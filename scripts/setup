@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Prüft, ob alles zum Bauen von Fission3D da ist, und installiert Fehlendes nach Rückfrage.
+#
+#   scripts/setup            prüfen und nach Rückfrage installieren
+#   scripts/setup --yes      ohne Rückfragen installieren
+#   scripts/setup --check    nur prüfen, nichts installieren
+#   scripts/setup --help
+
+set -u -o pipefail
+# shellcheck source=lib/common.sh
+. "$(dirname "$0")/lib/common.sh"
+
+MODE=ask
+for arg in "$@"; do
+    case "$arg" in
+        --yes|-y)   FISSION_ASSUME_YES=1; MODE=install ;;
+        --check)    MODE=check ;;
+        --help|-h)
+            sed -n '5,10p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0 ;;
+        *) die "Unbekannte Option '$arg'. Siehe scripts/setup --help" ;;
+    esac
+done
+export FISSION_ASSUME_YES="${FISSION_ASSUME_YES:-0}"
+
+MISSING_REQUIRED=()
+MISSING_TOOLS=()
+
+# ---------------------------------------------------------------- macOS (Homebrew)
+REQUIRED_BREW="cmake ninja qtbase qtdeclarative qtshadertools qtsvg catch2 git-lfs"
+DEV_BREW="clang-format ccache llvm"
+
+setup_macos() {
+    step "Prüfe macOS-Voraussetzungen"
+
+    if xcode-select -p >/dev/null 2>&1; then
+        ok "Xcode bzw. Command Line Tools sind installiert"
+    else
+        fail "Xcode / Command Line Tools fehlen"
+        note "Installiere sie mit:  xcode-select --install"
+        note "Danach dieses Skript erneut starten."
+        exit 1
+    fi
+
+    if ! command -v brew >/dev/null 2>&1; then
+        fail "Homebrew (Paketverwaltung für den Mac) fehlt"
+        note "Installiere es mit dem Befehl von https://brew.sh und starte dann dieses Skript erneut."
+        note "(Das Skript installiert Homebrew bewusst nicht selbst: Es ändert deinen Mac umfassend.)"
+        exit 1
+    fi
+    ok "Homebrew gefunden"
+
+    local formula
+    for formula in $REQUIRED_BREW; do
+        if brew list --versions "$formula" >/dev/null 2>&1; then
+            ok "$formula  ($(brew list --versions "$formula" | awk '{print $2}'))"
+        else
+            fail "$formula fehlt"
+            MISSING_REQUIRED+=("$formula")
+        fi
+    done
+    for formula in $DEV_BREW; do
+        if brew list --versions "$formula" >/dev/null 2>&1; then
+            ok "$formula  (Entwickler-Werkzeug)"
+        else
+            warn "$formula fehlt  (Entwickler-Werkzeug, nur für Formatierung und Code-Prüfung)"
+            MISSING_TOOLS+=("$formula")
+        fi
+    done
+}
+
+install_macos() {
+    local list=(${MISSING_REQUIRED[@]+"${MISSING_REQUIRED[@]}"})
+    if [ "${#MISSING_TOOLS[@]}" -gt 0 ] && ask_yes_no "Auch die Entwickler-Werkzeuge (${MISSING_TOOLS[*]}) installieren?"; then
+        list+=("${MISSING_TOOLS[@]}")
+    fi
+    if [ "${#list[@]}" -eq 0 ]; then
+        return 0
+    fi
+    step "Installiere mit Homebrew: ${list[*]}"
+    brew install "${list[@]}" || die "Die Installation mit Homebrew ist fehlgeschlagen."
+}
+
+qt_version_macos() { brew list --versions qtbase 2>/dev/null | awk '{print $2}'; }
+
+# ---------------------------------------------------------------- Linux (apt)
+REQUIRED_APT="build-essential cmake ninja-build pkg-config git git-lfs python3 \
+qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools qt6-shadertools-dev qt6-svg-dev \
+qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls \
+qml6-module-qtquick-templates qml6-module-qtquick-layouts catch2"
+DEV_APT="clang-format clang-tidy ccache xvfb"
+
+apt_installed() { dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "install ok installed"; }
+
+setup_linux() {
+    step "Prüfe Linux-Voraussetzungen"
+
+    if ! command -v apt-get >/dev/null 2>&1; then
+        fail "Diese Linux-Variante hat kein apt. Automatisch unterstützt ist Ubuntu/Debian."
+        note "Du brauchst: C++-Compiler (C++20), CMake >= 3.28, Ninja, Qt >= 6.8 (base, declarative,"
+        note "shadertools, svg, inkl. QML-Module), Catch2 >= 3, git-lfs, Python 3."
+        exit 1
+    fi
+    ok "apt gefunden"
+
+    local pkg
+    for pkg in $REQUIRED_APT; do
+        if apt_installed "$pkg"; then
+            ok "$pkg"
+        else
+            fail "$pkg fehlt"
+            MISSING_REQUIRED+=("$pkg")
+        fi
+    done
+    for pkg in $DEV_APT; do
+        if apt_installed "$pkg"; then
+            ok "$pkg  (Entwickler-Werkzeug)"
+        else
+            warn "$pkg fehlt  (Entwickler-Werkzeug: Formatierung, Code-Prüfung, Tests ohne Bildschirm)"
+            MISSING_TOOLS+=("$pkg")
+        fi
+    done
+}
+
+install_linux() {
+    local list=(${MISSING_REQUIRED[@]+"${MISSING_REQUIRED[@]}"})
+    if [ "${#MISSING_TOOLS[@]}" -gt 0 ] && ask_yes_no "Auch die Entwickler-Werkzeuge (${MISSING_TOOLS[*]}) installieren?"; then
+        list+=("${MISSING_TOOLS[@]}")
+    fi
+    if [ "${#list[@]}" -eq 0 ]; then
+        return 0
+    fi
+    local sudo_cmd=""
+    [ "$(id -u)" -ne 0 ] && sudo_cmd="sudo"
+    step "Installiere mit apt: ${list[*]}"
+    # shellcheck disable=SC2086
+    $sudo_cmd apt-get install -y "${list[@]}" || die "Die Installation mit apt ist fehlgeschlagen."
+}
+
+qt_version_linux() {
+    if command -v qtpaths6 >/dev/null 2>&1; then
+        qtpaths6 --qt-version 2>/dev/null
+    fi
+}
+
+# ---------------------------------------------------------------- common
+OS="$(detect_os)"
+case "$OS" in
+    macos) setup_macos ;;
+    linux) setup_linux ;;
+    *)     die "Dieses Betriebssystem wird nicht unterstützt (nur macOS und Linux)." ;;
+esac
+
+if [ "${#MISSING_REQUIRED[@]}" -gt 0 ] || [ "${#MISSING_TOOLS[@]}" -gt 0 ]; then
+    if [ "$MODE" = "check" ]; then
+        say ""
+        if [ "${#MISSING_REQUIRED[@]}" -gt 0 ]; then
+            fail "Es fehlen Pflichtpakete: ${MISSING_REQUIRED[*]}"
+            note "Installiere sie mit:  scripts/setup"
+            exit 1
+        fi
+        warn "Nur Entwickler-Werkzeuge fehlen. Zum Bauen und Starten reicht der aktuelle Stand."
+    else
+        if [ "${#MISSING_REQUIRED[@]}" -gt 0 ]; then
+            say ""
+            if ! ask_yes_no "Fehlende Pakete jetzt installieren (${MISSING_REQUIRED[*]})?"; then
+                die "Ohne diese Pakete kann Fission3D nicht gebaut werden."
+            fi
+        fi
+        case "$OS" in
+            macos) install_macos ;;
+            linux) install_linux ;;
+        esac
+    fi
+fi
+
+step "Prüfe Qt-Version"
+QT_VERSION=""
+case "$OS" in
+    macos) QT_VERSION="$(qt_version_macos)" ;;
+    linux) QT_VERSION="$(qt_version_linux)" ;;
+esac
+if [ -z "$QT_VERSION" ]; then
+    warn "Die Qt-Version konnte nicht ermittelt werden (wird beim Bauen geprüft)."
+else
+    QT_MAJOR="${QT_VERSION%%.*}"
+    QT_REST="${QT_VERSION#*.}"
+    QT_MINOR="${QT_REST%%.*}"
+    if [ "$QT_MAJOR" -gt 6 ] || { [ "$QT_MAJOR" -eq 6 ] && [ "$QT_MINOR" -ge 8 ]; }; then
+        ok "Qt $QT_VERSION  (benötigt wird mindestens 6.8)"
+    else
+        fail "Qt $QT_VERSION ist zu alt (benötigt wird mindestens 6.8)"
+        note "Auf dieser Linux-Version liefert apt nur ein älteres Qt. Offizielle Qt-Pakete gibt es per"
+        note "'pip install aqtinstall'; sag Bescheid, dann binde ich das in dieses Skript ein."
+        exit 1
+    fi
+fi
+
+if [ "$MODE" != "check" ] && [ -d "$REPO_ROOT/.git" ] && command -v git-lfs >/dev/null 2>&1; then
+    git -C "$REPO_ROOT" lfs install --local >/dev/null 2>&1 && ok "Git LFS für dieses Projekt eingerichtet"
+fi
+
+step "Fertig"
+say "  Alles ist bereit. Nächster Schritt:  scripts/run"

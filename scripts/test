@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Baut Fission3D und führt alle Tests aus, mit verständlicher Zusammenfassung.
+#
+#   scripts/test             Debug-Version testen
+#   scripts/test --release   optimierte Version testen
+#   scripts/test --asan      mit Speicherfehler-Erkennung (AddressSanitizer) testen
+
+set -u -o pipefail
+# shellcheck source=lib/common.sh
+. "$(dirname "$0")/lib/common.sh"
+
+KIND=debug
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --release) KIND=release ;;
+        --asan)    KIND=asan ;;
+        --help|-h) sed -n '5,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) die "Unbekannte Option '$1'. Siehe scripts/test --help" ;;
+    esac
+    shift
+done
+
+PRESET="$(preset_name "$KIND")"
+BUILD_DIR="$REPO_ROOT/build/$PRESET"
+BUILD_LOG="$BUILD_DIR.log"
+TEST_LOG="$BUILD_DIR.tests.log"
+
+need_command cmake
+need_command ninja
+cd "$REPO_ROOT" || exit 1
+
+# Plain-language names for the tests that are not unit tests.
+describe_test() {
+    case "$1" in
+        license_headers)             echo "Alle Quelldateien tragen den Lizenz-Kopf (SPDX)" ;;
+        layer_includes)              echo "Schichtregel im Quelltext: Qt und Kernel-Typen nur, wo erlaubt" ;;
+        app_opens_window)            echo "Die App startet und zeigt ihr Fenster" ;;
+        layering_control_builds)     echo "Kontrolle: Core-Code ohne Qt lässt sich bauen" ;;
+        layering_rejects_qt_in_core) echo "Schichtregel: Qt in Core wird vom Compiler abgelehnt" ;;
+        *)                           echo "Unit-Test: $1" ;;
+    esac
+}
+
+step "Baue Fission3D ($PRESET)"
+mkdir -p "$REPO_ROOT/build"
+if ! { cmake --preset "$PRESET" && cmake --build --preset "$PRESET"; } >"$BUILD_LOG" 2>&1; then
+    fail "Das Bauen ist fehlgeschlagen. Die letzten Zeilen des Protokolls:"
+    tail -n 25 "$BUILD_LOG" | sed 's/^/    /'
+    note "Fehlen vielleicht Voraussetzungen? Dann hilft:  scripts/setup"
+    exit 1
+fi
+ok "Gebaut"
+
+step "Führe Tests aus"
+export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-offscreen}"
+ctest --preset "$PRESET" >"$TEST_LOG" 2>&1
+CTEST_EXIT=$?
+
+PASSED=0
+FAILED=0
+FAILED_NAMES=()
+while IFS= read -r line; do
+    # Lines look like: "3/7 Test  #3: app_opens_window .... Passed  0.93 sec"
+    case "$line" in
+        *"Test "*"#"*"..."*)
+            name="$(printf '%s' "$line" | sed -E 's/^.*Test +#[0-9]+: (.*[^. ]) \.+ .*$/\1/')"
+            case "$line" in
+                *"Passed"*) PASSED=$((PASSED + 1)); ok "$(describe_test "$name")" ;;
+                *)          FAILED=$((FAILED + 1)); FAILED_NAMES+=("$name"); fail "$(describe_test "$name")" ;;
+            esac ;;
+    esac
+done <"$TEST_LOG"
+
+say ""
+if [ "$CTEST_EXIT" -eq 0 ] && [ "$FAILED" -eq 0 ] && [ "$PASSED" -gt 0 ]; then
+    say "${C_GREEN}${C_BOLD}Alles in Ordnung: $PASSED von $PASSED Tests bestanden.${C_RESET}"
+    exit 0
+fi
+
+say "${C_RED}${C_BOLD}Nicht in Ordnung: $FAILED Test(s) fehlgeschlagen, $PASSED bestanden.${C_RESET}"
+note "Details stehen in build/$PRESET.tests.log"
+tail -n 30 "$TEST_LOG" | sed 's/^/    /'
+exit 1

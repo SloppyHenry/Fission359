@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Baut Fission3D und startet es.
+#
+#   scripts/run              Debug-Version bauen und starten
+#   scripts/run --release    optimierte Version bauen und starten
+#   scripts/run --build-only nur bauen, nicht starten
+#
+# Alles nach "--" geht an das Programm, z. B.:  scripts/run -- --version
+
+set -u -o pipefail
+# shellcheck source=lib/common.sh
+. "$(dirname "$0")/lib/common.sh"
+
+KIND=debug
+START=1
+APP_ARGS=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --release)    KIND=release ;;
+        --build-only) START=0 ;;
+        --help|-h)    sed -n '5,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        --)           shift; APP_ARGS=("$@"); break ;;
+        *) die "Unbekannte Option '$1'. Siehe scripts/run --help" ;;
+    esac
+    shift
+done
+
+PRESET="$(preset_name "$KIND")"
+BUILD_DIR="$REPO_ROOT/build/$PRESET"
+LOG="$BUILD_DIR.log"
+
+need_command cmake
+need_command ninja
+cd "$REPO_ROOT" || exit 1
+
+step "Baue Fission3D ($PRESET)"
+note "Beim ersten Mal dauert das etwas länger. Das Protokoll steht in build/$PRESET.log"
+
+mkdir -p "$REPO_ROOT/build"
+if ! { cmake --preset "$PRESET" && cmake --build --preset "$PRESET"; } >"$LOG" 2>&1; then
+    fail "Das Bauen ist fehlgeschlagen. Die letzten Zeilen des Protokolls:"
+    tail -n 25 "$LOG" | sed 's/^/    /'
+    say ""
+    note "Fehlen vielleicht Voraussetzungen? Dann hilft:  scripts/setup"
+    exit 1
+fi
+ok "Gebaut"
+
+if [ "$START" -eq 0 ]; then
+    exit 0
+fi
+
+step "Starte Fission3D"
+exec "$BUILD_DIR/apps/fission3d/fission3d" "${APP_ARGS[@]+"${APP_ARGS[@]}"}"
