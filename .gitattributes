@@ -1,0 +1,23 @@
+# Normalize line endings: text files are LF in the repository.
+* text=auto eol=lf
+
+# Scripts must stay LF and executable
+scripts/* text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.icns binary
+*.ico binary
+*.ttf binary
+*.otf binary
+
+# Large test models are stored with Git LFS.
+# (Git attributes cannot filter by size, so LFS applies by file type below tests/fixtures.)
+tests/fixtures/**/*.stl  filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/**/*.3mf  filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/**/*.step filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/**/*.stp  filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/**/*.obj  filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/**/*.brep filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/**/*.fission filter=lfs diff=lfs merge=lfs -text
