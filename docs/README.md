@@ -13,6 +13,7 @@
 | [04-roadmap.md](04-roadmap.md) | Phasen, Meilensteine, Abhängigkeiten, Definition of Done | alle |
 | [arbeitspakete/](arbeitspakete/) | Alle Arbeitspakete (AP) je Phase mit Akzeptanzkriterien | Entwicklung |
 | [05-master-prompt.md](05-master-prompt.md) | **Der Prompt** für den KI-Coding-Agenten (z. B. Claude Code), mit Kurz-Prompts je Arbeitspaket | Agent |
+| [07-baukaesten.md](07-baukaesten.md) | Baukästen: geführtes Gestalten von Karten, Vasen, Figuren u. v. m. (statt starrer Vorlagen), Motiv-Bibliothek | Produkt, Entwicklung |
 | [06-rueckfragen.md](06-rueckfragen.md) | Offene Entscheidungen, jeweils mit der aktuell angenommenen Antwort | du |
 | [adr/](adr/) | Architecture Decision Records (Entscheidungsprotokolle) | Entwicklung |
 

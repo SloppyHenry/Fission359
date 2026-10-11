@@ -73,7 +73,7 @@ Jede Änderung zeigt sofort das Ergebnis. Bei teuren Operationen erscheint zuers
 
 | Gruppe | Inhalt (Beispiele) |
 |---|---|
-| **Formen** | Quader, Zylinder, Kugel, Kegel, Torus, Röhre, Prisma, Pyramide, Text, Stern; „Als Loch“-Schalter bei jeder Form |
+| **Formen** | Quader, Zylinder, Kugel, Kegel, Torus, Röhre, Prisma, Pyramide, Text, Stern; „Als Loch“-Schalter bei jeder Form; **Baukästen** (Karte, Vase, Figur …) |
 | **Skizze** | Linie, Rechteck, Kreis, Bogen, Langloch, Polygon, Kurve (Spline), Text; Maß, Regeln, Trimmen, Versetzen |
 | **Ändern** | Ziehen, Drehen (Drehkörper), Entlang Pfad, Übergang, Abrunden, Abschrägen, Aushöhlen, Fläche verschieben, Fläche entfernen |
 | **Kombinieren** | Vereinen, Ausschneiden, Überlappung behalten, Teilen, Weich verschmelzen |
@@ -82,7 +82,9 @@ Jede Änderung zeigt sofort das Ergebnis. Bei teuren Operationen erscheint zuers
 | **Prüfen** | Messen, Schnitt, Druckcheck, Gewicht und Material |
 | **Export** | Speichern als 3MF/STL/STEP, Im Slicer öffnen, Bild teilen |
 
-**Bausteine** (parametrische Fertigteile wie Box mit Deckel, Scharnier, Schnappverschluss, Aufhänger-Öse, Zahnrad, Schraubenloch) öffnen sich über eine eigene Bibliothek-Seitenleiste.
+**Bausteine** (parametrische Fertigteile wie Box mit Deckel, Scharnier, Schnappverschluss, Aufhänger-Öse, Zahnrad, Schraubenloch) öffnen sich über eine eigene Bibliothek-Seitenleiste, ebenso die **Motiv-Bibliothek** (2D-Motive für Karten, Reliefs, Schilder).
+
+**Baukästen** führen Schritt für Schritt zu einem eigenen Objekt (z. B. Karte: Format → Hintergrund → Motive → Text → Feinschliff → Drucken), ohne starre Vorlage. Konzept und Bedienung: [07-baukaesten.md](07-baukaesten.md).
 
 ---
 
@@ -261,7 +263,7 @@ Die Texte stammen aus einem **Meldungskatalog** (siehe AP-2.14). Technische Kern
 ## 11. Lernen im Programm
 
 - **Erster Start:** Sprache, Drucker auswählen (bestimmt die Druckbettgröße), Maus-Stil, dann „Bist du neu hier? [Mission starten] [Einfach loslegen]“.
-- **Startbildschirm „Was möchtest du bauen?“:** Kacheln für Deko, Halterung, Box, Ersatzteil, Schmuck, Spielzeug und Leer. Jede Kachel bietet Vorlagen und passende Missionen.
+- **Startbildschirm „Was möchtest du bauen?“:** Kacheln für Karte, Vase/Gefäß, Figur, Christbaumschmuck, Schild, Halterung, Box, Ersatzteil und Leer. Jede Kachel startet den passenden **Baukasten** oder bietet passende Missionen und Bausteine an. Es gibt keine starren Fertig-Vorlagen.
 - **Missionen:** geführte Mini-Projekte von 3 bis 10 Minuten. Schritte werden durch Hervorhebung erklärt. Das Programm **prüft den echten Modellzustand** („Super, der Quader ist 50 mm breit!“), statt nur „Weiter“-Klicks zu zählen.
   1. Dein erster Schlüsselanhänger
   2. Ein Stern für den Weihnachtsbaum
@@ -306,6 +308,9 @@ UI-Texte verwenden ausschließlich die Begriffe in der mittleren Spalte. Englisc
 | Clearance | Spiel | Play / Gap | Luft zwischen Teilen, damit sie passen |
 | Emboss / Deboss | Prägen / Gravieren | Emboss / Engrave | Erhaben / vertieft |
 | Smooth Boolean | Weich verschmelzen | Melt Together | Formen fließen weich ineinander |
+| – | Baukasten | Kit | Schritt für Schritt zum eigenen Objekt (Karte, Vase, Figur) |
+| – | Motiv | Motif | 2D-Bild zum Prägen, Gravieren oder Durchbrechen |
+| – | Streuen | Scatter | Ein Motiv zufällig über eine Fläche verteilen |
 
 ---
 

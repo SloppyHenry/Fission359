@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Fehlerbericht / Bug report
+description: Etwas funktioniert nicht wie erwartet. / Something does not work as expected.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Was ist passiert? / What happened?
+      description: Beschreibe es in eigenen Worten. Ein Screenshot hilft. / Describe it in your own words. A screenshot helps.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Wie kann ich es nachstellen? / Steps to reproduce
+      placeholder: |
+        1. Würfel auf die Arbeitsfläche ziehen
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Was hast du erwartet? / What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "Terminal: scripts/run -- --version"
+      placeholder: "0.0.1"
+  - type: dropdown
+    id: system
+    attributes:
+      label: System
+      options:
+        - macOS (Apple Silicon)
+        - Linux (Wayland)
+        - Linux (X11)
+        - Anderes / Other
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Weitere Angaben / Anything else?
+      description: Grafikkarte, Distribution, Logdatei (ohne persönliche Daten). / GPU, distribution, log file (without personal data).

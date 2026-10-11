@@ -9,11 +9,11 @@
 | **2** | Präzision | Skizzen, Ziehen/Drehen, Abrunden, Bohrungen, Parameter, Rezept | **M2:** Wandhalterung (Ablauf B) komplett inkl. Maßänderung | [phase-2-praezision.md](arbeitspakete/phase-2-praezision.md) |
 | **3** | Druckbereit | Druckcheck, Passungen, Mehrfarbig, Slicer | **M3:** Box mit Deckel, die beim ersten Druck passt, zweifarbig | [phase-3-druckbereit.md](arbeitspakete/phase-3-druckbereit.md) |
 | **4** | Spielwiese | Weich verschmelzen, Verformen, Prägen, Bilder, Generatoren | **M4:** Weihnachtsstern (Ablauf C) | [phase-4-spielwiese.md](arbeitspakete/phase-4-spielwiese.md) |
-| **5** | Lernen und Bausteine | Missionen, Bibliothek, Vorlagen, Feinschliff | **M5:** Neuling schafft 3 Missionen ohne fremde Hilfe | [phase-5-lernen-bausteine.md](arbeitspakete/phase-5-lernen-bausteine.md) |
+| **5** | Lernen, Bausteine und Baukästen | Missionen, Bausteine, Motiv-Bibliothek, Baukästen (Karten, Vasen, Figuren) | **M5:** Neuling schafft 3 Missionen und gestaltet in ≤ 5 min eine eigene Weihnachtskarte | [phase-5-lernen-bausteine.md](arbeitspakete/phase-5-lernen-bausteine.md) |
 | **6** | Release 1.0 | Updates, Stabilität, Lokalisierung, Beta | **M6:** Öffentliche 1.0 | [phase-6-release.md](arbeitspakete/phase-6-release.md) |
 | — | Backlog | Baugruppen, Skript-API, KI-Assistent, Zeichnungen, Windows … | — | [backlog.md](arbeitspakete/backlog.md) |
 
-> **Wichtig:** Lernhilfen (Hinweiszeile, Tooltip-Texte, verständliche Fehlermeldungen) sind **nicht** erst Phase 5. Jedes Arbeitspaket liefert seine eigenen Texte gleich mit. Phase 5 baut nur die Missions-Engine und die Bibliothek.
+> **Wichtig:** Lernhilfen (Hinweiszeile, Tooltip-Texte, verständliche Fehlermeldungen) sind **nicht** erst Phase 5. Jedes Arbeitspaket liefert seine eigenen Texte gleich mit. Phase 5 baut die Missions-Engine, die Bibliotheken und die Baukästen.
 
 ## Kritischer Pfad
 

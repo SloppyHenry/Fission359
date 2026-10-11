@@ -12,7 +12,7 @@ Ideen und größere Themen, die bewusst nicht in 1.0 sind. Die Reihenfolge ist e
 | B-6 | **3D-Maus (SpaceMouse)** | 3Dconnexion SDK (macOS), spacenavd (Linux) | S |
 | B-7 | **Blech und Lasercut** | Flache Teile mit Laschen und Abwicklung; Export als DXF/SVG für Lasercutter; Fingerzinken-Boxen | L |
 | B-8 | **Freiform (Subdivision)** | Siehe AP-4.10, falls zurückgestellt | XL |
-| B-9 | **Community-Bibliothek** | Bausteine und Vorlagen teilen (Website, kein Konto für Download) | L |
+| B-9 | **Community-Bibliothek** | Bausteine, Motive, Baukästen und Figuren teilen (Website, kein Konto für Download) | L |
 | B-10 | **Druckerintegration** | Direkt an Drucker senden (Bambu LAN, OctoPrint, Moonraker/Klipper, PrusaLink), über Slicer-CLI | M |
 | B-11 | **Messen per Foto/Scan** | Konturen aus Fotos (mit Referenz-Lineal) für Ersatzteile; Scan-Netze als Referenz einblenden | L |
 | B-12 | **Linux arm64** | z. B. für Raspberry Pi 5 / Asahi Linux | S |

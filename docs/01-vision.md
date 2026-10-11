@@ -33,7 +33,7 @@ Mit dem gleichen Werkzeug soll man eine Wandhalterung mit passgenauen Schraubenl
 
 **1. Die Umsteigerin aus Tinkercad – „Lena“, 34**
 Hat einen Bambu-Lab-Drucker, macht Geschenke und Deko (Namensschilder, Weihnachtsanhänger, Ausstechformen). Tinkercad ist ihr zu begrenzt, Fusion hat sie nach einer Stunde frustriert geschlossen.
-*Braucht:* sofortige Erfolgserlebnisse, Text, Muster, Mehrfarbdruck, Vorlagen.
+*Braucht:* sofortige Erfolgserlebnisse, Text, Muster, Mehrfarbdruck, Baukästen für Karten, Vasen und Figuren.
 
 **2. Der Heimwerker – „Tom“, 52**
 Misst mit dem Messschieber und will Ersatzteile, Halterungen und Adapter bauen, die auf Anhieb passen.
@@ -69,6 +69,13 @@ Kann CAD, will aber ein schnelles, lokales Werkzeug ohne Cloud, gern auf Linux.
 - Generatoren: Stern, Schneeflocke, Christbaumkugel, Vase, Zahnrad, Namensschild
 - Kaleidoskop-Modus: einen Arm gestalten, das Programm vervielfältigt ihn radial
 
+### Baukästen statt starrer Vorlagen
+- Geführtes Gestalten Schritt für Schritt, z. B. **Weihnachtskarte**: Format → Hintergrund → Motive → Text → Farben → Drucken
+- Erste Baukästen: **Karten**, **Vasen und Gefäße**, **Figuren**; danach Christbaumschmuck, Windlichter, Schilder, Ausstechformen, Schmuck, Boxen
+- Motiv-Bibliothek mit druckgeprüften 2D-Motiven (mehrfarbig, frei lizenziert)
+- Jedes Ergebnis ist ein Einzelstück und ein normales Modell, das man frei weiterbearbeiten kann
+- Details: [07-baukaesten.md](07-baukaesten.md)
+
 ### Druckbereit
 - Druckbett des eigenen Druckers im Arbeitsbereich
 - Druckcheck: geschlossen? Wandstärke? Überhänge? Passt aufs Bett?
@@ -77,7 +84,7 @@ Kann CAD, will aber ein schnelles, lokales Werkzeug ohne Cloud, gern auf Linux.
 - „Im Slicer öffnen“ mit einem Klick
 
 ### Lernen ist eingebaut
-- Startbildschirm „Was möchtest du bauen?“ mit Vorlagen
+- Startbildschirm „Was möchtest du bauen?“ mit Baukästen
 - Missionen: geführte Mini-Projekte direkt im Programm
 - Hinweiszeile, Tooltip-Karten mit kurzen Animationen, Befehlssuche mit Alltagswörtern („runde Ecken“ führt zu *Abrunden*)
 

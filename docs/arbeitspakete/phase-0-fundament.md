@@ -7,7 +7,7 @@
 ---
 
 ### AP-0.1 Repository, Build-System und Konventionen
-**Status:** offen · **Größe:** S · **Abhängigkeiten:** –
+**Status:** Review · **Größe:** S · **Abhängigkeiten:** –
 
 **Ziel:** Ein sauberes Monorepo, das sich auf beiden Plattformen mit einem Befehl bauen lässt.
 
@@ -23,10 +23,61 @@
 - **Ein-Befehl-Skripte für Nicht-Programmierer:** `scripts/setup` (prüft und installiert Voraussetzungen bzw. sagt genau, was fehlt), `scripts/run` (bauen und starten), `scripts/test` (alle Tests mit verständlicher Zusammenfassung)
 
 **Akzeptanzkriterien:**
-- [ ] `cmake --preset macos-debug && cmake --build --preset macos-debug` (bzw. `linux-debug`) baut ein leeres Qt-Fenster
-- [ ] Ein Verstoß gegen die Schichtregel (Core inkludiert Qt) führt zu einem Build-Fehler
-- [ ] README im Root erklärt Build in ≤ 10 Schritten
+- [x] `cmake --preset macos-debug && cmake --build --preset macos-debug` (bzw. `linux-debug`) baut ein leeres Qt-Fenster
+- [x] Ein Verstoß gegen die Schichtregel (Core inkludiert Qt) führt zu einem Build-Fehler
+- [x] README im Root erklärt Build in ≤ 10 Schritten
 - [ ] Auf einem frischen Mac genügen `scripts/setup` und `scripts/run`, um die App zu starten, ohne C++-Kenntnisse
+  *(auf dem Entwicklungs-Mac und per frischem Klon geprüft, aber noch nicht auf einem Mac ohne Xcode/Homebrew – siehe Abschlussvermerk)*
+
+#### Abschlussvermerk (2026-10-11)
+
+**Umgesetzt**
+- Git-Repo (`main`), `.gitignore`, `.gitattributes` (LFS nach Dateiendung unter `tests/fixtures/`), `.editorconfig`,
+  `LICENSE` (GPL-3.0-Volltext), `CLAUDE.md` (bindet den Master-Prompt per `@docs/05-master-prompt.md` ein).
+- `CMakeLists.txt` (≥ 3.28), `CMakePresets.json` mit `macos-`/`linux-` × `debug`/`release`/`asan`; Warnungen sind Fehler.
+- Ordnerstruktur nach Architektur §9; je Schicht ein CMake-Ziel mit Allow-List in `cmake/FissionLayers.cmake`.
+- Schichtregel dreifach abgesichert: (1) Konfigurieren bricht bei falscher Link-Abhängigkeit ab,
+  (2) Compiler lehnt Qt-Includes in `core` ab (Test `layering_rejects_qt_in_core` mit Kontrolltest),
+  (3) `scripts/tools/check_layers.py` prüft Qt und Kernel-Typen (OCCT, Manifold, PlaneGCS) im Quelltext.
+- Leeres QML-Fenster `fission3d` mit Entwickler-Option `--smoke-test <datei.png>` (rendert einen Frame, speichert ihn, beendet).
+- `.clang-format`, `.clang-tidy`, SPDX-Prüfung `scripts/tools/check_spdx.py`, Catch2-Unit-Test für `fission_core`.
+- `scripts/setup`, `scripts/run`, `scripts/test` (Deutsch, mit Rückfrage vor Installationen; getestet mit bash 3.2).
+- `README.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), Issue-/PR-Vorlagen,
+  [ADR-0001](../adr/0001-tech-stack.md), `THIRD_PARTY_NOTICES.md`, [docs/testumgebung.md](../testumgebung.md).
+
+**Wie getestet**
+- macOS 27 arm64 (AppleClang 21, Qt 6.11.2): Presets `debug` und `asan`, `scripts/test` → 7 von 7 Tests grün.
+- Ubuntu 26.04 x86_64 (GCC 15.2, Qt 6.10.2, per SSH): Presets `debug`, `release`, `asan` → je 7 von 7 grün.
+- CMake 3.28.6 (Mindestversion) auf Linux: Konfigurieren, Bauen, Tests grün.
+- Absichtliche Verstöße vorgeführt: `#include <QString>` in `core` → Compiler-Fehler; `Qt6::Core` an `fission_core`
+  gelinkt → Konfigurationsfehler.
+- Fenster-Screenshots (macOS und Linux, Software-Rendering, ohne Bildschirm) sind erzeugt und geprüft.
+
+**So probierst du es aus**
+1. Terminal im Projektordner öffnen.
+2. `scripts/setup` ausführen. Es zeigt, was vorhanden ist und was fehlt (Antwort `J` zum Installieren).
+3. `scripts/run` ausführen. Nach dem Bauen öffnet sich ein dunkles Fenster mit dem Text „Fission3D“.
+4. Fenster schließen, dann `scripts/test` ausführen. Am Ende steht „Alles in Ordnung: 7 von 7 Tests bestanden.“
+5. Optional: In `src/core/src/version.cpp` eine Zeile `#include <QString>` einfügen und `scripts/run` starten.
+   Das Bauen muss mit „'QString' file not found“ scheitern. Die Zeile danach wieder entfernen.
+
+**Bekannte Einschränkungen und Annahmen**
+- **Frischer Mac nicht nachgewiesen:** Der Entwicklungs-Mac hat bereits Xcode und Homebrew. `scripts/setup` ist hier
+  nur im Zustand „alles installiert“ und „einzelne Pakete fehlen“ geprüft (auf Linux mit Voll-Installation).
+- **CI nicht angebunden:** Die SPDX-Prüfung ist als Skript und CTest-Test vorhanden; der GitHub-Workflow folgt
+  in AP-0.3. Die Definition of Done verlangt grüne CI auf beiden Plattformen; das ist bis dahin offen.
+- **Linux-Qt:** Läuft mit apt-Qt 6.10 auf Ubuntu 26.04. Ubuntu 24.04 liefert nur Qt 6.4; dort braucht es
+  vcpkg (AP-0.2). `scripts/setup` meldet das und bricht kontrolliert ab. Fedora wird von `scripts/setup`
+  noch nicht automatisch unterstützt.
+- **Fenstertest ohne GPU:** `app_opens_window` nutzt Software-Rendering. Echte Grafik folgt mit AP-0.4/AP-0.8.
+- **LFS:** `.gitattributes` kann nicht nach Größe filtern, daher Regeln nach Dateiendung.
+- **Kontaktadresse im Code of Conduct** ist ein markierter `TODO`, bis eine Projektadresse feststeht.
+- Mac-Entwickler-Werkzeuge `clang-format`, `ccache`, `llvm` (für clang-tidy) wurden per Homebrew installiert.
+
+**Vorgeschlagene Folge-Arbeiten**
+- AP-0.2: vcpkg-Manifest; Qt und Catch2 darüber beziehen, `THIRD_PARTY_NOTICES.md` automatisch erzeugen.
+- AP-0.3: CI inkl. SPDX-, Format- und Layer-Prüfung; Ubuntu 24.04 als CI-Plattform.
+- Sobald ein Mac ohne Xcode/Homebrew verfügbar ist: Frisch-Mac-Test von `scripts/setup`.
 
 ---
 

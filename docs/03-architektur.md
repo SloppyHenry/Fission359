@@ -196,6 +196,8 @@ projekt.fission
 
 **Lizenzregel:** Das Projekt ist Open Source unter **GPL-3.0-or-later**. Erlaubt sind alle **GPL-3-kompatiblen** Lizenzen, bevorzugt permissive (MIT, BSD, Apache-2.0, zlib) und LGPL. **Nicht erlaubt** sind GPL-2.0-only (inkompatibel mit GPL-3), proprietäre und „nicht-kommerziell“-Lizenzen. Jede neue Abhängigkeit wird in `THIRD_PARTY_NOTICES.md` und im Über-Dialog aufgeführt. Jede Quelldatei trägt einen SPDX-Header (`// SPDX-License-Identifier: GPL-3.0-or-later`).
 
+**Inhalte (Motive, Schriften, Beispiele):** nur selbst erstellt oder **CC0**, **CC-BY-4.0** bzw. **OFL** (Schriften). Keine „nicht-kommerziell“-Lizenzen. Herkunft, Autor und Lizenz stehen in den Metadaten jeder Datei; ein CI-Skript prüft das.
+
 ---
 
 ## 9. Projektstruktur
@@ -221,7 +223,7 @@ fission3d/
 │  └─ services/                  Autosave, Settings, i18n, Updates, Slicer-Erkennung
 ├─ resources/
 │  ├─ i18n/ (de, en) · icons/ · fonts/ · printers/ (Druckerprofile, JSON)
-│  ├─ missions/ · templates/ · bausteine/ · messages/ (Meldungskatalog)
+│  ├─ missions/ · bausteine/ · baukaesten/ · motive/ · examples/ · messages/ (Meldungskatalog)
 ├─ tests/
 │  ├─ unit/ · geometry/ (Golden-Tests) · naming/ · io/ · ui/ · perf/
 │  └─ fixtures/                  Testmodelle, Altdateien für Migrationen

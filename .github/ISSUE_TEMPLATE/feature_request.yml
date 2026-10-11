@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Funktionswunsch / Feature request
+description: Eine Idee oder ein Wunsch. / An idea or wish.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Was willst du erreichen? / What do you want to achieve?
+      description: Beschreibe die Aufgabe, nicht die Lösung. Was möchtest du bauen? / Describe the task, not the solution. What do you want to build?
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: Wie machst du das heute? / How do you do it today?
+      description: Auch in anderen Programmen (z. B. Tinkercad, Fusion). / Also in other programs.
+  - type: textarea
+    id: idea
+    attributes:
+      label: Hast du eine Idee zur Bedienung? / Do you have an idea how it could work?
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Passt es zu den Design-Prinzipien? / Does it fit the design principles?
+      description: Siehe docs/01-vision.md. / See docs/01-vision.md.
+      options:
+        - label: Es bleibt für Einsteiger:innen verständlich. / It stays understandable for beginners.

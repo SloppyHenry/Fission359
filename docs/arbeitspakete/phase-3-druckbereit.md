@@ -53,6 +53,7 @@
 **Umfang:**
 - Farbe je Körper (Phase 1) **und je Fläche** (Flächen einfärben, z. B. Gravur farbig)
 - Filament-Palette passend zum Profil (Anzahl Farben, z. B. AMS mit 4); Farben als Filamente benennen („Rot PLA“)
+- **Farbwechsel nach Höhe** für Drucker mit einer Düse: Farbe ab Höhe X mm; Übergabe an den Slicer (z. B. PrusaSlicer-Farbwechsel-Metadaten im 3MF, Bambu/Orca-Projektdaten) oder als Anleitung mit Höhenangaben. Grundlage für Karten und Schilder (AP-5.10)
 - 3MF-Export mit Objekten und Farben so, dass **Bambu Studio, OrcaSlicer und PrusaSlicer** die Zuordnung übernehmen (Hersteller-Erweiterungen prüfen, z. B. Bambu-Projekt-Metadaten)
 
 **Akzeptanzkriterien:**
