@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Compiler warnings and sanitizers shared by all Fission3D targets.
+
+function(fission_apply_compiler_options target)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic -Wshadow)
+    if(FISSION_WARNINGS_AS_ERRORS)
+      target_compile_options(${target} PRIVATE -Werror)
+    endif()
+  endif()
+
+  if(FISSION_SANITIZE)
+    list(JOIN FISSION_SANITIZE "," _sanitizers)
+    target_compile_options(${target} PRIVATE
+      -fsanitize=${_sanitizers} -fno-omit-frame-pointer)
+    target_link_options(${target} PRIVATE -fsanitize=${_sanitizers})
+  endif()
+endfunction()
