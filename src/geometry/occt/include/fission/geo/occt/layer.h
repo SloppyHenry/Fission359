@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <string>
 #include <string_view>
 
 namespace fission::geo::occt {
@@ -11,7 +12,7 @@ namespace fission::geo::occt {
 std::string_view layerName() noexcept;
 
 /// Version of the linked OpenCASCADE library, for example "8.0.1".
-/// Also proves at startup that the library is found and loadable.
-std::string_view kernelVersion() noexcept;
+/// Calls into the library, so it also proves that OpenCASCADE is found and loadable.
+std::string kernelVersion();
 
 } // namespace fission::geo::occt

@@ -3,6 +3,7 @@
 
 #include <QCommandLineOption>
 #include <QCommandLineParser>
+#include <QCoreApplication>
 #include <QGuiApplication>
 #include <QImage>
 #include <QQmlApplicationEngine>
@@ -10,21 +11,32 @@
 #include <QString>
 #include <QTimer>
 
+#include <string_view>
+
 #include "fission/core/version.h"
 #include "fission/geo/occt/layer.h"
 
-int main(int argc, char* argv[]) {
-    QGuiApplication app(argc, argv);
-    QGuiApplication::setApplicationName(QStringLiteral("Fission3D"));
-    const auto toQString = [](std::string_view text) {
-        return QString::fromUtf8(text.data(), static_cast<qsizetype>(text.size()));
-    };
-    // "0.0.1 (OpenCASCADE 8.0.1)": handy in bug reports, and it makes the app load the kernel
-    // library at startup, so mixed Qt/vcpkg library problems show up immediately.
-    QGuiApplication::setApplicationVersion(
-        QStringLiteral("%1 (OpenCASCADE %2)")
-            .arg(toQString(fission::core::versionString()),
-                 toQString(fission::geo::occt::kernelVersion())));
+namespace {
+
+QString toQString(std::string_view text) {
+    return QString::fromUtf8(text.data(), static_cast<qsizetype>(text.size()));
+}
+
+// "0.0.1 (OpenCASCADE 8.0.1)": handy in bug reports. Asking for the kernel version calls into
+// the library, so a broken library setup shows up right at startup.
+QString versionText() {
+    return QStringLiteral("%1 (OpenCASCADE %2)")
+        .arg(toQString(fission::core::versionString()),
+             QString::fromStdString(fission::geo::occt::kernelVersion()));
+}
+
+// Reads the command line with a plain QCoreApplication: it needs no display, so --help and
+// --version also work in a terminal without a window system. Returns the screenshot path of
+// --smoke-test (empty if not given).
+QString parseCommandLine(int& argc, char** argv) {
+    QCoreApplication core(argc, argv);
+    QCoreApplication::setApplicationName(QStringLiteral("Fission3D"));
+    QCoreApplication::setApplicationVersion(versionText());
 
     QCommandLineParser parser;
     parser.addHelpOption();
@@ -36,7 +48,18 @@ int main(int argc, char* argv[]) {
         QStringLiteral("Save a screenshot of the first frame and exit."),
         QStringLiteral("file.png"));
     parser.addOption(smokeTest);
-    parser.process(app);
+    parser.process(core); // prints help or version and exits when asked
+    return parser.value(smokeTest);
+}
+
+} // namespace
+
+int main(int argc, char* argv[]) {
+    const QString smokeTestPath = parseCommandLine(argc, argv);
+
+    QGuiApplication app(argc, argv);
+    QGuiApplication::setApplicationName(QStringLiteral("Fission3D"));
+    QGuiApplication::setApplicationVersion(versionText());
 
     QQmlApplicationEngine engine;
     QObject::connect(
@@ -44,13 +67,12 @@ int main(int argc, char* argv[]) {
         [] { QCoreApplication::exit(2); }, Qt::QueuedConnection);
     engine.loadFromModule("Fission3D", "Main");
 
-    if (parser.isSet(smokeTest)) {
-        const QString outputPath = parser.value(smokeTest);
+    if (!smokeTestPath.isEmpty()) {
         // Give the scene graph a moment to render the first frame, then grab it.
-        QTimer::singleShot(500, &app, [&engine, outputPath] {
+        QTimer::singleShot(500, &app, [&engine, smokeTestPath] {
             auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().value(0));
             const QImage frame = window != nullptr ? window->grabWindow() : QImage();
-            const bool saved = !frame.isNull() && frame.save(outputPath);
+            const bool saved = !frame.isNull() && frame.save(smokeTestPath);
             QCoreApplication::exit(saved ? 0 : 3);
         });
     }

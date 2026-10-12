@@ -32,6 +32,12 @@ add_test(NAME third_party_rejects_forbidden_license
           --inventory "${CMAKE_CURRENT_SOURCE_DIR}/licenses/forbidden-inventory.json"
           --expect-problem stb)
 
+# --version needs no window system and loads OpenCASCADE (proves the library setup).
+add_test(NAME app_prints_version COMMAND fission3d --version)
+set_tests_properties(app_prints_version PROPERTIES
+  PASS_REGULAR_EXPRESSION "Fission3D [0-9]+\\.[0-9]+\\.[0-9]+ \\(OpenCASCADE [0-9]+\\.[0-9]+\\.[0-9]+\\)"
+  TIMEOUT 30)
+
 # Start the real app headless, render one frame and keep it as proof.
 add_test(NAME app_opens_window
   COMMAND fission3d --smoke-test "${CMAKE_BINARY_DIR}/smoke-test.png")
