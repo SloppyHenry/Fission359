@@ -90,18 +90,34 @@ CTEST_EXIT=$?
 
 PASSED=0
 FAILED=0
+GEO_TOTAL=0
 FAILED_NAMES=()
 while IFS= read -r line; do
     # Lines look like: "3/7 Test  #3: app_opens_window .... Passed  0.93 sec"
     case "$line" in
         *"Test "*"#"*"..."*)
             name="$(printf '%s' "$line" | sed -E 's/^.*Test +#[0-9]+: (.*[^. ]) \.+ .*$/\1/')"
+            # The kernel robustness catalog has dozens of cases: report it as one line.
+            case "$name" in
+                "geometry: "*)
+                    GEO_TOTAL=$((GEO_TOTAL + 1))
+                    case "$line" in
+                        *"Passed"*) PASSED=$((PASSED + 1)) ;;
+                        *)          FAILED=$((FAILED + 1)); FAILED_NAMES+=("$name")
+                                    fail "Konstruktionsfall: ${name#geometry: }" ;;
+                    esac
+                    continue ;;
+            esac
             case "$line" in
                 *"Passed"*) PASSED=$((PASSED + 1)); ok "$(describe_test "$name")" ;;
                 *)          FAILED=$((FAILED + 1)); FAILED_NAMES+=("$name"); fail "$(describe_test "$name")" ;;
             esac ;;
     esac
 done <"$TEST_LOG"
+
+if [ "$GEO_TOTAL" -gt 0 ]; then
+    ok "Geometrie-Kern: $GEO_TOTAL typische Konstruktionsfälle geprüft (Bericht: docs/spikes/kernel-robustheit.md)"
+fi
 
 say ""
 if [ "$CTEST_EXIT" -eq 0 ] && [ "$FAILED" -eq 0 ] && [ "$PASSED" -gt 0 ]; then

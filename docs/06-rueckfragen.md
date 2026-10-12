@@ -45,3 +45,9 @@ Jede Frage hat eine **aktuelle Annahme**, auf der die Dokumente beruhen.
 
 ### R14 – Zeithorizont und Ambition
 > **Annahme:** Ambitioniertes Open-Source-Projekt mit dem Ziel einer öffentlichen 1.0. Erster großer Meilenstein ist **M2** (Phasen 0–2).
+
+### R16 – Winkeltoleranz beim Export (aus AP-0.5)
+> **Annahme:** 5° statt der in Architektur § 6 genannten 0,5°, bei unveränderter Sehnenabweichung von 0,01 mm.
+> Begründung: 0,5° erzeugt bei kleinen Rundungen etwa zehnmal so viele Dreiecke und ist 15- bis 100-mal
+> langsamer, ohne dass die Maßhaltigkeit besser wird (siehe [kernel-robustheit.md](spikes/kernel-robustheit.md)).
+> Bis zu deiner Bestätigung bleibt die Architektur-Seite unverändert.

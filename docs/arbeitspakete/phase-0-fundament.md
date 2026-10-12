@@ -197,7 +197,7 @@
 ---
 
 ### AP-0.5 Spike: Kernel-Robustheit
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-0.2
+**Status:** Review · **Größe:** M · **Abhängigkeiten:** AP-0.2
 
 **Ziel:** Wissen, wo OCCT stark und wo es zickig ist, bevor die Features darauf gebaut werden.
 
@@ -208,9 +208,51 @@
 - Tessellierungsqualität und -dauer für Export (0,01 mm Sehnenfehler)
 
 **Akzeptanzkriterien:**
-- [ ] Bericht `docs/spikes/kernel-robustheit.md` mit Ergebnistabelle und empfohlenen Standard-Einstellungen
-- [ ] Liste „bekannte Problemfälle“ als Grundlage für den Meldungskatalog (AP-2.14)
-- [ ] Testfälle landen als Golden-Tests in `tests/geometry/`
+- [x] Bericht [`docs/spikes/kernel-robustheit.md`](../spikes/kernel-robustheit.md) mit Ergebnistabelle und empfohlenen Standard-Einstellungen
+- [x] Liste „bekannte Problemfälle“ als Grundlage für den Meldungskatalog (AP-2.14)
+- [x] Testfälle landen als Golden-Tests in `tests/geometry/`
+
+#### Abschlussvermerk (2026-10-12)
+
+**Umgesetzt**
+- 42 Konstruktionsfälle in `tests/geometry/` (A Booleans, B Abrunden, C Aushöhlen, D Text, E Gewinde und
+  Übergänge, F Dateien und Export, G Manifold-Gegenprobe). Volumina werden gegen geschlossene Formeln geprüft,
+  nicht gegen den Kernel selbst.
+- Ergebnistabelle pro Lauf als CSV (`FISSION_GEOMETRY_REPORT`), Darstellung mit `scripts/tools/geometry_report.py`.
+- Bericht mit Befunden, empfohlenen Einstellungen und der Liste bekannter Problemfälle.
+- `scripts/test` fasst den Katalog in einer Zeile zusammen.
+- Zusätzlich: OpenCASCADE-Module für STEP/Schrift nur für die Tests zugeschaltet
+  (`FISSION_OCCT_EXTRA_TARGETS`); Testschrift DejaVu Sans unter `tests/fixtures/fonts/`
+  (Lizenz Bitstream-Vera, im Lizenzinventar erfasst, nicht Teil des Programms).
+
+**Wie getestet**
+- macOS (arm64, Debug): 42 von 42 Fällen laufen; Linux-Testrechner B (Debian 13, x86_64, GCC 14.2, Debug):
+  42 von 42, **dieselben Ergebnisse** wie auf dem Mac. Gesamter `scripts/test`-Lauf auf beiden: 64 von 64 grün.
+- Drei Fälle (C2, C2a, C2b) zeigen ein bekanntes Problem und sind mit `[!mayfail]` markiert; die Ergebnistabelle
+  weist sie als „known problem“ aus.
+
+**Wichtigste Befunde** (Details im Bericht)
+1. Aushöhlen eines abgerundeten Quaders liefert still ungültige oder falsche Körper; „Reparatur“ macht ihn nur
+   gültig, nicht richtig. Gültigkeit allein reicht daher als Prüfung nicht. Verlässlich ist die Konstruktion.
+2. Fast bündige Flächen (< 0,001 mm) und winzige Spalte erzeugen Splitterflächen bzw. getrennte Körper;
+   ein Fuzzy-Wert behebt es.
+3. Die Winkeltoleranz 0,5° (Architektur § 6) ist für den Export zu streng: 121 000 statt 12 000 Dreiecke,
+   38–86 s statt unter 1 s, bei 0,002 mm Abweichung mit 5°.
+
+**So probierst du es aus**
+1. Terminal im Projektordner öffnen, `scripts/test` ausführen. In der Liste steht eine Zeile
+   „Geometrie-Kern: 42 typische Konstruktionsfälle geprüft“.
+2. Den Bericht lesen: `docs/spikes/kernel-robustheit.md` (Kurzfassung ganz oben, Tabellen darunter).
+3. Optional die Tabelle selbst erzeugen: `FISSION_GEOMETRY_REPORT=build/report.csv build/macos-debug/tests/geometry/fission_geometry_tests`
+   und dann `python3 scripts/tools/geometry_report.py build/report.csv`.
+
+**Offen und Folge-Arbeiten**
+- **Entscheidung für dich:** Export-Winkel von 0,5° auf 5° ändern (Architektur § 6, [R16](../06-rueckfragen.md)).
+- CI-Nachweis (Definition of Done: baut auf beiden Plattformen in der CI): folgt, sobald AP-0.3 grün läuft.
+- Nicht geprüft: große Modelle, fremde STEP-Dateien, variabler Abrundungsradius, Aushöhlen mit mehreren
+  offenen Flächen, Systemschriften, Mehr-Thread-Booleans (siehe Bericht, „Grenzen“).
+- Aushöhlen (AP-2.6): Konstruktion mit innerem Körper für eigene Formen, Plausibilitätsprüfung für alles andere;
+  eine allgemeine Plausibilitätsprüfung (Volumen, Flächen- und Körperzahl) ist als Baustein einzuplanen.
 
 ---
 

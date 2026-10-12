@@ -5,6 +5,12 @@
       "version": "FreeCAD 1.1.4",
       "license": "LGPL-2.1-or-later",
       "purpose": "2D sketch constraint solver (vendored in third_party/planegcs)"
+    },
+    {
+      "name": "dejavu-sans",
+      "version": "2.37",
+      "license": "Bitstream-Vera",
+      "purpose": "Test font for the text cases of the geometry tests (test data, not shipped; tests/fixtures/fonts)"
     }
   ],
   "overrides": {

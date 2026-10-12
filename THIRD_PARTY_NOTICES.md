@@ -22,6 +22,7 @@ license field are covered by `third_party/inventory.json` (with the reason for e
 | Library | Version | Purpose | License |
 |---|---|---|---|
 | catch2 | 3.16.0 | Unit tests (test builds only) | BSL-1.0 |
+| dejavu-sans | 2.37 | Test font for the text cases of the geometry tests (test data, not shipped; tests/fixtures/fonts) | Bitstream-Vera |
 | eigen3 | 5.0.1 | Linear algebra (also used by PlaneGCS) | MPL-2.0 |
 | lib3mf | 2.5.0#1 | 3MF import and export | BSD-2-Clause |
 | manifold | 3.5.4 | Robust mesh booleans, level sets | Apache-2.0 |

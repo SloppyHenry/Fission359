@@ -10,6 +10,12 @@ set(FISSION_OCCT_TARGETS
   ${OpenCASCADE_FoundationClasses_LIBRARIES}
   ${OpenCASCADE_ModelingData_LIBRARIES}
   ${OpenCASCADE_ModelingAlgorithms_LIBRARIES})
+# Further modules, linked only where needed (so far the geometry tests): STEP / mesh file
+# exchange and the font renderer for text outlines.
+set(FISSION_OCCT_EXTRA_TARGETS
+  ${OpenCASCADE_DataExchange_LIBRARIES}
+  TKService
+  TKV3d)
 
 find_package(manifold CONFIG REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)

@@ -34,7 +34,7 @@ ALLOWED = {
     "MIT", "MIT-0", "MIT-open-group", "X11", "ISC", "0BSD", "BSD-1-Clause", "BSD-2-Clause",
     "BSD-3-Clause", "BSD-2-Clause-Patent", "Apache-2.0", "BSL-1.0", "Zlib", "libpng-2.0",
     "Libpng", "FTL", "IJG", "bzip2-1.0.6", "curl", "Unlicense", "CC0-1.0", "blessing",
-    "Unicode-3.0", "Unicode-DFS-2016", "MIT-Modern-Variant", "MPL-2.0", "PSF-2.0", "Python-2.0", "NCSA", "HPND",
+    "Bitstream-Vera", "Unicode-3.0", "Unicode-DFS-2016", "MIT-Modern-Variant", "MPL-2.0", "PSF-2.0", "Python-2.0", "NCSA", "HPND",
     "LGPL-2.1-only", "LGPL-2.1-or-later", "LGPL-3.0-only", "LGPL-3.0-or-later",
     "GPL-3.0-only", "GPL-3.0-or-later", "GPL-2.0-or-later", "Public-Domain", "PD",
 }
