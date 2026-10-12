@@ -71,7 +71,8 @@
   noch nicht automatisch unterstützt.
 - **Fenstertest ohne GPU:** `app_opens_window` nutzt Software-Rendering. Echte Grafik folgt mit AP-0.4/AP-0.8.
 - **LFS:** `.gitattributes` kann nicht nach Größe filtern, daher Regeln nach Dateiendung.
-- **Kontaktadresse im Code of Conduct** ist ein markierter `TODO`, bis eine Projektadresse feststeht.
+- **Kontakt im Code of Conduct:** vorläufig GitHubs privates Melden (Security-Tab, „Report a vulnerability“,
+  in den Repo-Einstellungen aktiviert). Eine eigene Projektadresse ersetzt das, sobald sie existiert.
 - Mac-Entwickler-Werkzeuge `clang-format`, `ccache`, `llvm` (für clang-tidy) wurden per Homebrew installiert.
 
 **Vorgeschlagene Folge-Arbeiten**
