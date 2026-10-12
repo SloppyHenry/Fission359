@@ -109,9 +109,10 @@ install_macos() {
 qt_version_macos() { brew list --versions qtbase 2>/dev/null | awk '{print $2}'; }
 
 # ---------------------------------------------------------------- Linux (apt)
-# autoconf/automake/libtool: vcpkg builds some tools (gperf for fontconfig) from source.
+# autoconf/automake/libtool/libltdl-dev: vcpkg builds some small libraries (gperf, libxcrypt) from
+# source. libltdl-dev is only a "recommended" package of libtool, which CI images skip.
 BASE_APT="build-essential cmake ninja-build pkg-config git git-lfs python3 curl zip unzip tar \
-autoconf autoconf-archive automake libtool"
+autoconf autoconf-archive automake libtool libltdl-dev"
 SYSTEM_QT_APT="qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools qt6-shadertools-dev \
 qt6-svg-dev qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls \
 qml6-module-qtquick-templates qml6-module-qtquick-layouts"
