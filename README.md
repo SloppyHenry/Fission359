@@ -1,5 +1,7 @@
 # Fission3D
 
+[![CI](https://github.com/SloppyHenry/Fission3D/actions/workflows/ci.yml/badge.svg)](https://github.com/SloppyHenry/Fission3D/actions/workflows/ci.yml)
+
 > A native 3D construction program for macOS and Linux: as easy as clay, as precise as a caliper.
 > Open source under GPL-3.0-or-later. (English summary; the project documentation is German.)
 
@@ -16,7 +18,7 @@ Den Fahrplan findest du in [docs/04-roadmap.md](docs/04-roadmap.md).
 1. **Voraussetzungen:** ein Mac mit Apple Silicon und macOS 14 oder neuer plus **Xcode**
    (aus dem App Store), oder ein Linux-Rechner mit Ubuntu/Debian (x86_64).
 2. **Nur Mac:** Installiere [Homebrew](https://brew.sh) (einmalig, der Befehl steht auf der Webseite).
-3. **Projekt holen:** `git clone <Repository-Adresse> Fission3D` und dann `cd Fission3D`.
+3. **Projekt holen:** `git clone https://github.com/SloppyHenry/Fission3D.git` und dann `cd Fission3D`.
 4. **Voraussetzungen einrichten:** `scripts/setup`
    Das Skript sagt dir genau, was fehlt, und installiert es nach Rückfrage.
 5. **Bauen und starten:** `scripts/run`
