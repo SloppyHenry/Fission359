@@ -45,7 +45,8 @@ version_at_least() { # version_at_least 6.10.2 6 8
 
 # ---------------------------------------------------------------- macOS (Homebrew)
 # Qt kommt auf dem Mac aus Homebrew (schnell); ohne diese Pakete baut vcpkg Qt selbst (langsam).
-REQUIRED_BREW="cmake ninja pkgconf git-lfs qtbase qtdeclarative qtshadertools qtsvg"
+# autoconf/automake/libtool: vcpkg builds some small libraries (libb2, a Qt dependency) from source.
+REQUIRED_BREW="cmake ninja pkgconf git-lfs autoconf autoconf-archive automake libtool qtbase qtdeclarative qtshadertools qtsvg"
 DEV_BREW="clang-format ccache llvm"
 
 setup_macos() {
@@ -71,7 +72,7 @@ setup_macos() {
     local formula required="$REQUIRED_BREW" dev="$DEV_BREW"
     if [ "${FISSION_QT_SOURCE:-auto}" = "vcpkg" ]; then
         QT_PLAN=vcpkg
-        required="cmake ninja pkgconf git-lfs"
+        required="cmake ninja pkgconf git-lfs autoconf autoconf-archive automake libtool"
         note "FISSION_QT_SOURCE=vcpkg: Qt wird von vcpkg gebaut, kein Homebrew-Qt nötig."
     fi
     [ "$WITH_DEV_TOOLS" = "0" ] && dev=""
