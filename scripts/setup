@@ -123,6 +123,19 @@ libegl1-mesa-dev libgl1-mesa-dev libglu1-mesa-dev libfontconfig1-dev libdbus-1-d
 libwayland-dev libxml2-dev libffi-dev libxcb-cursor-dev"
 DEV_APT="clang-format clang-tidy ccache xvfb"
 
+# Qt's X11 plugin (xcb) needs all libxcb development packages (vcpkg's qtbase port asks for
+# '^libxcb.*-dev'). The names differ a little between releases, so ask apt.
+xcb_dev_packages() {
+    local names
+    names="$(apt-cache pkgnames libxcb 2>/dev/null | grep -E '^libxcb[a-z0-9-]*-dev$' | sort -u)"
+    # A fresh container has no package lists yet; as root we can fetch them right away.
+    if [ -z "$names" ] && [ "$(id -u)" -eq 0 ]; then
+        apt-get update -qq >/dev/null 2>&1
+        names="$(apt-cache pkgnames libxcb 2>/dev/null | grep -E '^libxcb[a-z0-9-]*-dev$' | sort -u)"
+    fi
+    printf '%s' "$names" | tr '\n' ' '
+}
+
 apt_installed() { dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "install ok installed"; }
 apt_candidate() { LC_ALL=C apt-cache policy "$1" 2>/dev/null | awk '/Candidate:/ {print $2}'; }
 
@@ -147,7 +160,7 @@ setup_linux() {
     if [ "${FISSION_QT_SOURCE:-auto}" = "vcpkg" ]; then
         QT_PLAN=vcpkg
         note "FISSION_QT_SOURCE=vcpkg: Qt wird von vcpkg gebaut, kein System-Qt nötig."
-        packages="$packages $VCPKG_QT_APT"
+        packages="$packages $VCPKG_QT_APT $(xcb_dev_packages)"
     elif [ -n "$candidate" ] && version_at_least "$candidate" 6 8; then
         QT_PLAN=system
         ok "Diese Distribution liefert Qt $candidate: wird als Systempaket genutzt (schnell)"
@@ -157,7 +170,7 @@ setup_linux() {
         warn "Diese Distribution hat kein Qt >= 6.8 (gefunden: ${candidate:-keins})"
         note "Qt wird deshalb beim ersten Bauen mit vcpkg selbst gebaut. Das dauert lange (Stunden"
         note "auf kleinen Rechnern), passiert aber nur einmal; danach kommt es aus dem Zwischenspeicher."
-        packages="$packages $VCPKG_QT_APT"
+        packages="$packages $VCPKG_QT_APT $(xcb_dev_packages)"
     fi
 
     local pkg

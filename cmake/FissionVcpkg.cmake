@@ -52,6 +52,13 @@ if(NOT DEFINED VCPKG_TARGET_TRIPLET)
   endif()
 endif()
 
+# We never cross-compile, so build tools for the host with the same triplet. Without this vcpkg
+# builds a second, full-featured copy of Qt (ICU, OpenSSL, PostgreSQL, Widgets, debug and
+# release) just to run moc and friends, which costs hours and extra system packages.
+if(NOT DEFINED VCPKG_HOST_TRIPLET)
+  set(VCPKG_HOST_TRIPLET "${VCPKG_TARGET_TRIPLET}" CACHE STRING "")
+endif()
+
 # --- vcpkg behaviour ------------------------------------------------------------------
 set(ENV{VCPKG_DISABLE_METRICS} "1")
 # Remove build trees after each port; they are huge (Qt: many GB) and not needed afterwards.
