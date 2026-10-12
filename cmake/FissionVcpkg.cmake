@@ -12,7 +12,13 @@
 #   vcpkg itself: $VCPKG_ROOT if set, otherwise <repo>/.vcpkg (created by scripts/setup).
 
 set(FISSION_QT_MIN_VERSION 6.8)
-set(FISSION_QT_SOURCE "auto" CACHE STRING "Where Qt comes from: auto, system or vcpkg")
+# The environment variable of the same name sets the default (used by CI: FISSION_QT_SOURCE=vcpkg).
+set(_fission_qt_source_default "auto")
+if(DEFINED ENV{FISSION_QT_SOURCE} AND NOT "$ENV{FISSION_QT_SOURCE}" STREQUAL "")
+  set(_fission_qt_source_default "$ENV{FISSION_QT_SOURCE}")
+endif()
+set(FISSION_QT_SOURCE "${_fission_qt_source_default}" CACHE STRING
+    "Where Qt comes from: auto, system or vcpkg")
 set_property(CACHE FISSION_QT_SOURCE PROPERTY STRINGS auto system vcpkg)
 
 # --- vcpkg toolchain ---------------------------------------------------------------

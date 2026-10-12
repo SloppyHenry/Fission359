@@ -34,7 +34,7 @@ QString versionText() {
 // --version also work in a terminal without a window system. Returns the screenshot path of
 // --smoke-test (empty if not given).
 QString parseCommandLine(int& argc, char** argv) {
-    QCoreApplication core(argc, argv);
+    const QCoreApplication core(argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("Fission3D"));
     QCoreApplication::setApplicationVersion(versionText());
 

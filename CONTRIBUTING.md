@@ -70,6 +70,21 @@ libraries in seconds. To share a cache between machines or with CI, point
 `VCPKG_BINARY_SOURCES` at a directory or server, for example
 `VCPKG_BINARY_SOURCES="clear;files,/path/to/shared-cache,readwrite"`.
 
+## Continuous integration
+
+Every pull request runs `.github/workflows/ci.yml`:
+
+- **Checks:** clang-format 21 (`python3 scripts/tools/check_format.py`, `--fix` to reformat),
+  SPDX headers, source-level layer rules, third-party licenses and an up-to-date
+  `THIRD_PARTY_NOTICES.md`. You can run the same checks locally.
+- **Build and test** on macOS (arm64) and Ubuntu 24.04, each as `debug-asan` (AddressSanitizer
+  and UBSan) and as `release`, with Qt from vcpkg.
+- **clang-tidy** runs on the changed files only and reports findings as annotations (advisory).
+
+The first run on a fresh repository builds all libraries (hours). Later runs restore the cache;
+a weekly scheduled run keeps it alive. If CI is red only on one platform, the logs and the
+smoke-test screenshot are attached to the run as artifacts.
+
 ## UI texts
 
 - Every user-visible string exists in **German and English** and goes through `qsTr()` / `tr()`.

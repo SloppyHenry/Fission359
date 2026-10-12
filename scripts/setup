@@ -7,19 +7,25 @@
 #   scripts/setup            prüfen und nach Rückfrage installieren
 #   scripts/setup --yes      ohne Rückfragen installieren
 #   scripts/setup --check    nur prüfen, nichts installieren
+#   scripts/setup --no-dev-tools   Formatierer, clang-tidy usw. nicht anbieten (CI)
 #   scripts/setup --help
+#
+# Mit FISSION_QT_SOURCE=vcpkg (so läuft die CI) werden keine System-Qt-Pakete verlangt:
+# vcpkg baut Qt dann selbst.
 
 set -u -o pipefail
 # shellcheck source=lib/common.sh
 . "$(dirname "$0")/lib/common.sh"
 
 MODE=ask
+WITH_DEV_TOOLS=1
 for arg in "$@"; do
     case "$arg" in
         --yes|-y)   FISSION_ASSUME_YES=1; MODE=install ;;
         --check)    MODE=check ;;
+        --no-dev-tools) WITH_DEV_TOOLS=0 ;;
         --help|-h)
-            sed -n '5,10p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '5,14p' "$0" | sed 's/^# \{0,1\}//'
             exit 0 ;;
         *) die "Unbekannte Option '$arg'. Siehe scripts/setup --help" ;;
     esac
@@ -62,8 +68,14 @@ setup_macos() {
     fi
     ok "Homebrew gefunden"
 
-    local formula
-    for formula in $REQUIRED_BREW; do
+    local formula required="$REQUIRED_BREW" dev="$DEV_BREW"
+    if [ "${FISSION_QT_SOURCE:-auto}" = "vcpkg" ]; then
+        QT_PLAN=vcpkg
+        required="cmake ninja pkgconf git-lfs"
+        note "FISSION_QT_SOURCE=vcpkg: Qt wird von vcpkg gebaut, kein Homebrew-Qt nötig."
+    fi
+    [ "$WITH_DEV_TOOLS" = "0" ] && dev=""
+    for formula in $required; do
         if brew list --versions "$formula" >/dev/null 2>&1; then
             ok "$formula  ($(brew list --versions "$formula" | awk '{print $2}'))"
         else
@@ -71,7 +83,7 @@ setup_macos() {
             MISSING_REQUIRED+=("$formula")
         fi
     done
-    for formula in $DEV_BREW; do
+    for formula in $dev; do
         if brew list --versions "$formula" >/dev/null 2>&1; then
             ok "$formula  (Entwickler-Werkzeug)"
         else
@@ -128,8 +140,13 @@ setup_linux() {
     candidate="$(apt_candidate qt6-base-dev)"
     candidate="${candidate#*:}"            # strip epoch
     candidate="$(printf '%s' "$candidate" | sed -E 's/^([0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/')"
-    local packages="$BASE_APT"
-    if [ -n "$candidate" ] && version_at_least "$candidate" 6 8; then
+    local packages="$BASE_APT" dev="$DEV_APT"
+    [ "$WITH_DEV_TOOLS" = "0" ] && dev=""
+    if [ "${FISSION_QT_SOURCE:-auto}" = "vcpkg" ]; then
+        QT_PLAN=vcpkg
+        note "FISSION_QT_SOURCE=vcpkg: Qt wird von vcpkg gebaut, kein System-Qt nötig."
+        packages="$packages $VCPKG_QT_APT"
+    elif [ -n "$candidate" ] && version_at_least "$candidate" 6 8; then
         QT_PLAN=system
         ok "Diese Distribution liefert Qt $candidate: wird als Systempaket genutzt (schnell)"
         packages="$packages $SYSTEM_QT_APT"
@@ -150,7 +167,7 @@ setup_linux() {
             MISSING_REQUIRED+=("$pkg")
         fi
     done
-    for pkg in $DEV_APT; do
+    for pkg in $dev; do
         if apt_installed "$pkg"; then
             ok "$pkg  (Entwickler-Werkzeug)"
         else

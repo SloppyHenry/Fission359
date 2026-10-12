@@ -1,0 +1,201 @@
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Continuous integration: format, license and layer checks, plus build and tests on
+# macOS (arm64) and Ubuntu 24.04, each as debug+AddressSanitizer and as release.
+#
+# Libraries come from vcpkg (Qt included, FISSION_QT_SOURCE=vcpkg). One job per operating
+# system builds them and fills the GitHub Actions cache; the build jobs then restore it.
+# The first run on a fresh repository builds everything and takes hours; later runs only
+# restore. A weekly run keeps the cache alive (GitHub deletes entries unused for 7 days).
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  FISSION_QT_SOURCE: vcpkg
+  VCPKG_DISABLE_METRICS: "1"
+
+jobs:
+  checks:
+    name: Checks (format, license headers, layers, licenses)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Format (clang-format 21)
+        run: |
+          python3 -m pip install --user clang-format==21.1.8
+          user_base="$(python3 -m site --user-base)"
+          CLANG_FORMAT="$user_base/bin/clang-format" python3 scripts/tools/check_format.py
+
+      - name: License headers (SPDX)
+        run: python3 scripts/tools/check_spdx.py .
+
+      - name: Layer rules in the source
+        run: python3 scripts/tools/check_layers.py .
+
+      - name: Third-party licenses
+        run: |
+          baseline="$(python3 -c 'import json; print(json.load(open("vcpkg.json"))["builtin-baseline"])')"
+          git clone --quiet --filter=blob:none https://github.com/microsoft/vcpkg .vcpkg
+          git -C .vcpkg checkout --quiet "$baseline"
+          python3 scripts/tools/licenses.py check
+          python3 scripts/tools/licenses.py notices --verify
+
+  # Builds the third-party libraries (vcpkg) and stores them in the cache. The archives are
+  # identical for debug and release (release-only libraries), so one entry per operating system.
+  libraries:
+    name: Libraries (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64
+            os: macos-15
+            preset: macos-release
+          - name: Ubuntu 24.04
+            os: ubuntu-24.04
+            preset: linux-release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Restore vcpkg binary cache
+        id: vcpkg-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Prerequisites (scripts/setup)
+        run: scripts/setup --yes --no-dev-tools
+
+      # Configuring runs "vcpkg install" for all libraries (a no-op on a warm cache).
+      - name: Build libraries
+        run: cmake --preset ${{ matrix.preset }}
+
+      # Saved even when the build failed, so that a retry resumes instead of starting over.
+      # Pull requests only read the cache.
+      - name: Save vcpkg binary cache
+        if: always() && github.event_name != 'pull_request' && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
+
+      - name: Upload vcpkg log
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: vcpkg-log-${{ matrix.preset }}
+          retention-days: 14
+          if-no-files-found: ignore
+          path: build/${{ matrix.preset }}/vcpkg-manifest-install.log
+
+  build:
+    name: ${{ matrix.name }}
+    needs: libraries
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64 · debug-asan
+            os: macos-15
+            preset: macos-asan
+          - name: macOS arm64 · release
+            os: macos-15
+            preset: macos-release
+          - name: Ubuntu 24.04 · debug-asan
+            os: ubuntu-24.04
+            preset: linux-asan
+          - name: Ubuntu 24.04 · release
+            os: ubuntu-24.04
+            preset: linux-release
+
+    env:
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Restore ccache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.preset }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.preset }}-
+
+      - name: Prerequisites (scripts/setup)
+        run: scripts/setup --yes --no-dev-tools
+
+      - name: Install ccache
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then brew install ccache; else sudo apt-get install -y ccache; fi
+
+      - name: Configure and build
+        run: |
+          cmake --preset ${{ matrix.preset }}
+          cmake --build --preset ${{ matrix.preset }}
+
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }}
+
+      - name: clang-tidy on changed files (advisory)
+        if: github.event_name == 'pull_request' && matrix.preset == 'linux-asan'
+        run: |
+          sudo apt-get install -y clang-tidy
+          python3 scripts/tools/tidy_changed.py --build-dir build/${{ matrix.preset }} \
+            --base origin/${{ github.base_ref }}
+
+      - name: Save ccache
+        if: always() && github.event_name != 'pull_request'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.preset }}-${{ github.sha }}
+
+      - name: Upload logs and screenshot
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: logs-${{ matrix.preset }}
+          retention-days: 14
+          if-no-files-found: ignore
+          path: |
+            build/${{ matrix.preset }}/smoke-test.png
+            build/${{ matrix.preset }}/Testing/Temporary/LastTest.log
+            build/${{ matrix.preset }}/vcpkg-manifest-install.log
