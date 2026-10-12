@@ -7,6 +7,7 @@ include(Catch)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 add_subdirectory(unit)
+add_subdirectory(smoke)
 add_subdirectory(layering)
 
 # Source-level checks (license headers, kernel types and Qt only where allowed).

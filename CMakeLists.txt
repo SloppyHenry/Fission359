@@ -3,12 +3,14 @@
 
 cmake_minimum_required(VERSION 3.28)
 
+# vcpkg toolchain, triplet and Qt source must be decided before project().
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(FissionVcpkg)
+
 project(Fission3D
   VERSION 0.0.1
   DESCRIPTION "Easy-to-use, precise 3D construction program for makers"
   LANGUAGES CXX)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -23,8 +25,14 @@ include(FissionCompilerOptions)
 include(FissionLayers)
 
 # Qt is only allowed in the layers listed in cmake/FissionLayers.cmake.
+# (Where it comes from - system or vcpkg - is decided in cmake/FissionVcpkg.cmake.)
 find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick)
 qt_standard_project_setup(REQUIRES 6.8)
+
+include(FissionDependencies)
+
+# Vendored third-party code (not available in vcpkg).
+add_subdirectory(third_party/planegcs)
 
 # Layers, ordered from the bottom (no dependencies) to the top (the app).
 add_subdirectory(src/geometry/gal)

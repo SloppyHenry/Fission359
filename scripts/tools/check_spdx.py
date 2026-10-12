@@ -35,7 +35,11 @@ def source_files(root: Path):
     for path in sorted(root.rglob("*")):
         if not path.is_file():
             continue
-        if any(part in SKIPPED_DIRS for part in path.relative_to(root).parts):
+        parts = path.relative_to(root).parts
+        # Skip build output, third-party code and hidden directories (.git, .vcpkg, ...);
+        # only .github is ours.
+        if any(part in SKIPPED_DIRS or (part.startswith(".") and part != ".github")
+               for part in parts[:-1]):
             continue
         if (path.suffix in SOURCE_SUFFIXES or path.name in SOURCE_NAMES
                 or is_script_without_suffix(path)):

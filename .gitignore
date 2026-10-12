@@ -6,8 +6,8 @@ CMakeUserPresets.json
 compile_commands.json
 
 # Dependency managers
+/.vcpkg/
 /vcpkg_installed/
-/.vcpkg-root
 
 # IDE / editor
 .idea/

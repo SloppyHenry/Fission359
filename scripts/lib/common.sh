@@ -59,3 +59,29 @@ preset_name() {
 need_command() {
     command -v "$1" >/dev/null 2>&1 || die "'$1' wurde nicht gefunden. Bitte zuerst scripts/setup ausführen."
 }
+
+# --------------------------------------------------------------------------- vcpkg
+
+# Prints the vcpkg commit that vcpkg.json pins (builtin-baseline).
+vcpkg_baseline() {
+    python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['builtin-baseline'])" \
+        "$REPO_ROOT/vcpkg.json"
+}
+
+# Prints the vcpkg directory in use: $VCPKG_ROOT if set, otherwise <repo>/.vcpkg.
+vcpkg_root() {
+    if [ -n "${VCPKG_ROOT:-}" ]; then
+        echo "$VCPKG_ROOT"
+    else
+        echo "$REPO_ROOT/.vcpkg"
+    fi
+}
+
+# Limits parallel work, for small or shared machines:  FISSION_JOBS=2 scripts/run
+# Everything else uses all cores.
+apply_job_limit() {
+    if [ -n "${FISSION_JOBS:-}" ]; then
+        export VCPKG_MAX_CONCURRENCY="$FISSION_JOBS"
+        export CMAKE_BUILD_PARALLEL_LEVEL="$FISSION_JOBS"
+    fi
+}

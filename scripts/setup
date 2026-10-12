@@ -28,9 +28,18 @@ export FISSION_ASSUME_YES="${FISSION_ASSUME_YES:-0}"
 
 MISSING_REQUIRED=()
 MISSING_TOOLS=()
+# "system": Qt (>= 6.8) kommt vom System. "vcpkg": Qt wird beim ersten Bauen mit vcpkg gebaut.
+QT_PLAN=system
+
+version_at_least() { # version_at_least 6.10.2 6 8
+    local v="$1" major minor rest
+    major="${v%%.*}"; rest="${v#*.}"; minor="${rest%%.*}"
+    [ "$major" -gt "$2" ] || { [ "$major" -eq "$2" ] && [ "$minor" -ge "$3" ]; }
+}
 
 # ---------------------------------------------------------------- macOS (Homebrew)
-REQUIRED_BREW="cmake ninja qtbase qtdeclarative qtshadertools qtsvg catch2 git-lfs"
+# Qt kommt auf dem Mac aus Homebrew (schnell); ohne diese Pakete baut vcpkg Qt selbst (langsam).
+REQUIRED_BREW="cmake ninja pkgconf git-lfs qtbase qtdeclarative qtshadertools qtsvg"
 DEV_BREW="clang-format ccache llvm"
 
 setup_macos() {
@@ -87,27 +96,51 @@ install_macos() {
 qt_version_macos() { brew list --versions qtbase 2>/dev/null | awk '{print $2}'; }
 
 # ---------------------------------------------------------------- Linux (apt)
-REQUIRED_APT="build-essential cmake ninja-build pkg-config git git-lfs python3 \
-qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools qt6-shadertools-dev qt6-svg-dev \
-qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls \
-qml6-module-qtquick-templates qml6-module-qtquick-layouts catch2"
+BASE_APT="build-essential cmake ninja-build pkg-config git git-lfs python3 curl zip unzip tar"
+SYSTEM_QT_APT="qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools qt6-shadertools-dev \
+qt6-svg-dev qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls \
+qml6-module-qtquick-templates qml6-module-qtquick-layouts"
+# Needed when vcpkg has to build Qt itself (Linux distribution without Qt >= 6.8).
+VCPKG_QT_APT="autoconf automake libtool bison flex gperf libx11-dev libxext-dev libxi-dev \
+libxrender-dev libxkbcommon-dev libxkbcommon-x11-dev libx11-xcb-dev libxcb-xkb-dev \
+libegl1-mesa-dev libgl1-mesa-dev libglu1-mesa-dev libfontconfig1-dev libdbus-1-dev \
+libwayland-dev libxml2-dev libffi-dev libxcb-cursor-dev"
 DEV_APT="clang-format clang-tidy ccache xvfb"
 
 apt_installed() { dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "install ok installed"; }
+apt_candidate() { LC_ALL=C apt-cache policy "$1" 2>/dev/null | awk '/Candidate:/ {print $2}'; }
 
 setup_linux() {
     step "Prüfe Linux-Voraussetzungen"
 
     if ! command -v apt-get >/dev/null 2>&1; then
         fail "Diese Linux-Variante hat kein apt. Automatisch unterstützt ist Ubuntu/Debian."
-        note "Du brauchst: C++-Compiler (C++20), CMake >= 3.28, Ninja, Qt >= 6.8 (base, declarative,"
-        note "shadertools, svg, inkl. QML-Module), Catch2 >= 3, git-lfs, Python 3."
+        note "Du brauchst: C++-Compiler (C++20), CMake >= 3.28, Ninja, pkg-config, curl, zip, unzip,"
+        note "git, git-lfs, Python 3 und Qt >= 6.8 (base, declarative, shadertools, svg, QML-Module)."
         exit 1
     fi
     ok "apt gefunden"
 
+    # Does this distribution offer Qt >= 6.8? If not, vcpkg builds Qt.
+    local candidate
+    candidate="$(apt_candidate qt6-base-dev)"
+    candidate="${candidate#*:}"            # strip epoch
+    candidate="$(printf '%s' "$candidate" | sed -E 's/^([0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/')"
+    local packages="$BASE_APT"
+    if [ -n "$candidate" ] && version_at_least "$candidate" 6 8; then
+        QT_PLAN=system
+        ok "Diese Distribution liefert Qt $candidate: wird als Systempaket genutzt (schnell)"
+        packages="$packages $SYSTEM_QT_APT"
+    else
+        QT_PLAN=vcpkg
+        warn "Diese Distribution hat kein Qt >= 6.8 (gefunden: ${candidate:-keins})"
+        note "Qt wird deshalb beim ersten Bauen mit vcpkg selbst gebaut. Das dauert lange (Stunden"
+        note "auf kleinen Rechnern), passiert aber nur einmal; danach kommt es aus dem Zwischenspeicher."
+        packages="$packages $VCPKG_QT_APT"
+    fi
+
     local pkg
-    for pkg in $REQUIRED_APT; do
+    for pkg in $packages; do
         if apt_installed "$pkg"; then
             ok "$pkg"
         else
@@ -136,6 +169,9 @@ install_linux() {
     local sudo_cmd=""
     [ "$(id -u)" -ne 0 ] && sudo_cmd="sudo"
     step "Installiere mit apt: ${list[*]}"
+    # Package lists can be stale (then downloads fail with 404), so refresh them first.
+    # shellcheck disable=SC2086
+    $sudo_cmd apt-get update -qq || warn "apt-get update ist fehlgeschlagen, versuche es trotzdem."
     # shellcheck disable=SC2086
     $sudo_cmd apt-get install -y "${list[@]}" || die "Die Installation mit apt ist fehlgeschlagen."
 }
@@ -146,7 +182,50 @@ qt_version_linux() {
     fi
 }
 
-# ---------------------------------------------------------------- common
+# ---------------------------------------------------------------- vcpkg (all systems)
+setup_vcpkg() {
+    step "Prüfe vcpkg (Paketverwaltung für die Bibliotheken)"
+    local root baseline
+    root="$(vcpkg_root)"
+    baseline="$(vcpkg_baseline)" || die "vcpkg.json konnte nicht gelesen werden."
+
+    if [ -n "${VCPKG_ROOT:-}" ]; then
+        ok "Verwende vcpkg aus VCPKG_ROOT: $root"
+        if [ ! -x "$root/vcpkg" ]; then
+            fail "In $root fehlt das Programm 'vcpkg' (bootstrap-vcpkg.sh ausführen)."
+            exit 1
+        fi
+        if ! git -C "$root" cat-file -e "${baseline}^{commit}" 2>/dev/null; then
+            warn "Dieses vcpkg kennt den Stand ${baseline:0:10} noch nicht (git fetch im vcpkg-Ordner)."
+        fi
+        return 0
+    fi
+
+    if [ -x "$root/vcpkg" ] && [ "$(git -C "$root" rev-parse HEAD 2>/dev/null)" = "$baseline" ]; then
+        ok "vcpkg ist eingerichtet (Stand ${baseline:0:10})"
+        return 0
+    fi
+
+    fail "vcpkg fehlt oder hat nicht den festgelegten Stand (${baseline:0:10})"
+    if [ "$MODE" = "check" ]; then
+        MISSING_REQUIRED+=("vcpkg")
+        return 0
+    fi
+    ask_yes_no "vcpkg jetzt nach .vcpkg/ herunterladen (ca. 150 MB)?" || die "Ohne vcpkg kann Fission3D nicht gebaut werden."
+
+    if [ ! -d "$root/.git" ]; then
+        git clone --filter=blob:none https://github.com/microsoft/vcpkg "$root" \
+            || die "vcpkg konnte nicht heruntergeladen werden (Internetverbindung?)."
+    fi
+    git -C "$root" fetch --quiet origin 2>/dev/null || true
+    git -C "$root" checkout --quiet "$baseline" \
+        || die "Der vcpkg-Stand ${baseline:0:10} wurde nicht gefunden."
+    "$root/bootstrap-vcpkg.sh" -disableMetrics >/dev/null \
+        || die "vcpkg konnte nicht eingerichtet werden."
+    ok "vcpkg eingerichtet (Stand ${baseline:0:10})"
+}
+
+# ---------------------------------------------------------------- main
 OS="$(detect_os)"
 case "$OS" in
     macos) setup_macos ;;
@@ -160,9 +239,9 @@ if [ "${#MISSING_REQUIRED[@]}" -gt 0 ] || [ "${#MISSING_TOOLS[@]}" -gt 0 ]; then
         if [ "${#MISSING_REQUIRED[@]}" -gt 0 ]; then
             fail "Es fehlen Pflichtpakete: ${MISSING_REQUIRED[*]}"
             note "Installiere sie mit:  scripts/setup"
-            exit 1
+        else
+            warn "Nur Entwickler-Werkzeuge fehlen. Zum Bauen und Starten reicht der aktuelle Stand."
         fi
-        warn "Nur Entwickler-Werkzeuge fehlen. Zum Bauen und Starten reicht der aktuelle Stand."
     else
         if [ "${#MISSING_REQUIRED[@]}" -gt 0 ]; then
             say ""
@@ -177,6 +256,12 @@ if [ "${#MISSING_REQUIRED[@]}" -gt 0 ] || [ "${#MISSING_TOOLS[@]}" -gt 0 ]; then
     fi
 fi
 
+if [ "$MODE" = "check" ] && [ "${#MISSING_REQUIRED[@]}" -gt 0 ]; then
+    # still look at vcpkg so the report is complete, then fail
+    setup_vcpkg
+    exit 1
+fi
+
 step "Prüfe Qt-Version"
 QT_VERSION=""
 case "$OS" in
@@ -184,19 +269,20 @@ case "$OS" in
     linux) QT_VERSION="$(qt_version_linux)" ;;
 esac
 if [ -z "$QT_VERSION" ]; then
-    warn "Die Qt-Version konnte nicht ermittelt werden (wird beim Bauen geprüft)."
-else
-    QT_MAJOR="${QT_VERSION%%.*}"
-    QT_REST="${QT_VERSION#*.}"
-    QT_MINOR="${QT_REST%%.*}"
-    if [ "$QT_MAJOR" -gt 6 ] || { [ "$QT_MAJOR" -eq 6 ] && [ "$QT_MINOR" -ge 8 ]; }; then
-        ok "Qt $QT_VERSION  (benötigt wird mindestens 6.8)"
+    if [ "$QT_PLAN" = "vcpkg" ]; then
+        ok "Kein System-Qt: vcpkg baut Qt beim ersten Bauen (dauert lange, passiert einmal)"
     else
-        fail "Qt $QT_VERSION ist zu alt (benötigt wird mindestens 6.8)"
-        note "Auf dieser Linux-Version liefert apt nur ein älteres Qt. Offizielle Qt-Pakete gibt es per"
-        note "'pip install aqtinstall'; sag Bescheid, dann binde ich das in dieses Skript ein."
-        exit 1
+        warn "Die Qt-Version konnte nicht ermittelt werden (wird beim Bauen geprüft)."
     fi
+elif version_at_least "$QT_VERSION" 6 8; then
+    ok "System-Qt $QT_VERSION  (benötigt wird mindestens 6.8)"
+else
+    warn "System-Qt $QT_VERSION ist zu alt (benötigt: 6.8). vcpkg baut Qt beim ersten Bauen selbst."
+fi
+
+setup_vcpkg
+if [ "$MODE" = "check" ] && [ "${#MISSING_REQUIRED[@]}" -gt 0 ]; then
+    exit 1
 fi
 
 if [ "$MODE" != "check" ] && [ -d "$REPO_ROOT/.git" ] && command -v git-lfs >/dev/null 2>&1; then
@@ -205,3 +291,5 @@ fi
 
 step "Fertig"
 say "  Alles ist bereit. Nächster Schritt:  scripts/run"
+note "Beim ersten Bauen entstehen die Bibliotheken (OpenCASCADE u. a.): rechne mit 15–30 Minuten."
+note "Danach kommen sie aus dem Zwischenspeicher (~/.cache/vcpkg) und alles geht schnell."

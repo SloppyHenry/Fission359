@@ -30,6 +30,7 @@ TEST_LOG="$BUILD_DIR.tests.log"
 
 need_command cmake
 need_command ninja
+apply_job_limit
 cd "$REPO_ROOT" || exit 1
 
 # Plain-language names for the tests that are not unit tests.
@@ -45,6 +46,7 @@ describe_test() {
 }
 
 step "Baue Fission3D ($PRESET)"
+note "Beim ersten Mal werden die Bibliotheken gebaut (15-30 Minuten). Fortschritt: tail -f build/$PRESET.log"
 mkdir -p "$REPO_ROOT/build"
 if ! { cmake --preset "$PRESET" && cmake --build --preset "$PRESET"; } >"$BUILD_LOG" 2>&1; then
     fail "Das Bauen ist fehlgeschlagen. Die letzten Zeilen des Protokolls:"

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "fission3d",
+  "version": "0.0.1",
+  "description": "Easy-to-use, precise 3D construction program for makers",
+  "license": "GPL-3.0-or-later",
+  "builtin-baseline": "e456309491fd875487bf02b8a0dca76c1b1b00cc",
+  "dependencies": [
+    "opencascade",
+    "manifold",
+    "eigen3",
+    "lib3mf",
+    "nlohmann-json",
+    "spdlog",
+    "minizip-ng",
+    "stb",
+    "nanosvg",
+    "boost-graph",
+    "catch2"
+  ],
+  "features": {
+    "qt": {
+      "description": "Build Qt 6 from vcpkg (used when no suitable system Qt >= 6.8 exists, and in CI)",
+      "dependencies": [
+        {
+          "name": "qtbase",
+          "default-features": false,
+          "features": [
+            "thread", "gui", "opengl", "freetype", "harfbuzz", "png", "jpeg", "zstd", "pcre2",
+            "doubleconversion", "concurrent", "network", "testlib",
+            { "name": "dbus", "platform": "linux" },
+            { "name": "egl", "platform": "linux" },
+            { "name": "fontconfig", "platform": "linux" },
+            { "name": "xcb", "platform": "linux" },
+            { "name": "xcb-xlib", "platform": "linux" },
+            { "name": "xrender", "platform": "linux" },
+            { "name": "wayland", "platform": "linux" }
+          ]
+        },
+        "qtdeclarative",
+        "qtshadertools",
+        "qtsvg"
+      ]
+    }
+  }
+}

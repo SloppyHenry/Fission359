@@ -15,19 +15,27 @@
 #   fission_geometry_mesh     Manifold / signed-distance implementation of the GAL
 #   fission_geometry_sketch   PlaneGCS binding
 #   fission_core              document, features graph, commands (no Qt, talks to the GAL only)
+#
+# Third-party libraries are listed per layer on purpose: for example OpenCASCADE (TK*) may only
+# be linked by fission_geometry_occt, Manifold only by fission_geometry_mesh.
 
 set(FISSION_ALLOWED_DEPS_fission_geometry "")
-set(FISSION_ALLOWED_DEPS_fission_geometry_occt fission_geometry)
-set(FISSION_ALLOWED_DEPS_fission_geometry_mesh fission_geometry)
-set(FISSION_ALLOWED_DEPS_fission_geometry_sketch fission_geometry)
-set(FISSION_ALLOWED_DEPS_fission_core fission_geometry)
-set(FISSION_ALLOWED_DEPS_fission_features fission_core fission_geometry)
-set(FISSION_ALLOWED_DEPS_fission_io fission_core fission_geometry)
-set(FISSION_ALLOWED_DEPS_fission_analysis fission_core fission_geometry)
-set(FISSION_ALLOWED_DEPS_fission_services fission_core Qt6::Core)
-set(FISSION_ALLOWED_DEPS_fission_render fission_core fission_geometry Qt6::Core Qt6::Gui)
+set(FISSION_ALLOWED_DEPS_fission_geometry_occt fission_geometry TK.*)
+set(FISSION_ALLOWED_DEPS_fission_geometry_mesh fission_geometry manifold::manifold)
+set(FISSION_ALLOWED_DEPS_fission_geometry_sketch fission_geometry planegcs Eigen3::Eigen)
+set(FISSION_ALLOWED_DEPS_fission_core fission_geometry nlohmann_json::nlohmann_json)
+set(FISSION_ALLOWED_DEPS_fission_features fission_core fission_geometry Eigen3::Eigen)
+set(FISSION_ALLOWED_DEPS_fission_io
+  fission_core fission_geometry
+  lib3mf::lib3mf MINIZIP::minizip-ng NanoSVG::nanosvg nlohmann_json::nlohmann_json)
+set(FISSION_ALLOWED_DEPS_fission_analysis fission_core fission_geometry Eigen3::Eigen)
+set(FISSION_ALLOWED_DEPS_fission_services
+  fission_core spdlog::spdlog nlohmann_json::nlohmann_json Qt6::Core)
+set(FISSION_ALLOWED_DEPS_fission_render
+  fission_core fission_geometry Eigen3::Eigen Qt6::Core Qt6::Gui)
 set(FISSION_ALLOWED_DEPS_fission_interaction
-  fission_core fission_geometry fission_features fission_render Qt6::Core Qt6::Gui)
+  fission_core fission_geometry fission_features fission_render Eigen3::Eigen
+  Qt6::Core Qt6::Gui)
 set(FISSION_ALLOWED_DEPS_fission_ui
   fission_core fission_features fission_interaction fission_render fission_services
   Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
