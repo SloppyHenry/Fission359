@@ -27,7 +27,7 @@
           "default-features": false,
           "features": [
             "thread", "gui", "opengl", "freetype", "harfbuzz", "png", "jpeg", "zstd", "pcre2",
-            "doubleconversion", "concurrent", "network", "testlib",
+            "doubleconversion", "concurrent", "network", "dnslookup", "testlib",
             { "name": "dbus", "platform": "linux" },
             { "name": "egl", "platform": "linux" },
             { "name": "fontconfig", "platform": "linux" },
