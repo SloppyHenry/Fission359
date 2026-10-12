@@ -43,8 +43,8 @@ Zusätzlich für AP-0.1 festgelegt:
   prüft Includes im Quelltext.
 - **Kernel-Implementierungen** (`occt`, `mesh`, `sketch`) implementieren nur die GAL und werden
   ausschließlich von der App (`apps/fission3d`) zusammengeführt. Keine andere Schicht kann sie linken.
-- **Bis AP-0.2** kommen Qt und Catch2 aus Systempaketen (Homebrew auf macOS, apt auf Ubuntu/Debian).
-  Der CMake-Code nutzt nur `find_package`, die Umstellung auf vcpkg ändert ihn nicht.
+- **Bezug der Bibliotheken:** in AP-0.1 vorläufig aus Systempaketen, seit AP-0.2 per vcpkg
+  (Qt hybrid: System-Qt ≥ 6.8, sonst vcpkg). Siehe [ADR-0004](0004-abhaengigkeiten-vcpkg.md).
 - **Rendering** (eigener Renderer auf Qt RHI oder OCCT AIS) bleibt offen und wird per ADR-0002
   nach dem Spike AP-0.4 entschieden.
 

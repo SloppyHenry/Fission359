@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Baut und testet das Projekt in einem sauberen Ubuntu-24.04-Container: genau das, was ein
+# frischer Klon auf Ubuntu 24.04 erlebt (dort liefert apt nur Qt 6.4, vcpkg baut Qt selbst).
+#
+#   scripts/tools/docker-ubuntu-check [--cpus N] [--memory 6g] [--keep-cache]
+#
+# Das Skript läuft auf einem Rechner mit Docker, nicht im Container. Der Quelltext wird nur
+# gelesen (read-only eingebunden). Zwischenspeicher: Docker-Volume "fission3d-ubuntu-vcpkg".
+# Ressourcen sind begrenzt, damit andere Dienste auf dem Rechner weiterlaufen.
+
+set -u -o pipefail
+SRC="$(cd "$(dirname "$0")/../.." && pwd)"
+CPUS=2
+MEMORY=6g
+IMAGE=ubuntu:24.04
+VOLUME=fission3d-ubuntu-vcpkg
+NAME=fission3d-ubuntu-check
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --cpus)       CPUS="$2"; shift ;;
+        --memory)     MEMORY="$2"; shift ;;
+        --help|-h)    sed -n '5,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) echo "Unbekannte Option '$1'" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+command -v docker >/dev/null 2>&1 || { echo "Docker wurde nicht gefunden." >&2; exit 1; }
+docker rm -f "$NAME" >/dev/null 2>&1
+
+echo "==> Starte $IMAGE (max. $CPUS Kerne, $MEMORY RAM), Quelltext: $SRC"
+docker run --rm --name "$NAME" \
+    --cpus "$CPUS" --memory "$MEMORY" --memory-swap "$MEMORY" \
+    -v "$SRC":/src:ro \
+    -v "$VOLUME":/root/.cache/vcpkg \
+    -e DEBIAN_FRONTEND=noninteractive \
+    -e FISSION_JOBS="$CPUS" \
+    "$IMAGE" bash -c '
+        set -e
+        mkdir /work
+        tar -C /src --exclude=./build --exclude=./.vcpkg --exclude=./.git -cf - . | tar -C /work -xf -
+        cd /work
+        nice -n 10 scripts/setup --yes
+        nice -n 10 scripts/test
+    '
+status=$?
+echo "==> Ende, Ergebnis: $status"
+exit "$status"

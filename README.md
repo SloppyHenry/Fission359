@@ -20,11 +20,13 @@ Den Fahrplan findest du in [docs/04-roadmap.md](docs/04-roadmap.md).
 4. **Voraussetzungen einrichten:** `scripts/setup`
    Das Skript sagt dir genau, was fehlt, und installiert es nach Rückfrage.
 5. **Bauen und starten:** `scripts/run`
-   Beim ersten Mal dauert das einige Minuten. Danach öffnet sich das Fenster.
+   Beim ersten Mal werden alle Bibliotheken gebaut (rund 15–30 Minuten, bei Linux ohne passendes
+   Qt deutlich länger). Danach geht es schnell und das Fenster öffnet sich.
 6. **Alles prüfen:** `scripts/test`
    Am Ende steht, ob alles in Ordnung ist, in einfachen Worten.
 
 Etwas klappt nicht? `scripts/setup --check` zeigt, was fehlt. Bauprotokolle liegen in `build/*.log`.
+Auf einem kleinen oder gleichzeitig genutzten Rechner hilft `FISSION_JOBS=2 scripts/run`.
 
 ## Für Entwickler:innen
 
@@ -44,7 +46,9 @@ apps/fission3d/   Programmstart und QML-Einstieg
 src/core/         Dokument, Features, Commands (kein Qt!)
 src/geometry/     gal/ (Schnittstelle), occt/, mesh/, sketch/ (Kernel-Anbindung)
 src/features/ io/ analysis/ services/ render/ interaction/ ui/
-tests/            unit/, layering/ (Schichtregel-Tests)
+third_party/      PlaneGCS (aus FreeCAD übernommen)
+tests/            unit/, smoke/ (je Bibliothek), layering/, licenses/
+vcpkg.json        Bibliotheken mit festem Stand
 docs/             Vision, UX-Konzept, Architektur, Roadmap, Arbeitspakete, ADRs
 ```
 

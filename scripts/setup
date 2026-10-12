@@ -206,7 +206,7 @@ setup_vcpkg() {
         return 0
     fi
 
-    fail "vcpkg fehlt oder hat nicht den festgelegten Stand (${baseline:0:10})"
+    warn "vcpkg fehlt oder hat nicht den festgelegten Stand (${baseline:0:10})"
     if [ "$MODE" = "check" ]; then
         MISSING_REQUIRED+=("vcpkg")
         return 0
@@ -214,7 +214,7 @@ setup_vcpkg() {
     ask_yes_no "vcpkg jetzt nach .vcpkg/ herunterladen (ca. 150 MB)?" || die "Ohne vcpkg kann Fission3D nicht gebaut werden."
 
     if [ ! -d "$root/.git" ]; then
-        git clone --filter=blob:none https://github.com/microsoft/vcpkg "$root" \
+        git clone --quiet --filter=blob:none https://github.com/microsoft/vcpkg "$root" \
             || die "vcpkg konnte nicht heruntergeladen werden (Internetverbindung?)."
     fi
     git -C "$root" fetch --quiet origin 2>/dev/null || true

@@ -16,7 +16,10 @@ scripts/test       # builds and runs all tests, with a plain-language summary
 
 Or use CMake directly: `cmake --preset <macos|linux>-<debug|release|asan>`, then
 `cmake --build --preset ...` and `ctest --preset ...`. Requirements: C++20 compiler,
-CMake >= 3.28, Ninja, Qt >= 6.8, Catch2 >= 3.
+CMake >= 3.28, Ninja, pkg-config, git. Libraries are fetched and built by vcpkg (pinned in
+`vcpkg.json`); Qt >= 6.8 comes from the system if available, otherwise vcpkg builds it.
+The first build takes a while; later builds use the binary cache. Useful switches:
+`FISSION_JOBS=2` (limit parallel jobs on small machines) and `-DFISSION_QT_SOURCE=vcpkg|system|auto`.
 
 ## Where work is planned
 
@@ -54,7 +57,10 @@ A violation makes the build or the tests fail (`tests/layering`, `scripts/tools/
 
   (use `#` instead of `//` in CMake, shell and Python files). `scripts/test` checks this.
 - **Dependencies:** only GPL-3-compatible licenses (no GPL-2.0-only, nothing proprietary).
-  New dependency = justification in the pull request + entry in `THIRD_PARTY_NOTICES.md`.
+  To add one: put it into `vcpkg.json`, allow it for the right layer in
+  `cmake/FissionLayers.cmake`, run `python3 scripts/tools/licenses.py check` and
+  `... notices --write` (updates `THIRD_PARTY_NOTICES.md`), and explain the need in the pull request.
+  Libraries come from vcpkg; see [ADR-0004](docs/adr/0004-abhaengigkeiten-vcpkg.md).
 
 ## UI texts
 
