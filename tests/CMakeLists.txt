@@ -18,6 +18,20 @@ add_test(NAME layer_includes
   COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_layers.py"
           "${CMAKE_SOURCE_DIR}")
 
+# License inventory of all third-party libraries (resolved from vcpkg.json without building).
+get_filename_component(FISSION_VCPKG_ROOT "${CMAKE_TOOLCHAIN_FILE}/../../.." ABSOLUTE)
+set(_licenses_py "${CMAKE_SOURCE_DIR}/scripts/tools/licenses.py")
+add_test(NAME third_party_licenses
+  COMMAND ${Python3_EXECUTABLE} "${_licenses_py}" check --vcpkg-root "${FISSION_VCPKG_ROOT}")
+add_test(NAME third_party_notices_current
+  COMMAND ${Python3_EXECUTABLE} "${_licenses_py}" notices --verify
+          --vcpkg-root "${FISSION_VCPKG_ROOT}")
+# Control: a GPL-2.0-only license in the inventory must be rejected.
+add_test(NAME third_party_rejects_forbidden_license
+  COMMAND ${Python3_EXECUTABLE} "${_licenses_py}" check --vcpkg-root "${FISSION_VCPKG_ROOT}"
+          --inventory "${CMAKE_CURRENT_SOURCE_DIR}/licenses/forbidden-inventory.json"
+          --expect-problem stb)
+
 # Start the real app headless, render one frame and keep it as proof.
 add_test(NAME app_opens_window
   COMMAND fission3d --smoke-test "${CMAKE_BINARY_DIR}/smoke-test.png")

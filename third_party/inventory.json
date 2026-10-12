@@ -1,0 +1,70 @@
+{
+  "extra": [
+    {
+      "name": "planegcs",
+      "version": "FreeCAD 1.1.4",
+      "license": "LGPL-2.1-or-later",
+      "purpose": "2D sketch constraint solver (vendored in third_party/planegcs)"
+    }
+  ],
+  "overrides": {
+    "qt*": {
+      "license": "LGPL-3.0-only OR GPL-3.0-only",
+      "reason": "Qt modules are offered as LGPL-3.0, GPL-2.0/3.0 or commercial; the vcpkg port has no license field. We use the LGPL-3.0 option, dynamically linked."
+    },
+    "stb": {
+      "license": "MIT OR Unlicense",
+      "reason": "stb headers are dual-licensed MIT / public domain (Unlicense)."
+    },
+    "cpp-base64": {
+      "license": "Zlib",
+      "reason": "Copyright text in the package is the zlib license wording."
+    },
+    "double-conversion": {
+      "license": "BSD-3-Clause",
+      "reason": "Google double-conversion uses the 3-clause BSD license."
+    },
+    "libb2": {
+      "license": "CC0-1.0 OR OpenSSL OR Apache-2.0",
+      "reason": "BLAKE2 reference code: choose any of CC0-1.0, OpenSSL or Apache-2.0 (we take CC0-1.0)."
+    },
+    "libiconv": {
+      "license": "LGPL-2.1-or-later",
+      "reason": "GNU libiconv library part (the iconv tool is GPL, not built here)."
+    },
+    "opengl-registry": {
+      "license": "MIT AND Apache-2.0",
+      "reason": "Khronos registry headers carry MIT or Apache-2.0 per file."
+    },
+    "vcpkg-make": {
+      "license": "MIT",
+      "reason": "vcpkg helper scripts, MIT (build tool only)."
+    },
+    "egl": {
+      "system": true,
+      "reason": "Only checks for the system's EGL; no code is shipped."
+    },
+    "opengl": {
+      "system": true,
+      "reason": "Only links the system's OpenGL; no code is shipped."
+    },
+    "pthread": {
+      "system": true,
+      "reason": "Empty package that links the system's pthread."
+    }
+  },
+  "purposes": {
+    "opencascade": "Precise B-Rep geometry kernel (booleans, fillets, STEP)",
+    "manifold": "Robust mesh booleans, level sets",
+    "eigen3": "Linear algebra (also used by PlaneGCS)",
+    "lib3mf": "3MF import and export",
+    "nlohmann-json": "JSON (document format)",
+    "spdlog": "Logging",
+    "minizip-ng": "ZIP container of the .fission file format",
+    "stb": "Image loading and writing",
+    "nanosvg": "SVG import",
+    "catch2": "Unit tests (test builds only)",
+    "boost-graph": "Graph algorithms used by PlaneGCS",
+    "qt": "UI (Qt Quick) and rendering abstraction (RHI)"
+  }
+}

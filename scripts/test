@@ -41,6 +41,32 @@ describe_test() {
         app_opens_window)            echo "Die App startet und zeigt ihr Fenster" ;;
         layering_control_builds)     echo "Kontrolle: Core-Code ohne Qt lässt sich bauen" ;;
         layering_rejects_qt_in_core) echo "Schichtregel: Qt in Core wird vom Compiler abgelehnt" ;;
+        third_party_licenses)        echo "Alle Bibliotheken haben GPL-3-kompatible Lizenzen" ;;
+        third_party_notices_current) echo "Das Lizenzinventar (THIRD_PARTY_NOTICES.md) ist aktuell" ;;
+        third_party_rejects_forbidden_license)
+                                     echo "Kontrolle: eine unverträgliche Lizenz wird abgelehnt" ;;
+        "smoke: OpenCASCADE builds a box with the right volume")
+                                     echo "Bibliothek OpenCASCADE: Quader mit richtigem Volumen" ;;
+        "smoke: OpenCASCADE cuts a hole into a box")
+                                     echo "Bibliothek OpenCASCADE: Loch in einen Quader schneiden" ;;
+        "smoke: Manifold subtracts a sphere from a cube")
+                                     echo "Bibliothek Manifold: Würfel minus Kugel" ;;
+        "smoke: PlaneGCS solves a point at a given distance on the x axis")
+                                     echo "Bibliothek PlaneGCS: Skizzen-Bedingungen lösen" ;;
+        "smoke: Eigen solves a small linear system")
+                                     echo "Bibliothek Eigen: Gleichungssystem lösen" ;;
+        "smoke: lib3mf writes and reads back a 3MF file")
+                                     echo "Bibliothek lib3mf: 3MF-Datei schreiben und lesen" ;;
+        "smoke: minizip-ng writes and reads back a zip file")
+                                     echo "Bibliothek minizip-ng: ZIP-Datei schreiben und lesen" ;;
+        "smoke: nanosvg parses a small SVG")
+                                     echo "Bibliothek nanosvg: SVG lesen" ;;
+        "smoke: stb writes and reads back a PNG")
+                                     echo "Bibliothek stb: PNG schreiben und lesen" ;;
+        "smoke: nlohmann-json parses and writes JSON")
+                                     echo "Bibliothek nlohmann-json: JSON lesen und schreiben" ;;
+        "smoke: spdlog formats a log line")
+                                     echo "Bibliothek spdlog: Protokollzeile formatieren" ;;
         *)                           echo "Unit-Test: $1" ;;
     esac
 }
