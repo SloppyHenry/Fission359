@@ -82,7 +82,7 @@
 ---
 
 ### AP-0.2 Abhängigkeiten
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-0.1
+**Status:** in Arbeit · **Größe:** M · **Abhängigkeiten:** AP-0.1
 
 **Ziel:** Alle Kernbibliotheken sind reproduzierbar verfügbar.
 

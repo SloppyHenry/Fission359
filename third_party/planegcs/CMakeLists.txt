@@ -19,7 +19,8 @@ add_library(planegcs STATIC
 # finds the stand-in next to this file (same shape as FreeCAD's src/Mod/Sketcher/App/planegcs).
 # shim/ provides <Base/Console.h>, <FCConfig.h> and <boost_graph_adjacency_list.hpp>.
 # Public include style is <planegcs/GCS.h>.
-target_include_directories(planegcs
+# SYSTEM: our strict warning flags (-Wshadow -Werror) must not apply to these headers.
+target_include_directories(planegcs SYSTEM
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/App"
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/shim" "${CMAKE_CURRENT_SOURCE_DIR}/App/planegcs")
 target_link_libraries(planegcs PUBLIC Eigen3::Eigen PRIVATE Boost::boost)
