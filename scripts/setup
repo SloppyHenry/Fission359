@@ -96,12 +96,14 @@ install_macos() {
 qt_version_macos() { brew list --versions qtbase 2>/dev/null | awk '{print $2}'; }
 
 # ---------------------------------------------------------------- Linux (apt)
-BASE_APT="build-essential cmake ninja-build pkg-config git git-lfs python3 curl zip unzip tar"
+# autoconf/automake/libtool: vcpkg builds some tools (gperf for fontconfig) from source.
+BASE_APT="build-essential cmake ninja-build pkg-config git git-lfs python3 curl zip unzip tar \
+autoconf autoconf-archive automake libtool"
 SYSTEM_QT_APT="qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools qt6-shadertools-dev \
 qt6-svg-dev qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls \
 qml6-module-qtquick-templates qml6-module-qtquick-layouts"
 # Needed when vcpkg has to build Qt itself (Linux distribution without Qt >= 6.8).
-VCPKG_QT_APT="autoconf automake libtool bison flex gperf libx11-dev libxext-dev libxi-dev \
+VCPKG_QT_APT="bison flex gperf libx11-dev libxext-dev libxi-dev \
 libxrender-dev libxkbcommon-dev libxkbcommon-x11-dev libx11-xcb-dev libxcb-xkb-dev \
 libegl1-mesa-dev libgl1-mesa-dev libglu1-mesa-dev libfontconfig1-dev libdbus-1-dev \
 libwayland-dev libxml2-dev libffi-dev libxcb-cursor-dev"

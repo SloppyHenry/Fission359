@@ -62,6 +62,14 @@ A violation makes the build or the tests fail (`tests/layering`, `scripts/tools/
   `... notices --write` (updates `THIRD_PARTY_NOTICES.md`), and explain the need in the pull request.
   Libraries come from vcpkg; see [ADR-0004](docs/adr/0004-abhaengigkeiten-vcpkg.md).
 
+## Binary cache
+
+vcpkg stores built libraries in a cache (default `~/.cache/vcpkg/archives`), keyed by compiler,
+settings and versions. A second checkout or a clean `build/` directory therefore restores the
+libraries in seconds. To share a cache between machines or with CI, point
+`VCPKG_BINARY_SOURCES` at a directory or server, for example
+`VCPKG_BINARY_SOURCES="clear;files,/path/to/shared-cache,readwrite"`.
+
 ## UI texts
 
 - Every user-visible string exists in **German and English** and goes through `qsTr()` / `tr()`.

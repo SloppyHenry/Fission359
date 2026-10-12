@@ -11,13 +11,20 @@
 #include <QTimer>
 
 #include "fission/core/version.h"
+#include "fission/geo/occt/layer.h"
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("Fission3D"));
+    const auto toQString = [](std::string_view text) {
+        return QString::fromUtf8(text.data(), static_cast<qsizetype>(text.size()));
+    };
+    // "0.0.1 (OpenCASCADE 8.0.1)": handy in bug reports, and it makes the app load the kernel
+    // library at startup, so mixed Qt/vcpkg library problems show up immediately.
     QGuiApplication::setApplicationVersion(
-        QString::fromUtf8(fission::core::versionString().data(),
-                          static_cast<qsizetype>(fission::core::versionString().size())));
+        QStringLiteral("%1 (OpenCASCADE %2)")
+            .arg(toQString(fission::core::versionString()),
+                 toQString(fission::geo::occt::kernelVersion())));
 
     QCommandLineParser parser;
     parser.addHelpOption();
