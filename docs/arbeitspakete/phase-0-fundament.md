@@ -95,8 +95,72 @@
 
 **Akzeptanzkriterien:**
 - [ ] Frischer Clone baut auf macOS und Ubuntu 24.04 ohne manuelle Schritte (außer Toolchain)
-- [ ] Alle Smoke-Tests grün
+  *(macOS: nachgewiesen aus frischem Klon mit leerem Zwischenspeicher; Debian 13 nachgewiesen; Ubuntu 24.04: siehe Abschlussvermerk)*
+- [x] Alle Smoke-Tests grün
 - [ ] Alle Lizenzen im Inventar sind GPL-3.0-kompatibel (Prüfskript in der CI)
+  *(Prüfung und Test vorhanden und grün; die CI-Anbindung folgt in AP-0.3)*
+
+#### Abschlussvermerk (2026-10-12, Stand vor Abschluss des Ubuntu-24.04-Laufs)
+
+**Umgesetzt**
+- `vcpkg.json` (Manifest-Modus, feste Baseline `e456309491…` vom 2026-10-10) mit OpenCASCADE 8.0.1, Manifold 3.5.4,
+  Eigen 5.0.1, lib3mf 2.5.0, nlohmann-json, spdlog, minizip-ng, stb, nanosvg, Boost.Graph (für PlaneGCS), Catch2 und
+  dem Feature `qt` (qtbase, qtdeclarative, qtshadertools, qtsvg).
+- Qt hybrid: System-Qt ≥ 6.8 wird genutzt, sonst baut vcpkg Qt (`FISSION_QT_SOURCE=auto|system|vcpkg`).
+  `scripts/setup` erkennt auf Linux selbst, welcher Weg gilt, und installiert die passenden Systempakete.
+- Eigene vcpkg-Triplets (dynamische Bibliotheken, nur Release). vcpkg liegt in `.vcpkg/` (nicht im Repo) und wird von
+  `scripts/setup` auf den festen Stand gesetzt.
+- PlaneGCS aus FreeCAD 1.1.4 (Commit `4fd3bf32…`) nach `third_party/planegcs`, Quellen byte-identisch, Ersatzdateien
+  für FreeCAD-Interna, Herkunft und Update-Anleitung in der README dort.
+- Welche Schicht welche Bibliothek linken darf (z. B. OpenCASCADE nur `fission_geometry_occt`), steht in
+  `cmake/FissionLayers.cmake` und wird beim Konfigurieren geprüft.
+- 10 Smoke-Tests (je Bibliothek einer), Lizenzprüfung `scripts/tools/licenses.py` (löst die Abhängigkeiten ohne
+  Bauen für macOS und Linux auf, 129 Komponenten) mit drei Tests (Lizenzen ok, Inventar aktuell, verbotene Lizenz
+  wird abgelehnt) und generiertem `THIRD_PARTY_NOTICES.md`.
+- Die App zeigt `Fission3D 0.0.1 (OpenCASCADE 8.0.1)` (`--version`, auch ohne Bildschirm) und lädt OpenCASCADE damit
+  beim Start wirklich.
+- `scripts/tools/docker-ubuntu-check`: Baut und testet den Stand in einem sauberen `ubuntu:24.04`-Container.
+- [ADR-0004](../adr/0004-abhaengigkeiten-vcpkg.md); ADR-0001, README, CONTRIBUTING und `docs/testumgebung.md` angepasst.
+
+**Wie getestet**
+- macOS 27 arm64 (System-Qt 6.11.2): frischer `git clone`, leerer Zwischenspeicher, `scripts/setup --yes` (21 s) und
+  `scripts/test`: Bibliotheken bauen und Tests dauern zusammen **15 Minuten**, 21 bzw. später 23 von 23 Tests grün.
+  Warmer Lauf mit Zwischenspeicher: Bibliotheken kommen in unter 1 Sekunde zurück.
+- Debian 13 x86_64 (System-Qt 6.8.2, 2 Kerne, niedrige Priorität): erster Lauf **rund 80 Minuten** für die
+  Bibliotheken (davon OpenCASCADE ca. 60), 23 von 23 Tests grün.
+- Dabei gefundene und behobene Fehler: fehlendes `pkg-config` (macOS), fehlende autoconf-Pakete (Linux),
+  GCC-Warnungen in den PlaneGCS-Headern (jetzt System-Header), `--version` ohne Bildschirm,
+  Linker ließ OpenCASCADE weg (jetzt echter Aufruf).
+
+**So probierst du es aus**
+1. Terminal im Projektordner, `scripts/setup` ausführen (installiert nach Rückfrage fehlende Pakete und richtet vcpkg ein).
+2. `scripts/test` ausführen. Beim ersten Mal baut es die Bibliotheken (15–30 Minuten, Fortschritt in
+   `build/macos-debug.log`); am Ende steht „Alles in Ordnung: 23 von 23 Tests bestanden“.
+3. `scripts/run -- --version` ausführen. Es erscheint `Fission3D 0.0.1 (OpenCASCADE 8.0.1)`.
+4. Optional: In `vcpkg.json` ist die Bibliotheksliste. In `THIRD_PARTY_NOTICES.md` stehen alle Lizenzen.
+5. Optional (nur mit Docker): `scripts/tools/docker-ubuntu-check` prüft den Stand in einem Ubuntu-24.04-Container.
+
+**Bekannte Einschränkungen und Annahmen**
+- **Ubuntu 24.04** ist über den Container geprüft (Ergebnis siehe unten); Qt wird dort aus vcpkg gebaut und braucht
+  auf einem kleinen Rechner Stunden. Das passiert nur einmal je Zwischenspeicher.
+- **Binär-Cache:** Lokal der vcpkg-Standard (`~/.cache/vcpkg/archives`). Die Anbindung für die CI folgt in AP-0.3.
+- **OCCT-Module:** Der Port schaltet Draw und Dokumentation bereits ab; Visualisierung, DataExchange und
+  ApplicationFramework bleiben an, weil der Viewport-Spike (AP-0.4, Prototyp B) und STEP-Farben sie brauchen.
+  Gelinkt werden nur drei Module. Weiter verkleinern nach AP-0.4.
+- **Mischbetrieb auf Linux:** System-Qt und OpenCASCADE aus vcpkg laden zusammen (nachgewiesen mit `ldd`). Gleichnamige
+  Bibliotheken (freetype, libpng, zlib) werden vom Lader nur einmal geladen. Heute ohne Folgen, weil die gelinkten
+  OCCT-Module sie nicht brauchen; sobald Schriften oder die OCCT-Visualisierung hinzukommen, in der CI mit
+  `FISSION_QT_SOURCE=vcpkg` gegenprüfen.
+- **Eigen 5.0.1** funktioniert mit PlaneGCS (Smoke-Test grün); die FreeCAD-Version selbst nutzt Eigen 3.4.
+- **Boost.Graph** ist neu in der Bibliotheksliste (nur Header, BSL-1.0), nötig für PlaneGCS.
+- **Vendored PlaneGCS:** Solver-Logging von FreeCAD ist stumm geschaltet, Warnungen gehen nach stderr.
+- **Linux-Testrechner A** war während AP-0.2 nicht erreichbar; alle Linux-Läufe liefen auf Linux-Testrechner B (4 Kerne, mit anderen
+  Diensten geteilt, deshalb auf 2 Kerne und niedrige Priorität begrenzt).
+
+**Vorgeschlagene Folge-Arbeiten**
+- AP-0.3: CI mit `FISSION_QT_SOURCE=vcpkg`, Binär-Cache und den Lizenz-Tests; clang-tidy auf geänderten Dateien.
+- AP-0.4: OCCT-Module nach der Viewport-Entscheidung verkleinern.
+- Windows-Triplet und Paketierung (dynamische Bibliotheken bündeln) bei AP-0.7.
 
 ---
 
