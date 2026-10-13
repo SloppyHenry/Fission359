@@ -76,10 +76,10 @@ def fix_plugin(app: Path, plugin: Path) -> int:
     for dep in dependencies(plugin):
         if dep.startswith(("@", *SYSTEM_PREFIXES)) and not dep.startswith("@rpath/"):
             continue
-        target = index.get(Path(dep).name)
+        target = lookup(index, Path(dep).name)
         if target is not None and target != dep:
             args += ["-change", dep, target]
-    if any(Path(dep).name in index for dep in dependencies(plugin)):
+    if any(lookup(index, Path(dep).name) for dep in dependencies(plugin)):
         for rpath in rpaths(plugin):
             args += ["-delete_rpath", rpath]
         args += ["-add_rpath", "@loader_path/" + "../" * len(plugin.relative_to(app / "Contents").parents[:-1])
@@ -87,6 +87,22 @@ def fix_plugin(app: Path, plugin: Path) -> int:
     if args:
         subprocess.run(["install_name_tool", *args, str(plugin)], check=True, capture_output=True)
     return 0
+
+
+def lookup(index: dict[str, str], name: str) -> str | None:
+    """Finds a bundled library by file name.
+
+    A reference such as libQt6Core.6.dylib (major version) is satisfied by the bundled
+    libQt6Core.6.11.2.dylib (full version) when no symlink with the short name was copied.
+    """
+    if name in index:
+        return index[name]
+    if name.endswith(".dylib"):
+        stem = name[: -len(".dylib")]
+        candidates = sorted(key for key in index if key.startswith(stem + "."))
+        if candidates:
+            return index[candidates[0]]
+    return None
 
 
 def main() -> int:
@@ -108,9 +124,15 @@ def main() -> int:
         if own_id is not None and path.is_relative_to(frameworks) and not own_id.startswith("@rpath/"):
             args += ["-id", "@rpath/" + str(path.relative_to(frameworks))]
         for dep in dependencies(path):
+            if dep.startswith("@rpath/") and not (frameworks / dep.removeprefix("@rpath/")).exists():
+                # e.g. @rpath/libQt6Core.6.dylib while only libQt6Core.6.11.2.dylib was bundled
+                target = lookup(index, Path(dep).name)
+                if target is not None and target != dep:
+                    args += ["-change", dep, target]
+                continue
             if dep.startswith(("@", *SYSTEM_PREFIXES)):
                 continue
-            target = index.get(Path(dep).name)
+            target = lookup(index, Path(dep).name)
             if target is not None:
                 args += ["-change", dep, target]
         for rpath in rpaths(path):
