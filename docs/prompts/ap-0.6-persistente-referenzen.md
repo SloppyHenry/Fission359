@@ -24,9 +24,17 @@ AP-0.6), `docs/03-architektur.md` §3.4, `docs/spikes/kernel-robustheit.md` und 
 
 ## Schritt 0: Mockup übernehmen
 Das Mockup ist fertig. Der Branch `mockup-oberflaeche` (4 Commits, enthält `docs/mockups/oberflaeche.html`,
-Änderungen in UX §1/§13 und R17–R20) ist mit `main` sauber zusammenführbar. **Führe ihn jetzt in `main`
-zusammen und pushe** (Merge-Commit, kein Squash), danach prüfe, dass die Links in `docs/README.md` und
-`docs/06-rueckfragen.md` auf das Mockup funktionieren. Das ist hiermit freigegeben.
+Änderungen in UX §1/§13 und R17–R20) ist mit `main` sauber zusammenführbar. **`main` ist seit dem
+13.10.2026 geschützt** (nur per Pull Request, alle 7 CI-Prüfungen grün, keine Force-Pushes, auch für
+Admins). Führe das Mockup daher per **Pull Request** zusammen: Branch pushen, PR öffnen, auf grüne CI
+warten, dann mergen. Das ist hiermit freigegeben. Danach prüfe, dass die Links in `docs/README.md` und
+`docs/06-rueckfragen.md` auf das Mockup funktionieren.
+
+**Vor dem ersten Merge in `main` prüfen:** GitHub veröffentlicht beim Zusammenführen im Web die
+**Haupt-Mailadresse des Kontos**, wenn dort „Keep my email addresses private“ aus ist (so geschah es
+bei Commit `3990d30`, PR #1). Frage den Product Owner, ob die Einstellung an ist. Falls nicht, nicht mergen,
+bis er sie gesetzt hat. Ob Commit `3990d30` per Historien-Umschreiben bereinigt wird, ist eine offene
+Entscheidung des Product Owners (siehe `project-state`); ohne sein OK keine Force-Pushes.
 
 ## Entscheidungen des Product Owners (aus der Planvorstellung)
 - **Frage 1 – Strenge der Ähnlichkeitssuche: a) streng.** Nur ein klarer, eindeutiger Gewinner wird
@@ -61,7 +69,8 @@ Weich (nur gemessen): Anteil automatisch richtig gefunden gegenüber „braucht 
 ## Arbeitsweise
 - Fasse in fünf Zeilen dein Verständnis zusammen und **starte dann direkt mit Schritt 0 und 1**; der Plan
   ist freigegeben. Halte an und frage, wenn sich etwas ergibt, das den Plan oder die Architektur ändert.
-- Kleine, lauffähige Schritte, nach jedem Schritt bauen und testen; Commits `AP-0.6: …`.
+- Kleine, lauffähige Schritte, nach jedem Schritt bauen und testen; Commits `AP-0.6: …`. Arbeit auf einem
+  Branch, Übernahme in `main` per Pull Request mit grüner CI.
 - Status am Ende ehrlich setzen: „Review“, nicht „erledigt“. Was nicht belegt ist, benennst du als offen.
 - Bei der Rückmeldung kurz und in Alltagssprache; Fachbegriffe über ihre Wirkung erklären.
 ```
