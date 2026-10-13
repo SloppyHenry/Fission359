@@ -56,6 +56,7 @@ Primäre Fertigung: FDM-3D-Druck. Bewusst **keine Browser-App**, keine Cloud-Pfl
 - docs/03-architektur.md – Stack, Schichten, Datenmodell, Präzision, Dateiformat, Budgets
 - docs/04-roadmap.md – Phasen, **Definition of Done**
 - docs/07-baukaesten.md – Baukästen (Karten, Vasen, Figuren) und Motiv-Bibliothek
+- docs/08-gestaltung.md – **Design-System** (Farben, Schrift, Layout, Bausteine; verbindlich), Vorlage: docs/mockups/oberflaeche.html
 - docs/arbeitspakete/*.md – Arbeitspakete mit Akzeptanzkriterien
 - docs/adr/ – bereits getroffene Entscheidungen (nicht stillschweigend davon abweichen)
 - docs/06-rueckfragen.md – offene Punkte und aktuelle Annahmen

@@ -29,10 +29,10 @@ Dieses Dokument beschreibt, **wie sich Fission3D anfühlt**. Es ist verbindlich 
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
 
-> **Gestaltungsvorlage (R17, 2026-10-13):** Aussehen und Anordnung zeigt das klickbare Mockup
-> [mockups/oberflaeche.html](mockups/oberflaeche.html). Abweichend von der Skizze oben stehen die
-> Werkzeuggruppen dort als Palette am linken Rand der 3D-Ansicht. Wo Mockup und Text sich widersprechen,
-> ist das in [06-rueckfragen.md](06-rueckfragen.md) als offener Punkt vermerkt.
+> **Verbindliche Gestaltung (R17, 2026-10-13):** Aussehen und Anordnung legt das Design-System
+> [08-gestaltung.md](08-gestaltung.md) fest, Vorlage ist das Mockup [mockups/oberflaeche.html](mockups/oberflaeche.html).
+> Die Skizze oben zeigt nur die Aufteilung. Abweichend davon stehen die Werkzeuggruppen als Palette am linken
+> Rand der 3D-Ansicht, das Rezept steht unter der Körperliste.
 
 - **3D-Ansicht dominiert.** Die Seitenleisten sind schmal und einklappbar. Auf einem 13"-Laptop hat die 3D-Ansicht mindestens 65 % der Fläche, spätestens im **Fokus-Modus** (beide Seitenleisten aus, Knopf am Ansichtswürfel oder ⇧F).
 - **Werkzeuggruppen oben:** höchstens 8 Gruppen mit Alltagsnamen. Ein Klick öffnet eine große, bebilderte Auswahl, keine Liste aus Mini-Icons.
@@ -333,7 +333,7 @@ UI-Texte verwenden ausschließlich die Begriffe in der mittleren Spalte. Englisc
 
 ## 13. Visuelle Gestaltung
 
-- **Ruhig, freundlich, modern.** Viel Weißraum, eine Akzentfarbe, abgerundete Ecken, klare Typografie. Vorlage ist das Mockup (R17).
+- **Ruhig, freundlich, modern.** Viel Weißraum, eine Akzentfarbe, abgerundete Ecken, klare Typografie (IBM Plex). Einzelheiten: [08-gestaltung.md](08-gestaltung.md).
 - **Akzentfarbe wählbar (R18):** Standard ist Blau. Unter Einstellungen ▸ Aussehen gibt es Vorschläge und eine eigene Farbe. Alle Akzenttöne (Knöpfe, Markierungen, Auswahl) werden daraus abgeleitet, Schrift darauf hält WCAG AA (4,5 : 1). Rot, Gelb und Grün sind Hinweisfarben („geht nicht“, „braucht Hilfe“, „passt“); ähnelt die gewählte Farbe einer davon, erscheint ein Hinweis.
 - **Modelle sehen aus wie gedruckt:** matte Kunststoff-Optik, weiche Umgebungsverdeckung (Ambient Occlusion), sanfter Schatten auf dem Druckbett, feine dunkle Kantenlinien.
 - **Standardfarben der Körper:** freundliche, gut unterscheidbare Töne, auch für Farbenblinde geeignet.
