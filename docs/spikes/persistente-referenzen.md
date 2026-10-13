@@ -278,7 +278,7 @@ FISSION_NAMING_VERBOSE=1 …            # jede unnötige Hilfe mit den Punktzahl
 
 - **Dieselben Ketten, andere Zahlen:** Die Folge der Zufallsänderungen ist auf beiden Plattformen identisch
   (eigener Generator). Die Zahlen weichen trotzdem ab, weil OpenCASCADE bei einigen Abrundungen auf Linux
-  anders entscheidet (dort lehnt der Kernel mehr Operationen ab, vor allem Abrundungen an Lochrändern). Das
+  anders entscheidet (auf Linux lehnt der Kernel mehr Operationen ab, ohne dass wir die Ursache untersucht haben). Das
   Ergebnis des Spikes ändert das nicht; es erinnert daran, dass Verhalten des Kernels plattformabhängig ist und
   die Suite auf beiden laufen muss (macht die CI).
 - Der OCAF-Praxistest läuft auf beiden mit denselben Ergebnissen. Unter AddressSanitizer meldet er das
