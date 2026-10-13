@@ -108,3 +108,14 @@ rund 9,7 GB der 12 GB Grafikspeicher belegt). Deshalb gilt:
   auskommen; Messwerte können schwanken, wenn der Sprachmodell-Server gerade rechnet.
 - Fremde Container und Prozesse werden nicht angefasst; eigene Container und Volumes tragen den Präfix `fission3d-`.
 - Messungen ohne Bildschirm per SSH (Offscreen); ein Fenstertest am Bildschirm macht der Product Owner.
+
+### Grafik-Messungen ohne Bildschirm (Spike AP-0.4)
+
+- **Vulkan ohne Fenster:** `QT_QPA_PLATFORM=xcb`, `DISPLAY` auf ein virtuelles Display (`Xvfb`), dazu
+  `QT_XCB_GL_INTEGRATION=none`. Die GPU rechnet über Vulkan, das virtuelle Display wird nur für die
+  Qt-Plattform gebraucht. Die Plattform `offscreen` kann keine Vulkan-Instanz erzeugen.
+- **OpenGL (OpenCASCADE-Anzeige):** `Xvfb` hat kein NVIDIA-GLX; dort läuft nur Software-OpenGL (Mesa). Echte
+  GPU-Werte für OpenGL brauchen eine Desktop-Sitzung oder einen X-Server mit NVIDIA-Treiber (eine
+  Systemänderung, die vorher abzustimmen ist).
+- **Mac:** Messungen ohne Fenster mit `QT_QPA_PLATFORM=offscreen` (Metal) laufen auch bei gesperrtem Bildschirm;
+  Fenster werden bei ausgeschaltetem Display von macOS nicht gezeichnet.

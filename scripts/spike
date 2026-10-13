@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Baut und startet die Prototypen der Untersuchungs-Arbeitspakete (AP-0.4: Viewport).
+#
+#   scripts/spike viewport-a [--scene S]   Prototyp A (Qt RHI) im Fenster
+#   scripts/spike viewport-b [--scene S]   Prototyp B (OpenCASCADE-Anzeige) im Fenster
+#   scripts/spike messen                   beide Prototypen ohne Fenster messen (Tabelle)
+#
+# Szenen S: part (kleines Teil), bench0.5, bench2, bench5 (0,5 / 2 / 5 Mio. Dreiecke).
+# Bedienung im Fenster: rechte Taste dreht, mittlere Taste (oder Shift + linke) verschiebt,
+# Mausrad zoomt, Trackpad: zwei Finger drehen, Shift + zwei Finger verschieben, Zwei-Finger-
+# Pinch zoomt. Klick wählt eine Fläche; Hovern hebt sie hervor.
+
+set -u -o pipefail
+# shellcheck source=lib/common.sh
+. "$(dirname "$0")/lib/common.sh"
+
+WHAT="${1:-}"
+case "$WHAT" in
+    viewport-a|viewport-b|messen) shift ;;
+    --help|-h|"") sed -n '5,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) die "Unbekannt: '$WHAT'. Siehe scripts/spike --help" ;;
+esac
+
+PRESET="$(preset_name release)"
+BUILD_DIR="$REPO_ROOT/build/$PRESET"
+LOG="$BUILD_DIR.spike.log"
+SPIKE_DIR="$BUILD_DIR/spikes/viewport"
+
+need_command cmake
+need_command ninja
+apply_job_limit
+cd "$REPO_ROOT" || exit 1
+
+case "$WHAT" in
+    viewport-a) TARGETS="viewport_a" ;;
+    viewport-b) TARGETS="viewport_b" ;;
+    messen)     TARGETS="viewport_a_bench viewport_b_bench" ;;
+esac
+
+step "Baue die Prototypen ($PRESET)"
+note "Beim ersten Mal werden die Bibliotheken gebaut (siehe scripts/run). Protokoll: $LOG"
+mkdir -p "$REPO_ROOT/build"
+# shellcheck disable=SC2086
+if ! { cmake --preset "$PRESET" -DFISSION_BUILD_SPIKES=ON && cmake --build --preset "$PRESET" --target $TARGETS; } >"$LOG" 2>&1; then
+    fail "Das Bauen ist fehlgeschlagen. Die letzten Zeilen des Protokolls:"
+    tail -n 25 "$LOG" | sed 's/^/    /'
+    exit 1
+fi
+ok "Gebaut"
+
+case "$WHAT" in
+    viewport-a)
+        step "Starte Prototyp A (Qt RHI)"
+        exec "$SPIKE_DIR/viewport_a" "$@" ;;
+    viewport-b)
+        step "Starte Prototyp B (OpenCASCADE-Anzeige)"
+        exec "$SPIKE_DIR/viewport_b" "$@" ;;
+    messen)
+        step "Messe (ohne Fenster, 1920 x 1080, 4-fach Kantenglättung)"
+        RESULTS="$BUILD_DIR/spike-messung.jsonl"
+        rm -f "$RESULTS"
+        case "$(detect_os)" in
+            macos) BACKEND=metal ;;
+            *)     BACKEND=vulkan ;;
+        esac
+        for scene in part bench0.5 bench2 bench5; do
+            note "Szene $scene ..."
+            QT_QPA_PLATFORM=offscreen "$SPIKE_DIR/viewport_a_bench" --backend "$BACKEND" --scene "$scene" \
+                --frames 120 --result-file "$RESULTS" >/dev/null 2>&1
+            "$SPIKE_DIR/viewport_b_bench" --scene "$scene" --frames 40 --picks 100 \
+                --result-file "$RESULTS" >/dev/null 2>&1
+        done
+        python3 - "$RESULTS" <<'PY'
+import json, sys
+print(f'{"Proto":5} {"Szene":9} {"Dreiecke":>9} {"Bilder/s":>9} {"Bildzeit ms":>11} {"Auswahl ms":>10}')
+for line in open(sys.argv[1]):
+    d = json.loads(line)
+    print(f'{d["prototype"][0]:5} {d["scene"]:9} {d["triangles"]:>9} {d["fps_avg"]:>9} '
+          f'{d["frame_ms_avg"]:>11} {d["pick_ms_avg"]:>10}')
+PY
+        note "Rohdaten: $RESULTS" ;;
+esac

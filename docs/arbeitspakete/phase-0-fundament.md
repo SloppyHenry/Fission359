@@ -146,9 +146,9 @@
 - **Ubuntu 24.04:** Qt wird dort aus vcpkg gebaut (apt liefert nur Qt 6.4). Nachgewiesen im GitHub-Runner
   `ubuntu-24.04` (siehe AP-0.3: kalt 2 h 11 min mit 4 Kernen, danach aus dem Zwischenspeicher). Der Lauf im
   sauberen Container (`scripts/tools/docker-ubuntu-check`, 2 Kerne) prüft zusätzlich, ob `scripts/setup` auch
-  ohne die vorinstallierten Pakete des Runners vollständig ist. Er hat bisher `libltdl-dev`, die libxcb-Pakete und
-  `python3-venv` als Lücken gefunden (alle in `scripts/setup` ergänzt); ein weiterer Lauf mit dem jetzigen Stand
-  war am 2026-10-13 noch nicht abgeschlossen.
+  ohne die vorinstallierten Pakete des Runners vollständig ist. Er hat `libltdl-dev`, die libxcb-Pakete und
+  `python3-venv` als Lücken gefunden (alle in `scripts/setup` ergänzt). **Letzter Lauf am 2026-10-13: 65 von 65
+  Tests bestanden** (Ubuntu 24.04, Qt aus vcpkg).
 - **Binär-Cache:** Lokal der vcpkg-Standard (`~/.cache/vcpkg/archives`); in der CI der GitHub-Zwischenspeicher
   (siehe [ADR-0005](../adr/0005-ci-pipeline-und-zwischenspeicher.md)).
 - **Ein Qt statt zwei:** Host- und Ziel-Triplet sind gleich; sonst baut vcpkg Qt ein zweites Mal vollständig.
@@ -232,7 +232,7 @@
 ---
 
 ### AP-0.4 Spike: Viewport-Technologie
-**Status:** in Arbeit · **Größe:** L · **Abhängigkeiten:** AP-0.2
+**Status:** Review · **Größe:** L · **Abhängigkeiten:** AP-0.2
 
 **Ziel:** Fundierte Entscheidung zwischen eigenem Renderer auf **Qt RHI** und **OCCT AIS/V3d**.
 
@@ -242,8 +242,48 @@
 - Messen: fps bei 0,5 / 2 / 5 Mio. Dreiecken, Picking-Latenz, Optik (Screenshots), Aufwand, Verhalten auf macOS (Metal vs. OpenGL) und Linux (Wayland/X11)
 
 **Akzeptanzkriterien:**
-- [ ] ADR-0002 „Viewport-Technologie“ mit Messwerten, Screenshots und Entscheidung
-- [ ] Der gewählte Prototyp läuft auf beiden Plattformen und ist Ausgangsbasis für AP-1.3
+- [x] ADR-0002 „Viewport-Technologie“ mit Messwerten, Screenshots und Entscheidung
+  *([ADR-0002](../adr/0002-viewport-technologie.md) liegt als Vorschlag vor; die Entscheidung trifft der Product Owner)*
+- [x] Der gewählte Prototyp läuft auf beiden Plattformen und ist Ausgangsbasis für AP-1.3
+  *(Prototyp A: Metal auf dem Mac, Vulkan auf Linux jeweils ohne Fenster gemessen; im Fenster auf dem Mac
+  geprüft, im Fenster unter Linux noch nicht von Hand)*
+
+#### Abschlussvermerk (2026-10-13)
+
+**Umgesetzt**
+- `spikes/viewport/` (nur mit `-DFISSION_BUILD_SPIKES=ON` gebaut, nicht Teil des Produkts):
+  gemeinsame Szenen aus OpenCASCADE-Körpern mit Flächen-IDs (klein, 0,5 / 2 / 5 Mio. Dreiecke), Kamera,
+  **Prototyp A** (Qt RHI: Zeichnen mit Bett, Raster, Schattenkarte, Kantenlinien, Auswahl über ID-Puffer,
+  Qt-Quick-Anbindung) und **Prototyp B** (OpenCASCADE AIS/V3d, eingebettet über `QQuickFramebufferObject`),
+  jeweils auch als Messprogramm ohne Fenster.
+- `scripts/spike viewport-a | viewport-b | messen`: Bauen, Starten, Messen für Menschen.
+- Bericht [viewport-technologie.md](../spikes/viewport-technologie.md) mit Messwerten, Bildern, Aufwand und
+  Risiken; [ADR-0002](../adr/0002-viewport-technologie.md) mit Empfehlung A.
+
+**Wie getestet**
+- Mac (M1, Metal/OpenGL) und Linux-Testrechner C (RTX 3060, Vulkan), jeweils ohne Fenster:
+  Bildzeit, Auswahl-Latenz und GPU-Zeit je Szene. Prototyp A im Fenster auf dem Mac einmal gestartet
+  (Screenshot geprüft).
+- Alle bestehenden Tests unverändert grün; die Prototypen laufen nicht in der CI (Schalter aus).
+
+**Wichtigste Ergebnisse**
+1. Beide erfüllen das Budget; die Leistung trennt sie nicht (M1: 2 Mio. Dreiecke mit 163 bzw. 130 Bildern/s).
+2. A ist unabhängig von OpenGL, headless testbar und hat die volle Kontrolle über die Optik; B liefert
+   Kanten-/Eckenauswahl fertig, ist aber an OpenGL gebunden.
+3. Empfehlung: **A**.
+
+**So probierst du es aus**
+1. `scripts/spike viewport-a` ausführen, mit der Maus drehen und zoomen, Flächen überfahren und anklicken.
+2. `scripts/spike viewport-b` ausführen und dasselbe tun. Bitte dabei notieren, ob das Teil erscheint und
+   sich bedienen lässt (das konnte ich ohne Bildschirm nicht abschließend prüfen).
+3. Größere Szene: `scripts/spike viewport-a --scene bench2`.
+4. Danach den Bericht lesen und im ADR-0002 entscheiden.
+
+**Offen und Folge-Arbeiten**
+- **Entscheidung des Product Owners** zu ADR-0002 (danach `docs/03-architektur.md` § 5 anpassen).
+- Messung auf der integrierten Intel-Grafik (Testrechner B) läuft; Ergebnis wird im Bericht ergänzt.
+- B eingebettet im Fenster mit echter GPU prüfen (Mac: von dir; Linux: Desktop-Sitzung nötig).
+- Für A noch zu bauen: Kanten-/Eckenauswahl, SSAO, Silhouetten, Griffe, Test mit einem echten STEP-Modell.
 
 ---
 

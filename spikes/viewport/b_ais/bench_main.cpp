@@ -16,6 +16,7 @@
 #include <Aspect_DisplayConnection.hxx>
 #include <Aspect_NeutralWindow.hxx>
 #include <Graphic3d_Camera.hxx>
+#include <Graphic3d_MaterialAspect.hxx>
 #include <Image_AlienPixMap.hxx>
 #include <Graphic3d_RenderingParams.hxx>
 #include <OpenGl_Context.hxx>
@@ -39,7 +40,12 @@
 #include <QSurfaceFormat>
 
 #include <algorithm>
+
+#if defined(Q_OS_LINUX)
+#include <GL/glx.h>
+#endif
 #include <chrono>
+#include <clocale>
 #include <cstdio>
 #include <vector>
 
@@ -72,6 +78,7 @@ double mean(const std::vector<double>& values) {
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
+    std::setlocale(LC_NUMERIC, "C");
     QCommandLineParser parser;
     parser.addHelpOption();
     parser.addOptions({
@@ -125,7 +132,14 @@ int main(int argc, char* argv[]) {
     const double sceneSeconds = millisecondsSince(sceneStart) / 1000.0;
 
     // --- OpenCASCADE viewer on top of Qt's context ---
+#if defined(Q_OS_LINUX)
+    Display* xDisplay = glXGetCurrentDisplay();
+    occ::handle<Aspect_DisplayConnection> display = xDisplay != nullptr
+                                                        ? new Aspect_DisplayConnection(reinterpret_cast<Aspect_XDisplay*>(xDisplay))
+                                                        : new Aspect_DisplayConnection();
+#else
     occ::handle<Aspect_DisplayConnection> display = new Aspect_DisplayConnection();
+#endif
     occ::handle<OpenGl_GraphicDriver> driver = new OpenGl_GraphicDriver(display, false);
     driver->ChangeOptions().buffersNoSwap = true;
     occ::handle<V3d_Viewer> viewer = new V3d_Viewer(driver);
@@ -140,6 +154,9 @@ int main(int argc, char* argv[]) {
     const bool ownContext = !parser.isSet("qt-context");
     occ::handle<Aspect_NeutralWindow> window = new Aspect_NeutralWindow();
     window->SetSize(size.width(), size.height());
+#if defined(Q_OS_LINUX)
+    window->SetNativeHandle(static_cast<Aspect_Drawable>(glXGetCurrentDrawable()));
+#endif
     if (ownContext) {
         view->SetWindow(window); // OpenCASCADE creates and manages its own context
     } else {
@@ -200,6 +217,9 @@ int main(int argc, char* argv[]) {
     const auto displayStart = Clock::now();
     occ::handle<AIS_Shape> shape = new AIS_Shape(scene.shape);
     shape->Attributes()->SetFaceBoundaryDraw(true);
+    // same base color as prototype A (the AIS default material is orange brass)
+    shape->SetColor(Quantity_Color(0.62, 0.66, 0.72, Quantity_TOC_sRGB));
+    shape->SetMaterial(Graphic3d_MaterialAspect(Graphic3d_NameOfMaterial_Plastified));
     context->Display(shape, AIS_Shaded, 0, false);
     context->Deactivate();
     context->Activate(shape, AIS_Shape::SelectionMode(TopAbs_FACE));

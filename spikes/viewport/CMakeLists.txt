@@ -6,6 +6,9 @@
 # Both prototypes show the same OpenCASCADE scenes (common/) and print comparable measurements.
 
 find_package(Qt6 6.8 REQUIRED COMPONENTS ShaderTools OpenGL GuiPrivate)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  find_package(OpenGL REQUIRED COMPONENTS GLX) # glXGetCurrentDisplay for prototype B
+endif()
 
 add_library(viewport_common STATIC common/scene.cpp)
 target_include_directories(viewport_common PUBLIC common)
@@ -73,4 +76,8 @@ target_include_directories(viewport_b PRIVATE b_ais)
 target_link_libraries(viewport_b PRIVATE
   viewport_common ${FISSION_OCCT_EXTRA_TARGETS} ${OpenCASCADE_Visualization_LIBRARIES}
   Qt6::Core Qt6::Gui Qt6::Quick Qt6::OpenGL)
+if(TARGET OpenGL::GLX)
+  target_link_libraries(viewport_b PRIVATE OpenGL::GLX)
+  target_link_libraries(viewport_b_bench PRIVATE OpenGL::GLX)
+endif()
 fission_apply_compiler_options(viewport_b)

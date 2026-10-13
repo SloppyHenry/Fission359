@@ -29,7 +29,9 @@
 
 #include <algorithm>
 #include <chrono>
+#include <clocale>
 #include <cstdio>
+#include <cstdlib>
 #include <vector>
 
 using fission::spike::MeshPass;
@@ -59,12 +61,14 @@ double mean(const std::vector<double>& values) {
     return values.empty() ? 0.0 : sum / double(values.size());
 }
 
+// Members are destroyed in reverse order: the QRhi must go before the Vulkan instance and
+// the offscreen surface it was created from.
 struct Device {
-    std::unique_ptr<QRhi> rhi;
-    std::unique_ptr<QOffscreenSurface> surface;
 #if defined(FISSION_SPIKE_VULKAN)
     std::unique_ptr<QVulkanInstance> vulkan;
 #endif
+    std::unique_ptr<QOffscreenSurface> surface;
+    std::unique_ptr<QRhi> rhi;
 };
 
 Device createDevice(const QString& backend) {
@@ -97,8 +101,14 @@ Device createDevice(const QString& backend) {
 
 } // namespace
 
+#define STAGE(text) \
+    do { if (std::getenv("VIEWPORT_TRACE")) { std::fprintf(stderr, "[bench] %s\n", text); } } while (0)
+
 int main(int argc, char* argv[]) {
+    STAGE("start");
     QGuiApplication app(argc, argv);
+    std::setlocale(LC_NUMERIC, "C");
+    STAGE("app created");
     QCommandLineParser parser;
     parser.addHelpOption();
     parser.addOptions({
@@ -120,7 +130,9 @@ int main(int argc, char* argv[]) {
     const QStringList sizeParts = parser.value("size").split('x');
     const QSize size(sizeParts.value(0).toInt(), sizeParts.value(1).toInt());
 
+    STAGE("creating device");
     Device device = createDevice(backend);
+    STAGE("device created");
     if (!device.rhi) {
         std::fprintf(stderr, "Backend '%s' is not available\n", qPrintable(backend));
         return 2;
@@ -159,13 +171,18 @@ int main(int argc, char* argv[]) {
     target->setRenderPassDescriptor(pass.get());
     target->create();
 
+    STAGE("scene + target ready");
     MeshPass mesh(rhi);
+    STAGE("mesh pass created");
     mesh.createPipelines(pass.get(), samples);
+    STAGE("pipelines created");
 
     QRhiCommandBuffer* cb = nullptr;
     rhi->beginOffscreenFrame(&cb);
     mesh.upload(cb, scene);
+    STAGE("uploaded + shadow pass recorded");
     rhi->endOffscreenFrame();
+    STAGE("upload frame finished");
 
     OrbitCamera camera;
     const auto& lo = scene.mesh.boundsMin;
@@ -189,9 +206,18 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < frames + 10; ++i) {
         camera.orbit(1.5F, 0.0F);
         const auto start = Clock::now();
+        if (i == 0) {
+            STAGE("first frame: begin");
+        }
         rhi->beginOffscreenFrame(&cb);
         mesh.draw(cb, target.get(), frameData(0), clear);
+        if (i == 0) {
+            STAGE("first frame: recorded");
+        }
         rhi->endOffscreenFrame();
+        if (i == 0) {
+            STAGE("first frame: finished");
+        }
         const double wall = millisecondsSince(start);
         if (i >= 10) {
             frameMs.push_back(wall);
@@ -201,6 +227,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    STAGE("frame loop done");
     // --- frame time including a readback of the finished image (what prototype B must do
     //     in headless mode, so this is the fair comparison) ---
     std::vector<double> readbackMs;
@@ -217,6 +244,7 @@ int main(int argc, char* argv[]) {
         readbackMs.push_back(millisecondsSince(start));
     }
 
+    STAGE("readback loop done");
     // --- picking: ID-buffer pass + readback, as it happens on every mouse move ---
     std::vector<double> pickMs;
     int hits = 0;
@@ -234,6 +262,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    STAGE("pick loop done");
     // --- optional picture ---
     const QString shot = parser.value("screenshot");
     if (!shot.isEmpty()) {

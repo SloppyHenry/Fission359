@@ -91,6 +91,7 @@ private:
     qint64 m_lastFrameNs = 0;
     qint64 m_lastStatsNs = 0;
     std::vector<double> m_intervalsMs;
+    int m_screenshotFrames = 0;
 };
 
 } // namespace fission::spike

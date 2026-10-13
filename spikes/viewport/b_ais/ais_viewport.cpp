@@ -10,6 +10,7 @@
 #include <Aspect_DisplayConnection.hxx>
 #include <Aspect_NeutralWindow.hxx>
 #include <Graphic3d_Camera.hxx>
+#include <Graphic3d_MaterialAspect.hxx>
 #include <Graphic3d_RenderingParams.hxx>
 #include <NCollection_IndexedMap.hxx>
 #include <OpenGl_Context.hxx>
@@ -25,6 +26,7 @@
 #include <V3d_View.hxx>
 #include <V3d_Viewer.hxx>
 
+#include <QCoreApplication>
 #include <QHoverEvent>
 #include <QMouseEvent>
 #include <QOpenGLContext>
@@ -35,6 +37,10 @@
 #include <QWheelEvent>
 
 #include <algorithm>
+
+#if defined(Q_OS_LINUX)
+#include <GL/glx.h> // OpenCASCADE needs the X display and drawable of Qt's context
+#endif
 
 namespace fission::spike {
 
@@ -107,7 +113,15 @@ private:
         const Scene& scene = *m_snapshot.scene;
         TopExp::MapShapes(scene.shape, TopAbs_FACE, m_faces);
 
+#if defined(Q_OS_LINUX)
+        // OpenCASCADE's GLX code must use the display and drawable Qt's context belongs to.
+        Display* xDisplay = glXGetCurrentDisplay();
+        occ::handle<Aspect_DisplayConnection> display =
+            xDisplay != nullptr ? new Aspect_DisplayConnection(reinterpret_cast<Aspect_XDisplay*>(xDisplay))
+                                : new Aspect_DisplayConnection();
+#else
         occ::handle<Aspect_DisplayConnection> display = new Aspect_DisplayConnection();
+#endif
         occ::handle<OpenGl_GraphicDriver> driver = new OpenGl_GraphicDriver(display, false);
         driver->ChangeOptions().buffersNoSwap = true;
         occ::handle<V3d_Viewer> viewer = new V3d_Viewer(driver);
@@ -122,6 +136,9 @@ private:
         occ::handle<OpenGl_Context> glContext = new OpenGl_Context();
         glContext->Init(true);
         m_window = new Aspect_NeutralWindow();
+#if defined(Q_OS_LINUX)
+        m_window->SetNativeHandle(static_cast<Aspect_Drawable>(glXGetCurrentDrawable()));
+#endif
         m_window->SetSize(1, 1);
         m_view->SetWindow(m_window, glContext->RenderingContext());
 
@@ -141,6 +158,9 @@ private:
 
         occ::handle<AIS_Shape> shape = new AIS_Shape(scene.shape);
         shape->Attributes()->SetFaceBoundaryDraw(true);
+        // same base color as prototype A (the AIS default material is orange brass)
+        shape->SetColor(Quantity_Color(0.62, 0.66, 0.72, Quantity_TOC_sRGB));
+        shape->SetMaterial(Graphic3d_MaterialAspect(Graphic3d_NameOfMaterial_Plastified));
         m_context->Display(shape, AIS_Shaded, 0, false);
         m_context->Deactivate();
         m_context->Activate(shape, AIS_Shape::SelectionMode(TopAbs_FACE));
@@ -163,6 +183,7 @@ private:
 AisViewport::AisViewport(QQuickItem* parent) : QQuickFramebufferObject(parent) {
     setAcceptedMouseButtons(Qt::AllButtons);
     setAcceptHoverEvents(true);
+    setMirrorVertically(true); // OpenGL framebuffers are bottom-up
     m_clock.start();
     auto scene = std::make_shared<Scene>(makeScene(runOptions().scene.toStdString()));
     if (scene->faceCount == 0) {
@@ -265,6 +286,15 @@ AisViewport::Snapshot AisViewport::takeSnapshot() {
 
 void AisViewport::reportFrame() {
     const qint64 now = m_clock.nsecsElapsed();
+    if (!runOptions().screenshot.isEmpty() && ++m_screenshotFrames == 30) {
+        QMetaObject::invokeMethod(
+            this,
+            [this] {
+                window()->grabWindow().save(runOptions().screenshot);
+                QCoreApplication::quit();
+            },
+            Qt::QueuedConnection);
+    }
     if (m_lastFrameNs != 0) {
         m_intervalsMs.push_back(double(now - m_lastFrameNs) / 1.0e6);
     }

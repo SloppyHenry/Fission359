@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Spike AP-0.4, prototype B: OpenCASCADE AIS viewer inside Qt Quick (OpenGL).
-//   viewport_b [--scene part|bench0.5|bench2|bench5] [--samples N]
+//   viewport_b [--scene part|bench0.5|bench2|bench5] [--samples N] [--screenshot FILE.png]
 
 #include "../common/run_options.h"
 
@@ -31,10 +31,12 @@ int main(int argc, char* argv[]) {
     parser.addOptions({
         {"scene", "part | bench0.5 | bench2 | bench5", "name", "part"},
         {"samples", "MSAA samples", "n", "4"},
+        {"screenshot", "Write a PNG after a few frames and quit", "file", ""},
     });
     parser.process(app);
     fission::spike::runOptions().scene = parser.value("scene");
     fission::spike::runOptions().samples = parser.value("samples").toInt();
+    fission::spike::runOptions().screenshot = parser.value("screenshot");
 
     QQmlApplicationEngine engine;
     engine.loadFromModule("ViewportB", "Main");
