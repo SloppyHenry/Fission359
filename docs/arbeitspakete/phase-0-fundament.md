@@ -83,7 +83,7 @@
 ---
 
 ### AP-0.2 Abhängigkeiten
-**Status:** in Arbeit · **Größe:** M · **Abhängigkeiten:** AP-0.1
+**Status:** Review · **Größe:** M · **Abhängigkeiten:** AP-0.1
 
 **Ziel:** Alle Kernbibliotheken sind reproduzierbar verfügbar.
 
@@ -95,13 +95,14 @@
 - Mini-Smoke-Test je Bibliothek (z. B. OCCT: Box erzeugen und Volumen prüfen; Manifold: Würfel minus Kugel)
 
 **Akzeptanzkriterien:**
-- [ ] Frischer Clone baut auf macOS und Ubuntu 24.04 ohne manuelle Schritte (außer Toolchain)
-  *(macOS: nachgewiesen aus frischem Klon mit leerem Zwischenspeicher; Debian 13 nachgewiesen; Ubuntu 24.04: siehe Abschlussvermerk)*
+- [x] Frischer Clone baut auf macOS und Ubuntu 24.04 ohne manuelle Schritte (außer Toolchain)
+  *(macOS: aus frischem Klon mit leerem Zwischenspeicher; Debian 13 nachgewiesen; Ubuntu 24.04 und macOS: in der CI aus
+  frischem Klon mit leerem Zwischenspeicher, `scripts/setup` und `cmake --preset`, siehe AP-0.3)*
 - [x] Alle Smoke-Tests grün
-- [ ] Alle Lizenzen im Inventar sind GPL-3.0-kompatibel (Prüfskript in der CI)
-  *(Prüfung und Test vorhanden und grün; die CI-Anbindung folgt in AP-0.3)*
+- [x] Alle Lizenzen im Inventar sind GPL-3.0-kompatibel (Prüfskript in der CI)
+  *(läuft in der CI-Stufe „Checks“ und als Test)*
 
-#### Abschlussvermerk (2026-10-12, Stand vor Abschluss des Ubuntu-24.04-Laufs)
+#### Abschlussvermerk (2026-10-12, ergänzt 2026-10-13)
 
 **Umgesetzt**
 - `vcpkg.json` (Manifest-Modus, feste Baseline `e456309491…` vom 2026-10-10) mit OpenCASCADE 8.0.1, Manifold 3.5.4,
@@ -142,9 +143,13 @@
 5. Optional (nur mit Docker): `scripts/tools/docker-ubuntu-check` prüft den Stand in einem Ubuntu-24.04-Container.
 
 **Bekannte Einschränkungen und Annahmen**
-- **Ubuntu 24.04** ist über den Container geprüft (Ergebnis siehe unten); Qt wird dort aus vcpkg gebaut und braucht
-  auf einem kleinen Rechner Stunden. Das passiert nur einmal je Zwischenspeicher.
-- **Binär-Cache:** Lokal der vcpkg-Standard (`~/.cache/vcpkg/archives`). Die Anbindung für die CI folgt in AP-0.3.
+- **Ubuntu 24.04:** Qt wird dort aus vcpkg gebaut (apt liefert nur Qt 6.4). Nachgewiesen im GitHub-Runner
+  `ubuntu-24.04` (siehe AP-0.3: kalt 2 h 11 min mit 4 Kernen, danach aus dem Zwischenspeicher). Ein zusätzlicher
+  Lauf im sauberen Container (`scripts/tools/docker-ubuntu-check`, 2 Kerne) ist noch nicht abgeschlossen und
+  prüft, ob `scripts/setup` auch ohne die vorinstallierten Pakete des Runners vollständig ist.
+- **Binär-Cache:** Lokal der vcpkg-Standard (`~/.cache/vcpkg/archives`); in der CI der GitHub-Zwischenspeicher
+  (siehe [ADR-0005](../adr/0005-ci-pipeline-und-zwischenspeicher.md)).
+- **Ein Qt statt zwei:** Host- und Ziel-Triplet sind gleich; sonst baut vcpkg Qt ein zweites Mal vollständig.
 - **OCCT-Module:** Der Port schaltet Draw und Dokumentation bereits ab; Visualisierung, DataExchange und
   ApplicationFramework bleiben an, weil der Viewport-Spike (AP-0.4, Prototyp B) und STEP-Farben sie brauchen.
   Gelinkt werden nur drei Module. Weiter verkleinern nach AP-0.4.
@@ -292,7 +297,8 @@
 
 **Offen und Folge-Arbeiten**
 - **Entscheidung für dich:** Export-Winkel von 0,5° auf 5° ändern (Architektur § 6, [R16](../06-rueckfragen.md)).
-- CI-Nachweis (Definition of Done: baut auf beiden Plattformen in der CI): folgt, sobald AP-0.3 grün läuft.
+- CI-Nachweis (Definition of Done): erbracht. Alle 42 Fälle laufen in der CI auf macOS und Ubuntu 24.04 grün
+  (`debug-asan` und `release`).
 - Nicht geprüft: große Modelle, fremde STEP-Dateien, variabler Abrundungsradius, Aushöhlen mit mehreren
   offenen Flächen, Systemschriften, Mehr-Thread-Booleans (siehe Bericht, „Grenzen“).
 - Aushöhlen (AP-2.6): Konstruktion mit innerem Körper für eigene Formen, Plausibilitätsprüfung für alles andere;
