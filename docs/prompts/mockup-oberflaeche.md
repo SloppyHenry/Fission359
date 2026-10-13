@@ -42,7 +42,7 @@ führt durch Ablauf A. Mindestens diese Zustände:
    Ein-Klick-Knöpfen, roter Geistergeometrie und einem ⚠-Eintrag im Rezept. **Kein modaler Dialog.**
 5. **Befehlssuche** (⌘K): „runde ecken“ → Abrunden, „hohl“ → Aushöhlen, „schraube“ → Bohrung.
 6. **Baukasten „Karte“:** Schrittleiste Format → Hintergrund → Motive → Text → Feinschliff → Drucken.
-7. **Hell- und Dunkelmodus** sowie ein Umschalter **Deutsch / English**.
+7. **Dunkelmodus als Standard**, Umschalter zum Hellmodus, sowie ein Umschalter **Deutsch / English**.
 
 ## Verbindliche Regeln (aus dem Projekt, nicht verhandelbar)
 - Aufbau wie UX-Konzept §1: Werkzeuggruppen oben (höchstens 8, Alltagsnamen), **Rezept links**
@@ -60,9 +60,21 @@ führt durch Ablauf A. Mindestens diese Zustände:
   Tastaturbedienung, Schrift mindestens 12 pt, „Bewegung reduzieren“ respektieren.
 
 ## Gestaltung
-Ruhig, freundlich, modern: viel Weißraum, eine Akzentfarbe, abgerundete Ecken, klare Typografie
-(Systemschrift oder Inter). Modelle wirken wie gedruckt (matter Kunststoff, weicher Schatten aufs Bett,
-feine Kantenlinien). Animationen 150–250 ms. Farbwerte als Tokens definieren, auch für den Dunkelmodus.
+**Wunsch des Product Owners: dunkel und modern, eine Mischung angelehnt an Photoshop und Blender.**
+- **Dunkel ist der Standard** (der Hellmodus bleibt als Umschalter). Ruhige, abgestufte Grautöne für
+  Flächen und Leisten, die 3D-Ansicht als dunkelste Fläche, damit die Modelle leuchten.
+- **Angelehnt an Photoshop:** schlanke, klar getrennte Seitenleisten (Rezept, Eigenschaften, Ebenen-artige
+  Körperliste), eine ruhige Optionsleiste oben unter der Werkzeuggruppen-Leiste, kompakte Zahlenfelder mit
+  Reglern, einklappbare Bereiche.
+- **Angelehnt an Blender:** großer 3D-Bereich mit Raster und farbigen Achsen, ViewCube bzw. Achsen-Gizmo
+  oben rechts, Wertblase beim Ziehen, dezente Overlays, Hover-Hervorhebung mit Akzentfarbe.
+- **Eigenständig bleiben:** keine Marken, Logos oder 1:1-Kopien dieser Programme; Begriffe nur aus dem
+  Glossar, nichts von Blenders Fachsprache. Das Programm soll sich für Einsteiger freundlich anfühlen,
+  nicht wie ein Profi-Werkzeug mit hundert Knöpfen.
+- **Eine Akzentfarbe** (z. B. ein warmes Orange oder ein klares Blau, begründe deine Wahl), abgerundete
+  Ecken, klare Typografie (Systemschrift oder Inter), Kontrast nach WCAG AA.
+- Modelle wirken wie gedruckt (matter Kunststoff, weicher Schatten aufs Bett, feine Kantenlinien).
+  Animationen 150–250 ms. Farbwerte als Tokens definieren, auch für den Hellmodus.
 
 ## Varianten
 Liefere **zwei Varianten der Arbeitsansicht** zum Umschalten und vergleiche sie in einer kurzen Tabelle

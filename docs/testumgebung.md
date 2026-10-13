@@ -1,8 +1,9 @@
 # Testumgebung
 
-Stand: 2026-10-12 (AP-0.2). Zugangsdaten, Hostnamen und Schlüssel stehen bewusst **nicht** hier.
-Es gibt zwei Linux-Testrechner; der zweite („kleiner Server“) ist seit AP-0.2 der Standard-Testrechner, weil
-der erste vorübergehend nicht erreichbar war.
+Stand: 2026-10-13 (AP-0.4). Zugangsdaten, Hostnamen und Schlüssel stehen bewusst **nicht** hier.
+Es gibt drei Linux-Testrechner. **Testrechner C** (Ubuntu 26.04 mit RTX 3060) ist seit AP-0.4 der
+Standard-Testrechner, vor allem wegen der echten GPU für die Viewport-Messungen. B bleibt für die
+Ubuntu-24.04-Container-Prüfung. A war zuletzt nicht erreichbar.
 
 ## macOS (Entwicklungsrechner)
 
@@ -87,3 +88,23 @@ Dort liefert apt nur Qt 6.4, also baut vcpkg Qt selbst. Der Zwischenspeicher lie
 | Plattform | Umfang | Dauer |
 |---|---|---|
 | Mac (Apple Silicon, alle Kerne) | alle Bibliotheken ohne Qt (System-Qt) | rund 15 Minuten |
+
+## Linux-Testrechner C: Ubuntu 26.04 mit RTX 3060 (per SSH, geteilt)
+
+| | |
+|---|---|
+| Distribution | Ubuntu 26.04.1 LTS, Kernel 7.0, x86_64 |
+| Hardware | 24 Threads, 15 GB RAM (davon meist nur ca. 5 GB frei), 16 GB Swap |
+| Grafik | NVIDIA GeForce RTX 3060 (12 GB), proprietärer Treiber 595.91, Vulkan 1.4 |
+| Sitzungen | KDE Plasma (Wayland); beim Anmeldebildschirm, keine Desktop-Sitzung aktiv |
+| Compiler | GCC (Ubuntu 26.04), CMake, Ninja, Git, Python 3 vorhanden |
+| Werkzeuge | `vulkaninfo`, `glxinfo`, `eglinfo`, `Xvfb`; `sudo` ohne Passwort |
+
+**Der Rechner betreibt dauerhaft andere Dienste** (Docker-Container und ein lokaler Sprachmodell-Server, der
+rund 9,7 GB der 12 GB Grafikspeicher belegt). Deshalb gilt:
+
+- Builds mit `FISSION_JOBS=4` und `nice -n 19` starten, auf den Arbeitsspeicher achten (nur ca. 5 GB frei).
+- **Grafikspeicher:** nur etwa 2,4 GB sind frei. Die Viewport-Prototypen müssen mit dieser Grenze
+  auskommen; Messwerte können schwanken, wenn der Sprachmodell-Server gerade rechnet.
+- Fremde Container und Prozesse werden nicht angefasst; eigene Container und Volumes tragen den Präfix `fission3d-`.
+- Messungen ohne Bildschirm per SSH (Offscreen); ein Fenstertest am Bildschirm macht der Product Owner.
