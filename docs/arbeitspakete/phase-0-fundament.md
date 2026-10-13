@@ -281,7 +281,8 @@
 
 **Offen und Folge-Arbeiten**
 - ~~Entscheidung des Product Owners zu ADR-0002~~ erledigt (2026-10-13: Option A); Architektur § 5 ist angepasst.
-- Messung auf der integrierten Intel-Grafik (Testrechner B) läuft; Ergebnis wird im Bericht ergänzt.
+- ~~Messung auf der integrierten Intel-Grafik (Testrechner B)~~ erledigt (2026-10-13): Intel HD 620, Vulkan,
+  2 Mio. Dreiecke mit 165 Bildern/s, Auswahl 6 ms; Budget erfüllt, Revisionskriterium nicht ausgelöst (Bericht, Abschnitt „Linux-Testrechner B“).
 - B eingebettet im Fenster mit echter GPU prüfen (Mac: von dir; Linux: Desktop-Sitzung nötig).
 - Für A noch zu bauen: Kanten-/Eckenauswahl, SSAO, Silhouetten, Griffe, Test mit einem echten STEP-Modell.
 

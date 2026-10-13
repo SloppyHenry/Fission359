@@ -16,7 +16,8 @@ und wurden mit denselben Szenen gemessen:
 ## Kurzfassung
 
 1. **Beide erfüllen das Budget** (60 Bilder/s bei 2 Mio. Dreiecken, Auswahl unter 16 ms). Auf dem M1
-   (Metal) zeichnet A 2 Mio. Dreiecke mit 163 Bildern/s, B mit 130; die Auswahl dauert 1–2 ms.
+   (Metal) zeichnet A 2 Mio. Dreiecke mit 163 Bildern/s, B mit 130; die Auswahl dauert 1–2 ms. Auch A auf
+   der integrierten Intel HD 620 (Vulkan) schafft 2 Mio. Dreiecke mit 165 Bildern/s, Auswahl 6 ms.
 2. **Die Leistung entscheidet nicht.** Die Unterschiede liegen bei Optik, Abhängigkeiten und Risiko.
 3. **A hat die bessere Zukunftssicherheit:** Es läuft auf Metal und Vulkan, B ist an OpenGL gebunden
    (auf macOS von Apple als veraltet eingestuft) und zwingt ganz Qt Quick auf den OpenGL-Modus.
@@ -41,8 +42,8 @@ und wurden mit denselben Szenen gemessen:
 - **Auswahl** ist die Zeit von der Mausposition bis zur Flächen-Nummer (A: Zeichnen eines 1-Pixel-Bildes
   und Zurücklesen; B: `MoveTo`).
 - **Rechner:** Mac (Apple M1, macOS), Linux-Testrechner C (Ubuntu 26.04, NVIDIA RTX 3060, geteilt mit einem
-  Sprachmodell-Server). Der Test auf der integrierten Intel-Grafik (Testrechner B) läuft noch (siehe
-  Abschnitt „Offene Messung“).
+  Sprachmodell-Server) und Linux-Testrechner B (Debian 13, integrierte Intel HD Graphics 620, nur
+  Prototyp A).
 
 ## Messwerte
 
@@ -69,6 +70,29 @@ A mit Metal (GPU-Zeit je Bild: 0,46 / 1,84 / 5,77 / 12,1 ms), B mit OpenGL. Ohne
 
 Die Grafikkarte teilt sich dort den Speicher mit einem Sprachmodell-Server (9,7 GB belegt); er war während
 der Messung untätig.
+
+### Linux-Testrechner B (Intel HD Graphics 620, Vulkan, nur Prototyp A)
+
+Der schwächste Zielfall: integrierte Grafik der Kaby-Lake-Generation (2017, 24 Ausführungseinheiten),
+Mesa-Treiber, 1920 × 1080, 4× MSAA, 120 Bilder nach 10 Aufwärmbildern. Gemessen über ein virtuelles Display (Xvfb)
+auf der echten Grafik; der Benchmark meldet den Gerätenamen, es war nicht der Software-Renderer.
+
+| Szene | Dreiecke | Bilder/s | Bildzeit (Mittel / p95) | GPU-Zeit | Auswahl (Mittel / p95) |
+|---|---|---|---|---|---|
+| part | 6 140 | 277 | 3,6 / 4,1 ms | 2,9 ms | 0,26 / 0,38 ms |
+| bench0.5 | 519 350 | 175 | 5,7 / 7,6 ms | 5,0 ms | 4,3 / 4,4 ms |
+| bench2 | 2 015 078 | 165 | 6,1 / 6,6 ms | 5,5 ms | 5,6 / 6,5 ms |
+| bench5 | 5 006 534 | 85 | 11,7 / 12,3 ms | 11,2 ms | 10,1 / 11,1 ms |
+
+- **Budget erfüllt:** 2 Mio. Dreiecke mit 165 Bildern/s (Ziel: 60), Auswahl unter 7 ms (Ziel: 16 ms). Auch
+  5 Mio. Dreiecke bleiben mit 85 Bildern/s über dem Ziel.
+- **Mit Bild-Auslesen** (der Vergleichswert zu B) liegt die Bildzeit auf dieser Grafik bei 13–17 ms,
+  fast unabhängig von der Szene: das Zurücklesen von 1920 × 1080 Pixeln kostet hier mehr als das Zeichnen. Das
+  betrifft nur den Messmodus (Screenshots, Tests); ein Fenster liest nicht zurück.
+- **Grenzen der Aussage:** gemessen ohne Fenster und ohne Bildschirmaufbau durch den Desktop (Compositor,
+  Vsync); die Auswahl wächst hier deutlich mit der Dreiecksanzahl (0,3 → 10 ms), weil jeder Auswahl-Durchlauf
+  das ganze Modell zeichnet. Bei sehr großen Modellen auf schwacher Grafik braucht die Auswahl daher
+  Vereinfachung (grobe Netze für die Auswahl oder Auswahl nur nach Bewegungsende), siehe Risiko 6.
 
 ### Was die Zahlen sagen
 
@@ -124,7 +148,11 @@ der Messung untätig.
    STEP-Modell folgen.
 4. **Eine Messung je Konfiguration** ohne Streuung. Die Größenordnungen sind eindeutig, die Nachkommastellen
    nicht.
-5. **Offene Messung:** Intel HD Graphics 620 (Testrechner B) für die „integrierte GPU“ aus der Architektur.
+5. ~~**Offene Messung:** Intel HD Graphics 620~~ erledigt am 13.10.2026: Budget erfüllt (siehe Abschnitt
+   „Linux-Testrechner B“). Nicht geprüft bleibt eine AMD-Grafik und der Betrieb im Fenster mit Desktop.
+6. **Auswahl auf schwacher Grafik:** 10 ms bei 5 Mio. Dreiecken auf der Intel HD 620 liegt unter dem Budget,
+   aber mit wenig Reserve. Vor Phase 1 ist eine Vereinfachung für die Auswahl (grobes Netz oder Auswahl
+   ohne Anti-Aliasing, nur bei Bewegungspausen) einzuplanen.
 
 ## So probierst du es aus
 

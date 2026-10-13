@@ -1,6 +1,6 @@
 # ADR-0002: Viewport-Technologie
 
-- **Status:** angenommen (Product Owner, 2026-10-13); Nachmessung auf integrierter Intel-Grafik steht noch aus
+- **Status:** angenommen (Product Owner, 2026-10-13); Nachmessung auf integrierter Intel-Grafik bestanden (2026-10-13)
 - **Datum:** 2026-10-13
 - **Arbeitspaket:** AP-0.4
 
@@ -24,7 +24,8 @@ macOS (Metal) und Linux (Wayland/X11, Vulkan/OpenGL), vollständig testbar. Tech
 Wir wählen **Option A (Qt RHI)**, weil
 
 - beide Optionen das Leistungsbudget erfüllen (M1: 2 Mio. Dreiecke mit 163 Bildern/s, Auswahl unter 2 ms;
-  RTX 3060: 5 Mio. mit 496 Bildern/s), die Leistung also nicht trennt;
+  RTX 3060: 5 Mio. mit 496 Bildern/s), die Leistung also nicht trennt; A erfüllt es auch auf der
+  integrierten Intel HD 620 (2 Mio. Dreiecke mit 165 Bildern/s, Auswahl 6 ms);
 - A unabhängig von OpenGL ist und damit den Wegfall von OpenGL auf macOS überlebt, B nicht;
 - A die Optik der Architektur (Bett, Schatten, Kanten, später SSAO) in unseren eigenen Shadern liefert;
 - A sich vollständig headless messen und testen lässt (Metal, Vulkan), was für die CI wichtig ist;
@@ -37,8 +38,9 @@ Wir wählen **Option A (Qt RHI)**, weil
 - Qt-Version wird über vcpkg festgenagelt, damit sich die RHI-Schnittstelle nicht unbemerkt ändert; ein
   Qt-Update ist ein bewusster Schritt mit Test der Ansicht.
 - **Revisionskriterium:** Wenn A für Kanten-/Eckenauswahl oder SSAO deutlich mehr als geplant kostet oder die
-  Bildrate auf integrierter Grafik das Budget verfehlt (Test auf Intel HD 620 steht aus), wird B oder der
-  Hybrid neu bewertet.
+  Bildrate auf integrierter Grafik das Budget verfehlt, wird B oder der Hybrid neu bewertet. Der Test auf
+  Intel HD 620 (2026-10-13) hat das Budget erfüllt; bei 5 Mio. Dreiecken liegt die Auswahl dort mit 10 ms
+  nahe am Limit (Vereinfachung für die Auswahl einplanen).
 
 ## Belege
 - [Bericht mit Messwerten und Bildern](../spikes/viewport-technologie.md)

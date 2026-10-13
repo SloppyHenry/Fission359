@@ -77,6 +77,15 @@ Nicht verändert: Treiber, Kernel, Systemdienste, Firewall, Benutzer.
   `scripts/tools/docker-ubuntu-check`.
 - Eigene Container und Volumes tragen den Präfix `fission3d-`; fremde Container werden nicht angefasst.
 
+### Zugriff auf die Intel-Grafik (13.10.2026)
+
+Der Benutzer war nicht in der Gruppe `render`, Vulkan sah deshalb nur den Software-Renderer. Mit Freigabe des
+Product Owners wurde er in die Gruppe `render` aufgenommen (`usermod -aG render`; wirkt ab der nächsten
+SSH-Verbindung, laufende Dienste sind nicht betroffen). Vulkan-Messung ohne Bildschirm:
+`QT_QPA_PLATFORM=xcb xvfb-run -a -s "-screen 0 1920x1080x24" viewport_a_bench --backend vulkan …`
+(mit `offscreen` lässt sich unter Qt keine Vulkan-Instanz anlegen). Das Gerät steht im Messergebnis
+(`"device"`); bei `llvmpipe` wäre die Messung wertlos.
+
 ### Ubuntu 24.04 (Zielplattform) per Container
 
 `scripts/tools/docker-ubuntu-check` baut und testet einen frischen Stand in einem `ubuntu:24.04`-Container.
