@@ -45,21 +45,10 @@ step "Installiere in das AppDir / install into the AppDir"
 rm -rf "$APPDIR"
 cmake --install "$BUILD_DIR" --prefix "$APPDIR/usr"
 
-# Finds qmake of the Qt that was used to build (the Qt plugin of linuxdeploy asks it for paths).
-find_qmake() {
-    local candidate
-    for candidate in \
-        "$FISSION_QT_PREFIX/bin/qmake6" "$FISSION_QT_PREFIX/bin/qmake" \
-        "$FISSION_QT_PREFIX/lib/qt6/bin/qmake6" /usr/lib/qt6/bin/qmake6 \
-        "$(command -v qmake6 || true)"; do
-        if [ -n "$candidate" ] && [ -x "$candidate" ]; then
-            echo "$candidate"
-            return 0
-        fi
-    done
-    return 1
-}
-QMAKE="$(find_qmake)" || die "qmake (Qt 6) nicht gefunden / not found"
+# linuxdeploy's Qt plugin asks qmake where Qt lives; vcpkg's Qt has none, so CMake writes a
+# shim that answers from the paths it found.
+QMAKE="$BUILD_DIR/qmake-shim"
+[ -x "$QMAKE" ] || die "qmake-shim fehlt / missing (cmake neu ausführen / reconfigure)"
 export QMAKE
 
 # AppImages need FUSE to run; build machines and containers often have none, so unpack instead.

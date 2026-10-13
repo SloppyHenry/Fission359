@@ -53,10 +53,11 @@ DEPLOY_LOG="$OUT_DIR/macdeployqt.log"
     || { tail -n 20 "$DEPLOY_LOG"; die "macdeployqt ist fehlgeschlagen / failed"; }
 say "  Protokoll / log: $DEPLOY_LOG"
 
-# The offscreen platform plugin lets the packaged app run without a display (CI, tests).
+# The offscreen platform plugin lets the packaged app run without a display (CI, tests). The
+# build copies it into the bundle already; this covers a bundle from an older build.
 mkdir -p "$APP/Contents/PlugIns/platforms"
 if [ -f "$FISSION_QT_PLUGINS/platforms/libqoffscreen.dylib" ]; then
-    cp -f "$FISSION_QT_PLUGINS/platforms/libqoffscreen.dylib" "$APP/Contents/PlugIns/platforms/"
+    cp -n "$FISSION_QT_PLUGINS/platforms/libqoffscreen.dylib" "$APP/Contents/PlugIns/platforms/" || true
 fi
 
 # All Mach-O files of the bundle (executables, dylibs, plugins).
