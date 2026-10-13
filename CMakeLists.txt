@@ -49,6 +49,12 @@ add_subdirectory(src/interaction)
 add_subdirectory(src/ui)
 add_subdirectory(apps/fission3d)
 
+# Throw-away prototypes of the spike work packages (AP-0.4). Off by default.
+option(FISSION_BUILD_SPIKES "Build the spike prototypes in spikes/" OFF)
+if(FISSION_BUILD_SPIKES)
+  add_subdirectory(spikes/viewport)
+endif()
+
 if(FISSION_BUILD_TESTS)
   enable_testing()
   add_subdirectory(tests)

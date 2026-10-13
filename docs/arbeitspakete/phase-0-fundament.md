@@ -232,7 +232,7 @@
 ---
 
 ### AP-0.4 Spike: Viewport-Technologie
-**Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-0.2
+**Status:** in Arbeit · **Größe:** L · **Abhängigkeiten:** AP-0.2
 
 **Ziel:** Fundierte Entscheidung zwischen eigenem Renderer auf **Qt RHI** und **OCCT AIS/V3d**.
 
