@@ -81,8 +81,8 @@ Every pull request runs `.github/workflows/ci.yml`:
   and UBSan) and as `release`, with Qt from vcpkg.
 - **clang-tidy** runs on the changed files only and reports findings as annotations (advisory).
 
-The first run on a fresh repository builds all libraries (hours). Later runs restore the cache;
-a weekly scheduled run keeps it alive. If CI is red only on one platform, the logs and the
+The first run on a fresh repository builds all libraries (about two hours). Later runs restore the
+cache and take a few minutes; a weekly scheduled run keeps it alive. If CI is red only on one platform, the logs and the
 smoke-test screenshot are attached to the run as artifacts.
 
 ## UI texts

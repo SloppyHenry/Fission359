@@ -166,7 +166,7 @@
 ---
 
 ### AP-0.3 CI-Pipeline
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-0.2
+**Status:** Review · **Größe:** M · **Abhängigkeiten:** AP-0.2
 
 **Umfang:**
 - GitHub Actions (oder Forgejo/GitLab, siehe Rückfragen): Jobs `macos-arm64` und `ubuntu-24.04` × `debug-asan`, `release`
@@ -175,8 +175,52 @@
 - Status-Badges im README
 
 **Akzeptanzkriterien:**
-- [ ] Pull Requests zeigen Build- und Test-Status beider Plattformen
-- [ ] Ein warmer CI-Lauf dauert < 15 Minuten
+- [x] Pull Requests zeigen Build- und Test-Status beider Plattformen
+- [x] Ein warmer CI-Lauf dauert < 15 Minuten (gemessen: 3 min 22 s)
+
+#### Abschlussvermerk (2026-10-13)
+
+**Umgesetzt**
+- `.github/workflows/ci.yml` mit drei Stufen: **Checks** (Format mit clang-format 21, SPDX-Köpfe, Schichtregeln im
+  Quelltext, Lizenzen und Lizenzinventar), **Libraries** (baut die Fremdbibliotheken und füllt den Zwischenspeicher,
+  je ein Job pro Betriebssystem) und **Build** (macOS arm64 und Ubuntu 24.04, je `debug-asan` und `release`: bauen und
+  alle Tests).
+- Zwischenspeicher: vcpkg-Archive (Schlüssel aus `vcpkg.json` und Triplets) und ccache. Gespeichert wird nur auf
+  `main`, nicht in Pull Requests. Ein wöchentlicher Lauf (montags) hält den Speicher am Leben, denn GitHub löscht
+  Einträge nach 7 Tagen ohne Nutzung.
+- clang-tidy läuft in Pull Requests nur auf geänderten Dateien und meldet als Hinweis (blockiert nicht).
+- Ergebnisse der Läufe (Protokolle, Fenster-Screenshot) hängen als Download am Lauf.
+- Dependabot hält die Aktionen aktuell (Aktionen sind auf Commit-Hashes festgenagelt).
+- Das README zeigt das CI-Abzeichen; `CONTRIBUTING.md` beschreibt die Pipeline.
+- [ADR-0005](../adr/0005-ci-pipeline-und-zwischenspeicher.md): Aufbau und Entscheidungen.
+
+**Wie getestet**
+- Erster Lauf auf einem leeren Zwischenspeicher: alle 7 Jobs grün, **2 h 11 min** (Bibliotheken je ca. 75 min,
+  Bau und Tests je ca. 2 min).
+- Zweiter, warmer Lauf: alle Jobs grün, **3 min 22 s**.
+- Pull-Request-Probe: dieser Vermerk kam selbst über einen Pull Request; die Statusanzeige beider Plattformen
+  erschien dort.
+
+**Unterwegs gefundene Probleme (jetzt behoben)**
+- macOS-Runner: `autoconf`, `automake`, `libtool` fehlten (eine Qt-Abhängigkeit braucht sie).
+- Ubuntu-Runner: `libltdl-dev` und die `libxcb*-dev`-Pakete fehlten.
+- vcpkg baute Qt zweimal (zusätzlich eine volle „Host“-Variante mit ICU, OpenSSL, PostgreSQL). Host- und
+  Ziel-Triplet sind jetzt gleich: ein schlankes Qt, spart Stunden und Systempakete.
+- Das schlanke Qt brauchte `dnslookup`, sonst fehlte auf macOS `libresolv` beim Linken.
+
+**So probierst du es aus**
+1. Auf github.com/SloppyHenry/Fission3D den Reiter **Actions** öffnen: Dort stehen die Läufe, grün = in Ordnung.
+2. Auf der Startseite zeigt das Abzeichen „CI“ den Stand von `main`.
+3. Bei einem Pull Request stehen unten die Prüfungen („Checks“ und die vier Build-Jobs); ein grüner Haken heißt,
+   dass Bauen und alle Tests auf beiden Systemen bestehen.
+
+**Einschränkungen und Folge-Arbeiten**
+- Ein leerer Zwischenspeicher kostet etwa 2 Stunden; das passiert nach Änderungen an `vcpkg.json` bzw. wenn der
+  Speicher abgelaufen ist. Aktuell belegt er ca. 1,2 GB von 10 GB.
+- `main` ist noch nicht geschützt (Prüfungen sind nicht erzwungen). Empfehlung: Schutzregel setzen, sobald du
+  mit Pull Requests arbeiten willst.
+- clang-tidy blockiert noch nicht; nach einer Lernphase ohne Fehlalarme kann es zur Pflicht werden.
+- Die Presets `debug` und `release` ohne Sanitizer laufen in der CI nicht (nur `debug-asan` und `release`).
 
 ---
 
