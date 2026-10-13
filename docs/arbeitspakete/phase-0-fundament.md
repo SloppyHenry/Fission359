@@ -350,7 +350,7 @@
 ---
 
 ### AP-0.6 Spike: Persistente Referenzen (Topological Naming)
-**Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-0.5
+**Status:** Review · **Größe:** L · **Abhängigkeiten:** AP-0.5
 
 **Ziel:** Ein tragfähiges Konzept nachweisen, *bevor* das Feature-System gebaut wird. Das ist das größte Architekturrisiko.
 
@@ -360,8 +360,61 @@
 - Vergleich mit OCAF/TNaming (OCCT-eigen) und der FreeCAD-1.0-Lösung
 
 **Akzeptanzkriterien:**
-- [ ] Alle Szenarien behalten die richtige Referenz oder melden ehrlich „braucht Hilfe“, ohne stille Fehlzuordnung
-- [ ] ADR-0003 „Persistente Referenzen“ mit gewähltem Ansatz
+- [x] Alle Szenarien behalten die richtige Referenz oder melden ehrlich „braucht Hilfe“, ohne stille Fehlzuordnung (Szenarien, 7 böse Fälle und 1 494 Verweise aus 421 Zufallsänderungen: 0 still falsch)
+- [x] ADR-0003 „Persistente Referenzen“ mit gewähltem Ansatz ([ADR-0003](../adr/0003-persistente-referenzen.md), Status „vorgeschlagen“, wartet auf das OK des Product Owners)
+
+#### Abschlussvermerk (2026-10-14)
+
+**Umgesetzt**
+- Prototyp in `tests/naming/` (kein Produktionscode): semantische Namen je Feature, Namensweitergabe über die
+  Kernel-Historie, Kanten nach ihren zwei Flächen benannt, Verweise mit Aussehen, Auflösung in drei Stufen
+  (Name, klare Ähnlichkeit, „braucht Hilfe“), Gedächtnis für verbrauchte Elemente. Vier Mini-Features:
+  Quader, Extrudieren eines Linienzugs, Bohrung, Abrunden.
+- Szenarien aus dem AP (15 Verweise), 3 Familien böser Fälle (7 Auflösungen), Zufallsprobe (421 Änderungen,
+  1 494 Verweise, Quader und Skizzen-Körper), Bausteine einzeln abschaltbar (`[sensitivity]`).
+- Praxistest mit OCAF/TNaming (5 Szenarien), FreeCAD 1.0 nur anhand der Dokumentation verglichen.
+- Bericht [docs/spikes/persistente-referenzen.md](../spikes/persistente-referenzen.md), ADR-0003, Architektur
+  § 3.4 ergänzt, Zeile „Persistente Referenzen“ in `scripts/test`.
+- Zusätzlich: OCCT-Module TKCAF/TKLCAF/TKCDF nur für die Tests verlinkt (`FISSION_OCCT_OCAF_TARGETS`);
+  keine neue Abhängigkeit im Programm, nichts in THIRD_PARTY_NOTICES.md nötig.
+
+**Wie getestet**
+- Mac (arm64, Debug): alle 81 Tests grün, darunter 16 Tests dieses APs (rund 20 s).
+- Linux-Testrechner C (Ubuntu 26.04, x86_64, Debug mit AddressSanitizer/UBSan): alle 81 Tests grün, darunter 16 dieses APs; 1 481 Verweise aus 419 Zufallsänderungen, 0 still falsch (andere Kernel-Ablehnungen als auf dem Mac, Details im Bericht)
+- CI: siehe Pull Request (Mac und Ubuntu 24.04, `debug-asan` und `release`).
+- Wahrheitswert der Zufallsprobe kommt aus geometrischen Abfragen mit den Modell-Parametern, nie aus den Namen.
+
+**So probierst du es aus**
+1. Im Projektordner `scripts/test` ausführen. In der Liste steht eine Zeile „Persistente Referenzen: …
+   nichts still falsch zugeordnet“.
+2. Bericht lesen: `docs/spikes/persistente-referenzen.md` (Kurzfassung ganz oben, danach Tabellen).
+3. Die Zahlen selbst sehen: `build/macos-debug/tests/naming/fission_naming_tests` (unter Linux
+   `build/linux-debug/...`). Am Ende steht die Tabelle „Persistent references: result per group“.
+4. Mehr Zufall: `FISSION_NAMING_CHAINS=100 build/macos-debug/tests/naming/fission_naming_tests "[random]"`.
+5. Sehen, was jeder Baustein bringt: `… fission_naming_tests "[sensitivity]"` (ca. 2 Minuten).
+
+**Wichtigste Befunde** (Details im Bericht)
+1. Das Konzept trägt: 0 stille Fehler, 93 % automatisch richtig, 6 % zu Recht „braucht Hilfe“, 0,2 % unnötig.
+2. Die Zufallsprobe fand einen Fall, den die Szenarien nicht hatten (Abrundung verbraucht eine Kante, eine
+   fast gleiche Kante daneben gewinnt die Ähnlichkeitssuche). Behoben durch das Gedächtnis für verbrauchte
+   Elemente; ohne es gibt es 8 stille Fehler.
+3. Die großzügige Variante („⚠ bitte prüfen“) bringt keinen zusätzlichen richtigen Treffer, aber 9 bis 33
+   falsche mit Warnung: nicht bauen.
+4. OCAF/TNaming löst die einfachen Szenarien, hat aber einen stillen Fehler bei „Plätze tauschen“, braucht
+   viel Buchführung, hat keine Ähnlichkeitssuche und ein Speicherleck (OCCT 8.0.1, `TNaming_Builder::Select`).
+
+**Offen und Folge-Arbeiten**
+- ADR-0003 braucht das OK des Product Owners (Status „vorgeschlagen“).
+- Nicht geprüft: Fasen, Aushöhlen, Muster, Spiegeln, Text, Booleans mehrerer Körper, Verschmelzen gleicher
+  Flächen, Laufzeit großer Körper (Zwischenspeicher für Signaturen nötig). Die Zufallsprobe muss in AP-2.10
+  mit den echten Features wiederholt werden; dort auch die Regel „klar durch Lage“ erneut messen.
+- Annahmen: Skizzen sind einfache Linienzüge mit festen Segment-Nummern (ohne PlaneGCS); die Wahrheitsregel
+  der Zufallsprobe lautet „die Identität folgt dem Feature“, ein Verweis folgt also einer Skizzenseite, die sich
+  um weniger als 45° dreht.
+- Der Standard-Zufallsgenerator von C++ liefert auf Mac und Linux andere Folgen; die Probe nutzt deshalb einen
+  eigenen, damit beide dieselben Ketten prüfen.
+- Lehre: Ein Header-Name `features.h` im Include-Pfad kollidiert unter Linux mit der System-Datei
+  `<features.h>` (der Prototyp heißt deshalb `recipe.h`).
 
 ---
 

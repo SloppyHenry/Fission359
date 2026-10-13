@@ -265,4 +265,22 @@ FISSION_NAMING_VERBOSE=1 …            # jede unnötige Hilfe mit den Punktzahl
 
 ## Prüfung auf Mac und Linux
 
-(wird nach dem Lauf ergänzt)
+| | Mac (arm64, Debug) | Linux (x86_64, Debug + AddressSanitizer/UBSan) |
+|---|---|---|
+| Tests dieses APs | 16 von 16 grün | 16 von 16 grün (gesamter Lauf 81 von 81) |
+| Zufallsänderungen (angewendet) | 421 | 419 |
+| Verweise geprüft | 1 494 | 1 481 |
+| ✔ automatisch richtig | 1 396 (93,4 %) | 1 398 (94,4 %) |
+| Hilfe zu Recht | 95 | 79 |
+| Hilfe unnötig | 3 | 4 |
+| **still falsch** | **0** | **0** |
+| Kernel lehnt Operation ab | 7 | 15 |
+
+- **Dieselben Ketten, andere Zahlen:** Die Folge der Zufallsänderungen ist auf beiden Plattformen identisch
+  (eigener Generator). Die Zahlen weichen trotzdem ab, weil OpenCASCADE bei einigen Abrundungen auf Linux
+  anders entscheidet (dort lehnt der Kernel mehr Operationen ab, vor allem Abrundungen an Lochrändern). Das
+  Ergebnis des Spikes ändert das nicht; es erinnert daran, dass Verhalten des Kernels plattformabhängig ist und
+  die Suite auf beiden laufen muss (macht die CI).
+- Der OCAF-Praxistest läuft auf beiden mit denselben Ergebnissen. Unter AddressSanitizer meldet er das
+  Speicherleck in OpenCASCADE (siehe oben); es ist im Test ausgenommen.
+- Die Prüfung auf Ubuntu 24.04 (Zielplattform) macht die CI.
