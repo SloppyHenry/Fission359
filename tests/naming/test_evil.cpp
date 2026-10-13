@@ -27,7 +27,7 @@ void expectHelp(const std::string& group, const Body& body, const Reference& sav
 
 } // namespace
 
-TEST_CASE("naming evil: a face is split in two", "[naming][evil]") {
+TEST_CASE("evil: a face is split in two", "[naming][evil]") {
     const BoxDims dims{40, 20, 10};
     Recipe recipe{makeBoxFeature("F1", dims.dx, dims.dy, dims.dz)};
     const Body box = bodyAfter(recipe);
@@ -59,7 +59,7 @@ TEST_CASE("naming evil: a face is split in two", "[naming][evil]") {
     }
 }
 
-TEST_CASE("naming evil: a face disappears", "[naming][evil]") {
+TEST_CASE("evil: a face disappears", "[naming][evil]") {
     SECTION("a sketch point is removed, the side face of its segment is gone") {
         std::vector<SketchPoint> sketch = rectangleSketch(40, 20);
         Recipe recipe{makeExtrudeFeature("F1", sketch, 10.0)};
@@ -112,7 +112,7 @@ TEST_CASE("naming evil: a face disappears", "[naming][evil]") {
     }
 }
 
-TEST_CASE("naming evil: two equal elements change places", "[naming][evil]") {
+TEST_CASE("evil: two equal elements change places", "[naming][evil]") {
     SECTION("a mirrored sketch: the same segment id now stands on the opposite side") {
         std::vector<SketchPoint> sketch = rectangleSketch(40, 20);
         Recipe recipe{makeExtrudeFeature("F1", sketch, 10.0)};

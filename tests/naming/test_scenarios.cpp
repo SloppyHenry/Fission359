@@ -17,7 +17,7 @@ namespace {
 constexpr double kPi = 3.14159265358979323846;
 }
 
-TEST_CASE("naming: a box names its six faces and twelve edges", "[naming][basics]") {
+TEST_CASE("a box names its six faces and twelve edges", "[naming][basics]") {
     Recipe recipe{makeBoxFeature("F1", 40, 20, 10)};
     const Evaluation ev = evaluate(recipe);
     REQUIRE(ev.features[0].status == FeatureStatus::ok);
@@ -33,7 +33,7 @@ TEST_CASE("naming: a box names its six faces and twelve edges", "[naming][basics
     REQUIRE(ev.body.find(Kind::edge, "edge[F1/box/face:+X|F1/box/face:+Z]").size() == 1);
 }
 
-TEST_CASE("naming: box, round one edge, then change the height", "[naming][scenario]") {
+TEST_CASE("box, round one edge, then change the height", "[naming][scenario]") {
     BoxDims dims{40, 20, 10};
     Recipe recipe{makeBoxFeature("F1", dims.dx, dims.dy, dims.dz)};
     const Body box = bodyAfter(recipe);
@@ -96,7 +96,7 @@ ExtrudeHole makeExtrudeHole() {
 
 } // namespace
 
-TEST_CASE("naming: sketch, extrude, drill into a side, extend the sketch", "[naming][scenario]") {
+TEST_CASE("sketch, extrude, drill into a side, extend the sketch", "[naming][scenario]") {
     ExtrudeHole m = makeExtrudeHole();
 
     SECTION("the hole is cut into the right side wall") {
@@ -135,7 +135,7 @@ TEST_CASE("naming: sketch, extrude, drill into a side, extend the sketch", "[nam
     }
 }
 
-TEST_CASE("naming: insert a feature before an existing one", "[naming][scenario]") {
+TEST_CASE("insert a feature before an existing one", "[naming][scenario]") {
     const BoxDims dims{40, 20, 10};
     Recipe recipe{makeBoxFeature("F1", dims.dx, dims.dy, dims.dz)};
     const Body box = bodyAfter(recipe);
@@ -182,8 +182,7 @@ TEST_CASE("naming: insert a feature before an existing one", "[naming][scenario]
     }
 }
 
-TEST_CASE("naming: rim of a hole survives moving the hole and resizing the plate",
-          "[naming][scenario]") {
+TEST_CASE("rim of a hole survives moving the hole and resizing the plate", "[naming][scenario]") {
     BoxDims dims{60, 30, 10};
     Recipe recipe{makeBoxFeature("F1", dims.dx, dims.dy, dims.dz)};
     Body body = bodyAfter(recipe);
@@ -219,7 +218,7 @@ TEST_CASE("naming: rim of a hole survives moving the hole and resizing the plate
     }
 }
 
-TEST_CASE("naming: a replaced feature is found again by similarity", "[naming][scenario]") {
+TEST_CASE("a replaced feature is found again by similarity", "[naming][scenario]") {
     ExtrudeHole m = makeExtrudeHole();
     const Reference saved = m.recipe[1].refs[0];
     REQUIRE(saved.name == "F1/extrude/side[S1]");

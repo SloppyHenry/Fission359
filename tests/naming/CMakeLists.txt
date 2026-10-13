@@ -13,11 +13,13 @@ add_executable(fission_naming_tests
   report.cpp
   test_scenarios.cpp
   test_evil.cpp
-  test_random.cpp)
+  test_random.cpp
+  test_ocaf.cpp)
 
 target_link_libraries(fission_naming_tests PRIVATE
   Catch2::Catch2WithMain
-  ${FISSION_OCCT_TARGETS})
+  ${FISSION_OCCT_TARGETS}
+  ${FISSION_OCCT_OCAF_TARGETS})
 fission_apply_compiler_options(fission_naming_tests)
 
 # The sensitivity runs (same random chains with parts of the design switched off) take minutes;

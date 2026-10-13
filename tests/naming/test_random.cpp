@@ -660,26 +660,26 @@ void runChains(Strictness mode, bool extrude, bool requireSafe = true, int chain
 
 } // namespace
 
-TEST_CASE("naming random: box, strict mode never assigns silently wrong", "[naming][random]") {
+TEST_CASE("random: box, strict mode never assigns silently wrong", "[naming][random]") {
     runChains(Strictness::strict, false);
 }
 
-TEST_CASE("naming random: box, lenient mode never assigns silently wrong", "[naming][random]") {
+TEST_CASE("random: box, lenient mode never assigns silently wrong", "[naming][random]") {
     runChains(Strictness::lenient, false);
 }
 
-TEST_CASE("naming random: sketch, strict mode never assigns silently wrong", "[naming][random]") {
+TEST_CASE("random: sketch, strict mode never assigns silently wrong", "[naming][random]") {
     runChains(Strictness::strict, true);
 }
 
-TEST_CASE("naming random: sketch, lenient mode never assigns silently wrong", "[naming][random]") {
+TEST_CASE("random: sketch, lenient mode never assigns silently wrong", "[naming][random]") {
     runChains(Strictness::lenient, true);
 }
 
 // How much does each part of the design contribute? The same random chains run with parts
 // switched off or with other limits. Only counted, nothing is required here except for the
 // default setting. The numbers go into docs/spikes/persistente-referenzen.md.
-TEST_CASE("naming sensitivity: effect of each design decision", "[naming][sensitivity][.]") {
+TEST_CASE("sensitivity: effect of each design decision", "[naming][sensitivity][.]") {
     struct Variant {
         const char* name;
         void (*apply)(Limits&);
