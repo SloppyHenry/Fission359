@@ -280,7 +280,11 @@ int main(int argc, char* argv[]) {
                          QImage::Format_RGBA8888);
             image = image.copy();
             if (rhi->isYUpInFramebuffer()) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
                 image = image.flipped(Qt::Vertical);
+#else
+                image = image.mirrored(false, true); // flipped() is new in Qt 6.9 (Debian 13 has 6.8)
+#endif
             }
             image.save(shot);
         }

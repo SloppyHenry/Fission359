@@ -5,7 +5,30 @@
 #   cmake -DFISSION_BUILD_SPIKES=ON ...
 # Both prototypes show the same OpenCASCADE scenes (common/) and print comparable measurements.
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS ShaderTools OpenGL GuiPrivate)
+find_package(Qt6 6.8 REQUIRED COMPONENTS ShaderTools OpenGL)
+find_package(Qt6 6.8 QUIET OPTIONAL_COMPONENTS GuiPrivate)
+if(NOT TARGET Qt6::GuiPrivate)
+  # Debian 13 ships the private headers (qt6-base-private-dev) but no CMake package for them.
+  # Fall back to the include directories next to the public ones.
+  get_target_property(_qt_gui_includes Qt6::Gui INTERFACE_INCLUDE_DIRECTORIES)
+  set(_qt_private_dirs "")
+  foreach(_dir IN LISTS _qt_gui_includes)
+    if(_dir MATCHES "/(QtGui)$")
+      get_filename_component(_root "${_dir}" DIRECTORY)
+      list(APPEND _qt_private_dirs
+        "${_root}/QtGui/${Qt6Gui_VERSION}" "${_root}/QtGui/${Qt6Gui_VERSION}/QtGui"
+        "${_root}/QtCore/${Qt6Gui_VERSION}" "${_root}/QtCore/${Qt6Gui_VERSION}/QtCore")
+    endif()
+  endforeach()
+  if(NOT _qt_private_dirs)
+    message(FATAL_ERROR "Qt private headers not found: install qt6-base-private-dev (or use vcpkg Qt)")
+  endif()
+  add_library(Qt6::GuiPrivate INTERFACE IMPORTED)
+  set_target_properties(Qt6::GuiPrivate PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${_qt_private_dirs}"
+    INTERFACE_LINK_LIBRARIES Qt6::Gui)
+  message(STATUS "Qt6::GuiPrivate: using private header directories ${_qt_private_dirs}")
+endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   find_package(OpenGL REQUIRED COMPONENTS GLX) # glXGetCurrentDisplay for prototype B
 endif()
