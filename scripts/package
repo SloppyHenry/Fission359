@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Baut Fission3D und erzeugt ein Installationspaket:
+#   macOS: ein .dmg (ad-hoc signiert)      Linux: ein AppImage (und mit --flatpak ein Flatpak)
+#
+#   scripts/package             optimierte Version bauen und paketieren
+#   scripts/package --flatpak   (Linux) zusätzlich ein Flatpak bauen
+#
+# Das Ergebnis liegt in build/package/. Anleitung zum Installieren: docs/paketierung.md
+
+set -u -o pipefail
+# shellcheck source=lib/common.sh
+. "$(dirname "$0")/lib/common.sh"
+
+WITH_FLATPAK=0
+for arg in "$@"; do
+    case "$arg" in
+        --flatpak) WITH_FLATPAK=1 ;;
+        --help|-h) sed -n '5,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) die "Unbekannte Option '$arg'. Siehe scripts/package --help" ;;
+    esac
+done
+
+OS="$(detect_os)"
+PRESET="$(preset_name release)"
+BUILD_DIR="$REPO_ROOT/build/$PRESET"
+OUT_DIR="$REPO_ROOT/build/package"
+LOG="$BUILD_DIR.log"
+
+need_command cmake
+need_command ninja
+apply_job_limit
+cd "$REPO_ROOT" || exit 1
+
+step "Baue Fission3D ($PRESET)"
+note "Fortschritt: tail -f build/$PRESET.log   (zweites Terminalfenster)"
+mkdir -p "$REPO_ROOT/build"
+if ! { cmake --preset "$PRESET" && cmake --build --preset "$PRESET" --target fission3d; } >"$LOG" 2>&1; then
+    fail "Das Bauen ist fehlgeschlagen. Die letzten Zeilen des Protokolls:"
+    tail -n 25 "$LOG" | sed 's/^/    /'
+    exit 1
+fi
+ok "Gebaut"
+# shellcheck source=/dev/null
+. "$BUILD_DIR/package-env.sh"
+
+step "Erzeuge das Paket"
+if [ "$OS" = "macos" ]; then
+    note "Das Bündeln von Qt dauert einige Minuten."
+    if ! "$REPO_ROOT/packaging/macos/package.sh" "$BUILD_DIR" "$OUT_DIR"; then
+        fail "Das Paketieren ist fehlgeschlagen."
+        exit 1
+    fi
+    ok "Fertig: $(ls "$OUT_DIR"/*.dmg)"
+    note "Installieren: Das Bild öffnen, Fission3D in 'Programme' ziehen, dann der Hinweis in"
+    note "'Installationshilfe' bzw. docs/paketierung.md (Gatekeeper-Umweg)."
+else
+    if ! "$REPO_ROOT/packaging/linux/package.sh" "$BUILD_DIR" "$OUT_DIR"; then
+        fail "Das Paketieren ist fehlgeschlagen."
+        exit 1
+    fi
+    ok "Fertig: $(ls "$OUT_DIR"/*.AppImage)"
+    note "Starten:  chmod +x <Datei>.AppImage && ./<Datei>.AppImage"
+    if [ "$WITH_FLATPAK" = "1" ]; then
+        step "Baue das Flatpak"
+        if ! "$REPO_ROOT/packaging/linux/flatpak/build.sh" "$OUT_DIR"; then
+            fail "Das Flatpak konnte nicht gebaut werden."
+            exit 1
+        fi
+        ok "Flatpak gebaut. Starten:  flatpak run $FISSION_APP_ID"
+    fi
+fi
