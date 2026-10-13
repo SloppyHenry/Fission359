@@ -91,6 +91,7 @@ CTEST_EXIT=$?
 PASSED=0
 FAILED=0
 GEO_TOTAL=0
+NAMING_TOTAL=0
 FAILED_NAMES=()
 while IFS= read -r line; do
     # Lines look like: "3/7 Test  #3: app_opens_window .... Passed  0.93 sec"
@@ -107,6 +108,14 @@ while IFS= read -r line; do
                                     fail "Konstruktionsfall: ${name#geometry: }" ;;
                     esac
                     continue ;;
+                "naming: "*)
+                    NAMING_TOTAL=$((NAMING_TOTAL + 1))
+                    case "$line" in
+                        *"Passed"*) PASSED=$((PASSED + 1)) ;;
+                        *)          FAILED=$((FAILED + 1)); FAILED_NAMES+=("$name")
+                                    fail "Referenz-Szenario: ${name#naming: }" ;;
+                    esac
+                    continue ;;
             esac
             case "$line" in
                 *"Passed"*) PASSED=$((PASSED + 1)); ok "$(describe_test "$name")" ;;
@@ -117,6 +126,10 @@ done <"$TEST_LOG"
 
 if [ "$GEO_TOTAL" -gt 0 ]; then
     ok "Geometrie-Kern: $GEO_TOTAL typische Konstruktionsfälle geprüft (Bericht: docs/spikes/kernel-robustheit.md)"
+fi
+
+if [ "$NAMING_TOTAL" -gt 0 ]; then
+    ok "Persistente Referenzen: $NAMING_TOTAL Szenarien, böse Fälle und Zufallsproben geprüft, nichts still falsch zugeordnet (Bericht: docs/spikes/persistente-referenzen.md)"
 fi
 
 say ""
