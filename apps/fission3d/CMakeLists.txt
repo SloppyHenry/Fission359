@@ -101,12 +101,17 @@ if(APPLE)
     XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${FISSION_APP_ID}")
   # vcpkg bundles the platform plugin "cocoa" next to the executable and the loader then looks
   # only there. The offscreen plugin lets tests and CI run the app without a display.
+  # The copy has to use the Qt libraries of the bundle, not the Qt installation (relocate.py).
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
   add_custom_command(TARGET fission3d POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E make_directory
             "$<TARGET_BUNDLE_CONTENT_DIR:fission3d>/PlugIns/platforms"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}/platforms/libqoffscreen.dylib"
             "$<TARGET_BUNDLE_CONTENT_DIR:fission3d>/PlugIns/platforms/"
+    COMMAND "${Python3_EXECUTABLE}" "${FISSION_PACKAGING_DIR}/macos/relocate.py" --plugin
+            "$<TARGET_BUNDLE_DIR:fission3d>"
+            "$<TARGET_BUNDLE_CONTENT_DIR:fission3d>/PlugIns/platforms/libqoffscreen.dylib"
     VERBATIM)
   install(TARGETS fission3d BUNDLE DESTINATION .)
 else()

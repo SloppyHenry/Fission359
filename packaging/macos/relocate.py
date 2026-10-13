@@ -15,7 +15,9 @@ The main executable has the run path @executable_path/../Frameworks, which dyld 
 plugins and their dependencies. Anything still pointing outside the bundle afterwards is reported
 (and makes the exit code non-zero): that is a library macdeployqt could not find.
 
-Usage: relocate.py Fission3D.app
+Usage:
+  relocate.py Fission3D.app                      whole bundle (packaging)
+  relocate.py --plugin Fission3D.app plugin.dylib  one plugin that was copied in later (build)
 """
 
 import subprocess
@@ -59,7 +61,37 @@ def rpaths(path: Path) -> list[str]:
     return result
 
 
+def fix_plugin(app: Path, plugin: Path) -> int:
+    """Points a plugin at the Qt libraries inside the bundle (and nothing else).
+
+    A plugin copied in from the Qt installation keeps that installation's run paths, so it
+    would load a second copy of Qt next to the one the executable uses ("two sets of Qt
+    binaries"). Libraries that the bundle does not contain are left alone: then the bundle
+    uses the system Qt anyway and the plugin must keep using it, too.
+    """
+    frameworks = app / "Contents" / "Frameworks"
+    index = {p.name: "@rpath/" + str(p.relative_to(frameworks))
+             for p in frameworks.rglob("*") if is_macho(p)}
+    args: list[str] = []
+    for dep in dependencies(plugin):
+        if dep.startswith(("@", *SYSTEM_PREFIXES)) and not dep.startswith("@rpath/"):
+            continue
+        target = index.get(Path(dep).name)
+        if target is not None and target != dep:
+            args += ["-change", dep, target]
+    if any(Path(dep).name in index for dep in dependencies(plugin)):
+        for rpath in rpaths(plugin):
+            args += ["-delete_rpath", rpath]
+        args += ["-add_rpath", "@loader_path/" + "../" * len(plugin.relative_to(app / "Contents").parents[:-1])
+                 + "Frameworks"]
+    if args:
+        subprocess.run(["install_name_tool", *args, str(plugin)], check=True, capture_output=True)
+    return 0
+
+
 def main() -> int:
+    if sys.argv[1] == "--plugin":
+        return fix_plugin(Path(sys.argv[2]).resolve(), Path(sys.argv[3]).resolve())
     app = Path(sys.argv[1]).resolve()
     frameworks = app / "Contents" / "Frameworks"
     files = [p for p in sorted(app.rglob("*")) if is_macho(p)]
