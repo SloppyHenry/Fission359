@@ -34,7 +34,7 @@ Dieses Dokument beschreibt, **wie sich Fission3D anfühlt**. Es ist verbindlich 
 > Werkzeuggruppen dort als Palette am linken Rand der 3D-Ansicht. Wo Mockup und Text sich widersprechen,
 > ist das in [06-rueckfragen.md](06-rueckfragen.md) als offener Punkt vermerkt.
 
-- **3D-Ansicht dominiert.** Die Seitenleisten sind schmal und einklappbar. Auf einem 13"-Laptop hat die 3D-Ansicht mindestens 65 % der Fläche.
+- **3D-Ansicht dominiert.** Die Seitenleisten sind schmal und einklappbar. Auf einem 13"-Laptop hat die 3D-Ansicht mindestens 65 % der Fläche, spätestens im **Fokus-Modus** (beide Seitenleisten aus, Knopf am Ansichtswürfel oder ⇧F).
 - **Werkzeuggruppen oben:** höchstens 8 Gruppen mit Alltagsnamen. Ein Klick öffnet eine große, bebilderte Auswahl, keine Liste aus Mini-Icons.
 - **Rezept links:** der Verlauf als lesbare Sätze (siehe Abschnitt 4). Darunter die Liste der Körper mit Sichtbarkeit und Farbe.
 - **Eigenschaften rechts:** zeigt immer, *was ausgewählt ist* und *was man daran ändern kann*. Selten Gebrauchtes steckt hinter „▸ Mehr“.
@@ -65,7 +65,7 @@ Während des Ziehens zeigt eine **Wertblase** am Zeiger den aktuellen Wert.
 - **Achsen:** farbige Pfeile X/Y/Z zum Verschieben, Maßbänder entlang der Kanten (Klick oder Tippen ändert das Maß), Punkte auf den Flächen zum Strecken.
 - **Klassisch:** weiße Eck-Quadrate, Hebe-Pfeil und Maßkästchen, vertraut für Tinkercad-Umsteiger.
 
-Beide Arten lösen dieselben Commands aus und folgen denselben Regeln: Tippen ersetzt Ziehen, Maße ändern verzerrt nie, Rundungen und Löcher bleiben rund (§7). Die Wahl ändert nur die Darstellung, nie das Ergebnis.
+Beide Arten lösen dieselben Commands aus und folgen denselben Regeln: Tippen ersetzt Ziehen, Maße ändern verzerrt nie, Rundungen und Löcher bleiben rund (§7). Die Wahl ändert nur die Darstellung, nie das Ergebnis. Voreingestellt ist **Achsen**.
 
 ### 2.3 Präzision ohne Reibung
 - **Tippen ersetzt Ziehen.** Wer während eines Griffs eine Zahl tippt, ersetzt damit den Wert. `Enter` bestätigt, `Esc` bricht ab, `Tab` springt zum nächsten Maß (Breite → Tiefe → Höhe).
@@ -266,7 +266,7 @@ Die Texte stammen aus einem **Meldungskatalog** (siehe AP-2.14). Technische Kern
 - **Trackpad (macOS):** zwei Finger = drehen, Shift + zwei Finger = verschieben, Pinch = Zoom. Smart Zoom (Doppeltipp) zentriert auf die Fläche.
 - **ViewCube** oben rechts: klickbar, mit animierten Übergängen.
 - **Doppelklick auf eine Fläche:** Die Ansicht dreht sich senkrecht auf die Fläche.
-- `F` = alles zeigen, `Pos1`/`Home` = Startansicht, `1–7` = Standardansichten, `P` = Perspektive/Orthografisch.
+- `F` = alles zeigen, `⇧F` = Fokus-Modus (Seitenleisten aus und wieder an), `Pos1`/`Home` = Startansicht, `1–7` = Standardansichten, `P` = Perspektive/Orthografisch.
 - **3D-Maus (SpaceMouse):** später (Backlog).
 
 ---
@@ -276,6 +276,7 @@ Die Texte stammen aus einem **Meldungskatalog** (siehe AP-2.14). Technische Kern
 - **Erster Start:** Sprache, Drucker auswählen (bestimmt die Druckbettgröße), Maus-Stil, dann „Bist du neu hier? [Mission starten] [Einfach loslegen]“.
 - **Startbildschirm „Was möchtest du bauen?“:** Kacheln für Karte, Vase/Gefäß, Figur, Christbaumschmuck, Schild, Halterung, Box, Ersatzteil und Leer. Jede Kachel startet den passenden **Baukasten** oder bietet passende Missionen und Bausteine an. Es gibt keine starren Fertig-Vorlagen.
 - **Missionen:** geführte Mini-Projekte von 3 bis 10 Minuten. Schritte werden durch Hervorhebung erklärt. Das Programm **prüft den echten Modellzustand** („Super, der Quader ist 50 mm breit!“), statt nur „Weiter“-Klicks zu zählen.
+- **Lotse:** Eine Karte unten in der 3D-Ansicht zeigt den nächsten Missionsschritt. Er lässt sich jederzeit ein- und ausschalten (an der Karte oder unter Einstellungen). Er blendet nur Hilfe ein und aus, nie Werkzeuge oder Felder; es gibt also keinen getrennten Anfänger- und Profimodus (Design-Prinzip 8).
   1. Dein erster Schlüsselanhänger
   2. Ein Stern für den Weihnachtsbaum
   3. Eine Wandhalterung, die hält
@@ -324,6 +325,8 @@ UI-Texte verwenden ausschließlich die Begriffe in der mittleren Spalte. Englisc
 | – | Griffe: Achsen | Handles: Axes | Farbige Pfeile und Maßbänder am ausgewählten Körper |
 | – | Griffe: Klassisch | Handles: Classic | Eck-Quadrate und Maßkästchen, wie in Tinkercad |
 | – | Akzentfarbe | Accent colour | Die Farbe für Knöpfe und Markierungen, frei wählbar |
+| – | Lotse | Guide | Zeigt in Missionen den nächsten Schritt, ein- und ausschaltbar |
+| – | Fokus | Focus | Blendet die Seitenleisten aus, die 3D-Ansicht wird groß |
 | – | Streuen | Scatter | Ein Motiv zufällig über eine Fläche verteilen |
 
 ---

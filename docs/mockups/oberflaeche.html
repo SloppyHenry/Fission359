@@ -452,6 +452,8 @@ button.chip,.chip[role="button"]{cursor:pointer}
 .dlg-b h3 .hint{color:var(--amber);font-weight:600;display:inline-flex;align-items:center;gap:6px}
 .dlg-b h3 .hint::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber)}
 .purpose{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.purpose .pcard:nth-child(odd):last-child{grid-column:1/-1}
+.pcard .vtag{font-size:10.5px;margin-left:4px;vertical-align:1px}
 .pcard{display:flex;flex-direction:column;gap:4px;padding:12px;border-radius:9px;border:1px solid var(--line);background:var(--raise);text-align:left;color:var(--fg)}
 .pcard .ic{width:18px;height:18px;color:var(--fg-3);margin-bottom:4px}
 .pcard b{font-size:13px}
@@ -580,7 +582,7 @@ const $ = s => document.querySelector(s);
 const S = {
   scene:'start', lang:'de', theme:'dark', handles:'achsen', mode:'gefuehrt', display:'farbe', tool:'verschieben',
   cam:{a:-30,e:36}, flyout:null, search:null, holeOn:true, hide:{}, edits:{}, lotse:true, focus:false,
-  leftTab:'koerper', startPage:'home', accent:'#2563D9', back:null, rightTab:'objekt', exp:{purpose:'druck', fmt:'3mf', fixed:false},
+  leftTab:'koerper', startPage:'home', allProps:false, accent:'#2563D9', back:null, rightTab:'objekt', exp:{purpose:'druck', fmt:'3mf', fixed:false},
   typed:null, timers:[], info:false, kitStep:2, editDim:false, errorFixed:false,
   kit:{size:'a6',art:'flach',ori:'quer',form:'rund',flaeche:'glatt',durch:'keine',rahmen:'schlicht',
        mart:'erhaben',lib:'weihnachten',ttxt:'frohe',tform:'gerade',tart:'erhaben',farbe:'ams',schema:'klassisch',loch:'keins',fill:'voll'}
@@ -594,6 +596,8 @@ const fmt = n => n.toLocaleString(S.lang==='de'?'de-DE':'en-US',{maximumFraction
 let UID = 0; const uid = p => (p||'u')+(++UID);
 
 const ICONS = {
+  game:'M6 8h12a4 4 0 0 1 4 4v2a3 3 0 0 1-5.4 1.8L15 14H9l-1.6 1.8A3 3 0 0 1 2 14v-2a4 4 0 0 1 4-4z M7 10.5v3 M5.5 12h3 M16 11h.01 M18 13h.01',
+  globe:'M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18z M3 12h18 M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z',
   cube:'M12 3l8 4.5v9L12 21l-8-4.5v-9z M12 12l8-4.5 M12 12v9 M12 12L4 7.5',
   pencil:'M4 20l4-1L19 8l-3-3L5 16z M14 7l3 3',
   round:'M5 20v-8a7 7 0 0 1 7-7h8 M5 5h3 M5 5v3',
@@ -936,13 +940,6 @@ function renderTabs(){
     <span class="spacer"></span>
     <button class="iconbtn" data-act="mock" data-msg="${T('Rückgängig (⌘Z)','Undo (⌘Z)')}" aria-label="${T('Rückgängig','Undo')}">${icon('undo')}</button>
     <button class="iconbtn" data-act="mock" data-msg="${T('Wiederholen (⇧⌘Z)','Redo (⇧⌘Z)')}" aria-label="${T('Wiederholen','Redo')}">${icon('redo')}</button>
-    <div class="mode"><span>${T('Oberfläche','Interface')}</span>
-      <div class="segc" role="group" aria-label="${T('Oberfläche','Interface')}">
-        <button data-act="mode" data-arg="gefuehrt" aria-pressed="${S.mode==='gefuehrt'}">${icon('compass')} ${T('Geführt','Guided')}</button>
-        <button data-act="mode" data-arg="experte" aria-pressed="${S.mode==='experte'}">${icon('sliders')} ${T('Experte','Expert')}</button>
-      </div>
-      <span class="vtag" title="${T('Aus der Vorlage übernommen. Achtung: Design-Prinzip 8 sagt „kein getrennter Anfänger- und Profimodus“. Entscheidung offen.','Taken from the reference. Note: design principle 8 says “no separate beginner and pro mode”. Decision open.')}">?</span>
-    </div>
     <button class="btn primary" data-act="scene" data-arg="export">${icon('upload')} ${T('Exportieren','Export')}</button>`;
 }
 
@@ -1024,11 +1021,11 @@ const swatches=cur=>`<div class="swatches">${FILAMENTS().map(([k,l])=>`<button s
 const showMe=()=>`<button class="linkbtn" data-act="mock" data-msg="${T('„Zeig mir wie“ spielt eine kurze Animation ab (im Mockup nicht enthalten).','“Show me how” plays a short animation (not included in this mockup).')}">${icon('play')} ${T('Zeig mir wie','Show me how')}</button>`;
 const ohead=(ic,name,sub)=>`<div class="ohead"><span class="oi">${icon(ic)}</span><div style="min-width:0"><b>${name}</b><small>${sub}</small></div><button class="iconbtn" data-act="mock" data-msg="${T('Weitere Aktionen: umbenennen, duplizieren, löschen …','More actions: rename, duplicate, delete …')}" aria-label="${T('Weitere Aktionen','More actions')}">${icon('more')}</button></div>`;
 function disclose(){
-  if(S.mode==='experte') return `<div class="sec"><div class="sec-h"><h3>${T('Drehung','Rotation')}</h3></div><div class="f3">${field('f-rx','X','0','°',{})}${field('f-ry','Y','0','°',{})}${field('f-rz','Z','0','°',{})}</div></div>
+  if(S.allProps) return `<div class="sec"><div class="sec-h"><h3>${T('Drehung','Rotation')}</h3><button class="linkbtn" data-act="allprops">${T('Weniger zeigen','Show less')}</button></div><div class="f3">${field('f-rx','X','0','°',{})}${field('f-ry','Y','0','°',{})}${field('f-rz','Z','0','°',{})}</div></div>
     <div class="sec"><div class="sec-h"><h3>${T('Benannte Maße','Named measures')}</h3><button class="linkbtn" data-act="mock" data-msg="${T('Neues benanntes Maß (⌘M)','New named measure (⌘M)')}">${icon('plus')} ${T('Neu','New')}</button></div>
       <div class="row"><span class="mono">${T('Breite','Width')}</span><span class="mono">50 mm</span></div><div class="row"><span class="mono">${T('Lochabstand','HoleOffset')}</span><span class="mono">${T('Breite','Width')}/10</span></div></div>`;
   return `<div class="sec"><div class="disclose">${T('Drehung, benannte Maße und Feinheit sind ausgeblendet, damit du dich aufs Wesentliche konzentrieren kannst.','Rotation, named measures and fineness are hidden so you can focus on the essentials.')}
-    <button class="btn sm" data-act="mode" data-arg="experte">${icon('sliders')} ${T('Alle Einstellungen zeigen','Show all settings')}</button></div></div>`;
+    <button class="btn sm" data-act="allprops">${icon('sliders')} ${T('Alle Einstellungen zeigen','Show all settings')}</button></div></div>`;
 }
 function boxProps(w,d,h,r,active,extra=''){
   return ohead('cube',T('Quader','Box'),T('Körper in „','Body in “')+DOCNAME()+T('“','”'))+`
@@ -1367,7 +1364,7 @@ function lotseHtml(){
     <div style="min-width:0"><div class="lk"><b>${T('Lotse','Guide')}</b>${T('Mission „Dein erster Schlüsselanhänger“ · Schritt','Mission “Your first key tag” · step')} ${n} ${T('von','of')} 8</div>
       <div class="dots">${[...Array(8)].map((_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</div>
       <h4>${L[0]}</h4><p>${L[1]}</p>${extra}</div>
-    <div class="la"><button class="btn sm amber" data-act="mock" data-msg="${T('„Zeig mir wie“ spielt eine kurze Animation am eigenen Modell ab.','“Show me how” plays a short animation on your own model.')}">${icon('play')} ${T('Zeig mir wie','Show me how')}</button><button class="btn sm" data-act="lotse">${T('Verstanden','Got it')}</button></div></div>`;
+    <div class="la"><button class="btn sm amber" data-act="mock" data-msg="${T('„Zeig mir wie“ spielt eine kurze Animation am eigenen Modell ab.','“Show me how” plays a short animation on your own model.')}">${icon('play')} ${T('Zeig mir wie','Show me how')}</button><button class="btn sm" data-act="lotse">${T('Verstanden','Got it')}</button><button class="iconbtn" data-act="mode" data-arg="experte" aria-label="${T('Lotse ausschalten','Switch guide off')}" title="${T('Lotse ausschalten (wieder an: Einstellungen)','Switch guide off (back on: Settings)')}">${icon('x')}</button></div></div>`;
 }
 function viewChrome(){
   const disp=[['draht','wire',T('Drahtgitter','Wireframe')],['volumen','solid',T('Volumen','Solid')],['farbe','color',T('Farben','Colours')]];
@@ -1471,7 +1468,7 @@ function renderCube(){
   [['x',[1,0,0],'var(--ax-x)'],['y',[0,1,0],'var(--ax-y)'],['z',[0,0,1],'var(--ax-z)']].forEach(([n,d,col])=>{const e=A.p(...d);
     s+=`<line x1="${r1(o[0])}" y1="${r1(o[1])}" x2="${r1(e[0])}" y2="${r1(e[1])}" style="stroke:${col}" stroke-width="2" stroke-linecap="round"/><text x="${r1(e[0]+(e[0]-o[0])*0.35)}" y="${r1(e[1]+(e[1]-o[1])*0.35)}" font-size="12" font-weight="700" style="fill:${col}" text-anchor="middle" dominant-baseline="central">${n.toUpperCase()}</text>`;});
   $('#cube').innerHTML=`<svg width="112" height="134" viewBox="0 0 112 134" role="group" aria-label="${T('Ansichtswürfel','View cube')}">${s}</svg>
-    <div class="cube-btns"><button class="iconbtn" data-act="view" data-arg="home" aria-label="${T('Startansicht (Pos1)','Home view (Home)')}" title="${T('Startansicht (Pos1)','Home view (Home)')}">${icon('home')}</button><button class="iconbtn" data-act="focus" aria-pressed="${S.focus}" aria-label="${T('Fokus: Seitenleisten ausblenden (F)','Focus: hide side panels (F)')}" title="${T('Fokus: Seitenleisten ausblenden (F)','Focus: hide side panels (F)')}">${icon('max')}</button></div>`;
+    <div class="cube-btns"><button class="iconbtn" data-act="view" data-arg="home" aria-label="${T('Startansicht (Pos1)','Home view (Home)')}" title="${T('Startansicht (Pos1)','Home view (Home)')}">${icon('home')}</button><button class="iconbtn" data-act="focus" aria-pressed="${S.focus}" aria-label="${T('Fokus: Seitenleisten ausblenden (⇧F)','Focus: hide side panels (⇧F)')}" title="${T('Fokus: Seitenleisten ausblenden (⇧F)','Focus: hide side panels (⇧F)')}">${icon('max')}</button></div>`;
 }
 let camAnim=0;
 function animateCam(to){
@@ -1663,50 +1660,77 @@ function previewSvg(w,h){
     const m={w:50,d:20,h:4,r:4,text:true,hole:true,holeX:S.exp.fixed?-19.5:-20,holeDia:5};
     let s=SVGDEFS(3)+drawKeychain(C,m);
     // amber dashed ring: hole too close to the edge (print check hint)
-    if(!S.exp.fixed){ const ring=circle(m.holeX,0,4.6,40).map(p=>[p[0],p[1],m.h]); s+=`<polygon points="${ptsAttr(C,ring)}" fill="none" style="stroke:var(--amber)" stroke-width="2" stroke-dasharray="5 4"/>`; }
+    if(!S.exp.fixed && S.exp.purpose==='druck'){ const ring=circle(m.holeX,0,4.6,40).map(p=>[p[0],p[1],m.h]); s+=`<polygon points="${ptsAttr(C,ring)}" fill="none" style="stroke:var(--amber)" stroke-width="2" stroke-dasharray="5 4"/>`; }
     return `<svg viewBox="0 0 ${w} ${h}" aria-label="${T('Vorschau: Schlüsselanhänger','Preview: key tag')}" role="img">${s}</svg>`;
   } finally { S.display=keep; }
 }
 function renderExport(){
   const E=$('#exp'); E.hidden=S.scene!=='export'; if(E.hidden) return;
-  const P=[['druck','printer',T('3D-Druck','3D printing'),T('Für den Slicer, mit Farben','For the slicer, with colours')],['cad','cad',T('Anderes CAD-Programm','Other CAD program'),T('Exakte Flächen, z. B. für Fusion','Exact faces, e.g. for Fusion')],
-    ['teilen','download',T('Nur die Form','Shape only'),T('Für ältere Programme und Webseiten','For older programs and websites')],['bild','image',T('Bild','Picture'),T('PNG zum Zeigen','PNG to show off')]];
-  const F={druck:[['3mf','3MF',T('Farben, Einheiten und Druckbett bleiben erhalten.','Colours, units and print bed are kept.'),true],['stl','STL',T('Nur die Form, eine Farbe. Geht überall.','Shape only, one colour. Works everywhere.')]],
-    cad:[['step','STEP',T('Exakte runde Flächen, ohne Dreiecke.','Exact round faces, no triangles.'),true],['3mf','3MF',T('Wenn das Programm kein STEP kann.','If the program cannot read STEP.')]],
-    teilen:[['stl','STL',T('Die bekannteste Form-Datei.','The best-known shape file.'),true],['obj','OBJ',T('Mit Farben für Grafikprogramme.','With colours for graphics programs.')]],
-    bild:[['png','PNG',T('Bild der aktuellen Ansicht.','Picture of the current view.'),true]]}[S.exp.purpose];
+  const P=[['druck','printer',T('3D-Druck','3D printing'),T('Eigener Drucker oder Druckdienst','Own printer or print service')],
+    ['spiel','game',T('Spiel-Engine','Game engine'),T('Godot, Unity, Unreal, Roblox …','Godot, Unity, Unreal, Roblox …'),true],
+    ['andere','cad',T('Andere Programme','Other programs'),T('CAD, Weitergabe an andere','CAD, sharing with others')],
+    ['web','globe',T('Web & AR','Web & AR'),T('Auf Webseiten oder am Handy ansehen','View on websites or on a phone'),true],
+    ['bild','image',T('Bild','Picture'),T('PNG zum Zeigen','PNG to show off')]];
+  const F={druck:[['3mf','3MF',T('Farben, Einheiten und Druckbett bleiben erhalten.','Colours, units and print bed are kept.'),true],['stl','STL',T('Der Klassiker: nur die Form, eine Farbe.','The classic: shape only, one colour.')]],
+    spiel:[['glb','glTF / GLB',T('Modern und kompakt, mit Farben als Materialien. Godot und Unity lesen es direkt.','Modern and compact, colours as materials. Godot and Unity read it directly.'),true],['fbx','FBX',T('Für ältere Pipelines, z. B. Unreal.','For older pipelines, e.g. Unreal.')],['obj','OBJ',T('Form und einfache Materialien.','Shape and simple materials.')]],
+    andere:[['step','STEP',T('Exakte runde Flächen, für CAD-Programme wie Fusion.','Exact round faces, for CAD programs like Fusion.'),true],['3mf','3MF',T('Mit Farben, für die meisten 3D-Programme.','With colours, for most 3D programs.')],['stl','STL',T('Geht überall, nur die Form.','Works everywhere, shape only.')],['obj','OBJ',T('Für Grafikprogramme wie Blender.','For graphics programs like Blender.')]],
+    web:[['glb','glTF / GLB',T('Für Webseiten und Android.','For websites and Android.'),true],['usdz','USDZ',T('Für AR auf iPhone und iPad.','For AR on iPhone and iPad.')]],
+    bild:[['png','PNG',T('Bild der aktuellen Ansicht, Hintergrund durchsichtig.','Picture of the current view, transparent background.'),true]]}[S.exp.purpose];
+  const pu=S.exp.purpose, tri=({grob:'1 100',mittel:'3 200',fein:'9 800'})[S.exp.fine||'mittel'];
   if(!F.some(f=>f[0]===S.exp.fmt)) S.exp.fmt=F[0][0];
   const fx=S.exp.fixed;
   E.innerHTML=`<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="exph">
-    <div class="dlg-h"><span class="oi">${icon('upload')}</span><div><b id="exph">${T('Druckcheck & Export','Print check & export')}</b><small>${T('Schlüsselanhänger · 1 Körper · 50 × 20 × 5,5 mm','Key tag · 1 body · 50 × 20 × 5.5 mm')}</small></div>
+    <div class="dlg-h"><span class="oi">${icon('upload')}</span><div><b id="exph">${pu==='druck'?T('Druckcheck & Export','Print check & export'):T('Exportieren','Export')}</b><small>${T('Schlüsselanhänger · 1 Körper · 50 × 20 × 5,5 mm','Key tag · 1 body · 50 × 20 × 5.5 mm')}</small></div>
       <button class="iconbtn" data-act="scene" data-arg="loch" aria-label="${T('Schließen','Close')}">${icon('x')}</button></div>
     <div class="dlg-b">
       <div><h3>${T('Wofür ist die Datei?','What is the file for?')}</h3>
-        <div class="purpose" role="group">${P.map(([k,ic,b,sp])=>`<button class="pcard" data-act="purpose" data-arg="${k}" aria-pressed="${S.exp.purpose===k}">${icon(ic)}<b>${b}</b><span>${sp}</span></button>`).join('')}</div>
+        <div class="purpose" role="group">${P.map(([k,ic,b,sp,vor])=>`<button class="pcard" data-act="purpose" data-arg="${k}" aria-pressed="${S.exp.purpose===k}" ${vor?`title="${T('Vorschlag aus der Vorlage, noch nicht in Architektur und Roadmap','Proposal from the reference, not yet in architecture and roadmap')}"`:''}>${icon(ic)}<b>${b}${vor?' <span class="vtag">'+T('Vorschlag','Proposal')+'</span>':''}</b><span>${sp}</span></button>`).join('')}</div>
         <h3>${T('Format','Format')}</h3>
         <div role="radiogroup" aria-label="${T('Format','Format')}">${F.map(([k,n,d,rec])=>`<button class="fmt" role="radio" aria-checked="${S.exp.fmt===k}" data-act="fmt" data-arg="${k}"><span class="rd"></span><span><b>${n}</b>${rec?`<span class="recm">${T('Empfohlen','Recommended')}</span>`:''}<span>${d}</span></span></button>`).join('')}</div>
       </div>
-      <div><h3>${T('Druckcheck','Print check')}${fx?'':`<span class="hint">${T('1 Hinweis','1 hint')}</span>`}</h3>
-        <div class="pchk"><span>${icon('ok')}</span><div><b>${T('Passt aufs Druckbett','Fits the print bed')}</b><p>${T('50 × 20 mm von 256 × 256 mm. Liegt flach auf.','50 × 20 mm of 256 × 256 mm. Lies flat.')}</p></div></div>
-        <div class="pchk"><span>${icon('ok')}</span><div><b>${T('Geschlossen und gültig','Closed and valid')}</b><p>${T('Keine Lücken, keine überlappenden Teile.','No gaps, no overlapping parts.')}</p></div></div>
-        <div class="pchk"><span>${icon('ok')}</span><div><b>${T('Keine Überhänge','No overhangs')}</b><p>${T('Druckt ohne Stützen.','Prints without supports.')}</p></div></div>
-        <div class="pchk ${fx?'done':'warn'}"><span>${icon(fx?'ok':'warn')}</span><div><b>${fx?T('Loch sitzt jetzt 5,5 mm vom Rand','Hole is now 5.5 mm from the edge'):T('Wand am Loch ist dünn','Wall at the hole is thin')}</b>
-          <p>${fx?T('Rückgängig mit ⌘Z.','Undo with ⌘Z.'):T('Zwischen Loch und Rand bleiben 0,8 mm. Mit Düse 0,4 mm sind das nur zwei Linien, der Ring kann abbrechen.','Only 0.8 mm remain between hole and edge. With a 0.4 mm nozzle that is just two lines, the ring may break.')}</p>
-          ${fx?'':`<div class="pa"><button class="btn sm amber" data-act="expfix">${T('Loch 0,5 mm nach innen','Move hole 0.5 mm inwards')}</button><button class="btn sm" data-act="scene" data-arg="loch">${T('Im Modell zeigen','Show in model')}</button><button class="btn sm" data-act="mock" data-msg="${T('Hinweis ausgeblendet. Er erscheint im Druckcheck weiter grau.','Hint hidden. It stays grey in the print check.')}">${T('So lassen','Leave it')}</button></div>`}</div></div>
-        <p style="font-size:12px;color:var(--fg-4);margin:8px 0 0"><span class="vtag">${T('Vorschlag','Proposal')}</span> ${T('Beispieltext für einen Druckcheck-Hinweis.','Sample text for a print check hint.')}</p>
-      </div>
+      <div>${checksHtml(fx)}</div>
       <div><h3>${T('Vorschau','Preview')}</h3>
         <div class="prev">${previewSvg(320,230)}</div>
-        ${fx?'':`<div class="legend"><i></i>${T('gelb gestrichelt: dünne Stelle','yellow dashed: thin spot')}</div>`}
-        <div class="pinfo"><div>${T('Größe','Size')}<b>50 × 20 × 5,5 mm</b></div><div>${T('Volumen','Volume')}<b>3,9 cm³</b></div><div>${T('Gewicht (PLA)','Weight (PLA)')}<b>≈ 4,8 g</b></div><div>${T('Druckzeit','Print time')}<b>≈ 22 min</b></div></div>
+        ${fx||pu!=='druck'?'':`<div class="legend"><i></i>${T('gelb gestrichelt: dünne Stelle','yellow dashed: thin spot')}</div>`}
+        ${pu==='druck'?`<div class="pinfo"><div>${T('Größe','Size')}<b>50 × 20 × 5,5 mm</b></div><div>${T('Volumen','Volume')}<b>3,9 cm³</b></div><div>${T('Gewicht (PLA)','Weight (PLA)')}<b>≈ 4,8 g</b></div><div>${T('Druckzeit','Print time')}<b>≈ 22 min</b></div></div>`
+          :pu==='spiel'||pu==='web'?`<div class="pinfo"><div>${T('Größe','Size')}<b>0,05 × 0,02 m</b></div><div>${T('Dreiecke','Triangles')}<b>≈ ${tri}</b></div><div>${T('Materialien','Materials')}<b>2</b></div><div>${T('Dateigröße','File size')}<b>≈ ${({grob:'60',mittel:'170',fein:'480'})[S.exp.fine||'mittel']} KB</b></div></div>`
+          :pu==='bild'?`<div class="pinfo"><div>${T('Bildgröße','Image size')}<b>1920 × 1080</b></div><div>${T('Hintergrund','Background')}<b>${T('durchsichtig','transparent')}</b></div></div>`
+          :`<div class="pinfo"><div>${T('Größe','Size')}<b>50 × 20 × 5,5 mm</b></div><div>${T('Körper','Bodies')}<b>3</b></div></div>`}
         <details class="adv" style="margin-top:10px"><summary>${T('Genauigkeit','Accuracy')}</summary><p style="font-size:12.5px;color:var(--fg-3);margin:0 0 10px">${T('Abweichung höchstens 0,01 mm, Winkel 5°. Runde Flächen bleiben rund, auch beim Loch.','Deviation at most 0.01 mm, angle 5°. Round faces stay round, including the hole.')}</p></details>
       </div>
     </div>
     <div class="dlg-f"><span class="path">${icon('folder')} ~/${T('Dokumente','Documents')}/${T('Schluesselanhaenger','Key-tag')}.${S.exp.fmt}</span><span class="note">${T('Gewicht und Druckzeit sind Schätzungen.','Weight and print time are estimates.')}</span><span class="spacer"></span>
       <button class="btn" data-act="scene" data-arg="loch">${T('Abbrechen','Cancel')}</button>
-      <button class="btn" data-act="mock" data-msg="${T('Gespeichert (Attrappe).','Saved (dummy).')}">${icon('download')} ${T('Speichern','Save')}</button>
-      ${S.exp.purpose==='druck'?`<button class="btn primary" data-act="mock" data-msg="${T('Öffnet den Slicer mit allen Farben (Attrappe).','Opens the slicer with all colours (dummy).')}">${icon('slicer')} ${T('Im Slicer öffnen','Open in Slicer')}</button>`:''}</div>
+      <button class="btn ${pu==='druck'?'':'primary'}" data-act="mock" data-msg="${T('Gespeichert (Attrappe).','Saved (dummy).')}">${icon('download')} ${T('Speichern','Save')}</button>
+      ${pu==='druck'?`<button class="btn primary" data-act="mock" data-msg="${T('Öffnet den Slicer mit allen Farben (Attrappe).','Opens the slicer with all colours (dummy).')}">${icon('slicer')} ${T('Im Slicer öffnen','Open in Slicer')}</button>`:''}</div>
   </div>`;
+}
+
+function checksHtml(fx){
+  const pu=S.exp.purpose, ok=(b,p)=>`<div class="pchk"><span>${icon('ok')}</span><div><b>${b}</b><p>${p}</p></div></div>`;
+  if(pu==='druck') return `<h3>${T('Druckcheck','Print check')}${fx?'':`<span class="hint">${T('1 Hinweis','1 hint')}</span>`}</h3>
+        ${ok(T('Passt aufs Druckbett','Fits the print bed'),T('50 × 20 mm von 256 × 256 mm. Liegt flach auf.','50 × 20 mm of 256 × 256 mm. Lies flat.'))}
+        ${ok(T('Geschlossen und gültig','Closed and valid'),T('Keine Lücken, keine überlappenden Teile.','No gaps, no overlapping parts.'))}
+        ${ok(T('Keine Überhänge','No overhangs'),T('Druckt ohne Stützen.','Prints without supports.'))}
+        <div class="pchk ${fx?'done':'warn'}"><span>${icon(fx?'ok':'warn')}</span><div><b>${fx?T('Loch sitzt jetzt 5,5 mm vom Rand','Hole is now 5.5 mm from the edge'):T('Wand am Loch ist dünn','Wall at the hole is thin')}</b>
+          <p>${fx?T('Rückgängig mit ⌘Z.','Undo with ⌘Z.'):T('Zwischen Loch und Rand bleiben 0,8 mm. Mit Düse 0,4 mm sind das nur zwei Linien, der Ring kann abbrechen.','Only 0.8 mm remain between hole and edge. With a 0.4 mm nozzle that is just two lines, the ring may break.')}</p>
+          ${fx?'':`<div class="pa"><button class="btn sm amber" data-act="expfix">${T('Loch 0,5 mm nach innen','Move hole 0.5 mm inwards')}</button><button class="btn sm" data-act="scene" data-arg="loch">${T('Im Modell zeigen','Show in model')}</button><button class="btn sm" data-act="mock" data-msg="${T('Hinweis ausgeblendet. Er erscheint im Druckcheck weiter grau.','Hint hidden. It stays grey in the print check.')}">${T('So lassen','Leave it')}</button></div>`}</div></div>
+        <p style="font-size:12px;color:var(--fg-4);margin:8px 0 0"><span class="vtag">${T('Vorschlag','Proposal')}</span> ${T('Beispieltext für einen Druckcheck-Hinweis.','Sample text for a print check hint.')}</p>`;
+  const fine=S.exp.fine||'mittel';
+  const fineRow=`<div class="pchk"><span>${icon('sliders')}</span><div><b>${T('Feinheit','Fineness')}</b><p>${T('Weniger Dreiecke laden schneller, mehr sehen runder aus. Rundungen bleiben rund, nur feiner oder gröber unterteilt.','Fewer triangles load faster, more look rounder. Roundings stay round, just divided more finely or coarsely.')}</p>
+          <div class="pa"><div class="segc" role="group" aria-label="${T('Feinheit','Fineness')}">${[['grob',T('Grob','Coarse')],['mittel',T('Mittel','Medium')],['fein',T('Fein','Fine')]].map(([k,l])=>`<button data-act="fine" data-arg="${k}" aria-pressed="${fine===k}">${l}</button>`).join('')}</div></div></div></div>`;
+  if(pu==='spiel') return `<h3>${T('Prüfung','Check')}</h3>
+        ${ok(T('Maßstab in Metern','Scale in metres'),T('Spiele rechnen in Metern. Fission3D rechnet um: 50 mm werden 0,05 m.','Games use metres. Fission3D converts: 50 mm become 0.05 m.'))}
+        ${ok(T('Farben werden Materialien','Colours become materials'),T('Weiß und Rot kommen als zwei Materialien an.','White and red arrive as two materials.'))}
+        ${ok(T('Steht auf dem Boden','Stands on the ground'),T('Der Nullpunkt liegt unten in der Mitte, wie Spiele es erwarten.','The origin sits at the bottom centre, as games expect.'))}${fineRow}`;
+  if(pu==='web') return `<h3>${T('Prüfung','Check')}</h3>
+        ${ok(T('Klein genug fürs Web','Small enough for the web'),T('Lädt auch über das Handynetz schnell.','Loads quickly even on mobile data.'))}
+        ${ok(T('Echte Größe in AR','True size in AR'),T('Am Handy erscheint der Anhänger 5 cm groß auf dem Tisch.','On the phone the tag appears 5 cm wide on the table.'))}${fineRow}`;
+  if(pu==='andere') return `<h3>${T('Prüfung','Check')}</h3>
+        ${ok(T('Einheit: Millimeter','Unit: millimetres'),T('Wird in der Datei mitgespeichert (außer bei STL).','Stored in the file (except STL).'))}
+        ${ok(T('Exakte Flächen','Exact faces'),T('Bei STEP bleiben Rundungen und Löcher exakte Kreise.','With STEP, roundings and holes stay exact circles.'))}
+        ${ok(T('Rezept bleibt hier','Recipe stays here'),T('Andere Programme bekommen nur das Ergebnis. Zum Weiterarbeiten die .fission-Datei behalten.','Other programs only get the result. Keep the .fission file to continue working.'))}`;
+  return `<h3>${T('Prüfung','Check')}</h3>${ok(T('Aktuelle Ansicht','Current view'),T('So wie du das Modell gerade siehst, ohne Griffe und Raster.','Exactly as you see the model now, without handles and grid.'))}`;
 }
 
 /* ======================= info drawer ======================= */
@@ -1733,10 +1757,10 @@ function renderInfo(){
   <ul><li>${T('„Szene“ heißt „Körper“, „Verlauf“ heißt „Rezept“ (Glossar).','“Scene” is “Bodies”, “History” is “Recipe” (glossary).')}</li>
    <li>${T('Kein Rendern, keine Spiel-Engine, keine cm-Einheit als Standard: Wir bauen für den 3D-Druck, in mm.','No rendering, no game engine, no cm default: we build for 3D printing, in mm.')}</li>
    <li>${T('Fehler und Druckcheck-Hinweise erscheinen am Modell, nicht als Fenster. Der Export-Assistent ist ein Fenster, weil Speichern keine Geometrie-Operation ist.','Errors and print check hints appear on the model, not as windows. The export assistant is a window because saving is not a geometry operation.')}</li></ul>
-  <h3>${T('Offene Entscheidungen','Open decisions')}</h3>
-  <ul><li>${T('„Geführt | Experte“ oben rechts stammt aus der Vorlage. Design-Prinzip 8 sagt: kein getrennter Anfänger- und Profimodus. Hier blendet „Experte“ nur den Lotsen aus, alle Werkzeuge bleiben gleich.','“Guided | Expert” top right comes from the reference. Design principle 8 says: no separate beginner and pro mode. Here “Expert” only hides the guide, all tools stay the same.')}</li>
-   <li>${T('Welche Griffe beim ersten Start voreingestellt sind (Vorschlag: Achsen; die Frage „Maus-Stil wie Tinkercad“ beim ersten Start könnte Klassisch wählen).','Which handles are preset on first start (proposal: Axes; choosing “mouse style like Tinkercad” on first start could pick Classic).')}</li>
-   <li>${T('Fläche der 3D-Ansicht (siehe unten). Mit „Fokus“ (Knopf unter dem Ansichtswürfel, Taste F) verschwinden beide Seitenleisten.','3D view area (see below). “Focus” (button below the view cube, key F) hides both side panels.')}</li></ul>
+  <h3>${T('Entschieden am 13.10.2026','Decided on 13 Oct 2026')}</h3>
+  <ul><li>${T('Griffe: Beide Arten bleiben einstellbar, voreingestellt ist „Achsen“.','Handles: both styles stay selectable, “Axes” is the default.')}</li><li>${T('Akzentfarbe: frei wählbar unter Einstellungen.','Accent colour: free choice in Settings.')}</li>
+   <li>${T('Statt „Geführt | Experte“: Den Lotsen kann man jederzeit ein- und ausschalten (Einstellungen oder „Verstanden“ an der Lotsen-Karte). Weitere Felder zeigt „Alle Einstellungen zeigen“, unabhängig davon. So gibt es keinen getrennten Anfänger- und Profimodus (Design-Prinzip 8).','Instead of “Guided | Expert”: the guide can be switched on and off any time (Settings or “Got it” on the guide card). More fields via “Show all settings”, independently. So there is no separate beginner and pro mode (design principle 8).')}</li>
+   <li>${T('3D-Fläche: Im Fokus-Modus (Knopf unter dem Ansichtswürfel, ⇧F) hat die 3D-Ansicht 84 %. Taste F bleibt „alles zeigen“ (UX §10).','3D area: in focus mode (button below the view cube, ⇧F) the 3D view gets 84 %. Key F stays “show all” (UX §10).')}</li></ul>
   ${pct!==null?`<h3>${T('Fläche der 3D-Ansicht','3D view area')}</h3><p><span class="pct">${pct} %</span> ${T('des Programmfensters in dieser Szene und Fenstergröße. Ziel laut UX-Konzept: mindestens 65 % auf einem 13"-Laptop.','of the app window in this scene and window size. Target in the UX concept: at least 65 % on a 13" laptop.')}</p>`:''}
   <h3>${T('Was das Mockup nicht zeigt','What this mockup does not show')}</h3>
   <ul><li>${T('Echte Geometrie: Ansicht drehen nur über den Ansichtswürfel, Maße ändern das Bild nur teilweise.','Real geometry: rotating only via the view cube, measures only partly change the picture.')}</li>
@@ -1780,7 +1804,8 @@ const ACT={
   spage:v=>{S.startPage=v; if(v==='home') S.back=null; renderAll();},
   settings:()=>{ if(S.scene!=='start') S.back=S.scene; S.startPage='settings'; go('start'); }, lang:v=>{S.lang=v; if(S.search&&S.scene==='suche') S.search.q=T('runde ecken','round corners'); renderAll();},
   info:()=>{S.info=!S.info; renderAll();},
-  mode:v=>{S.mode=v; S.lotse=true; renderAll(); toast(v==='experte'?T('Experte: Lotse und Erklär-Texte ausgeblendet. Alle Werkzeuge bleiben gleich.','Expert: guide and explanations hidden. All tools stay the same.'):T('Geführt: Der Lotse zeigt den nächsten Schritt.','Guided: the guide shows the next step.'));},
+  mode:v=>{S.mode=v; S.lotse=true; renderAll(); toast(v==='experte'?T('Lotse aus. Alle Werkzeuge bleiben gleich, du kannst ihn jederzeit wieder einschalten.','Guide off. All tools stay the same, you can switch it back on any time.'):T('Lotse an: Er zeigt den nächsten Schritt.','Guide on: it shows the next step.'));},
+  allprops:()=>{S.allProps=!S.allProps; renderAll();},
   disp:v=>{S.display=v; renderAll();},
   tool:v=>{S.tool=v; renderAll(); if(v!=='verschieben'&&v!=='groesse') toast(`${T(...TOOLNAMES[v])}: ${T('im Mockup nur angedeutet','only hinted at in this mockup')}`);},
   ltab:v=>{S.leftTab=v; S.flyout=null; renderAll();}, rtab:v=>{S.rightTab=v; renderAll();},
@@ -1797,7 +1822,7 @@ const ACT={
   fix:v=>{ if(v==='max'){S.errorFixed=true; renderAll(); toast(T('Erledigt: Rundung jetzt 3,9 mm. Rückgängig mit ⌘Z.','Done: rounding is now 3.9 mm. Undo with ⌘Z.'));}
     else if(v==='skip'){S.errorFixed=true; renderAll(); toast(T('Erledigt: Diese Kante bleibt eckig.','Done: this edge stays sharp.'));}
     else { setTimeout(()=>{const f=document.querySelector('#right input[data-bind="r"]')||$('#right input'); f?.focus(); f?.select();},0); } },
-  purpose:v=>{S.exp.purpose=v; renderExport();}, fmt:v=>{S.exp.fmt=v; renderExport();},
+  purpose:v=>{S.exp.purpose=v; renderExport();}, fine:v=>{S.exp.fine=v; renderExport();}, fmt:v=>{S.exp.fmt=v; renderExport();},
   expfix:()=>{S.exp.fixed=true; renderExport(); toast(T('Erledigt: Das Loch sitzt jetzt 5,5 mm vom Rand. Rückgängig mit ⌘Z.','Done: the hole is now 5.5 mm from the edge. Undo with ⌘Z.'));},
   mock:(v,t)=>toast(t.dataset.msg||T('Im Mockup nur angedeutet.','Only hinted at in this mockup.')),
   toggle:(v,t)=>{t.setAttribute('aria-pressed',t.getAttribute('aria-pressed')!=='true');},
@@ -1828,7 +1853,7 @@ document.addEventListener('keydown',e=>{
   if(inField) return;
   if(e.key==='ArrowRight'){ stepScene(1); } else if(e.key==='ArrowLeft'){ stepScene(-1); }
   else if(e.key==='Home' && WORK(S.scene)){ animateCam(VIEWS.home); }
-  else if(e.key.toLowerCase()==='f' && WORK(S.scene) && !e.metaKey && !e.ctrlKey){ ACT.focus(); }
+  else if(e.key==='F' && e.shiftKey && WORK(S.scene) && !e.metaKey && !e.ctrlKey){ ACT.focus(); }
 });
 document.addEventListener('input',e=>{
   if(e.target.id==='accpick'){ S.accent=e.target.value.toUpperCase(); renderAll(); return; }
