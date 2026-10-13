@@ -12,6 +12,9 @@
 | R2b | Projektlizenz | **GPL-3.0-or-later** bestätigt | Architektur §1/§8, Master-Prompt |
 | R7 | Apple-Developer-Konto | Xcode installiert; nur **kostenloses** Konto | AP-0.7: zuerst ad-hoc-Signatur plus Gatekeeper-Anleitung; Notarisierung vorbereitet, aktiv erst mit bezahltem Konto. Master-Prompt: Abschnitt „Testumgebung“ |
 | R8 | Linux-Test | Eigener Linux-Rechner per **SSH mit Root-Rechten** | Master-Prompt: Abschnitt „Testumgebung“. Distribution und GPU ermittelt der Agent beim ersten Zugriff und hält sie in `docs/testumgebung.md` fest |
+| R17 | Wie soll die Oberfläche aussehen? | Wie das klickbare Mockup [mockups/oberflaeche.html](mockups/oberflaeche.html) (Stand 2026-10-13, nach der Vorlage „Formwerk 3D“ des Product Owners): dunkel und ruhig, Werkzeugpalette in der 3D-Ansicht, Lotse für Missionen, Startseite, Druckcheck & Export als Assistent | **UX §1** und **§13** verweisen auf das Mockup als Gestaltungsvorlage. Noch offen: Schalter „Geführt \| Experte“ (Design-Prinzip 8) und die Fläche der 3D-Ansicht (48 % bei 1280 × 800, Ziel 65 %; mit Fokus 84 %) |
+| R18 | Akzentfarbe | **Frei wählbar** unter Einstellungen ▸ Aussehen: Vorschläge (Standard Blau) und eigene Farbe | **UX §13**, Glossar. Das Programm leitet alle Akzenttöne aus der gewählten Farbe ab und hält WCAG AA ein. Ähnelt die Farbe Rot, Gelb oder Grün (Hinweisfarben), erscheint ein Hinweis, gesperrt wird sie nicht |
+| R19 | Griffe | **Beide Griff-Arten bleiben** und sind einstellbar: „Achsen“ (Pfeile X/Y/Z, Maßbänder) und „Klassisch“ (Eck-Quadrate wie Tinkercad) | **UX §2.2**, Glossar. Beide ändern Maße gleich (Regeln 11–13 gelten für beide; Ablauf D wird mit beiden Griff-Arten geprüft). Voreinstellung beim ersten Start noch offen (Vorschlag: Achsen) |
 
 ---
 

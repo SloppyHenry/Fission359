@@ -29,6 +29,11 @@ Dieses Dokument beschreibt, **wie sich Fission3D anfühlt**. Es ist verbindlich 
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
 
+> **Gestaltungsvorlage (R17, 2026-10-13):** Aussehen und Anordnung zeigt das klickbare Mockup
+> [mockups/oberflaeche.html](mockups/oberflaeche.html). Abweichend von der Skizze oben stehen die
+> Werkzeuggruppen dort als Palette am linken Rand der 3D-Ansicht. Wo Mockup und Text sich widersprechen,
+> ist das in [06-rueckfragen.md](06-rueckfragen.md) als offener Punkt vermerkt.
+
 - **3D-Ansicht dominiert.** Die Seitenleisten sind schmal und einklappbar. Auf einem 13"-Laptop hat die 3D-Ansicht mindestens 65 % der Fläche.
 - **Werkzeuggruppen oben:** höchstens 8 Gruppen mit Alltagsnamen. Ein Klick öffnet eine große, bebilderte Auswahl, keine Liste aus Mini-Icons.
 - **Rezept links:** der Verlauf als lesbare Sätze (siehe Abschnitt 4). Darunter die Liste der Körper mit Sichtbarkeit und Farbe.
@@ -55,6 +60,12 @@ Dieses Dokument beschreibt, **wie sich Fission3D anfühlt**. Es ist verbindlich 
 | eine **Bohrung** | Durchmesser- und Tiefen-Griff | Bohrung anpassen |
 
 Während des Ziehens zeigt eine **Wertblase** am Zeiger den aktuellen Wert.
+
+**Griff-Art (Einstellung, R19):** Wie die Griffe aussehen, stellt man unter Einstellungen ▸ Griffe ein.
+- **Achsen:** farbige Pfeile X/Y/Z zum Verschieben, Maßbänder entlang der Kanten (Klick oder Tippen ändert das Maß), Punkte auf den Flächen zum Strecken.
+- **Klassisch:** weiße Eck-Quadrate, Hebe-Pfeil und Maßkästchen, vertraut für Tinkercad-Umsteiger.
+
+Beide Arten lösen dieselben Commands aus und folgen denselben Regeln: Tippen ersetzt Ziehen, Maße ändern verzerrt nie, Rundungen und Löcher bleiben rund (§7). Die Wahl ändert nur die Darstellung, nie das Ergebnis.
 
 ### 2.3 Präzision ohne Reibung
 - **Tippen ersetzt Ziehen.** Wer während eines Griffs eine Zahl tippt, ersetzt damit den Wert. `Enter` bestätigt, `Esc` bricht ab, `Tab` springt zum nächsten Maß (Breite → Tiefe → Höhe).
@@ -310,13 +321,17 @@ UI-Texte verwenden ausschließlich die Begriffe in der mittleren Spalte. Englisc
 | Smooth Boolean | Weich verschmelzen | Melt Together | Formen fließen weich ineinander |
 | – | Baukasten | Kit | Schritt für Schritt zum eigenen Objekt (Karte, Vase, Figur) |
 | – | Motiv | Motif | 2D-Bild zum Prägen, Gravieren oder Durchbrechen |
+| – | Griffe: Achsen | Handles: Axes | Farbige Pfeile und Maßbänder am ausgewählten Körper |
+| – | Griffe: Klassisch | Handles: Classic | Eck-Quadrate und Maßkästchen, wie in Tinkercad |
+| – | Akzentfarbe | Accent colour | Die Farbe für Knöpfe und Markierungen, frei wählbar |
 | – | Streuen | Scatter | Ein Motiv zufällig über eine Fläche verteilen |
 
 ---
 
 ## 13. Visuelle Gestaltung
 
-- **Ruhig, freundlich, modern.** Viel Weißraum, eine Akzentfarbe, abgerundete Ecken, klare Typografie (Systemschrift oder Inter).
+- **Ruhig, freundlich, modern.** Viel Weißraum, eine Akzentfarbe, abgerundete Ecken, klare Typografie. Vorlage ist das Mockup (R17).
+- **Akzentfarbe wählbar (R18):** Standard ist Blau. Unter Einstellungen ▸ Aussehen gibt es Vorschläge und eine eigene Farbe. Alle Akzenttöne (Knöpfe, Markierungen, Auswahl) werden daraus abgeleitet, Schrift darauf hält WCAG AA (4,5 : 1). Rot, Gelb und Grün sind Hinweisfarben („geht nicht“, „braucht Hilfe“, „passt“); ähnelt die gewählte Farbe einer davon, erscheint ein Hinweis.
 - **Modelle sehen aus wie gedruckt:** matte Kunststoff-Optik, weiche Umgebungsverdeckung (Ambient Occlusion), sanfter Schatten auf dem Druckbett, feine dunkle Kantenlinien.
 - **Standardfarben der Körper:** freundliche, gut unterscheidbare Töne, auch für Farbenblinde geeignet.
 - **Hell- und Dunkelmodus**, folgt dem System.

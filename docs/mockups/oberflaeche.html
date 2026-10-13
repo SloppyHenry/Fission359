@@ -523,6 +523,34 @@ details.adv[open] summary::before{content:"⌄ "}
   .palette{width:52px} .palette .pt span{display:none} .lotse .keys,.lotse p{display:none} .fly{left:72px;width:calc(100% - 84px)}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+/* ---------- settings page (start screen) ---------- */
+.sset{display:grid;gap:16px;max-width:880px}
+.sset .card{padding:18px 20px}
+.sset h2{margin:0 0 4px;font-size:15px}
+.sset .sd{margin:0 0 14px;color:var(--fg-3);font-size:12.5px;max-width:65ch}
+.srow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 16px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.srow:first-of-type{border-top:0}
+.srow>.segc,.srow>.switch{justify-self:start}
+.srow>label,.srow>span.l{color:var(--fg-2);font-weight:500}
+.acrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.acsw{position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;border:0;background:none;color:var(--fg-3);font-size:12px;padding:0}
+.acsw i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid transparent;box-shadow:inset 0 0 0 2px var(--panel)}
+.acsw[aria-pressed="true"] i{border-color:var(--fg)}
+.acsw[aria-pressed="true"]{color:var(--fg);font-weight:600}
+.acsw.own i{background:conic-gradient(#e5534b,#f0a53a,#5dbb63,#2fb5c0,#5b97ff,#a06bff,#e5534b)}
+.acsw input{position:absolute;opacity:0;width:1px;height:1px}
+.aprev{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;padding:12px;border-radius:9px;background:var(--chrome);border:1px solid var(--line)}
+.aprev .chip{position:static;transform:none}
+.ahint{display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:9px 12px;border-radius:8px;border:1px solid var(--amber-line);background:var(--amber-soft);color:var(--fg-2);font-size:12.5px}
+.ahint .ic{color:var(--amber);flex:none;margin-top:1px}
+.hstyles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hcard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:0 0 12px;border-radius:10px;border:1px solid var(--line);background:var(--raise);color:var(--fg);overflow:hidden}
+.hcard svg{width:100%;height:150px;display:block;background:radial-gradient(ellipse at 50% 40%,var(--view),var(--view-2))}
+.hcard b,.hcard span{padding:0 12px}
+.hcard span{font-size:12.5px;color:var(--fg-3)}
+.hcard[aria-checked="true"]{border-color:var(--accent-line);box-shadow:0 0 0 1px var(--accent-line)}
+.hcard[aria-checked="true"] b::after{content:" ✓";color:var(--accent-text)}
+@media (max-width:760px){ .srow{grid-template-columns:1fr} .hstyles{grid-template-columns:1fr} }
 </style>
 
 <div id="demo" role="region" aria-label="Mockup-Steuerung"></div>
@@ -552,7 +580,7 @@ const $ = s => document.querySelector(s);
 const S = {
   scene:'start', lang:'de', theme:'dark', handles:'achsen', mode:'gefuehrt', display:'farbe', tool:'verschieben',
   cam:{a:-30,e:36}, flyout:null, search:null, holeOn:true, hide:{}, edits:{}, lotse:true, focus:false,
-  leftTab:'koerper', rightTab:'objekt', exp:{purpose:'druck', fmt:'3mf', fixed:false},
+  leftTab:'koerper', startPage:'home', accent:'#2563D9', back:null, rightTab:'objekt', exp:{purpose:'druck', fmt:'3mf', fixed:false},
   typed:null, timers:[], info:false, kitStep:2, editDim:false, errorFixed:false,
   kit:{size:'a6',art:'flach',ori:'quer',form:'rund',flaeche:'glatt',durch:'keine',rahmen:'schlicht',
        mart:'erhaben',lib:'weihnachten',ttxt:'frohe',tform:'gerade',tart:'erhaben',farbe:'ams',schema:'klassisch',loch:'keins',fill:'voll'}
@@ -895,7 +923,7 @@ function renderMenu(){
   $('#menu').innerHTML=`
     <div class="menu-l"><div class="brand">${LOGO}<span>Fission3D</span></div>${menus.map(([d,e])=>`<button class="mbtn" data-act="mock" data-msg="${T('Menü „'+d+'“ (Attrappe)','Menu “'+e+'” (dummy)')}">${T(d,e)}</button>`).join('')}</div>
     <button class="search" data-act="search" aria-label="${T('Befehlssuche öffnen','Open command search')}">${icon('search')}<span>${T('Was möchtest du tun?','What do you want to do?')}</span><kbd>⌘K</kbd></button>
-    <div class="menu-r"><button class="mbtn" data-act="mock" data-msg="${T('Druckerprofil wechseln (bestimmt Druckbett, Düse, Farben)','Switch printer profile (bed, nozzle, colours)')}">${icon('printer')} ${T('Mein Drucker · 256 × 256 mm','My printer · 256 × 256 mm')}</button></div>`;
+    <div class="menu-r"><button class="iconbtn" data-act="settings" aria-label="${T('Einstellungen','Settings')}" title="${T('Einstellungen (⌘,)','Settings (⌘,)')}">${icon('gear')}</button><button class="mbtn" data-act="mock" data-msg="${T('Druckerprofil wechseln (bestimmt Druckbett, Düse, Farben)','Switch printer profile (bed, nozzle, colours)')}">${icon('printer')} ${T('Mein Drucker · 256 × 256 mm','My printer · 256 × 256 mm')}</button></div>`;
 }
 function renderTabs(){
   const doc=DOCNAME();
@@ -1182,8 +1210,7 @@ function boxDims(C,m,active,typed){
   s+=dimBand(C,[ox+W/2+o*0.7,-D/2-o*0.7,0],[ox+W/2+o*0.7,-D/2-o*0.7,H],[ox+W/2,-D/2,0],[ox+W/2,-D/2,H],lab('h',H),active==='h'?'active':'');
   return s;
 }
-function moveGizmo(C,c){ // c = 3D anchor (top centre)
-  const L=78;
+function moveGizmo(C,c,L=78){ // c = 3D anchor (top centre)
   const [A,X]=scrDir(C,c,[1,0,0],L), [,Y]=scrDir(C,c,[0,1,0],L*0.85), [,Z]=scrDir(C,c,[0,0,1],L*1.25);
   return axisArrow(A,Z,'z','Z')+axisArrow(A,Y,'y','Y')+axisArrow(A,X,'x','X')+`<circle cx="${r1(A[0])}" cy="${r1(A[1])}" r="8" style="fill:#fff;stroke:var(--handle-line)" stroke-width="1.5"/>`;
 }
@@ -1457,6 +1484,86 @@ function animateCam(to){
   camAnim=requestAnimationFrame(step);
 }
 
+/* ======================= accent colour (user setting) ======================= */
+// Derives all accent tokens from one chosen colour and keeps every text/background pair at WCAG AA (4.5:1).
+const hex2rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const rgb2hex=c=>'#'+c.map(v=>Math.round(clamp(v,0,255)).toString(16).padStart(2,'0')).join('').toUpperCase();
+function rgb2hsl([r,g,b]){ r/=255; g/=255; b/=255; const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2; let h=0,s=0;
+  if(mx!==mn){ const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4; h*=60; } return [h,s,l]; }
+function hsl2rgb([h,s,l]){ const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)); return [f(0)*255,f(8)*255,f(4)*255]; }
+const lum=c=>{const v=c.map(x=>{x/=255; return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4);}); return .2126*v[0]+.7152*v[1]+.0722*v[2];};
+const contrast=(a,b)=>{const x=lum(a),y=lum(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
+const mix=(a,b,t)=>a.map((v,i)=>v*(1-t)+b[i]*t);
+function shiftUntil(hsl,bg,dir,min=4.6){ let [h,s,l]=hsl; for(let i=0;i<100 && contrast(hsl2rgb([h,s,l]),bg)<min;i++) l=clamp(l+dir*0.01,0,1); return hsl2rgb([h,s,l]); }
+function accentTokens(hex,dark){
+  const base=rgb2hsl(hex2rgb(hex)), cs=getComputedStyle(document.documentElement);
+  const tok=n=>hex2rgb(cs.getPropertyValue(n).trim()||'#808080');
+  const panel=tok('--panel'), white=[255,255,255];
+  const soft=mix(panel,hex2rgb(hex),dark?.22:.14);
+  // accent text must stay readable on every surface it appears on: check against the worst one
+  const bgs=[panel,tok('--field'),tok('--chrome'),tok('--view'),soft].sort((x,y)=>lum(x)-lum(y)), worst=dark?bgs[bgs.length-1]:bgs[0];
+  const btn=shiftUntil(base,white,-1);                      // button fill, white label on top
+  const text=dark?shiftUntil([base[0],Math.min(base[1],.9),Math.max(base[2],.6)],worst,+1):shiftUntil(base,worst,-1);
+  const line=dark?hsl2rgb([base[0],Math.min(base[1],.95),clamp(Math.max(base[2],.62),0,.72)]):btn;
+  return {'--accent':rgb2hex(btn),'--accent-hover':rgb2hex(hsl2rgb([base[0],base[1],clamp(rgb2hsl(btn)[2]+(dark?.05:-.05),0,1)])),
+    '--accent-fg':'#FFFFFF','--accent-text':rgb2hex(text),'--accent-line':rgb2hex(line),'--accent-soft':rgb2hex(soft)};
+}
+const ACCENTS=[['#2563D9','Blau','Blue'],['#7C4DDB','Violett','Violet'],['#0E9AA7','Türkis','Teal'],['#D6336C','Pink','Pink'],['#5A6B85','Schiefer','Slate']];
+function accentClash(hex){ // hues that already carry a meaning: red = fails, yellow = needs help, green = fits
+  const [h,s]=rgb2hsl(hex2rgb(hex)); if(s<.25) return null;
+  if(h<15||h>=345) return T('Rot bedeutet „geht nicht“','red means “does not work”');
+  if(h>=25&&h<65) return T('Gelb bedeutet „braucht Hilfe“','yellow means “needs help”');
+  if(h>=90&&h<155) return T('Grün bedeutet „passt“','green means “fits”');
+  return null;
+}
+function applyAccent(){
+  const R=document.documentElement;
+  ['--accent','--accent-hover','--accent-fg','--accent-text','--accent-line','--accent-soft'].forEach(k=>R.style.removeProperty(k));
+  if(S.accent.toUpperCase()==='#2563D9') return; // default palette is hand-tuned in the stylesheet
+  const t=accentTokens(S.accent,effTheme()==='dark'); for(const k in t) R.style.setProperty(k,t[k]);
+}
+const effTheme=()=>S.theme==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):S.theme;
+
+/* ======================= settings page ======================= */
+function handlePreview(style){
+  const C=cam({a:-30,e:30,s:2.8,cx:118,cy:104,tx:0,ty:0,tz:4}), out=rrect(34,20,0), m={w:34,d:20,h:12};
+  let s=drawPoly(C,prismFaces(out,0,m.h),COL.white,{edges:true,icon:true});
+  if(style==='achsen') s+=selOutline(C,out,0,m.h)+moveGizmo(C,[0,0,m.h],46);
+  else s+=classicHandles(C,m);
+  return `<svg viewBox="0 0 236 150" aria-hidden="true">${s}</svg>`;
+}
+function settingsHtml(){
+  const own=!ACCENTS.some(a=>a[0].toUpperCase()===S.accent.toUpperCase()), clash=accentClash(S.accent);
+  const sw=(hex,l,on,extra='')=>`<button class="acsw ${extra}" data-act="accent" data-arg="${hex}" aria-pressed="${on}"><i style="background:${hex}"></i>${l}</button>`;
+  return `<div class="shead"><div><small>${T('Einstellungen','Settings')}</small><h1>${T('Aussehen und Bedienung','Look and handling')}</h1></div>
+      <div class="sb">${S.back?`<button class="btn primary" data-act="scene" data-arg="${S.back}">${icon('left')} ${T('Zurück zum Modell','Back to the model')}</button>`:''}</div></div>
+    <div class="sset">
+      <section class="card"><h2>${T('Aussehen','Appearance')}</h2><p class="sd">${T('Änderungen wirken sofort und gelten für alle Projekte.','Changes apply right away and to all projects.')}</p>
+        <div class="srow"><span class="l">${T('Design','Theme')}</span><div class="segc" role="group" aria-label="${T('Design','Theme')}">
+          ${[['system',T('Wie das System','Like the system')],['light',T('Hell','Light')],['dark',T('Dunkel','Dark')]].map(([k,l])=>`<button data-act="theme" data-arg="${k}" aria-pressed="${S.theme===k}">${l}</button>`).join('')}</div></div>
+        <div class="srow" style="align-items:start"><span class="l">${T('Akzentfarbe','Accent colour')}</span><div>
+          <div class="acrow" role="group" aria-label="${T('Akzentfarbe','Accent colour')}">${ACCENTS.map(([h,de,en])=>sw(h,T(de,en)+(h==='#2563D9'?' · '+T('Standard','default'):''),S.accent.toUpperCase()===h)).join('')}
+            <label class="acsw own" aria-pressed="${own}"><i ${own?`style="background:${S.accent};box-shadow:inset 0 0 0 2px var(--panel)"`:''}></i>${T('Eigene …','Custom …')}<input type="color" id="accpick" value="${S.accent}" aria-label="${T('Eigene Akzentfarbe wählen','Pick a custom accent colour')}"></label></div>
+          <div class="aprev" aria-label="${T('Vorschau','Preview')}"><button class="btn primary" data-act="none">${icon('upload')} ${T('Exportieren','Export')}</button>
+            <span class="chip acc">${icon('scissors')} ${T('schneidet aus:','subtracts from:')} <b>${T('Quader','Box')}</b></span>
+            <button class="switch" role="switch" aria-checked="true" data-act="none"><span class="tr"></span>${T('Als Loch','As Hole')}</button>
+            <button class="linkbtn" data-act="none">${T('Zeig mir wie','Show me how')}</button></div>
+          ${clash?`<div class="ahint">${icon('warn')}<span>${T('Diese Farbe ähnelt einer Hinweisfarbe:','This colour resembles a hint colour:')} ${clash}. ${T('Hinweise am Modell fallen dann weniger auf. Du kannst sie trotzdem nehmen.','Hints on the model will stand out less. You can still use it.')}</span></div>`:''}
+          <p class="sd" style="margin:10px 0 0">${T('Schrift auf Knöpfen und Markierungen passt Fission3D automatisch an, damit alles gut lesbar bleibt.','Fission3D adjusts text on buttons and highlights automatically so everything stays readable.')}</p></div></div>
+        <div class="srow"><span class="l">${T('Sprache','Language')}</span><div class="segc" role="group">${[['de','Deutsch'],['en','English']].map(([k,l])=>`<button data-act="lang" data-arg="${k}" aria-pressed="${S.lang===k}">${l}</button>`).join('')}</div></div>
+      </section>
+      <section class="card"><h2>${T('Griffe','Handles')}</h2><p class="sd">${T('So sehen die Griffe an einem ausgewählten Körper aus. Beide ändern Maße gleich: Rundungen und Löcher bleiben rund, jede Zahl ist eintippbar.','How handles look on a selected body. Both change sizes the same way: roundings and holes stay round, every number can be typed.')}</p>
+        <div class="hstyles" role="radiogroup" aria-label="${T('Griffe','Handles')}">
+          <button class="hcard" role="radio" aria-checked="${S.handles==='achsen'}" data-act="handles" data-arg="achsen">${handlePreview('achsen')}<b>${T('Achsen','Axes')}</b><span>${T('Farbige Pfeile X, Y, Z zum Verschieben, Maßbänder an den Kanten, Punkte zum Strecken. Wie in CAD-Programmen.','Coloured X, Y, Z arrows to move, measure bands along the edges, dots to stretch. Like CAD programs.')}</span></button>
+          <button class="hcard" role="radio" aria-checked="${S.handles==='klassisch'}" data-act="handles" data-arg="klassisch">${handlePreview('klassisch')}<b>${T('Klassisch','Classic')}</b><span>${T('Weiße Eck-Quadrate, Hebe-Pfeil und Maßkästchen. Vertraut für Tinkercad-Umsteiger.','White corner squares, lift arrow and measure boxes. Familiar to Tinkercad switchers.')}</span></button></div>
+      </section>
+      <section class="card"><h2>${T('Bedienung','Controls')}</h2>
+        <div class="srow"><label for="mstyle">${T('Maus-Stil','Mouse style')}</label><select id="mstyle" class="sel" style="max-width:260px">${[T('Fission3D (Standard)','Fission3D (default)'),T('wie Fusion','like Fusion'),T('wie Tinkercad','like Tinkercad'),T('wie Blender','like Blender'),T('wie SketchUp','like SketchUp')].map(o=>`<option>${o}</option>`).join('')}</select></div>
+        <div class="srow"><span class="l">${T('Lotse','Guide')}</span><button class="switch" role="switch" aria-checked="${S.mode==='gefuehrt'}" data-act="mode" data-arg="${S.mode==='gefuehrt'?'experte':'gefuehrt'}"><span class="tr"></span>${T('Missionen und Hinweise zeigen','Show missions and tips')}</button></div>
+      </section>
+    </div>`;
+}
+
 /* ======================= flyout & command search ======================= */
 function flyoutHtml(){
   const g=GROUPS.find(x=>x.k===S.flyout); if(!g || !WORK(S.scene)) return '';
@@ -1516,7 +1623,7 @@ function openSearch(){
 
 /* ======================= start screen ======================= */
 function renderStart(){
-  const nav=[['home',T('Start','Home'),true],['learn',T('Missionen','Missions'),false,'1/6'],['kit',T('Baukästen','Kits')],['folder',T('Meine Projekte','My projects')],['layers',T('Bausteine','Building blocks')],['printer',T('Drucker','Printers')],['gear',T('Einstellungen','Settings')]];
+  const nav=[['home',T('Start','Home'),'home'],['learn',T('Missionen','Missions'),null,'1/6'],['kit',T('Baukästen','Kits')],['folder',T('Meine Projekte','My projects')],['layers',T('Bausteine','Building blocks')],['printer',T('Drucker','Printers')],['gear',T('Einstellungen','Settings'),'settings']];
   const kits=[['karte','Karte','Card','Weihnachten, Geburtstag, Namen','Christmas, birthday, names','148 × 105 mm'],['vase','Vase / Gefäß','Vase / Vessel','Profil ziehen, Muster wählen','Drag a profile, pick a pattern','Ø 80 mm'],
     ['figur','Figur','Figure','Aus Kugeln und Knete','From spheres and clay','60 mm'],['schmuck','Christbaumschmuck','Ornament','Sterne, Kugeln, Anhänger','Stars, baubles, tags','Ø 70 mm'],
     ['schild','Schild','Sign','Namen, Türen, Beete','Names, doors, garden beds','120 × 40 mm'],['box','Box mit Deckel','Box with lid','Deckel passt beim ersten Druck','Lid fits on the first print','80 × 60 × 40 mm'],
@@ -1526,9 +1633,9 @@ function renderStart(){
     ['pencil',T('Wandhalterung','Wall bracket'),T('Skizze mit Maßen, Bohrungen für Schrauben.','Sketch with measures, screw holes.'),T('ca. 12 Min.','about 12 min')],
     ['sparkle',T('Stern für den Baum','Star for the tree'),T('Stern-Form, Öse, Prägung.','Star shape, loop, embossing.'),T('ca. 6 Min.','about 6 min')]];
   const hour=new Date().getHours(), greet=hour<11?T('Guten Morgen','Good morning'):hour<18?T('Hallo','Hello'):T('Guten Abend','Good evening');
-  $('#start').innerHTML=`<nav class="snav" aria-label="${T('Startseite','Start page')}">${nav.map(([ic,l,on,c])=>`<button class="${on?'on':''}" data-act="${on?'none':'mock'}" data-msg="${l}: ${T('im Mockup nicht ausgearbeitet','not worked out in this mockup')}">${icon(ic)}${l}${c?`<span class="cnt">${c}</span>`:''}</button>`).join('')}
+  $('#start').innerHTML=`<nav class="snav" aria-label="${T('Startseite','Start page')}">${nav.map(([ic,l,pg,c])=>`<button class="${pg===S.startPage?'on':''}" data-act="${pg?'spage':'mock'}" data-arg="${pg||''}" aria-current="${pg===S.startPage?'page':'false'}" data-msg="${l}: ${T('im Mockup nicht ausgearbeitet','not worked out in this mockup')}">${icon(ic)}${l}${c?`<span class="cnt">${c}</span>`:''}</button>`).join('')}
       <div class="stip"><b>${icon('compass')} ${T('Tipp','Tip')}</b>${T('Jede Zahl ist eintippbar: Während du an einem Griff ziehst, tippst du einfach 50 und Enter.','Every number can be typed: while dragging a handle, just type 50 and Enter.')}</div></nav>
-    <div class="smain">
+    <div class="smain">${S.startPage==='settings'?settingsHtml():`
       <div class="shead"><div><small>${greet} · ${T('Mein Drucker · 256 × 256 mm · Düse 0,4 mm','My printer · 256 × 256 mm · nozzle 0.4 mm')}</small><h1>${T('Was möchtest du heute bauen?','What would you like to make today?')}</h1></div>
         <div class="sb"><button class="btn" data-act="mock" data-msg="${T('Öffnen: .fission, 3MF, STL, STEP','Open: .fission, 3MF, STL, STEP')}">${icon('folder')} ${T('Öffnen …','Open …')}</button><button class="btn primary" data-act="scene" data-arg="leer">${icon('plus')} ${T('Neues Projekt','New project')}</button></div></div>
       <div class="srow1">
@@ -1544,7 +1651,7 @@ function renderStart(){
       <div class="stitle"><h2>${T('Neu beginnen mit einem Baukasten','Start with a kit')}</h2><span>${T('Alles, was entsteht, bleibt ein normales Modell und frei änderbar.','Everything you make stays a normal model you can change freely.')}</span></div>
       <div class="tiles">${kits.map(([k,de,en,sd,se,u])=>`<button class="btile" data-act="tile" data-arg="${k}"><span class="art">${shapeSvg(k,120,96,k==='leer'?1.5:1.45)}</span><span class="lab"><b>${T(de,en)}</b><span>${T(sd,se)}</span><span class="unitchip">${u}</span></span></button>`).join('')}</div>
       <div class="stitle"><h2>${T('Missionen','Missions')}</h2><span>${T('Kurze Aufgaben am echten Modell. Der Lotse prüft, ob es geklappt hat.','Short tasks on a real model. The guide checks whether it worked.')}</span></div>
-      <div class="missions">${missions.map(([ic,h,p,sm,cur])=>`<button class="card mcard ${cur?'cur':''}" data-act="${cur?'scene':'mock'}" data-arg="abrunden" data-msg="${h}: ${T('im Mockup nicht ausgearbeitet','not worked out in this mockup')}"><span class="mh"><i>${icon(ic)}</i>${h}</span><p>${p}</p>${cur?`<div class="bar"><i style="width:37.5%"></i></div>`:''}<small>${sm}</small></button>`).join('')}</div>
+      <div class="missions">${missions.map(([ic,h,p,sm,cur])=>`<button class="card mcard ${cur?'cur':''}" data-act="${cur?'scene':'mock'}" data-arg="abrunden" data-msg="${h}: ${T('im Mockup nicht ausgearbeitet','not worked out in this mockup')}"><span class="mh"><i>${icon(ic)}</i>${h}</span><p>${p}</p>${cur?`<div class="bar"><i style="width:37.5%"></i></div>`:''}<small>${sm}</small></button>`).join('')}</div>`}
     </div>`;
 }
 
@@ -1611,7 +1718,8 @@ function renderInfo(){
   <p>${T('Eine Attrappe zum Anschauen und Durchklicken: keine echte Geometrie, kein Speichern. Die gestrichelte Leiste oben gehört nicht zum Programm. Schilder „Vorschlag“ markieren Ideen, die nicht in den Projektdokumenten stehen.','A clickable dummy: no real geometry, no saving. The dashed strip at the top is not part of the app. “Proposal” tags mark ideas that are not in the project documents.')}</p>
   <h3>${T('Szenen','Scenes')}</h3><div class="slist">${SCENES.map((s,i)=>`<button data-act="scene" data-arg="${s.id}" aria-current="${s.id===S.scene}">${i+1}. ${s.t()}</button>`).join('')}</div>
   <h3>${T('Zwei Griff-Arten','Two handle styles')}</h3>
-  <p>${T('Oben in der Mockup-Leiste umschaltbar. Im Programm wäre das eine Einstellung („Griffe: Achsen | Klassisch“).','Switchable in the mockup strip. In the app it would be a setting (“Handles: Axes | Classic”).')}</p>
+  <p>${T('Entschieden: Beide bleiben. Jede:r stellt sie unter Einstellungen ▸ Griffe ein (Zahnrad oben rechts, ⌘,). Die Mockup-Leiste schaltet zum Vergleichen schnell um.','Decided: both stay. Everyone picks one under Settings ▸ Handles (gear top right, ⌘,). The mockup strip switches quickly for comparison.')}</p>
+  <h3>${T('Akzentfarbe','Accent colour')}</h3><p>${T('Entschieden: frei wählbar unter Einstellungen ▸ Aussehen, mit Vorschlägen und eigener Farbe. Fission3D leitet daraus alle Akzenttöne ab und hält dabei den Kontrast (WCAG AA). Ähnelt die Farbe Rot, Gelb oder Grün, erscheint ein Hinweis, weil diese Farben schon Bedeutungen haben.','Decided: free choice under Settings ▸ Appearance, with suggestions and a custom colour. Fission3D derives all accent shades and keeps contrast (WCAG AA). If the colour resembles red, yellow or green, a hint appears because those colours already carry meaning.')}</p>
   <ul><li><b>${T('Achsen','Axes')}</b> ${T('(Standard): farbige Pfeile X/Y/Z zum Verschieben, Maßbänder an den Kanten zum Tippen, blaue Punkte zum Ziehen von Flächen (Werkzeug „Größe“). Wirkt wie ein CAD-Programm.','(default): coloured X/Y/Z arrows to move, measure bands along the edges for typing, blue dots to pull faces (tool “Size”). Feels like a CAD program.')}</li>
    <li><b>${T('Klassisch','Classic')}</b>: ${T('weiße Eck-Quadrate, Hebe-Pfeil, Maßkästchen. Vertraut für Tinkercad-Umsteiger.','white corner squares, lift arrow, measure boxes. Familiar to Tinkercad switchers.')}</li></ul>
   <p>${T('Beide Arten ändern Maße gleich: Löcher und Rundungen bleiben rund, jede Zahl ist eintippbar.','Both styles change sizes the same way: holes and roundings stay round, every number can be typed.')}</p>
@@ -1627,7 +1735,7 @@ function renderInfo(){
    <li>${T('Fehler und Druckcheck-Hinweise erscheinen am Modell, nicht als Fenster. Der Export-Assistent ist ein Fenster, weil Speichern keine Geometrie-Operation ist.','Errors and print check hints appear on the model, not as windows. The export assistant is a window because saving is not a geometry operation.')}</li></ul>
   <h3>${T('Offene Entscheidungen','Open decisions')}</h3>
   <ul><li>${T('„Geführt | Experte“ oben rechts stammt aus der Vorlage. Design-Prinzip 8 sagt: kein getrennter Anfänger- und Profimodus. Hier blendet „Experte“ nur den Lotsen aus, alle Werkzeuge bleiben gleich.','“Guided | Expert” top right comes from the reference. Design principle 8 says: no separate beginner and pro mode. Here “Expert” only hides the guide, all tools stay the same.')}</li>
-   <li>${T('Standard-Griffe: Achsen oder Klassisch?','Default handles: Axes or Classic?')}</li>
+   <li>${T('Welche Griffe beim ersten Start voreingestellt sind (Vorschlag: Achsen; die Frage „Maus-Stil wie Tinkercad“ beim ersten Start könnte Klassisch wählen).','Which handles are preset on first start (proposal: Axes; choosing “mouse style like Tinkercad” on first start could pick Classic).')}</li>
    <li>${T('Fläche der 3D-Ansicht (siehe unten). Mit „Fokus“ (Knopf unter dem Ansichtswürfel, Taste F) verschwinden beide Seitenleisten.','3D view area (see below). “Focus” (button below the view cube, key F) hides both side panels.')}</li></ul>
   ${pct!==null?`<h3>${T('Fläche der 3D-Ansicht','3D view area')}</h3><p><span class="pct">${pct} %</span> ${T('des Programmfensters in dieser Szene und Fenstergröße. Ziel laut UX-Konzept: mindestens 65 % auf einem 13"-Laptop.','of the app window in this scene and window size. Target in the UX concept: at least 65 % on a 13" laptop.')}</p>`:''}
   <h3>${T('Was das Mockup nicht zeigt','What this mockup does not show')}</h3>
@@ -1653,6 +1761,7 @@ function startTyping(){
 }
 function go(id){
   if(!SCENES.some(s=>s.id===id)) return;
+  if(id!=='start'){ S.back=null; S.startPage='home'; }
   clearTimers(); S.scene=id; S.edits={}; S.hide={}; S.typed=null; S.errorFixed=false; S.editDim=false; S.holeOn=true; S.lotse=true;
   S.exp.fixed=false; S.tool={rund:'groesse',abrunden:'waehlen',fehler:'waehlen'}[id]||'verschieben';
   S.flyout=id==='quader'||id==='leer'?'formen':null;
@@ -1667,7 +1776,9 @@ const ACT={
   none:()=>{},
   scene:v=>go(v), next:()=>stepScene(1), prev:()=>stepScene(-1),
   handles:v=>{S.handles=v; renderAll(); toast(v==='achsen'?T('Griffe: Achsen – Pfeile X/Y/Z und Maßbänder.','Handles: Axes – X/Y/Z arrows and measure bands.'):T('Griffe: Klassisch – Eck-Quadrate wie in Tinkercad.','Handles: Classic – corner squares like Tinkercad.'));},
-  theme:v=>{S.theme=v; renderAll();}, lang:v=>{S.lang=v; if(S.search&&S.scene==='suche') S.search.q=T('runde ecken','round corners'); renderAll();},
+  theme:v=>{S.theme=v; renderAll();}, accent:v=>{S.accent=v; renderAll();},
+  spage:v=>{S.startPage=v; if(v==='home') S.back=null; renderAll();},
+  settings:()=>{ if(S.scene!=='start') S.back=S.scene; S.startPage='settings'; go('start'); }, lang:v=>{S.lang=v; if(S.search&&S.scene==='suche') S.search.q=T('runde ecken','round corners'); renderAll();},
   info:()=>{S.info=!S.info; renderAll();},
   mode:v=>{S.mode=v; S.lotse=true; renderAll(); toast(v==='experte'?T('Experte: Lotse und Erklär-Texte ausgeblendet. Alle Werkzeuge bleiben gleich.','Expert: guide and explanations hidden. All tools stay the same.'):T('Geführt: Der Lotse zeigt den nächsten Schritt.','Guided: the guide shows the next step.'));},
   disp:v=>{S.display=v; renderAll();},
@@ -1706,6 +1817,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{
   const tag=e.target.tagName, inField=/INPUT|SELECT|TEXTAREA/.test(tag);
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); openSearch(); return; }
+  if((e.metaKey||e.ctrlKey)&&e.key===','){ e.preventDefault(); ACT.settings(); return; }
   if(e.target.id==='cmdq'){
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); S.search.sel=clamp(S.search.sel+(e.key==='ArrowDown'?1:-1),0,Math.max(0,(S.search.n||1)-1)); refreshSearch(); return; }
     if(e.key==='Enter'){ e.preventDefault(); ACT.cmdpick(String(S.search.sel)); return; }
@@ -1719,6 +1831,7 @@ document.addEventListener('keydown',e=>{
   else if(e.key.toLowerCase()==='f' && WORK(S.scene) && !e.metaKey && !e.ctrlKey){ ACT.focus(); }
 });
 document.addEventListener('input',e=>{
+  if(e.target.id==='accpick'){ S.accent=e.target.value.toUpperCase(); renderAll(); return; }
   if(e.target.id==='cmdq'){ S.search.q=e.target.value; S.search.sel=0; refreshSearch(); }
 });
 document.addEventListener('change',e=>{
@@ -1746,7 +1859,7 @@ document.addEventListener('mouseleave',hideTip);
 
 function renderAll(){
   const fid=document.activeElement?.id;
-  const R=document.documentElement; R.dataset.theme=S.theme; R.lang=S.lang;
+  const R=document.documentElement; R.dataset.theme=effTheme(); R.lang=S.lang; applyAccent();
   renderDemo(); renderMenu();
   const app=$('#app'), start=S.scene==='start';
   app.className=[S.scene==='karte'?'kit':'', S.focus&&WORK(S.scene)?'focus':'', start?'is-start':''].join(' ').trim();
@@ -1759,6 +1872,7 @@ function renderAll(){
 addEventListener('resize',()=>{ renderView(); positionFlyout(); });
 (function boot(){
   const h=(location.hash||'').slice(1);
+  if(h==='einstellungen'){ S.startPage='settings'; go('start'); return; }
   go(SCENES.some(s=>s.id===h)?h:'start');
 })();
 </script>
