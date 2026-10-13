@@ -28,7 +28,9 @@ qt_add_shaders(viewport_a "viewport_a_shaders"
     a_rhi/shaders/mesh.frag
     a_rhi/shaders/pick.frag
     a_rhi/shaders/line.vert
-    a_rhi/shaders/line.frag)
+    a_rhi/shaders/line.frag
+    a_rhi/shaders/shadow.vert
+    a_rhi/shaders/shadow.frag)
 target_link_libraries(viewport_a PRIVATE
   viewport_common Qt6::Core Qt6::Gui Qt6::GuiPrivate Qt6::Quick)
 # The generated QML registration includes rhi_viewport.h by its plain name.
@@ -45,6 +47,30 @@ qt_add_shaders(viewport_a_bench "viewport_a_bench_shaders"
     a_rhi/shaders/mesh.frag
     a_rhi/shaders/pick.frag
     a_rhi/shaders/line.vert
-    a_rhi/shaders/line.frag)
+    a_rhi/shaders/line.frag
+    a_rhi/shaders/shadow.vert
+    a_rhi/shaders/shadow.frag)
 target_link_libraries(viewport_a_bench PRIVATE viewport_common Qt6::Core Qt6::Gui Qt6::GuiPrivate)
 fission_apply_compiler_options(viewport_a_bench)
+
+# --- prototype B: OpenCASCADE AIS / V3d ----------------------------------------------------
+# Headless benchmark: OpenCASCADE's viewer renders into a Qt-created OpenGL framebuffer.
+qt_add_executable(viewport_b_bench b_ais/bench_main.cpp)
+target_link_libraries(viewport_b_bench PRIVATE
+  viewport_common ${FISSION_OCCT_EXTRA_TARGETS} ${OpenCASCADE_Visualization_LIBRARIES}
+  Qt6::Core Qt6::Gui Qt6::OpenGL)
+fission_apply_compiler_options(viewport_b_bench)
+
+# Interactive prototype B (Qt Quick + OpenCASCADE viewer in a framebuffer object).
+qt_add_executable(viewport_b b_ais/main.cpp)
+qt_add_qml_module(viewport_b
+  URI ViewportB
+  VERSION 1.0
+  QML_FILES b_ais/Main.qml
+  SOURCES b_ais/ais_viewport.h b_ais/ais_viewport.cpp
+  OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/qml-modules/ViewportB")
+target_include_directories(viewport_b PRIVATE b_ais)
+target_link_libraries(viewport_b PRIVATE
+  viewport_common ${FISSION_OCCT_EXTRA_TARGETS} ${OpenCASCADE_Visualization_LIBRARIES}
+  Qt6::Core Qt6::Gui Qt6::Quick Qt6::OpenGL)
+fission_apply_compiler_options(viewport_b)

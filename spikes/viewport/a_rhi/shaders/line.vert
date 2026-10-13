@@ -7,9 +7,12 @@ layout(location = 0) in vec3 position;
 
 layout(std140, binding = 0) uniform Params {
     mat4 mvp;
-    mat4 viewRotation;
+    mat4 lightVp;
     vec4 ids;
     vec4 color;
+    vec4 eye;
+    vec4 lightDir;
+    vec4 flags;
 } u;
 
 out gl_PerVertex {

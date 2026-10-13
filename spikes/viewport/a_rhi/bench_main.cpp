@@ -201,6 +201,22 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // --- frame time including a readback of the finished image (what prototype B must do
+    //     in headless mode, so this is the fair comparison) ---
+    std::vector<double> readbackMs;
+    for (int i = 0; i < 60; ++i) {
+        camera.orbit(1.5F, 0.0F);
+        QRhiReadbackResult image;
+        const auto start = Clock::now();
+        rhi->beginOffscreenFrame(&cb);
+        mesh.draw(cb, target.get(), frameData(0), clear);
+        QRhiResourceUpdateBatch* readback = rhi->nextResourceUpdateBatch();
+        readback->readBackTexture(QRhiReadbackDescription(color.get()), &image);
+        cb->resourceUpdate(readback);
+        rhi->endOffscreenFrame();
+        readbackMs.push_back(millisecondsSince(start));
+    }
+
     // --- picking: ID-buffer pass + readback, as it happens on every mouse move ---
     std::vector<double> pickMs;
     int hits = 0;
@@ -248,13 +264,13 @@ int main(int argc, char* argv[]) {
         "{\"prototype\":\"A-rhi\",\"mode\":\"headless\",\"backend\":\"%s\",\"device\":\"%s\","
         "\"scene\":\"%s\",\"triangles\":%zu,\"faces\":%d,\"size\":\"%dx%d\",\"samples\":%d,"
         "\"scene_build_s\":%.2f,\"frames\":%zu,\"fps_avg\":%.1f,\"frame_ms_avg\":%.2f,"
-        "\"frame_ms_p95\":%.2f,\"gpu_ms_avg\":%.2f,\"pick_ms_avg\":%.2f,\"pick_ms_p95\":%.2f,"
+        "\"frame_ms_p95\":%.2f,\"frame_ms_readback_avg\":%.2f,\"gpu_ms_avg\":%.2f,\"pick_ms_avg\":%.2f,\"pick_ms_p95\":%.2f,"
         "\"picks\":%zu,\"pick_hits\":%d}",
         rhi->backendName(), qPrintable(QString::fromUtf8(rhi->driverInfo().deviceName)),
         scene.name.c_str(), scene.mesh.triangleCount(), scene.faceCount, size.width(),
         size.height(), samples, sceneSeconds, frameMs.size(),
         averageMs > 0 ? 1000.0 / averageMs : 0.0, averageMs, percentile(frameMs, 0.95),
-        gpuMs.empty() ? -1.0 : mean(gpuMs), mean(pickMs), percentile(pickMs, 0.95), pickMs.size(),
+        mean(readbackMs), gpuMs.empty() ? -1.0 : mean(gpuMs), mean(pickMs), percentile(pickMs, 0.95), pickMs.size(),
         hits);
     std::printf("BENCH %s\n", json);
     const QString resultFile = parser.value("result-file");

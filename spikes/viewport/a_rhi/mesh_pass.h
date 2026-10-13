@@ -40,6 +40,9 @@ public:
     void upload(QRhiCommandBuffer* cb, const Scene& scene);
     const Scene* uploadedScene() const { return m_uploaded; }
 
+    // Renders the shadow map (call after upload, and again when the scene changes).
+    void renderShadow(QRhiCommandBuffer* cb);
+
     // Draws the scene into `target`.
     void draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const Frame& frame,
               const QColor& clearColor);
@@ -53,7 +56,7 @@ public:
 
 private:
     void writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* buffer, const QMatrix4x4& mvp,
-                       const QMatrix4x4& rotation, const Frame& frame);
+                       const Frame& frame);
     std::unique_ptr<QRhiGraphicsPipeline> makePipeline(const QShader& vertex,
                                                        const QShader& fragment, bool meshLayout,
                                                        bool lines, QRhiRenderPassDescriptor* pass,
@@ -68,6 +71,17 @@ private:
     std::unique_ptr<QRhiBuffer> m_vertexBuffer;
     std::unique_ptr<QRhiBuffer> m_indexBuffer;
     std::unique_ptr<QRhiBuffer> m_edgeBuffer;
+    std::unique_ptr<QRhiBuffer> m_bedVertexBuffer;
+    std::unique_ptr<QRhiBuffer> m_bedIndexBuffer;
+    std::unique_ptr<QRhiBuffer> m_shadowUniforms;
+    std::unique_ptr<QRhiSampler> m_sampler;
+    std::unique_ptr<QRhiTexture> m_shadowTexture;
+    std::unique_ptr<QRhiTextureRenderTarget> m_shadowTarget;
+    std::unique_ptr<QRhiRenderPassDescriptor> m_shadowPass;
+    std::unique_ptr<QRhiShaderResourceBindings> m_shadowSrb;
+    std::unique_ptr<QRhiGraphicsPipeline> m_shadowPipeline;
+    QMatrix4x4 m_lightViewProjection;
+    QVector3D m_lightDirection;
     std::unique_ptr<QRhiBuffer> m_uniforms;
     std::unique_ptr<QRhiBuffer> m_pickUniforms;
     std::unique_ptr<QRhiShaderResourceBindings> m_srb;
@@ -89,6 +103,8 @@ private:
     QShader m_pickFragment;
     QShader m_lineVertex;
     QShader m_lineFragment;
+    QShader m_shadowVertex;
+    QShader m_shadowFragment;
 };
 
 } // namespace fission::spike

@@ -59,6 +59,7 @@ public:
         return matrix;
     }
 
+    const QVector3D& target() const { return m_target; }
     float yaw() const { return m_yaw; }
     float pitch() const { return m_pitch; }
     void setAngles(float yaw, float pitch) { m_yaw = yaw; m_pitch = pitch; }

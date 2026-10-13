@@ -5,6 +5,8 @@
 
 layout(location = 0) in vec3 vNormal;
 layout(location = 1) in float vFace;
+layout(location = 2) in vec3 vWorld;
+layout(location = 3) in vec4 vLight;
 
 layout(location = 0) out vec4 fragColor;
 
