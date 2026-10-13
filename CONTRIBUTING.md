@@ -103,4 +103,10 @@ stored with Git LFS.
 
 - One topic per commit. Message style: `AP-1.5: Add cylinder primitive with handles`.
 - Fill in the pull request template. Describe the effect for users, not only the code.
+- **`main` is protected:** changes arrive only through a pull request, and all seven CI checks
+  (see above) must be green. Force pushes and deleting `main` are blocked for everyone,
+  maintainers included. Branches are deleted automatically after the merge.
+- **Privacy:** commit with your GitHub no-reply address
+  (`<id>+<user>@users.noreply.github.com`) and enable *Keep my email addresses private* in your
+  GitHub settings, otherwise merges made in the web interface publish your real address.
 - Be kind: see the [Code of Conduct](CODE_OF_CONDUCT.md).
