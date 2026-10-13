@@ -132,14 +132,15 @@ namespace fission::geo {
 
 ---
 
-## 5. Rendering (Spike in AP-0.4)
+## 5. Rendering ([ADR-0002](adr/0002-viewport-technologie.md))
 
 - **Tessellierung je Fläche,** mit Face-ID pro Dreieck; Kanten als Polylinien mit Edge-ID; Ecken als Punkte.
 - **Picking über ID-Buffer:** Ein Offscreen-Render-Pass schreibt IDs. Hover wird mit 60 Hz ausgewertet.
 - **Optik:** einfache PBR (matter Kunststoff), SSAO, weicher Schatten aufs Druckbett, Silhouetten- und Kantenlinien, 4× MSAA, Auswahl als Kontur und Aufhellung.
 - **Overlays** für Griffe, Gizmos, Maße und Wertblasen: Griffe werden in 3D gerendert (Tiefe korrekt), Texte und Eingabefelder als QML-Overlay.
 - **Budget:** 60 fps bei 2 Mio. Dreiecken auf einem M1 bzw. integrierter Intel/AMD-GPU (Linux).
-- **Fallback-Option:** OCCT AIS/V3d in Qt eingebettet (schneller zu B-Rep-Picking, aber OpenGL und weniger Kontrolle über die Optik). Die Entscheidung fällt per ADR nach dem Spike.
+- **Entscheidung (ADR-0002):** eigener Renderer auf **Qt RHI** (`QQuickRhiItem`), Metal auf macOS, Vulkan bzw. OpenGL auf Linux. Ausgangsbasis ist `spikes/viewport/a_rhi/` (`MeshPass` ist fensterunabhängig und headless testbar). Noch zu bauen: Kanten-/Eckenauswahl, SSAO, Silhouetten, Griffe in 3D.
+- **Verworfen:** OCCT AIS/V3d eingebettet (nur OpenGL, weniger Kontrolle über die Optik). Wird neu bewertet, wenn die Revisionskriterien im ADR eintreten.
 
 ---
 
@@ -149,7 +150,7 @@ namespace fission::geo {
 - **Anzeige:** standardmäßig 2 Nachkommastellen (einstellbar). Eingaben werden mit voller Genauigkeit übernommen; `12,345` bleibt `12,345`.
 - **Einheiten:** mm (Standard), cm, m, in, ft. Gemischte Eingabe in Ausdrücken ist erlaubt.
 - **Anzeige-Tessellierung:** adaptiv und blickabhängig. Beim Hineinzoomen wird im Hintergrund feiner tesselliert, damit Rundungen nie facettiert aussehen. Es gibt keinen „Seiten“-Parameter für runde Formen.
-- **Export-Tessellierung:** Sehnenfehler standardmäßig 0,01 mm, Winkeltoleranz 0,5°. Beides ist im Export-Dialog mit Vorschau der Dreiecksanzahl einstellbar.
+- **Export-Tessellierung:** Sehnenfehler standardmäßig 0,01 mm, Winkeltoleranz 5° (0,5° wäre 15- bis 100-mal langsamer ohne bessere Maßhaltigkeit, siehe [R16](06-rueckfragen.md)). Beides ist im Export-Dialog mit Vorschau der Dreiecksanzahl einstellbar.
 - **Druck-Toleranzen** (im Druckerprofil): Standard-Spiel 0,2 mm für Steckverbindungen, Lochkorrektur (+0,1 bis 0,2 mm für FDM), Mindestwandstärke = 2 × Düsendurchmesser.
 
 ---

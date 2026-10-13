@@ -1,6 +1,6 @@
 # ADR-0002: Viewport-Technologie
 
-- **Status:** vorgeschlagen (Entscheidung des Product Owners steht aus)
+- **Status:** angenommen (Product Owner, 2026-10-13); Nachmessung auf integrierter Intel-Grafik steht noch aus
 - **Datum:** 2026-10-13
 - **Arbeitspaket:** AP-0.4
 
@@ -20,7 +20,7 @@ macOS (Metal) und Linux (Wayland/X11, Vulkan/OpenGL), vollständig testbar. Tech
 3. **Hybrid:** AIS nur zum Auswählen, eigener Renderer zum Zeichnen · doppelte Datenhaltung, kein klarer
    Vorteil gegenüber A, das schon Auswahl hat.
 
-## Entscheidung (Vorschlag)
+## Entscheidung
 Wir wählen **Option A (Qt RHI)**, weil
 
 - beide Optionen das Leistungsbudget erfüllen (M1: 2 Mio. Dreiecke mit 163 Bildern/s, Auswahl unter 2 ms;

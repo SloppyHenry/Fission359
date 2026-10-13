@@ -47,7 +47,7 @@ Jede Frage hat eine **aktuelle Annahme**, auf der die Dokumente beruhen.
 > **Annahme:** Ambitioniertes Open-Source-Projekt mit dem Ziel einer öffentlichen 1.0. Erster großer Meilenstein ist **M2** (Phasen 0–2).
 
 ### R16 – Winkeltoleranz beim Export (aus AP-0.5)
-> **Annahme:** 5° statt der in Architektur § 6 genannten 0,5°, bei unveränderter Sehnenabweichung von 0,01 mm.
+> **Entschieden (2026-10-13, Product Owner):** 5° statt der ursprünglich in Architektur § 6 genannten 0,5°, bei unveränderter Sehnenabweichung von 0,01 mm.
 > Begründung: 0,5° erzeugt bei kleinen Rundungen etwa zehnmal so viele Dreiecke und ist 15- bis 100-mal
 > langsamer, ohne dass die Maßhaltigkeit besser wird (siehe [kernel-robustheit.md](spikes/kernel-robustheit.md)).
-> Bis zu deiner Bestätigung bleibt die Architektur-Seite unverändert.
+> Architektur § 6 ist angepasst.

@@ -243,7 +243,7 @@
 
 **Akzeptanzkriterien:**
 - [x] ADR-0002 „Viewport-Technologie“ mit Messwerten, Screenshots und Entscheidung
-  *([ADR-0002](../adr/0002-viewport-technologie.md) liegt als Vorschlag vor; die Entscheidung trifft der Product Owner)*
+  *([ADR-0002](../adr/0002-viewport-technologie.md) ist am 2026-10-13 vom Product Owner angenommen: Option A, Qt RHI)*
 - [x] Der gewählte Prototyp läuft auf beiden Plattformen und ist Ausgangsbasis für AP-1.3
   *(Prototyp A: Metal auf dem Mac, Vulkan auf Linux jeweils ohne Fenster gemessen; im Fenster auf dem Mac
   geprüft, im Fenster unter Linux noch nicht von Hand)*
@@ -280,7 +280,7 @@
 4. Danach den Bericht lesen und im ADR-0002 entscheiden.
 
 **Offen und Folge-Arbeiten**
-- **Entscheidung des Product Owners** zu ADR-0002 (danach `docs/03-architektur.md` § 5 anpassen).
+- ~~Entscheidung des Product Owners zu ADR-0002~~ erledigt (2026-10-13: Option A); Architektur § 5 ist angepasst.
 - Messung auf der integrierten Intel-Grafik (Testrechner B) läuft; Ergebnis wird im Bericht ergänzt.
 - B eingebettet im Fenster mit echter GPU prüfen (Mac: von dir; Linux: Desktop-Sitzung nötig).
 - Für A noch zu bauen: Kanten-/Eckenauswahl, SSAO, Silhouetten, Griffe, Test mit einem echten STEP-Modell.
@@ -338,7 +338,7 @@
    und dann `python3 scripts/tools/geometry_report.py build/report.csv`.
 
 **Offen und Folge-Arbeiten**
-- **Entscheidung für dich:** Export-Winkel von 0,5° auf 5° ändern (Architektur § 6, [R16](../06-rueckfragen.md)).
+- ~~Export-Winkel von 0,5° auf 5°~~ entschieden (2026-10-13), Architektur § 6 und [R16](../06-rueckfragen.md) sind angepasst.
 - CI-Nachweis (Definition of Done): erbracht. Alle 42 Fälle laufen in der CI auf macOS und Ubuntu 24.04 grün
   (`debug-asan` und `release`).
 - Nicht geprüft: große Modelle, fremde STEP-Dateien, variabler Abrundungsradius, Aushöhlen mit mehreren
