@@ -11,7 +11,7 @@
 #include <cstddef>
 #include <vector>
 
-#include "features.h"
+#include "recipe.h"
 #include "report.h"
 #include "truth.h"
 #include <BRepGProp.hxx>

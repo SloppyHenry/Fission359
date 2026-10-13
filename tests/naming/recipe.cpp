@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Fission3D contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "features.h"
+#include "recipe.h"
 
 #include <cmath>
 #include <utility>

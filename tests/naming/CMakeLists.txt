@@ -9,13 +9,12 @@
 
 add_library(fission_naming_proto OBJECT
   naming.cpp
-  features.cpp
+  recipe.cpp
   truth.cpp
   report.cpp)
 target_link_libraries(fission_naming_proto PUBLIC
   Catch2::Catch2
   ${FISSION_OCCT_TARGETS})
-target_include_directories(fission_naming_proto PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 fission_apply_compiler_options(fission_naming_proto)
 
 add_executable(fission_naming_tests
