@@ -42,7 +42,14 @@ using namespace fission::test::naming;
 // TNaming_Selector::Solve, which this test uses); the leaked block keeps its shapes alive. It is
 // a defect of the library, not of the prototype, so LeakSanitizer is told to ignore it. Finding
 // it by name needs the full stack, hence the slow unwinder for this executable.
-#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
+#if defined(__SANITIZE_ADDRESS__)
+#define FISSION_TEST_ASAN 1
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define FISSION_TEST_ASAN 1
+#endif
+#endif
+#ifdef FISSION_TEST_ASAN
 extern "C" {
 const char* __lsan_default_suppressions();
 const char* __lsan_default_suppressions() {
