@@ -53,13 +53,15 @@ struct World {
     std::string newId() { return "F" + std::to_string(nextId++); }
 };
 
+// The standard distributions are not the same in every standard library; this generator makes
+// the chains identical on macOS and Linux (std::mt19937 itself is fully specified).
 struct Rng {
     std::mt19937 gen;
     explicit Rng(unsigned seed) : gen(seed) {}
     double uniform(double lo, double hi) {
-        return std::uniform_real_distribution<double>(lo, hi)(gen);
+        return lo + (hi - lo) * (static_cast<double>(gen()) / 4294967296.0);
     }
-    int below(int n) { return std::uniform_int_distribution<int>(0, n - 1)(gen); }
+    int below(int n) { return static_cast<int>(gen() % static_cast<unsigned>(n)); }
 };
 
 // ---- geometry of the sides of a box ----
@@ -654,6 +656,9 @@ void runChains(Strictness mode, bool extrude, bool requireSafe = true, int chain
     INFO((extrude ? "sketch" : "box")
          << " world: edits " << stats.edits << ", references judged " << stats.references
          << ", kernel errors " << stats.kernelErrors);
+    std::printf("random trial (%s model, %s): %d edits, %d references judged, %d kernel refusals\n",
+                extrude ? "sketch" : "box", mode == Strictness::strict ? "strict" : "lenient",
+                stats.edits, stats.references, stats.kernelErrors);
     REQUIRE(stats.references > 0);
     REQUIRE(stats.edits > 0);
 }
@@ -683,6 +688,7 @@ TEST_CASE("sensitivity: effect of each design decision", "[naming][sensitivity][
     struct Variant {
         const char* name;
         void (*apply)(Limits&);
+        Strictness mode = Strictness::strict;
     };
     const Variant variants[] = {
         {"sens: default", [](Limits&) {}},
@@ -709,6 +715,13 @@ TEST_CASE("sensitivity: effect of each design decision", "[naming][sensitivity][
              l.strictScore = 0.90;
              l.strictMargin = 0.30;
          }},
+        {"sens: generous mode (default limits)", [](Limits&) {}, Strictness::lenient},
+        {"sens: generous mode, wide (score 0.35, margin 0.00)",
+         [](Limits& l) {
+             l.lenientScore = 0.35;
+             l.lenientMargin = 0.0;
+         },
+         Strictness::lenient},
         {"sens: turn limit 25 degrees", [](Limits& l) { l.plausibleDegrees = 25.0; }},
         {"sens: turn limit 90 degrees", [](Limits& l) { l.plausibleDegrees = 90.0; }},
     };
@@ -718,8 +731,8 @@ TEST_CASE("sensitivity: effect of each design decision", "[naming][sensitivity][
         variant.apply(limits());
         setGroupOverride(variant.name);
         const bool isDefault = std::string(variant.name) == "sens: default";
-        runChains(Strictness::strict, false, isDefault);
-        runChains(Strictness::strict, true, isDefault);
+        runChains(variant.mode, false, isDefault);
+        runChains(variant.mode, true, isDefault);
     }
     setGroupOverride({});
     limits() = saved;

@@ -606,7 +606,12 @@ Resolution resolve(const Body& body, const Reference& ref, Strictness strictness
         if (strictness == Strictness::strict) {
             return help("the name now matches several elements (it was split)");
         }
+        // Several pieces carry the name. Even a piece that looks exactly like the original is
+        // only one of them, so a pick is always a guess and has to be shown as one.
         Resolution r = decide(body, ref, hits, strictness, "split element");
+        if (r.outcome == Outcome::fallback) {
+            r.checkPlease = true;
+        }
         return r;
     }
 
