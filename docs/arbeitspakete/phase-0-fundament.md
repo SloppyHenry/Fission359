@@ -144,9 +144,11 @@
 
 **Bekannte Einschränkungen und Annahmen**
 - **Ubuntu 24.04:** Qt wird dort aus vcpkg gebaut (apt liefert nur Qt 6.4). Nachgewiesen im GitHub-Runner
-  `ubuntu-24.04` (siehe AP-0.3: kalt 2 h 11 min mit 4 Kernen, danach aus dem Zwischenspeicher). Ein zusätzlicher
-  Lauf im sauberen Container (`scripts/tools/docker-ubuntu-check`, 2 Kerne) ist noch nicht abgeschlossen und
-  prüft, ob `scripts/setup` auch ohne die vorinstallierten Pakete des Runners vollständig ist.
+  `ubuntu-24.04` (siehe AP-0.3: kalt 2 h 11 min mit 4 Kernen, danach aus dem Zwischenspeicher). Der Lauf im
+  sauberen Container (`scripts/tools/docker-ubuntu-check`, 2 Kerne) prüft zusätzlich, ob `scripts/setup` auch
+  ohne die vorinstallierten Pakete des Runners vollständig ist. Er hat bisher `libltdl-dev`, die libxcb-Pakete und
+  `python3-venv` als Lücken gefunden (alle in `scripts/setup` ergänzt); ein weiterer Lauf mit dem jetzigen Stand
+  war am 2026-10-13 noch nicht abgeschlossen.
 - **Binär-Cache:** Lokal der vcpkg-Standard (`~/.cache/vcpkg/archives`); in der CI der GitHub-Zwischenspeicher
   (siehe [ADR-0005](../adr/0005-ci-pipeline-und-zwischenspeicher.md)).
 - **Ein Qt statt zwei:** Host- und Ziel-Triplet sind gleich; sonst baut vcpkg Qt ein zweites Mal vollständig.
