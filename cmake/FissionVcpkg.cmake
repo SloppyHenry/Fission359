@@ -52,6 +52,14 @@ if(NOT DEFINED VCPKG_TARGET_TRIPLET)
   endif()
 endif()
 
+# Binaries must run on the oldest macOS we support. The vcpkg triplet builds the libraries
+# for the same version (cmake/vcpkg-triplets/fission-arm64-osx.cmake).
+set(FISSION_MACOS_MIN_VERSION "14.0" CACHE INTERNAL "Minimum macOS version of the app")
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "${FISSION_MACOS_MIN_VERSION}" CACHE STRING
+      "Minimum macOS version")
+endif()
+
 # We never cross-compile, so build tools for the host with the same triplet. Without this vcpkg
 # builds a second, full-featured copy of Qt (ICU, OpenSSL, PostgreSQL, Widgets, debug and
 # release) just to run moc and friends, which costs hours and extra system packages.

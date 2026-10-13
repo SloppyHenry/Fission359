@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: Fission3D contributors -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!--
+  Entitlements for the Hardened Runtime. Only used with a Developer ID signature (notarisation);
+  an ad-hoc signature (the default today) ignores the Hardened Runtime.
+  allow-jit / allow-unsigned-executable-memory: the QML engine (V4) generates machine code.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.cs.allow-jit</key><true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key><true/>
+</dict>
+</plist>

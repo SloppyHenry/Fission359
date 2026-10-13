@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: Fission3D contributors -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-fission3d">
+    <comment>Fission3D project</comment>
+    <comment xml:lang="de">Fission3D-Projekt</comment>
+    <icon name="io.github.sloppyhenry.Fission3D"/>
+    <glob pattern="*.fission"/>
+  </mime-type>
+</mime-info>
