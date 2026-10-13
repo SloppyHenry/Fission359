@@ -11,7 +11,9 @@ add_executable(fission_naming_tests
   features.cpp
   truth.cpp
   report.cpp
-  test_scenarios.cpp)
+  test_scenarios.cpp
+  test_evil.cpp
+  test_random.cpp)
 
 target_link_libraries(fission_naming_tests PRIVATE
   Catch2::Catch2WithMain

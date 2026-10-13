@@ -76,31 +76,62 @@ Feature makeFilletFeature(const std::string& id, std::vector<Reference> edges, d
 
 namespace {
 
+// The results of `op` for one element of the input: modified / generated pieces, or the
+// element itself if the operation does not mention it.
+std::vector<TopoDS_Shape> successors(BRepBuilderAPI_MakeShape& op, const TopoDS_Shape& shape,
+                                     Kind kind) {
+    std::vector<TopoDS_Shape> targets;
+    if (op.IsDeleted(shape)) {
+        return targets;
+    }
+    for (const TopoDS_Shape& modified : op.Modified(shape)) {
+        targets.push_back(modified);
+    }
+    if (kind == Kind::face) {
+        for (const TopoDS_Shape& generated : op.Generated(shape)) {
+            targets.push_back(generated);
+        }
+    }
+    if (targets.empty()) {
+        targets.push_back(shape);
+    }
+    return targets;
+}
+
 // Passes the names of `input` to the result of `op` through the kernel history. Faces that the
 // operation does not mention are unchanged (the same face lives on in the result).
 void inherit(Body& result, const Body& input, BRepBuilderAPI_MakeShape& op) {
+    result.tombstones().insert(result.tombstones().end(), input.tombstones().begin(),
+                               input.tombstones().end());
     for (const Entry& face : input.faces()) {
-        if (face.names.empty() || op.IsDeleted(face.shape)) {
+        if (face.names.empty()) {
             continue;
         }
-        std::vector<TopoDS_Shape> targets;
-        for (const TopoDS_Shape& modified : op.Modified(face.shape)) {
-            targets.push_back(modified);
-        }
-        for (const TopoDS_Shape& generated : op.Generated(face.shape)) {
-            targets.push_back(generated);
-        }
-        if (targets.empty()) {
-            targets.push_back(face.shape);
-        }
-        for (const TopoDS_Shape& target : targets) {
+        for (const TopoDS_Shape& target : successors(op, face.shape, Kind::face)) {
             const int idx = result.index(Kind::face, target);
             if (idx < 0) {
                 continue;
             }
             for (const std::string& name : face.names) {
-                result.faces()[idx].addName(name);
+                result.faces()[static_cast<std::size_t>(idx)].addName(name);
             }
+        }
+    }
+}
+
+// Remembers which named elements of `input` have no namesake in `result` any more. The kernel
+// history is not reliable for edges (neighbours of a rounded edge are rebuilt), so "consumed"
+// is decided by the names, after the derived names of `result` exist.
+void recordTombstones(Body& result, const Body& input, const std::string& featureId) {
+    for (const Kind kind : {Kind::face, Kind::edge}) {
+        const std::vector<Entry>& entries = input.entries(kind);
+        for (int i = 0; i < static_cast<int>(entries.size()); ++i) {
+            const Entry& entry = entries[static_cast<std::size_t>(i)];
+            if (entry.names.empty() || !result.find(kind, entry.primary()).empty()) {
+                continue;
+            }
+            result.tombstones().push_back(
+                {kind, entry.primary(), input.signatureOf(kind, i), featureId});
         }
     }
 }
@@ -167,6 +198,7 @@ Step combine(const Body& current, Body tool, const std::string& id) {
     inherit(result, current, fuse);
     inherit(result, tool, fuse);
     result.deriveNames(id);
+    recordTombstones(result, current, id);
     return {true, {}, std::move(result)};
 }
 
@@ -299,6 +331,7 @@ Step applyHole(const Feature& f, const Body& current, const Resolution& face) {
     inherit(result, current, cut);
     inherit(result, tool, cut);
     result.deriveNames(f.id);
+    recordTombstones(result, current, f.id);
     return {true, {}, std::move(result)};
 }
 
@@ -326,6 +359,7 @@ Step applyFillet(const Feature& f, const Body& current, const std::vector<Resolu
         }
     }
     result.deriveNames(f.id);
+    recordTombstones(result, current, f.id);
     return {true, {}, std::move(result)};
 }
 

@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <iterator>
 #include <set>
 #include <utility>
@@ -184,6 +185,22 @@ std::vector<std::string> Body::neighbourNames(Kind kind, int index) const {
     return sortedUnique(std::move(names));
 }
 
+std::vector<int> Body::neighbourFaces(Kind kind, int index) const {
+    std::vector<int> faces;
+    if (kind == Kind::edge) {
+        faces = edgeFaces_[static_cast<std::size_t>(index)];
+    } else {
+        for (const int e : faceEdges_[static_cast<std::size_t>(index)]) {
+            for (const int f : edgeFaces_[static_cast<std::size_t>(e)]) {
+                if (f != index && std::find(faces.begin(), faces.end(), f) == faces.end()) {
+                    faces.push_back(f);
+                }
+            }
+        }
+    }
+    return faces;
+}
+
 void Body::deriveNames(const std::string& featureId) {
     // Faces first (a new fillet corner patch, a face the history knows nothing about) ...
     std::vector<std::string> derived(faces_.size());
@@ -259,6 +276,29 @@ Signature Body::signatureOf(Kind kind, int idx) const {
         }
     }
     sig.neighbours = neighbourNames(kind, idx);
+    for (const int f : neighbourFaces(kind, idx)) {
+        const TopoDS_Face face = TopoDS::Face(faces_[static_cast<std::size_t>(f)].shape);
+        const BRepAdaptor_Surface surface(face);
+        NeighbourLook look;
+        look.name = faces_[static_cast<std::size_t>(f)].primary();
+        look.geomType = static_cast<int>(surface.GetType());
+        GProp_GProps faceProps;
+        BRepGProp::SurfaceProperties(face, faceProps);
+        look.centroid = faceProps.CentreOfMass();
+        if (surface.GetType() == GeomAbs_Plane) {
+            gp_Dir normal = surface.Plane().Axis().Direction();
+            if (face.Orientation() == TopAbs_REVERSED) {
+                normal.Reverse();
+            }
+            look.direction = normal;
+            look.hasDirection = true;
+            look.directed = true;
+        } else if (surface.GetType() == GeomAbs_Cylinder) {
+            look.direction = canonicalAxis(surface.Cylinder().Axis().Direction());
+            look.hasDirection = true;
+        }
+        sig.neighbourLooks.push_back(look);
+    }
     return sig;
 }
 
@@ -306,6 +346,25 @@ double positionScore(const Signature& a, const Signature& b, double diagonal) {
     return std::max(0.0, 1.0 - a.centroid.Distance(b.centroid) / scale);
 }
 
+bool looksAlike(const NeighbourLook& a, const NeighbourLook& b, double diagonal) {
+    if (a.geomType != b.geomType) {
+        return false;
+    }
+    if (a.hasDirection && b.hasDirection) {
+        double cosine = a.direction.X() * b.direction.X() + a.direction.Y() * b.direction.Y() +
+                        a.direction.Z() * b.direction.Z();
+        cosine = std::clamp(cosine, -1.0, 1.0);
+        double degrees = std::acos(cosine) * 180.0 / kPi;
+        if (!(a.directed && b.directed)) {
+            degrees = std::min(degrees, 180.0 - degrees);
+        }
+        if (degrees > limits().directionGateDegrees) {
+            return false;
+        }
+    }
+    return a.centroid.Distance(b.centroid) <= limits().positionRadiusFactor * diagonal;
+}
+
 struct Similarity {
     bool comparable = false; // same kind and geometry type, direction within the gate
     double total = 0.0;
@@ -333,23 +392,41 @@ Similarity similarity(const Signature& ref, const Signature& cand, double diagon
                                                       ? ratio(ref.radius, cand.radius)
                                                       : ratio(ref.size, cand.size));
 
-    // Neighbours count only as far as their names still exist; if a whole feature was replaced
-    // the old names are gone and carry no information (neutral score).
-    std::vector<std::string> expected;
-    for (const std::string& name : ref.neighbours) {
-        if (liveNames.count(name) != 0) {
-            expected.push_back(name);
+    // Neighbours: a name that still exists must be adjacent to the candidate. A name that is
+    // gone (its feature was replaced) is recognised by the look of the face instead.
+    double neighbours = 0.75; // no information
+    if (!ref.neighbourLooks.empty() || !cand.neighbourLooks.empty()) {
+        int matched = 0;
+        for (const NeighbourLook& expected : ref.neighbourLooks) {
+            const bool alive = !expected.name.empty() && liveNames.count(expected.name) != 0;
+            if (alive) {
+                matched += std::binary_search(cand.neighbours.begin(), cand.neighbours.end(),
+                                              expected.name)
+                               ? 1
+                               : 0;
+            } else if (limits().recogniseNeighbours) {
+                for (const NeighbourLook& other : cand.neighbourLooks) {
+                    if (looksAlike(expected, other, diagonal)) {
+                        ++matched;
+                        break;
+                    }
+                }
+            }
         }
-    }
-    double neighbours = 0.75;
-    if (!expected.empty()) {
-        std::vector<std::string> common;
-        std::set_intersection(expected.begin(), expected.end(), cand.neighbours.begin(),
-                              cand.neighbours.end(), std::back_inserter(common));
-        std::vector<std::string> all;
-        std::set_union(expected.begin(), expected.end(), cand.neighbours.begin(),
-                       cand.neighbours.end(), std::back_inserter(all));
-        neighbours = static_cast<double>(common.size()) / static_cast<double>(all.size());
+        const std::size_t total = std::max(ref.neighbourLooks.size(), cand.neighbourLooks.size());
+        neighbours = static_cast<double>(matched) / static_cast<double>(total);
+        if (!limits().recogniseNeighbours) {
+            // Old behaviour (measured for comparison): only names that still exist count.
+            std::vector<std::string> expectedNames;
+            for (const NeighbourLook& look : ref.neighbourLooks) {
+                if (liveNames.count(look.name) != 0) {
+                    expectedNames.push_back(look.name);
+                }
+            }
+            if (expectedNames.empty()) {
+                neighbours = 0.75;
+            }
+        }
     }
     result.total = 0.35 * position + 0.15 * direction + 0.20 * size + 0.30 * neighbours;
     return result;
@@ -378,13 +455,14 @@ std::set<std::string> liveNamesOf(const Body& body) {
 }
 
 struct Ranked {
-    int index = -1;
+    int index = -1; // index in the body, or -1 for "no live candidate"
     double score = 0.0;
 };
 
-// Best and second best comparable candidate among `pool` (all entries when empty).
+// Best live candidate, second best live candidate and the best consumed element (tombstone)
+// among `pool` (all entries when empty).
 void rank(const Body& body, const Reference& ref, const std::vector<int>& pool, Ranked& best,
-          Ranked& second) {
+          Ranked& second, double& bestTombstone, const Tombstone** tombstone) {
     const std::set<std::string> live = liveNamesOf(body);
     const std::vector<Entry>& entries = body.entries(ref.kind);
     const auto consider = [&](int i) {
@@ -403,6 +481,16 @@ void rank(const Body& body, const Reference& ref, const std::vector<int>& pool, 
     if (pool.empty()) {
         for (int i = 0; i < static_cast<int>(entries.size()); ++i) {
             consider(i);
+        }
+        for (const Tombstone& dead : body.tombstones()) {
+            if (dead.kind != ref.kind) {
+                continue;
+            }
+            const Similarity sim = similarity(ref.signature, dead.signature, body.diagonal(), live);
+            if (sim.comparable && sim.total > bestTombstone) {
+                bestTombstone = sim.total;
+                *tombstone = &dead;
+            }
         }
     } else {
         for (const int i : pool) {
@@ -429,31 +517,53 @@ Resolution take(const Body& body, Kind kind, int idx, Outcome outcome, double sc
     return r;
 }
 
-// Picks the winner of a similarity search under the rules of `strictness`.
+// Picks the winner of a similarity search under the rules of `strictness`. Consumed elements
+// compete too: if the reference looks at least as much like something that an earlier feature
+// consumed as like any live element, the honest answer is "needs help".
 Resolution decide(const Body& body, const Reference& ref, const std::vector<int>& pool,
                   Strictness strictness, const std::string& context) {
     Ranked best;
     Ranked second;
-    rank(body, ref, pool, best, second);
+    double dead = 0.0;
+    const Tombstone* tombstone = nullptr;
+    rank(body, ref, pool, best, second, dead, &tombstone);
     if (best.index < 0) {
         return help(context + ": nothing similar enough");
     }
+    char scores[96];
+    std::snprintf(scores, sizeof scores, " [best %.2f, second %.2f, consumed %.2f]", best.score,
+                  second.score, dead);
     const Limits& lim = limits();
-    const bool strictOk =
-        best.score >= lim.strictScore && best.score - second.score >= lim.strictMargin;
+    if (tombstone != nullptr && dead >= lim.lenientScore &&
+        dead >= best.score - lim.tombstoneSlack) {
+        return help(context + ": looks like an element that " + tombstone->consumedBy +
+                    " consumed (" + tombstone->name + ")" + scores);
+    }
+    // The winner may also be clear by place: it sits exactly where the original was and the
+    // runner-up is much further away (typical when a feature was replaced by an equal one).
+    bool nearest = second.index < 0;
+    if (!nearest) {
+        const gp_Pnt& origin = ref.signature.centroid;
+        const double d1 = body.signatureOf(ref.kind, best.index).centroid.Distance(origin);
+        const double d2 = body.signatureOf(ref.kind, second.index).centroid.Distance(origin);
+        nearest = d1 <= lim.nearestAbsolute * body.diagonal() && d1 <= lim.nearestRatio * d2;
+    }
+    const double liveRival = nearest ? 0.0 : second.score;
+    const double rival = std::max(liveRival, dead);
+    const bool strictOk = best.score >= lim.strictScore && best.score - rival >= lim.strictMargin;
     if (strictOk) {
         return take(body, ref.kind, best.index, Outcome::fallback, best.score,
-                    context + ": clear winner by similarity");
+                    context + ": clear winner by similarity" + scores);
     }
     const bool lenientOk =
-        best.score >= lim.lenientScore && best.score - second.score >= lim.lenientMargin;
+        best.score >= lim.lenientScore && best.score - rival >= lim.lenientMargin;
     if (strictness == Strictness::lenient && lenientOk) {
         Resolution r = take(body, ref.kind, best.index, Outcome::fallback, best.score,
-                            context + ": probable match, please check");
+                            context + ": probable match, please check" + scores);
         r.checkPlease = true;
         return r;
     }
-    return help(context + ": no clear winner");
+    return help(context + ": no clear winner" + scores);
 }
 
 } // namespace
@@ -502,6 +612,37 @@ Resolution resolve(const Body& body, const Reference& ref, Strictness strictness
 
     // Name unknown (the feature that created it was replaced, or the element vanished).
     return decide(body, ref, {}, strictness, "name not found");
+}
+
+std::string explain(const Body& body, const Reference& ref) {
+    std::string text;
+    const std::set<std::string> live = liveNamesOf(body);
+    const std::vector<Entry>& entries = body.entries(ref.kind);
+    char line[256];
+    for (int i = 0; i < static_cast<int>(entries.size()); ++i) {
+        const Signature cand = body.signatureOf(ref.kind, i);
+        const Similarity sim = similarity(ref.signature, cand, body.diagonal(), live);
+        if (!sim.comparable) {
+            continue;
+        }
+        std::snprintf(line, sizeof line, "    %.2f  %s  at (%.1f, %.1f, %.1f) r %.2f size %.1f\n",
+                      sim.total, entries[static_cast<std::size_t>(i)].primary().c_str(),
+                      cand.centroid.X(), cand.centroid.Y(), cand.centroid.Z(), cand.radius,
+                      cand.size);
+        text += line;
+    }
+    for (const Tombstone& dead : body.tombstones()) {
+        if (dead.kind != ref.kind) {
+            continue;
+        }
+        const Similarity sim = similarity(ref.signature, dead.signature, body.diagonal(), live);
+        if (sim.comparable) {
+            std::snprintf(line, sizeof line, "    %.2f  (consumed by %s) %s\n", sim.total,
+                          dead.consumedBy.c_str(), dead.name.c_str());
+            text += line;
+        }
+    }
+    return text;
 }
 
 void refresh(Reference& reference, const Body& body, const Resolution& resolution) {

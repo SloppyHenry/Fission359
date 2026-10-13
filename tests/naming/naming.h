@@ -26,6 +26,17 @@ namespace fission::test::naming {
 
 enum class Kind { face, edge };
 
+// What an adjacent face looked like (its name may be gone after a feature was replaced; the
+// look still allows to recognise it).
+struct NeighbourLook {
+    std::string name;
+    int geomType = -1;
+    gp_Pnt centroid;
+    gp_Dir direction{0.0, 0.0, 1.0};
+    bool hasDirection = false;
+    bool directed = false;
+};
+
 // What a referenced face or edge looked like when it was picked (and last resolved).
 struct Signature {
     Kind kind = Kind::face;
@@ -36,7 +47,8 @@ struct Signature {
     bool directed = false;     // plane normals have a sign, axes and line directions do not
     double size = 0.0;         // area or length
     double radius = 0.0;       // cylinder / circle radius, 0 otherwise
-    std::vector<std::string> neighbours; // sorted names of the adjacent faces
+    std::vector<std::string> neighbours;       // sorted names of the adjacent faces
+    std::vector<NeighbourLook> neighbourLooks; // the same faces with their look
 };
 
 struct Reference {
@@ -54,6 +66,16 @@ struct Entry {
     void addName(const std::string& name);
 };
 
+// An element that an earlier feature consumed (a rounded edge, a covered face). The body keeps
+// what it looked like so that a reference to it is not mistaken for a look-alike that came
+// from the same operation.
+struct Tombstone {
+    Kind kind = Kind::face;
+    std::string name;
+    Signature signature;
+    std::string consumedBy; // feature id
+};
+
 // A solid together with the names of all its faces and edges.
 class Body {
 public:
@@ -67,6 +89,8 @@ public:
     const std::vector<Entry>& edges() const { return edges_; }
     const std::vector<Entry>& entries(Kind kind) const;
     double diagonal() const { return diagonal_; }
+    std::vector<Tombstone>& tombstones() { return tombstones_; }
+    const std::vector<Tombstone>& tombstones() const { return tombstones_; }
 
     // Index of a face / edge of this body, or -1.
     int index(Kind kind, const TopoDS_Shape& sub) const;
@@ -78,6 +102,7 @@ public:
     void deriveNames(const std::string& featureId);
 
     std::vector<std::string> neighbourNames(Kind kind, int index) const;
+    std::vector<int> neighbourFaces(Kind kind, int index) const;
     Signature signatureOf(Kind kind, int index) const;
 
 private:
@@ -86,6 +111,7 @@ private:
     std::vector<Entry> edges_;
     std::vector<std::vector<int>> edgeFaces_; // per edge: indices of adjacent faces
     std::vector<std::vector<int>> faceEdges_; // per face: indices of its edges
+    std::vector<Tombstone> tombstones_;
     double diagonal_ = 0.0;
 };
 
@@ -117,6 +143,9 @@ struct Resolution {
 
 Resolution resolve(const Body& body, const Reference& reference, Strictness strictness);
 
+// Text listing every comparable candidate with its similarity score (for diagnosis).
+std::string explain(const Body& body, const Reference& reference);
+
 // After a successful resolution: the reference points to the current name and look.
 void refresh(Reference& reference, const Body& body, const Resolution& resolution);
 
@@ -130,6 +159,10 @@ struct Limits {
     double strictMargin = 0.20;
     double lenientScore = 0.55;
     double lenientMargin = 0.08;
+    double tombstoneSlack = 0.05;    // a consumed look-alike this close to the best is a rival
+    bool recogniseNeighbours = true; // match vanished neighbour names by their look
+    double nearestAbsolute = 0.02;   // winner within this fraction of the diagonal of the old place
+    double nearestRatio = 0.1;       // ... and at least this much closer than the runner-up
 };
 Limits& limits();
 

@@ -8,6 +8,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstddef>
+#include <vector>
+
 #include "features.h"
 #include "report.h"
 #include "truth.h"
@@ -69,6 +72,58 @@ inline double volumeOf(const TopoDS_Shape& shape) {
     GProp_GProps props;
     BRepGProp::VolumeProperties(shape, props);
     return props.Mass();
+}
+
+// ---- sketch outlines (counter-clockwise polygons; segment i runs from point i to point i+1) ----
+
+inline std::vector<SketchPoint> rectangleSketch(double dx, double dy, int firstSegment = 0) {
+    return {{0, 0, firstSegment},
+            {dx, 0, firstSegment + 1},
+            {dx, dy, firstSegment + 2},
+            {0, dy, firstSegment + 3}};
+}
+
+// The side face of the extrusion that stands on the sketch segment with the given id.
+inline truth::Shapes segmentFace(const TopoDS_Shape& shape, const std::vector<SketchPoint>& sketch,
+                                 int segment) {
+    for (std::size_t i = 0; i < sketch.size(); ++i) {
+        if (sketch[i].segment != segment) {
+            continue;
+        }
+        const SketchPoint& a = sketch[i];
+        const SketchPoint& b = sketch[(i + 1) % sketch.size()];
+        const gp_Dir outward(b.y - a.y, -(b.x - a.x), 0.0); // right of the direction (CCW)
+        return truth::planarFaces(shape, gp_Pnt(a.x, a.y, 0.0), outward);
+    }
+    return {};
+}
+
+// The straight edge where the extrusion's top cap meets the side face of a segment.
+inline truth::Shapes segmentTopEdge(const TopoDS_Shape& shape,
+                                    const std::vector<SketchPoint>& sketch, int segment,
+                                    double height) {
+    for (std::size_t i = 0; i < sketch.size(); ++i) {
+        if (sketch[i].segment != segment) {
+            continue;
+        }
+        const SketchPoint& a = sketch[i];
+        const SketchPoint& b = sketch[(i + 1) % sketch.size()];
+        const gp_Dir outward(b.y - a.y, -(b.x - a.x), 0.0);
+        return truth::straightEdgesBetween(shape, gp_Pnt(a.x, a.y, 0.0), outward,
+                                           gp_Pnt(0, 0, height), gp_Dir(0, 0, 1));
+    }
+    return {};
+}
+
+// New point behind point `index`; the segment that starts there gets the id `segment`.
+inline void insertPoint(std::vector<SketchPoint>& sketch, std::size_t index, double x, double y,
+                        int segment) {
+    sketch.insert(sketch.begin() + static_cast<std::ptrdiff_t>(index) + 1, {x, y, segment});
+}
+
+// Removes point `index`: the previous segment now runs to the next point, this one is gone.
+inline void removePoint(std::vector<SketchPoint>& sketch, std::size_t index) {
+    sketch.erase(sketch.begin() + static_cast<std::ptrdiff_t>(index));
 }
 
 // Exactly one element: the pick of the user.
