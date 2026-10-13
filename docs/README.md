@@ -17,6 +17,7 @@
 | [06-rueckfragen.md](06-rueckfragen.md) | Offene Entscheidungen, jeweils mit der aktuell angenommenen Antwort | du |
 | [adr/](adr/) | Architecture Decision Records (Entscheidungsprotokolle) | Entwicklung |
 | [spikes/](spikes/) | Berichte der Untersuchungs-Arbeitspakete (Messwerte, Empfehlungen) | Entwicklung |
+| [prompts/](prompts/) | Fertige Auftragstexte für einzelne Sitzungen (z. B. Oberflächen-Mockup) | du, Agent |
 
 ## So geht's los
 
