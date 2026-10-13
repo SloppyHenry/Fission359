@@ -33,6 +33,9 @@ const char* toString(Verdict verdict);
 // honest answer is "needs help".
 Verdict judge(const Resolution& resolution, const truth::Shapes& truth);
 
+// While set, every record() is counted under this group name instead (sensitivity runs).
+void setGroupOverride(const std::string& group);
+
 // Counts the verdict under `group` / `strictness` and returns it.
 Verdict record(const std::string& group, Strictness strictness, const Resolution& resolution,
                const truth::Shapes& truth);

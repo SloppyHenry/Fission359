@@ -533,7 +533,7 @@ struct ChainStats {
 // simulated user picks it again (the real user would do the same when the feature shows
 // "needs help"), so one unsafe reference is counted once and not at every later edit.
 void judge(World& w, const Evaluation& ev, Strictness mode, unsigned seed, int step,
-           const std::string& what, ChainStats& stats) {
+           const std::string& what, ChainStats& stats, bool requireSafe) {
     const bool verbose = std::getenv("FISSION_NAMING_VERBOSE") != nullptr;
     for (std::size_t i = 0; i < w.recipe.size(); ++i) {
         Feature& f = w.recipe[i];
@@ -563,7 +563,9 @@ void judge(World& w, const Evaluation& ev, Strictness mode, unsigned seed, int s
                                             outcome.input.signatureOf(f.refs[j].kind,
                                                                       outcome.refs[j].index))
                                  : std::string("-")));
-            CHECK(verdict != Verdict::silentlyWrong);
+            if (requireSafe) {
+                CHECK(verdict != Verdict::silentlyWrong);
+            }
             if (verbose && verdict == Verdict::unnecessaryHelp) {
                 std::fprintf(stderr, "[%s] seed %u step %d (%s) %s: %s\n  saved: %s\n%s",
                              groupOf(w, f, intent), seed, step, what.c_str(), f.id.c_str(),
@@ -587,6 +589,8 @@ int chainCount() {
     }
     return 24;
 }
+
+// `requireSafe`: a silently wrong assignment fails the test (the sensitivity runs only count).
 
 World makeWorld(Rng& rng, bool extrude) {
     World w;
@@ -620,14 +624,14 @@ World makeWorld(Rng& rng, bool extrude) {
     return w;
 }
 
-void runChains(Strictness mode, bool extrude) {
+void runChains(Strictness mode, bool extrude, bool requireSafe = true, int chains = 0) {
     constexpr int kEdits = 10;
     ChainStats stats;
-    for (int chain = 0; chain < chainCount(); ++chain) {
+    for (int chain = 0; chain < (chains > 0 ? chains : chainCount()); ++chain) {
         const unsigned seed = (extrude ? 5000u : 1000u) + static_cast<unsigned>(chain);
         Rng rng(seed);
         World w = makeWorld(rng, extrude);
-        judge(w, evaluate(w.recipe, mode), mode, seed, 0, "initial", stats);
+        judge(w, evaluate(w.recipe, mode), mode, seed, 0, "initial", stats, requireSafe);
         for (int step = 1; step <= kEdits; ++step) {
             const World before = w;
             const std::string what = randomEdit(w, rng);
@@ -644,7 +648,7 @@ void runChains(Strictness mode, bool extrude) {
             }
             w.recipe = trial;
             ++stats.edits;
-            judge(w, ev, mode, seed, step, what, stats);
+            judge(w, ev, mode, seed, step, what, stats, requireSafe);
         }
     }
     INFO((extrude ? "sketch" : "box")
@@ -670,4 +674,53 @@ TEST_CASE("naming random: sketch, strict mode never assigns silently wrong", "[n
 
 TEST_CASE("naming random: sketch, lenient mode never assigns silently wrong", "[naming][random]") {
     runChains(Strictness::lenient, true);
+}
+
+// How much does each part of the design contribute? The same random chains run with parts
+// switched off or with other limits. Only counted, nothing is required here except for the
+// default setting. The numbers go into docs/spikes/persistente-referenzen.md.
+TEST_CASE("naming sensitivity: effect of each design decision", "[naming][sensitivity][.]") {
+    struct Variant {
+        const char* name;
+        void (*apply)(Limits&);
+    };
+    const Variant variants[] = {
+        {"sens: default", [](Limits&) {}},
+        {"sens: without consumed-element memory", [](Limits& l) { l.useTombstones = false; }},
+        {"sens: without neighbour recognition", [](Limits& l) { l.recogniseNeighbours = false; }},
+        {"sens: without place dominance", [](Limits& l) { l.nearestRatio = 0.0; }},
+        {"sens: looser (score 0.70, margin 0.10)",
+         [](Limits& l) {
+             l.strictScore = 0.70;
+             l.strictMargin = 0.10;
+         }},
+        {"sens: very loose (score 0.45, margin 0.00)",
+         [](Limits& l) {
+             l.strictScore = 0.45;
+             l.strictMargin = 0.0;
+         }},
+        {"sens: very tight (score 0.97, margin 0.50)",
+         [](Limits& l) {
+             l.strictScore = 0.97;
+             l.strictMargin = 0.50;
+         }},
+        {"sens: tighter (score 0.90, margin 0.30)",
+         [](Limits& l) {
+             l.strictScore = 0.90;
+             l.strictMargin = 0.30;
+         }},
+        {"sens: turn limit 25 degrees", [](Limits& l) { l.plausibleDegrees = 25.0; }},
+        {"sens: turn limit 90 degrees", [](Limits& l) { l.plausibleDegrees = 90.0; }},
+    };
+    const Limits saved = limits();
+    for (const Variant& variant : variants) {
+        limits() = saved;
+        variant.apply(limits());
+        setGroupOverride(variant.name);
+        const bool isDefault = std::string(variant.name) == "sens: default";
+        runChains(Strictness::strict, false, isDefault);
+        runChains(Strictness::strict, true, isDefault);
+    }
+    setGroupOverride({});
+    limits() = saved;
 }

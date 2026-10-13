@@ -112,10 +112,22 @@ Verdict judge(const Resolution& resolution, const truth::Shapes& truth) {
     return resolution.checkPlease ? Verdict::warnedWrong : Verdict::silentlyWrong;
 }
 
+namespace {
+std::string& groupOverride() {
+    static std::string current;
+    return current;
+}
+} // namespace
+
+void setGroupOverride(const std::string& group) {
+    groupOverride() = group;
+}
+
 Verdict record(const std::string& group, Strictness strictness, const Resolution& resolution,
                const truth::Shapes& truth) {
     const Verdict verdict = judge(resolution, truth);
-    Tally& t = tallies()[{group, static_cast<int>(strictness)}];
+    const std::string& name = groupOverride().empty() ? group : groupOverride();
+    Tally& t = tallies()[{name, static_cast<int>(strictness)}];
     switch (verdict) {
     case Verdict::correct:
         (resolution.outcome == Outcome::found ? t.correctByName : t.correctBySimilarity)++;

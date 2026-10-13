@@ -160,6 +160,7 @@ struct Limits {
     double lenientScore = 0.55;
     double lenientMargin = 0.08;
     double tombstoneSlack = 0.05;    // a consumed look-alike this close to the best is a rival
+    bool useTombstones = true;       // consumed elements compete in the similarity search
     bool recogniseNeighbours = true; // match vanished neighbour names by their look
     double nearestAbsolute = 0.02;   // winner within this fraction of the diagonal of the old place
     double nearestRatio = 0.1;       // ... and at least this much closer than the runner-up

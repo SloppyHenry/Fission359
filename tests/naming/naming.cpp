@@ -483,7 +483,7 @@ void rank(const Body& body, const Reference& ref, const std::vector<int>& pool, 
             consider(i);
         }
         for (const Tombstone& dead : body.tombstones()) {
-            if (dead.kind != ref.kind) {
+            if (dead.kind != ref.kind || !limits().useTombstones) {
                 continue;
             }
             const Similarity sim = similarity(ref.signature, dead.signature, body.diagonal(), live);

@@ -20,4 +20,6 @@ target_link_libraries(fission_naming_tests PRIVATE
   ${FISSION_OCCT_TARGETS})
 fission_apply_compiler_options(fission_naming_tests)
 
-catch_discover_tests(fission_naming_tests TEST_PREFIX "naming: ")
+# The sensitivity runs (same random chains with parts of the design switched off) take minutes;
+# run them by hand: fission_naming_tests "[sensitivity]"
+catch_discover_tests(fission_naming_tests TEST_PREFIX "naming: " TEST_SPEC "~[sensitivity]")
