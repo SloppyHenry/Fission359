@@ -232,7 +232,7 @@
 ---
 
 ### AP-0.4 Spike: Viewport-Technologie
-**Status:** Review · **Größe:** L · **Abhängigkeiten:** AP-0.2
+**Status:** erledigt (2026-10-13, ADR-0002 angenommen, Messungen auf M1, RTX 3060 und Intel HD 620) · **Größe:** L · **Abhängigkeiten:** AP-0.2
 
 **Ziel:** Fundierte Entscheidung zwischen eigenem Renderer auf **Qt RHI** und **OCCT AIS/V3d**.
 
