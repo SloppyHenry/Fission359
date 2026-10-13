@@ -28,14 +28,12 @@ fission_apply_compiler_options(fission_naming_tests)
 # run them by hand.
 catch_discover_tests(fission_naming_tests TEST_PREFIX "naming: " TEST_SPEC "~[sensitivity]")
 
-# OpenCASCADE's own naming framework (OCAF / TNaming), linked only here. It leaks a few bytes in
-# TNaming_Builder::Select; the leak is suppressed by name, which needs the full stack.
+# OpenCASCADE's own naming framework (OCAF / TNaming), linked only here. The executable also
+# carries the LeakSanitizer exception for a leak inside OpenCASCADE (see test_ocaf.cpp).
 add_executable(fission_ocaf_tests test_ocaf.cpp)
 target_link_libraries(fission_ocaf_tests PRIVATE
   fission_naming_proto
   Catch2::Catch2WithMain
   ${FISSION_OCCT_OCAF_TARGETS})
 fission_apply_compiler_options(fission_ocaf_tests)
-catch_discover_tests(fission_ocaf_tests TEST_PREFIX "naming: "
-  PROPERTIES ENVIRONMENT
-    "ASAN_OPTIONS=fast_unwind_on_malloc=0;LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan.supp")
+catch_discover_tests(fission_ocaf_tests TEST_PREFIX "naming: ")

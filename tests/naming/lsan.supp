@@ -1,7 +1,0 @@
-# SPDX-FileCopyrightText: Fission3D contributors
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
-# LeakSanitizer suppressions for the naming tests. OpenCASCADE 8.0.1 leaks a few bytes per call
-# in TNaming_Builder::Select (reached from TNaming_Selector::Solve); the OCAF practical test of
-# AP-0.6 triggers it. It is a defect of the library, not of the prototype.
-leak:TNaming_Builder::Select

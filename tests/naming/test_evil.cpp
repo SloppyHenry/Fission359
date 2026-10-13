@@ -5,6 +5,9 @@
 // "needs help". A silent assignment here is exactly the stale-reference bug of other CAD
 // programs, so these tests must never be weakened.
 
+#include <cstdio>
+#include <cstdlib>
+
 #include "scenario_support.h"
 
 using namespace fission::test::naming;
@@ -22,6 +25,10 @@ void expectHelp(const std::string& group, const Body& body, const Reference& sav
     const Resolution lenient = resolve(body, saved, Strictness::lenient);
     INFO("lenient reason: " << lenient.reason);
     const Verdict verdict = record(group, Strictness::lenient, lenient, {});
+    if (std::getenv("FISSION_NAMING_VERBOSE") != nullptr) {
+        std::fprintf(stderr, "[%s] lenient: %s (%s)\n", group.c_str(), toString(verdict),
+                     lenient.reason.c_str());
+    }
     REQUIRE(verdict != Verdict::silentlyWrong);
 }
 

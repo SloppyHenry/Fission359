@@ -38,6 +38,23 @@
 
 using namespace fission::test::naming;
 
+// OpenCASCADE 8.0.1 leaks a few bytes in TNaming_Builder::Select (reached from
+// TNaming_Selector::Solve, which this test uses); the leaked block keeps its shapes alive. It is
+// a defect of the library, not of the prototype, so LeakSanitizer is told to ignore it. Finding
+// it by name needs the full stack, hence the slow unwinder for this executable.
+#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
+extern "C" {
+const char* __lsan_default_suppressions();
+const char* __lsan_default_suppressions() {
+    return "leak:TNaming_Builder::Select\n";
+}
+const char* __asan_default_options();
+const char* __asan_default_options() {
+    return "fast_unwind_on_malloc=0";
+}
+}
+#endif
+
 namespace {
 
 // ---------------------------------------------------------------------------------------------
@@ -121,6 +138,9 @@ Resolution asResolution(bool solved, const TopoDS_Shape& shape) {
 
 struct Ocaf {
     occ::handle<TDF_Data> data = new TDF_Data;
+    // The attributes reference each other in cycles; a document has to be cleared by hand,
+    // otherwise OpenCASCADE's reference counting never frees it.
+    ~Ocaf() { data->Root().ForgetAllAttributes(true); }
     TDF_Label label(int tag) const { return data->Root().FindChild(tag); }
 };
 
