@@ -1,0 +1,1903 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Fission3D – klickbares Oberflächen-Mockup (Attrappe, kein Produktionscode). Gestaltung nach Vorlage „Formwerk 3D“ des Product Owners. -->
+<title>Fission3D Oberfläche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-screen desktop app. Amber mockup strip on top (not part of the app), then menu bar / document tabs /
+   [bodies + recipe | 3D view with floating tools | properties] / status line. Dark-first, IBM Plex, one blue accent. */
+:root{
+  color-scheme: dark;
+  --chrome:#131416; --bar:#1A1B1E; --panel:#1F2023; --field:#27292D; --field-2:#2E3035; --raise:#26282C;
+  --line:#34363B; --line-2:#3A3D43; --line-3:#4A4E55;
+  --view:#2B2D31; --view-2:#232528;
+  --fg:#E8E9EB; --fg-2:#C9CCD1; --fg-3:#A4A8B0; --fg-4:#979CA5;
+  --accent:#2563D9; --accent-fg:#FFFFFF; --accent-text:#7FB0FF; --accent-line:#5B97FF; --accent-soft:#22314F; --accent-hover:#2F6FE6;
+  --amber:#F0A53A; --amber-fg:#1A1205; --amber-soft:rgba(240,165,58,.12); --amber-line:rgba(240,165,58,.45);
+  --ok:#5DBB63; --ok-soft:rgba(93,187,99,.14); --bad:#F47C74; --bad-soft:rgba(242,100,92,.14);
+  --ax-x:#E5534B; --ax-y:#57AB5A; --ax-z:#5B97FF;
+  --bed:#25272B; --bed-rgb:37,39,43; --bed-edge:#44474E; --grid:#303237; --grid-2:#3A3D43;
+  --edge:rgba(10,11,13,.55); --shd:rgba(0,0,0,.6);
+  --handle:#FFFFFF; --handle-line:#16181b;
+  --glass:rgba(31,32,35,.94); --shadow-ui:rgba(0,0,0,.45);
+  --ghost:rgba(170,182,200,.26); --ghost-line:rgba(215,222,234,.8);
+  --demo-bg:#2c2516; --demo-bg2:#3a311c; --demo-fg:#f4e5c2; --demo-line:#7c6534; --demo-on:#fff8e8; --note:#e6bf6e;
+  --font:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Cantarell,"Noto Sans",Ubuntu,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,"DejaVu Sans Mono",monospace;
+  --font-round:"Arial Rounded MT Bold","Nunito","Varela Round",-apple-system,"Segoe UI",sans-serif;
+  --dur:180ms;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  color-scheme: light;
+  --chrome:#E9EBEE; --bar:#F0F1F3; --panel:#F7F8F9; --field:#FFFFFF; --field-2:#F0F2F5; --raise:#FFFFFF;
+  --line:#D9DCE1; --line-2:#CDD1D7; --line-3:#B5BBC4; --view:#E3E6EA; --view-2:#D4D8DE;
+  --fg:#1B1D21; --fg-2:#3A3E45; --fg-3:#50555E; --fg-4:#5E646E;
+  --accent:#2563D9; --accent-fg:#FFFFFF; --accent-text:#1F57C2; --accent-line:#2563D9; --accent-soft:#DCE8FF; --accent-hover:#1E57C4;
+  --amber:#8F5600; --amber-fg:#FFFFFF; --amber-soft:rgba(183,110,0,.1); --amber-line:rgba(183,110,0,.45);
+  --ok:#17692F; --ok-soft:rgba(30,125,58,.1); --bad:#B71F1F; --bad-soft:rgba(198,40,40,.08);
+  --bed:#CDD2D9; --bed-rgb:205,210,217; --bed-edge:#A7AEB8; --grid:#BCC2CB; --grid-2:#AAB1BC;
+  --edge:rgba(20,24,30,.45); --shd:rgba(30,40,60,.32); --handle-line:#1c1f24;
+  --glass:rgba(250,251,252,.96); --shadow-ui:rgba(30,40,60,.18);
+  --ghost:rgba(90,110,140,.22); --ghost-line:rgba(40,60,90,.75);
+  --demo-bg:#fbf0d4; --demo-bg2:#fff8e6; --demo-fg:#4a3810; --demo-line:#c9a253; --demo-on:#2a1d03; --note:#80520a;
+}}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --chrome:#E9EBEE; --bar:#F0F1F3; --panel:#F7F8F9; --field:#FFFFFF; --field-2:#F0F2F5; --raise:#FFFFFF;
+  --line:#D9DCE1; --line-2:#CDD1D7; --line-3:#B5BBC4; --view:#E3E6EA; --view-2:#D4D8DE;
+  --fg:#1B1D21; --fg-2:#3A3E45; --fg-3:#50555E; --fg-4:#5E646E;
+  --accent:#2563D9; --accent-fg:#FFFFFF; --accent-text:#1F57C2; --accent-line:#2563D9; --accent-soft:#DCE8FF; --accent-hover:#1E57C4;
+  --amber:#8F5600; --amber-fg:#FFFFFF; --amber-soft:rgba(183,110,0,.1); --amber-line:rgba(183,110,0,.45);
+  --ok:#17692F; --ok-soft:rgba(30,125,58,.1); --bad:#B71F1F; --bad-soft:rgba(198,40,40,.08);
+  --bed:#CDD2D9; --bed-rgb:205,210,217; --bed-edge:#A7AEB8; --grid:#BCC2CB; --grid-2:#AAB1BC;
+  --edge:rgba(20,24,30,.45); --shd:rgba(30,40,60,.32); --handle-line:#1c1f24;
+  --glass:rgba(250,251,252,.96); --shadow-ui:rgba(30,40,60,.18);
+  --ghost:rgba(90,110,140,.22); --ghost-line:rgba(40,60,90,.75);
+  --demo-bg:#fbf0d4; --demo-bg2:#fff8e6; --demo-fg:#4a3810; --demo-line:#c9a253; --demo-on:#2a1d03; --note:#80520a;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;display:flex;flex-direction:column;background:var(--chrome);color:var(--fg);font:13px/1.45 var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent-line);outline-offset:2px;border-radius:4px}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+kbd,.kbd{font:500 12px/1 var(--mono);padding:3px 6px;border-radius:4px;background:var(--field);border:1px solid var(--line-2);color:var(--fg-2);white-space:nowrap}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.vtag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--note);border:1px dashed var(--note);border-radius:4px;padding:0 5px;line-height:18px;white-space:nowrap;cursor:help}
+.btn{height:32px;padding:0 13px;border-radius:6px;border:1px solid var(--line-2);background:transparent;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;color:var(--fg);font-weight:500;transition:background var(--dur),border-color var(--dur)}
+.btn:hover{background:var(--field);border-color:var(--line-3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.amber{background:var(--amber);border-color:var(--amber);color:var(--amber-fg);font-weight:600}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.btn.full{width:100%}
+.btn:disabled{opacity:.45;cursor:default}
+.iconbtn{width:30px;height:30px;display:grid;place-items:center;border-radius:6px;border:0;background:none;color:var(--fg-3)}
+.iconbtn:hover{background:var(--field);color:var(--fg)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent-text);font-size:12px;display:inline-flex;align-items:center;gap:4px}
+
+/* ---------- mockup strip (not part of the app) ---------- */
+#demo{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:6px 12px;background:var(--demo-bg);color:var(--demo-fg);border-bottom:1px dashed var(--demo-line);font-size:12px;position:relative;z-index:40}
+#demo .tag{font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:2px 7px;border:1px solid var(--demo-line);border-radius:4px}
+#demo .grp-d{display:flex;align-items:center;gap:6px}
+#demo .lbl{opacity:.85}
+.seg{display:inline-flex;border:1px solid var(--demo-line);border-radius:6px;overflow:hidden}
+.seg button{background:none;border:0;padding:3px 9px;color:inherit;font-size:12px}
+.seg button+button{border-left:1px solid var(--demo-line)}
+.seg button[aria-pressed="true"]{background:var(--demo-line);color:var(--demo-on);font-weight:600}
+#demo select{background:var(--demo-bg2);color:var(--demo-fg);border:1px solid var(--demo-line);border-radius:6px;padding:3px 6px;max-width:250px;font-size:12px}
+.dbtn{background:var(--demo-bg2);border:1px solid var(--demo-line);border-radius:6px;padding:3px 9px;color:inherit;font-size:12px;display:inline-flex;align-items:center;gap:5px}
+
+/* ---------- app grid ---------- */
+#app{flex:1;min-height:0;position:relative;display:grid;--lw:248px;--rw:300px;
+  grid-template-columns:var(--lw) minmax(0,1fr) var(--rw);
+  grid-template-rows:40px 52px minmax(0,1fr) 28px;
+  grid-template-areas:"menu menu menu" "tabs tabs tabs" "left view right" "status status status"}
+#app.focus{--lw:0px;--rw:0px} #app.focus #left,#app.focus #right{display:none}
+#app.kit{--lw:312px;--rw:0px} #app.kit #right{display:none}
+#menu{grid-area:menu} #tabs{grid-area:tabs} #left{grid-area:left} #view{grid-area:view} #right{grid-area:right} #status{grid-area:status}
+
+#menu{display:grid;grid-template-columns:auto minmax(200px,440px) auto;justify-content:space-between;align-items:center;gap:12px;padding:0 12px;background:var(--chrome);border-bottom:1px solid var(--line);z-index:6}
+.menu-l{display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap;margin-right:10px}
+.brand svg{width:18px;height:18px}
+.mbtn{background:none;border:0;padding:5px 9px;border-radius:5px;color:var(--fg-2);white-space:nowrap}
+.mbtn:hover{background:var(--field);color:var(--fg)}
+.search{display:flex;align-items:center;gap:10px;height:28px;padding:0 6px 0 11px;border-radius:7px;border:1px solid var(--line-2);background:var(--bar);color:var(--fg-4);width:100%;text-align:left}
+.search span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search:hover{border-color:var(--line-3);color:var(--fg-3)}
+.menu-r{display:flex;justify-content:flex-end;align-items:center;gap:8px;color:var(--fg-4);font-size:12px;min-width:0;white-space:nowrap}
+
+#tabs{display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--bar);border-bottom:1px solid var(--line);min-width:0}
+.dtab{display:flex;align-items:center;gap:8px;height:36px;padding:0 10px 0 12px;border-radius:7px;border:1px solid transparent;background:none;color:var(--fg-3);white-space:nowrap;min-width:0}
+.dtab:hover{background:var(--panel);color:var(--fg)}
+.dtab.on{background:var(--panel);border-color:var(--line);color:var(--fg);font-weight:500}
+.dtab .x{width:16px;height:16px;display:grid;place-items:center;border-radius:4px;color:var(--fg-4)}
+.dtab .x .ic{width:12px;height:12px}
+.spacer{flex:1}
+.mode{display:flex;align-items:center;gap:8px;color:var(--fg-4);font-size:12px}
+.segc{display:inline-flex;background:var(--chrome);border:1px solid var(--line);border-radius:8px;padding:3px;gap:2px}
+.segc button{display:inline-flex;align-items:center;gap:6px;border:0;background:none;border-radius:6px;padding:4px 10px;font-size:12.5px;color:var(--fg-3);white-space:nowrap}
+.segc button:hover{color:var(--fg)}
+.segc button[aria-pressed="true"]{background:var(--field-2);color:var(--fg);font-weight:600}
+.segc .ic{width:14px;height:14px}
+
+/* ---------- side panels ---------- */
+aside.panel{background:var(--panel);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+#left{border-right:1px solid var(--line)} #right{border-left:1px solid var(--line)}
+.ptabs{display:flex;align-items:center;gap:2px;height:46px;padding:0 10px 0 6px;border-bottom:1px solid var(--line);flex:none}
+.ptabs button{height:46px;padding:0 10px;border:0;background:none;color:var(--fg-3);font-weight:500;border-bottom:2px solid transparent}
+.ptabs button[aria-selected="true"]{color:var(--fg);font-weight:600;border-bottom-color:var(--fg)}
+.ptabs .iconbtn{margin-left:auto;width:26px;height:26px}
+.pbody{overflow:auto;padding:10px;flex:1;min-height:0}
+.pfind{display:flex;align-items:center;gap:8px;height:32px;border-radius:7px;border:1px solid var(--line);background:var(--field);padding:0 10px;color:var(--fg-4);margin-bottom:10px}
+.pfind input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--fg)}
+.tree{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.trow{display:grid;grid-template-columns:16px 18px minmax(0,1fr) auto 24px;align-items:center;gap:6px;height:33px;padding:0 4px 0 6px;border-radius:6px;color:var(--fg-2);border:1px solid transparent;width:100%;text-align:left;background:none}
+.trow:hover{background:var(--field)}
+.trow.sel{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent-line) 45%,transparent);color:var(--fg);font-weight:600}
+.trow.group{font-weight:600;color:var(--fg)}
+.trow.child{padding-left:24px}
+.trow .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trow .cnt{font-size:12px;color:var(--fg-4);font-weight:400}
+.trow .eye{width:24px;height:24px;display:grid;place-items:center;border:0;background:none;border-radius:4px;color:var(--fg-4)}
+.trow .eye:hover{color:var(--fg)}
+.trow.off .nm{color:var(--fg-4);text-decoration:line-through}
+.sw{width:12px;height:12px;border-radius:3px;border:1px solid var(--edge);display:inline-block}
+.sw.holes{background:repeating-linear-gradient(45deg,var(--fg-3) 0 2px,transparent 2px 4px)}
+
+.rec{border-top:1px solid var(--line);flex:none;max-height:46%;display:flex;flex-direction:column;min-height:0}
+.rec-h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 6px;font-weight:600}
+.rec-list{list-style:none;margin:0;padding:0 8px;overflow:auto;min-height:0}
+.ri{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:start;width:100%;text-align:left;padding:6px 8px;border-radius:6px;border:1px solid transparent;background:none;color:var(--fg-2)}
+.ri:hover{background:var(--field);color:var(--fg)}
+.ri .num{font:500 12px/18px var(--mono);color:var(--fg-4)}
+.ri .rt{line-height:18px}
+.ri .rt small{display:block;color:var(--fg-4);font-size:12px}
+.ri .rt small.stw.bad{color:var(--bad);font-weight:600} .ri .rt small.stw.edit{color:var(--accent-text)}
+.ri.edit{background:var(--accent-soft);color:var(--fg)}
+.ri.bad{background:var(--bad-soft);color:var(--fg)}
+.st{font-size:12px;line-height:18px;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.st .ic{width:13px;height:13px;stroke-width:2.4}
+.st.ok{color:var(--ok)} .st.edit{color:var(--accent-text)} .st.bad{color:var(--bad)}
+.now{display:flex;align-items:center;gap:8px;color:var(--accent-text);font-size:12px;font-weight:600;margin:4px 8px;cursor:ns-resize;user-select:none}
+.now::before,.now::after{content:"";flex:1;height:2px;border-radius:1px;background:var(--accent-line)}
+.rec-foot{padding:6px 14px 12px;color:var(--fg-4);font-size:12px}
+.empty{color:var(--fg-4);font-size:12px;padding:6px 8px;line-height:1.5}
+
+/* right panel */
+.ohead{display:grid;grid-template-columns:36px minmax(0,1fr) 28px;gap:10px;align-items:center;padding:14px;border-bottom:1px solid var(--line)}
+.ohead .oi{width:36px;height:36px;border-radius:8px;background:var(--accent-soft);color:var(--accent-text);display:grid;place-items:center}
+.ohead b{display:block;font-size:14.5px;font-weight:600}
+.ohead small{display:block;color:var(--fg-4);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sec{padding:14px;border-bottom:1px solid var(--line)}
+.sec-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.sec-h h3{margin:0;font-size:13px;font-weight:600}
+.sec-h .aside{color:var(--fg-4);font-size:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;border-radius:6px;padding:3px 9px;font-size:12px;background:var(--field);color:var(--fg-3)}
+.pill[aria-pressed="true"]{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent-line) 40%,transparent);color:var(--accent-text)}
+.pill .ic{width:13px;height:13px}
+.badge{font-size:12px;font-weight:600;border-radius:10px;padding:0 8px;line-height:20px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.badge.ok{color:var(--ok);background:var(--ok-soft)} .badge.bad{color:var(--bad);background:var(--bad-soft)} .badge.edit{color:var(--accent-text);background:var(--accent-soft)} .badge.amber{color:var(--amber);background:var(--amber-soft)}
+.badge .ic{width:13px;height:13px;stroke-width:2.4}
+.f3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.f2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fld>label{color:var(--fg-4);font-size:12px;cursor:ew-resize;user-select:none}
+.fin{display:flex;align-items:center;gap:6px;height:32px;border-radius:6px;border:1px solid var(--line);background:var(--field);padding:0 8px;min-width:0;transition:border-color var(--dur),box-shadow var(--dur)}
+.fin:focus-within,.fld.active .fin{border-color:var(--accent-line);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent-line) 22%,transparent)}
+.fin input{flex:1;min-width:0;width:100%;background:none;border:0;outline:0;font:500 13px var(--mono);color:var(--fg);padding:0}
+.fin .unit{color:var(--fg-4);font:12px var(--mono)}
+.fin .ax{width:18px;height:18px;border-radius:4px;display:grid;place-items:center;font:600 11.5px var(--mono);color:#fff;flex:none}
+.fld.err .fin{border-color:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
+.fnote{font-size:12px;color:var(--fg-4)}
+.fld.err .fnote{color:var(--bad)}
+.row{display:grid;grid-template-columns:96px minmax(0,1fr);align-items:center;gap:10px;margin:9px 0}
+.row>span:first-child{color:var(--fg-4);font-size:12.5px}
+.selbox{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--field);border:1px solid var(--line);border-radius:6px;height:32px;padding:0 9px;width:100%;text-align:left;color:var(--fg)}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.swatches button{width:40px;height:40px;border-radius:8px;border:2px solid transparent;padding:0;box-shadow:inset 0 0 0 1px var(--edge)}
+.swatches button[aria-pressed="true"]{border-color:var(--accent-line);box-shadow:0 0 0 2px var(--panel) inset}
+.swatches .add{background:none;border:1px dashed var(--line-3);color:var(--fg-4);display:grid;place-items:center}
+.switch{display:inline-flex;align-items:center;gap:8px;background:none;border:0;padding:0;color:var(--fg)}
+.switch .tr{width:32px;height:18px;border-radius:9px;background:var(--line-2);position:relative;transition:background var(--dur)}
+.switch .tr::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--fg);transition:transform var(--dur)}
+.switch[aria-checked="true"] .tr{background:var(--accent)}
+.switch[aria-checked="true"] .tr::after{transform:translateX(14px);background:#fff}
+.disclose{border:1px dashed var(--line-3);border-radius:8px;padding:12px 14px;color:var(--fg-3);font-size:12.5px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.chk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.chk li{display:grid;grid-template-columns:18px 1fr;gap:9px}
+.chk .ic{color:var(--ok);stroke-width:2.3;margin-top:1px}
+.chk small{display:block;color:var(--fg-4);font-size:12px}
+.slider{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:12px;color:var(--fg-4);font-size:12.5px}
+.slider .track{height:4px;border-radius:2px;background:var(--line-2);position:relative}
+.slider .track i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--accent-line)}
+.slider .track b{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--accent-line);transform:translate(-50%,-50%);box-shadow:0 0 0 3px var(--panel)}
+
+/* ---------- 3D view ---------- */
+#view{position:relative;overflow:hidden;background:radial-gradient(ellipse 85% 75% at 50% 45%,var(--view),var(--view-2));min-width:0;min-height:0}
+#view svg.scene{position:absolute;inset:0;display:block}
+#ov{position:absolute;inset:0;pointer-events:none}
+#ov .ov{position:absolute;pointer-events:auto}
+.float{background:var(--panel);border:1px solid var(--line);border-radius:9px;box-shadow:0 6px 20px var(--shadow-ui)}
+.vbar{position:absolute;top:12px;left:12px;display:flex;gap:8px;z-index:4}
+.vbar .float{display:flex;align-items:center;padding:3px;gap:2px}
+.vbar .float>button{display:inline-flex;align-items:center;gap:7px;border:0;background:none;border-radius:6px;padding:5px 10px;color:var(--fg-3);font-size:12.5px;white-space:nowrap}
+.vbar .float>button:hover{color:var(--fg)}
+.vbar .float>button[aria-pressed="true"]{background:var(--field-2);color:var(--fg);font-weight:600}
+.vbar .float .ic{width:14px;height:14px}
+.palette{position:absolute;left:12px;top:60px;width:76px;display:flex;flex-direction:column;gap:2px;padding:6px;z-index:4;max-height:calc(100% - 72px);overflow:auto}
+.palette .pt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 6px;border-radius:7px;border:0;background:none;color:var(--fg-2);font-size:12px;line-height:1.1}
+.palette .pt:hover{background:var(--field)}
+.palette .pt[aria-pressed="true"]{background:var(--accent);color:#fff}
+.palette .pt[aria-expanded="true"]{background:var(--accent-soft);color:var(--accent-text)}
+.palette .pt .ic{width:18px;height:18px}
+.palette hr{width:70%;border:0;border-top:1px solid var(--line);margin:5px auto}
+#cube{position:absolute;top:8px;right:12px;width:112px;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:3}
+#cube svg{display:block}
+.vc-face{fill:var(--field);stroke:var(--line-3);stroke-width:1;cursor:pointer;transition:fill var(--dur)}
+.vc-face:hover{fill:var(--accent-soft);stroke:var(--accent-line)}
+.vc-t{fill:var(--fg-3);font-weight:600;pointer-events:none;font-family:var(--mono)}
+.cube-btns{display:flex;gap:6px}
+.cube-btns .iconbtn{width:30px;height:30px;background:var(--panel);border:1px solid var(--line)}
+.navbtns{position:absolute;right:12px;bottom:14px;display:flex;flex-direction:column;gap:2px;padding:4px;z-index:4}
+.navbtns .iconbtn{width:34px;height:34px}
+.lotse{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(600px,calc(100% - 200px));display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;z-index:5;border-color:var(--line-2)}
+.lotse .li{width:32px;height:32px;border-radius:8px;background:var(--amber-soft);color:var(--amber);display:grid;place-items:center;align-self:start}
+.lotse .lk{font-size:12px;color:var(--fg-4)}
+.lotse .lk b{color:var(--amber);font-weight:600;margin-right:6px}
+.lotse .dots{display:flex;gap:4px;margin:4px 0 6px}
+.lotse .dots i{width:6px;height:6px;border-radius:50%;background:var(--line-3)}
+.lotse .dots i.on{background:var(--amber)}
+.lotse h4{margin:0 0 3px;font-size:14.5px;display:flex;align-items:center;gap:8px}
+.lotse p{margin:0;color:var(--fg-2);font-size:13px}
+.lotse .la{display:flex;gap:8px;align-items:center}
+.lotse .keys{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center}
+.lotse .keys kbd{opacity:.45;transition:opacity var(--dur)}
+.lotse .keys kbd.on{opacity:1} .lotse .keys kbd.cur{background:var(--accent);color:#fff;border-color:var(--accent);opacity:1}
+.lotse .good{color:var(--ok);font-weight:600;font-size:12.5px;margin-top:6px;display:flex;align-items:center;gap:6px}
+.lotse-pill{position:absolute;left:100px;bottom:14px;z-index:5;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;color:var(--amber);font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--panel);border-radius:8px}
+
+.bed-top{fill:var(--bed)} .grid{stroke:var(--grid);stroke-width:1} .grid.major{stroke:var(--grid-2)}
+.bed-rim{fill:none;stroke:var(--bed-edge);stroke-width:1.5}
+.ax-x{stroke:var(--ax-x);stroke-width:1.5;opacity:.8} .ax-y{stroke:var(--ax-y);stroke-width:1.5;opacity:.8}
+.origin{fill:var(--fg-3)}
+.bedlabel{fill:var(--fg-4);font-size:12px;font-family:var(--mono)}
+.shd{fill:var(--shd)}
+.hdl{fill:var(--handle);stroke:var(--handle-line);stroke-width:1.3;cursor:pointer;transition:fill var(--dur)}
+.hdl:hover{fill:var(--accent-line)}
+.hdl.lift{fill:var(--handle-line);stroke:var(--handle)}
+.cursor{fill:#ffffff;stroke:#000000;stroke-width:1.1;stroke-linejoin:round}
+.dim{stroke:var(--fg-3);stroke-width:1.2;fill:none} .dim-ext{stroke:var(--fg-4);stroke-width:1;stroke-dasharray:3 3;fill:none}
+.dimb{stroke:var(--accent-line);stroke-width:1.3;fill:none;opacity:.9}
+.selo{fill:none;stroke:var(--accent-line);stroke-width:2.2;stroke-linejoin:round}
+.accl{stroke:var(--accent-line);fill:none;stroke-width:2.2;stroke-linecap:round}
+.accsoft{fill:color-mix(in srgb,var(--accent-line) 22%,transparent);stroke:var(--accent-line);stroke-width:1.5}
+.gx{stroke:var(--ax-x)} .gy{stroke:var(--ax-y)} .gz{stroke:var(--ax-z)}
+.gxf{fill:var(--ax-x)} .gyf{fill:var(--ax-y)} .gzf{fill:var(--ax-z)}
+.glab{font:600 13px var(--mono)}
+.ghost{fill:url(#stripes);stroke:var(--ghost-line);stroke-width:1.3;stroke-dasharray:5 4}
+.ghost-top{fill:none;stroke:var(--ghost-line);stroke-width:1.3;stroke-dasharray:5 4}
+.gs-a{fill:var(--ghost)} .gs-b{stroke:var(--ghost-line);stroke-width:2.2;opacity:.7}
+.ghost-red{fill:var(--bad-soft);stroke:var(--bad);stroke-dasharray:5 4;stroke-width:1.6}
+.badl{stroke:var(--bad);stroke-width:3;stroke-linecap:round}
+.pick{cursor:pointer}
+.pick:hover{stroke:var(--accent-line)!important;stroke-width:2!important}
+.emb{font-family:var(--font-round);font-weight:800}
+.ptr{stroke:var(--fg-4);stroke-width:1.2;fill:none;stroke-dasharray:2 3}
+
+.dpill{transform-origin:0 0;display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:12px;background:var(--panel);border:1.5px solid var(--accent-line);color:var(--fg);font:500 13px var(--mono);white-space:nowrap;box-shadow:0 3px 10px var(--shadow-ui)}
+.dpill.active{background:var(--accent);color:#fff}
+.dpill.active b::after{content:"";display:inline-block;width:2px;height:14px;background:#fff;margin-left:2px;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+.dpill b{font-weight:500}
+@keyframes blink{50%{opacity:0}}
+.bubble{transform:translate(16px,14px);background:var(--panel);border:1px solid var(--line-2);border-radius:8px;padding:4px 9px;font-size:12px;white-space:nowrap;box-shadow:0 6px 18px var(--shadow-ui);color:var(--fg-3)}
+.bubble b{font:600 14px var(--mono);color:var(--fg)}
+.bubble .typed{color:var(--accent-text)}
+.chip{transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line-2);border-radius:14px;padding:3px 10px;font-size:12px;white-space:nowrap;color:var(--fg);box-shadow:0 4px 12px var(--shadow-ui)}
+.chip b{font-family:var(--mono);font-weight:600}
+button.chip,.chip[role="button"]{cursor:pointer}
+.chip:hover{border-color:var(--accent-line)}
+.chip.ok .ic{color:var(--ok);stroke-width:2.4}
+.chip.acc{border-color:var(--accent-line);color:var(--accent-text)}
+.chip input{width:46px;background:var(--field);border:1px solid var(--accent-line);border-radius:5px;padding:0 4px;text-align:right;font-family:var(--mono)}
+.dimf{transform:translate(-50%,-50%);display:inline-flex;align-items:baseline;gap:6px;background:var(--field);border:1px solid var(--line-2);border-radius:7px;padding:4px 9px;font-size:12px;white-space:nowrap;color:var(--fg-4);box-shadow:0 4px 12px var(--shadow-ui)}
+.dimf b{font:600 15px var(--mono);color:var(--fg);min-width:22px;text-align:right}
+.dimf.active{border-color:var(--accent-line);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent-line) 25%,transparent)}
+.dimf.active b::after{content:"";display:inline-block;width:2px;height:15px;background:var(--accent-line);margin-left:2px;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+.ctx{transform:translate(-50%,-100%);display:flex;gap:2px;padding:4px;white-space:nowrap}
+.ctx.below{transform:translate(-50%,0)}
+.ctx button{display:flex;align-items:center;gap:6px;border:0;background:none;border-radius:6px;padding:5px 9px;color:var(--fg-2);font-size:12.5px}
+.ctx button:hover{background:var(--field);color:var(--fg)}
+.ctx button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-text)}
+.ctx .k{color:var(--fg-4);font-size:12px}
+.msg{width:min(380px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--line-2);border-radius:10px;padding:14px 16px;box-shadow:0 14px 36px var(--shadow-ui);position:relative;overflow:hidden}
+.msg::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--bad)}
+.msg h4{margin:0 0 4px;font-size:14px;display:flex;align-items:center;gap:8px}
+.msg h4 .ic{color:var(--bad);stroke-width:2.1}
+.msg p{margin:0 0 12px;color:var(--fg-2)}
+.msg .acts{display:flex;flex-wrap:wrap;gap:6px}
+.msg .where{font-size:12px;color:var(--fg-4);margin-top:10px}
+.banner{position:absolute;top:60px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:6px 14px;font-weight:600;white-space:nowrap;z-index:4}
+.banner .ic{color:var(--ok);stroke-width:2.4}
+.inset{position:absolute;left:100px;bottom:14px;width:300px;padding:12px 14px;font-size:12px;color:var(--fg-3);z-index:4}
+.inset h5{margin:0 0 6px;font-size:12.5px;color:var(--fg);display:flex;justify-content:space-between;gap:6px}
+.inset svg{display:block;width:100%;height:70px;margin:4px 0}
+
+.fly{position:absolute;top:60px;left:98px;width:min(460px,calc(100% - 230px));padding:14px;z-index:6}
+.fly-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.fly-h h4{margin:0;font-size:14px}
+.fly-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 8px;border-radius:8px;border:1px solid var(--line);background:var(--raise);font-size:12px;color:var(--fg-2);transition:border-color var(--dur)}
+.tile:hover{border-color:var(--accent-line);color:var(--fg)}
+.tile.on{border-color:var(--accent-line);background:var(--accent-soft);color:var(--fg)}
+.tile svg.shape{width:62px;height:52px}
+.fly-list{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.fly-list button{text-align:left;border:1px solid var(--line);background:var(--raise);border-radius:8px;padding:8px 10px;color:var(--fg)}
+.fly-list button:hover{border-color:var(--accent-line)}
+.fly-list small{display:block;color:var(--fg-4);font-size:12px}
+.fly-kits{display:flex;align-items:center;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--fg-4);flex-wrap:wrap}
+
+.cmd{position:absolute;top:4px;left:50%;transform:translateX(-50%);width:min(560px,calc(100% - 32px));overflow:hidden;z-index:8}
+.cmd-in{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.cmd-in input{flex:1;min-width:0;background:none;border:0;outline:0;font-size:15px}
+.cmd-res{list-style:none;margin:0;padding:6px;max-height:300px;overflow:auto}
+.cmd-res li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:7px;cursor:pointer}
+.cmd-res li[aria-selected="true"]{background:var(--accent-soft)}
+.cmd-res .ci{width:30px;height:30px;border-radius:7px;background:var(--field);display:grid;place-items:center;color:var(--fg-2)}
+.cmd-res .cn{font-weight:600}
+.cmd-res .cg{color:var(--fg-4);font-weight:400}
+.cmd-res .why{display:block;font-size:12px;color:var(--fg-4)}
+.cmd-res mark{background:none;color:var(--accent-text);font-weight:650}
+.cmd-try{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 14px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--fg-4)}
+.cmd-try button{border:1px solid var(--line);background:var(--field);border-radius:12px;padding:1px 9px;font-size:12px}
+
+#status{display:flex;align-items:center;gap:16px;padding:0 12px;background:var(--chrome);border-top:1px solid var(--line);color:var(--fg-3);font-size:12px;min-width:0;white-space:nowrap}
+#status .sl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;display:flex;gap:16px}
+#status .sl b{color:var(--fg);font-weight:600}
+#status .sr2{display:flex;gap:14px;align-items:center}
+#status .dotok{display:inline-flex;align-items:center;gap:6px}
+#status .dotok::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+
+/* ---------- kit (left panel stepper) ---------- */
+.kit-h{padding:14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.kit-h h2{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+.kit-h .kb{display:flex;gap:6px}
+.kstep{border-bottom:1px solid var(--line)}
+.kstep>button{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;background:none;border:0;text-align:left;color:var(--fg-2);font-weight:500}
+.kstep>button .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--field-2);font:600 12px var(--mono);color:var(--fg-2)}
+.kstep.done>button .n{background:var(--ok-soft);color:var(--ok)}
+.kstep.cur>button{color:var(--fg);font-weight:600}
+.kstep.cur>button .n{background:var(--accent);color:#fff}
+.kstep .kbody{padding:2px 14px 14px}
+.ksec{margin:4px 0 14px}
+.ksec h4{margin:0 0 7px;font-size:12px;font-weight:600;color:var(--fg-4)}
+.kopts{display:flex;flex-wrap:wrap;gap:6px}
+.kopt{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--raise);border-radius:7px;padding:5px 9px;font-size:12px;color:var(--fg-2)}
+.kopt:hover{border-color:var(--line-3)}
+.kopt.on{border-color:var(--accent-line);background:var(--accent-soft);color:var(--fg);font-weight:600}
+.kopt.tall{flex-direction:column;width:62px;padding:6px 4px;gap:3px}
+.kopt.tall svg{width:26px;height:26px}
+.kopt .ic{width:15px;height:15px}
+.knote{font-size:12px;color:var(--fg-4);margin:6px 2px 0}
+.kfoot{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line);flex:none}
+
+/* ---------- start screen ---------- */
+#start{position:absolute;top:40px;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:232px minmax(0,1fr);background:var(--chrome)}
+.snav{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;padding:14px 12px;min-height:0;overflow:auto}
+.snav>button{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:8px;border:0;background:none;color:var(--fg-2);font-weight:500;text-align:left}
+.snav>button:hover{background:var(--field)}
+.snav>button.on{background:var(--field-2);color:var(--fg);font-weight:600}
+.snav .cnt{margin-left:auto;font:600 12px var(--mono);color:var(--amber);background:var(--amber-soft);border-radius:5px;padding:1px 6px}
+.stip{margin-top:auto;border:1px solid var(--amber-line);background:var(--amber-soft);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--fg-2)}
+.stip b{display:flex;align-items:center;gap:7px;color:var(--amber);margin-bottom:6px}
+.smain{overflow:auto;padding:30px 44px 40px;min-width:0}
+.shead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.shead small{color:var(--fg-4);font-size:13px}
+.shead h1{margin:2px 0 0;font-size:28px;line-height:1.2;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.shead .sb{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.srow1{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:16px}
+.cont{display:grid;grid-template-columns:minmax(0,290px) minmax(0,1fr);gap:20px;padding:16px}
+.cont .art{background:radial-gradient(ellipse at 50% 40%,var(--view),var(--view-2));border-radius:9px;display:grid;place-items:center;min-height:190px}
+.cont .art svg{width:240px;height:180px}
+.cont small{color:var(--fg-4);font-size:12.5px}
+.cont h2{margin:6px 0 2px;font-size:19px}
+.prog{background:var(--chrome);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:16px 0}
+.prog .ph{display:flex;justify-content:space-between;gap:10px;font-size:12.5px}
+.prog .ph b{color:var(--amber)}
+.prog p{margin:4px 0 10px;font-size:12.5px;color:var(--fg-2)}
+.bar{height:4px;border-radius:2px;background:var(--line-2)} .bar i{display:block;height:100%;border-radius:2px;background:var(--amber)}
+.bar.blue i{background:var(--accent-line)}
+.recent{padding:16px}
+.recent .rh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-weight:600}
+.rfile{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;width:100%;padding:6px;border-radius:8px;border:0;background:none;text-align:left;color:var(--fg)}
+.rfile:hover{background:var(--field)}
+.rfile svg{width:52px;height:40px;background:var(--view-2);border-radius:6px}
+.rfile b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rfile small{color:var(--fg-4);font-size:12px}
+.stitle{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:30px 0 12px;flex-wrap:wrap}
+.stitle h2{margin:0;font-size:16px}
+.stitle span{color:var(--fg-4);font-size:12.5px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:12px}
+.btile{display:grid;grid-template-rows:100px auto;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:0;overflow:hidden;color:var(--fg);transition:border-color var(--dur)}
+.btile:hover{border-color:var(--accent-line)}
+.btile .art{background:radial-gradient(ellipse at 50% 40%,var(--view),var(--view-2));display:grid;place-items:center}
+.btile .art svg{width:120px;height:96px}
+.btile .lab{padding:11px 13px 13px;display:flex;flex-direction:column;gap:4px}
+.btile .lab b{font-size:13.5px}
+.btile .lab span{font-size:12px;color:var(--fg-3)}
+.unitchip{align-self:flex-start;margin-top:6px;font-size:12px;color:var(--fg-3);background:var(--field-2);border-radius:10px;padding:1px 8px}
+.missions{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.mcard{padding:16px;display:flex;flex-direction:column;gap:10px;text-align:left;color:var(--fg)}
+.mcard.cur{border-color:var(--amber-line)}
+.mcard .mh{display:flex;align-items:center;gap:10px;font-weight:600}
+.mcard .mh i{width:30px;height:30px;border-radius:7px;background:var(--field-2);display:grid;place-items:center;color:var(--fg-2)}
+.mcard.cur .mh i{background:var(--amber-soft);color:var(--amber)}
+.mcard p{margin:0;font-size:12.5px;color:var(--fg-3)}
+.mcard small{color:var(--fg-4);font-size:12px}
+
+/* ---------- export assistant (sheet) ---------- */
+#exp{position:absolute;top:40px;left:0;right:0;bottom:0;z-index:15;background:rgba(8,9,10,.62);display:flex;align-items:flex-start;justify-content:center;padding:28px 24px;overflow:auto}
+.dlg{width:min(1100px,100%);background:var(--panel);border:1px solid var(--line-2);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.5);display:flex;flex-direction:column}
+.dlg-h{display:grid;grid-template-columns:40px minmax(0,1fr) 32px;gap:12px;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
+.dlg-h .oi{width:40px;height:40px;border-radius:9px;background:var(--accent-soft);color:var(--accent-text);display:grid;place-items:center}
+.dlg-h b{display:block;font-size:17px}
+.dlg-h small{color:var(--fg-4)}
+.dlg-b{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,.95fr);gap:22px;padding:20px}
+.dlg-b h3{margin:0 0 10px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.dlg-b h3 .hint{color:var(--amber);font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.dlg-b h3 .hint::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber)}
+.purpose{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.purpose .pcard:nth-child(odd):last-child{grid-column:1/-1}
+.pcard .vtag{font-size:10.5px;margin-left:4px;vertical-align:1px}
+.pcard{display:flex;flex-direction:column;gap:4px;padding:12px;border-radius:9px;border:1px solid var(--line);background:var(--raise);text-align:left;color:var(--fg)}
+.pcard .ic{width:18px;height:18px;color:var(--fg-3);margin-bottom:4px}
+.pcard b{font-size:13px}
+.pcard span{font-size:12px;color:var(--fg-3)}
+.pcard[aria-pressed="true"]{border-color:var(--accent-line);background:var(--accent-soft)}
+.pcard[aria-pressed="true"] .ic{color:var(--accent-text)}
+.fmt{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;align-items:start;padding:12px;border-radius:9px;border:1px solid var(--line);background:var(--raise);text-align:left;width:100%;color:var(--fg);margin-bottom:8px}
+.fmt .rd{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-3);margin-top:1px}
+.fmt[aria-checked="true"]{border-color:var(--accent-line);background:var(--accent-soft)}
+.fmt[aria-checked="true"] .rd{border:5px solid var(--accent-line);background:#fff}
+.fmt b{font-family:var(--mono)}
+.fmt .recm{margin-left:8px;font:600 12px var(--font);color:var(--ok);background:var(--ok-soft);border-radius:4px;padding:1px 6px}
+#cmdl{position:absolute;top:44px;left:0;right:0;height:0;z-index:30} #cmdl .cmd{top:0}
+.fmt span{display:block;font-size:12px;color:var(--fg-3);margin-top:2px}
+.fmt span.recm{display:inline-block;margin:0 0 0 8px;color:var(--ok)}
+.pchk{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;padding:12px 14px;border-radius:9px;border:1px solid var(--line);background:var(--raise);margin-bottom:8px}
+.pchk .ic{color:var(--ok);stroke-width:2.2;margin-top:2px}
+.pchk b{font-size:13px}
+.pchk p{margin:2px 0 0;font-size:12.5px;color:var(--fg-3)}
+.pchk.warn{border-color:var(--amber-line);background:var(--amber-soft)}
+.pchk.warn .ic{color:var(--amber)}
+.pchk .pa{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.pchk.done{opacity:.75}
+.prev{background:radial-gradient(ellipse at 50% 40%,var(--view),var(--view-2));border-radius:10px;height:230px;display:grid;place-items:center;overflow:hidden}
+.prev svg{width:100%;height:100%}
+.pinfo{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--chrome);border:1px solid var(--line);border-radius:9px;padding:12px;margin-top:10px;font-size:12px;color:var(--fg-4)}
+.pinfo b{display:block;font:500 13px var(--mono);color:var(--fg);margin-top:2px}
+.legend{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--fg-3);margin:12px 0}
+.legend i{width:20px;border-top:2px dashed var(--amber)}
+details.adv{border:1px solid var(--line);border-radius:8px;padding:0 12px}
+details.adv summary{cursor:pointer;padding:9px 0;font-weight:500;list-style:none}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv summary::before{content:"› ";color:var(--fg-4)}
+details.adv[open] summary::before{content:"⌄ "}
+.dlg-f{display:flex;align-items:center;gap:12px;padding:16px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.dlg-f .path{display:flex;align-items:center;gap:8px;color:var(--fg-3);font-size:12.5px}
+.dlg-f .note{color:var(--fg-4);font-size:12.5px}
+
+/* ---------- info drawer, toast, tooltip card ---------- */
+#info{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);z-index:60;background:var(--panel);border-left:3px solid var(--demo-line);overflow:auto;box-shadow:-20px 0 50px var(--shadow-ui);padding:0 20px 30px}
+#info .ih{position:sticky;top:0;background:var(--panel);display:flex;justify-content:space-between;align-items:center;padding:14px 0 10px;border-bottom:1px solid var(--line);margin-bottom:10px}
+#info h2{margin:0;font-size:16px}
+#info h3{font-size:13px;margin:18px 0 6px}
+#info p,#info li{color:var(--fg-2);line-height:1.5}
+#info ul{padding-left:18px;margin:4px 0}
+#info table{width:100%;border-collapse:collapse;font-size:12px}
+#info th,#info td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+#info th{background:var(--field)}
+#info .pct{font:600 22px var(--mono)}
+.slist{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.slist button{text-align:left;border:1px solid var(--line);background:var(--field);border-radius:7px;padding:5px 8px;font-size:12px;color:var(--fg)}
+.slist button[aria-current="true"]{border-color:var(--accent-line);color:var(--accent-text)}
+#toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:70;background:var(--field-2);color:var(--fg);border:1px solid var(--line-2);border-radius:9px;padding:8px 14px;box-shadow:0 10px 30px var(--shadow-ui);max-width:calc(100% - 32px)}
+#tipcard{position:fixed;z-index:80;width:250px;background:var(--panel);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;box-shadow:0 14px 36px var(--shadow-ui);pointer-events:none;font-size:12px;color:var(--fg-3)}
+#tipcard b{display:block;color:var(--fg);font-size:13px;margin-bottom:3px}
+#tipcard .tk{margin-top:6px}
+
+@media (max-width:1240px){ .menu-l .mbtn:nth-child(n+5){display:none} .mode>span{display:none} }
+@media (max-width:1100px){ #app{--lw:216px;--rw:264px} .dlg-b{grid-template-columns:1fr 1fr} .dlg-b>div:last-child{grid-column:1/-1} .srow1{grid-template-columns:1fr} .lotse{width:calc(100% - 120px)} }
+@media (max-width:900px){ .menu-l .mbtn{display:none} .dtab:not(.on){display:none} #start{grid-template-columns:1fr} .snav{display:none} .smain{padding:20px 16px} }
+@media (max-width:760px){
+  #app,#app.kit{--lw:0px;--rw:0px} #left,#right{display:none}
+  #menu{grid-template-columns:auto minmax(0,1fr)} .menu-r{display:none}
+  .mode{display:none} .vbar .float:last-child{display:none} #cube{transform:scale(.8);transform-origin:top right}
+  .lotse{width:calc(100% - 24px);grid-template-columns:1fr} .lotse .li{display:none}
+  .inset,.navbtns{display:none} .dlg-b{grid-template-columns:1fr} .purpose{grid-template-columns:1fr}
+  .cont{grid-template-columns:1fr} #status .sr2{display:none}
+  #tabs .dtab:not(.on),#tabs .iconbtn[data-act="mock"]{display:none} .dtab{min-width:0}
+  .palette{width:52px} .palette .pt span{display:none} .lotse .keys,.lotse p{display:none} .fly{left:72px;width:calc(100% - 84px)}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+/* ---------- settings page (start screen) ---------- */
+.sset{display:grid;gap:16px;max-width:880px}
+.sset .card{padding:18px 20px}
+.sset h2{margin:0 0 4px;font-size:15px}
+.sset .sd{margin:0 0 14px;color:var(--fg-3);font-size:12.5px;max-width:65ch}
+.srow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 16px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.srow:first-of-type{border-top:0}
+.srow>.segc,.srow>.switch{justify-self:start}
+.srow>label,.srow>span.l{color:var(--fg-2);font-weight:500}
+.acrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.acsw{position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;border:0;background:none;color:var(--fg-3);font-size:12px;padding:0}
+.acsw i{width:34px;height:34px;border-radius:50%;display:block;border:2px solid transparent;box-shadow:inset 0 0 0 2px var(--panel)}
+.acsw[aria-pressed="true"] i{border-color:var(--fg)}
+.acsw[aria-pressed="true"]{color:var(--fg);font-weight:600}
+.acsw.own i{background:conic-gradient(#e5534b,#f0a53a,#5dbb63,#2fb5c0,#5b97ff,#a06bff,#e5534b)}
+.acsw input{position:absolute;opacity:0;width:1px;height:1px}
+.aprev{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;padding:12px;border-radius:9px;background:var(--chrome);border:1px solid var(--line)}
+.aprev .chip{position:static;transform:none}
+.ahint{display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:9px 12px;border-radius:8px;border:1px solid var(--amber-line);background:var(--amber-soft);color:var(--fg-2);font-size:12.5px}
+.ahint .ic{color:var(--amber);flex:none;margin-top:1px}
+.hstyles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hcard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:0 0 12px;border-radius:10px;border:1px solid var(--line);background:var(--raise);color:var(--fg);overflow:hidden}
+.hcard svg{width:100%;height:150px;display:block;background:radial-gradient(ellipse at 50% 40%,var(--view),var(--view-2))}
+.hcard b,.hcard span{padding:0 12px}
+.hcard span{font-size:12.5px;color:var(--fg-3)}
+.hcard[aria-checked="true"]{border-color:var(--accent-line);box-shadow:0 0 0 1px var(--accent-line)}
+.hcard[aria-checked="true"] b::after{content:" ✓";color:var(--accent-text)}
+@media (max-width:760px){ .srow{grid-template-columns:1fr} .hstyles{grid-template-columns:1fr} }
+</style>
+
+<div id="demo" role="region" aria-label="Mockup-Steuerung"></div>
+<div id="app">
+  <header id="menu"></header>
+  <div id="tabs"></div>
+  <aside id="left" class="panel"></aside>
+  <main id="view" aria-label="3D-Ansicht">
+    <svg class="scene" id="scene" aria-hidden="true"></svg>
+    <div id="ov"></div>
+    <div id="cube"></div>
+  </main>
+  <aside id="right" class="panel"></aside>
+  <footer id="status" aria-live="polite"></footer>
+  <section id="start" hidden></section>
+  <section id="exp" hidden></section>
+  <div id="cmdl"></div>
+</div>
+<aside id="info" hidden></aside>
+<div id="toast" role="status" hidden></div>
+<div id="tipcard" hidden></div>
+
+<script>
+"use strict";
+/* ======================= state & helpers ======================= */
+const $ = s => document.querySelector(s);
+const S = {
+  scene:'start', lang:'de', theme:'dark', handles:'achsen', mode:'gefuehrt', display:'farbe', tool:'verschieben',
+  cam:{a:-30,e:36}, flyout:null, search:null, holeOn:true, hide:{}, edits:{}, lotse:true, focus:false,
+  leftTab:'koerper', startPage:'home', allProps:false, accent:'#2563D9', back:null, rightTab:'objekt', exp:{purpose:'druck', fmt:'3mf', fixed:false},
+  typed:null, timers:[], info:false, kitStep:2, editDim:false, errorFixed:false,
+  kit:{size:'a6',art:'flach',ori:'quer',form:'rund',flaeche:'glatt',durch:'keine',rahmen:'schlicht',
+       mart:'erhaben',lib:'weihnachten',ttxt:'frohe',tform:'gerade',tart:'erhaben',farbe:'ams',schema:'klassisch',loch:'keins',fill:'voll'}
+};
+const T = (de,en) => S.lang==='de' ? de : en;
+const D2R = Math.PI/180;
+const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const r1 = n => Math.round(n*10)/10;
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const fmt = n => n.toLocaleString(S.lang==='de'?'de-DE':'en-US',{maximumFractionDigits:2});
+let UID = 0; const uid = p => (p||'u')+(++UID);
+
+const ICONS = {
+  game:'M6 8h12a4 4 0 0 1 4 4v2a3 3 0 0 1-5.4 1.8L15 14H9l-1.6 1.8A3 3 0 0 1 2 14v-2a4 4 0 0 1 4-4z M7 10.5v3 M5.5 12h3 M16 11h.01 M18 13h.01',
+  globe:'M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18z M3 12h18 M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z',
+  cube:'M12 3l8 4.5v9L12 21l-8-4.5v-9z M12 12l8-4.5 M12 12v9 M12 12L4 7.5',
+  pencil:'M4 20l4-1L19 8l-3-3L5 16z M14 7l3 3',
+  round:'M5 20v-8a7 7 0 0 1 7-7h8 M5 5h3 M5 5v3',
+  combine:'M14 12a5 5 0 1 1-10 0a5 5 0 1 1 10 0z M20 12a5 5 0 1 1-10 0a5 5 0 1 1 10 0z',
+  pattern:'M5 5h3v3H5z M10.5 5h3v3h-3z M16 5h3v3h-3z M5 10.5h3v3H5z M10.5 10.5h3v3h-3z M16 10.5h3v3h-3z M5 16h3v3H5z M10.5 16h3v3h-3z M16 16h3v3h-3z',
+  sparkle:'M12 3l1.8 5.4L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.6z M18.5 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z',
+  check:'M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18z M8 12l3 3 5-6',
+  export:'M12 15V4 M8 8l4-4 4 4 M5 14v6h14v-6',
+  search:'M11 18a7 7 0 1 0 0-14a7 7 0 0 0 0 14z M16 16l4.5 4.5',
+  undo:'M9 14L4 9l5-5 M4 9h10a6 6 0 0 1 0 12h-3',
+  redo:'M15 14l5-5-5-5 M20 9H10a6 6 0 0 0 0 12h3',
+  eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 15a3 3 0 1 0 0-6a3 3 0 0 0 0 6z',
+  eyeoff:'M2 12s4-7 10-7c2 0 3.7.6 5.1 1.5 M22 12s-4 7-10 7c-2 0-3.7-.6-5.1-1.5 M3 3l18 18',
+  hole:'M12 20a8 8 0 1 0 0-16a8 8 0 0 0 0 16z M12 15a3 3 0 1 0 0-6a3 3 0 0 0 0 6z',
+  text:'M5 6h14 M12 6v13 M9 19h6',
+  ok:'M5 12.5l4.5 4.5L19 7',
+  x:'M6 6l12 12 M18 6L6 18',
+  info:'M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18z M12 11v6 M12 7.5v.2',
+  warn:'M12 3.5l9.5 17h-19z M12 10v4.5 M12 17.5v.2',
+  dice:'M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M8.5 8.5h.01 M15.5 15.5h.01 M12 12h.01 M15.5 8.5h.01 M8.5 15.5h.01',
+  moon:'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',
+  sun:'M12 16a4 4 0 1 0 0-8a4 4 0 0 0 0 8z M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4',
+  home:'M4 11l8-7 8 7 M6 9.5V20h12V9.5',
+  left:'M15 5l-7 7 7 7', right:'M9 5l7 7-7 7',
+  printer:'M6 9V3h12v6 M4 9h16v8H4z M7 14h10v7H7z',
+  scissors:'M6 9a3 3 0 1 0 0-6a3 3 0 0 0 0 6z M6 21a3 3 0 1 0 0-6a3 3 0 0 0 0 6z M8.5 7.5L20 18 M8.5 16.5L20 6',
+  play:'M7 4l13 8-13 8z',
+  move:'M12 3v18 M3 12h18 M12 3l-3 3 M12 3l3 3 M12 21l-3-3 M12 21l3-3 M3 12l3-3 M3 12l3 3 M21 12l-3-3 M21 12l-3 3',
+  bevel:'M5 20V10l5-5h9',
+  mirror:'M12 3v18 M9 7L4 17h5z M15 7l5 10h-5z',
+  melt:'M8 16a5 5 0 1 1 3-9 5 5 0 1 1 3 9c-1 .8-2 1.2-3 1.2S9 16.8 8 16z',
+  pull:'M5 15h14v5H5z M12 12V3 M8.5 6.5L12 3l3.5 3.5',
+  hollow:'M4 7h16v13H4z M7 10h10v7H7z',
+  layers:'M12 3l9 5-9 5-9-5z M3 13l9 5 9-5',
+  ruler:'M3 17L17 3l4 4L7 21z M7 13l2 2 M10 10l2 2 M13 7l2 2',
+  slicer:'M4 4h16v6H4z M7 10v4 M17 10v4 M4 14h16v6H4z',
+  kit:'M4 7h16v13H4z M9 7V4h6v3 M4 12h16',
+  lock:'M6 11h12v9H6z M8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+  plus:'M12 5v14 M5 12h14',
+  palette:'M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-2.5 1-2 2.5-2H18a3 3 0 0 0 3-3c0-4.5-4-8.5-9-8.5z M7.5 11h.01 M10 7h.01 M15 7h.01',
+  arc:'M5 19c0-8 6-14 14-14',
+  folder:'M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2h8.5A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z',
+  download:'M12 4v11 M7.5 10.5L12 15l4.5-4.5 M5 19h14',
+  upload:'M12 15V4 M7.5 8.5L12 4l4.5 4.5 M5 19h14',
+  chev:'M6 9l6 6 6-6',
+  max:'M4 9V4h5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5',
+  orbit:'M20 12a8 8 0 1 1-2.3-5.7 M20 4v4h-4',
+  hand:'M8 13V6.5a1.5 1.5 0 0 1 3 0V12 M11 11V5a1.5 1.5 0 0 1 3 0v6 M14 11V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.7-2.3L4 15.3a1.5 1.5 0 0 1 2.3-1.9L8 15',
+  zoom:'M11 18a7 7 0 1 0 0-14a7 7 0 0 0 0 14z M16 16l4.5 4.5 M11 8v6 M8 11h6',
+  compass:'M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18z M15.5 8.5l-2 5-5 2 2-5z',
+  more:'M5 12h.01 M12 12h.01 M19 12h.01',
+  select:'M6 4l12 7-5.5 1.5L10 18z',
+  rotate:'M20 12a8 8 0 1 1-3-6.2 M20 4v4h-4',
+  scale:'M4 20L20 4 M14 4h6v6 M10 20H4v-6',
+  wire:'M12 3l8 4.5v9L12 21l-8-4.5v-9z M4 7.5l8 4.5 8-4.5 M12 12v9',
+  solid:'M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18z',
+  color:'M12 21a9 9 0 1 0 0-18v18z',
+  close:'M7 7l10 10 M17 7L7 17',
+  ground:'M12 4v10 M8 10l4 4 4-4 M5 19h14',
+  center:'M12 3v4 M12 17v4 M3 12h4 M17 12h4 M12 15a3 3 0 1 0 0-6a3 3 0 0 0 0 6z',
+  sliders:'M4 7h10 M18 7h2 M4 17h4 M12 17h8 M16 5v4 M10 15v4',
+  learn:'M3 9l9-5 9 5-9 5z M7 11.5V16c3 2 7 2 10 0v-4.5',
+  grid:'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z',
+  gear:'M12 15a3 3 0 1 0 0-6a3 3 0 0 0 0 6z M19.4 13a7.4 7.4 0 0 0 0-2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-1.7-1L15 3.6h-4l-.4 2.4a7 7 0 0 0-1.7 1L6.6 6.1l-2 3.4 2 1.5a7.4 7.4 0 0 0 0 2l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 1.7 1l.4 2.4h4l.4-2.4a7 7 0 0 0 1.7-1l2.3.9 2-3.4z',
+  image:'M4 5h16v14H4z M4 15l4-4 4 4 3-3 5 5 M15.5 9.5h.01',
+  cad:'M4 20V8l8-4 8 4v12 M4 8l8 4 8-4 M12 12v8'
+};
+const icon = (n,cls='') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[n]||''}"/></svg>`;
+const LOGO = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 2.6 3 6.9v9.4l7.6 4.4z" style="fill:var(--accent-line)"/><path d="M13.4 2.6 21 6.9v9.4l-7.6 4.4z" style="fill:var(--accent-line);opacity:.5"/></svg>`;
+
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.hidden=false;
+  clearTimeout(toast.h); toast.h=setTimeout(()=>{t.hidden=true},2800);
+}
+
+/* Expression parser for number fields: 25+3, 40/2, 2,5 cm, 1 in, Breite/2. Comma and dot both work. */
+const NAMED = {breite:50,tiefe:20,'höhe':4,hoehe:4,width:50,depth:20,height:4};
+function parseExpr(src){
+  const s=src.replace(/\s+/g,''); let i=0;
+  const num=()=>{const m=/^\d+(?:[.,]\d+)?|^[.,]\d+/.exec(s.slice(i)); if(!m) return null; i+=m[0].length; return parseFloat(m[0].replace(',','.'));};
+  const unit=v=>{const m=/^(mm|cm|in|zoll|")/i.exec(s.slice(i)); if(!m) return v; i+=m[0].length; const u=m[0].toLowerCase(); return v*(u==='cm'?10:u==='mm'?1:25.4);};
+  const atom=()=>{
+    if(s[i]==='('){i++; const v=expr(); if(s[i]!==')') throw 0; i++; return unit(v);}
+    if(s[i]==='-'){i++; return -atom();}
+    const v=num(); if(v!==null) return unit(v);
+    const m=/^[a-zäöüß_]+/i.exec(s.slice(i));
+    if(m && (m[0].toLowerCase() in NAMED)){ i+=m[0].length; return unit(NAMED[m[0].toLowerCase()]); }
+    throw 0;
+  };
+  const term=()=>{let v=atom(); while(s[i]==='*'||s[i]==='/'){const o=s[i++]; const r=atom(); v=o==='*'?v*r:v/r;} return v;};
+  const expr=()=>{let v=term(); while(s[i]==='+'||s[i]==='-'){const o=s[i++]; const r=term(); v=o==='+'?v+r:v-r;} return v;};
+  try{ const v=expr(); return i===s.length && isFinite(v) ? v : NaN; }catch(e){ return NaN; }
+}
+
+/* ======================= tiny 3D mock renderer ======================= */
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const norm=v=>{const l=Math.hypot(...v)||1; return v.map(x=>x/l);};
+const LIGHT=norm([0.35,-0.55,0.76]);
+function cam(o){
+  const a=o.a*D2R, e=o.e*D2R, ca=Math.cos(a), sa=Math.sin(a), ce=Math.cos(e), se=Math.sin(e);
+  const tx=o.tx||0, ty=o.ty||0, tz=o.tz||0;
+  return {
+    o, s:o.s,
+    p:(x,y,z)=>{x-=tx;y-=ty;z-=tz; const u=x*ca-y*sa, w=x*sa+y*ca, up=z*ce+w*se; return [o.cx+u*o.s, o.cy-up*o.s];},
+    depth:(x,y,z)=>-(x*sa+y*ca)*ce+z*se,
+    toCam:[-sa*ce,-ca*ce,se]
+  };
+}
+function rrect(w,d,r,ox=0,oy=0,n=14){
+  r=Math.max(0,Math.min(r,w/2-0.01,d/2-0.01));
+  const cs=[[w/2-r,-d/2+r,-90],[w/2-r,d/2-r,0],[-w/2+r,d/2-r,90],[-w/2+r,-d/2+r,180]], pts=[];
+  for(const [cx,cy,a0] of cs){
+    if(r<=0){pts.push([ox+cx,oy+cy]);continue;}
+    for(let i=0;i<=n;i++){const a=(a0+90*i/n)*D2R; pts.push([ox+cx+r*Math.cos(a),oy+cy+r*Math.sin(a)]);}
+  }
+  return pts;
+}
+const circle=(cx,cy,r,n=48)=>Array.from({length:n},(_,i)=>[cx+r*Math.cos(i/n*2*Math.PI),cy+r*Math.sin(i/n*2*Math.PI)]);
+function starPts(cx,cy,R,r,k=5,rot=90){const p=[];for(let i=0;i<2*k;i++){const a=(rot+i*180/k)*D2R, q=i%2?r:R; p.push([cx+q*Math.cos(a),cy+q*Math.sin(a)]);}return p;}
+function gearPts(R,r,t=10){const p=[];for(let i=0;i<t;i++){const a=i/t*2*Math.PI, s=2*Math.PI/t;
+  [[0,r],[.12,R],[.38,R],[.5,r]].forEach(([f,q])=>p.push([q*Math.cos(a+f*s),q*Math.sin(a+f*s)]));
+  p.push([r*Math.cos(a+.75*s),r*Math.sin(a+.75*s)]);}return p;}
+function prismFaces(pts,z0,z1,map=(x,y,z)=>[x,y,z],rgb){
+  const F=[], n=pts.length;
+  for(let i=0;i<n;i++){const a=pts[i], b=pts[(i+1)%n]; F.push({pts:[map(a[0],a[1],z0),map(b[0],b[1],z0),map(b[0],b[1],z1),map(a[0],a[1],z1)],rgb});}
+  F.push({pts:pts.map(p=>map(p[0],p[1],z1)),top:true,rgb});
+  F.push({pts:pts.slice().reverse().map(p=>map(p[0],p[1],z0)),rgb});
+  return F;
+}
+function sphereFaces(cx,cy,cz,r,rgb,nu=36,nv=18){
+  const F=[], P=(u,v)=>[cx+r*Math.cos(v)*Math.cos(u),cy+r*Math.cos(v)*Math.sin(u),cz+r*Math.sin(v)];
+  for(let i=0;i<nu;i++)for(let j=0;j<nv;j++){const u0=i/nu*2*Math.PI,u1=(i+1)/nu*2*Math.PI,v0=-Math.PI/2+j/nv*Math.PI,v1=-Math.PI/2+(j+1)/nv*Math.PI;
+    F.push({pts:[P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)],rgb});}
+  return F;
+}
+function coneFaces(cx,cy,r,h,rgb,n=36){
+  const b=circle(cx,cy,r,n), F=[];
+  for(let i=0;i<n;i++){const a=b[i],c=b[(i+1)%n]; F.push({pts:[[a[0],a[1],0],[c[0],c[1],0],[cx,cy,h]],rgb});}
+  return F;
+}
+function torusFaces(R,r,z,rgb,nu=30,nv=12){
+  const F=[], P=(u,v)=>[(R+r*Math.cos(v))*Math.cos(u),(R+r*Math.cos(v))*Math.sin(u),z+r*Math.sin(v)];
+  for(let i=0;i<nu;i++)for(let j=0;j<nv;j++){const u0=i/nu*2*Math.PI,u1=(i+1)/nu*2*Math.PI,v0=j/nv*2*Math.PI,v1=(j+1)/nv*2*Math.PI;
+    F.push({pts:[P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)],rgb});}
+  return F;
+}
+function latheFaces(prof,rgb,wall=1.2,n=32){
+  const F=[], P=(r,z,u)=>[r*Math.cos(u),r*Math.sin(u),z];
+  for(let i=0;i<n;i++){const u0=i/n*2*Math.PI,u1=(i+1)/n*2*Math.PI;
+    for(let k=0;k<prof.length-1;k++){const [ra,za]=prof[k],[rb,zb]=prof[k+1];
+      F.push({pts:[P(ra,za,u0),P(ra,za,u1),P(rb,zb,u1),P(rb,zb,u0)],rgb});
+      if(k>0) F.push({pts:[P(ra-wall,za,u1),P(ra-wall,za,u0),P(rb-wall,zb,u0),P(rb-wall,zb,u1)],rgb});}
+    const [rt,zt]=prof[prof.length-1];
+    F.push({pts:[P(rt,zt,u0),P(rt,zt,u1),P(rt-wall,zt,u1),P(rt-wall,zt,u0)],rgb});}
+  return F;
+}
+function newell(P){let x=0,y=0,z=0;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];
+  x+=(a[1]-b[1])*(a[2]+b[2]); y+=(a[2]-b[2])*(a[0]+b[0]); z+=(a[0]-b[0])*(a[1]+b[1]);} return norm([x,y,z]);}
+function shade(rgb,n,C,mul=1){const d=Math.max(0,dot(n,LIGHT)), v=Math.max(0,dot(n,C.toCam)), k=(0.5+0.5*d+0.12*v)*mul;
+  return `rgb(${rgb.map(c=>Math.min(255,Math.round(c*k))).join(',')})`;}
+const ptsAttr=(C,P)=>P.map(p=>{const q=C.p(p[0],p[1],p[2]); return r1(q[0])+','+r1(q[1]);}).join(' ');
+const ptsAttr2=Q=>Q.map(q=>r1(q[0])+','+r1(q[1])).join(' ');
+/* Painter's algorithm with back-face culling: good enough for a mock of matte printed plastic. */
+function drawPoly(C,faces,rgb,opt={}){
+  const vis=[];
+  for(const f of faces){const n=newell(f.pts); if(dot(n,C.toCam)<=1e-4) continue;
+    let d=0; for(const p of f.pts) d+=C.depth(p[0],p[1],p[2]); vis.push({f,n,d:d/f.pts.length});}
+  vis.sort((a,b)=>a.d-b.d);
+  const mode=opt.icon?'farbe':S.display;
+  if(mode==='draht') return vis.map(({f})=>`<polygon points="${ptsAttr(C,f.pts)}" fill="none" style="stroke:var(--accent-line)" stroke-width="${f.top?1.2:0.6}" stroke-opacity="${f.top?0.95:0.45}"/>`).join('');
+  return vis.map(({f,n})=>{const fill=shade(mode==='volumen'?[200,203,210]:(f.rgb||rgb),n,C); const edge=opt.edges||f.top;
+    return `<polygon points="${ptsAttr(C,f.pts)}" fill="${fill}" stroke="${edge?'var(--edge)':fill}" style="${edge?'stroke:var(--edge)':''}" stroke-width="${edge?1:0.7}" stroke-linejoin="round" ${opt.pick?`class="pick" data-act="${opt.pick}"`:''}/>`;}).join('');
+}
+function hull(P){P=P.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lo=[],up=[];for(const p of P){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+  for(const p of P.slice().reverse()){while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}
+  return lo.slice(0,-1).concat(up.slice(0,-1));}
+function drawHole(C,cx,cy,r,zt,zb,rgb){
+  const id=uid('hc'), top=circle(cx,cy,r,48).map(p=>[p[0],p[1],zt]), bot=circle(cx,cy,r,48).map(p=>[p[0],p[1],zb]);
+  const wall=`rgb(${rgb.map(c=>Math.round(c*.5)).join(',')})`;
+  return `<clipPath id="${id}"><polygon points="${ptsAttr(C,top)}"/></clipPath>
+    <polygon points="${ptsAttr(C,top)}" fill="${wall}" style="stroke:var(--edge)" stroke-width="1"/>
+    <polygon points="${ptsAttr(C,bot)}" class="bed-top" clip-path="url(#${id})"/>`;
+}
+function affine(C,x,y,z){const p0=C.p(x,y,z),pu=C.p(x+1,y,z),pv=C.p(x,y-1,z);
+  return [pu[0]-p0[0],pu[1]-p0[1],pv[0]-p0[0],pv[1]-p0[1],p0[0],p0[1]].map(v=>Math.round(v*1000)/1000).join(' ');}
+function embossText(C,lines,x,y,z,h,size,rgb,lh=1.15){
+  if(S.display==='volumen') rgb=[200,203,210];
+  if(S.display==='draht'){ const L=[].concat(lines), y0=-(L.length-1)*size*lh/2;
+    return `<text class="emb" transform="matrix(${affine(C,x,y,z+h)})" font-size="${size}" text-anchor="middle" dominant-baseline="central" fill="none" style="stroke:var(--accent-line)" stroke-width="0.12">${L.map((t,k)=>`<tspan x="0" y="${r1(y0+k*size*lh)}">${t}</tspan>`).join('')}</text>`; }
+  const n=Math.max(3,Math.round(h/0.2)), side=`rgb(${rgb.map(c=>Math.round(c*.62)).join(',')})`, top=`rgb(${rgb.join(',')})`;
+  const L=[].concat(lines), y0=-(L.length-1)*size*lh/2; let out='';
+  for(let i=0;i<=n;i++){const last=i===n;
+    out+=`<text class="emb" transform="matrix(${affine(C,x,y,z+h*i/n)})" font-size="${size}" text-anchor="middle" dominant-baseline="central" fill="${last?top:side}" ${last?'style="stroke:var(--edge)" stroke-width="0.07"':''}>${L.map((t,k)=>`<tspan x="0" y="${r1(y0+k*size*lh)}">${t}</tspan>`).join('')}</text>`;}
+  return out;
+}
+function cylGhost(C,cx,cy,r,z0,z1){
+  const c=circle(cx,cy,r,48), all=[...c.map(p=>C.p(p[0],p[1],z0)),...c.map(p=>C.p(p[0],p[1],z1))];
+  return `<polygon points="${ptsAttr2(hull(all))}" class="ghost"/><polygon points="${ptsAttr(C,c.map(p=>[p[0],p[1],z1]))}" class="ghost-top"/>`;
+}
+function shadowOf(C,outline,h,sd){
+  const off=outline.map(p=>C.p(p[0]-0.28*h-0.6,p[1]+0.42*h+0.8,0)), base=outline.map(p=>C.p(p[0],p[1],0));
+  return `<polygon points="${ptsAttr2(off)}" class="shd" opacity=".55" filter="url(#blurL)"/><polygon points="${ptsAttr2(base)}" class="shd" opacity=".7" filter="url(#blurS)"/>`;
+}
+const SVGDEFS = sd => `<defs>
+  <filter id="blurL" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${r1(sd)}"/></filter>
+  <filter id="blurS" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${r1(Math.max(1,sd/3))}"/></filter>
+  <pattern id="stripes" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" class="gs-a"/><line x1="0" y1="0" x2="0" y2="7" class="gs-b"/></pattern>
+</defs>`;
+const COL={white:[236,232,224],red:[214,66,56],green:[66,156,96],yellow:[242,183,56],blue:[70,136,206],grey:[150,156,166],
+  purple:[146,112,200],orange:[236,128,52],teal:[52,166,160],dark:[40,42,48],steel:[120,138,170]};
+
+/* ======================= illustrated shape icons ======================= */
+function shapeSvg(kind,w=60,h=50,zoom=1){ const keep=S.display; S.display='farbe'; try{ return shapeSvg0(kind,w,h,zoom); } finally { S.display=keep; } }
+function shapeSvg0(kind,w=60,h=50,zoom=1){
+  const C=cam({a:-30,e:30,s:1.15*zoom*(w/60),cx:w/2,cy:h*0.62,tx:0,ty:0,tz:0});
+  let g='';
+  switch(kind){
+    case 'quader': g=drawPoly(C,prismFaces(rrect(20,20,0),0,18),COL.blue,{edges:true}); break;
+    case 'zylinder': g=drawPoly(C,prismFaces(circle(0,0,10,40),0,18),COL.orange); break;
+    case 'kugel': g=drawPoly(C,sphereFaces(0,0,10,10.5,COL.purple),COL.purple); break;
+    case 'kegel': g=drawPoly(C,coneFaces(0,0,10.5,20,COL.yellow),COL.yellow); break;
+    case 'torus': g=drawPoly(C,torusFaces(8.5,3.6,4,COL.green),COL.green); break;
+    case 'roehre': g=drawPoly(C,prismFaces(circle(0,0,10,40),0,16),COL.teal)+drawHole(C,0,0,6,16,0,COL.teal); break;
+    case 'prisma': g=drawPoly(C,prismFaces(circle(0,0,10.5,6),0,16),COL.teal,{edges:true}); break;
+    case 'pyramide': { const b=[[-10,-10],[10,-10],[10,10],[-10,10]], F=[];
+      for(let i=0;i<4;i++){const a=b[i],c=b[(i+1)%4]; F.push({pts:[[a[0],a[1],0],[c[0],c[1],0],[0,0,18]]});}
+      g=drawPoly(C,F,COL.yellow,{edges:true}); break; }
+    case 'text': g=embossText(C,'Aa',0,0,0,5,17,COL.red); break;
+    case 'stern': g=drawPoly(C,prismFaces(starPts(0,0,13,5.5),0,5),COL.yellow); break;
+    case 'karte': g=drawPoly(C,prismFaces(rrect(34,24,2),0,1.4),COL.white)
+      +drawPoly(C,prismFaces([[-6,-9],[6,-9],[2,-3],[5,-3],[1,3],[3,3],[-0,9],[-3,3],[-1,3],[-5,-3],[-2,-3]].map(p=>[p[0]-6,p[1]]),1.4,3),COL.green)
+      +drawPoly(C,prismFaces(starPts(-6,10,2.6,1.1),1.4,3.4),COL.yellow); break;
+    case 'vase': g=drawPoly(C,latheFaces([[0.01,0],[7,0],[9.5,6],[8,14],[5,19],[6.5,23]],COL.purple,1.1,48),COL.purple); break;
+    case 'figur': g=drawPoly(C,[...sphereFaces(0,0,6.5,6.5,COL.white),...sphereFaces(0,0,16,4.6,COL.white),...sphereFaces(0,-4.2,16.5,1,COL.orange,10,6),
+      ...sphereFaces(1.6,-3.8,18,.6,COL.dark,8,5),...sphereFaces(-1.6,-3.8,18,.6,COL.dark,8,5)],COL.white); break;
+    case 'schmuck': g=drawPoly(C,[...prismFaces(starPts(0,0,13,5.5,6),0,4,undefined,COL.red),...torusFaces(2.4,.8,0,COL.red,14,6).map(f=>({...f,pts:f.pts.map(p=>[p[0],p[1]+15,p[2]+2])}))],COL.red); break;
+    case 'schild': g=drawPoly(C,prismFaces(rrect(34,16,3),0,2),COL.blue)+embossText(C,'TOM',0,0,2,1.4,8.5,COL.white); break;
+    case 'halterung': g=drawPoly(C,prismFaces([[0,0],[18,0],[18,3.5],[3.5,3.5],[3.5,18],[0,18]],0,14,(u,v,t)=>[u-9,-(t-7),v]),COL.orange,{edges:true}); break;
+    case 'box': g=drawPoly(C,prismFaces(rrect(22,18,1.5),0,11),COL.teal)+drawPoly(C,prismFaces(rrect(23,19,1.8),11.6,14.6),[120,200,190]); break;
+    case 'ersatzteil': g=drawPoly(C,prismFaces(gearPts(12,9.4,10),0,5),COL.grey)+drawHole(C,0,0,3.4,5,0,COL.grey); break;
+    case 'anhaenger': g=drawPoly(C,prismFaces(rrect(30,12,3),0,2.4),COL.white)+drawHole(C,-11.5,0,1.8,2.4,0,COL.white)+embossText(C,'LENA',2,0,2.4,1,6,COL.red); break;
+    case 'leer': { const sq=[[-14,-14],[14,-14],[14,14],[-14,14]].map(p=>C.p(p[0],p[1],0)); const c=C.p(0,0,0);
+      g=`<polygon points="${ptsAttr2(sq)}" style="fill:var(--bed);stroke:var(--fg-3)" stroke-width="1.3" stroke-dasharray="4 3"/><path d="M${r1(c[0]-7)} ${r1(c[1])}h14M${r1(c[0])} ${r1(c[1]-7)}v14" style="stroke:var(--accent)" stroke-width="2.4" stroke-linecap="round"/>`; break; }
+  }
+  return `<svg class="shape" viewBox="0 0 ${w} ${h}" aria-hidden="true">${g}</svg>`;
+}
+
+/* ======================= content data ======================= */
+const SCENES=[
+  {id:'start', t:()=>T('Startbildschirm','Start screen')},
+  {id:'leer', t:()=>T('Leeres Druckbett','Empty print bed')},
+  {id:'quader', t:()=>T('Ablauf A · Quader aufs Bett ziehen','Flow A · Drag a box onto the bed')},
+  {id:'tippen', t:()=>T('Ablauf A · Maße tippen (50 ⇥ 20 ⇥ 4)','Flow A · Type sizes (50 ⇥ 20 ⇥ 4)')},
+  {id:'abrunden', t:()=>T('Ablauf A · Kanten abrunden','Flow A · Round the edges')},
+  {id:'text', t:()=>T('Ablauf A · Text „LENA“ prägen','Flow A · Emboss text “LENA”')},
+  {id:'loch', t:()=>T('Ablauf A · Loch als Geisterform','Flow A · Hole as ghost shape')},
+  {id:'export', t:()=>T('Ablauf A · Druckcheck & Export','Flow A · Print check & export')},
+  {id:'fehler', t:()=>T('Fehler als Hilfe','Errors that help')},
+  {id:'suche', t:()=>T('Befehlssuche (⌘K)','Command search (⌘K)')},
+  {id:'rund', t:()=>T('Ablauf D · Loch bleibt rund','Flow D · Hole stays round')},
+  {id:'karte', t:()=>T('Baukasten „Karte“','Kit “Card”')}
+];
+const WORK = id => !['start','karte','export'].includes(id);
+const GROUPS=[
+  {k:'formen',de:'Formen',en:'Shapes',ic:'cube',tip:['Grundformen, Text und Baukästen. Mit „Als Loch“ wird jede Form zum Loch.','Basic shapes, text and kits. “As Hole” turns any shape into a hole.']},
+  {k:'skizze',de:'Skizze',en:'Sketch',ic:'pencil',tip:['2D-Zeichnung als Grundlage, mit Maßen und Regeln.','2D drawing as a base, with measures and rules.']},
+  {k:'aendern',de:'Ändern',en:'Modify',ic:'round',tip:['Ziehen, Abrunden, Aushöhlen und mehr.','Pull, Round, Hollow and more.']},
+  {k:'kombinieren',de:'Kombinieren',en:'Combine',ic:'combine',tip:['Körper vereinen, ausschneiden oder weich verschmelzen.','Merge, subtract or melt bodies together.']},
+  {k:'muster',de:'Muster',en:'Repeat',ic:'pattern',tip:['Etwas mehrfach anordnen oder spiegeln.','Arrange something several times or mirror it.']},
+  {k:'deko',de:'Deko',en:'Decorate',ic:'sparkle',tip:['Prägen, Gravieren, Verdrehen, Generatoren.','Emboss, engrave, twist, generators.']},
+  {k:'pruefen',de:'Prüfen',en:'Check',ic:'check',tip:['Messen, Schnitt, Druckcheck, Gewicht.','Measure, section, print check, weight.']},
+  {k:'export',de:'Export',en:'Export',ic:'export',tip:['3MF, STL, STEP oder direkt im Slicer öffnen.','3MF, STL, STEP or open directly in the slicer.']}
+];
+const SHAPES=[['quader','Quader','Box'],['zylinder','Zylinder','Cylinder'],['kugel','Kugel','Sphere'],['kegel','Kegel','Cone'],['torus','Torus','Torus'],
+  ['roehre','Röhre','Tube'],['prisma','Prisma','Prism'],['pyramide','Pyramide','Pyramid'],['text','Text','Text'],['stern','Stern','Star']];
+const GTOOLS={
+  skizze:[['Linie','Line'],['Rechteck','Rectangle'],['Kreis','Circle'],['Bogen','Arc'],['Langloch','Slot'],['Polygon','Polygon'],['Kurve','Curve'],['Text','Text'],['Maß','Measure','Länge, Abstand oder Winkel festlegen','Set a length, distance or angle'],['Regeln','Rules','z. B. „parallel“, „gleich lang“','e.g. “parallel”, “equal length”'],['Trimmen','Trim'],['Versetzen','Offset','Parallel verschieben','Move in parallel']],
+  aendern:[['Ziehen','Pull','Fläche oder Skizze in die Höhe ziehen','Pull a face or sketch upwards'],['Drehkörper','Spin','Profil um eine Achse drehen','Spin a profile around an axis'],['Entlang Pfad','Along Path','Profil an einer Linie entlangführen','Guide a profile along a line'],['Übergang','Blend Between','Weicher Übergang zwischen zwei Formen','Smooth transition between two shapes'],['Abrunden','Round','Kanten rund machen','Make edges round'],['Abschrägen (Fase)','Bevel','Kanten schräg abschneiden','Cut edges at an angle'],['Aushöhlen','Hollow','Innen hohl machen, Wandstärke behalten','Make hollow, keep wall thickness'],['Fläche verschieben','Move Face'],['Fläche entfernen','Remove Face']],
+  kombinieren:[['Vereinen','Merge','Zu einem Körper verbinden','Join into one body'],['Ausschneiden','Subtract','Eine Form aus einer anderen herausschneiden','Cut one shape out of another'],['Überlappung behalten','Keep Overlap','Nur das, was beide gemeinsam haben','Only what both have in common'],['Teilen','Split','Körper an einer Fläche zerteilen','Split a body at a face'],['Weich verschmelzen','Melt Together','Formen fließen weich ineinander','Shapes flow softly into each other']],
+  muster:[['Reihe','Row'],['Kreis','Circle'],['Entlang Pfad','Along Path'],['Spiegeln','Mirror','Spiegelbildlich kopieren','Copy as a mirror image'],['Kaleidoskop','Kaleidoscope','Einen Arm gestalten, das Programm vervielfältigt ihn','Design one arm, the program repeats it']],
+  deko:[['Prägen','Emboss','Erhaben','Raised'],['Gravieren','Engrave','Vertieft','Recessed'],['Verdrehen','Twist'],['Biegen','Bend'],['Verjüngen','Taper'],['Strukturen','Textures'],['Relief aus Bild','Relief from Image'],['Generatoren','Generators','Stern, Schneeflocke, Vase, Zahnrad …','Star, snowflake, vase, gear …']],
+  pruefen:[['Messen','Measure'],['Schnitt','Section'],['Druckcheck','Print Check','Geschlossen? Wandstärke? Passt aufs Bett?','Closed? Wall thickness? Fits the bed?'],['Gewicht und Material','Weight and Material']],
+  export:[['Speichern als 3MF','Save as 3MF'],['Speichern als STL','Save as STL'],['Speichern als STEP','Save as STEP'],['Im Slicer öffnen','Open in Slicer','Ein Klick, mit allen Farben','One click, with all colours'],['Bild teilen','Share Image']]
+};
+const TOOLS=[
+  {de:'Abrunden',en:'Round',g:['Ändern','Modify'],ic:'round',k:'R',syn:{de:['runde ecken','ecken rund','kante rund','rund machen'],en:['round corners','fillet','rounded edge','soften edges']},d:['Kanten rund machen','Make edges round']},
+  {de:'Abschrägen (Fase)',en:'Bevel',g:['Ändern','Modify'],ic:'bevel',k:'⌥R',syn:{de:['schräge kante','fase','ecke abschneiden'],en:['chamfer','cut corner','angled edge']},d:['Kanten schräg abschneiden','Cut edges at an angle']},
+  {de:'Aushöhlen',en:'Hollow',g:['Ändern','Modify'],ic:'hollow',k:'',syn:{de:['hohl','innen leer','schale','wandstärke'],en:['hollow','shell','empty inside']},d:['Innen hohl machen, Wandstärke behalten','Make hollow, keep wall thickness']},
+  {de:'Bohrung',en:'Screw Hole',g:['Formen ▸ Loch','Shapes ▸ Hole'],ic:'hole',k:'H',syn:{de:['schraube','bohren','schraubenloch','senkkopf','gewinde'],en:['screw','drill','countersink','thread']},d:['Loch für eine echte Schraube, mit Senkung','Hole for a real screw, with countersink']},
+  {de:'Text',en:'Text',g:['Formen','Shapes'],ic:'text',k:'T',syn:{de:['namen','name','schrift','beschriften','buchstaben'],en:['name','lettering','letters','write']},d:['Text prägen oder gravieren','Emboss or engrave text']},
+  {de:'Spiegeln',en:'Mirror',g:['Muster','Repeat'],ic:'mirror',k:'',syn:{de:['symmetrisch','spiegelbild'],en:['symmetric','flip copy']},d:['Spiegelbildlich kopieren','Copy as a mirror image']},
+  {de:'Ziehen',en:'Pull',g:['Ändern','Modify'],ic:'pull',k:'P',syn:{de:['hochziehen','extrudieren','länger machen','fläche ziehen'],en:['extrude','push pull','make taller']},d:['Fläche oder Skizze in die Höhe ziehen','Pull a face or sketch upwards']},
+  {de:'Weich verschmelzen',en:'Melt Together',g:['Kombinieren','Combine'],ic:'melt',k:'',syn:{de:['knete','verschmelzen','weich verbinden'],en:['smooth union','clay','blend shapes']},d:['Formen fließen weich ineinander','Shapes flow softly into each other']},
+  {de:'Ausschneiden',en:'Subtract',g:['Kombinieren','Combine'],ic:'scissors',k:'',syn:{de:['wegschneiden','abziehen','loch machen'],en:['cut','remove','make hole']},d:['Eine Form aus einer anderen herausschneiden','Cut one shape out of another']},
+  {de:'Reihe',en:'Row',g:['Muster','Repeat'],ic:'pattern',k:'',syn:{de:['mehrfach','kopieren','viele','nebeneinander'],en:['array','copies','many']},d:['Etwas mehrfach in einer Reihe anordnen','Arrange something several times in a row']},
+  {de:'Druckcheck',en:'Print Check',g:['Prüfen','Check'],ic:'check',k:'',syn:{de:['druckbar','prüfen','passt aufs bett'],en:['printable','check','fits the bed']},d:['Geschlossen? Wandstärke? Passt aufs Bett?','Closed? Wall thickness? Fits the bed?']},
+  {de:'Im Slicer öffnen',en:'Open in Slicer',g:['Export','Export'],ic:'slicer',k:'',syn:{de:['drucken','slicer','3mf','exportieren'],en:['print','slicer','3mf','export']},d:['Ein Klick, mit allen Farben','One click, with all colours']}
+];
+
+
+/* ======================= demo strip (not part of the app) ======================= */
+function segBtns(act,cur,opts){return `<div class="seg" role="group">${opts.map(([v,l])=>`<button data-act="${act}" data-arg="${v}" aria-pressed="${cur===v}">${l}</button>`).join('')}</div>`;}
+function renderDemo(){
+  const i=SCENES.findIndex(s=>s.id===S.scene);
+  $('#demo').setAttribute('aria-label',T('Mockup-Steuerung (nicht Teil des Programms)','Mockup controls (not part of the app)'));
+  $('#demo').innerHTML=`
+    <span class="tag" title="${T('Diese Leiste gehört nicht zum Programm.','This strip is not part of the app.')}">Mockup</span>
+    <div class="grp-d">
+      <button class="dbtn" data-act="prev" aria-label="${T('Vorige Szene','Previous scene')}">${icon('left')}</button>
+      <label class="sr" for="scsel">${T('Szene','Scene')}</label>
+      <select id="scsel">${SCENES.map((s,k)=>`<option value="${s.id}" ${s.id===S.scene?'selected':''}>${k+1}. ${s.t()}</option>`).join('')}</select>
+      <button class="dbtn" data-act="next" aria-label="${T('Nächste Szene','Next scene')}">${icon('right')}</button>
+      <span class="lbl" title="${T('Pfeiltasten ← → wechseln die Szene','Arrow keys ← → change the scene')}">${i+1}/${SCENES.length}</span>
+    </div>
+    <div class="grp-d"><span class="lbl">${T('Griffe','Handles')}</span>${segBtns('handles',S.handles,[['achsen',T('Achsen','Axes')],['klassisch',T('Klassisch','Classic')]])}</div>
+    <div class="grp-d">${segBtns('theme',S.theme,[['dark',T('Dunkel','Dark')],['light',T('Hell','Light')]])}</div>
+    <div class="grp-d">${segBtns('lang',S.lang,[['de','DE'],['en','EN']])}</div>
+    <button class="dbtn" data-act="info" aria-expanded="${S.info}">${icon('info')} ${T('Info','Info')}</button>`;
+}
+
+/* ======================= menu bar & document tabs ======================= */
+const DOCNAME = () => S.scene==='karte' ? T('Weihnachtskarte','Christmas card') : S.scene==='rund' ? T('Ablauf D','Flow D') : T('Schlüsselanhänger','Key tag');
+function renderMenu(){
+  const menus = S.scene==='start' ? [['Datei','File'],['Bearbeiten','Edit'],['Ansicht','View'],['Hilfe','Help']]
+    : [['Datei','File'],['Bearbeiten','Edit'],['Ansicht','View'],['Körper','Body'],['Fenster','Window'],['Hilfe','Help']];
+  $('#menu').innerHTML=`
+    <div class="menu-l"><div class="brand">${LOGO}<span>Fission3D</span></div>${menus.map(([d,e])=>`<button class="mbtn" data-act="mock" data-msg="${T('Menü „'+d+'“ (Attrappe)','Menu “'+e+'” (dummy)')}">${T(d,e)}</button>`).join('')}</div>
+    <button class="search" data-act="search" aria-label="${T('Befehlssuche öffnen','Open command search')}">${icon('search')}<span>${T('Was möchtest du tun?','What do you want to do?')}</span><kbd>⌘K</kbd></button>
+    <div class="menu-r"><button class="iconbtn" data-act="settings" aria-label="${T('Einstellungen','Settings')}" title="${T('Einstellungen (⌘,)','Settings (⌘,)')}">${icon('gear')}</button><button class="mbtn" data-act="mock" data-msg="${T('Druckerprofil wechseln (bestimmt Druckbett, Düse, Farben)','Switch printer profile (bed, nozzle, colours)')}">${icon('printer')} ${T('Mein Drucker · 256 × 256 mm','My printer · 256 × 256 mm')}</button></div>`;
+}
+function renderTabs(){
+  const doc=DOCNAME();
+  const other = S.scene==='karte' ? T('Schlüsselanhänger','Key tag') : T('Wandhalterung Flur','Hallway bracket');
+  $('#tabs').innerHTML=`
+    <button class="iconbtn" data-act="scene" data-arg="start" aria-label="${T('Startseite','Start page')}" title="${T('Startseite','Start page')}">${icon('home')}</button>
+    <button class="dtab on" aria-current="page">${icon('cube')}<span>${doc}</span><span class="x" data-act="mock" data-msg="${T('Schließen – alles ist automatisch gespeichert.','Close – everything is saved automatically.')}">${icon('close')}</span></button>
+    <button class="dtab" data-act="mock" data-msg="${T('Zweites Dokument (Attrappe)','Second document (dummy)')}">${icon('cube')}<span>${other}</span></button>
+    <button class="iconbtn" data-act="scene" data-arg="start" aria-label="${T('Neues Projekt','New project')}">${icon('plus')}</button>
+    <span class="spacer"></span>
+    <button class="iconbtn" data-act="mock" data-msg="${T('Rückgängig (⌘Z)','Undo (⌘Z)')}" aria-label="${T('Rückgängig','Undo')}">${icon('undo')}</button>
+    <button class="iconbtn" data-act="mock" data-msg="${T('Wiederholen (⇧⌘Z)','Redo (⇧⌘Z)')}" aria-label="${T('Wiederholen','Redo')}">${icon('redo')}</button>
+    <button class="btn primary" data-act="scene" data-arg="export">${icon('upload')} ${T('Exportieren','Export')}</button>`;
+}
+
+/* ======================= left panel: bodies + recipe ======================= */
+const CIRC='①②③④⑤⑥⑦⑧⑨';
+function recipe(){
+  const id=S.scene, q=(st,v)=>({t:T('Quader','Box')+' '+(v||'50 × 20 × 4 mm'),st,go:'tippen'});
+  const r=st=>({t:T('4 senkrechte Kanten abgerundet · 4 mm','4 vertical edges rounded · 4 mm'),st,go:'abrunden'});
+  const tx=st=>({t:T('Text „LENA“ geprägt · 1,5 mm','Text “LENA” embossed · 1.5 mm'),st,go:'text'});
+  const lo=st=>({t:T('Loch Ø 5 mm durchgehend','Hole Ø 5 mm through'),sub:T('schneidet aus: Quader','subtracts from: Box'),st,go:'loch'});
+  switch(id){
+    case 'leer': return [];
+    case 'quader': return [q('edit','34 × 20 × 20 mm')];
+    case 'tippen': { const t=S.typed; const v=t?`${fmt(t.w)} × ${fmt(t.d)} × ${fmt(t.h)} mm`:undefined; return [q(t&&!t.done?'edit':'ok',v)]; }
+    case 'abrunden': return [q('ok'),r('edit')];
+    case 'text': return [q('ok'),r('ok'),tx('edit')];
+    case 'loch': return [q('ok'),r('ok'),tx('ok'),lo('edit')];
+    case 'fehler': return [q('ok'),r('ok'),tx('ok'),lo('ok'),{t:T('4 Kanten oben abgerundet · ','4 top edges rounded · ')+(S.errorFixed?T('3,9 mm','3.9 mm'):'5 mm'),sub:S.errorFixed?'':T('Die Rundung passt nicht hinein','The rounding does not fit'),st:S.errorFixed?'ok':'bad',go:'fehler'}];
+    case 'rund': return [{t:T('Quader 80 × 40 × 10 mm · Ecken 5 mm','Box 80 × 40 × 10 mm · corners 5 mm'),sub:T('vorher 40 mm breit','was 40 mm wide'),st:'edit',go:'rund'},{t:T('Loch Ø 6 mm durchgehend','Hole Ø 6 mm through'),sub:T('10 mm vom linken Rand','10 mm from left edge'),st:'ok',go:'rund'}];
+    default: return [q('ok'),r('ok'),tx('ok'),lo('ok')];
+  }
+}
+function stBadge(st){
+  return st==='ok'?`<span class="st ok" title="${T('in Ordnung','ok')}">${icon('ok')}<span class="sr">${T('in Ordnung','ok')}</span></span>`
+   : st==='edit'?`<span class="st edit" title="${T('wird bearbeitet','editing')}">${icon('pencil')}<span class="sr">${T('wird bearbeitet','editing')}</span></span>`
+   : `<span class="st bad" title="${T('geht nicht','fails')}">${icon('warn')}<span class="sr">${T('geht nicht','fails')}</span></span>`;
+}
+function bodies(){
+  const id=S.scene; if(['leer','start','karte'].includes(id)) return [];
+  const b=[{k:'box',n:T('Quader','Box'),c:COL.white}];
+  if(['text','loch','export','fehler','suche'].includes(id)) b.push({k:'text',n:T('Text „LENA“','Text “LENA”'),c:COL.red});
+  if(['loch','export','fehler','suche'].includes(id)) b.push({k:'hole',n:T('Loch Ø 5 mm','Hole Ø 5 mm'),hole:true});
+  if(id==='rund') b.push({k:'hole',n:T('Loch Ø 6 mm','Hole Ø 6 mm'),hole:true});
+  return b;
+}
+const SELECTED = () => ({quader:'box',tippen:'box',abrunden:'box',text:'text',loch:'hole',fehler:'box',suche:'box',rund:'box'})[S.scene];
+function renderLeft(){
+  const L=$('#left');
+  if(S.scene==='karte'){ L.innerHTML=kitPanel(); return; }
+  const tabs=`<div class="ptabs" role="tablist">
+    <button role="tab" data-act="ltab" data-arg="koerper" aria-selected="${S.leftTab==='koerper'}">${T('Körper','Bodies')}</button>
+    <button role="tab" data-act="ltab" data-arg="bib" aria-selected="${S.leftTab==='bib'}">${T('Bibliothek','Library')}</button>
+    <button class="iconbtn" data-act="group" data-arg="formen" aria-label="${T('Form hinzufügen','Add shape')}" title="${T('Form hinzufügen','Add shape')}">${icon('plus')}</button></div>`;
+  if(S.leftTab==='bib'){
+    const blk=[['Box mit Deckel','Box with lid'],['Scharnier','Hinge'],['Schnappverschluss','Snap fit'],['Aufhänger-Öse','Hanging loop'],['Zahnrad','Gear'],['Schraubenloch','Screw hole']];
+    const mot=[['Tanne','Fir tree'],['Stern','Star'],['Schneeflocke','Snowflake'],['Herz','Heart']];
+    L.innerHTML=tabs+`<div class="pbody"><div class="pfind">${icon('search')}<input id="libq" placeholder="${T('Bausteine und Motive suchen','Search building blocks and motifs')}"></div>
+      <div class="empty" style="padding:4px 2px 8px;font-weight:600;color:var(--fg-3)">${T('Bausteine','Building blocks')}</div>
+      <div class="fly-list" style="grid-template-columns:1fr">${blk.map(([d,e])=>`<button data-act="mock" data-msg="${T('Baustein ziehen und am Modell andocken (Attrappe)','Drag the building block onto the model (dummy)')}">${T(d,e)}</button>`).join('')}</div>
+      <div class="empty" style="padding:14px 2px 8px;font-weight:600;color:var(--fg-3)">${T('Motive','Motifs')}</div>
+      <div class="fly-list">${mot.map(([d,e])=>`<button data-act="mock" data-msg="${T('Motiv aufs Modell ziehen: prägen, gravieren oder durchbrechen','Drag motif onto the model: emboss, engrave or cut through')}">${T(d,e)}</button>`).join('')}</div></div>`;
+    return;
+  }
+  const R=recipe(), B=bodies(), sel=SELECTED();
+  const tree = B.length ? `<li><div class="trow group">${icon('chev')}${icon('folder')}<span class="nm">${DOCNAME()}</span><span class="cnt">${B.length} ${T('Körper','bodies')}</span><span></span></div></li>`
+    + B.map(b=>`<li><div class="trow child ${b.k===sel?'sel':''} ${S.hide[b.k]?'off':''}"><span></span>${b.hole?`<span class="sw holes"></span>`:`<span class="sw" style="background:rgb(${b.c.join(',')})"></span>`}<span class="nm">${b.n}${b.hole?` <small style="color:var(--fg-4);font-weight:400">· ${T('als Loch','as hole')}</small>`:''}</span><span></span>
+      <button class="eye" data-act="eye" data-arg="${b.k}" aria-label="${T('Sichtbarkeit','Visibility')}: ${b.n}" aria-pressed="${!S.hide[b.k]}">${icon(S.hide[b.k]?'eyeoff':'eye')}</button></div></li>`).join('')
+    : `<li class="empty">${T('Noch keine Körper. Hol dir eine Form über „Formen“ in der Werkzeugleiste oder mit ⌘K.','No bodies yet. Get a shape from “Shapes” in the tool bar or with ⌘K.')}</li>`;
+  const bedRow=`<li><div class="trow ${S.hide.bed?'off':''}"><span></span>${icon('printer')}<span class="nm">${T('Druckbett','Print bed')}</span><span class="cnt mono">256 × 256</span>
+      <button class="eye" data-act="eye" data-arg="bed" aria-label="${T('Druckbett zeigen','Show print bed')}" aria-pressed="${!S.hide.bed}">${icon(S.hide.bed?'eyeoff':'eye')}</button></div></li>`;
+  L.innerHTML=tabs+`<div class="pbody"><div class="pfind">${icon('search')}<input id="bodyq" placeholder="${T('Körper suchen','Search bodies')}"></div><ul class="tree">${tree}${bedRow}</ul></div>
+  <div class="rec"><div class="rec-h"><span>${T('Rezept','Recipe')}</span><kbd>⌘Z</kbd></div>
+    <ol class="rec-list">${R.length?R.map((e,i)=>`<li><button class="ri ${e.st}" data-act="scene" data-arg="${e.go}" title="${T('Klicken zum Bearbeiten','Click to edit')}">
+      <span class="num">${CIRC[i]}</span><span class="rt">${e.t}${e.st==='bad'?`<small class="stw bad">${T('geht nicht','fails')}${e.sub?' · '+e.sub:''}</small>`:e.st==='edit'?`<small class="stw edit">${T('wird bearbeitet','editing')}${e.sub?' · '+e.sub:''}</small>`:e.sub?`<small>${e.sub}</small>`:''}</span>${stBadge(e.st)}</button></li>`).join(''):''}</ol>
+    <div class="now" role="separator" tabindex="0" title="${T('Zeitmarker: zurückziehen, um einen früheren Stand zu sehen','Time marker: drag back to see an earlier state')}">${T('jetzt','now')}</div>
+    <div class="rec-foot">${R.length?T('Jeder Schritt bleibt änderbar – klick ihn an und probier ruhig herum.','Every step stays editable – click it and feel free to experiment.'):T('Jede Änderung landet hier als Satz.','Every change appears here as a sentence.')}</div></div>`;
+}
+
+/* ======================= right panel: properties ======================= */
+function field(id,label,val,unit,o={}){
+  return `<div class="fld ${o.cls||''}"><label for="${id}" title="${T('Ziehen ändert den Wert, Tippen ersetzt ihn','Drag to change, type to replace')}">${label}</label>
+    <div class="fin">${o.ax?`<span class="ax" style="background:var(--ax-${o.ax})">${o.ax.toUpperCase()}</span>`:''}<input id="${id}" value="${val}" inputmode="decimal" autocomplete="off" spellcheck="false" ${o.bind?`data-bind="${o.bind}"`:''} data-unit="${unit||''}"><span class="unit">${unit||''}</span></div>
+    ${o.note!==undefined?`<div class="fnote" id="${id}-n">${o.note}</div>`:''}</div>`;
+}
+const more=(inner)=>`<details class="adv" style="margin-top:8px"><summary>${T('Mehr','More')}</summary><div style="padding-bottom:10px">${inner}</div></details>`;
+const segp=(opts,cur)=>`<div class="segc" role="group">${opts.map(([v,l])=>`<button data-act="mock" data-msg="${l}" aria-pressed="${v===cur}">${l}</button>`).join('')}</div>`;
+const FILAMENTS=()=>[['white',T('Weiß','White')],['red',T('Rot','Red')],['blue',T('Blau','Blue')],['yellow',T('Gelb','Yellow')]];
+const swatches=cur=>`<div class="swatches">${FILAMENTS().map(([k,l])=>`<button style="background:rgb(${COL[k].join(',')})" aria-label="${l}" title="${l} (PLA)" aria-pressed="${k===cur}" data-act="mock" data-msg="${T('Farbe','Colour')}: ${l}"></button>`).join('')}<button class="add" aria-label="${T('Filament hinzufügen','Add filament')}" data-act="mock" data-msg="${T('Filament aus dem Druckerprofil hinzufügen','Add filament from printer profile')}">${icon('plus')}</button></div>`;
+const showMe=()=>`<button class="linkbtn" data-act="mock" data-msg="${T('„Zeig mir wie“ spielt eine kurze Animation ab (im Mockup nicht enthalten).','“Show me how” plays a short animation (not included in this mockup).')}">${icon('play')} ${T('Zeig mir wie','Show me how')}</button>`;
+const ohead=(ic,name,sub)=>`<div class="ohead"><span class="oi">${icon(ic)}</span><div style="min-width:0"><b>${name}</b><small>${sub}</small></div><button class="iconbtn" data-act="mock" data-msg="${T('Weitere Aktionen: umbenennen, duplizieren, löschen …','More actions: rename, duplicate, delete …')}" aria-label="${T('Weitere Aktionen','More actions')}">${icon('more')}</button></div>`;
+function disclose(){
+  if(S.allProps) return `<div class="sec"><div class="sec-h"><h3>${T('Drehung','Rotation')}</h3><button class="linkbtn" data-act="allprops">${T('Weniger zeigen','Show less')}</button></div><div class="f3">${field('f-rx','X','0','°',{})}${field('f-ry','Y','0','°',{})}${field('f-rz','Z','0','°',{})}</div></div>
+    <div class="sec"><div class="sec-h"><h3>${T('Benannte Maße','Named measures')}</h3><button class="linkbtn" data-act="mock" data-msg="${T('Neues benanntes Maß (⌘M)','New named measure (⌘M)')}">${icon('plus')} ${T('Neu','New')}</button></div>
+      <div class="row"><span class="mono">${T('Breite','Width')}</span><span class="mono">50 mm</span></div><div class="row"><span class="mono">${T('Lochabstand','HoleOffset')}</span><span class="mono">${T('Breite','Width')}/10</span></div></div>`;
+  return `<div class="sec"><div class="disclose">${T('Drehung, benannte Maße und Feinheit sind ausgeblendet, damit du dich aufs Wesentliche konzentrieren kannst.','Rotation, named measures and fineness are hidden so you can focus on the essentials.')}
+    <button class="btn sm" data-act="allprops">${icon('sliders')} ${T('Alle Einstellungen zeigen','Show all settings')}</button></div></div>`;
+}
+function boxProps(w,d,h,r,active,extra=''){
+  return ohead('cube',T('Quader','Box'),T('Körper in „','Body in “')+DOCNAME()+T('“','”'))+`
+    <div class="sec"><div class="sec-h"><h3>${T('Maße','Size')}</h3><button class="pill" data-act="toggle" aria-pressed="false">${icon('scale')} ${T('Proportional','Proportional')}</button></div>
+      <div class="f3">${field('f-w',T('Breite','Width'),fmt(w),'mm',{bind:'w',cls:active==='w'?'active':''})}${field('f-d',T('Tiefe','Depth'),fmt(d),'mm',{bind:'d',cls:active==='d'?'active':''})}${field('f-h',T('Höhe','Height'),fmt(h),'mm',{bind:'h',cls:active==='h'?'active':''})}</div>
+      <div class="f3" style="margin-top:10px">${field('f-r',T('Ecken','Corners'),fmt(r),'mm',{bind:'r'})}</div>${extra}</div>
+    <div class="sec"><div class="sec-h"><h3>${T('Position','Position')}</h3></div>
+      <div class="f3">${field('f-x','',fmt(0),'',{ax:'x'})}${field('f-y','',fmt(0),'',{ax:'y'})}${field('f-z','',fmt(0),'',{ax:'z'})}</div>
+      <div class="f2" style="margin-top:10px"><button class="btn sm" data-act="mock" data-msg="${T('Liegt schon auf dem Druckbett.','Already on the print bed.')}">${icon('ground')} ${T('Aufs Bett legen','Drop to bed')}</button><button class="btn sm" data-act="mock" data-msg="${T('Mittig aufs Druckbett gesetzt.','Centred on the print bed.')}">${icon('center')} ${T('Zentrieren','Centre')}</button></div></div>
+    <div class="sec"><div class="sec-h"><h3>${T('Farbe','Colour')}</h3><span class="aside">${T('Weiß · PLA','White · PLA')}</span></div>${swatches('white')}
+      <div class="row" style="margin-top:14px"><span>${T('Als Loch','As Hole')}</span><button class="switch" role="switch" aria-checked="false" data-act="mock" data-msg="${T('„Als Loch“ macht die Form zur Geisterform, die sofort ausschneidet.','“As Hole” turns the shape into a ghost that cuts right away.')}"><span class="tr"></span></button></div></div>`+disclose();
+}
+function propsHtml(){
+  const id=S.scene, m=model();
+  if(S.rightTab==='drucker') return `${ohead('printer',T('Mein Drucker','My printer'),T('Druckerprofil · beim ersten Start gewählt','Printer profile · chosen on first start'))}
+    <div class="sec"><div class="row"><span>${T('Profil','Profile')}</span><button class="selbox" data-act="mock" data-msg="${T('Druckerprofil wechseln','Switch printer profile')}">${T('Mein Drucker','My printer')} ${icon('chev')}</button></div>
+      <div class="row"><span>${T('Druckbett','Print bed')}</span><span class="mono">256 × 256 × 256 mm</span></div><div class="row"><span>${T('Düse','Nozzle')}</span><span class="mono">${T('0,4 mm','0.4 mm')}</span></div></div>
+    <div class="sec"><div class="sec-h"><h3>${T('Filamente','Filaments')}</h3><span class="aside">${T('4 Farben','4 colours')}</span></div>${swatches('')}</div>
+    <div class="sec"><div class="sec-h"><h3>${T('Druckcheck','Print check')}</h3><span class="badge ok">${icon('ok')}${T('druckbar','printable')}</span></div>
+      <ul class="chk"><li>${icon('ok')}<span>${T('Geschlossen','Closed')}</span></li><li>${icon('ok')}<span>${T('Passt aufs Druckbett','Fits the bed')}</span></li><li>${icon('ok')}<span>${T('Keine Überhänge über 45°','No overhangs over 45°')}</span></li></ul>
+      <button class="btn sm full" style="margin-top:12px" data-act="scene" data-arg="export">${T('Druckcheck & Export öffnen','Open print check & export')}</button></div>`;
+  switch(id){
+    case 'leer': return `<div class="ohead"><span class="oi">${icon('select')}</span><div><b>${T('Nichts ausgewählt','Nothing selected')}</b><small>${T('Klicke einen Körper an, um ihn zu ändern.','Click a body to change it.')}</small></div><span></span></div>
+      <div class="sec"><p class="empty" style="padding:0">${T('Neue Formen holst du dir links über „Formen“ in der Werkzeugleiste – oder du drückst ⌘K und beschreibst, was du bauen willst.','Get new shapes from “Shapes” in the tool bar on the left – or press ⌘K and describe what you want to build.')}</p></div>`;
+    case 'quader': case 'suche': case 'export': return boxProps(m.w??50,m.d??20,m.h??4,m.r??4,null);
+    case 'tippen': { const t=S.typed, act=t&&!t.done?t.f:null; return boxProps(m.w,m.d,m.h,m.r,act); }
+    case 'rund': return boxProps(80,40,10,5,'w',`<div class="fnote" style="margin-top:10px">${T('Größe ändern verzerrt nie: Ecken bleiben 5-mm-Viertelkreise, das Loch bleibt Ø 6 mm.','Changing size never distorts: corners stay 5 mm quarter circles, the hole stays Ø 6 mm.')}</div>`);
+    case 'abrunden': return ohead('round',T('Abrunden','Round'),T('Schritt ② im Rezept · 4 senkrechte Kanten','Step ② in the recipe · 4 vertical edges'))+`
+      <div class="sec"><div class="sec-h"><h3>${T('Rundung','Rounding')}</h3><span class="badge edit">${T('wird bearbeitet','editing')}</span></div>
+        <div class="f2">${field('f-rad',T('Radius','Radius'),'4','mm',{bind:'r'})}<div class="fld"><label>${T('Kanten','Edges')}</label><button class="selbox" data-act="mock" data-msg="${T('Weitere Kanten anklicken, um sie hinzuzufügen.','Click more edges to add them.')}">${T('4 senkrechte','4 vertical')} ${icon('plus')}</button></div></div>
+        <div class="row" style="margin-top:12px"><span>${T('Form','Shape')}</span>${segp([['r',T('Rund','Round')],['b',T('Schräg (⌥)','Bevel (⌥)')]],'r')}</div>
+        <div style="margin-top:10px">${showMe()}</div></div>`+disclose();
+    case 'text': return ohead('text',T('Text „LENA“','Text “LENA”'),T('geprägt auf Quader','embossed on Box'))+`
+      <div class="sec"><div class="sec-h"><h3>Text</h3><span class="badge edit">${T('wird bearbeitet','editing')}</span></div>
+        <div class="fld"><label for="f-txt">${T('Inhalt','Content')}</label><div class="fin"><input id="f-txt" value="LENA" style="font-family:var(--font)"></div></div>
+        <div class="row"><span>${T('Schrift','Font')}</span><button class="selbox" data-act="mock" data-msg="${T('Druckgeeignete OFL-Schriften','Print-friendly OFL fonts')}">Nunito Black ${icon('chev')}</button></div>
+        <div class="f2">${field('f-sz',T('Größe','Size'),'9','mm',{})}${field('f-th',T('Höhe','Height'),T('1,5','1.5'),'mm',{})}</div>
+        <div class="row" style="margin-top:12px"><span>${T('Art','Style')}</span>${segp([['p',T('Geprägt','Embossed')],['g',T('Graviert','Engraved')]],'p')}</div></div>
+      <div class="sec"><div class="sec-h"><h3>${T('Farbe','Colour')}</h3><span class="aside">${T('Rot · PLA','Red · PLA')}</span></div>${swatches('red')}</div>`+disclose();
+    case 'loch': return ohead('hole',T('Zylinder','Cylinder'),T('als Loch · schneidet aus: Quader','as hole · subtracts from: Box'))+`
+      <div class="sec"><div class="row" style="margin-top:0"><span>${T('Als Loch','As Hole')}</span><button class="switch" role="switch" aria-checked="${S.holeOn}" data-act="holeSw"><span class="tr"></span><span>${S.holeOn?T('an','on'):T('aus','off')}</span></button></div>
+        <div class="f2">${field('f-dia',T('Durchmesser','Diameter'),'5','mm',{})}${field('f-edge',T('Vom Rand','From edge'),'5','mm',{})}</div>
+        <div class="row" style="margin-top:12px"><span>${T('Tiefe','Depth')}</span>${segp([['t',T('Durchgehend','Through')],['m',T('Maß','Value')]],'t')}</div>
+        <div class="row"><span>${T('Schneidet aus','Subtracts from')}</span><button class="selbox" data-act="mock" data-msg="${T('Ziel wählen, auch mehrere Körper','Choose target, several bodies possible')}">${T('Quader','Box')} ${icon('chev')}</button></div></div>`+disclose();
+    case 'fehler': return ohead('round',T('Abrunden','Round'),T('Schritt ⑤ im Rezept · 4 Kanten oben','Step ⑤ in the recipe · 4 top edges'))+`
+      <div class="sec"><div class="sec-h"><h3>${T('Rundung','Rounding')}</h3>${S.errorFixed?`<span class="badge ok">${icon('ok')}${T('passt','fits')}</span>`:`<span class="badge bad">${icon('warn')}${T('geht nicht','fails')}</span>`}</div>
+        ${field('f-rad2',T('Radius','Radius'),S.errorFixed?T('3,9','3.9'):'5','mm',{cls:S.errorFixed?'':'err',note:S.errorFixed?T('Größtmöglicher Wert','Largest possible value'):T('Höchstens 3,9 mm passen hier.','At most 3.9 mm fits here.')})}
+        <div class="row" style="margin-top:12px"><span>${T('Form','Shape')}</span>${segp([['r',T('Rund','Round')],['b',T('Schräg (⌥)','Bevel (⌥)')]],'r')}</div></div>`+disclose();
+  }
+  return '';
+}
+function renderRight(){
+  const R=$('#right');
+  if(S.scene==='karte'){ R.innerHTML=''; return; }
+  R.innerHTML=`<div class="ptabs" role="tablist">
+    <button role="tab" data-act="rtab" data-arg="objekt" aria-selected="${S.rightTab==='objekt'}">${T('Objekt','Object')}</button>
+    <button role="tab" data-act="rtab" data-arg="drucker" aria-selected="${S.rightTab==='drucker'}">${T('Drucker','Printer')}</button></div>
+    <div class="pbody" style="padding:0">${propsHtml()}</div>`;
+}
+
+/* ======================= status line (= hint line) ======================= */
+const TOOLNAMES={waehlen:['Wählen','Select'],verschieben:['Verschieben','Move'],drehen:['Drehen','Rotate'],groesse:['Größe','Size']};
+function renderStatus(){
+  const H={
+    leer:T('Wähle links „Formen“ und ziehe einen Quader aufs Druckbett.','Pick “Shapes” on the left and drag a box onto the print bed.'),
+    quader:T('Ziehe an einem Griff – oder tippe einfach eine Zahl.','Drag a handle – or just type a number.'),
+    tippen:T('Tippen ersetzt den Wert · Tab: nächstes Maß · Enter: fertig · Komma und Punkt gehen beide','Typing replaces the value · Tab: next measure · Enter: done · comma and dot both work'),
+    abrunden:T('Ziehe am Viertelkreis oder tippe den Radius · ⌥: Schräge','Drag the quarter circle or type the radius · ⌥: bevel'),
+    text:T('Tippe, um den Text zu ändern · Pfeil nach oben: höher prägen','Type to change the text · arrow up: emboss higher'),
+    loch:T('Das Loch schneidet sofort aus · Maß anklicken zum Ändern','The hole cuts right away · click a measure to change it'),
+    export:T('Prüfe die Hinweise und öffne das Modell im Slicer.','Check the hints and open the model in the slicer.'),
+    fehler:T('Das Modell zeigt den letzten gültigen Stand · wähle eine Lösung in der Meldung','The model shows the last valid state · pick a fix in the message'),
+    suche:T('Suche mit deinen eigenen Worten · ↑↓ wählen · Enter starten · Esc schließen','Search in your own words · ↑↓ select · Enter start · Esc close'),
+    rund:T('Ziehe an der Seitenfläche, um zu strecken · Rundungen und Löcher bleiben exakt','Drag the side face to stretch · roundings and holes stay exact'),
+    karte:T('Ziehe Motive aus der Bibliothek direkt auf die Karte.','Drag motifs from the library straight onto the card.')
+  }[S.scene]||'';
+  const sel={box:T('Quader','Box'),text:T('Text „LENA“','Text “LENA”'),hole:T('Loch','Hole')}[SELECTED()];
+  $('#status').innerHTML=`<div class="sl">${sel?`<span><b>${sel}</b> ${T('ausgewählt','selected')}</span>`:''}<span>${T('Werkzeug','Tool')}: ${T(...TOOLNAMES[S.tool])}</span><span>${H}</span></div>
+    <div class="sr2"><span>${T('Einheit: mm · Raster 1 mm','Unit: mm · grid 1 mm')}</span><span class="dotok">${T('Automatisch gespeichert','Saved automatically')}</span></div>`;
+}
+
+/* ======================= kit "card" (left stepper) ======================= */
+const KSTEPS=[['Format','Format'],['Hintergrund','Background'],['Motive','Motifs'],['Text','Text'],['Feinschliff','Finishing'],['Drucken','Print']];
+function kitPanel(){
+  return `<div class="kit-h"><h2>${icon('kit')} ${T('Baukasten: Weihnachtskarte','Kit: Christmas card')}</h2>
+    <div class="kb"><button class="btn sm" data-act="mock" data-msg="${T('Überrasch mich: würfelt eine stimmige Kombination. Schritte mit Schloss bleiben.','Surprise me: rolls a matching combination. Locked steps stay.')}">${icon('dice')} ${T('Überrasch mich','Surprise me')}</button>
+    <button class="btn sm" data-act="mock" data-msg="${T('Frei weiter: Baukasten verlassen, alle Werkzeuge frei. Doppelklick auf die Rezept-Gruppe öffnet ihn wieder.','Continue freely: leave the kit, all tools available. Double-click the recipe group to reopen it.')}">${T('Frei weiter','Continue freely')}</button></div></div>
+    <div class="pbody" style="padding:0">${KSTEPS.map((s,i)=>{const n=i+1, cur=n===S.kitStep, done=n<S.kitStep;
+      return `<div class="kstep ${cur?'cur':''} ${done?'done':''}"><button data-act="kitstep" data-arg="${n}" aria-expanded="${cur}"><span class="n">${done?'✓':n}</span>${s[S.lang==='de'?0:1]}</button>${cur?`<div class="kbody">${kitOptions()}</div>`:''}</div>`;}).join('')}</div>
+    <div class="kfoot"><button class="btn sm" data-act="kitstep" data-arg="${Math.max(1,S.kitStep-1)}" ${S.kitStep===1?'disabled':''}>‹ ${T('Zurück','Back')}</button><span class="spacer"></span>
+      <button class="btn sm primary" data-act="kitstep" data-arg="${Math.min(6,S.kitStep+1)}">${S.kitStep===6?T('Fertig','Done'):T('Weiter','Next')} ›</button></div>`;
+}
+
+const MINI={rect:'M3 6h18v12H3z',rund:'M7 6h10a4 4 0 0 1 4 4v4a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-4a4 4 0 0 1 4-4z',stern:ICONS.sparkle,
+  baum:'M12 3l5 6h-3l4 5h-3l4 5H5l4-5H6l4-5H7z',kugel:'M12 20a7 7 0 1 0 0-14a7 7 0 0 0 0 14z M10 6V4h4v2',herz:'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
+  wolke:'M7 18h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6-1.4A3.5 3.5 0 0 0 7 18z',eigen:ICONS.pencil};
+function kitOptions(){
+  const k=S.kit, opt=(g,v,l,ic)=>`<button class="kopt ${ic?'tall':''} ${k[g]===v?'on':''}" data-act="kopt" data-arg="${g}:${v}" aria-pressed="${k[g]===v}">${ic?`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="${ic}"/></svg>`:''}<span>${l}</span></button>`;
+  const sec=(t,b,n='')=>`<div class="ksec"><h4>${t}</h4><div class="kopts">${b}</div>${n?`<p class="knote">${n}</p>`:''}</div>`;
+  switch(S.kitStep){
+    case 1: return sec(T('Größe','Size'),opt('size','a6','A6 · 148 × 105')+opt('size','q120',T('Quadratisch 120','Square 120'))+opt('size','q150',T('Quadratisch 150','Square 150'))+opt('size','dl',T('DIN lang','DL'))+opt('size','mini',T('Mini 85 × 55','Mini 85 × 55'))+opt('size','eigen',T('Eigene Größe','Custom size')))
+      +sec(T('Art','Type'),opt('art','flach',T('Flache Karte','Flat card'))+opt('art','klapp',T('Klappkarte','Folding card'))+opt('art','auf',T('Aufstellkarte','Standing card'))+opt('art','licht',T('Lichtkarte','Light card')),T('Klappkarte: zwei Hälften mit druckbarem Scharnier.','Folding card: two halves with a printable hinge.'))
+      +sec(T('Ausrichtung','Orientation'),opt('ori','quer',T('Quer','Landscape'))+opt('ori','hoch',T('Hoch','Portrait')));
+    case 2: return sec(T('Form','Shape'),opt('form','rect',T('Rechteck','Rectangle'),MINI.rect)+opt('form','rund',T('Abgerundet','Rounded'),MINI.rund)+opt('form','stern',T('Stern','Star'),MINI.stern)+opt('form','baum',T('Tanne','Fir tree'),MINI.baum)+opt('form','kugel',T('Kugel','Bauble'),MINI.kugel)+opt('form','herz',T('Herz','Heart'),MINI.herz)+opt('form','wolke',T('Wolke','Cloud'),MINI.wolke)+opt('form','eigen',T('Eigene','Custom'),MINI.eigen),T('Die Kacheln zeigen später die Option an deiner eigenen Karte.','Later the tiles show each option on your own card.'))
+      +sec(T('Fläche','Surface'),opt('flaeche','glatt',T('glatt','smooth'))+opt('flaeche','schnee',T('Schnee','Snow'))+opt('flaeche','holz',T('Holz','Wood'))+opt('flaeche','leinen',T('Leinen','Linen')))
+      +sec(T('Durchbrüche','Cut-outs'),opt('durch','keine',T('keine','none'))+opt('durch','sterne',T('Sterne','Stars'))+opt('durch','flocken',T('Flocken','Flakes'))+opt('durch','punkte',T('Punkte','Dots')))
+      +sec(T('Rahmen','Frame'),opt('rahmen','keiner',T('keiner','none'))+opt('rahmen','schlicht',T('schlicht','plain'))+opt('rahmen','zier',T('Zierrahmen','Ornate'))+opt('rahmen','eigen',T('eigener','custom')))
+      +more(field('k-th',T('Dicke','Thickness'),T('1,6','1.6'),'mm',{pct:16})+field('k-r',T('Ecken','Corners'),'6','mm',{pct:30}));
+    case 3: return sec(T('Bibliothek','Library'),opt('lib','weihnachten',T('Weihnachten','Christmas'))+opt('lib','winter','Winter')+opt('lib','sterne',T('Sterne und Himmel','Stars and sky'))+opt('lib','tiere',T('Tiere','Animals')))
+      +sec(T('Motive','Motifs'),opt('m','baum',T('Tanne','Fir tree'),MINI.baum)+opt('m','stern',T('Stern','Star'),MINI.stern)+opt('m','kugel',T('Kugel','Bauble'),MINI.kugel)+opt('m','herz',T('Herz','Heart'),MINI.herz)+opt('m','wolke',T('Wolke','Cloud'),MINI.wolke)+opt('m','eigen',T('Eigenes SVG','Own SVG'),MINI.eigen),T('Ziehe ein Motiv auf die Karte. Unter 30 mm warnt das Programm, wenn Details zu fein werden.','Drag a motif onto the card. Below 30 mm the program warns when details get too fine.'))
+      +sec(T('Art','Style'),opt('mart','erhaben',T('erhaben','raised'))+opt('mart','vertieft',T('vertieft','recessed'))+opt('mart','durch',T('durchbrochen','cut through'))+opt('mart','auf',T('aufgesetzt','add-on part')))
+      +sec(T('Streuen','Scatter'),opt('streu','an',T('Schneeflocken streuen','Scatter snowflakes')),T('Dichte, Größe und Drehung unter „Mehr“.','Density, size and rotation under “More”.'));
+    case 4: return sec(T('Vorschläge','Suggestions'),opt('ttxt','frohe',T('Frohe Weihnachten','Frohe Weihnachten'))+opt('ttxt','fest','Frohes Fest')+opt('ttxt','merry','Merry Christmas')+opt('ttxt','frei',T('Eigener Text','Own text')))
+      +sec(T('Verlauf','Path'),opt('tform','gerade',T('gerade','straight'))+opt('tform','bogen',T('im Bogen','arc'))+opt('tform','kurve',T('entlang Kurve','along curve')))
+      +sec(T('Art','Style'),opt('tart','erhaben',T('erhaben','raised'))+opt('tart','vertieft',T('vertieft','recessed')))
+      +`<div class="row"><span>${T('Schrift','Font')}</span><button class="selbox" data-act="mock" data-msg="${T('Druckgeeignete OFL-Schriften','Print-friendly OFL fonts')}">Nunito Black ▾</button></div>`;
+    case 5: return sec(T('Farbschema','Colour scheme'),opt('schema','klassisch',T('Klassisch','Classic'))+opt('schema','nordisch',T('Nordisch','Nordic'))+opt('schema','gold',T('Gold und Weiß','Gold and white')))
+      +sec(T('Mehrfarbig','Multicolour'),opt('farbe','ams',T('je Motiv ein Filament','one filament per motif'))+opt('farbe','hoehe',T('Farbwechsel nach Höhe','colour change by height')),T('Farbwechsel nach Höhe: für Drucker mit einer Düse, z. B. ab 1,6 mm Rot.','Colour change by height: for single-nozzle printers, e.g. red from 1.6 mm.'))
+      +sec(T('Aufhängen','Hanging'),opt('loch','keins',T('nichts','nothing'))+opt('loch','loch',T('Loch','Hole'))+opt('loch','oese',T('Öse','Loop')));
+    case 6: return `<div class="ksec"><h4>${T('Druckcheck','Print check')}</h4><ul class="chk"><li>${icon('ok')}<span>${T('Alles druckbar','All printable')}<small>${T('Linien ≥ 0,8 mm, keine Überhänge','Lines ≥ 0.8 mm, no overhangs')}</small></span></li></ul></div>
+      <div class="ksec"><h4>${T('Versand-Check','Postage check')}</h4><ul class="chk"><li>${icon('ok')}<span>${T('Passt in C6-Umschlag','Fits a C6 envelope')}<small>148 × 105 mm</small></span></li>
+        <li>${icon('ok')}<span>${T('Kompaktbrief','Compact letter')}<small>${T('2,8 mm dick · ca. 31 g (≤ 10 mm / 50 g)','2.8 mm thick · approx. 31 g (≤ 10 mm / 50 g)')}</small></span></li></ul>
+        <div class="tipcard" style="margin-top:10px"><p>${T('Mit 15 % Füllung wiegt die Karte ca. 14 g und geht als Standardbrief.','With 15 % infill the card weighs approx. 14 g and goes as a standard letter.')}</p><button class="btn" data-act="mock" data-msg="${T('Füllung auf 15 % gesetzt (Rückgängig: ⌘Z).','Infill set to 15 % (undo: ⌘Z).')}">${T('Füllung 15 % einstellen','Set infill to 15 %')}</button></div></div>
+      <button class="btn primary full" style="margin-top:12px" data-act="mock" data-msg="${T('Der Slicer öffnet sich mit vier Farben als 3MF.','The slicer opens with four colours as 3MF.')}">${icon('slicer')} ${T('Im Slicer öffnen','Open in Slicer')}</button>`;
+  }
+  return '';
+}
+
+/* ======================= scene model ======================= */
+function model(){
+  const id=S.scene, K={w:50,d:20,h:4,r:4,text:true,hole:true,holeX:-20,holeDia:5};
+  let m;
+  switch(id){
+    case 'leer': m={empty:true,cam:{zoom:1}}; break;
+    case 'quader': m={w:34,d:20,h:20,r:0,cam:{zoom:2.7,tx:-42,ty:0,tz:4}}; break;
+    case 'tippen': { const t=S.typed||{w:50,d:20,h:4}; m={w:t.w,d:t.d,h:t.h,r:0,cam:{zoom:4.2,tx:2,ty:0,tz:4}}; break; }
+    case 'abrunden': m={...K,text:false,hole:false,cam:{zoom:5,tx:0,ty:0,tz:2}}; break;
+    case 'text': m={...K,hole:false,cam:{zoom:5,tx:0,ty:0,tz:3}}; break;
+    case 'loch': m={...K,hole:S.holeOn,ghost:S.holeOn,solid:!S.holeOn,cam:{zoom:4.4,tx:-5,ty:0,tz:4}}; break;
+    case 'rund': m={w:80,d:40,h:10,r:5,x0:20,hole:true,holeX:-10,holeDia:6,cam:{zoom:2.4,tx:26,ty:0,tz:6}}; break;
+    case 'karte': m={card:true,cam:{zoom:1.75,a:-22,e:54,tx:0,ty:-6,tz:0}}; break;
+    default: m={...K,cam:{zoom:5,tx:0,ty:0,tz:3}};
+  }
+  for(const k of ['w','d','h','r']) if(S.edits[k]!=null && !m.empty && !m.card) m[k]=S.edits[k];
+  if(m.r>=Math.min(m.w,m.d)/2) m.r=Math.min(m.w,m.d)/2-0.05;
+  return m;
+}
+const VIEWS={home:{a:-30,e:36},top:{a:0,e:90},front:{a:0,e:0},right:{a:-90,e:0},back:{a:180,e:0},left:{a:90,e:0}};
+
+/* ======================= gizmos: "Achsen" (default) and "Klassisch" (Tinkercad-like) ======================= */
+const scrDir=(C,p,v,len)=>{const a=C.p(...p), b=C.p(p[0]+v[0],p[1]+v[1],p[2]+v[2]); const dx=b[0]-a[0], dy=b[1]-a[1], l=Math.hypot(dx,dy)||1; return [a,[a[0]+dx/l*len,a[1]+dy/l*len]];};
+function axisArrow(A,B,cls,label){
+  const ang=Math.atan2(B[1]-A[1],B[0]-A[0]), l=13, w=0.42;
+  const tip=B, b1=[B[0]-l*Math.cos(ang-w),B[1]-l*Math.sin(ang-w)], b2=[B[0]-l*Math.cos(ang+w),B[1]-l*Math.sin(ang+w)];
+  const lx=B[0]+Math.cos(ang)*14, ly=B[1]+Math.sin(ang)*14;
+  return `<line x1="${r1(A[0])}" y1="${r1(A[1])}" x2="${r1(B[0]-Math.cos(ang)*8)}" y2="${r1(B[1]-Math.sin(ang)*8)}" class="g${cls}" stroke-width="3.2" stroke-linecap="round"/>
+    <polygon points="${ptsAttr2([tip,b1,b2])}" class="g${cls}f" style="cursor:pointer"/>
+    <text x="${r1(lx)}" y="${r1(ly)}" class="glab g${cls}f" text-anchor="middle" dominant-baseline="central">${label}</text>`;
+}
+function selOutline(C,outline,z0,z1){
+  const top=outline.map(p=>C.p(p[0],p[1],z1)), all=[...outline.map(p=>C.p(p[0],p[1],z0)),...top];
+  return `<polygon points="${ptsAttr2(hull(all))}" class="selo" opacity=".55"/><polygon points="${ptsAttr2(top)}" class="selo"/>`;
+}
+/* dimension band parallel to an edge, label pill rotated with the edge (kept upright) */
+function dimBand(C,p1,p2,e1,e2,html,cls=''){
+  const A=C.p(...p1), B=C.p(...p2), E1=C.p(...e1), E2=C.p(...e2);
+  let ang=Math.atan2(B[1]-A[1],B[0]-A[0])*180/Math.PI; if(ang>90) ang-=180; if(ang<-90) ang+=180;
+  if(Math.abs(ang)>65) ang=0;
+  const n=[-(B[1]-A[1]),(B[0]-A[0])], nl=Math.hypot(...n)||1, t=[n[0]/nl*5,n[1]/nl*5];
+  O.h+=`<div class="ov dpill ${cls}" style="left:${r1(clamp((A[0]+B[0])/2,30,O.W-30))}px;top:${r1(clamp((A[1]+B[1])/2,20,O.H-20))}px;transform:translate(-50%,-50%) rotate(${r1(ang)}deg);transform-origin:50% 50%">${html}</div>`;
+  return line(E1,A,'dimb')+line(E2,B,'dimb')+line(A,B,'dimb')+line([A[0]-t[0],A[1]-t[1]],[A[0]+t[0],A[1]+t[1]],'dimb')+line([B[0]-t[0],B[1]-t[1]],[B[0]+t[0],B[1]+t[1]],'dimb');
+}
+function boxDims(C,m,active,typed){
+  const W=m.w,D=m.d,H=m.h, ox=m.x0||0, o=Math.max(4,Math.min(W,D)*0.28);
+  const lab=(f,v)=>{ const on=active===f; return `<b>${on?(typed||''):fmt(v)}</b> mm`; };
+  let s='';
+  s+=dimBand(C,[ox-W/2,-D/2-o,H],[ox+W/2,-D/2-o,H],[ox-W/2,-D/2,H],[ox+W/2,-D/2,H],lab('w',W),active==='w'?'active':'');
+  s+=dimBand(C,[ox+W/2+o,-D/2,H],[ox+W/2+o,D/2,H],[ox+W/2,-D/2,H],[ox+W/2,D/2,H],lab('d',D),active==='d'?'active':'');
+  s+=dimBand(C,[ox+W/2+o*0.7,-D/2-o*0.7,0],[ox+W/2+o*0.7,-D/2-o*0.7,H],[ox+W/2,-D/2,0],[ox+W/2,-D/2,H],lab('h',H),active==='h'?'active':'');
+  return s;
+}
+function moveGizmo(C,c,L=78){ // c = 3D anchor (top centre)
+  const [A,X]=scrDir(C,c,[1,0,0],L), [,Y]=scrDir(C,c,[0,1,0],L*0.85), [,Z]=scrDir(C,c,[0,0,1],L*1.25);
+  return axisArrow(A,Z,'z','Z')+axisArrow(A,Y,'y','Y')+axisArrow(A,X,'x','X')+`<circle cx="${r1(A[0])}" cy="${r1(A[1])}" r="8" style="fill:#fff;stroke:var(--handle-line)" stroke-width="1.5"/>`;
+}
+function sizeDots(C,m){ // push-pull dots on face centres (tool "Größe")
+  const ox=m.x0||0, pts=[[ox+m.w/2,0,m.h/2],[ox,-m.d/2,m.h/2],[ox,0,m.h]];
+  return pts.map(p=>{const q=C.p(...p); return `<circle cx="${r1(q[0])}" cy="${r1(q[1])}" r="7" style="fill:var(--accent-line);stroke:#fff" stroke-width="2" class="pick"><title>${T('Ziehen ändert das Maß','Drag to change the size')}</title></circle>`;}).join('');
+}
+function classicHandles(C,m){
+  const W=m.w,D=m.d,H=m.h, ox=m.x0||0; let s='';
+  [[W/2,-D/2],[W/2,D/2],[-W/2,D/2],[-W/2,-D/2]].forEach(([x,y])=>{s+=hdl(C.p(ox+x,y,0));});
+  const tc=C.p(ox,0,H); s+=line(tc,[tc[0],tc[1]-26],'dim')+hdl([tc[0],tc[1]-26])+hdl(tc,'lift',8);
+  return s;
+}
+
+/* ======================= 3D view ======================= */
+let O;
+function at(P,html,cls='',attrs=''){
+  const x=clamp(P[0],8,O.W-8), y=clamp(P[1],8,O.H-8);
+  O.h+=`<div class="ov ${cls}" style="left:${r1(x)}px;top:${r1(y)}px" ${attrs}>${html}</div>`;
+}
+function ctxBar(P,items,below){
+  at([clamp(P[0],330,O.W-370),Math.max(P[1]+(below?22:-22),84)],items.map(([ic,l,on,k])=>`<button ${on!==undefined?`aria-pressed="${!!on}"`:''} data-act="mock" data-msg="${l}">${icon(ic)}${l}${k?` <span class="k">${k}</span>`:''}</button>`).join(''),below?'ctx float below':'ctx float',`role="toolbar" aria-label="${T('Kontextleiste','Context bar')}"`);
+}
+function sceneOverlays(C,m){
+  const id=S.scene, P=(x,y,z)=>C.p(x,y,z), classic=S.handles==='klassisch'; let s='';
+  const W=m.w,D=m.d,H=m.h, ox=m.x0||0;
+  const topY=()=>Math.min(...rrect(W,D,m.r||0,ox,0).map(p=>P(p[0],p[1],H)[1]));
+  if(id==='quader'){
+    if(classic){
+      s+=classicHandles(C,m)+dimLine(C,[-W/2,-D/2-6,0],[W/2,-D/2-6,0],[-W/2,-D/2,0],[W/2,-D/2,0]);
+      const c=P(W/2,-D/2,0); s+=cursorAt([c[0]+2,c[1]+2]);
+      at(c,`<span>${T('Breite','Width')}</span> <b>34</b> mm · <span>${T('Tiefe','Depth')}</span> <b>20</b> mm`,'bubble');
+    } else {
+      s+=selOutline(C,rrect(W,D,0),0,H)+boxDims(C,m);
+      if(S.tool==='groesse'){ s+=sizeDots(C,m); const q=P(W/2,0,H/2); const e=[q[0]+46,q[1]+18]; s+=arrow([q[0]+9,q[1]+3],e)+cursorAt(e); at(e,`<span>${T('Breite','Width')}</span> <b>34</b> mm`,'bubble'); }
+      else s+=moveGizmo(C,[0,0,H]);
+    }
+  }
+  if(id==='tippen'){
+    const t=S.typed||{w:50,d:20,h:4,f:null,txt:{},done:true,ki:-1};
+    if(classic){
+      s+=dimLine(C,[-W/2,-D/2-7,0],[W/2,-D/2-7,0],[-W/2,-D/2,0],[W/2,-D/2,0])+dimLine(C,[W/2+7,-D/2,0],[W/2+7,D/2,0],[W/2,-D/2,0],[W/2,D/2,0])+dimLine(C,[W/2+3,-D/2-3,0],[W/2+3,-D/2-3,H]);
+      [[W/2,-D/2],[W/2,D/2],[-W/2,D/2],[-W/2,-D/2]].forEach(([x,y])=>{s+=hdl(P(x,y,0),'',8);});
+      const chip=(f,lab,val,p)=>at(p,`<span>${lab}</span><b>${t.f===f&&!t.done?(t.txt[f]||''):fmt(val)}</b><span>mm</span>`,'dimf'+(t.f===f&&!t.done?' active':''));
+      const pw=P(0,-D/2-7,0), pd=P(W/2+7,0,0), ph=P(W/2+3,-D/2-3,H/2);
+      chip('w',T('Breite','Width'),t.w,[pw[0],pw[1]+20]); chip('d',T('Tiefe','Depth'),t.d,[pd[0]+70,pd[1]-6]); chip('h',T('Höhe','Height'),t.h,[ph[0]+64,ph[1]+40]);
+    } else {
+      s+=selOutline(C,rrect(W,D,0),0,H)+boxDims(C,m,t.done?null:t.f,t.txt&&t.f?t.txt[t.f]:'');
+    }
+    if(t.done) ctxBar([P(0,D/2,H)[0],topY()-60],[['pull',T('Ziehen','Pull')],['round',T('Abrunden','Round')],['hole',T('Loch','Hole')],['hollow',T('Aushöhlen','Hollow')],['pencil',T('Skizze darauf','Sketch on it')]]);
+  }
+  if(id==='abrunden'){
+    const cs=[[W/2-m.r,-D/2+m.r,-90],[W/2-m.r,D/2-m.r,0],[-W/2+m.r,D/2-m.r,90],[-W/2+m.r,-D/2+m.r,180]];
+    cs.forEach(([cx,cy,a0],i)=>{ const mid=(a0+45)*D2R, n=[Math.cos(mid),Math.sin(mid),0]; if(dot(n,C.toCam)<0.05) return;
+      const arc=[...Array(13)].map((_,k)=>{const a=(a0+90*k/12)*D2R; return [cx+m.r*Math.cos(a),cy+m.r*Math.sin(a)];});
+      const band=[...arc.map(p=>[p[0],p[1],0]),...arc.slice().reverse().map(p=>[p[0],p[1],H])];
+      s+=`<polygon points="${ptsAttr(C,band)}" class="accsoft" opacity="${i===0?1:.6}"/>`; });
+    const g=P(W/2-m.r+m.r*Math.SQRT1_2,-D/2+m.r-m.r*Math.SQRT1_2,H);
+    s+=`<circle cx="${r1(g[0])}" cy="${r1(g[1]-16)}" r="11" style="fill:${classic?'var(--handle)':'var(--accent-line)'};stroke:${classic?'var(--accent-line)':'#fff'}" stroke-width="2"/><path d="M${r1(g[0]-5)} ${r1(g[1]-10)}a7 7 0 0 1 7-9" style="stroke:${classic?'var(--accent-line)':'#fff'}" fill="none" stroke-width="2" stroke-linecap="round"/>`;
+    s+=line([g[0],g[1]-5],[g[0],g[1]],'accl');
+    const e=[g[0]-70,g[1]-78]; s+=arrow([g[0]-8,g[1]-26],e)+cursorAt(e);
+    at(e,`<span>${T('Rundung','Rounding')}</span> <b class="typed">4</b> mm`,'bubble');
+    ctxBar([P(-6,D/2,H)[0],topY()-60],[['round',T('Abrunden','Round'),true],['bevel',T('Abschrägen','Bevel'),false,'⌥'],['ok',T('Alle senkrechten Kanten','All vertical edges'),true]]);
+  }
+  if(id==='text'){
+    const box=[[-12,-5.5],[16,-5.5],[16,5.5],[-12,5.5]].map(p=>[p[0],p[1],H+1.5]);
+    s+=`<polygon points="${ptsAttr(C,box)}" fill="none" style="stroke:var(--accent-line)" stroke-width="1.6" ${classic?'stroke-dasharray="5 4"':''}/>`;
+    const a=P(2,0,H+1.5);
+    if(classic){ s+=arrow([a[0],a[1]-4],[a[0],a[1]-46]); }
+    else { const [A,Z]=scrDir(C,[2,0,H+1.5],[0,0,1],60); s+=axisArrow(A,Z,'z','Z')+`<circle cx="${r1(A[0])}" cy="${r1(A[1])}" r="7" style="fill:#fff;stroke:var(--handle-line)" stroke-width="1.5"/>`; }
+    at([a[0]+18,a[1]-44],`<span>${T('Prägehöhe','Emboss height')}</span> <b>${T('1,5','1.5')}</b> mm`,'bubble');
+    ctxBar([P(0,D/2,H)[0],topY()-74],[['text',T('Text ändern','Edit text')],['layers',T('Geprägt ⇄ Graviert','Embossed ⇄ Engraved')],['palette',T('Farbe','Colour')],['arc',T('Im Bogen','Arc')]]);
+  }
+  if(id==='loch'){
+    const top=P(m.holeX,0,H+3);
+    at([top[0],top[1]-30],`${icon('scissors')} ${T('schneidet aus:','subtracts from:')} <b style="font-family:var(--font)">${T('Quader','Box')}</b> ▾`,'chip acc',`role="button" tabindex="0" data-act="mock" data-msg="${T('Ziel ändern: auch mehrere Körper möglich.','Change target: several bodies possible.')}"`);
+    s+=line([top[0],top[1]-18],top,'ptr');
+    if(classic){
+      s+=dimLine(C,[-W/2,-D/2-6,H],[m.holeX,-D/2-6,H],[-W/2,-D/2,H],[m.holeX,0,H]);
+      const dm=P((m.holeX-W/2)/2,-D/2-6,H);
+      if(S.editDim) at([dm[0],dm[1]+22],`<input id="dimedit" value="5" aria-label="${T('Abstand vom Rand','Distance from edge')}"> mm ${T('vom Rand','from edge')}`,'chip acc');
+      else at([dm[0],dm[1]+22],`<b>5 mm</b> ${T('vom Rand','from edge')}`,'chip',`role="button" tabindex="0" data-act="editdim"`);
+      s+=hdl(P(m.holeX+2.5,0,H+3),'',8);
+    } else {
+      s+=dimBand(C,[-W/2,-D/2-6,H],[m.holeX,-D/2-6,H],[-W/2,-D/2,H],[m.holeX,0,H],S.editDim?`<input id="dimedit" value="5" style="width:40px;background:none;border:0;color:inherit;font:inherit;text-align:right"> mm`:`<b>5</b> mm`);
+      const dm=P((m.holeX-W/2)/2,-D/2-6,H);
+      if(!S.editDim) at([dm[0]+40,dm[1]+28],T('vom Rand – klick zum Ändern','from edge – click to change'),'chip',`role="button" tabindex="0" data-act="editdim" style="font-size:12px"`);
+      s+=moveGizmo(C,[m.holeX,0,H+3]);
+    }
+    const dd=P(m.holeX+2.5,0,H+3); at([dd[0]+46,dd[1]+4],`Ø <b>5</b> mm`,'chip',`role="button" tabindex="0" data-act="mock" data-msg="${T('Durchmesser ändern: Griff ziehen oder tippen.','Change diameter: drag the handle or type.')}"`);
+  }
+  if(id==='fehler' && !S.errorFixed){
+    const arcPts=x=>[...Array(13)].map((_,k)=>{const a=(90+90*k/12)*D2R; return [x,-5+5*Math.cos(a),-1+5*Math.sin(a)];});
+    s+=`<polygon points="${ptsAttr(C,[...arcPts(-21),...arcPts(21).reverse()])}" class="ghost-red"/>`+line(P(-21,-D/2,H),P(21,-D/2,H),'badl');
+    const a=P(0,-D/2,H), cx=clamp(a[0]+20,110,O.W-470), cy=clamp(a[1]+100,70,O.H-250);
+    s+=`<path d="M${r1(a[0])} ${r1(a[1])} L${r1(cx+20)} ${r1(cy)}" style="stroke:var(--bad)" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/><circle cx="${r1(a[0])}" cy="${r1(a[1])}" r="4" style="fill:var(--bad)"/>`;
+    O.h+=`<div class="ov" style="left:${r1(cx)}px;top:${r1(cy)}px"><div class="msg" role="alert">
+      <h4>${icon('warn')} ${T('Abrunden mit 5 mm geht hier nicht.','Rounding with 5 mm does not work here.')}</h4>
+      <p>${T('Die Kante grenzt an eine Seitenfläche, die nur 4 mm hoch ist. Die Rundung passt dort nicht hinein.','The edge borders a side face that is only 4 mm high. The rounding does not fit there.')}</p>
+      <div class="acts"><button class="btn sm primary" data-act="fix" data-arg="max">${T('Größtmöglichen Wert verwenden (3,9 mm)','Use largest possible value (3.9 mm)')}</button>
+      <button class="btn sm" data-act="fix" data-arg="skip">${T('Diese Kante weglassen','Leave out this edge')}</button>
+      <button class="btn sm" data-act="fix" data-arg="edit">${T('Wert ändern','Change value')}</button></div>
+      <div class="where">${T('Schritt ⑤ im Rezept · rot gestrichelt: so würde die Rundung aussehen','Step ⑤ in the recipe · red dashed: what the rounding would look like')}</div></div></div>`;
+  }
+  if(id==='rund'){
+    s+=`<polygon points="${ptsAttr(C,rrect(40,40,5,0,0).map(p=>[p[0],p[1],H]))}" class="dim-ext"/>`;
+    const rf=P(60,0,H/2), e=[rf[0]+40,rf[1]+40];
+    if(classic){ s+=hdl(rf); }
+    else { s+=selOutline(C,rrect(W,D,m.r,ox,0),0,H); s+=`<circle cx="${r1(rf[0])}" cy="${r1(rf[1])}" r="7" style="fill:var(--accent-line);stroke:#fff" stroke-width="2"/>`; }
+    s+=arrow([rf[0]+9,rf[1]+1],e)+cursorAt(e);
+    at(e,`<span>${T('Breite','Width')}</span> <b>80</b> mm <span>(+40)</span>`,'bubble');
+    const cr=P(60-5+5*Math.SQRT1_2,-20+5-5*Math.SQRT1_2,H); at([cr[0]+30,cr[1]+70],`${icon('ok')} R 5 mm · ${T('bleibt rund','stays round')}`,'chip ok');
+    const hp=P(-10,0,H); at([hp[0]-10,hp[1]-36],`${icon('ok')} Ø 6 mm · ${T('bleibt rund','stays round')}`,'chip ok');
+    s+=dimLine(C,[-20,-26,0],[-10,-26,0],[-20,-20,0],[-10,0,0]); const dl=P(-15,-26,0);
+    at([dl[0]+70,dl[1]+24],`<b>10 mm</b> ${T('vom Rand, unverändert','from edge, unchanged')}`,'chip');
+    O.h+=`<div class="inset float"><h5>${T('So würde Skalieren aussehen','What scaling would look like')} <span class="vtag">${T('Erklärung','Explainer')}</span></h5>
+      <svg viewBox="0 0 280 70" aria-hidden="true"><rect x="10" y="10" width="200" height="50" rx="20" ry="9" style="fill:var(--field-2);stroke:var(--bad)" stroke-width="1.5"/><ellipse cx="52" cy="35" rx="15" ry="7" style="fill:var(--view-2);stroke:var(--bad)"/>
+      <path d="M232 20l26 30M258 20l-26 30" style="stroke:var(--bad)" stroke-width="3" stroke-linecap="round"/></svg>
+      ${T('Ecken und Loch würden oval. Fission3D streckt stattdessen. Verzerren gibt es nur ausdrücklich: Ändern ▸ Mehr ▸ Verzerren, mit Hinweis vorher.','Corners and hole would turn oval. Fission3D stretches instead. Distorting only on purpose: Modify ▸ More ▸ Distort, with a warning first.')}</div>`;
+  }
+  if(id==='karte'){
+    const st=S.kitStep;
+    if(st===1||st===2){ s+=dimBand(C,[-74,-62,0],[74,-62,0],[-74,-52.5,0],[74,-52.5,0],'<b>148</b> mm')+dimBand(C,[84,-52.5,0],[84,52.5,0],[74,-52.5,0],[74,52.5,0],'<b>105</b> mm'); }
+    if(st===3){ s+=`<polygon points="${ptsAttr(C,[[-64,-38],[-12,-38],[-12,36],[-64,36]].map(p=>[p[0],p[1],3]))}" class="selo"/>`;
+      const a=P(-38,36,3); at([a[0],a[1]-22],`${T('Motiv: Tanne','Motif: fir tree')} · ${T('erhaben 1,2 mm','raised 1.2 mm')}`,'chip acc'); }
+    if(st===4){ s+=`<polygon points="${ptsAttr(C,[[-8,-14],[68,-14],[68,18],[-8,18]].map(p=>[p[0],p[1],2.6]))}" class="selo"/>`;
+      const a=P(30,18,2.6); at([a[0],a[1]-22],`Text · ${T('erhaben 1 mm','raised 1 mm')}`,'chip acc'); }
+    if(st===6){ O.h+=`<div class="banner float">${icon('check')} ${T('Druckbar · passt in C6 · Kompaktbrief','Printable · fits C6 · compact letter')}</div>`; }
+  }
+  return s;
+}
+
+/* ---------- floating view chrome: display bar, tool palette, nav buttons, Lotse ---------- */
+const PAL_TOOLS=[['waehlen','select'],['verschieben','move'],['drehen','rotate'],['groesse','scale']];
+const MISSION={leer:1,quader:2,tippen:2,abrunden:3,text:4,loch:5};
+function lotseHtml(){
+  const n=MISSION[S.scene]; if(!n || S.mode!=='gefuehrt') return '';
+  if(!S.lotse || S.flyout || S.search) return `<button class="lotse-pill" data-act="lotse">${icon('compass')} ${T('Lotse · Schritt','Guide · step')} ${n}/8</button>`;
+  const L={
+    1:[T('Hol dir einen Quader','Get a box'),T('Klicke links auf „Formen“ und ziehe den Quader aufs Druckbett. Er landet auf der Fläche unter dem Zeiger.','Click “Shapes” on the left and drag the box onto the print bed. It lands on the face under the pointer.')],
+    2:[T('Bring den Quader auf Maß','Size the box'),T('Ziehe an einem Griff – oder tippe einfach eine Zahl, das ist genauer.','Drag a handle – or just type a number, that is more precise.')],
+    3:[T('Runde die Ecken ab','Round the corners'),T('Fahre über eine senkrechte Kante und ziehe am Viertelkreis – oder tippe 4.','Hover a vertical edge and drag the quarter circle – or type 4.')],
+    4:[T('Schreib deinen Namen drauf','Put your name on it'),T('Formen ▸ Text, auf die Oberseite klicken, LENA tippen. Der Text sitzt automatisch mittig.','Shapes ▸ Text, click the top face, type LENA. The text is centred automatically.')],
+    5:[T('Ein Loch für den Schlüsselring','A hole for the key ring'),T('Zylinder holen, „Als Loch“ einschalten, an den linken Rand ziehen. Klick auf das Maß und tippe 5.','Get a cylinder, switch on “As Hole”, drag it to the left edge. Click the measure and type 5.')]
+  }[n];
+  let extra='';
+  if(S.scene==='tippen'){
+    const t=S.typed||{ki:99,done:true}, seq=TYPESEQ();
+    L[0]=T('Tippe die Maße','Type the sizes'); L[1]=T('Tippe 50, Tab, 20, Tab, 4 und Enter. Komma und Punkt gehen beide, auch 40/2 oder 1 in.','Type 50, Tab, 20, Tab, 4 and Enter. Comma and dot both work, also 40/2 or 1 in.');
+    extra=`<div class="keys" aria-label="${T('Gedrückte Tasten','Keys pressed')}">${seq.map((k,i)=>`<kbd class="${i<t.ki?'on':''} ${i===t.ki?'cur':''}">${k.l}</kbd>`).join('')}<button class="linkbtn" data-act="replay" style="margin-left:6px">${icon('play')} ${T('Nochmal','Replay')}</button></div>`
+      +(t.done?`<div class="good">${icon('ok')} ${T('Super, der Quader ist 50 mm breit!','Great, the box is 50 mm wide!')}</div>`:'');
+  }
+  return `<div class="lotse float" role="region" aria-label="${T('Lotse','Guide')}"><span class="li">${icon('compass')}</span>
+    <div style="min-width:0"><div class="lk"><b>${T('Lotse','Guide')}</b>${T('Mission „Dein erster Schlüsselanhänger“ · Schritt','Mission “Your first key tag” · step')} ${n} ${T('von','of')} 8</div>
+      <div class="dots">${[...Array(8)].map((_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</div>
+      <h4>${L[0]}</h4><p>${L[1]}</p>${extra}</div>
+    <div class="la"><button class="btn sm amber" data-act="mock" data-msg="${T('„Zeig mir wie“ spielt eine kurze Animation am eigenen Modell ab.','“Show me how” plays a short animation on your own model.')}">${icon('play')} ${T('Zeig mir wie','Show me how')}</button><button class="btn sm" data-act="lotse">${T('Verstanden','Got it')}</button><button class="iconbtn" data-act="mode" data-arg="experte" aria-label="${T('Lotse ausschalten','Switch guide off')}" title="${T('Lotse ausschalten (wieder an: Einstellungen)','Switch guide off (back on: Settings)')}">${icon('x')}</button></div></div>`;
+}
+function viewChrome(){
+  const disp=[['draht','wire',T('Drahtgitter','Wireframe')],['volumen','solid',T('Volumen','Solid')],['farbe','color',T('Farben','Colours')]];
+  return `<div class="vbar"><div class="float"><button data-act="mock" data-msg="${T('Perspektive ⇄ Orthografisch (Taste P)','Perspective ⇄ orthographic (key P)')}">${T('Perspektive','Perspective')} ${icon('chev')}</button></div>
+      <div class="float" role="group" aria-label="${T('Darstellung','Display')}">${disp.map(([k,ic,l])=>`<button data-act="disp" data-arg="${k}" aria-pressed="${S.display===k}">${icon(ic)} ${l}</button>`).join('')}</div></div>
+    <nav class="palette float" aria-label="${T('Werkzeuge','Tools')}">
+      ${PAL_TOOLS.map(([k,ic])=>`<button class="pt" data-act="tool" data-arg="${k}" aria-pressed="${S.tool===k}" data-tip-t="${T(...TOOLNAMES[k])}" data-tip="${T('Griffe am ausgewählten Körper. Gilt für den Griff-Stil „Achsen“.','Handles on the selected body. Applies to the “Axes” handle style.')}">${icon(ic)}<span>${T(...TOOLNAMES[k])}</span></button>`).join('')}
+      <hr>
+      ${GROUPS.filter(g=>g.k!=='export').map(g=>`<button class="pt" data-act="group" data-arg="${g.k}" aria-expanded="${S.flyout===g.k}" data-tip-t="${T(g.de,g.en)}" data-tip="${T(...g.tip)}">${icon(g.ic)}<span>${T(g.de,g.en)}</span></button>`).join('')}
+    </nav>
+    <div class="navbtns float">
+      <button class="iconbtn" data-act="mock" data-msg="${T('Ansicht drehen: rechte Maustaste ziehen','Orbit: drag with the right mouse button')}" aria-label="${T('Drehen','Orbit')}">${icon('orbit')}</button>
+      <button class="iconbtn" data-act="mock" data-msg="${T('Verschieben: mittlere Maustaste ziehen','Pan: drag with the middle mouse button')}" aria-label="${T('Verschieben','Pan')}">${icon('hand')}</button>
+      <button class="iconbtn" data-act="mock" data-msg="${T('Zoomen: Mausrad, zum Zeiger hin','Zoom: mouse wheel, towards the pointer')}" aria-label="Zoom">${icon('zoom')}</button></div>
+    ${lotseHtml()}`;
+}
+function renderView(){
+  const v=$('#view'); if(S.scene==='start') return;
+  const W=v.clientWidth, H=v.clientHeight; if(!W||!H) return;
+  const m=model(), c=m.cam, fit=Math.min(W/400,H/300);
+  const lot=MISSION[S.scene]&&S.mode==='gefuehrt'&&S.lotse&&!S.flyout&&!S.search;
+  const C=cam({a:S.cam.a,e:S.cam.e,s:fit*c.zoom,cx:W/2+36,cy:H/2+(lot?-52:4),tx:c.tx||0,ty:c.ty||0,tz:c.tz||0});
+  O={h:'',W,H};
+  let svg=SVGDEFS(Math.max(2,C.s*1.2))+(S.hide.bed?'':drawBed(C,m));
+  if(m.card) svg+=drawCard(C); else if(!m.empty) svg+=drawKeychain(C,m);
+  svg+=sceneOverlays(C,m);
+  const sc=$('#scene'); sc.setAttribute('viewBox',`0 0 ${W} ${H}`); sc.setAttribute('width',W); sc.setAttribute('height',H); sc.innerHTML=svg;
+  $('#ov').innerHTML=viewChrome()+O.h+flyoutHtml();
+  renderCube();
+  positionFlyout();
+}
+
+/* ======================= drawing helpers, bed, models ======================= */
+const cursorAt=P=>`<path class="cursor" transform="translate(${r1(P[0])},${r1(P[1])})" d="M0 0 L0 17 L4.5 13 L7.6 19.6 L10.2 18.4 L7.2 11.9 L13 11.9 Z"/>`;
+const hdl=(P,cls='',sz=10)=>`<rect class="hdl ${cls}" x="${r1(P[0]-sz/2)}" y="${r1(P[1]-sz/2)}" width="${sz}" height="${sz}" rx="2" data-act="mock" data-msg="${T('Maß-Griff: ziehen ändert das Maß','Size handle: drag to change the measure')}"/>`;
+function line(A,B,cls){return `<line x1="${r1(A[0])}" y1="${r1(A[1])}" x2="${r1(B[0])}" y2="${r1(B[1])}" class="${cls}"/>`;}
+function arrow(A,B,cls='accl'){const a=Math.atan2(B[1]-A[1],B[0]-A[0]),l=9;
+  return line(A,B,cls)+`<path class="${cls}" d="M${r1(B[0]-l*Math.cos(a-0.45))} ${r1(B[1]-l*Math.sin(a-0.45))} L${r1(B[0])} ${r1(B[1])} L${r1(B[0]-l*Math.cos(a+0.45))} ${r1(B[1]-l*Math.sin(a+0.45))}"/>`;}
+function dimLine(C,p1,p2,ext1,ext2){ // 3D points; ext = 3D origin of extension line
+  const A=C.p(...p1),B=C.p(...p2); let s='';
+  if(ext1) s+=line(C.p(...ext1),A,'dim-ext'); if(ext2) s+=line(C.p(...ext2),B,'dim-ext');
+  const a=Math.atan2(B[1]-A[1],B[0]-A[0]), n=[-Math.sin(a)*5,Math.cos(a)*5];
+  return s+line(A,B,'dim')+line([A[0]-n[0],A[1]-n[1]],[A[0]+n[0],A[1]+n[1]],'dim')+line([B[0]-n[0],B[1]-n[1]],[B[0]+n[0],B[1]+n[1]],'dim');
+}
+function drawBed(C,m){
+  const bedRGB=getComputedStyle(document.documentElement).getPropertyValue('--bed-rgb').split(',').map(Number);
+  const out=rrect(256,256,6), sides=prismFaces(out,-5,0).filter(f=>!f.top);
+  const id=uid('bed'), top=ptsAttr(C,out.map(p=>[p[0],p[1],0]));
+  let s=drawPoly(C,sides,bedRGB.map(c=>c*0.8))+`<clipPath id="${id}"><polygon points="${top}"/></clipPath><polygon points="${top}" class="bed-top"/>`;
+  const g=C.s>5?5:10, maj=g===5?10:50;
+  s+=`<g clip-path="url(#${id})">`;
+  for(let v=-125;v<=125;v+=g){ if(v===0) continue; const c=Math.abs(v)%maj===0?'grid major':'grid';
+    s+=line(C.p(v,-128,0),C.p(v,128,0),c)+line(C.p(-128,v,0),C.p(128,v,0),c); }
+  s+=line(C.p(-128,0,0),C.p(128,0,0),'ax-x')+line(C.p(0,-128,0),C.p(0,128,0),'ax-y')+`</g><polygon points="${top}" class="bed-rim"/>`;
+  const o=C.p(0,0,0); s+=`<circle cx="${r1(o[0])}" cy="${r1(o[1])}" r="3" class="origin"/>`;
+  if(C.s<3.2){ const f=C.p(0,-128,0), rr=C.p(128,0,0), fl=C.p(-128,-128,0);
+    s+=`<text class="bedlabel" x="${r1(f[0])}" y="${r1(f[1]+24)}" text-anchor="middle">256 mm</text><text class="bedlabel" x="${r1(rr[0]+10)}" y="${r1(rr[1]+20)}">256 mm</text>
+      <text class="bedlabel" x="${r1(fl[0]-6)}" y="${r1(fl[1]+22)}" text-anchor="end">${T('Mein Drucker · 256 × 256 mm','My printer · 256 × 256 mm')}</text>`; }
+  return s;
+}
+function drawKeychain(C,m){
+  let s=''; const ox=m.x0||0, out=rrect(m.w,m.d,m.r,ox,0);
+  if(!S.hide.box){
+    s+=shadowOf(C,out,m.h);
+    s+=drawPoly(C,prismFaces(out,0,m.h),COL.white,{edges:m.r===0,pick:'mock'});
+    if(m.hole && !S.hide.hole) s+=drawHole(C,m.holeX,0,m.holeDia/2,m.h,0,COL.white);
+  }
+  if(m.text && !S.hide.text) s+=embossText(C,'LENA',2,0,S.hide.box?0:m.h,1.5,9,COL.red);
+  if(m.ghost && !S.hide.hole) s+=cylGhost(C,m.holeX,0,m.holeDia/2,-0.5,m.h+3);
+  if(m.solid) s+=drawPoly(C,prismFaces(circle(m.holeX,0,m.holeDia/2,40),0,m.h+3),COL.steel);
+  return s;
+}
+function drawCard(C){
+  let s=''; const card=rrect(148,105,6), h=1.6;
+  s+=shadowOf(C,card,h)+drawPoly(C,prismFaces(card,0,h),COL.white);
+  const tree=[[-4,-34],[4,-34],[4,-27],[24,-27],[10,-9],[19,-9],[7,8],[14,8],[0,30],[-14,8],[-7,8],[-19,-9],[-10,-9],[-24,-27],[-4,-27]].map(p=>[p[0]-38,p[1]-2]);
+  s+=drawPoly(C,prismFaces(tree,h,h+1.2),COL.green);
+  [[-44,-18],[-30,-12],[-40,-2],[-34,10],[-46,4]].forEach(([x,y],i)=>{s+=drawPoly(C,prismFaces(circle(x,y,1.8,16),h+1.2,h+2.2),i%2?COL.yellow:COL.red);});
+  s+=drawPoly(C,prismFaces(starPts(-38,30,7,3),h,h+1.8),COL.yellow);
+  [[-64,38],[-14,40],[8,-36],[60,40],[66,-30],[-66,-40],[24,36],[-10,-42],[44,-40]].forEach(([x,y])=>{s+=drawPoly(C,prismFaces(starPts(x,y,3.2,1.2,6),h,h+0.8),[170,205,236]);});
+  s+=`<polygon points="${ptsAttr(C,rrect(140,97,4).map(p=>[p[0],p[1],h+0.01]))}" fill="none" style="stroke:var(--edge)" stroke-width="1"/>`;
+  s+=embossText(C,['Frohe','Weihnachten'],30,2,h,1,12,COL.red,1.2);
+  return s;
+}
+
+/* ======================= view cube & camera ======================= */
+function renderCube(){
+  const C=cam({a:S.cam.a,e:S.cam.e,s:27,cx:56,cy:54,tx:0,ty:0,tz:0});
+  const F=[
+    {k:'top',l:T('OBEN','TOP'),pts:[[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]],c:[0,0,1],u:[1,0,0],v:[0,-1,0]},
+    {k:'front',l:T('VORNE','FRONT'),pts:[[-1,-1,-1],[1,-1,-1],[1,-1,1],[-1,-1,1]],c:[0,-1,0],u:[1,0,0],v:[0,0,-1]},
+    {k:'right',l:T('RECHTS','RIGHT'),pts:[[1,-1,-1],[1,1,-1],[1,1,1],[1,-1,1]],c:[1,0,0],u:[0,1,0],v:[0,0,-1]},
+    {k:'back',l:T('HINTEN','BACK'),pts:[[1,1,-1],[-1,1,-1],[-1,1,1],[1,1,1]],c:[0,1,0],u:[-1,0,0],v:[0,0,-1]},
+    {k:'left',l:T('LINKS','LEFT'),pts:[[-1,1,-1],[-1,-1,-1],[-1,-1,1],[-1,1,1]],c:[-1,0,0],u:[0,-1,0],v:[0,0,-1]}];
+  let s='';
+  F.filter(f=>dot(newell(f.pts),C.toCam)>0.02).sort((a,b)=>C.depth(...a.c)-C.depth(...b.c)).forEach(f=>{
+    const o=C.p(...f.c), pu=C.p(f.c[0]+f.u[0],f.c[1]+f.u[1],f.c[2]+f.u[2]), pv=C.p(f.c[0]+f.v[0],f.c[1]+f.v[1],f.c[2]+f.v[2]);
+    const M=[pu[0]-o[0],pu[1]-o[1],pv[0]-o[0],pv[1]-o[1],o[0],o[1]].map(x=>Math.round(x*1000)/1000).join(' ');
+    s+=`<polygon class="vc-face" points="${ptsAttr(C,f.pts)}" data-act="view" data-arg="${f.k}"><title>${f.l}</title></polygon><text class="vc-t" transform="matrix(${M})" font-size="${f.l.length>5?0.36:0.44}" text-anchor="middle" dominant-baseline="central">${f.l}</text>`;});
+  const A=cam({a:S.cam.a,e:S.cam.e,s:13,cx:16,cy:116,tx:0,ty:0,tz:0}), o=A.p(0,0,0);
+  [['x',[1,0,0],'var(--ax-x)'],['y',[0,1,0],'var(--ax-y)'],['z',[0,0,1],'var(--ax-z)']].forEach(([n,d,col])=>{const e=A.p(...d);
+    s+=`<line x1="${r1(o[0])}" y1="${r1(o[1])}" x2="${r1(e[0])}" y2="${r1(e[1])}" style="stroke:${col}" stroke-width="2" stroke-linecap="round"/><text x="${r1(e[0]+(e[0]-o[0])*0.35)}" y="${r1(e[1]+(e[1]-o[1])*0.35)}" font-size="12" font-weight="700" style="fill:${col}" text-anchor="middle" dominant-baseline="central">${n.toUpperCase()}</text>`;});
+  $('#cube').innerHTML=`<svg width="112" height="134" viewBox="0 0 112 134" role="group" aria-label="${T('Ansichtswürfel','View cube')}">${s}</svg>
+    <div class="cube-btns"><button class="iconbtn" data-act="view" data-arg="home" aria-label="${T('Startansicht (Pos1)','Home view (Home)')}" title="${T('Startansicht (Pos1)','Home view (Home)')}">${icon('home')}</button><button class="iconbtn" data-act="focus" aria-pressed="${S.focus}" aria-label="${T('Fokus: Seitenleisten ausblenden (⇧F)','Focus: hide side panels (⇧F)')}" title="${T('Fokus: Seitenleisten ausblenden (⇧F)','Focus: hide side panels (⇧F)')}">${icon('max')}</button></div>`;
+}
+let camAnim=0;
+function animateCam(to){
+  cancelAnimationFrame(camAnim);
+  if(RM()){ S.cam={...to}; renderView(); return; }
+  const from={...S.cam}; let da=to.a-from.a; while(da>180) da-=360; while(da<-180) da+=360;
+  const t0=performance.now(), dur=230;
+  const step=t=>{ const k=Math.min(1,(t-t0)/dur), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    S.cam={a:from.a+da*e,e:from.e+(to.e-from.e)*e}; renderView(); if(k<1) camAnim=requestAnimationFrame(step); };
+  camAnim=requestAnimationFrame(step);
+}
+
+/* ======================= accent colour (user setting) ======================= */
+// Derives all accent tokens from one chosen colour and keeps every text/background pair at WCAG AA (4.5:1).
+const hex2rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const rgb2hex=c=>'#'+c.map(v=>Math.round(clamp(v,0,255)).toString(16).padStart(2,'0')).join('').toUpperCase();
+function rgb2hsl([r,g,b]){ r/=255; g/=255; b/=255; const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2; let h=0,s=0;
+  if(mx!==mn){ const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4; h*=60; } return [h,s,l]; }
+function hsl2rgb([h,s,l]){ const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)); return [f(0)*255,f(8)*255,f(4)*255]; }
+const lum=c=>{const v=c.map(x=>{x/=255; return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4);}); return .2126*v[0]+.7152*v[1]+.0722*v[2];};
+const contrast=(a,b)=>{const x=lum(a),y=lum(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
+const mix=(a,b,t)=>a.map((v,i)=>v*(1-t)+b[i]*t);
+function shiftUntil(hsl,bg,dir,min=4.6){ let [h,s,l]=hsl; for(let i=0;i<100 && contrast(hsl2rgb([h,s,l]),bg)<min;i++) l=clamp(l+dir*0.01,0,1); return hsl2rgb([h,s,l]); }
+function accentTokens(hex,dark){
+  const base=rgb2hsl(hex2rgb(hex)), cs=getComputedStyle(document.documentElement);
+  const tok=n=>hex2rgb(cs.getPropertyValue(n).trim()||'#808080');
+  const panel=tok('--panel'), white=[255,255,255];
+  const soft=mix(panel,hex2rgb(hex),dark?.22:.14);
+  // accent text must stay readable on every surface it appears on: check against the worst one
+  const bgs=[panel,tok('--field'),tok('--chrome'),tok('--view'),soft].sort((x,y)=>lum(x)-lum(y)), worst=dark?bgs[bgs.length-1]:bgs[0];
+  const btn=shiftUntil(base,white,-1);                      // button fill, white label on top
+  const text=dark?shiftUntil([base[0],Math.min(base[1],.9),Math.max(base[2],.6)],worst,+1):shiftUntil(base,worst,-1);
+  const line=dark?hsl2rgb([base[0],Math.min(base[1],.95),clamp(Math.max(base[2],.62),0,.72)]):btn;
+  return {'--accent':rgb2hex(btn),'--accent-hover':rgb2hex(hsl2rgb([base[0],base[1],clamp(rgb2hsl(btn)[2]+(dark?.05:-.05),0,1)])),
+    '--accent-fg':'#FFFFFF','--accent-text':rgb2hex(text),'--accent-line':rgb2hex(line),'--accent-soft':rgb2hex(soft)};
+}
+const ACCENTS=[['#2563D9','Blau','Blue'],['#7C4DDB','Violett','Violet'],['#0E9AA7','Türkis','Teal'],['#D6336C','Pink','Pink'],['#5A6B85','Schiefer','Slate']];
+function accentClash(hex){ // hues that already carry a meaning: red = fails, yellow = needs help, green = fits
+  const [h,s]=rgb2hsl(hex2rgb(hex)); if(s<.25) return null;
+  if(h<15||h>=345) return T('Rot bedeutet „geht nicht“','red means “does not work”');
+  if(h>=25&&h<65) return T('Gelb bedeutet „braucht Hilfe“','yellow means “needs help”');
+  if(h>=90&&h<155) return T('Grün bedeutet „passt“','green means “fits”');
+  return null;
+}
+function applyAccent(){
+  const R=document.documentElement;
+  ['--accent','--accent-hover','--accent-fg','--accent-text','--accent-line','--accent-soft'].forEach(k=>R.style.removeProperty(k));
+  if(S.accent.toUpperCase()==='#2563D9') return; // default palette is hand-tuned in the stylesheet
+  const t=accentTokens(S.accent,effTheme()==='dark'); for(const k in t) R.style.setProperty(k,t[k]);
+}
+const effTheme=()=>S.theme==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):S.theme;
+
+/* ======================= settings page ======================= */
+function handlePreview(style){
+  const C=cam({a:-30,e:30,s:2.8,cx:118,cy:104,tx:0,ty:0,tz:4}), out=rrect(34,20,0), m={w:34,d:20,h:12};
+  let s=drawPoly(C,prismFaces(out,0,m.h),COL.white,{edges:true,icon:true});
+  if(style==='achsen') s+=selOutline(C,out,0,m.h)+moveGizmo(C,[0,0,m.h],46);
+  else s+=classicHandles(C,m);
+  return `<svg viewBox="0 0 236 150" aria-hidden="true">${s}</svg>`;
+}
+function settingsHtml(){
+  const own=!ACCENTS.some(a=>a[0].toUpperCase()===S.accent.toUpperCase()), clash=accentClash(S.accent);
+  const sw=(hex,l,on,extra='')=>`<button class="acsw ${extra}" data-act="accent" data-arg="${hex}" aria-pressed="${on}"><i style="background:${hex}"></i>${l}</button>`;
+  return `<div class="shead"><div><small>${T('Einstellungen','Settings')}</small><h1>${T('Aussehen und Bedienung','Look and handling')}</h1></div>
+      <div class="sb">${S.back?`<button class="btn primary" data-act="scene" data-arg="${S.back}">${icon('left')} ${T('Zurück zum Modell','Back to the model')}</button>`:''}</div></div>
+    <div class="sset">
+      <section class="card"><h2>${T('Aussehen','Appearance')}</h2><p class="sd">${T('Änderungen wirken sofort und gelten für alle Projekte.','Changes apply right away and to all projects.')}</p>
+        <div class="srow"><span class="l">${T('Design','Theme')}</span><div class="segc" role="group" aria-label="${T('Design','Theme')}">
+          ${[['system',T('Wie das System','Like the system')],['light',T('Hell','Light')],['dark',T('Dunkel','Dark')]].map(([k,l])=>`<button data-act="theme" data-arg="${k}" aria-pressed="${S.theme===k}">${l}</button>`).join('')}</div></div>
+        <div class="srow" style="align-items:start"><span class="l">${T('Akzentfarbe','Accent colour')}</span><div>
+          <div class="acrow" role="group" aria-label="${T('Akzentfarbe','Accent colour')}">${ACCENTS.map(([h,de,en])=>sw(h,T(de,en)+(h==='#2563D9'?' · '+T('Standard','default'):''),S.accent.toUpperCase()===h)).join('')}
+            <label class="acsw own" aria-pressed="${own}"><i ${own?`style="background:${S.accent};box-shadow:inset 0 0 0 2px var(--panel)"`:''}></i>${T('Eigene …','Custom …')}<input type="color" id="accpick" value="${S.accent}" aria-label="${T('Eigene Akzentfarbe wählen','Pick a custom accent colour')}"></label></div>
+          <div class="aprev" aria-label="${T('Vorschau','Preview')}"><button class="btn primary" data-act="none">${icon('upload')} ${T('Exportieren','Export')}</button>
+            <span class="chip acc">${icon('scissors')} ${T('schneidet aus:','subtracts from:')} <b>${T('Quader','Box')}</b></span>
+            <button class="switch" role="switch" aria-checked="true" data-act="none"><span class="tr"></span>${T('Als Loch','As Hole')}</button>
+            <button class="linkbtn" data-act="none">${T('Zeig mir wie','Show me how')}</button></div>
+          ${clash?`<div class="ahint">${icon('warn')}<span>${T('Diese Farbe ähnelt einer Hinweisfarbe:','This colour resembles a hint colour:')} ${clash}. ${T('Hinweise am Modell fallen dann weniger auf. Du kannst sie trotzdem nehmen.','Hints on the model will stand out less. You can still use it.')}</span></div>`:''}
+          <p class="sd" style="margin:10px 0 0">${T('Schrift auf Knöpfen und Markierungen passt Fission3D automatisch an, damit alles gut lesbar bleibt.','Fission3D adjusts text on buttons and highlights automatically so everything stays readable.')}</p></div></div>
+        <div class="srow"><span class="l">${T('Sprache','Language')}</span><div class="segc" role="group">${[['de','Deutsch'],['en','English']].map(([k,l])=>`<button data-act="lang" data-arg="${k}" aria-pressed="${S.lang===k}">${l}</button>`).join('')}</div></div>
+      </section>
+      <section class="card"><h2>${T('Griffe','Handles')}</h2><p class="sd">${T('So sehen die Griffe an einem ausgewählten Körper aus. Beide ändern Maße gleich: Rundungen und Löcher bleiben rund, jede Zahl ist eintippbar.','How handles look on a selected body. Both change sizes the same way: roundings and holes stay round, every number can be typed.')}</p>
+        <div class="hstyles" role="radiogroup" aria-label="${T('Griffe','Handles')}">
+          <button class="hcard" role="radio" aria-checked="${S.handles==='achsen'}" data-act="handles" data-arg="achsen">${handlePreview('achsen')}<b>${T('Achsen','Axes')}</b><span>${T('Farbige Pfeile X, Y, Z zum Verschieben, Maßbänder an den Kanten, Punkte zum Strecken. Wie in CAD-Programmen.','Coloured X, Y, Z arrows to move, measure bands along the edges, dots to stretch. Like CAD programs.')}</span></button>
+          <button class="hcard" role="radio" aria-checked="${S.handles==='klassisch'}" data-act="handles" data-arg="klassisch">${handlePreview('klassisch')}<b>${T('Klassisch','Classic')}</b><span>${T('Weiße Eck-Quadrate, Hebe-Pfeil und Maßkästchen. Vertraut für Tinkercad-Umsteiger.','White corner squares, lift arrow and measure boxes. Familiar to Tinkercad switchers.')}</span></button></div>
+      </section>
+      <section class="card"><h2>${T('Bedienung','Controls')}</h2>
+        <div class="srow"><label for="mstyle">${T('Maus-Stil','Mouse style')}</label><select id="mstyle" class="sel" style="max-width:260px">${[T('Fission3D (Standard)','Fission3D (default)'),T('wie Fusion','like Fusion'),T('wie Tinkercad','like Tinkercad'),T('wie Blender','like Blender'),T('wie SketchUp','like SketchUp')].map(o=>`<option>${o}</option>`).join('')}</select></div>
+        <div class="srow"><span class="l">${T('Lotse','Guide')}</span><button class="switch" role="switch" aria-checked="${S.mode==='gefuehrt'}" data-act="mode" data-arg="${S.mode==='gefuehrt'?'experte':'gefuehrt'}"><span class="tr"></span>${T('Missionen und Hinweise zeigen','Show missions and tips')}</button></div>
+      </section>
+    </div>`;
+}
+
+/* ======================= flyout & command search ======================= */
+function flyoutHtml(){
+  const g=GROUPS.find(x=>x.k===S.flyout); if(!g || !WORK(S.scene)) return '';
+  let body;
+  if(g.k==='formen'){
+    body=`<div class="fly-grid">${SHAPES.map(([k,de,en])=>`<button class="tile ${S.scene==='quader'&&k==='quader'?'on':''}" data-act="shape" data-arg="${k}" data-tip-t="${T(de,en)}" data-tip="${T('Aufs Druckbett ziehen. Landet auf der Fläche unter dem Zeiger.','Drag onto the bed. Lands on the face under the pointer.')}">${shapeSvg(k)}<span>${T(de,en)}</span></button>`).join('')}</div>
+      <div class="fly-kits">${icon('kit')} ${T('Baukästen:','Kits:')} <button class="kopt" data-act="kit" data-arg="karte">${T('Karte','Card')}</button><button class="kopt" data-act="kit" data-arg="vase">${T('Vase','Vase')}</button><button class="kopt" data-act="kit" data-arg="figur">${T('Figur','Figure')}</button>
+      <span class="spacer"></span><button class="kopt" data-act="ltab" data-arg="bib">${T('Bausteine','Building blocks')} ▸</button></div>`;
+  } else {
+    body=`<div class="fly-list">${GTOOLS[g.k].map(([de,en,dd,de2])=>`<button data-act="mock" data-msg="${T(de,en)}: ${T('im Mockup nicht ausgearbeitet','not worked out in this mockup')}" data-tip-t="${T(de,en)}" data-tip="${dd?T(dd,de2):T('Werkzeug aus dem UX-Konzept §3','Tool from UX concept §3')}">${T(de,en)}${dd?`<small>${T(dd,de2)}</small>`:''}</button>`).join('')}</div>`;
+  }
+  return `<div class="fly float" id="fly" role="dialog" aria-label="${T(g.de,g.en)}"><div class="fly-h"><h4>${T(g.de,g.en)}</h4>
+    ${g.k==='formen'?`<button class="switch" role="switch" aria-checked="${!!S.flyHole}" data-act="flyhole"><span class="tr"></span>${T('Als Loch','As Hole')}</button>`:''}
+    <button class="iconbtn" data-act="closefly" aria-label="${T('Schließen','Close')}">${icon('x')}</button></div>${body}</div>`;
+}
+function positionFlyout(){ // align the flyout with its palette button
+  const f=$('#fly'), b=document.querySelector(`.palette [data-arg="${S.flyout}"]`); if(!f||!b) return;
+  const vr=$('#view').getBoundingClientRect(), br=b.getBoundingClientRect();
+  f.style.top=clamp(br.top-vr.top-6,60,Math.max(60,Math.min(vr.height-f.offsetHeight-12,S.scene==='quader'?60:9e9)))+'px';
+}
+const normq=s=>s.toLowerCase().trim();
+function searchTools(q){
+  q=normq(q); const L=S.lang;
+  if(!q) return TOOLS.slice(0,5).map(t=>({t,why:null}));
+  const res=[];
+  for(const t of TOOLS){
+    const name=normq(t[L]); let score=0, why=null;
+    if(name.startsWith(q)) score=3; else if(name.includes(q)) score=2.5;
+    else { for(const s of [...t.syn[L],...t.syn[L==='de'?'en':'de']]){ const words=q.split(/\s+/);
+      if(s.includes(q)||q.includes(s)){ score=2; why=s; break; }
+      if(words.every(w=>s.split(/\s+/).some(x=>x.startsWith(w)))){ score=1.5; why=s; break; } } }
+    if(score) res.push({t,why,score});
+  }
+  return res.sort((a,b)=>b.score-a.score);
+}
+function searchHtml(){
+  if(!S.search || !WORK(S.scene)) return '';
+  const R=searchTools(S.search.q); S.search.n=R.length; const sel=Math.min(S.search.sel,Math.max(0,R.length-1));
+  const hi=(txt,q)=>{const i=normq(txt).indexOf(normq(q)); return q&&i>=0?txt.slice(0,i)+'<mark>'+txt.slice(i,i+q.length)+'</mark>'+txt.slice(i+q.length):txt;};
+  return `<div class="cmd float" role="dialog" aria-label="${T('Befehlssuche','Command search')}">
+    <div class="cmd-in">${icon('search')}<input id="cmdq" value="${S.search.q.replace(/"/g,'&quot;')}" placeholder="${T('Was möchtest du tun? z. B. „runde ecken“','What do you want to do? e.g. “round corners”')}" role="combobox" aria-expanded="true" aria-controls="cmdres" aria-autocomplete="list" autocomplete="off"><kbd>Esc</kbd></div>
+    <ul class="cmd-res" id="cmdres" role="listbox">${R.length?R.map((r,i)=>`<li role="option" aria-selected="${i===sel}" data-act="cmdpick" data-arg="${i}">
+      <span class="ci">${icon(r.t.ic)}</span><span><span class="cn">${hi(r.t[S.lang],S.search.q)}</span> <span class="cg">· ${T(...r.t.g)}</span>
+      <span class="why">${r.why?`${T('gefunden über','found via')} „${hi(r.why,S.search.q)}“ · `:''}${T(...r.t.d)}</span></span>${r.t.k?`<kbd>${r.t.k}</kbd>`:'<span></span>'}</li>`).join('')
+      :`<li aria-disabled="true"><span class="ci">${icon('info')}</span><span>${T('Nichts gefunden. Probier ein anderes Wort, z. B. „rund“ oder „loch“.','Nothing found. Try another word, e.g. “round” or “hole”.')}</span><span></span></li>`}</ul>
+    <div class="cmd-try">${T('Probier:','Try:')} ${(S.lang==='de'?['runde ecken','hohl','schraube','namen','knete']:['round corners','hollow','screw','name','clay']).map(w=>`<button data-act="tryq" data-arg="${w}">${w}</button>`).join('')}</div></div>`;
+}
+function renderSearch(){ $('#cmdl').innerHTML=searchHtml(); }
+function refreshSearch(){
+  const old=$('#cmdres'); if(!old){ renderSearch(); return; }
+  const tmp=document.createElement('div'); tmp.innerHTML=searchHtml(); old.replaceWith(tmp.querySelector('#cmdres'));
+}
+function openSearch(){
+  if(!WORK(S.scene)){ toast(T('Die Befehlssuche gibt es in der Arbeitsansicht.','Command search lives in the work view.')); return; }
+  S.search={q:'',sel:0}; S.flyout=null; renderAll(); setTimeout(()=>$('#cmdq')?.focus(),0);
+}
+
+/* ======================= start screen ======================= */
+function renderStart(){
+  const nav=[['home',T('Start','Home'),'home'],['learn',T('Missionen','Missions'),null,'1/6'],['kit',T('Baukästen','Kits')],['folder',T('Meine Projekte','My projects')],['layers',T('Bausteine','Building blocks')],['printer',T('Drucker','Printers')],['gear',T('Einstellungen','Settings'),'settings']];
+  const kits=[['karte','Karte','Card','Weihnachten, Geburtstag, Namen','Christmas, birthday, names','148 × 105 mm'],['vase','Vase / Gefäß','Vase / Vessel','Profil ziehen, Muster wählen','Drag a profile, pick a pattern','Ø 80 mm'],
+    ['figur','Figur','Figure','Aus Kugeln und Knete','From spheres and clay','60 mm'],['schmuck','Christbaumschmuck','Ornament','Sterne, Kugeln, Anhänger','Stars, baubles, tags','Ø 70 mm'],
+    ['schild','Schild','Sign','Namen, Türen, Beete','Names, doors, garden beds','120 × 40 mm'],['box','Box mit Deckel','Box with lid','Deckel passt beim ersten Druck','Lid fits on the first print','80 × 60 × 40 mm'],
+    ['halterung','Halterung','Bracket','Wand, Regal, Kabel','Wall, shelf, cables','mm'],['leer','Leeres Druckbett','Empty print bed','Alles selbst bauen','Build it all yourself','256 × 256 mm']];
+  const missions=[['ok',T('Dein erster Schlüsselanhänger','Your first key tag'),T('Quader, Maße tippen, abrunden, Text, Loch.','Box, typed sizes, round, text, hole.'),T('Schritt 3 von 8 · ca. 5 Min.','Step 3 of 8 · about 5 min'),true],
+    ['round',T('Box mit passendem Deckel','Box with a lid that fits'),T('Aushöhlen, Wandstärke, Passung für den Deckel.','Hollow, wall thickness, fit for the lid.'),T('ca. 10 Min.','about 10 min')],
+    ['pencil',T('Wandhalterung','Wall bracket'),T('Skizze mit Maßen, Bohrungen für Schrauben.','Sketch with measures, screw holes.'),T('ca. 12 Min.','about 12 min')],
+    ['sparkle',T('Stern für den Baum','Star for the tree'),T('Stern-Form, Öse, Prägung.','Star shape, loop, embossing.'),T('ca. 6 Min.','about 6 min')]];
+  const hour=new Date().getHours(), greet=hour<11?T('Guten Morgen','Good morning'):hour<18?T('Hallo','Hello'):T('Guten Abend','Good evening');
+  $('#start').innerHTML=`<nav class="snav" aria-label="${T('Startseite','Start page')}">${nav.map(([ic,l,pg,c])=>`<button class="${pg===S.startPage?'on':''}" data-act="${pg?'spage':'mock'}" data-arg="${pg||''}" aria-current="${pg===S.startPage?'page':'false'}" data-msg="${l}: ${T('im Mockup nicht ausgearbeitet','not worked out in this mockup')}">${icon(ic)}${l}${c?`<span class="cnt">${c}</span>`:''}</button>`).join('')}
+      <div class="stip"><b>${icon('compass')} ${T('Tipp','Tip')}</b>${T('Jede Zahl ist eintippbar: Während du an einem Griff ziehst, tippst du einfach 50 und Enter.','Every number can be typed: while dragging a handle, just type 50 and Enter.')}</div></nav>
+    <div class="smain">${S.startPage==='settings'?settingsHtml():`
+      <div class="shead"><div><small>${greet} · ${T('Mein Drucker · 256 × 256 mm · Düse 0,4 mm','My printer · 256 × 256 mm · nozzle 0.4 mm')}</small><h1>${T('Was möchtest du heute bauen?','What would you like to make today?')}</h1></div>
+        <div class="sb"><button class="btn" data-act="mock" data-msg="${T('Öffnen: .fission, 3MF, STL, STEP','Open: .fission, 3MF, STL, STEP')}">${icon('folder')} ${T('Öffnen …','Open …')}</button><button class="btn primary" data-act="scene" data-arg="leer">${icon('plus')} ${T('Neues Projekt','New project')}</button></div></div>
+      <div class="srow1">
+        <div class="card cont"><div class="art">${shapeSvg('anhaenger',240,180,1.7)}</div>
+          <div><small>${T('Weitermachen','Continue')}</small><h2>${T('Schlüsselanhänger LENA','Key tag LENA')}</h2><small>${T('Zuletzt bearbeitet vor 2 Tagen · 50 × 20 × 4 mm','Last edited 2 days ago · 50 × 20 × 4 mm')}</small>
+            <div class="prog"><div class="ph"><span>${T('Mission „Dein erster Schlüsselanhänger“','Mission “Your first key tag”')}</span><b>3/8</b></div>
+              <p>${T('Als Nächstes: die Ecken abrunden.','Next: round the corners.')}</p><div class="bar"><i style="width:37.5%"></i></div></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-act="scene" data-arg="abrunden">${icon('play')} ${T('Weitermachen','Continue')}</button><button class="btn" data-act="scene" data-arg="export">${icon('slicer')} ${T('Im Slicer öffnen','Open in Slicer')}</button></div></div></div>
+        <div class="card recent"><div class="rh">${T('Zuletzt geöffnet','Recently opened')}<button class="linkbtn" data-act="mock" data-msg="${T('Alle Projekte','All projects')}">${T('Alle','All')}</button></div>
+          ${[['halterung',T('Wandhalterung Flur','Hallway bracket'),T('vor 1 Woche · 3 Körper','1 week ago · 3 bodies')],['schmuck',T('Stern 2026','Star 2026'),T('12. Dez. · Baukasten','Dec 12 · kit')],['box',T('Box für Akkus','Battery box'),T('Nov. · 2 Körper','Nov · 2 bodies')],['karte',T('Weihnachtskarte','Christmas card'),T('Baukasten Karte','Card kit')]]
+            .map(([k,n,d])=>`<button class="rfile" data-act="tile" data-arg="${k}">${shapeSvg(k,52,40,0.85)}<span><b>${n}</b><small>${d}</small></span></button>`).join('')}</div>
+      </div>
+      <div class="stitle"><h2>${T('Neu beginnen mit einem Baukasten','Start with a kit')}</h2><span>${T('Alles, was entsteht, bleibt ein normales Modell und frei änderbar.','Everything you make stays a normal model you can change freely.')}</span></div>
+      <div class="tiles">${kits.map(([k,de,en,sd,se,u])=>`<button class="btile" data-act="tile" data-arg="${k}"><span class="art">${shapeSvg(k,120,96,k==='leer'?1.5:1.45)}</span><span class="lab"><b>${T(de,en)}</b><span>${T(sd,se)}</span><span class="unitchip">${u}</span></span></button>`).join('')}</div>
+      <div class="stitle"><h2>${T('Missionen','Missions')}</h2><span>${T('Kurze Aufgaben am echten Modell. Der Lotse prüft, ob es geklappt hat.','Short tasks on a real model. The guide checks whether it worked.')}</span></div>
+      <div class="missions">${missions.map(([ic,h,p,sm,cur])=>`<button class="card mcard ${cur?'cur':''}" data-act="${cur?'scene':'mock'}" data-arg="abrunden" data-msg="${h}: ${T('im Mockup nicht ausgearbeitet','not worked out in this mockup')}"><span class="mh"><i>${icon(ic)}</i>${h}</span><p>${p}</p>${cur?`<div class="bar"><i style="width:37.5%"></i></div>`:''}<small>${sm}</small></button>`).join('')}</div>`}
+    </div>`;
+}
+
+/* ======================= export assistant (print check + export) ======================= */
+function previewSvg(w,h){
+  const keep=S.display; S.display='farbe';
+  try{
+    const C=cam({a:-30,e:38,s:Math.min(w,h)/46,cx:w/2,cy:h*0.58,tx:0,ty:0,tz:2});
+    const m={w:50,d:20,h:4,r:4,text:true,hole:true,holeX:S.exp.fixed?-19.5:-20,holeDia:5};
+    let s=SVGDEFS(3)+drawKeychain(C,m);
+    // amber dashed ring: hole too close to the edge (print check hint)
+    if(!S.exp.fixed && S.exp.purpose==='druck'){ const ring=circle(m.holeX,0,4.6,40).map(p=>[p[0],p[1],m.h]); s+=`<polygon points="${ptsAttr(C,ring)}" fill="none" style="stroke:var(--amber)" stroke-width="2" stroke-dasharray="5 4"/>`; }
+    return `<svg viewBox="0 0 ${w} ${h}" aria-label="${T('Vorschau: Schlüsselanhänger','Preview: key tag')}" role="img">${s}</svg>`;
+  } finally { S.display=keep; }
+}
+function renderExport(){
+  const E=$('#exp'); E.hidden=S.scene!=='export'; if(E.hidden) return;
+  const P=[['druck','printer',T('3D-Druck','3D printing'),T('Eigener Drucker oder Druckdienst','Own printer or print service')],
+    ['spiel','game',T('Spiel-Engine','Game engine'),T('Godot, Unity, Unreal, Roblox …','Godot, Unity, Unreal, Roblox …'),true],
+    ['andere','cad',T('Andere Programme','Other programs'),T('CAD, Weitergabe an andere','CAD, sharing with others')],
+    ['web','globe',T('Web & AR','Web & AR'),T('Auf Webseiten oder am Handy ansehen','View on websites or on a phone'),true],
+    ['bild','image',T('Bild','Picture'),T('PNG zum Zeigen','PNG to show off')]];
+  const F={druck:[['3mf','3MF',T('Farben, Einheiten und Druckbett bleiben erhalten.','Colours, units and print bed are kept.'),true],['stl','STL',T('Der Klassiker: nur die Form, eine Farbe.','The classic: shape only, one colour.')]],
+    spiel:[['glb','glTF / GLB',T('Modern und kompakt, mit Farben als Materialien. Godot und Unity lesen es direkt.','Modern and compact, colours as materials. Godot and Unity read it directly.'),true],['fbx','FBX',T('Für ältere Pipelines, z. B. Unreal.','For older pipelines, e.g. Unreal.')],['obj','OBJ',T('Form und einfache Materialien.','Shape and simple materials.')]],
+    andere:[['step','STEP',T('Exakte runde Flächen, für CAD-Programme wie Fusion.','Exact round faces, for CAD programs like Fusion.'),true],['3mf','3MF',T('Mit Farben, für die meisten 3D-Programme.','With colours, for most 3D programs.')],['stl','STL',T('Geht überall, nur die Form.','Works everywhere, shape only.')],['obj','OBJ',T('Für Grafikprogramme wie Blender.','For graphics programs like Blender.')]],
+    web:[['glb','glTF / GLB',T('Für Webseiten und Android.','For websites and Android.'),true],['usdz','USDZ',T('Für AR auf iPhone und iPad.','For AR on iPhone and iPad.')]],
+    bild:[['png','PNG',T('Bild der aktuellen Ansicht, Hintergrund durchsichtig.','Picture of the current view, transparent background.'),true]]}[S.exp.purpose];
+  const pu=S.exp.purpose, tri=({grob:'1 100',mittel:'3 200',fein:'9 800'})[S.exp.fine||'mittel'];
+  if(!F.some(f=>f[0]===S.exp.fmt)) S.exp.fmt=F[0][0];
+  const fx=S.exp.fixed;
+  E.innerHTML=`<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="exph">
+    <div class="dlg-h"><span class="oi">${icon('upload')}</span><div><b id="exph">${pu==='druck'?T('Druckcheck & Export','Print check & export'):T('Exportieren','Export')}</b><small>${T('Schlüsselanhänger · 1 Körper · 50 × 20 × 5,5 mm','Key tag · 1 body · 50 × 20 × 5.5 mm')}</small></div>
+      <button class="iconbtn" data-act="scene" data-arg="loch" aria-label="${T('Schließen','Close')}">${icon('x')}</button></div>
+    <div class="dlg-b">
+      <div><h3>${T('Wofür ist die Datei?','What is the file for?')}</h3>
+        <div class="purpose" role="group">${P.map(([k,ic,b,sp,vor])=>`<button class="pcard" data-act="purpose" data-arg="${k}" aria-pressed="${S.exp.purpose===k}" ${vor?`title="${T('Vorschlag aus der Vorlage, noch nicht in Architektur und Roadmap','Proposal from the reference, not yet in architecture and roadmap')}"`:''}>${icon(ic)}<b>${b}${vor?' <span class="vtag">'+T('Vorschlag','Proposal')+'</span>':''}</b><span>${sp}</span></button>`).join('')}</div>
+        <h3>${T('Format','Format')}</h3>
+        <div role="radiogroup" aria-label="${T('Format','Format')}">${F.map(([k,n,d,rec])=>`<button class="fmt" role="radio" aria-checked="${S.exp.fmt===k}" data-act="fmt" data-arg="${k}"><span class="rd"></span><span><b>${n}</b>${rec?`<span class="recm">${T('Empfohlen','Recommended')}</span>`:''}<span>${d}</span></span></button>`).join('')}</div>
+      </div>
+      <div>${checksHtml(fx)}</div>
+      <div><h3>${T('Vorschau','Preview')}</h3>
+        <div class="prev">${previewSvg(320,230)}</div>
+        ${fx||pu!=='druck'?'':`<div class="legend"><i></i>${T('gelb gestrichelt: dünne Stelle','yellow dashed: thin spot')}</div>`}
+        ${pu==='druck'?`<div class="pinfo"><div>${T('Größe','Size')}<b>50 × 20 × 5,5 mm</b></div><div>${T('Volumen','Volume')}<b>3,9 cm³</b></div><div>${T('Gewicht (PLA)','Weight (PLA)')}<b>≈ 4,8 g</b></div><div>${T('Druckzeit','Print time')}<b>≈ 22 min</b></div></div>`
+          :pu==='spiel'||pu==='web'?`<div class="pinfo"><div>${T('Größe','Size')}<b>0,05 × 0,02 m</b></div><div>${T('Dreiecke','Triangles')}<b>≈ ${tri}</b></div><div>${T('Materialien','Materials')}<b>2</b></div><div>${T('Dateigröße','File size')}<b>≈ ${({grob:'60',mittel:'170',fein:'480'})[S.exp.fine||'mittel']} KB</b></div></div>`
+          :pu==='bild'?`<div class="pinfo"><div>${T('Bildgröße','Image size')}<b>1920 × 1080</b></div><div>${T('Hintergrund','Background')}<b>${T('durchsichtig','transparent')}</b></div></div>`
+          :`<div class="pinfo"><div>${T('Größe','Size')}<b>50 × 20 × 5,5 mm</b></div><div>${T('Körper','Bodies')}<b>3</b></div></div>`}
+        <details class="adv" style="margin-top:10px"><summary>${T('Genauigkeit','Accuracy')}</summary><p style="font-size:12.5px;color:var(--fg-3);margin:0 0 10px">${T('Abweichung höchstens 0,01 mm, Winkel 5°. Runde Flächen bleiben rund, auch beim Loch.','Deviation at most 0.01 mm, angle 5°. Round faces stay round, including the hole.')}</p></details>
+      </div>
+    </div>
+    <div class="dlg-f"><span class="path">${icon('folder')} ~/${T('Dokumente','Documents')}/${T('Schluesselanhaenger','Key-tag')}.${S.exp.fmt}</span><span class="note">${T('Gewicht und Druckzeit sind Schätzungen.','Weight and print time are estimates.')}</span><span class="spacer"></span>
+      <button class="btn" data-act="scene" data-arg="loch">${T('Abbrechen','Cancel')}</button>
+      <button class="btn ${pu==='druck'?'':'primary'}" data-act="mock" data-msg="${T('Gespeichert (Attrappe).','Saved (dummy).')}">${icon('download')} ${T('Speichern','Save')}</button>
+      ${pu==='druck'?`<button class="btn primary" data-act="mock" data-msg="${T('Öffnet den Slicer mit allen Farben (Attrappe).','Opens the slicer with all colours (dummy).')}">${icon('slicer')} ${T('Im Slicer öffnen','Open in Slicer')}</button>`:''}</div>
+  </div>`;
+}
+
+function checksHtml(fx){
+  const pu=S.exp.purpose, ok=(b,p)=>`<div class="pchk"><span>${icon('ok')}</span><div><b>${b}</b><p>${p}</p></div></div>`;
+  if(pu==='druck') return `<h3>${T('Druckcheck','Print check')}${fx?'':`<span class="hint">${T('1 Hinweis','1 hint')}</span>`}</h3>
+        ${ok(T('Passt aufs Druckbett','Fits the print bed'),T('50 × 20 mm von 256 × 256 mm. Liegt flach auf.','50 × 20 mm of 256 × 256 mm. Lies flat.'))}
+        ${ok(T('Geschlossen und gültig','Closed and valid'),T('Keine Lücken, keine überlappenden Teile.','No gaps, no overlapping parts.'))}
+        ${ok(T('Keine Überhänge','No overhangs'),T('Druckt ohne Stützen.','Prints without supports.'))}
+        <div class="pchk ${fx?'done':'warn'}"><span>${icon(fx?'ok':'warn')}</span><div><b>${fx?T('Loch sitzt jetzt 5,5 mm vom Rand','Hole is now 5.5 mm from the edge'):T('Wand am Loch ist dünn','Wall at the hole is thin')}</b>
+          <p>${fx?T('Rückgängig mit ⌘Z.','Undo with ⌘Z.'):T('Zwischen Loch und Rand bleiben 0,8 mm. Mit Düse 0,4 mm sind das nur zwei Linien, der Ring kann abbrechen.','Only 0.8 mm remain between hole and edge. With a 0.4 mm nozzle that is just two lines, the ring may break.')}</p>
+          ${fx?'':`<div class="pa"><button class="btn sm amber" data-act="expfix">${T('Loch 0,5 mm nach innen','Move hole 0.5 mm inwards')}</button><button class="btn sm" data-act="scene" data-arg="loch">${T('Im Modell zeigen','Show in model')}</button><button class="btn sm" data-act="mock" data-msg="${T('Hinweis ausgeblendet. Er erscheint im Druckcheck weiter grau.','Hint hidden. It stays grey in the print check.')}">${T('So lassen','Leave it')}</button></div>`}</div></div>
+        <p style="font-size:12px;color:var(--fg-4);margin:8px 0 0"><span class="vtag">${T('Vorschlag','Proposal')}</span> ${T('Beispieltext für einen Druckcheck-Hinweis.','Sample text for a print check hint.')}</p>`;
+  const fine=S.exp.fine||'mittel';
+  const fineRow=`<div class="pchk"><span>${icon('sliders')}</span><div><b>${T('Feinheit','Fineness')}</b><p>${T('Weniger Dreiecke laden schneller, mehr sehen runder aus. Rundungen bleiben rund, nur feiner oder gröber unterteilt.','Fewer triangles load faster, more look rounder. Roundings stay round, just divided more finely or coarsely.')}</p>
+          <div class="pa"><div class="segc" role="group" aria-label="${T('Feinheit','Fineness')}">${[['grob',T('Grob','Coarse')],['mittel',T('Mittel','Medium')],['fein',T('Fein','Fine')]].map(([k,l])=>`<button data-act="fine" data-arg="${k}" aria-pressed="${fine===k}">${l}</button>`).join('')}</div></div></div></div>`;
+  if(pu==='spiel') return `<h3>${T('Prüfung','Check')}</h3>
+        ${ok(T('Maßstab in Metern','Scale in metres'),T('Spiele rechnen in Metern. Fission3D rechnet um: 50 mm werden 0,05 m.','Games use metres. Fission3D converts: 50 mm become 0.05 m.'))}
+        ${ok(T('Farben werden Materialien','Colours become materials'),T('Weiß und Rot kommen als zwei Materialien an.','White and red arrive as two materials.'))}
+        ${ok(T('Steht auf dem Boden','Stands on the ground'),T('Der Nullpunkt liegt unten in der Mitte, wie Spiele es erwarten.','The origin sits at the bottom centre, as games expect.'))}${fineRow}`;
+  if(pu==='web') return `<h3>${T('Prüfung','Check')}</h3>
+        ${ok(T('Klein genug fürs Web','Small enough for the web'),T('Lädt auch über das Handynetz schnell.','Loads quickly even on mobile data.'))}
+        ${ok(T('Echte Größe in AR','True size in AR'),T('Am Handy erscheint der Anhänger 5 cm groß auf dem Tisch.','On the phone the tag appears 5 cm wide on the table.'))}${fineRow}`;
+  if(pu==='andere') return `<h3>${T('Prüfung','Check')}</h3>
+        ${ok(T('Einheit: Millimeter','Unit: millimetres'),T('Wird in der Datei mitgespeichert (außer bei STL).','Stored in the file (except STL).'))}
+        ${ok(T('Exakte Flächen','Exact faces'),T('Bei STEP bleiben Rundungen und Löcher exakte Kreise.','With STEP, roundings and holes stay exact circles.'))}
+        ${ok(T('Rezept bleibt hier','Recipe stays here'),T('Andere Programme bekommen nur das Ergebnis. Zum Weiterarbeiten die .fission-Datei behalten.','Other programs only get the result. Keep the .fission file to continue working.'))}`;
+  return `<h3>${T('Prüfung','Check')}</h3>${ok(T('Aktuelle Ansicht','Current view'),T('So wie du das Modell gerade siehst, ohne Griffe und Raster.','Exactly as you see the model now, without handles and grid.'))}`;
+}
+
+/* ======================= info drawer ======================= */
+function renderInfo(){
+  const I=$('#info'); I.hidden=!S.info; if(!S.info) return;
+  const v=$('#view').getBoundingClientRect(), a=$('#app').getBoundingClientRect();
+  const pct=WORK(S.scene)?Math.round(v.width*v.height/(a.width*a.height)*100):null;
+  I.innerHTML=`<div class="ih"><h2>${T('Über dieses Mockup','About this mockup')}</h2><button class="iconbtn" data-act="info" aria-label="${T('Schließen','Close')}">${icon('x')}</button></div>
+  <p>${T('Eine Attrappe zum Anschauen und Durchklicken: keine echte Geometrie, kein Speichern. Die gestrichelte Leiste oben gehört nicht zum Programm. Schilder „Vorschlag“ markieren Ideen, die nicht in den Projektdokumenten stehen.','A clickable dummy: no real geometry, no saving. The dashed strip at the top is not part of the app. “Proposal” tags mark ideas that are not in the project documents.')}</p>
+  <h3>${T('Szenen','Scenes')}</h3><div class="slist">${SCENES.map((s,i)=>`<button data-act="scene" data-arg="${s.id}" aria-current="${s.id===S.scene}">${i+1}. ${s.t()}</button>`).join('')}</div>
+  <h3>${T('Zwei Griff-Arten','Two handle styles')}</h3>
+  <p>${T('Entschieden: Beide bleiben. Jede:r stellt sie unter Einstellungen ▸ Griffe ein (Zahnrad oben rechts, ⌘,). Die Mockup-Leiste schaltet zum Vergleichen schnell um.','Decided: both stay. Everyone picks one under Settings ▸ Handles (gear top right, ⌘,). The mockup strip switches quickly for comparison.')}</p>
+  <h3>${T('Akzentfarbe','Accent colour')}</h3><p>${T('Entschieden: frei wählbar unter Einstellungen ▸ Aussehen, mit Vorschlägen und eigener Farbe. Fission3D leitet daraus alle Akzenttöne ab und hält dabei den Kontrast (WCAG AA). Ähnelt die Farbe Rot, Gelb oder Grün, erscheint ein Hinweis, weil diese Farben schon Bedeutungen haben.','Decided: free choice under Settings ▸ Appearance, with suggestions and a custom colour. Fission3D derives all accent shades and keeps contrast (WCAG AA). If the colour resembles red, yellow or green, a hint appears because those colours already carry meaning.')}</p>
+  <ul><li><b>${T('Achsen','Axes')}</b> ${T('(Standard): farbige Pfeile X/Y/Z zum Verschieben, Maßbänder an den Kanten zum Tippen, blaue Punkte zum Ziehen von Flächen (Werkzeug „Größe“). Wirkt wie ein CAD-Programm.','(default): coloured X/Y/Z arrows to move, measure bands along the edges for typing, blue dots to pull faces (tool “Size”). Feels like a CAD program.')}</li>
+   <li><b>${T('Klassisch','Classic')}</b>: ${T('weiße Eck-Quadrate, Hebe-Pfeil, Maßkästchen. Vertraut für Tinkercad-Umsteiger.','white corner squares, lift arrow, measure boxes. Familiar to Tinkercad switchers.')}</li></ul>
+  <p>${T('Beide Arten ändern Maße gleich: Löcher und Rundungen bleiben rund, jede Zahl ist eintippbar.','Both styles change sizes the same way: holes and roundings stay round, every number can be typed.')}</p>
+  <h3>${T('Aus der Vorlage „Formwerk“ übernommen','Taken from the “Formwerk” reference')}</h3>
+  <ul><li>${T('Dunkles, ruhiges Farbschema mit Blau als Akzent, IBM Plex als Schrift.','Dark, calm colour scheme with blue accent, IBM Plex type.')}</li>
+   <li>${T('Werkzeugpalette links in der 3D-Ansicht, Darstellung oben, Ansichtswürfel oben rechts.','Tool palette on the left of the 3D view, display modes on top, view cube top right.')}</li>
+   <li>${T('Lernkarte unten in der Mitte → bei uns der „Lotse“ der Missionen.','Learning card at the bottom → our missions “guide”.')}</li>
+   <li>${T('Startseite mit Weitermachen, Zuletzt, Vorlagen → bei uns Baukästen und Missionen.','Start page with continue, recent, templates → our kits and missions.')}</li>
+   <li>${T('Export-Assistent mit Zweck, Format, Prüfungen und Vorschau → bei uns Druckcheck & Export.','Export assistant with purpose, format, checks and preview → our print check & export.')}</li></ul>
+  <h3>${T('Bewusst anders als die Vorlage','Deliberately different from the reference')}</h3>
+  <ul><li>${T('„Szene“ heißt „Körper“, „Verlauf“ heißt „Rezept“ (Glossar).','“Scene” is “Bodies”, “History” is “Recipe” (glossary).')}</li>
+   <li>${T('Kein Rendern, keine Spiel-Engine, keine cm-Einheit als Standard: Wir bauen für den 3D-Druck, in mm.','No rendering, no game engine, no cm default: we build for 3D printing, in mm.')}</li>
+   <li>${T('Fehler und Druckcheck-Hinweise erscheinen am Modell, nicht als Fenster. Der Export-Assistent ist ein Fenster, weil Speichern keine Geometrie-Operation ist.','Errors and print check hints appear on the model, not as windows. The export assistant is a window because saving is not a geometry operation.')}</li></ul>
+  <h3>${T('Entschieden am 13.10.2026','Decided on 13 Oct 2026')}</h3>
+  <ul><li>${T('Griffe: Beide Arten bleiben einstellbar, voreingestellt ist „Achsen“.','Handles: both styles stay selectable, “Axes” is the default.')}</li><li>${T('Akzentfarbe: frei wählbar unter Einstellungen.','Accent colour: free choice in Settings.')}</li>
+   <li>${T('Statt „Geführt | Experte“: Den Lotsen kann man jederzeit ein- und ausschalten (Einstellungen oder „Verstanden“ an der Lotsen-Karte). Weitere Felder zeigt „Alle Einstellungen zeigen“, unabhängig davon. So gibt es keinen getrennten Anfänger- und Profimodus (Design-Prinzip 8).','Instead of “Guided | Expert”: the guide can be switched on and off any time (Settings or “Got it” on the guide card). More fields via “Show all settings”, independently. So there is no separate beginner and pro mode (design principle 8).')}</li>
+   <li>${T('3D-Fläche: Im Fokus-Modus (Knopf unter dem Ansichtswürfel, ⇧F) hat die 3D-Ansicht 84 %. Taste F bleibt „alles zeigen“ (UX §10).','3D area: in focus mode (button below the view cube, ⇧F) the 3D view gets 84 %. Key F stays “show all” (UX §10).')}</li></ul>
+  ${pct!==null?`<h3>${T('Fläche der 3D-Ansicht','3D view area')}</h3><p><span class="pct">${pct} %</span> ${T('des Programmfensters in dieser Szene und Fenstergröße. Ziel laut UX-Konzept: mindestens 65 % auf einem 13"-Laptop.','of the app window in this scene and window size. Target in the UX concept: at least 65 % on a 13" laptop.')}</p>`:''}
+  <h3>${T('Was das Mockup nicht zeigt','What this mockup does not show')}</h3>
+  <ul><li>${T('Echte Geometrie: Ansicht drehen nur über den Ansichtswürfel, Maße ändern das Bild nur teilweise.','Real geometry: rotating only via the view cube, measures only partly change the picture.')}</li>
+   <li>${T('Skizzen, Muster, Deko-Werkzeuge (außer Text), Bausteine, Benannte Maße als Tabelle, Baukästen Vase und Figur.','Sketches, repeat, decorate tools (except text), building blocks, named measures table, vase and figure kits.')}</li>
+   <li>${T('Erster Start, Speichern, Rückgängig, Slicer-Übergabe (Knöpfe sind Attrappen).','First start, saving, undo, slicer hand-off (buttons are dummies).')}</li></ul>`;
+}
+
+/* ======================= actions, keyboard, boot ======================= */
+const TYPESEQ=()=>[{l:'5',f:'w',v:'5'},{l:'0',f:'w',v:'50'},{l:'⇥ Tab'},{l:'2',f:'d',v:'2'},{l:'0',f:'d',v:'20'},{l:'⇥ Tab'},{l:'4',f:'h',v:'4'},{l:'⏎ Enter'}];
+function clearTimers(){ S.timers.forEach(clearTimeout); S.timers=[]; }
+function startTyping(){
+  clearTimers(); const seq=TYPESEQ();
+  if(RM()){ S.typed={w:50,d:20,h:4,f:null,txt:{},done:true,ki:seq.length}; renderAll(); return; }
+  S.typed={w:34,d:20,h:20,f:'w',txt:{w:''},done:false,ki:-1}; renderAll();
+  seq.forEach((k,i)=>S.timers.push(setTimeout(()=>{
+    const t=S.typed; t.ki=i;
+    if(k.f){ t.f=k.f; t.txt[k.f]=k.v; t[k.f]=parseFloat(k.v); }
+    else if(k.l.includes('Tab')){ t.f=t.f==='w'?'d':'h'; t.txt[t.f]=''; }
+    else { t.done=true; t.f=null; t.ki=seq.length; }
+    renderAll();
+  },700+i*520)));
+}
+function go(id){
+  if(!SCENES.some(s=>s.id===id)) return;
+  if(id!=='start'){ S.back=null; S.startPage='home'; }
+  clearTimers(); S.scene=id; S.edits={}; S.hide={}; S.typed=null; S.errorFixed=false; S.editDim=false; S.holeOn=true; S.lotse=true;
+  S.exp.fixed=false; S.tool={rund:'groesse',abrunden:'waehlen',fehler:'waehlen'}[id]||'verschieben';
+  S.flyout=id==='quader'||id==='leer'?'formen':null;
+  S.search=id==='suche'?{q:T('runde ecken','round corners'),sel:0}:null;
+  const c=model().cam; S.cam={a:c.a??-30,e:c.e??36};
+  try{ history.replaceState(null,'','#'+id); }catch(e){}
+  renderAll();
+  if(id==='tippen') startTyping();
+}
+const stepScene=d=>{const i=SCENES.findIndex(s=>s.id===S.scene); go(SCENES[clamp(i+d,0,SCENES.length-1)].id);};
+const ACT={
+  none:()=>{},
+  scene:v=>go(v), next:()=>stepScene(1), prev:()=>stepScene(-1),
+  handles:v=>{S.handles=v; renderAll(); toast(v==='achsen'?T('Griffe: Achsen – Pfeile X/Y/Z und Maßbänder.','Handles: Axes – X/Y/Z arrows and measure bands.'):T('Griffe: Klassisch – Eck-Quadrate wie in Tinkercad.','Handles: Classic – corner squares like Tinkercad.'));},
+  theme:v=>{S.theme=v; renderAll();}, accent:v=>{S.accent=v; renderAll();},
+  spage:v=>{S.startPage=v; if(v==='home') S.back=null; renderAll();},
+  settings:()=>{ if(S.scene!=='start') S.back=S.scene; S.startPage='settings'; go('start'); }, lang:v=>{S.lang=v; if(S.search&&S.scene==='suche') S.search.q=T('runde ecken','round corners'); renderAll();},
+  info:()=>{S.info=!S.info; renderAll();},
+  mode:v=>{S.mode=v; S.lotse=true; renderAll(); toast(v==='experte'?T('Lotse aus. Alle Werkzeuge bleiben gleich, du kannst ihn jederzeit wieder einschalten.','Guide off. All tools stay the same, you can switch it back on any time.'):T('Lotse an: Er zeigt den nächsten Schritt.','Guide on: it shows the next step.'));},
+  allprops:()=>{S.allProps=!S.allProps; renderAll();},
+  disp:v=>{S.display=v; renderAll();},
+  tool:v=>{S.tool=v; renderAll(); if(v!=='verschieben'&&v!=='groesse') toast(`${T(...TOOLNAMES[v])}: ${T('im Mockup nur angedeutet','only hinted at in this mockup')}`);},
+  ltab:v=>{S.leftTab=v; S.flyout=null; renderAll();}, rtab:v=>{S.rightTab=v; renderAll();},
+  lotse:()=>{S.lotse=!S.lotse; renderView();},
+  focus:()=>{S.focus=!S.focus; renderAll();},
+  group:v=>{S.flyout=S.flyout===v?null:v; S.search=null; renderAll();}, closefly:()=>{S.flyout=null; renderAll();},
+  flyhole:()=>{S.flyHole=!S.flyHole; renderAll();},
+  shape:v=>{ if(v==='quader'){ if(S.scene!=='quader') go('quader'); } else toast(T('Im Mockup ist nur der Quader ausgearbeitet.','Only the box is worked out in this mockup.')); },
+  kit:v=>{ if(v==='karte') go('karte'); else toast(T('Dieser Baukasten ist im Mockup nicht ausgearbeitet.','This kit is not worked out in this mockup.')); },
+  tile:v=>{ if(v==='leer') go('leer'); else if(v==='karte') go('karte'); else toast(T('Im Mockup nicht ausgearbeitet. Ausprobieren: „Karte“ oder „Leeres Druckbett“.','Not worked out in this mockup. Try “Card” or “Empty print bed”.')); },
+  view:v=>animateCam(VIEWS[v]),
+  eye:v=>{S.hide[v]=!S.hide[v]; renderAll();},
+  holeSw:()=>{S.holeOn=!S.holeOn; renderAll(); toast(S.holeOn?T('Als Loch: an. Die Form schneidet sofort aus.','As Hole: on. The shape cuts right away.'):T('Als Loch: aus. Die Form ist jetzt ein normaler Körper.','As Hole: off. The shape is now a normal body.'));},
+  fix:v=>{ if(v==='max'){S.errorFixed=true; renderAll(); toast(T('Erledigt: Rundung jetzt 3,9 mm. Rückgängig mit ⌘Z.','Done: rounding is now 3.9 mm. Undo with ⌘Z.'));}
+    else if(v==='skip'){S.errorFixed=true; renderAll(); toast(T('Erledigt: Diese Kante bleibt eckig.','Done: this edge stays sharp.'));}
+    else { setTimeout(()=>{const f=document.querySelector('#right input[data-bind="r"]')||$('#right input'); f?.focus(); f?.select();},0); } },
+  purpose:v=>{S.exp.purpose=v; renderExport();}, fine:v=>{S.exp.fine=v; renderExport();}, fmt:v=>{S.exp.fmt=v; renderExport();},
+  expfix:()=>{S.exp.fixed=true; renderExport(); toast(T('Erledigt: Das Loch sitzt jetzt 5,5 mm vom Rand. Rückgängig mit ⌘Z.','Done: the hole is now 5.5 mm from the edge. Undo with ⌘Z.'));},
+  mock:(v,t)=>toast(t.dataset.msg||T('Im Mockup nur angedeutet.','Only hinted at in this mockup.')),
+  toggle:(v,t)=>{t.setAttribute('aria-pressed',t.getAttribute('aria-pressed')!=='true');},
+  replay:()=>startTyping(), search:()=>openSearch(),
+  tryq:v=>{S.search.q=v; S.search.sel=0; renderSearch(); const i=$('#cmdq'); i?.focus(); i?.setSelectionRange(v.length,v.length);},
+  cmdpick:v=>{ const r=searchTools(S.search.q)[+v]; if(!r) return; S.search=null;
+    if(r.t.de==='Abrunden') go('abrunden'); else if(r.t.de==='Text') go('text'); else if(r.t.de==='Im Slicer öffnen'||r.t.de==='Druckcheck') go('export');
+    else { renderAll(); toast(`${T(r.t.de,r.t.en)}: ${T('Werkzeug startet (im Mockup nicht ausgearbeitet).','tool starts (not worked out in this mockup).')}`); } },
+  kitstep:v=>{S.kitStep=+v; renderAll();},
+  kopt:v=>{const [g,val]=v.split(':'); S.kit[g]=val; renderAll();},
+  editdim:()=>{S.editDim=true; renderView(); setTimeout(()=>{const i=$('#dimedit'); i?.focus(); i?.select();},0);}
+};
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t || t.disabled) return;
+  const f=ACT[t.dataset.act]; if(f){ e.preventDefault(); e.stopPropagation(); f(t.dataset.arg,t,e); }
+});
+document.addEventListener('keydown',e=>{
+  const tag=e.target.tagName, inField=/INPUT|SELECT|TEXTAREA/.test(tag);
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); openSearch(); return; }
+  if((e.metaKey||e.ctrlKey)&&e.key===','){ e.preventDefault(); ACT.settings(); return; }
+  if(e.target.id==='cmdq'){
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); S.search.sel=clamp(S.search.sel+(e.key==='ArrowDown'?1:-1),0,Math.max(0,(S.search.n||1)-1)); refreshSearch(); return; }
+    if(e.key==='Enter'){ e.preventDefault(); ACT.cmdpick(String(S.search.sel)); return; }
+  }
+  if(e.key==='Escape'){ if(S.search){S.search=null; renderAll(); return;} if(S.flyout){S.flyout=null; renderAll(); return;} if(S.info){S.info=false; renderAll(); return;} if(S.editDim){S.editDim=false; renderView(); return;} if(S.scene==='export'){ go('loch'); return; } }
+  if(e.target.id==='dimedit' && e.key==='Enter'){ const v=parseExpr(e.target.value); S.editDim=false; renderView(); toast(isNaN(v)?T('Das verstehe ich nicht. Beispiele: 5, 2,5 cm, 10/2','I do not understand that. Examples: 5, 2.5 cm, 10/2'):T(`Loch sitzt jetzt ${fmt(v)} mm vom Rand.`,`Hole is now ${fmt(v)} mm from the edge.`)); return; }
+  if(e.key==='Enter' && e.target.matches('[role="button"]')){ e.target.click(); return; }
+  if(inField) return;
+  if(e.key==='ArrowRight'){ stepScene(1); } else if(e.key==='ArrowLeft'){ stepScene(-1); }
+  else if(e.key==='Home' && WORK(S.scene)){ animateCam(VIEWS.home); }
+  else if(e.key==='F' && e.shiftKey && WORK(S.scene) && !e.metaKey && !e.ctrlKey){ ACT.focus(); }
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='accpick'){ S.accent=e.target.value.toUpperCase(); renderAll(); return; }
+  if(e.target.id==='cmdq'){ S.search.q=e.target.value; S.search.sel=0; refreshSearch(); }
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='scsel'){ go(el.value); return; }
+  if(el.matches('.fin input') && el.dataset.unit!==undefined && el.dataset.unit!==''){
+    const v=parseExpr(el.value), fld=el.closest('.fld');
+    if(isNaN(v)){ fld?.classList.add('err'); toast(T('Das verstehe ich nicht. Beispiele: 25+3, 2,5 cm, 1 in, Breite/2','I do not understand that. Examples: 25+3, 2.5 cm, 1 in, Width/2')); return; }
+    fld?.classList.remove('err'); const shown=fmt(Math.round(v*100)/100);
+    if(el.value.trim()!==shown) toast(`${el.value.trim()} = ${shown} ${el.dataset.unit||''}`);
+    el.value=shown;
+    if(el.dataset.bind){ S.edits[el.dataset.bind]=Math.max(0.1,v); renderView(); }
+  }
+});
+let tipTimer; const tipEl=$('#tipcard');
+function showTip(el){ clearTimeout(tipTimer); tipTimer=setTimeout(()=>{ const r=el.getBoundingClientRect();
+  tipEl.innerHTML=`<b>${el.dataset.tipT||''}</b>${el.dataset.tip}`; tipEl.hidden=false;
+  const right=r.right+10+262<innerWidth;
+  tipEl.style.left=(el.closest('.palette')&&right?r.right+10:clamp(r.left,8,innerWidth-262))+'px';
+  tipEl.style.top=(el.closest('.palette')?r.top:(r.bottom+8+tipEl.offsetHeight>innerHeight?r.top-tipEl.offsetHeight-8:r.bottom+8))+'px'; },700); }
+function hideTip(){ clearTimeout(tipTimer); tipEl.hidden=true; }
+document.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tip]'); if(t) showTip(t); else hideTip();});
+document.addEventListener('focusin',e=>{const t=e.target.closest('[data-tip]'); if(t) showTip(t); else hideTip();});
+document.addEventListener('mouseleave',hideTip);
+
+function renderAll(){
+  const fid=document.activeElement?.id;
+  const R=document.documentElement; R.dataset.theme=effTheme(); R.lang=S.lang; applyAccent();
+  renderDemo(); renderMenu();
+  const app=$('#app'), start=S.scene==='start';
+  app.className=[S.scene==='karte'?'kit':'', S.focus&&WORK(S.scene)?'focus':'', start?'is-start':''].join(' ').trim();
+  $('#start').hidden=!start;
+  if(start) renderStart();
+  else { renderTabs(); renderLeft(); renderRight(); renderStatus(); renderView(); }
+  renderExport(); renderSearch(); renderInfo();
+  if(fid){ const el=document.getElementById(fid); if(el && el!==document.activeElement) el.focus(); }
+}
+addEventListener('resize',()=>{ renderView(); positionFlyout(); });
+(function boot(){
+  const h=(location.hash||'').slice(1);
+  if(h==='einstellungen'){ S.startPage='settings'; go('start'); return; }
+  go(SCENES.some(s=>s.id===h)?h:'start');
+})();
+</script>
