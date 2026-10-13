@@ -366,7 +366,7 @@
 ---
 
 ### AP-0.7 Paketierung: Hallo-Welt
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-0.3
+**Status:** in Arbeit (seit 2026-10-13) · **Größe:** M · **Abhängigkeiten:** AP-0.3
 
 **Ziel:** Signieren, Notarisieren und Paketieren früh klären, nicht erst vor dem Release.
 
@@ -382,7 +382,8 @@
 **Akzeptanzkriterien:**
 - [ ] `.dmg` mit ad-hoc-signierter App startet auf einem Mac nach dem dokumentierten Gatekeeper-Umweg
 - [ ] Der Notarisierungs-Schritt existiert in der CI, ist ohne Secrets übersprungen und dokumentiert
-- [ ] AppImage startet auf Ubuntu 22.04/24.04 und Fedora (Wayland und X11)
+- [ ] AppImage startet auf Ubuntu 24.04 und Fedora (Wayland und X11)
+  *(geändert am 2026-10-13 vom Product Owner: Ubuntu 22.04 entfällt, weil das glibc des CI-Bauplatzes zu neu ist; ältere Systeme bauen selbst, siehe Backlog B-15)*
 - [ ] Flatpak baut lokal und startet
 
 ---

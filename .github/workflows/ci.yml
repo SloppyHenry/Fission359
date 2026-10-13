@@ -3,6 +3,9 @@
 
 # Continuous integration: format, license and layer checks, plus build and tests on
 # macOS (arm64) and Ubuntu 24.04, each as debug+AddressSanitizer and as release.
+# Every run also builds the installable packages (.dmg, AppImage, Flatpak) and starts them once
+# (job "package", AP-0.7). Signing and notarisation with a paid Apple account are prepared and
+# switched on by repository secrets; without them the .dmg is signed ad hoc (docs/paketierung.md).
 #
 # Libraries come from vcpkg (Qt included, FISSION_QT_SOURCE=vcpkg). One job per operating
 # system builds them and fills the GitHub Actions cache; the build jobs then restore it.
@@ -199,3 +202,130 @@ jobs:
             build/${{ matrix.preset }}/smoke-test.png
             build/${{ matrix.preset }}/Testing/Temporary/LastTest.log
             build/${{ matrix.preset }}/vcpkg-manifest-install.log
+
+  # Builds the installable packages from the cached libraries and starts each one once.
+  # Packages must be built on the oldest supported system (Ubuntu 24.04: the AppImage and the
+  # Flatpak need a glibc at least as old as every machine they should run on, ADR-0006).
+  package:
+    name: Package (${{ matrix.name }})
+    needs: libraries
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64 (.dmg)
+            os: macos-15
+          - name: Ubuntu 24.04 (AppImage, Flatpak)
+            os: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Prerequisites (scripts/setup)
+        run: scripts/setup --yes --no-dev-tools
+
+      # ---- macOS ----------------------------------------------------------------------
+      # Developer ID signing: only when the certificate secrets exist (paid Apple account).
+      - name: Import signing certificate (only with secrets)
+        if: runner.os == 'macOS'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+        run: |
+          if [ -z "$MACOS_CERTIFICATE" ] || [ -z "$MACOS_SIGNING_IDENTITY" ]; then
+            echo "No signing secrets: the app is signed ad hoc."
+            exit 0
+          fi
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          security create-keychain -p "ci" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "ci" "$keychain"
+          echo "$MACOS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" \
+            -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "ci" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" login.keychain
+          echo "FISSION_CODESIGN_IDENTITY=$MACOS_SIGNING_IDENTITY" >> "$GITHUB_ENV"
+          rm -f "$RUNNER_TEMP/certificate.p12"
+
+      - name: Build the .dmg (macOS)
+        if: runner.os == 'macOS'
+        run: scripts/package
+
+      - name: Notarise (skipped without Apple credentials)
+        if: runner.os == 'macOS'
+        env:
+          FISSION_NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          FISSION_NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          FISSION_NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+        run: packaging/macos/notarize.sh build/package/Fission3D-*-macos-arm64.dmg
+
+      - name: Start the app from the .dmg (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          dmg="$(ls build/package/Fission3D-*-macos-arm64.dmg)"
+          mount_point="$RUNNER_TEMP/dmg"
+          hdiutil attach "$dmg" -mountpoint "$mount_point" -nobrowse -readonly
+          app="$mount_point/Fission3D.app"
+          codesign --verify --deep --strict "$app"
+          "$app/Contents/MacOS/fission3d" --version
+          QT_QPA_PLATFORM=offscreen "$app/Contents/MacOS/fission3d" --smoke-test "$RUNNER_TEMP/dmg-smoke.png"
+          test -s "$RUNNER_TEMP/dmg-smoke.png"
+          hdiutil detach "$mount_point"
+
+      # ---- Linux ----------------------------------------------------------------------
+      - name: Packaging tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y patchelf flatpak flatpak-builder desktop-file-utils appstream
+          # Ubuntu 24.04 runners forbid the user namespaces that Flatpak's sandbox needs.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Build AppImage and Flatpak (Linux)
+        if: runner.os == 'Linux'
+        run: scripts/package --flatpak
+
+      - name: Check metadata (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          desktop-file-validate build/package/AppDir/usr/share/applications/*.desktop
+          appstreamcli validate --no-net build/package/AppDir/usr/share/metainfo/*.metainfo.xml
+
+      - name: Start the AppImage (Linux)
+        if: runner.os == 'Linux'
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          appimage="$(ls build/package/Fission3D-*-x86_64.AppImage)"
+          "$appimage" --version
+          "$appimage" --smoke-test "$RUNNER_TEMP/appimage-smoke.png"
+          test -s "$RUNNER_TEMP/appimage-smoke.png"
+
+      - name: Start the Flatpak (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          flatpak run --env=QT_QPA_PLATFORM=offscreen io.github.sloppyhenry.Fission3D --version
+
+      - name: Upload packages
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package-${{ runner.os }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            build/package/*.dmg
+            build/package/*.AppImage
+            build/package/*.flatpak

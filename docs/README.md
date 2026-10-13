@@ -14,6 +14,7 @@
 | [arbeitspakete/](arbeitspakete/) | Alle Arbeitspakete (AP) je Phase mit Akzeptanzkriterien | Entwicklung |
 | [05-master-prompt.md](05-master-prompt.md) | **Der Prompt** für den KI-Coding-Agenten (z. B. Claude Code), mit Kurz-Prompts je Arbeitspaket | Agent |
 | [07-baukaesten.md](07-baukaesten.md) | Baukästen: geführtes Gestalten von Karten, Vasen, Figuren u. v. m. (statt starrer Vorlagen), Motiv-Bibliothek | Produkt, Entwicklung |
+| [paketierung.md](paketierung.md) | Installieren (macOS, AppImage, Flatpak), Pakete bauen, Signieren und Secrets | alle |
 | [08-gestaltung.md](08-gestaltung.md) | **Design-System:** Farben, Schrift, Bildschirmaufbau, Bausteine (verbindlich, nach dem Mockup) | Produkt, UI-Entwicklung |
 | [06-rueckfragen.md](06-rueckfragen.md) | Offene Entscheidungen, jeweils mit der aktuell angenommenen Antwort | du |
 | [adr/](adr/) | Architecture Decision Records (Entscheidungsprotokolle) | Entwicklung |
