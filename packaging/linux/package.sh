@@ -86,6 +86,12 @@ export LINUXDEPLOY_OUTPUT_VERSION="$FISSION_VERSION"
 export LINUXDEPLOY_PLUGIN_PATH="$TOOLS_DIR"
 export PATH="$TOOLS_DIR:$PATH"
 
+# The OpenGL dispatch library of GLVND is small and stable, but not installed on every desktop
+# (Ubuntu: libopengl0), and linuxdeploy leaves it out. Without it the app does not start at all.
+EXTRA_LIBRARY_ARGS=()
+glvnd_opengl="$(ldconfig -p 2>/dev/null | awk '/libOpenGL\.so\.0 .*x86-64/ {print $NF; exit}')"
+[ -n "$glvnd_opengl" ] && EXTRA_LIBRARY_ARGS+=(--library "$glvnd_opengl")
+
 step "Bündle Qt und Bibliotheken, baue das AppImage / bundle libraries, build the AppImage"
 ARCH_DIR="$OUT_DIR"
 cd "$ARCH_DIR"
@@ -96,6 +102,7 @@ rm -f ./*.AppImage
     --desktop-file "$APPDIR/usr/share/applications/$FISSION_APP_ID.desktop" \
     --icon-file "$APPDIR/usr/share/icons/hicolor/512x512/apps/$FISSION_APP_ID.png" \
     "${DEPLOY_DEPS_ARGS[@]+"${DEPLOY_DEPS_ARGS[@]}"}" \
+    "${EXTRA_LIBRARY_ARGS[@]+"${EXTRA_LIBRARY_ARGS[@]}"}" \
     --plugin qt \
     --output appimage
 
