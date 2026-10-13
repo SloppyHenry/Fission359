@@ -98,6 +98,12 @@ Das klassische Problem parametrischer CAD-Programme: Ein Feature verweist auf �
 4. **Ehrlich bleiben:** Ist die Zuordnung unsicher, bekommt das Feature den Status „braucht Hilfe“. Die UI zeigt die alte Position als Geist und bittet um eine neue Auswahl. Es wird **niemals still falsch zugeordnet**.
 5. **Testsuite** mit typischen Änderungsszenarien (Maß ändern, Feature davor einfügen, Skizze ändern), siehe AP-0.6 und AP-2.10.
 
+**Ergebnis des Spikes AP-0.6** ([ADR-0003](adr/0003-persistente-referenzen.md), [Bericht](spikes/persistente-referenzen.md)):
+Das Konzept trägt (0 stille Fehler in 1 494 Verweisen). Festgelegt wurden zusätzlich: Kanten heißen nach den zwei
+Flächen, die sie verbinden; Verweise tragen auch das Aussehen ihrer Nachbarn; der Körper führt ein Gedächtnis für
+verbrauchte Elemente mit (die Kernel-Historie reicht für Kanten nicht); es gibt nur den strengen Modus. Jedes
+Feature muss einen Namens-Vertrag erfüllen (alle erzeugten Flächen benennen, Historie liefern).
+
 ### 3.5 Commands und Undo
 - Jede Änderung ist ein `Command` mit `apply()` und `revert()` auf **Dokumentebene** (Parameter, Feature hinzufügen/entfernen …), nicht auf Geometrie-Ebene. Die Geometrie wird neu berechnet oder kommt aus dem Cache.
 - **Transaktionen** fassen zusammen: Ein Zieh-Vorgang mit 200 Zwischenwerten ergibt einen Undo-Schritt.

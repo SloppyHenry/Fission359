@@ -17,6 +17,10 @@ set(FISSION_OCCT_EXTRA_TARGETS
   TKService
   TKV3d)
 
+# OCAF (TKCAF / TKLCAF with TNaming): linked only by the persistent-reference spike tests
+# (AP-0.6), to measure OCCT's own naming against ours. The product does not use it.
+set(FISSION_OCCT_OCAF_TARGETS TKCDF TKLCAF TKCAF)
+
 find_package(manifold CONFIG REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(lib3mf CONFIG REQUIRED)
