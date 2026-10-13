@@ -1,6 +1,6 @@
 # ADR-0003: Persistente Referenzen (Topological Naming)
 
-- **Status:** vorgeschlagen (Spike AP-0.6 abgeschlossen; Annahme durch den Product Owner steht aus)
+- **Status:** angenommen (Product Owner, 2026-10-14)
 - **Datum:** 2026-10-14
 - **Arbeitspaket:** AP-0.6
 

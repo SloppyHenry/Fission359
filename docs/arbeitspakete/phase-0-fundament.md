@@ -361,7 +361,7 @@
 
 **Akzeptanzkriterien:**
 - [x] Alle Szenarien behalten die richtige Referenz oder melden ehrlich „braucht Hilfe“, ohne stille Fehlzuordnung (Szenarien, 7 böse Fälle und 1 494 Verweise aus 421 Zufallsänderungen: 0 still falsch)
-- [x] ADR-0003 „Persistente Referenzen“ mit gewähltem Ansatz ([ADR-0003](../adr/0003-persistente-referenzen.md), Status „vorgeschlagen“, wartet auf das OK des Product Owners)
+- [x] ADR-0003 „Persistente Referenzen“ mit gewähltem Ansatz ([ADR-0003](../adr/0003-persistente-referenzen.md), angenommen am 2026-10-14)
 
 #### Abschlussvermerk (2026-10-14)
 
@@ -404,7 +404,6 @@
    viel Buchführung, hat keine Ähnlichkeitssuche und ein Speicherleck (OCCT 8.0.1, `TNaming_Builder::Select`).
 
 **Offen und Folge-Arbeiten**
-- ADR-0003 braucht das OK des Product Owners (Status „vorgeschlagen“).
 - Nicht geprüft: Fasen, Aushöhlen, Muster, Spiegeln, Text, Booleans mehrerer Körper, Verschmelzen gleicher
   Flächen, Laufzeit großer Körper (Zwischenspeicher für Signaturen nötig). Die Zufallsprobe muss in AP-2.10
   mit den echten Features wiederholt werden; dort auch die Regel „klar durch Lage“ erneut messen.
