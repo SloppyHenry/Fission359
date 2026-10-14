@@ -4,8 +4,10 @@
 #include "fission/geo/occt/solids.h"
 
 #include <cmath>
+#include <cstdint>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "fission/geo/error.h"
 
@@ -23,6 +25,7 @@
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
 #include <GCPnts_TangentialDeflection.hxx>
+#include <GeomAbs_SurfaceType.hxx>
 #include <GProp_GProps.hxx>
 #include <NCollection_IndexedMap.hxx>
 #include <Poly_Triangulation.hxx>
@@ -35,6 +38,8 @@
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <gp_Ax2.hxx>
+#include <gp_Dir.hxx>
+#include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Trsf.hxx>
 #include <gp_Vec.hxx>
@@ -159,20 +164,88 @@ void appendFace(const TopoDS_Face& face, std::uint32_t faceId, TriangleMesh& mes
 
 } // namespace
 
-Solid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner) {
+namespace {
+
+// 1-based number of `face` among the faces of `shape`: the same numbering tessellate() uses.
+std::uint32_t faceNumber(const TopoDS_Shape& shape, const TopoDS_Shape& face) {
+    ShapeMap faces;
+    TopExp::MapShapes(shape, TopAbs_FACE, faces);
+    const int index = faces.FindIndex(face);
+    if (index <= 0) {
+        throw GeometryError(GeometryErrorCode::kernelFailure,
+                            "a primitive face could not be found in its body");
+    }
+    return static_cast<std::uint32_t>(index);
+}
+
+// The roles must cover every face exactly once (naming contract, ADR-0003).
+NamedSolid withRoles(const TopoDS_Shape& shape, const char* what,
+                     const std::vector<std::pair<const char*, TopoDS_Shape>>& roles) {
+    NamedSolid result;
+    result.solid = validated(shape, what);
+    ShapeMap faces;
+    TopExp::MapShapes(shape, TopAbs_FACE, faces);
+    if (static_cast<std::size_t>(faces.Extent()) != roles.size()) {
+        throw GeometryError(GeometryErrorCode::kernelFailure,
+                            std::string(what) + ": not every face got a role");
+    }
+    for (const auto& [role, face] : roles) {
+        result.faces.push_back({faceNumber(shape, face), role});
+    }
+    return result;
+}
+
+} // namespace
+
+NamedSolid makeNamedBox(double sizeX, double sizeY, double sizeZ, Point3d corner) {
     if (!isPositiveFinite(sizeX) || !isPositiveFinite(sizeY) || !isPositiveFinite(sizeZ) ||
         !isFinite(corner)) {
         throw GeometryError(GeometryErrorCode::invalidInput, "box: sizes must be positive numbers");
     }
     try {
         BRepPrimAPI_MakeBox maker(gp_Pnt(corner.x, corner.y, corner.z), sizeX, sizeY, sizeZ);
-        return validated(maker.Shape(), "box");
+        const TopoDS_Shape shape = maker.Shape();
+
+        // The kernel has its own idea of front and left. Ours: looking at the box from the front
+        // we look along +Y, so front is -Y, left is -X (as in the view cube).
+        ShapeMap faces;
+        TopExp::MapShapes(shape, TopAbs_FACE, faces);
+        std::vector<std::pair<const char*, TopoDS_Shape>> roles;
+        for (int i = 1; i <= faces.Extent(); ++i) {
+            const TopoDS_Face face = TopoDS::Face(faces(i));
+            const BRepAdaptor_Surface surface(face);
+            if (surface.GetType() != GeomAbs_Plane) {
+                continue;
+            }
+            gp_Dir normal = surface.Plane().Axis().Direction();
+            if (face.Orientation() == TopAbs_REVERSED) {
+                normal.Reverse();
+            }
+            const char* role = nullptr;
+            if (normal.Z() > 0.5) {
+                role = "top";
+            } else if (normal.Z() < -0.5) {
+                role = "bottom";
+            } else if (normal.Y() > 0.5) {
+                role = "back";
+            } else if (normal.Y() < -0.5) {
+                role = "front";
+            } else if (normal.X() > 0.5) {
+                role = "right";
+            } else if (normal.X() < -0.5) {
+                role = "left";
+            }
+            if (role != nullptr) {
+                roles.emplace_back(role, faces(i));
+            }
+        }
+        return withRoles(shape, "box", roles);
     } catch (const Standard_Failure&) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "box: the kernel failed");
     }
 }
 
-Solid makeCylinder(double radius, double height, Point3d base) {
+NamedSolid makeNamedCylinder(double radius, double height, Point3d base) {
     if (!isPositiveFinite(radius) || !isPositiveFinite(height) || !isFinite(base)) {
         throw GeometryError(GeometryErrorCode::invalidInput,
                             "cylinder: radius and height must be positive numbers");
@@ -180,10 +253,34 @@ Solid makeCylinder(double radius, double height, Point3d base) {
     try {
         const gp_Ax2 axis(gp_Pnt(base.x, base.y, base.z), gp_Dir(0.0, 0.0, 1.0));
         BRepPrimAPI_MakeCylinder maker(axis, radius, height);
-        return validated(maker.Shape(), "cylinder");
+        const TopoDS_Shape shape = maker.Shape();
+
+        // The maker does not hand out its faces: tell them apart by what they are. The side is
+        // the cylindrical face; of the two flat ones the lower is the bottom.
+        ShapeMap faces;
+        TopExp::MapShapes(shape, TopAbs_FACE, faces);
+        std::vector<std::pair<const char*, TopoDS_Shape>> roles;
+        for (int i = 1; i <= faces.Extent(); ++i) {
+            const BRepAdaptor_Surface surface(TopoDS::Face(faces(i)));
+            if (surface.GetType() == GeomAbs_Cylinder) {
+                roles.emplace_back("side", faces(i));
+            } else if (surface.GetType() == GeomAbs_Plane) {
+                const bool lower = surface.Plane().Location().Z() < base.z + height / 2.0;
+                roles.emplace_back(lower ? "bottom" : "top", faces(i));
+            }
+        }
+        return withRoles(shape, "cylinder", roles);
     } catch (const Standard_Failure&) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "cylinder: the kernel failed");
     }
+}
+
+Solid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner) {
+    return makeNamedBox(sizeX, sizeY, sizeZ, corner).solid;
+}
+
+Solid makeCylinder(double radius, double height, Point3d base) {
+    return makeNamedCylinder(radius, height, base).solid;
 }
 
 SolidReport measure(const Solid& solid) {

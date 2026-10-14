@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "fission/geo/kernel.h"
 #include "fission/geo/mesh.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
@@ -15,6 +16,12 @@ Solid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner = {});
 
 /// Cylinder standing on the plane z = base.z, axis along +Z, `base` is the centre of its bottom.
 Solid makeCylinder(double radius, double height, Point3d base = {});
+
+/// Like `makeBox`, with the role of every face (see `GeometryKernel::makeBox`).
+NamedSolid makeNamedBox(double sizeX, double sizeY, double sizeZ, Point3d corner = {});
+
+/// Like `makeCylinder`, with the role of every face (bottom, top, side).
+NamedSolid makeNamedCylinder(double radius, double height, Point3d base = {});
 
 /// Volume, area, bounding box, topology counts and validity of a body.
 SolidReport measure(const Solid& solid);
