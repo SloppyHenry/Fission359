@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=@FISSION_APP_NAME@
+GenericName=3D design program
+GenericName[de]=3D-Konstruktionsprogramm
+Comment=Easy and precise 3D design for makers
+Comment[de]=3D-Konstruktion, einfach und präzise
+Keywords=3D;CAD;3D printing;design;STL;3MF;
+Keywords[de]=3D;CAD;3D-Druck;Konstruktion;STL;3MF;
+Exec=fission3d %f
+Icon=@FISSION_APP_ID@
+Terminal=false
+Categories=Graphics;3DGraphics;Engineering;
+MimeType=@FISSION_MIME_TYPE@;
+StartupWMClass=@FISSION_APP_NAME@

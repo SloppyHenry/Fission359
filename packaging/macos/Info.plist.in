@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: Fission3D contributors -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Filled in by CMake (configure_file, @ONLY); see cmake/FissionPackaging.cmake. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>CFBundleLocalizations</key>
+  <array><string>en</string><string>de</string></array>
+  <key>CFBundleExecutable</key><string>@FISSION_BUNDLE_EXECUTABLE@</string>
+  <key>CFBundleIdentifier</key><string>@FISSION_APP_ID@</string>
+  <key>CFBundleName</key><string>@FISSION_APP_NAME@</string>
+  <key>CFBundleDisplayName</key><string>@FISSION_APP_NAME@</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>@PROJECT_VERSION@</string>
+  <key>CFBundleVersion</key><string>@PROJECT_VERSION@</string>
+  <key>CFBundleIconFile</key><string>@FISSION_APP_NAME@</string>
+  <key>LSMinimumSystemVersion</key><string>@FISSION_MACOS_MIN_VERSION@</string>
+  <key>LSApplicationCategoryType</key><string>public.app-category.graphics-design</string>
+  <key>NSHighResolutionCapable</key><true/>
+  <key>NSSupportsAutomaticGraphicsSwitching</key><true/>
+  <key>NSHumanReadableCopyright</key><string>Copyright © Fission3D contributors. GPL-3.0-or-later.</string>
+
+  <!-- Project files (.fission): opened with a double-click, shown with the app icon. -->
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeName</key><string>Fission3D Project</string>
+      <key>CFBundleTypeRole</key><string>Editor</string>
+      <key>LSHandlerRank</key><string>Owner</string>
+      <key>LSItemContentTypes</key>
+      <array><string>@FISSION_PROJECT_UTI@</string></array>
+    </dict>
+  </array>
+  <key>UTExportedTypeDeclarations</key>
+  <array>
+    <dict>
+      <key>UTTypeIdentifier</key><string>@FISSION_PROJECT_UTI@</string>
+      <key>UTTypeDescription</key><string>Fission3D Project</string>
+      <key>UTTypeConformsTo</key>
+      <array><string>public.data</string><string>public.content</string></array>
+      <key>UTTypeTagSpecification</key>
+      <dict>
+        <key>public.filename-extension</key><array><string>fission</string></array>
+        <key>public.mime-type</key><string>@FISSION_MIME_TYPE@</string>
+      </dict>
+    </dict>
+  </array>
+</dict>
+</plist>

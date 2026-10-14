@@ -18,3 +18,4 @@ Ideen und größere Themen, die bewusst nicht in 1.0 sind. Die Reihenfolge ist e
 | B-12 | **Linux arm64** | z. B. für Raspberry Pi 5 / Asahi Linux | S |
 | B-13 | **iPad-Version** | Qt unterstützt iOS; Bedienkonzept für Stift und Touch (Shapr3D-artig) | XL |
 | B-14 | **Kernel-Grenzen** | Falls OCCT an Grenzen stößt: gezielt in OCCT selbst verbessern (Beiträge upstream) oder einzelne Operationen über Manifold/SDF lösen. Kommerzielle Kerne (Parasolid) sind mit der GPL nicht vereinbar und scheiden aus | XL |
+| B-15 | **Selbst bauen auf älteren Systemen** | Wer ein Linux ohne passendes fertiges Paket hat (z. B. Ubuntu 22.04), kann das Programm selbst bauen. Dafür ein **dynamisches Installationsskript**, das die Distribution erkennt, die nötigen Pakete bzw. Qt/vcpkg beschafft, baut und installiert (Menüeintrag, Dateizuordnung). Baut auf `scripts/setup` und AP-0.7 auf | M |

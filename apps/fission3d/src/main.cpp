@@ -60,6 +60,8 @@ int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("Fission3D"));
     QGuiApplication::setApplicationVersion(versionText());
+    // Lets Wayland and the desktop match the window to the installed .desktop file and icon.
+    QGuiApplication::setDesktopFileName(QStringLiteral(FISSION_APP_ID));
 
     QQmlApplicationEngine engine;
     QObject::connect(

@@ -56,4 +56,7 @@ if [ "$START" -eq 0 ]; then
 fi
 
 step "Starte Fission3D"
-exec "$BUILD_DIR/apps/fission3d/fission3d" "${APP_ARGS[@]+"${APP_ARGS[@]}"}"
+APP="$BUILD_DIR/apps/fission3d/fission3d"
+# On macOS the program is an application bundle (needed for the icon, Info.plist and packaging).
+[ -x "$APP.app/Contents/MacOS/fission3d" ] && APP="$APP.app/Contents/MacOS/fission3d"
+exec "$APP" "${APP_ARGS[@]+"${APP_ARGS[@]}"}"

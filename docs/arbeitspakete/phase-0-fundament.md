@@ -418,7 +418,7 @@
 ---
 
 ### AP-0.7 Paketierung: Hallo-Welt
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-0.3
+**Status:** erledigt (2026-10-14; `.dmg` vom Product Owner auf sauberem macOS 14 getestet) · **Größe:** M · **Abhängigkeiten:** AP-0.3
 
 **Ziel:** Signieren, Notarisieren und Paketieren früh klären, nicht erst vor dem Release.
 
@@ -432,10 +432,70 @@
 > 2. **Später** (bezahltes Konto, 99 €/Jahr, spätestens vor einer öffentlichen Beta): Die Pipeline für Developer-ID und Notarisierung ist vorbereitet und wird per CI-Secret aktiviert.
 
 **Akzeptanzkriterien:**
-- [ ] `.dmg` mit ad-hoc-signierter App startet auf einem Mac nach dem dokumentierten Gatekeeper-Umweg
-- [ ] Der Notarisierungs-Schritt existiert in der CI, ist ohne Secrets übersprungen und dokumentiert
-- [ ] AppImage startet auf Ubuntu 22.04/24.04 und Fedora (Wayland und X11)
-- [ ] Flatpak baut lokal und startet
+- [x] `.dmg` mit ad-hoc-signierter App startet auf einem Mac nach dem dokumentierten Gatekeeper-Umweg
+  *(2026-10-14 vom Product Owner in einer virtuellen Maschine mit sauberem macOS 14.8.7 durchgespielt: Gatekeeper blockiert, nach „Open Anyway“ öffnet sich die App; zuvor auf dem Entwicklungs-Mac mit simulierter Quarantäne geprüft)*
+- [x] Der Notarisierungs-Schritt existiert in der CI, ist ohne Secrets übersprungen und dokumentiert
+- [x] AppImage startet auf Ubuntu 24.04 und Fedora (Wayland und X11)
+  *(geändert am 2026-10-13 vom Product Owner: Ubuntu 22.04 entfällt, weil das glibc des CI-Bauplatzes zu neu ist; ältere Systeme bauen selbst, siehe Backlog B-15)*
+  *(geprüft in frischen Containern und unter X11/virtuellem Wayland; am echten Bildschirm noch nicht von Hand)*
+- [x] Flatpak baut lokal und startet
+  *(Ubuntu 24.04 in der CI und lokal; Qt und Bibliotheken sind gebündelt, nicht Flathub-tauglich)*
+
+#### Abschlussvermerk (2026-10-13)
+
+**Umgesetzt**
+- **Kennungen und Metadaten:** Anwendungs-ID `io.github.sloppyhenry.Fission3D`, Projektdateien `.fission` mit MIME-Typ
+  und macOS-Dokumenttyp, `.desktop`, AppStream, Icons ([cmake/FissionPackaging.cmake](../../cmake/FissionPackaging.cmake),
+  [packaging/](../../packaging/)). Das Icon ist ein **Platzhalter**.
+- **macOS:** `Fission3D.app` (Mindestversion 14.0) mit gebündeltem Qt und allen Bibliotheken, Ad-hoc-Signatur,
+  `.dmg` mit Hintergrund, Programme-Verknüpfung und zweisprachiger Installationshilfe. Ein Aufräumschritt
+  ([relocate.py](../../packaging/macos/relocate.py)) macht alle Verweise relativ und **bricht ab**, wenn irgendetwas nach
+  außen zeigt. Vorbereitet: Developer-ID-Signatur mit Hardened Runtime, Notarisierung und Staple (ohne Secrets übersprungen).
+- **Linux:** AppImage (`linuxdeploy`, X11, Wayland und Offscreen gebündelt) und Flatpak (verpackt dasselbe AppDir,
+  `org.freedesktop.Platform` 25.08).
+- **Werkzeug und CI:** `scripts/package [--flatpak]`; CI-Job **Package** baut und startet bei jedem Lauf `.dmg`, AppImage
+  und Flatpak und lädt sie als Artefakte hoch (14 Tage). Secrets-Handling in [docs/paketierung.md](../paketierung.md).
+- **Entscheidungen:** [ADR-0006](../adr/0006-paketierung.md); Backlog **B-15** (Selbstbau auf älteren Systemen mit
+  dynamischem Installationsskript).
+
+**Wie getestet**
+- CI (PR #6): alle Jobs grün auf macOS arm64 und Ubuntu 24.04, einschließlich Start der drei Pakete.
+- `.dmg` aus der CI auf dem Entwicklungs-Mac: Signatur gültig, Mindestversion 14.0, keine Verweise außerhalb der App,
+  Version und Fenster-Screenshot ohne Display; mit simulierter Download-Quarantäne lehnt Gatekeeper ab, nach
+  `xattr -dr com.apple.quarantine` startet die App und zeigt ihr Fenster.
+- AppImage aus der CI (Ubuntu 24.04): frischer `ubuntu:24.04`- und `fedora:44`-Container (Version und Fenster-Screenshot),
+  Xvfb (X11) und virtuelles Wayland (`kwin_wayland --virtual`) auf Ubuntu 26.04.
+- Flatpak aus der CI auf Ubuntu 26.04: `--version`, Offscreen und virtuelles Wayland.
+
+**So probierst du es aus**
+1. Auf github.com/SloppyHenry/Fission3D unter **Actions** den letzten Lauf öffnen und unten bei **Artifacts**
+   `package-macOS` laden und entpacken.
+2. Das `.dmg` öffnen, **Fission3D** nach **Programme** ziehen und starten. macOS blockiert beim ersten Mal.
+3. **Systemeinstellungen → Datenschutz & Sicherheit** → bei Fission3D **Trotzdem öffnen**. Es erscheint das Fenster
+   „Fission3D“ (Details: [docs/paketierung.md](../paketierung.md)).
+4. Lokal selbst bauen: `scripts/package` (dauert einige Minuten); das Ergebnis liegt in `build/package/`.
+5. Linux: `package-Linux` laden, `chmod +x Fission3D-*.AppImage && ./Fission3D-*.AppImage`.
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- Das `.dmg` ist auf macOS 14 (virtuell) getestet; macOS 15 und neuer verhalten sich beim Gatekeeper ähnlich, wurden aber nicht
+  einzeln geprüft.
+- Das `.dmg` braucht ohne Notarisierung (kostenloses Konto) jedes Mal den Gatekeeper-Umweg. Die Pipeline für Developer ID
+  und Notarisierung wird mit sechs Secrets aktiv (bezahltes Konto, 99 €/Jahr).
+- **Lokal gebaute Pakete** laufen nur auf dem eigenen System: auf dem Mac mit Homebrew-Qt verlangen sie die macOS-Version
+  des Rechners, auf neueren Linux-Systemen ein neueres glibc. Verteilt wird nur, was die CI baut.
+- **Das Flatpak ist nicht Flathub-tauglich** (verpackt das fertige Programm). Der Quellbau mit der KDE-Laufzeit folgt
+  vor AP-6.1.
+- Das AppImage verlässt sich auf Systembibliotheken der Desktop-Umgebung (u. a. `libharfbuzz`, `libfreetype`,
+  `fontconfig`, `libxkbcommon`, Grafiktreiber). Auf einem Desktop sind sie da, in minimalen Containern nicht.
+- Die Pakete sind mit rund 40 MB (dmg) bzw. 32 MB (AppImage) größer als nötig, sie enthalten alle Qt-Quick-Module,
+  die die Werkzeuge finden; Verkleinern folgt, sobald klar ist, welche Module das Programm braucht.
+- Nicht am echten Bildschirm geprüft: Wayland und X11 des AppImage auf Ubuntu 24.04/Fedora (nur Container, Xvfb und ein
+  virtueller Compositor).
+- **Außerhalb dieses APs gefunden:** Auf Ubuntu 26.04 (GCC 15) scheitert `tests/smoke/smoke_eigen.cpp` an einer
+  Eigen-Warnung (`-Warray-bounds`, durch `-Werror` ein Fehler). Die CI (GCC 13) ist nicht betroffen. Vorschlag: die
+  Warnung für diese Testdatei abschalten.
+- Vorgeschlagene Folge-Arbeiten: echtes Icon, Quellbau-Flatpak, Paketgröße, Öffnen von `.fission`-Dateien per
+  Doppelklick (sobald es das Format gibt), Backlog B-15.
 
 ---
 
