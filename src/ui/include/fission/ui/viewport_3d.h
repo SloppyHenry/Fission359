@@ -6,13 +6,13 @@
 
 #pragma once
 
-#include <memory>
-
 #include <QColor>
 #include <QPointF>
 #include <QQuickRhiItem>
 #include <QString>
 #include <QVariantAnimation>
+
+#include <memory>
 
 #include "fission/render/camera.h"
 #include "fission/render/scene.h"

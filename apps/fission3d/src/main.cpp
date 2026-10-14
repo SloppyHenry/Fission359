@@ -85,9 +85,8 @@ int main(int argc, char* argv[]) {
         [] { QCoreApplication::exit(2); }, Qt::QueuedConnection);
     engine.loadFromModule("Fission3D", "Main");
     if (!engine.rootObjects().isEmpty()) {
-        if (auto* viewport =
-                engine.rootObjects().constFirst()->findChild<fission::ui::Viewport3D*>(
-                    QStringLiteral("viewport"))) {
+        if (auto* viewport = engine.rootObjects().constFirst()->findChild<fission::ui::Viewport3D*>(
+                QStringLiteral("viewport"))) {
             viewport->setScene(makeDemoScene());
         }
     }

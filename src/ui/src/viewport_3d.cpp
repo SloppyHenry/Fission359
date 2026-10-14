@@ -3,16 +3,17 @@
 
 #include "fission/ui/viewport_3d.h"
 
-#include <algorithm>
-#include <cmath>
-
 #include <QMouseEvent>
 #include <QQuickWindow>
 #include <QWheelEvent>
-#include <QtQml/qqml.h>
-#include <rhi/qrhi.h>
+
+#include <algorithm>
+#include <cmath>
 
 #include "fission/render/scene_renderer.h"
+
+#include <QtQml/qqml.h>
+#include <rhi/qrhi.h>
 
 namespace fission::ui {
 
@@ -182,9 +183,9 @@ void Viewport3D::setStandardView(const QString& name) {
     static const struct {
         const char* name;
         StandardView view;
-    } views[] = {{"home", StandardView::home},   {"top", StandardView::top},
+    } views[] = {{"home", StandardView::home},     {"top", StandardView::top},
                  {"bottom", StandardView::bottom}, {"front", StandardView::front},
-                 {"back", StandardView::back},   {"left", StandardView::left},
+                 {"back", StandardView::back},     {"left", StandardView::left},
                  {"right", StandardView::right}};
     for (const auto& entry : views) {
         if (name == QLatin1String(entry.name)) {
@@ -197,7 +198,8 @@ void Viewport3D::setStandardView(const QString& name) {
 void Viewport3D::frameAll() {
     const render::BedSpec bed = m_scene ? m_scene->bed : render::BedSpec{};
     render::OrbitCamera target = m_camera;
-    target.frame({-0.5F * bed.sizeX, -0.5F * bed.sizeY, 0.0F}, {0.5F * bed.sizeX, 0.5F * bed.sizeY, 40.0F});
+    target.frame({-0.5F * bed.sizeX, -0.5F * bed.sizeY, 0.0F},
+                 {0.5F * bed.sizeX, 0.5F * bed.sizeY, 40.0F});
     render::CameraPose pose = target.pose();
     pose.yaw = m_camera.pose().yaw;
     pose.pitch = m_camera.pose().pitch;
@@ -239,7 +241,8 @@ void Viewport3D::orbitBy(double dx, double dy) {
 }
 
 QPointF Viewport3D::project(double x, double y, double z) const {
-    return m_camera.project(QVector3D(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)));
+    return m_camera.project(
+        QVector3D(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)));
 }
 
 void Viewport3D::mousePressEvent(QMouseEvent* event) {

@@ -3,6 +3,7 @@
 
 add_executable(fission_unit_tests
   core/test_version.cpp
+  core/test_expression.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   render/test_camera.cpp)
