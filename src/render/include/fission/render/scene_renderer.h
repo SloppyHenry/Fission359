@@ -19,6 +19,9 @@
 
 namespace fission::render {
 
+/// How bodies are drawn: only their edges, in one neutral colour, or in their own colours.
+enum class DisplayMode { wireframe, solid, colors };
+
 class SceneRenderer {
 public:
     struct Frame {
@@ -26,6 +29,7 @@ public:
         QMatrix4x4 projection;
         float pixelsPerMillimetre = 2.0F; ///< decides how fine the bed grid is
         bool bedVisible = true;
+        DisplayMode displayMode = DisplayMode::colors;
         ViewPalette palette;
     };
 

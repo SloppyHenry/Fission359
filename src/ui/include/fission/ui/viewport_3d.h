@@ -13,9 +13,11 @@
 #include <QVariantAnimation>
 
 #include <memory>
+#include <vector>
 
 #include "fission/render/camera.h"
 #include "fission/render/scene.h"
+#include "fission/render/scene_renderer.h"
 
 namespace fission::ui {
 
@@ -34,6 +36,7 @@ class Viewport3D : public QQuickRhiItem {
     Q_PROPERTY(QColor shadowColor MEMBER m_shadow NOTIFY paletteChanged)
     Q_PROPERTY(bool bedVisible READ bedVisible WRITE setBedVisible NOTIFY bedVisibleChanged)
     Q_PROPERTY(bool orthographic READ orthographic WRITE setOrthographic NOTIFY orthographicChanged)
+    Q_PROPERTY(QString displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged)
     Q_PROPERTY(bool animated MEMBER m_animated)
     Q_PROPERTY(double cameraYaw READ cameraYaw NOTIFY cameraChanged)
     Q_PROPERTY(double cameraPitch READ cameraPitch NOTIFY cameraChanged)
@@ -53,6 +56,8 @@ public:
     void setBedVisible(bool visible);
     bool orthographic() const { return m_camera.orthographic(); }
     void setOrthographic(bool orthographic);
+    QString displayMode() const { return m_displayMode; }
+    void setDisplayMode(const QString& mode);
     double cameraYaw() const { return m_camera.pose().yaw; }
     double cameraPitch() const { return m_camera.pose().pitch; }
     double pixelsPerMillimetre() const { return m_camera.pixelsPerMillimetre(); }
@@ -63,6 +68,8 @@ public:
 
     /// "home", "top", "bottom", "front", "back", "left" or "right".
     Q_INVOKABLE void setStandardView(const QString& name);
+    /// Shows or hides one body of the scene (the eye in the body list).
+    Q_INVOKABLE void setBodyVisible(int index, bool visible);
     /// Frames the scene again (key F).
     Q_INVOKABLE void frameAll();
     /// Zoom by `factor` (< 1 moves closer) towards the point (x, y) in item pixels.
@@ -82,6 +89,7 @@ public:
         QMatrix4x4 projection;
         float pixelsPerMillimetre = 2.0F;
         bool bedVisible = true;
+        render::DisplayMode displayMode = render::DisplayMode::colors;
         quint64 sceneVersion = 0;
         quint64 paletteVersion = 0;
     };
@@ -92,6 +100,7 @@ signals:
     void paletteChanged();
     void bedVisibleChanged();
     void orthographicChanged();
+    void displayModeChanged();
     void cameraChanged();
     void sceneChanged();
     void backendNameChanged();
@@ -110,7 +119,12 @@ private:
     void animateTo(const render::CameraPose& target);
     void cameraMoved();
 
-    std::shared_ptr<const render::RenderScene> m_scene;
+    void rebuildVisibleScene();
+
+    std::shared_ptr<const render::RenderScene> m_scene;        // everything
+    std::shared_ptr<const render::RenderScene> m_shown;        // without hidden bodies
+    std::vector<bool> m_bodyVisible;
+    QString m_displayMode{QStringLiteral("color")};
     quint64 m_sceneVersion = 1;
     quint64 m_paletteVersion = 1;
     render::OrbitCamera m_camera;

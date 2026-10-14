@@ -23,6 +23,7 @@ layout(std140, binding = 0) uniform Params {
     vec4 shadowColor;
     vec4 params;
     vec4 bedSize;
+    vec4 bodyOverride; // rgb, a = 1: draw every body in this colour
 } u;
 
 layout(binding = 1) uniform sampler2D shadowMap;
@@ -63,6 +64,7 @@ void main() {
     float diffuse = max(dot(n, u.lightDir.xyz), 0.0) * lit;
     float fill = max(dot(n, viewDir), 0.0);
     float ambient = 0.46 + 0.14 * n.z;
-    vec3 c = vColor.rgb * (ambient + 0.5 * diffuse + 0.1 * fill);
+    vec3 base = u.bodyOverride.a > 0.5 ? u.bodyOverride.rgb : vColor.rgb;
+    vec3 c = base * (ambient + 0.5 * diffuse + 0.1 * fill);
     fragColor = vec4(c, vColor.a);
 }

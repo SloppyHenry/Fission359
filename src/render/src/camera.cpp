@@ -44,7 +44,7 @@ void OrbitCamera::frame(const QVector3D& boundsMin, const QVector3D& boundsMax) 
     m_sceneRadius = std::max(0.5F * (boundsMax - boundsMin).length(), 1.0F);
     // The sphere around the box must fit, also in a narrow window (then the width decides).
     const float tanLimit = tanHalfFov() * std::min(1.0F, aspect());
-    m_pose.distance = m_sceneRadius / std::sin(std::atan(tanLimit)) * 1.1F;
+    m_pose.distance = m_sceneRadius / std::sin(std::atan(tanLimit)) * 0.92F;
 }
 
 void OrbitCamera::orbit(float dxPixels, float dyPixels) {

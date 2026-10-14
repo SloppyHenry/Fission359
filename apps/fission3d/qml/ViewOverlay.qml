@@ -1,0 +1,312 @@
+// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+import QtQuick
+import QtQuick.Controls.Basic
+import Fission3D.Ui
+
+// Everything that floats above the 3D view: display bar, tool palette, view cube, navigation
+// buttons (docs/08-gestaltung.md §5).
+Item {
+    id: root
+
+    property bool orthographic: false
+    property string display: "color"       // wire | solid | color
+    property string tool: "move"
+    property real cameraYaw: 0
+    property real cameraPitch: 0
+    property bool focusMode: false
+    signal orthographicToggled
+    signal displayRequested(string mode)
+    signal toolRequested(string tool)
+    signal groupRequested(string group)
+    signal viewRequested(string view)
+    signal focusToggled
+    signal navigationHint(string hint)
+    signal orbitDragged(real dx, real dy)
+    signal panDragged(real dx, real dy)
+    signal zoomRequested(real factor)
+
+    // --- display bar (top left) -------------------------------------------------------
+    Row {
+        x: 12
+        y: 12
+        spacing: 8
+
+        Float {
+            width: perspective.implicitWidth + 6
+            height: 38
+
+            AbstractButton {
+                id: perspective
+
+                x: 3
+                y: 4
+                implicitHeight: 30
+                implicitWidth: perspectiveRow.implicitWidth + 20
+                hoverEnabled: true
+                Accessible.name: root.orthographic ? qsTr("Orthographic") : qsTr("Perspective")
+                onClicked: root.orthographicToggled()
+
+                contentItem: Row {
+                    id: perspectiveRow
+
+                    spacing: 7
+
+                    Txt {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.orthographic ? qsTr("Orthographic") : qsTr("Perspective")
+                        color: perspective.hovered ? Theme.fg : Theme.fg3
+                        font.pixelSize: Theme.fontSizeSmallPlus
+                        elide: Text.ElideNone
+                    }
+
+                    Icon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        name: "chev"
+                        size: 14
+                        color: perspective.hovered ? Theme.fg : Theme.fg3
+                    }
+                }
+
+                background: Rectangle {
+                    radius: Theme.radius
+                    color: "transparent"
+
+                    Focusring {
+                        visible: perspective.visualFocus
+                    }
+                }
+            }
+        }
+
+        Float {
+            width: displayRow.implicitWidth + 6
+            height: 38
+
+            Row {
+                id: displayRow
+
+                x: 3
+                y: 4
+                spacing: 2
+
+                Repeater {
+                    model: [
+                        { value: "wire", text: qsTr("Wireframe"), icon: "wire" },
+                        { value: "solid", text: qsTr("Solid"), icon: "solid" },
+                        { value: "color", text: qsTr("Colours"), icon: "color" }
+                    ]
+
+                    delegate: AbstractButton {
+                        id: displayButton
+
+                        required property var modelData
+                        readonly property bool selected: root.display === modelData.value
+
+                        implicitHeight: 30
+                        implicitWidth: displayContent.implicitWidth + 20
+                        hoverEnabled: true
+                        Accessible.name: modelData.text
+                        Accessible.checkable: true
+                        Accessible.checked: selected
+                        onClicked: root.displayRequested(modelData.value)
+
+                        contentItem: Row {
+                            id: displayContent
+
+                            spacing: 7
+
+                            Icon {
+                                anchors.verticalCenter: parent.verticalCenter
+                                name: displayButton.modelData.icon
+                                size: 14
+                                color: displayButton.selected || displayButton.hovered ? Theme.fg : Theme.fg3
+                            }
+
+                            Txt {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: displayButton.modelData.text
+                                font.pixelSize: Theme.fontSizeSmallPlus
+                                font.weight: displayButton.selected ? Font.DemiBold : Font.Normal
+                                color: displayButton.selected || displayButton.hovered ? Theme.fg : Theme.fg3
+                                elide: Text.ElideNone
+                            }
+                        }
+
+                        background: Rectangle {
+                            radius: Theme.radius
+                            color: displayButton.selected ? Theme.field2 : "transparent"
+
+                            Focusring {
+                                visible: displayButton.visualFocus
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- tool palette (left, 76 px) ------------------------------------------------------
+    Float {
+        id: palette
+
+        x: 12
+        y: 60
+        width: 76
+        height: Math.min(paletteColumn.implicitHeight + 12, root.height - 72)
+
+        Flickable {
+            anchors.fill: parent
+            anchors.margins: 4
+            contentHeight: paletteColumn.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            Column {
+                id: paletteColumn
+
+                width: parent.width
+                spacing: 2
+
+                Repeater {
+                    model: [
+                        { id: "select", text: qsTr("Select"), icon: "select",
+                          tip: qsTr("Handles on the selected body. Applies to the “Axes” handle style.") },
+                        { id: "move", text: qsTr("Move"), icon: "move",
+                          tip: qsTr("Handles on the selected body. Applies to the “Axes” handle style.") },
+                        { id: "rotate", text: qsTr("Rotate"), icon: "rotate",
+                          tip: qsTr("Handles on the selected body. Applies to the “Axes” handle style.") },
+                        { id: "size", text: qsTr("Size"), icon: "scale",
+                          tip: qsTr("Handles on the selected body. Applies to the “Axes” handle style.") }
+                    ]
+
+                    delegate: ToolButton3D {
+                        required property var modelData
+
+                        width: paletteColumn.width
+                        text: modelData.text
+                        iconName: modelData.icon
+                        active: root.tool === modelData.id
+                        tipText: modelData.tip
+                        onClicked: root.toolRequested(modelData.id)
+                    }
+                }
+
+                Item {
+                    width: parent.width
+                    height: 11
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: parent.width * 0.7
+                        height: 1
+                        color: Theme.line
+                    }
+                }
+
+                Repeater {
+                    model: [
+                        { id: "shapes", text: qsTr("Shapes"), icon: "cube",
+                          tip: qsTr("Basic shapes, text and kits. With “As Hole” any shape becomes a hole.") },
+                        { id: "sketch", text: qsTr("Sketch"), icon: "pencil",
+                          tip: qsTr("2D drawing as a base, with measures and rules.") },
+                        { id: "modify", text: qsTr("Modify"), icon: "round",
+                          tip: qsTr("Pull, Round, Hollow and more.") },
+                        { id: "combine", text: qsTr("Combine"), icon: "combine",
+                          tip: qsTr("Merge, subtract or melt bodies together.") },
+                        { id: "repeat", text: qsTr("Repeat"), icon: "pattern",
+                          tip: qsTr("Arrange something several times or mirror it.") },
+                        { id: "decorate", text: qsTr("Decorate"), icon: "sparkle",
+                          tip: qsTr("Emboss, engrave, twist, generators.") },
+                        { id: "check", text: qsTr("Check"), icon: "check",
+                          tip: qsTr("Measure, section, print check, weight.") }
+                    ]
+
+                    delegate: ToolButton3D {
+                        required property var modelData
+
+                        width: paletteColumn.width
+                        text: modelData.text
+                        iconName: modelData.icon
+                        tipText: modelData.tip
+                        onClicked: root.groupRequested(modelData.id)
+                    }
+                }
+            }
+        }
+    }
+
+    // --- view cube and buttons (top right) -------------------------------------------------
+    Column {
+        x: root.width - 112 - 12
+        y: 8
+        spacing: 6
+
+        ViewCube {
+            yaw: root.cameraYaw
+            pitch: root.cameraPitch
+            onViewRequested: view => root.viewRequested(view)
+        }
+
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 6
+
+            IconBtn {
+                iconName: "home"
+                tip: Qt.platform.os === "osx" ? qsTr("Home view (Home)") : qsTr("Home view (Pos1)")
+                framed: true
+                onClicked: root.viewRequested("home")
+            }
+
+            IconBtn {
+                iconName: "max"
+                tip: root.focusMode ? qsTr("Show side bars (Shift+F)") : qsTr("Focus: hide the side bars (Shift+F)")
+                framed: true
+                checkable: true
+                checked: root.focusMode
+                onClicked: root.focusToggled()
+            }
+        }
+    }
+
+    // --- navigation buttons (bottom right): show how the mouse does it, and work by dragging
+    Float {
+        x: root.width - width - 12
+        y: root.height - height - 14
+        width: 42
+        height: 3 * 34 + 2 * 2 + 8
+
+        Column {
+            x: 4
+            y: 4
+            spacing: 2
+
+            NavButton {
+                iconName: "orbit"
+                label: qsTr("Orbit")
+                hint: qsTr("Orbit: drag with the right mouse button – or drag this button")
+                onHintRequested: text => root.navigationHint(text)
+                onDragged: (dx, dy) => root.orbitDragged(dx, dy)
+            }
+
+            NavButton {
+                iconName: "hand"
+                label: qsTr("Pan")
+                hint: qsTr("Pan: drag with the middle mouse button – or drag this button")
+                onHintRequested: text => root.navigationHint(text)
+                onDragged: (dx, dy) => root.panDragged(dx, dy)
+            }
+
+            NavButton {
+                iconName: "zoom"
+                label: qsTr("Zoom")
+                hint: qsTr("Zoom: mouse wheel, towards the pointer – or drag this button")
+                onHintRequested: text => root.navigationHint(text)
+                onDragged: (dx, dy) => root.zoomRequested(Math.pow(1.01, dy))
+            }
+        }
+    }
+}

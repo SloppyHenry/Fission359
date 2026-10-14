@@ -65,6 +65,7 @@ public:
         frame.projection = m_snapshot.projection;
         frame.pixelsPerMillimetre = m_snapshot.pixelsPerMillimetre;
         frame.bedVisible = m_snapshot.bedVisible;
+        frame.displayMode = m_snapshot.displayMode;
         frame.palette = m_snapshot.palette;
         m_renderer->draw(cb, renderTarget(), frame);
         if (m_item != nullptr) {
@@ -91,10 +92,11 @@ Viewport3D::Viewport3D(QQuickItem* parent) : QQuickRhiItem(parent) {
     setFlag(ItemAcceptsInputMethod, false);
 
     m_scene = std::make_shared<render::RenderScene>();
+    m_shown = m_scene;
     const render::BedSpec bed = m_scene->bed;
     m_camera.setViewportSize(QSizeF(800.0, 600.0));
     m_camera.frame({-0.5F * bed.sizeX, -0.5F * bed.sizeY, 0.0F},
-                   {0.5F * bed.sizeX, 0.5F * bed.sizeY, 40.0F});
+                   {0.5F * bed.sizeX, 0.5F * bed.sizeY, 0.0F});
 
     m_animation.setDuration(kAnimationMilliseconds);
     m_animation.setEasingCurve(QEasingCurve::OutCubic);
@@ -134,9 +136,45 @@ render::ViewPalette Viewport3D::palette() const {
 
 void Viewport3D::setScene(std::shared_ptr<const render::RenderScene> scene) {
     m_scene = std::move(scene);
-    ++m_sceneVersion;
+    m_bodyVisible.assign(m_scene ? m_scene->bodies.size() : 0, true);
+    rebuildVisibleScene();
     emit sceneChanged();
     update();
+}
+
+void Viewport3D::rebuildVisibleScene() {
+    if (m_scene && std::find(m_bodyVisible.begin(), m_bodyVisible.end(), false) != m_bodyVisible.end()) {
+        auto shown = std::make_shared<render::RenderScene>();
+        shown->bed = m_scene->bed;
+        for (std::size_t i = 0; i < m_scene->bodies.size(); ++i) {
+            if (m_bodyVisible[i]) {
+                shown->bodies.push_back(m_scene->bodies[i]);
+            }
+        }
+        m_shown = std::move(shown);
+    } else {
+        m_shown = m_scene;
+    }
+    ++m_sceneVersion;
+}
+
+void Viewport3D::setBodyVisible(int index, bool visible) {
+    if (index < 0 || static_cast<std::size_t>(index) >= m_bodyVisible.size() ||
+        m_bodyVisible[static_cast<std::size_t>(index)] == visible) {
+        return;
+    }
+    m_bodyVisible[static_cast<std::size_t>(index)] = visible;
+    rebuildVisibleScene();
+    update();
+}
+
+void Viewport3D::setDisplayMode(const QString& mode) {
+    if (m_displayMode != mode && (mode == QLatin1String("wire") || mode == QLatin1String("solid") ||
+                                  mode == QLatin1String("color"))) {
+        m_displayMode = mode;
+        emit displayModeChanged();
+        update();
+    }
 }
 
 int Viewport3D::triangleCount() const {
@@ -295,7 +333,10 @@ void Viewport3D::geometryChange(const QRectF& newGeometry, const QRectF& oldGeom
 
 Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect) {
     Snapshot snapshot;
-    snapshot.scene = m_scene;
+    snapshot.scene = m_shown ? m_shown : m_scene;
+    snapshot.displayMode = m_displayMode == QLatin1String("wire")    ? render::DisplayMode::wireframe
+                           : m_displayMode == QLatin1String("solid") ? render::DisplayMode::solid
+                                                                      : render::DisplayMode::colors;
     snapshot.palette = palette();
     snapshot.view = m_camera.view();
     snapshot.projection = m_camera.projection(aspect);

@@ -33,8 +33,9 @@ struct Params {
     float shadowColor[4];
     float params[4];
     float bedSize[4];
+    float bodyOverride[4];
 };
-static_assert(sizeof(Params) == 64 * 3 + 16 * 10, "Params must match the std140 block");
+static_assert(sizeof(Params) == 64 * 3 + 16 * 11, "Params must match the std140 block");
 
 struct MeshVertex {
     float position[3];
@@ -436,7 +437,15 @@ void SceneRenderer::writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* 
     p.params[1] = 1.0F / float(kShadowSize);
     p.params[2] = fine ? 5.0F : 10.0F;
     p.params[3] = fine ? 10.0F : 50.0F;
-    p.bedSize[2] = m_hasShadow ? 1.0F : 0.0F;
+    // Wireframe draws no surfaces, so there is nothing that casts a shadow.
+    p.bedSize[2] = m_hasShadow && frame.displayMode != DisplayMode::wireframe ? 1.0F : 0.0F;
+    if (frame.displayMode == DisplayMode::solid) {
+        // "Solid": one neutral colour for all bodies, the colours of the bodies are off.
+        p.bodyOverride[0] = 0.84F;
+        p.bodyOverride[1] = 0.86F;
+        p.bodyOverride[2] = 0.89F;
+        p.bodyOverride[3] = 1.0F;
+    }
     updates->updateDynamicBuffer(buffer, 0, sizeof(Params), &p);
 }
 
@@ -463,7 +472,7 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
         cb->setVertexInput(0, 1, &input, m_bedIndices.get(), 0, QRhiCommandBuffer::IndexUInt32);
         cb->drawIndexed(static_cast<quint32>(m_bedIndexCount));
     }
-    if (m_bodyVertices && m_bodyIndexCount > 0) {
+    if (m_bodyVertices && m_bodyIndexCount > 0 && frame.displayMode != DisplayMode::wireframe) {
         const QRhiCommandBuffer::VertexInput input(m_bodyVertices.get(), 0);
         cb->setGraphicsPipeline(m_bodyPipeline.get());
         cb->setShaderResources(m_srb.get());

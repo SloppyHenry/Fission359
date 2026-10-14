@@ -23,6 +23,7 @@ layout(std140, binding = 0) uniform Params {
     vec4 shadowColor;
     vec4 params;
     vec4 bedSize;
+    vec4 bodyOverride; // rgb, a = 1: draw every body in this colour
 } u;
 
 layout(binding = 1) uniform sampler2D shadowMap;
