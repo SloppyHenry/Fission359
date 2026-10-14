@@ -33,4 +33,10 @@ target_include_directories(fission_smoke_tests SYSTEM PRIVATE
   "${FISSION_LIB3MF_CPP_INCLUDE_DIR}")
 fission_apply_compiler_options(fission_smoke_tests)
 
+# GCC 15 reports a false positive for Eigen's fixed-size 2x2 solves (-Warray-bounds inside
+# Eigen's own SSE code, e.g. on Ubuntu 26.04). Not our code, so only this file is exempt.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set_source_files_properties(smoke_eigen.cpp PROPERTIES COMPILE_OPTIONS "-Wno-array-bounds")
+endif()
+
 catch_discover_tests(fission_smoke_tests TEST_PREFIX "smoke: ")
