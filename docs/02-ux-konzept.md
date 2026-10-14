@@ -346,7 +346,7 @@ UI-Texte verwenden ausschließlich die Begriffe in der mittleren Spalte. Englisc
 ## 14. Barrierefreiheit
 
 - Vollständig per Tastatur bedienbar (Fokus sichtbar, Tab-Reihenfolge)
-- UI-Skalierung 80–200 %, Mindest-Schriftgröße 12 pt
+- UI-Skalierung 80–200 %; Mindest-Schriftgröße 12 px bei 100 % (Design-System, [08-gestaltung.md](08-gestaltung.md) §3), mit der Skalierung bis 200 % entsprechend größer
 - Kontraste nach WCAG AA; Status nie nur über Farbe (immer auch Symbol oder Text)
 - Screenreader-Beschriftungen für alle Bedienelemente (Qt Accessibility)
 
