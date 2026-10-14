@@ -8,11 +8,11 @@ import Qt.labs.platform
 MenuBar {
     id: bar
 
-    property var menus: []
+    property var menuData: []
     signal actionTriggered(string id)
 
     Instantiator {
-        model: bar.menus
+        model: bar.menuData
 
         delegate: Menu {
             id: menu

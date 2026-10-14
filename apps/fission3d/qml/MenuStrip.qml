@@ -109,6 +109,7 @@ Rectangle {
         readonly property real free: root.width - 24 - left.width - right.width - 24
         width: Math.max(160, Math.min(440, free))
         x: 12 + left.width + 12 + Math.max(0, (free - width) / 2)
+        visible: free >= 140 // very narrow windows: the search moves to the keyboard (Ctrl+K)
         anchors.verticalCenter: parent.verticalCenter
         height: 28
         hoverEnabled: true

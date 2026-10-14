@@ -215,7 +215,11 @@ int main(int argc, char* argv[]) {
         });
     }
 
-    const auto reportFirstFrame = [&, mainEntered, ageAtMain] {
+    const auto reportFirstFrame = [&, mainEntered, ageAtMain, reported = std::make_shared<bool>(false)] {
+        if (*reported) {
+            return;
+        }
+        *reported = true;
         const double sinceMain = std::chrono::duration<double, std::milli>(
                                      std::chrono::steady_clock::now() - mainEntered)
                                      .count();

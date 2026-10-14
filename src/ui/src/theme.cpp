@@ -4,6 +4,7 @@
 #include "fission/ui/theme.h"
 
 #include <QGuiApplication>
+#include <QtGlobal>
 #include <QStyleHints>
 
 namespace fission::ui {
@@ -51,14 +52,20 @@ void Theme::rebuild() {
 }
 
 QStringList Theme::fontFamilies() {
-    // IBM Plex Sans ships with the program; the rest is the fallback of docs/08-gestaltung.md §3.
-    return {QStringLiteral("IBM Plex Sans"), QStringLiteral("SF Pro Text"),
-            QStringLiteral("Cantarell"), QStringLiteral("Noto Sans")};
+    // IBM Plex Sans ships with the program. If it cannot be loaded, the system font takes over
+    // (docs/08-gestaltung.md §3): San Francisco on macOS, Cantarell or Noto Sans on Linux.
+#if defined(Q_OS_MACOS)
+    return {QStringLiteral("IBM Plex Sans"), QStringLiteral(".AppleSystemUIFont"),
+            QStringLiteral("Helvetica Neue")};
+#else
+    return {QStringLiteral("IBM Plex Sans"), QStringLiteral("Cantarell"),
+            QStringLiteral("Noto Sans")};
+#endif
 }
 
 QStringList Theme::monoFamilies() {
-    return {QStringLiteral("IBM Plex Mono"), QStringLiteral("SF Mono"),
-            QStringLiteral("DejaVu Sans Mono")};
+    return {QStringLiteral("IBM Plex Mono"), QStringLiteral("DejaVu Sans Mono"),
+            QStringLiteral("Menlo")};
 }
 
 } // namespace fission::ui

@@ -136,7 +136,7 @@ Window {
         active: root.isMac
         source: "NativeMenuBar.qml"
         onLoaded: {
-            item.menus = Qt.binding(() => root.menuModel)
+            item.menuData = Qt.binding(() => root.menuModel)
             item.actionTriggered.connect(root.run)
         }
     }
