@@ -7,7 +7,7 @@
 ---
 
 ### AP-1.1 Dokumentmodell und Feature-Graph
-**Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-0.5, AP-0.6
+**Status:** in Arbeit · **Größe:** L · **Abhängigkeiten:** AP-0.5, AP-0.6
 
 **Umfang:**
 - `Document`, `Feature`, `Value`, `Body`, `Parameter` gemäß [Architektur §3](../03-architektur.md#3-core-datenmodell)
@@ -21,6 +21,22 @@
 - [ ] Eine Parameteränderung rechnet nur betroffene Features neu (per Test nachgewiesen)
 - [ ] Eine laufende Neuberechnung bricht bei einer neuen Änderung innerhalb von ≤ 50 ms ab
 - [ ] `"25,5 + 1 in"` ergibt `50,9 mm`; `"a = b, b = a"` liefert einen verständlichen Zyklusfehler
+
+#### Zerlegung (2026-10-14, vom Product Owner bestätigt)
+Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpkg.json` bleibt unberührt).
+
+| Teil | Status | Inhalt |
+|---|---|---|
+| **a) Werte und Ausdrücke** | offen | AST-Parser mit Fehlerposition, `min`, `max`, `round`, `sin`, `cos`, `sqrt`, Abhängigkeiten zwischen benannten Maßen, Zykluserkennung, Einheiten-Art (Länge/Winkel/Zahl); `evaluateExpression` bleibt als Hülle für das Zahlenfeld; Messung der Testabdeckung |
+| **b) Dokument und Features** | offen | `Document`, `Parameter`, `Feature`, `Body`, Feature-Typ-Registry; `GeometryKernel`-Schnittstelle in der GAL (ADR-0008); `PersistentRef` als Datentyp und Namens-Vertrag; Feature-Typen `box` und `cylinder` |
+| **c) Neuberechnung** | offen | Abhängigkeits-Graph, Dirty-Propagation, Ergebnis-Cache, Worker mit Abbruch, Status je Feature, Ereignisse |
+| **d) Anbindung an die Oberfläche** | offen | `DocumentModel`; der Demo-Würfel wird ein `box`-Feature im Dokument; Rezept-Platzhalter und Maß-Änderung sichtbar |
+
+**Festlegungen**
+- **Kernel-Zugriff:** Features rufen den Kernel über eine Schnittstelle der GAL auf, die App reicht die OCCT-Umsetzung hinein.
+- **Texte:** `describe()` und Statusmeldungen liefern Schlüssel und Werte, nie fertigen Text; die Oberfläche übersetzt (Regel 4).
+- **Abbruch ≤ 50 ms** heißt: Die Engine nimmt den neuen Auftrag sofort an und verwirft das alte Ergebnis; lange Schritte prüfen ein Abbruch-Token. Eine einzelne Kernel-Operation läuft im Hintergrund zu Ende, ohne die Oberfläche zu blockieren. Mit echten Kernel-Operationen wird das ab AP-1.7 neu bewertet.
+- **Mehrere Dokumente:** Das Modell kennt keinen globalen Zustand; ein Test belegt zwei Dokumente parallel. Das Verdrahten von „Neu“ und mehreren Tabs gehört in AP-1.11.
 
 ---
 
@@ -58,6 +74,10 @@
 - [ ] Ein Loch Ø 3 mm zeigt bei bildschirmfüllendem Zoom keine sichtbaren Facetten (Screenshot-Test)
 - [ ] Alle Voreinstellungen sind in einem Test-Skript durchgespielt
 - [ ] Trackpad-Navigation fühlt sich auf macOS „wie Shapr3D/Fusion“ an (subjektiver Check durch 3 Personen)
+
+**Stand nach AP-0.8 (2026-10-14):**
+- *Schon da:* Renderer mit Körpern, mattem Licht, Schatten und Kantenlinien; Druckbett mit Raster (fest 256 × 256 mm, noch nicht aus dem Druckerprofil); Kamera mit Maus und Trackpad (Orbit, Pan, Zoom zum Zeiger); Perspektive/Ortho; Standardansichten mit Übergang; Ansichtswürfel; „Alles zeigen“ per Haus-Symbol.
+- *Offen:* Rendern mehrerer Körper aus dem Dokument inkrementell (AP-1.1d legt den Anfang), SSAO, adaptive Feinheit, Doppelklick auf Fläche, klickbare Würfel-Kanten/-Ecken, Maus-Voreinstellungen (Fusion, Tinkercad, Blender, SketchUp), 2-Mio.-Dreiecke-Messung, Drucker-Bettgröße.
 
 ---
 
@@ -195,6 +215,10 @@
 **Akzeptanzkriterien:**
 - [ ] Sprachwechsel ohne Neustart
 - [ ] Keine hartkodierten UI-Texte (Prüfskript in der CI)
+
+**Stand nach AP-0.8 (2026-10-14):**
+- *Schon da:* Fenster nach Mockup, Menüs (Mac: Systemmenüleiste, Linux: im Fenster), Deutsch und Englisch mit Umschalten zur Laufzeit (`--language`), `qsTr` mit Übersetzungstest in der CI, Hell/Dunkel und Akzentfarbe (Theme), Über-Fenster, Protokolldatei.
+- *Offen:* Erststart-Assistent, Einstellungen (Einheit, Nachkommastellen, Maus-Stil, UI-Skalierung, Autosave), Druckerprofile, Startbildschirm, Tastenkürzel-Konzept, **„Neu“ und mehrere Dokument-Tabs verdrahten** (aus AP-1.1 hierher verschoben; das Dokumentmodell kann mehrere Dokumente).
 
 ---
 
