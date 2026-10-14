@@ -36,6 +36,12 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
+      "name": "macos-coverage",
+      "displayName": "macOS Debug + test coverage",
+      "inherits": "macos-base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "FISSION_COVERAGE": "ON" }
+    },
+    {
       "name": "macos-asan",
       "displayName": "macOS Debug + AddressSanitizer/UBSan",
       "inherits": "macos-base",
@@ -54,6 +60,12 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
+      "name": "linux-coverage",
+      "displayName": "Linux Debug + test coverage",
+      "inherits": "linux-base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "FISSION_COVERAGE": "ON" }
+    },
+    {
       "name": "linux-asan",
       "displayName": "Linux Debug + AddressSanitizer/UBSan",
       "inherits": "linux-base",
@@ -64,9 +76,11 @@
     { "name": "macos-debug", "configurePreset": "macos-debug" },
     { "name": "macos-release", "configurePreset": "macos-release" },
     { "name": "macos-asan", "configurePreset": "macos-asan" },
+    { "name": "macos-coverage", "configurePreset": "macos-coverage" },
     { "name": "linux-debug", "configurePreset": "linux-debug" },
     { "name": "linux-release", "configurePreset": "linux-release" },
-    { "name": "linux-asan", "configurePreset": "linux-asan" }
+    { "name": "linux-asan", "configurePreset": "linux-asan" },
+    { "name": "linux-coverage", "configurePreset": "linux-coverage" }
   ],
   "testPresets": [
     {

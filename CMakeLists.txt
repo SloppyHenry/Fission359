@@ -20,6 +20,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(FISSION_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 option(FISSION_BUILD_TESTS "Build the test suite" ON)
 set(FISSION_SANITIZE "" CACHE STRING "Sanitizers to enable, e.g. \"address;undefined\"")
+option(FISSION_COVERAGE "Instrument the code for test coverage (scripts/coverage)" OFF)
 
 include(FissionCompilerOptions)
 include(FissionLayers)
