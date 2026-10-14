@@ -418,7 +418,7 @@
 ---
 
 ### AP-0.7 Paketierung: Hallo-Welt
-**Status:** Review (2026-10-13; wartet auf deinen Test des `.dmg` auf einem Mac) · **Größe:** M · **Abhängigkeiten:** AP-0.3
+**Status:** erledigt (2026-10-14; `.dmg` vom Product Owner auf sauberem macOS 14 getestet) · **Größe:** M · **Abhängigkeiten:** AP-0.3
 
 **Ziel:** Signieren, Notarisieren und Paketieren früh klären, nicht erst vor dem Release.
 
@@ -433,7 +433,7 @@
 
 **Akzeptanzkriterien:**
 - [x] `.dmg` mit ad-hoc-signierter App startet auf einem Mac nach dem dokumentierten Gatekeeper-Umweg
-  *(auf dem Entwicklungs-Mac geprüft, Download-Quarantäne simuliert; ein wirklich sauberer Mac steht noch aus)*
+  *(2026-10-14 vom Product Owner in einer virtuellen Maschine mit sauberem macOS 14.8.7 durchgespielt: Gatekeeper blockiert, nach „Open Anyway“ öffnet sich die App; zuvor auf dem Entwicklungs-Mac mit simulierter Quarantäne geprüft)*
 - [x] Der Notarisierungs-Schritt existiert in der CI, ist ohne Secrets übersprungen und dokumentiert
 - [x] AppImage startet auf Ubuntu 24.04 und Fedora (Wayland und X11)
   *(geändert am 2026-10-13 vom Product Owner: Ubuntu 22.04 entfällt, weil das glibc des CI-Bauplatzes zu neu ist; ältere Systeme bauen selbst, siehe Backlog B-15)*
@@ -477,6 +477,8 @@
 5. Linux: `package-Linux` laden, `chmod +x Fission3D-*.AppImage && ./Fission3D-*.AppImage`.
 
 **Einschränkungen, Annahmen, Folge-Arbeiten**
+- Das `.dmg` ist auf macOS 14 (virtuell) getestet; macOS 15 und neuer verhalten sich beim Gatekeeper ähnlich, wurden aber nicht
+  einzeln geprüft.
 - Das `.dmg` braucht ohne Notarisierung (kostenloses Konto) jedes Mal den Gatekeeper-Umweg. Die Pipeline für Developer ID
   und Notarisierung wird mit sechs Secrets aktiv (bezahltes Konto, 99 €/Jahr).
 - **Lokal gebaute Pakete** laufen nur auf dem eigenen System: auf dem Mac mit Homebrew-Qt verlangen sie die macOS-Version
