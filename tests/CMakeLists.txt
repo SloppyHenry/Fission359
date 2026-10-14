@@ -81,6 +81,10 @@ if(APPLE)
 elseif(FISSION_XVFB_RUN)
   set(_fission_gui_runner ${FISSION_XVFB_RUN} -a -s "-screen 0 1280x800x24")
 endif()
+set(_fission_native_menu_flag "")
+if(APPLE)
+  set(_fission_native_menu_flag --native-menu-bar)
+endif()
 if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
   foreach(_theme dark light)
     add_test(NAME app_window_${_theme}
@@ -91,6 +95,7 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
       ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 FIXTURES_SETUP window_${_theme})
     add_test(NAME app_window_${_theme}_matches_design
       COMMAND fission_screenshot_check "${CMAKE_BINARY_DIR}/window-${_theme}.png" ${_theme} --expect-3d
+              ${_fission_native_menu_flag}
               --reference "${CMAKE_CURRENT_SOURCE_DIR}/reference/mockup-${_theme}.png")
     set_tests_properties(app_window_${_theme}_matches_design PROPERTIES
       ENVIRONMENT "QT_QPA_PLATFORM=offscreen" FIXTURES_REQUIRED window_${_theme} TIMEOUT 60)

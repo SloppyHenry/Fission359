@@ -59,10 +59,13 @@ int main(int argc, char** argv) {
     }
     const bool dark = std::strcmp(argv[2], "dark") == 0;
     bool expect3d = false;
+    bool nativeMenuBar = false; // macOS: the menus are in the system menu bar, not in the picture
     const char* referencePath = nullptr;
     for (int i = 3; i < argc; ++i) {
         if (std::strcmp(argv[i], "--expect-3d") == 0) {
             expect3d = true;
+        } else if (std::strcmp(argv[i], "--native-menu-bar") == 0) {
+            nativeMenuBar = true;
         } else if (std::strcmp(argv[i], "--reference") == 0 && i + 1 < argc) {
             referencePath = argv[++i];
         }
@@ -138,16 +141,25 @@ int main(int argc, char** argv) {
         struct Region {
             const char* name;
             int x0, y0, x1, y1;
+            bool bottomAnchored; // the picture may be lower than the reference (smaller screen)
         };
         const int viewTop = 92;
         const int statusTop = h - 28;
-        const Region regions[] = {{"menu bar", 0, 0, w, 40},
-                                  {"document bar", 0, 40, w, viewTop},
-                                  {"left side bar", 0, viewTop, 248, statusTop},
-                                  {"right side bar", w - 300, viewTop, w, statusTop},
-                                  {"status line", 0, statusTop, w, h}};
+        // The lower end of the side bars (the recipe) sits at the bottom edge: it is left out,
+        // so that a window that is a little lower than the reference can still be compared.
+        const int panelBottom = statusTop - 200;
+        const Region regions[] = {{"menu bar", 0, 0, w, 40, false},
+                                  {"document bar", 0, 40, w, viewTop, false},
+                                  {"left side bar", 0, viewTop, 248, panelBottom, false},
+                                  {"right side bar", w - 300, viewTop, w, panelBottom, false},
+                                  {"status line", 0, statusTop, w, h, true}};
+        const int heightDifference = reference.height() - h;
         constexpr int kBlock = 8;
         for (const Region& region : regions) {
+            if (nativeMenuBar && std::strcmp(region.name, "menu bar") == 0) {
+                continue;
+            }
+            const int referenceShift = region.bottomAnchored ? heightDifference : 0;
             int blocks = 0;
             int different = 0;
             for (int y = region.y0; y + kBlock <= region.y1; y += kBlock) {
@@ -156,7 +168,7 @@ int main(int argc, char** argv) {
                     for (int j = 0; j < kBlock; ++j) {
                         for (int i = 0; i < kBlock; ++i) {
                             const QColor a = shot.at(x + i, y + j);
-                            const QColor b = reference.at(x + i, y + j);
+                            const QColor b = reference.at(x + i, y + j + referenceShift);
                             sums[0][0] += a.red();
                             sums[0][1] += a.green();
                             sums[0][2] += a.blue();
