@@ -39,7 +39,8 @@
         },
         "qtdeclarative",
         "qtshadertools",
-        "qtsvg"
+        "qtsvg",
+        { "name": "qttools", "default-features": false, "features": ["linguist"] }
       ]
     }
   }

@@ -330,7 +330,7 @@ def render(components, inventory):
     for c in sorted(direct, key=lambda c: c["name"].lower()):
         purpose = c.get("purpose") or purposes.get(c["name"], "")
         rows.append([c["name"], c["version"], purpose, c["license"]])
-    rows.append(["Qt 6 (qtbase, qtdeclarative, qtshadertools, qtsvg)", "≥ 6.8",
+    rows.append(["Qt 6 (qtbase, qtdeclarative, qtshadertools, qtsvg; qttools for lrelease at build time)", "≥ 6.8",
                  purposes.get("qt", "UI and rendering abstraction"),
                  "LGPL-3.0-only OR GPL-3.0-only (we use it as LGPL, dynamically linked)"])
     rows.append(["Boost.Graph (header only)", "", purposes.get("boost-graph", ""), "BSL-1.0"])

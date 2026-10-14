@@ -11,7 +11,7 @@ Ubuntu-24.04-Container-Prüfung. A war zuletzt nicht erreichbar.
 |---|---|
 | System | macOS 27.0, Apple Silicon (arm64) |
 | Compiler | AppleClang 21 (Xcode 27) |
-| Qt | 6.11.2 (Homebrew: `qtbase`, `qtdeclarative`, `qtshadertools`, `qtsvg`) |
+| Qt | 6.11.2 (Homebrew: `qtbase`, `qtdeclarative`, `qtshadertools`, `qtsvg`, `qttools`) |
 | Build-Werkzeuge | CMake 4.4, Ninja 1.13, pkg-config (Homebrew); Bibliotheken über vcpkg |
 | Signierung | nur kostenloses Apple-Developer-Konto: ad hoc bzw. lokal, keine Notarisierung (siehe AP-0.7) |
 
@@ -26,7 +26,7 @@ Ubuntu-24.04-Container-Prüfung. A war zuletzt nicht erreichbar.
 | Sitzungen | KDE Plasma, Wayland **und** X11 installiert |
 | Compiler | GCC 15.2 |
 | Build-Werkzeuge | CMake 4.2.3, Ninja 1.13, clang-format 21, clang-tidy 21, ccache 4.12 (apt) |
-| Qt | 6.10.2 (apt: `qt6-base-dev`, `qt6-declarative-dev`, `qt6-shadertools-dev`, `qt6-svg-dev`, QML-Module) |
+| Qt | 6.10.2 (apt: `qt6-base-dev`, `qt6-declarative-dev`, `qt6-shadertools-dev`, `qt6-svg-dev`, `qt6-tools-dev`, `qt6-tools-dev-tools`, `qt6-l10n-tools`, QML-Module) |
 | Catch2 | 3.7.1 (apt) |
 | Rechte | SSH-Zugang per Schlüssel, `sudo` ohne Passwort |
 
