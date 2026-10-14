@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import Fission3D.View
 
 Window {
     id: root
@@ -12,10 +13,8 @@ Window {
     color: "#2b2d31"
     title: qsTr("Fission3D")
 
-    Text {
-        anchors.centerIn: parent
-        text: root.title
-        color: "#d8dae0"
-        font.pixelSize: 32
+    Viewport3D {
+        objectName: "viewport"
+        anchors.fill: parent
     }
 }
