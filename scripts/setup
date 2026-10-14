@@ -46,7 +46,7 @@ version_at_least() { # version_at_least 6.10.2 6 8
 # ---------------------------------------------------------------- macOS (Homebrew)
 # Qt kommt auf dem Mac aus Homebrew (schnell); ohne diese Pakete baut vcpkg Qt selbst (langsam).
 # autoconf/automake/libtool: vcpkg builds some small libraries (libb2, a Qt dependency) from source.
-REQUIRED_BREW="cmake ninja pkgconf git-lfs autoconf autoconf-archive automake libtool qtbase qtdeclarative qtshadertools qtsvg"
+REQUIRED_BREW="cmake ninja pkgconf git-lfs autoconf autoconf-archive automake libtool qtbase qtdeclarative qtshadertools qtsvg qttools"
 DEV_BREW="clang-format ccache llvm"
 
 setup_macos() {
@@ -115,7 +115,7 @@ qt_version_macos() { brew list --versions qtbase 2>/dev/null | awk '{print $2}';
 BASE_APT="build-essential cmake ninja-build pkg-config git git-lfs python3 python3-venv curl zip unzip tar \
 autoconf autoconf-archive automake libtool libltdl-dev"
 SYSTEM_QT_APT="qt6-base-dev qt6-base-private-dev qt6-declarative-dev qt6-declarative-dev-tools qt6-shadertools-dev \
-qt6-svg-dev qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls \
+qt6-svg-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls \
 qml6-module-qtquick-templates qml6-module-qtquick-layouts"
 # Needed when vcpkg has to build Qt itself (Linux distribution without Qt >= 6.8).
 VCPKG_QT_APT="bison flex gperf libx11-dev libxext-dev libxi-dev \

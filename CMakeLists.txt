@@ -26,7 +26,8 @@ include(FissionLayers)
 
 # Qt is only allowed in the layers listed in cmake/FissionLayers.cmake.
 # (Where it comes from - system or vcpkg - is decided in cmake/FissionVcpkg.cmake.)
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick)
+# LinguistTools provides lrelease/lupdate (translations: qsTr + .ts files, German and English).
+find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick LinguistTools)
 qt_standard_project_setup(REQUIRES 6.8)
 
 include(FissionDependencies)

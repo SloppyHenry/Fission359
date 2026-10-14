@@ -66,6 +66,13 @@ Alle Kernbibliotheken (OpenCASCADE, Manifold, Eigen, lib3mf, …) sollen auf mac
 - **Revisionskriterium:** Tritt im Hybrid-Betrieb ein Fehler auf, der nur dort vorkommt, wird `auto`
   auf Linux zu `vcpkg` geändert. Wird PlaneGCS in vcpkg aufgenommen, ersetzen wir `third_party/planegcs`.
 
+## Ergänzung (2026-10-14, AP-0.8): Qt-Übersetzungswerkzeuge
+Für Übersetzungen mit Qt Linguist (`qsTr` + `.ts`-Dateien, Deutsch und Englisch) kommt `qttools` dazu
+(nur `lrelease`/`lupdate` zur Bauzeit, nichts davon wird ausgeliefert): Feature `linguist` in `vcpkg.json`,
+Homebrew `qttools`, apt `qt6-tools-dev`, `qt6-tools-dev-tools`, `qt6-l10n-tools`. Das Feature zieht in
+vcpkg `qtbase[widgets]` nach, ändert damit den Hash von Qt und aller Qt-Pakete: Der Zwischenspeicher der CI
+wird einmal komplett neu gefüllt.
+
 ## Belege
 - Bauzeiten, Testläufe und Plattformen: Abschlussvermerk AP-0.2 in
   docs/arbeitspakete/phase-0-fundament.md.

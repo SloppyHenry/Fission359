@@ -33,7 +33,7 @@ license field are covered by `third_party/inventory.json` (with the reason for e
 | planegcs | FreeCAD 1.1.4 | 2D sketch constraint solver (vendored in third_party/planegcs) | LGPL-2.1-or-later |
 | spdlog | 1.17.0#1 | Logging | MIT |
 | stb | 2026-08-02 | Image loading and writing | MIT OR Unlicense |
-| Qt 6 (qtbase, qtdeclarative, qtshadertools, qtsvg) | ≥ 6.8 | UI (Qt Quick) and rendering abstraction (RHI) | LGPL-3.0-only OR GPL-3.0-only (we use it as LGPL, dynamically linked) |
+| Qt 6 (qtbase, qtdeclarative, qtshadertools, qtsvg; qttools for lrelease at build time) | ≥ 6.8 | UI (Qt Quick) and rendering abstraction (RHI) | LGPL-3.0-only OR GPL-3.0-only (we use it as LGPL, dynamically linked) |
 | Boost.Graph (header only) |  | Graph algorithms used by PlaneGCS | BSL-1.0 |
 
 ### Transitive dependencies
