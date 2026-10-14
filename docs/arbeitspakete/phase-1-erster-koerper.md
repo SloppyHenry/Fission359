@@ -7,7 +7,7 @@
 ---
 
 ### AP-1.1 Dokumentmodell und Feature-Graph
-**Status:** Review (2026-10-14, PR #14–#18) · **Größe:** L · **Abhängigkeiten:** AP-0.5, AP-0.6
+**Status:** erledigt (2026-10-14, PR #14–#18; vom Product Owner ausprobiert) · **Größe:** L · **Abhängigkeiten:** AP-0.5, AP-0.6
 
 **Umfang:**
 - `Document`, `Feature`, `Value`, `Body`, `Parameter` gemäß [Architektur §3](../03-architektur.md#3-core-datenmodell)
@@ -27,10 +27,10 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 
 | Teil | Status | Inhalt |
 |---|---|---|
-| **a) Werte und Ausdrücke** | Review (PR #15) | AST-Parser mit Fehlerposition, `min`, `max`, `round`, `sin`, `cos`, `sqrt`, Abhängigkeiten zwischen benannten Maßen, Zykluserkennung, Einheiten-Art (Länge/Winkel/Zahl); `evaluateExpression` bleibt als Hülle für das Zahlenfeld; Messung der Testabdeckung |
-| **b) Dokument und Features** | Review (PR #16) | `Document`, `Parameter`, `Feature`, `Body`, Feature-Typ-Registry; `GeometryKernel`-Schnittstelle in der GAL (ADR-0008); `PersistentRef` als Datentyp und Namens-Vertrag; Feature-Typen `box` und `cylinder` |
-| **c) Neuberechnung** | Review (PR #17) | Abhängigkeits-Graph, Dirty-Propagation, Ergebnis-Cache, Worker mit Abbruch, Status je Feature, Ereignisse |
-| **d) Anbindung an die Oberfläche** | Review (PR #18) | `DocumentModel`; der Demo-Würfel wird ein `box`-Feature im Dokument; Rezept-Platzhalter und Maß-Änderung sichtbar |
+| **a) Werte und Ausdrücke** | erledigt (PR #15) | AST-Parser mit Fehlerposition, `min`, `max`, `round`, `sin`, `cos`, `sqrt`, Abhängigkeiten zwischen benannten Maßen, Zykluserkennung, Einheiten-Art (Länge/Winkel/Zahl); `evaluateExpression` bleibt als Hülle für das Zahlenfeld; Messung der Testabdeckung |
+| **b) Dokument und Features** | erledigt (PR #16) | `Document`, `Parameter`, `Feature`, `Body`, Feature-Typ-Registry; `GeometryKernel`-Schnittstelle in der GAL (ADR-0008); `PersistentRef` als Datentyp und Namens-Vertrag; Feature-Typen `box` und `cylinder` |
+| **c) Neuberechnung** | erledigt (PR #17) | Abhängigkeits-Graph, Dirty-Propagation, Ergebnis-Cache, Worker mit Abbruch, Status je Feature, Ereignisse |
+| **d) Anbindung an die Oberfläche** | erledigt (PR #18) | `DocumentModel`; der Demo-Würfel wird ein `box`-Feature im Dokument; Rezept-Platzhalter und Maß-Änderung sichtbar |
 
 **Festlegungen**
 - **Kernel-Zugriff:** Features rufen den Kernel über eine Schnittstelle der GAL auf, die App reicht die OCCT-Umsetzung hinein.

@@ -8,6 +8,8 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include "fission/core/expression.h"
@@ -94,12 +96,21 @@ struct FeatureDraft {
     int newBodies = 0; ///< How many new bodies the step creates.
 };
 
+/// A step taken out of the recipe, with everything needed to put it back exactly where it was
+/// (same id, same number, same place, same bodies at the same places). Commands use this to
+/// undo and redo adding and removing steps.
+struct RemovedFeature {
+    Feature feature;
+    std::size_t index = 0;
+    std::vector<std::pair<std::size_t, Body>> bodies; ///< Ascending by index.
+};
+
 /// The document: named measures, the recipe (features in order) and the bodies it makes.
 ///
 /// A plain value: copies are independent, so the recompute works on a snapshot while the
 /// interface goes on editing. There is no global state; any number of documents can be open.
-/// The interface changes a document only through commands (AP-1.2); the member functions that
-/// change it are what those commands call.
+/// The interface changes a document only through commands (AP-1.2, `History`); the member
+/// functions that change it are what those commands call.
 class Document {
 public:
     Document() = default;
@@ -113,6 +124,10 @@ public:
     /// Increases with every change; lets others see "did it change since I looked".
     std::uint64_t revision() const noexcept { return revision_; }
 
+    /// True when both documents hold the same content (title, settings, measures, recipe, bodies).
+    /// Revision and id generator state are not content. Used to prove that undo restores a state.
+    bool sameContentAs(const Document& other) const;
+
     // --- named measures -----------------------------------------------------------------
     const std::vector<Parameter>& parameters() const noexcept { return parameters_; }
     const Parameter* findParameter(std::string_view name) const;
@@ -122,6 +137,14 @@ public:
     bool setParameterExpression(std::string_view name, std::string expression);
     bool renameParameter(std::string_view name, std::string newName);
     bool removeParameter(std::string_view name);
+    /// Position of a measure in the list, or nullopt.
+    std::optional<std::size_t> indexOfParameter(std::string_view name) const;
+    /// Removes the measure at a position (exact, even when names repeat).
+    bool removeParameterAt(std::size_t index);
+    /// Renames the measure at a position (exact, even when names repeat).
+    bool setParameterNameAt(std::size_t index, std::string newName);
+    /// Puts a measure back at a given place (undo of removing it).
+    void insertParameter(std::size_t index, Parameter parameter);
     std::vector<MeasureDefinition> measureDefinitions() const;
 
     // --- recipe --------------------------------------------------------------------------
@@ -138,6 +161,14 @@ public:
     /// missing input; `dependentsOf` tells beforehand who that will be.
     bool removeFeature(const FeatureId& id);
     std::vector<FeatureId> dependentsOf(const FeatureId& id) const;
+    /// Like `removeFeature`, but hands back what is needed to restore the step exactly.
+    std::optional<RemovedFeature> takeFeature(const FeatureId& id);
+    /// Puts a step taken out with `takeFeature` back where it was.
+    void restoreFeature(RemovedFeature removed);
+    /// The number the last new step got. Commands set it back on undo so that numbers stay
+    /// gapless in what the person sees; removing a step alone never frees its number.
+    int lastFeatureNumber() const noexcept { return lastFeatureNumber_; }
+    void setLastFeatureNumber(int number) noexcept { lastFeatureNumber_ = number; }
 
     bool setFeatureValue(const FeatureId& id, std::string_view name, std::string expression);
     bool setFeatureLabel(const FeatureId& id, std::string label);
