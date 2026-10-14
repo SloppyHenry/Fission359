@@ -7,6 +7,18 @@
       "purpose": "2D sketch constraint solver (vendored in third_party/planegcs)"
     },
     {
+      "name": "ibm-plex-sans",
+      "version": "3.005",
+      "license": "OFL-1.1",
+      "purpose": "Interface font (bundled in the program: apps/fission3d/resources/fonts)"
+    },
+    {
+      "name": "ibm-plex-mono",
+      "version": "2.005",
+      "license": "OFL-1.1",
+      "purpose": "Font for numbers and measures (bundled in the program: apps/fission3d/resources/fonts)"
+    },
+    {
       "name": "dejavu-sans",
       "version": "2.37",
       "license": "Bitstream-Vera",

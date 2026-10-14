@@ -64,8 +64,11 @@ QStringList Theme::fontFamilies() {
 }
 
 QStringList Theme::monoFamilies() {
-    return {QStringLiteral("IBM Plex Mono"), QStringLiteral("DejaVu Sans Mono"),
-            QStringLiteral("Menlo")};
+#if defined(Q_OS_MACOS)
+    return {QStringLiteral("IBM Plex Mono"), QStringLiteral("Menlo")};
+#else
+    return {QStringLiteral("IBM Plex Mono"), QStringLiteral("DejaVu Sans Mono")};
+#endif
 }
 
 } // namespace fission::ui

@@ -500,7 +500,7 @@
 ---
 
 ### AP-0.8 App-Gerüst mit Würfel
-**Status:** offen · **Größe:** S · **Abhängigkeiten:** AP-0.4, AP-0.7
+**Status:** Review · **Größe:** S · **Abhängigkeiten:** AP-0.4, AP-0.7
 
 **Umfang:**
 - Hauptfenster mit Platzhalter-Panels (Rezept, Eigenschaften, Hinweiszeile) gemäß UX-Layout
@@ -508,5 +508,77 @@
 - Logging (spdlog) in Datei im Nutzerverzeichnis; Versions-Info im Über-Dialog
 
 **Akzeptanzkriterien:**
-- [ ] Meilenstein-Demo erfüllt (siehe oben)
-- [ ] Startzeit < 3 s gemessen und im Log ausgegeben
+- [x] Meilenstein-Demo erfüllt (siehe oben)
+  *(`.dmg` lokal gebaut und gestartet, AppImage aus der CI; am echten Bildschirm hat bisher nur der Entwicklungs-Mac
+  das Fenster gesehen, Linux nur in Xvfb)*
+- [x] Startzeit < 3 s gemessen und im Log ausgegeben
+  *(Mac M1, Metal: 0,5 s warm, 1,2 s direkt nach dem Bauen; Linux in Xvfb mit Software-OpenGL: 0,25 s)*
+
+#### Abschlussvermerk (2026-10-14)
+
+**Umgesetzt**
+- **Schritt 0 (PR #9):** `qttools` (Linguist) in vcpkg, Homebrew und apt; das Konfigurieren prüft, dass `lrelease` gefunden wird.
+- **Würfel über den Kern:** `Solid`, `TriangleMesh` (Flächen-ID je Dreieck, Kanten als Linienzüge) und `GeometryError` in der
+  Geometrie-Abstraktion; `makeBox`, `makeCylinder`, `measure` und `tessellate` in `src/geometry/occt`. Jedes Ergebnis wird mit
+  `BRepCheck_Analyzer` geprüft, ungültige Körper sind ein Fehler. Kernel-Typen verlassen `src/geometry/occt` nicht.
+- **Renderer** (`src/render`, Qt RHI): Hintergrundverlauf, Druckbett mit 5/10-mm-Raster (wechselt mit dem Zoom), Achsen rot/grün,
+  Ursprungspunkt, Körper mit mattem Licht, weichem Schatten und feinen Kantenlinien, Darstellung Drahtgitter/Volumen/Farben,
+  Kamera mit Maus (rechts drehen, Mitte verschieben, Rad zoomt zum Zeiger) und Trackpad (zwei Finger drehen, ⇧ verschiebt),
+  Standardansichten mit 180-ms-Übergang, Perspektive/Orthografisch.
+- **Fenster** nach Mockup und [08-gestaltung.md](../08-gestaltung.md): Menüleiste 40 px, Dokument-Tabs 52 px, linke Leiste
+  (Körper/Bibliothek, Rezept), rechte Leiste (Objekt/Drucker), Statuszeile mit Hinweiszeile, schwebende Darstellungsleiste,
+  Werkzeugpalette mit Tooltip-Karten, Ansichtswürfel mit Achsenkreuz, Navigationsknöpfe (Klick zeigt die Mausbedienung, Ziehen
+  bedient), Fokus-Modus (⇧F), Größenangaben am Druckbett. **Auf dem Mac stehen die Menüs in der System-Menüleiste**, unter
+  Linux im Fenster.
+- **Grundbausteine:** Theme-Tokens in C++ (dunkel/hell, Akzentfarbe ableitbar, Kontrastfunktionen), Zahlenfeld
+  (`NumberField.qml`) mit Formelauswertung im Kern (`+ − * /`, Klammern, mm/cm/in, benannte Maße, Komma und Punkt),
+  Schaltflächen, Segmentschalter, Karten.
+- **Sprache:** alle Texte über `qsTr`, englische Quelltexte, Übersetzung Deutsch und Englisch (178 Texte), Umschalten zur Laufzeit
+  (`--language de|en`). IBM Plex Sans/Mono mitgeliefert (OFL 1.1, in `THIRD_PARTY_NOTICES.md`).
+- **Protokoll und Messung:** spdlog in Datei mit Rotation (`~/Library/Logs/Fission3D` bzw. `~/.local/state/fission3d`),
+  Startzeit vom Prozessstart des Betriebssystems bis zum ersten Bild im Protokoll und im Über-Fenster; `--measure-startup`.
+- **Über-Fenster** (Menü Hilfe bzw. App-Menü): Version, Qt, OpenCASCADE, Grafik-Backend, Startzeit, Lizenz, Protokolldatei.
+- [ADR-0007](../adr/0007-oberflaeche-qt-quick.md); ADR-0004 ergänzt.
+
+**Wie getestet**
+- Unit-Tests: Würfel und Zylinder (Volumen, Oberfläche, Hülle, Topologie, Gültigkeit, geschlossenes und nach außen
+  zeigendes Netz), Kamera (Zoom zum Zeiger, Verschieben, Einpassen), Formelauswertung, Token-Kontraste (alle Paare, beide
+  Designs, Vorschläge und Extremwerte der Akzentfarbe), Zahlenformat.
+- Fenster-Tests (`app_window_dark|light`, `…_matches_design`): echtes Fenster mit Grafikgerät (Linux: Xvfb + Software-OpenGL,
+  Mac: Metal); Farben der Flächen gegen die Tokens, Würfel sichtbar, Blockvergleich der Leisten mit Bildern des Mockups
+  (`tests/reference/`). `app_start_time` (< 3 s), `translations_complete` (Deutsch und Englisch vollständig, nichts fest
+  eingebaut).
+- Mac M1 (Metal, vcpkg-Qt, `.dmg` mit `packaging/macos/package.sh` lokal gebaut, App aus dem Paket gestartet) und Linux
+  (Ubuntu 26.04, vcpkg-Qt und System-Qt). CI: alle Jobs inklusive Fenster aus `.dmg` und AppImage.
+- Bilder: [docs/screenshots/](../screenshots/) (`ap-0.8-linux-*`, `ap-0.8-macos-*`).
+
+**So probierst du es aus**
+1. Auf github.com/SloppyHenry/Fission3D unter **Actions** den letzten Lauf des Pull Requests öffnen, `package-macOS`
+   laden, das `.dmg` öffnen und Fission3D starten (Gatekeeper-Umweg wie bei AP-0.7).
+2. Mit der **rechten Maustaste** ziehen (oder auf dem Trackpad mit zwei Fingern): die Ansicht dreht sich um den Würfel.
+   **Mittlere Taste** (oder ⇧ + zwei Finger) verschiebt, das **Rad** zoomt zum Zeiger.
+3. Auf den **Ansichtswürfel** oben rechts klicken (Vorne, Oben …) und auf das Haus-Symbol: die Ansicht springt weich.
+4. **⇧F** blendet beide Seitenleisten aus und wieder ein; **P** schaltet zwischen Perspektive und Orthografisch;
+   Drahtgitter/Volumen/Farben oben links.
+5. Das Auge neben „Quader“ in der linken Leiste blendet den Würfel aus, das neben „Druckbett“ das Bett.
+6. Menü **Fission3D ▸ Über Fission3D** (Linux: **Hilfe ▸ Über Fission3D**) zeigt Version und Startzeit.
+   Design und Sprache zum Ausprobieren: `fission3d --theme light --language en`.
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Bewusst nicht gebaut** (laut Auftrag): Auswahl, Griffe, Werkzeuge, Rezept-Inhalt, Befehlssuche, Einstellungen, Startseite,
+  SSAO. Diese Schaltflächen sind sichtbar, melden aber in der Hinweiszeile „kommt in einer späteren Version“.
+- **Absichtlich anders als im Mockup:** (a) kein „Lotse · Schritt 1/8“-Knopf, denn es gibt noch keine Missionen; (b) kein
+  „Automatisch gespeichert“ und kein Druckcheck mit Häkchen, denn beides wäre derzeit unwahr; (c) nur ein Dokument-Tab;
+  (d) Schriftgrößen 12,5/14,5 px werden 13/15 px (Qt Quick kennt nur ganze Pixel); (e) Text über dem 3D-Bett nutzt `fg-3`
+  statt `fg-4`, weil `fg-4` im hellen Design dort nur 3,9 : 1 erreicht.
+- **Gemeldet, nicht still geändert:** UX-Konzept §14 verlangt eine Mindest-Schriftgröße von 12 pt (16 px), das Design-System
+  nutzt 12–13 px. Umgesetzt ist das Design-System; Entscheidung des Product Owners offen (siehe Rückmeldung).
+- Die Fensterprüfung in der CI nutzt Software-Rendering; sie belegt Aufbau und Farben, nicht die Bildrate auf echter Grafik.
+- Das vcpkg-Qt der CI hat keinen Vulkan-Treiber: das AppImage rendert unter Linux mit OpenGL (ADR-0002 nennt „Vulkan bzw.
+  OpenGL“). Metal auf dem Mac.
+- Auf dem Mac fehlt im Build-Baum der CI das `cocoa`-Plugin; dort laufen die Fensterprüfungen auf dem fertigen Paket
+  (CI-Job „Package“, beratend).
+- `scripts/setup` verlangt jetzt `qttools`. Homebrew hebt dabei `qtbase` (6.11.2 → 6.12.0), `glib`, `harfbuzz` u. a. an; das
+  geschieht erst mit Zustimmung des Product Owners.
+- Vorgeschlagene Folge-Arbeiten: Einstellungen (Design, Akzent, Sprache), UI-Skalierung, Befehlssuche, Tooltip-Animationen,
+  Bildschirmleser-Beschriftungen, echtes Logo.
