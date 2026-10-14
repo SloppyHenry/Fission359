@@ -3,7 +3,8 @@
 
 add_executable(fission_unit_tests
   core/test_version.cpp
-  geometry/test_occt_layer.cpp)
+  geometry/test_occt_layer.cpp
+  geometry/test_solids.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
   fission_core fission_geometry_occt Catch2::Catch2WithMain)
