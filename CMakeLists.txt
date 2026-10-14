@@ -31,6 +31,11 @@ find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick ShaderTools Linguist
 include(FissionQt)
 qt_standard_project_setup(REQUIRES 6.8)
 
+# Libraries from vcpkg win over same-named libraries elsewhere on the machine. Homebrew's Qt 6.12
+# keeps its headers in /opt/homebrew/include, where Homebrew's own Catch2 (another version) is
+# found as well and would otherwise shadow the one the tests are linked against.
+include_directories(BEFORE SYSTEM "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
+
 include(FissionDependencies)
 
 # Vendored third-party code (not available in vcpkg).
