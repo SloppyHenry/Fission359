@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Misst, wie viel vom Core-Code die Tests durchlaufen (Zeilenabdeckung), und meldet den Wert.
+#
+#   scripts/coverage             Core (src/core), Mindestwert 85 %
+#   scripts/coverage --min 90    anderer Mindestwert
+#   scripts/coverage --prefix src/geometry/gal/   anderer Ordner
+
+set -u -o pipefail
+# shellcheck source=lib/common.sh
+. "$(dirname "$0")/lib/common.sh"
+
+MINIMUM=85
+PREFIX="src/core/"
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --min)     MINIMUM="$2"; shift ;;
+        --prefix)  PREFIX="$2"; shift ;;
+        --help|-h) sed -n '5,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) die "Unbekannte Option '$1'. Siehe scripts/coverage --help" ;;
+    esac
+    shift
+done
+
+PRESET="$(preset_name coverage)"
+BUILD_DIR="$REPO_ROOT/build/$PRESET"
+BUILD_LOG="$BUILD_DIR.log"
+
+need_command cmake
+need_command ninja
+need_command python3
+apply_job_limit
+cd "$REPO_ROOT" || exit 1
+
+step "Baue Fission3D mit Messung ($PRESET)"
+mkdir -p "$REPO_ROOT/build"
+if ! { cmake --preset "$PRESET" && cmake --build --preset "$PRESET" --target fission_unit_tests; } \
+        >"$BUILD_LOG" 2>&1; then
+    fail "Das Bauen ist fehlgeschlagen. Die letzten Zeilen des Protokolls:"
+    tail -n 25 "$BUILD_LOG" | sed 's/^/    /'
+    exit 1
+fi
+ok "Gebaut"
+
+step "Führe die Unit-Tests aus und werte sie aus"
+if python3 "$REPO_ROOT/scripts/tools/coverage.py" --build-dir "$BUILD_DIR" \
+        --source-root "$REPO_ROOT" --prefix "$PREFIX" --minimum "$MINIMUM"; then
+    say ""
+    say "${C_GREEN}${C_BOLD}Abdeckung von $PREFIX liegt bei mindestens $MINIMUM %.${C_RESET}"
+else
+    say ""
+    say "${C_RED}${C_BOLD}Abdeckung von $PREFIX liegt unter $MINIMUM %.${C_RESET}"
+    exit 1
+fi

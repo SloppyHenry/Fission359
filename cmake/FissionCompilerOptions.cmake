@@ -11,6 +11,17 @@ function(fission_apply_compiler_options target)
     endif()
   endif()
 
+  if(FISSION_COVERAGE)
+    # Clang: source-based coverage (llvm-cov); GCC: gcov. scripts/tools/coverage.py reads both.
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      target_compile_options(${target} PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+      target_link_options(${target} PRIVATE -fprofile-instr-generate)
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      target_compile_options(${target} PRIVATE --coverage -O0)
+      target_link_options(${target} PRIVATE --coverage)
+    endif()
+  endif()
+
   if(FISSION_SANITIZE)
     list(JOIN FISSION_SANITIZE "," _sanitizers)
     target_compile_options(${target} PRIVATE
