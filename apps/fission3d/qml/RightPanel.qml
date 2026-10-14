@@ -9,6 +9,11 @@ import Fission3D.Ui
 Rectangle {
     id: root
 
+    property string stepTitle: ""
+    property var stepValues: []        // [{ name, label, group, expression, value, kind, error }]
+    signal valueCommitted(string name, string text)
+    readonly property var sizeValues: stepValues.filter(v => v.group === "size")
+    readonly property var positionValues: stepValues.filter(v => v.group === "position")
     property string tab: "object"      // object | printer
     property string printerName: ""
     property string bedText: ""
@@ -108,14 +113,94 @@ Rectangle {
 
             // header: what is selected
             PanelHeader {
-                visible: root.tab === "object"
+                visible: root.tab === "object" && root.stepValues.length === 0
                 iconName: "select"
                 title: qsTr("Nothing selected")
                 subtitle: qsTr("Click a body to change it.")
             }
 
+            PanelHeader {
+                visible: root.tab === "object" && root.stepValues.length > 0
+                iconName: "cube"
+                title: root.stepTitle
+                subtitle: qsTr("Change a value or type a formula.")
+            }
+
             Section {
-                visible: root.tab === "object"
+                visible: root.tab === "object" && root.sizeValues.length > 0
+                heading: qsTr("Size")
+
+                Repeater {
+                    model: root.sizeValues
+
+                    delegate: NumberField {
+                        id: sizeField
+
+                        required property var modelData
+
+                        width: parent.width
+                        label: modelData.label
+                        kind: modelData.kind
+                        unit: modelData.kind === "angle" ? "°" : "mm"
+                        invalid: modelData.error
+                        onTextCommitted: text => root.valueCommitted(modelData.name, text)
+
+                        Binding {
+                            target: sizeField
+                            property: "value"
+                            value: sizeField.modelData.value
+                        }
+
+                        Binding {
+                            target: sizeField
+                            property: "expression"
+                            value: sizeField.modelData.expression
+                        }
+                    }
+                }
+            }
+
+            Section {
+                visible: root.tab === "object" && root.positionValues.length > 0
+                heading: qsTr("Position")
+
+                Row {
+                    width: parent.width
+                    spacing: 8
+
+                    Repeater {
+                        model: root.positionValues
+
+                        delegate: NumberField {
+                            id: positionField
+
+                            required property var modelData
+
+                            width: (parent.width - 16) / 3
+                            axis: modelData.name
+                            kind: modelData.kind
+                            unit: ""
+                            invalid: modelData.error
+                            onTextCommitted: text => root.valueCommitted(modelData.name, text)
+
+                            Binding {
+                                target: positionField
+                                property: "value"
+                                value: positionField.modelData.value
+                            }
+
+                            Binding {
+                                target: positionField
+                                property: "expression"
+                                value: positionField.modelData.expression
+                            }
+                        }
+                    }
+                }
+            }
+
+            Section {
+                visible: root.tab === "object" && root.stepValues.length === 0
 
                 Txt {
                     width: parent.width

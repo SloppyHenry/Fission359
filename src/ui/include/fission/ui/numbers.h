@@ -6,6 +6,8 @@
 #include <QObject>
 #include <QString>
 
+#include "fission/core/expression.h"
+
 namespace fission::ui {
 
 /// Number input and output for the number fields (QML singleton "Numbers"): formulas, units
@@ -16,6 +18,10 @@ class Numbers : public QObject {
 public:
     explicit Numbers(QObject* parent = nullptr) : QObject(parent) {}
 
+    /// The named measures of the document that formulas may use (millimetres). Set by the
+    /// document model whenever they change.
+    void setNamedMeasures(core::NamedMeasures measures) { m_measures = std::move(measures); }
+
     /// Value of what was typed in; kind is "length" (result in mm), "angle" or "plain".
     /// Returns NaN when the text is not a valid expression.
     Q_INVOKABLE double evaluate(const QString& text,
@@ -24,6 +30,9 @@ public:
     /// A number as text with at most `decimals` decimals and no trailing zeros ("12,5" in German,
     /// "12.5" in English).
     Q_INVOKABLE QString format(double value, int decimals = 3) const;
+
+private:
+    core::NamedMeasures m_measures;
 };
 
 } // namespace fission::ui

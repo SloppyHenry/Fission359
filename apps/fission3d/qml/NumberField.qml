@@ -16,17 +16,25 @@ Item {
     property string axis: ""       // "", "x", "y" or "z": a coloured letter in front
     property int decimals: 3
     property string note: ""
+    property string expression: ""  // the formula the value came from ("" = typed as a plain number)
     property bool invalid: false
     property bool readOnly: false
     readonly property bool editing: input.activeFocus
     signal edited(real newValue)
+    signal textCommitted(string text) // what was typed, when it differs from what was shown
 
     implicitWidth: 96
     implicitHeight: column.implicitHeight
 
-    function refresh() {
-        input.text = Numbers.format(root.value, root.decimals)
+    function shownText() {
+        return root.expression !== "" ? root.expression : Numbers.format(root.value, root.decimals)
     }
+
+    function refresh() {
+        input.text = shownText()
+    }
+
+    onExpressionChanged: if (!input.activeFocus) refresh()
 
     onValueChanged: if (!input.activeFocus) refresh()
     Component.onCompleted: refresh()
@@ -161,9 +169,14 @@ Item {
             return
         }
         root.invalid = false
+        const typed = input.text.trim()
+        const changedText = typed !== shownText()
         if (result !== root.value) {
             root.value = result
             root.edited(result)
+        }
+        if (changedText) {
+            root.textCommitted(typed)
         }
         refresh()
     }

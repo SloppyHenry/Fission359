@@ -92,7 +92,11 @@ fi
 ok "Gebaut"
 
 step "Führe Tests aus"
-export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-offscreen}"
+# Linux: no screen needed (the window tests start their own virtual one). macOS: the window tests
+# use the real window system of the Mac, so nothing is forced there.
+if [ "$(detect_os)" != "macos" ]; then
+    export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-offscreen}"
+fi
 ctest --preset "$PRESET" >"$TEST_LOG" 2>&1
 CTEST_EXIT=$?
 

@@ -216,13 +216,12 @@ Window {
             bodies: root.bodyList
             bedVisible: root.bedVisible
             bedText: root.bedText
-            recipe: [{ text: qsTr("Box 20 × 20 × 20 mm"), state: "ok" }]
+            recipe: root.recipeList
+            currentStep: DocumentModel.currentStep
             onTabRequested: tab => root.leftTab = tab
             onAddRequested: root.showHint(qsTr("Shapes arrive in a later version."))
-            onBodyVisibilityRequested: (index, visible) => {
-                viewport.setBodyVisible(index, visible)
-                root.bodyVisible = visible
-            }
+            onStepRequested: index => DocumentModel.selectStep(DocumentModel.currentStep === index ? -1 : index)
+            onBodyVisibilityRequested: (index, visible) => DocumentModel.setBodyVisible(index, visible)
             onBedVisibilityRequested: visible => root.bedVisible = visible
         }
 
@@ -294,7 +293,10 @@ Window {
             printerName: qsTr("My printer")
             bedText: qsTr("%1 mm").arg(root.bedText + " × 256")
             nozzleText: qsTr("0.4 mm")
+            stepTitle: root.currentStepTitle
+            stepValues: root.stepValueList
             onTabRequested: tab => root.rightTab = tab
+            onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)
         }
     }
 
@@ -313,7 +315,83 @@ Window {
         id: aboutWindow
     }
 
-    // the one demo body, see main.cpp
-    property bool bodyVisible: true
-    readonly property var bodyList: [{ name: qsTr("Box"), color: "#E9EAEC", visible: bodyVisible }]
+    // --- the document as the interface shows it (texts are composed here, see DocumentModel) ---
+    function typeLabel(type) {
+        return type === "box" ? qsTr("Box") : type === "cylinder" ? qsTr("Cylinder") : qsTr("Body")
+    }
+
+    function valueLabel(name) {
+        switch (name) {
+        case "width": return qsTr("Width")
+        case "depth": return qsTr("Depth")
+        case "height": return qsTr("Height")
+        case "radius": return qsTr("Radius")
+        default: return name
+        }
+    }
+
+    function stepText(step) {
+        const n = value => Numbers.format(value, 2)
+        const v = step.values
+        if (step.type === "box" && v.length === 3) {
+            return qsTr("Box %1 × %2 × %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+        }
+        if (step.type === "cylinder" && v.length === 2) {
+            return qsTr("Cylinder, radius %1 mm, height %2 mm").arg(n(v[0])).arg(n(v[1]))
+        }
+        return typeLabel(step.type)
+    }
+
+    // One short sentence for what went wrong (the full message catalogue comes later).
+    function problemText(problem) {
+        if (!problem) {
+            return ""
+        }
+        if (problem.detail === "unknownName") {
+            return qsTr("I don’t know “%1”.").arg(problem.subject)
+        }
+        if (problem.detail === "brokenDependency") {
+            return qsTr("“%1” has a problem itself.").arg(problem.subject)
+        }
+        if (problem.detail === "divisionByZero") {
+            return qsTr("That divides by zero.")
+        }
+        if (problem.code === "parameterOutOfRange") {
+            return qsTr("%1 must be bigger than zero.").arg(valueLabel(problem.field))
+        }
+        if (problem.code === "inputFailed" || problem.code === "inputMissing") {
+            return qsTr("An earlier step has a problem.")
+        }
+        if (problem.code === "parameterInvalid") {
+            return qsTr("%1 cannot be calculated.").arg(valueLabel(problem.field))
+        }
+        return qsTr("This shape could not be built.")
+    }
+
+    readonly property var recipeList: DocumentModel.recipe.map(step => ({
+        text: step.problem ? stepText(step) + " – " + problemText(step.problem) : stepText(step),
+        state: step.state
+    }))
+
+    readonly property var bodyList: DocumentModel.bodies.map(body => ({
+        name: body.name !== "" ? body.name : typeLabel(body.type) + " " + body.number,
+        color: body.color,
+        visible: body.visible
+    }))
+
+    readonly property string currentStepTitle: {
+        const index = DocumentModel.currentStep
+        return index >= 0 && index < DocumentModel.recipe.length
+               ? typeLabel(DocumentModel.recipe[index].type) : ""
+    }
+
+    readonly property var stepValueList: DocumentModel.stepValues.map(value => ({
+        name: value.name,
+        label: valueLabel(value.name),
+        group: value.group,
+        expression: value.expression,
+        value: value.value,
+        kind: value.kind,
+        error: value.error
+    }))
 }
