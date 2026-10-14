@@ -88,7 +88,14 @@ smoke-test screenshot are attached to the run as artifacts.
 ## UI texts
 
 - Every user-visible string exists in **German and English** and goes through `qsTr()` / `tr()`.
-  No hard-coded strings.
+  No hard-coded strings. The source text is English; the translations are Qt Linguist files in
+  `apps/fission3d/i18n/` (`fission3d_de.ts`, `fission3d_en.ts`).
+- After adding or changing a text, refresh the files with `cmake --build build/<preset> --target
+  update_translations` (needs a Qt whose `lupdate` understands QML: Homebrew or apt Qt, not the vcpkg
+  build), translate the new entries (Qt Linguist or by hand) and run `ctest -R translations`: it fails
+  on unfinished translations and on hard-coded texts.
+- Colours and sizes come from the `Theme` singleton (`src/ui/include/fission/ui/theme.h`), never from values
+  written into QML files.
 - Use only terms from the glossary in [docs/02-ux-konzept.md](docs/02-ux-konzept.md) (section 12).
 - Error messages come from the message catalog. No raw kernel errors reach the UI.
 
