@@ -144,3 +144,21 @@ Mit Freigabe des Product Owners ("fühl dich komplett frei") wurde auf Testrechn
 
 **Wichtig:** Ein AppImage oder Flatpak, das auf diesem Rechner (Ubuntu 26.04, glibc 2.43) gebaut wurde, läuft nur auf
 gleich neuen Systemen. Zum Prüfen verteilbarer Pakete die Artefakte der CI (Ubuntu 24.04) verwenden.
+
+## Virtueller Mac für Installationstests (14.10.2026)
+
+Für einen "sauberen Mac" (ohne Xcode, Homebrew, Qt) gibt es auf dem Entwicklungs-Mac eine virtuelle Maschine:
+
+| | |
+|---|---|
+| Werkzeug | [tart](https://github.com/cirruslabs/tart) 2.41.0 (Binärpaket in `~/tools/tart-2.41.0`, Prüfsumme geprüft; die Homebrew-Formel ist mit dem aktuellen Homebrew kaputt) |
+| Image | `ghcr.io/cirruslabs/macos-sonoma-vanilla` → lokale Maschine `fission3d-mac14` |
+| System | macOS 14.8.7 (Sonoma), arm64, nur die Kommandozeilen-Werkzeuge; Benutzer und Passwort sind die öffentlichen Vorgaben des Images |
+| Platz | rund 27 GB |
+
+Starten mit Fenster: `~/tools/tart-2.41.0/tart.app/Contents/MacOS/tart run fission3d-mac14`; ohne Fenster
+(für SSH-Tests) mit `--no-graphics` und `tart ip fission3d-mac14`.
+
+Was damit geprüft wurde (AP-0.7): Die App aus dem CI-`.dmg` startet dort und meldet ihre Version; die Quarantäne wird von
+Gatekeeper erkannt (App-Translocation), der Start wartet dann auf die Entscheidung im Dialog. Der Dialog selbst und das
+Fenster ließen sich ohne Bildschirm nicht prüfen, das macht der Product Owner im VM-Fenster.
