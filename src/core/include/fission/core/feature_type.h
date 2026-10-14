@@ -20,23 +20,23 @@ namespace fission::core {
 /// What is wrong with a step. Codes and values only: the interface turns them into sentences
 /// through the message catalogue (rule 5), and no raw kernel text ever reaches a person.
 enum class FeatureIssueCode {
-    unknownType,             ///< No feature type of that name is registered.
-    parameterInvalid,        ///< A value's formula has an error; `expression` says which.
-    parameterOutOfRange,     ///< Understandable, but not usable (size zero or negative).
-    inputMissing,            ///< A body the step works on does not exist (any more).
-    inputFailed,             ///< An earlier step it depends on has an error.
-    namingContractViolated,  ///< The step did not name every face it created (a bug).
-    kernelRejected,          ///< The kernel could not use the input.
-    kernelResultInvalid,     ///< The kernel's result failed the validity check.
-    kernelFailed,            ///< The kernel could not compute it.
-    cancelled,               ///< A newer change replaced this calculation.
+    unknownType,            ///< No feature type of that name is registered.
+    parameterInvalid,       ///< A value's formula has an error; `expression` says which.
+    parameterOutOfRange,    ///< Understandable, but not usable (size zero or negative).
+    inputMissing,           ///< A body the step works on does not exist (any more).
+    inputFailed,            ///< An earlier step it depends on has an error.
+    namingContractViolated, ///< The step did not name every face it created (a bug).
+    kernelRejected,         ///< The kernel could not use the input.
+    kernelResultInvalid,    ///< The kernel's result failed the validity check.
+    kernelFailed,           ///< The kernel could not compute it.
+    cancelled,              ///< A newer change replaced this calculation.
 };
 
 struct FeatureIssue {
     FeatureIssueCode code = FeatureIssueCode::kernelFailed;
-    std::string subject;                     ///< The parameter concerned, if any.
+    std::string subject; ///< The parameter concerned, if any.
     std::optional<ExpressionError> expression;
-    std::string detail;                      ///< For the log only, never shown.
+    std::string detail; ///< For the log only, never shown.
 };
 
 /// What a feature type says about a value it takes.
@@ -63,10 +63,10 @@ enum class HandleKind { distance, radius };
 struct HandleSpec {
     std::string id;
     HandleKind kind = HandleKind::distance;
-    std::string parameter;      ///< The value it changes.
-    geo::Point3d origin;        ///< Where it sits (mm).
-    geo::Point3d direction;     ///< Unit vector along which it is dragged.
-    double sign = 1.0;          ///< +1: dragging along `direction` increases the value, -1: decreases.
+    std::string parameter;  ///< The value it changes.
+    geo::Point3d origin;    ///< Where it sits (mm).
+    geo::Point3d direction; ///< Unit vector along which it is dragged.
+    double sign = 1.0;      ///< +1: dragging along `direction` increases the value, -1: decreases.
 };
 
 /// One body a step made or changed, with the role of each of its faces.
@@ -118,7 +118,8 @@ public:
     virtual std::optional<FeatureIssue> validate(const ResolvedParams& params) const = 0;
 
     /// Makes the geometry. May throw `geo::GeometryError`; the recompute turns it into an issue.
-    virtual FeatureResult execute(const ExecuteInput& input, const ExecuteContext& context) const = 0;
+    virtual FeatureResult execute(const ExecuteInput& input,
+                                  const ExecuteContext& context) const = 0;
 
     virtual Description describe(const ResolvedParams& params) const = 0;
 

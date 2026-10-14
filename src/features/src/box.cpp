@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "fission/features/builtin.h"
+
 #include "primitives.h"
 
 namespace fission::features {
@@ -19,7 +20,7 @@ public:
     int version() const override { return 1; }
 
     std::vector<ParamSpec> parameters() const override {
-        return {{"width", QuantityKind::length, "20"}, {"depth", QuantityKind::length, "20"},
+        return {{"width", QuantityKind::length, "20"},  {"depth", QuantityKind::length, "20"},
                 {"height", QuantityKind::length, "20"}, {"x", QuantityKind::length, "0"},
                 {"y", QuantityKind::length, "0"},       {"z", QuantityKind::length, "0"}};
     }
@@ -43,8 +44,7 @@ public:
     }
 
     Description describe(const ResolvedParams& params) const override {
-        return {"box",
-                {params.at("width"), params.at("depth"), params.at("height")}};
+        return {"box", {params.at("width"), params.at("depth"), params.at("height")}};
     }
 
     std::vector<HandleSpec> handles(const ResolvedParams& params) const override {

@@ -106,8 +106,8 @@ TEST_CASE("the built-in feature types are registered", "[features]") {
 
 TEST_CASE("box: size, place, faces and their names", "[features]") {
     Setup setup;
-    const Made made = make(setup, "box",
-                           {{"width", 20}, {"depth", 30}, {"height", 40}, {"x", 5}, {"y", 0}, {"z", 2}});
+    const Made made = make(
+        setup, "box", {{"width", 20}, {"depth", 30}, {"height", 40}, {"x", 5}, {"y", 0}, {"z", 2}});
     const FeatureOutput& output = made.result.outputs[0];
 
     CHECK(made.report.valid);
@@ -125,7 +125,7 @@ TEST_CASE("box: size, place, faces and their names", "[features]") {
 
     // ... and the names are right: each role points to the face that looks that way.
     const std::map<std::string, std::array<double, 3>> expected{
-        {"bottom", {0, 0, -1}}, {"top", {0, 0, 1}},  {"front", {0, -1, 0}},
+        {"bottom", {0, 0, -1}}, {"top", {0, 0, 1}},   {"front", {0, -1, 0}},
         {"back", {0, 1, 0}},    {"left", {-1, 0, 0}}, {"right", {1, 0, 0}},
     };
     for (const auto& [role, normal] : expected) {
@@ -142,8 +142,8 @@ TEST_CASE("box: size, place, faces and their names", "[features]") {
 
 TEST_CASE("cylinder: round stays round, faces are named", "[features]") {
     Setup setup;
-    const Made made = make(setup, "cylinder",
-                           {{"radius", 10}, {"height", 20}, {"x", 0}, {"y", 0}, {"z", 0}});
+    const Made made =
+        make(setup, "cylinder", {{"radius", 10}, {"height", 20}, {"x", 0}, {"y", 0}, {"z", 0}});
     const FeatureOutput& output = made.result.outputs[0];
     CHECK(made.report.valid);
     CHECK(made.report.volume == Approx(kPi * 10.0 * 10.0 * 20.0).epsilon(1e-9));
@@ -181,7 +181,8 @@ TEST_CASE("values that cannot make a body are stopped before the kernel", "[feat
 
 TEST_CASE("steps describe themselves and offer handles that change values", "[features]") {
     Setup setup;
-    const auto values = params({{"width", 20}, {"depth", 30}, {"height", 40}, {"x", 0}, {"y", 0}, {"z", 0}});
+    const auto values =
+        params({{"width", 20}, {"depth", 30}, {"height", 40}, {"x", 0}, {"y", 0}, {"z", 0}});
 
     const Description box = setup.registry.find("box")->describe(values);
     CHECK(box.key == "box");

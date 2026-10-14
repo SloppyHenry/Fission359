@@ -22,7 +22,8 @@ FeatureDraft boxDraft(const char* width = "20") {
 
 } // namespace
 
-TEST_CASE("features get stable ids, numbers that are never reused, and their bodies", "[document]") {
+TEST_CASE("features get stable ids, numbers that are never reused, and their bodies",
+          "[document]") {
     Document document(7);
     const auto first = document.addFeature(boxDraft());
     const auto second = document.addFeature(boxDraft());
@@ -192,7 +193,9 @@ TEST_CASE("the feature registry refuses a second type of the same name", "[regis
         int version() const override { return 1; }
         std::vector<ParamSpec> parameters() const override { return {}; }
         std::optional<FeatureIssue> validate(const ResolvedParams&) const override { return {}; }
-        FeatureResult execute(const ExecuteInput&, const ExecuteContext&) const override { return {}; }
+        FeatureResult execute(const ExecuteInput&, const ExecuteContext&) const override {
+            return {};
+        }
         Description describe(const ResolvedParams&) const override { return {"dummy", {}}; }
         std::vector<HandleSpec> handles(const ResolvedParams&) const override { return {}; }
     };

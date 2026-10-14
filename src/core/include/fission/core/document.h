@@ -40,10 +40,10 @@ struct Parameter {
 /// nothing is hidden in geometry (rule 3: everything stays changeable).
 struct Feature {
     FeatureId id;
-    int number = 0;       ///< "F5": counted up per document, never used twice (ADR-0003).
-    std::string type;     ///< "box", "cylinder", ...
-    int typeVersion = 1;  ///< For migrations of one feature type.
-    std::string label;    ///< Optional name given by the person.
+    int number = 0;      ///< "F5": counted up per document, never used twice (ADR-0003).
+    std::string type;    ///< "box", "cylinder", ...
+    int typeVersion = 1; ///< For migrations of one feature type.
+    std::string label;   ///< Optional name given by the person.
     std::map<std::string, Value> params;
     std::map<std::string, std::vector<PersistentRef>> refs;
     std::vector<BodyId> inputs;  ///< Bodies this step works on (made by earlier steps).
@@ -142,7 +142,8 @@ public:
     bool setFeatureValue(const FeatureId& id, std::string_view name, std::string expression);
     bool setFeatureLabel(const FeatureId& id, std::string label);
     bool setFeatureSuppressed(const FeatureId& id, bool suppressed);
-    bool setFeatureRefs(const FeatureId& id, std::string_view name, std::vector<PersistentRef> refs);
+    bool setFeatureRefs(const FeatureId& id, std::string_view name,
+                        std::vector<PersistentRef> refs);
 
     // --- bodies --------------------------------------------------------------------------
     const std::vector<Body>& bodies() const noexcept { return bodies_; }

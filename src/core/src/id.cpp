@@ -25,7 +25,7 @@ std::string IdSource::nextUuid() {
     std::uint64_t high = nextWord();
     std::uint64_t low = nextWord();
     high = (high & 0xFFFFFFFFFFFF0FFFULL) | 0x0000000000004000ULL; // version 4
-    low = (low & 0x3FFFFFFFFFFFFFFFULL) | 0x8000000000000000ULL;  // variant 1
+    low = (low & 0x3FFFFFFFFFFFFFFFULL) | 0x8000000000000000ULL;   // variant 1
 
     static constexpr char digits[] = "0123456789abcdef";
     std::string text;

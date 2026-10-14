@@ -9,9 +9,9 @@
 
 namespace fission::core {
 
-/// A stable identifier (UUID text). The tag keeps feature ids and body ids apart in the type system.
-template <class Tag>
-struct Id {
+/// A stable identifier (UUID text). The tag keeps feature ids and body ids apart in the type
+/// system.
+template <class Tag> struct Id {
     std::string value;
 
     bool empty() const noexcept { return value.empty(); }

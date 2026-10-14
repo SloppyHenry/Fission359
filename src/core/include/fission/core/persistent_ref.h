@@ -13,7 +13,18 @@ namespace fission::core {
 enum class ElementKind { face, edge };
 
 /// What kind of surface or curve an element lies on (kernel independent).
-enum class ElementShape { unknown, plane, cylinder, cone, sphere, torus, freeform, line, circle, curve };
+enum class ElementShape {
+    unknown,
+    plane,
+    cylinder,
+    cone,
+    sphere,
+    torus,
+    freeform,
+    line,
+    circle,
+    curve
+};
 
 /// What a neighbouring face looked like. Its name may be gone after a feature was replaced; the
 /// look still lets the face be recognised.
@@ -33,14 +44,14 @@ struct NeighbourLook {
 struct ElementLook {
     ElementKind kind = ElementKind::face;
     ElementShape shape = ElementShape::unknown;
-    geo::Point3d centroid;                          ///< Centre of mass.
-    geo::Point3d direction{0.0, 0.0, 1.0};          ///< Plane normal, axis or line direction.
+    geo::Point3d centroid;                 ///< Centre of mass.
+    geo::Point3d direction{0.0, 0.0, 1.0}; ///< Plane normal, axis or line direction.
     bool hasDirection = false;
-    bool directed = false;                          ///< Plane normals have a sign, axes do not.
-    double size = 0.0;                              ///< Area or length.
-    double radius = 0.0;                            ///< Cylinder or circle radius, otherwise 0.
-    std::vector<std::string> neighbours;            ///< Sorted names of the adjacent faces.
-    std::vector<NeighbourLook> neighbourLooks;      ///< The same faces with their look.
+    bool directed = false;                     ///< Plane normals have a sign, axes do not.
+    double size = 0.0;                         ///< Area or length.
+    double radius = 0.0;                       ///< Cylinder or circle radius, otherwise 0.
+    std::vector<std::string> neighbours;       ///< Sorted names of the adjacent faces.
+    std::vector<NeighbourLook> neighbourLooks; ///< The same faces with their look.
 
     bool operator==(const ElementLook&) const = default;
 };

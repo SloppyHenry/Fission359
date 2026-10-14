@@ -20,9 +20,9 @@ void Document::setSettings(const DocumentSettings& settings) {
 
 const Parameter* Document::findParameter(std::string_view name) const {
     const std::string key = foldMeasureName(name);
-    const auto found = std::find_if(parameters_.begin(), parameters_.end(), [&](const Parameter& p) {
-        return foldMeasureName(p.name) == key;
-    });
+    const auto found =
+        std::find_if(parameters_.begin(), parameters_.end(),
+                     [&](const Parameter& p) { return foldMeasureName(p.name) == key; });
     return found == parameters_.end() ? nullptr : &*found;
 }
 
@@ -59,9 +59,9 @@ bool Document::renameParameter(std::string_view name, std::string newName) {
 
 bool Document::removeParameter(std::string_view name) {
     const std::string key = foldMeasureName(name);
-    const auto found = std::find_if(parameters_.begin(), parameters_.end(), [&](const Parameter& p) {
-        return foldMeasureName(p.name) == key;
-    });
+    const auto found =
+        std::find_if(parameters_.begin(), parameters_.end(),
+                     [&](const Parameter& p) { return foldMeasureName(p.name) == key; });
     if (found == parameters_.end()) {
         return false;
     }
@@ -166,9 +166,10 @@ std::vector<FeatureId> Document::dependentsOf(const FeatureId& id) const {
         if (other.id == id) {
             continue;
         }
-        const bool uses = std::any_of(other.inputs.begin(), other.inputs.end(), [&](const BodyId& b) {
-            return std::find(bodies.begin(), bodies.end(), b) != bodies.end();
-        });
+        const bool uses =
+            std::any_of(other.inputs.begin(), other.inputs.end(), [&](const BodyId& b) {
+                return std::find(bodies.begin(), bodies.end(), b) != bodies.end();
+            });
         if (uses) {
             result.push_back(other.id);
             bodies.insert(bodies.end(), other.outputs.begin(), other.outputs.end());

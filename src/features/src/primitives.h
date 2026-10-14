@@ -15,8 +15,8 @@
 namespace fission::features {
 
 /// The first value in `names` that is not a positive finite number, as an issue.
-inline std::optional<core::FeatureIssue>
-requirePositive(const core::ResolvedParams& params, std::initializer_list<const char*> names) {
+inline std::optional<core::FeatureIssue> requirePositive(const core::ResolvedParams& params,
+                                                         std::initializer_list<const char*> names) {
     for (const char* name : names) {
         const auto found = params.find(name);
         if (found == params.end() || !std::isfinite(found->second.value) ||

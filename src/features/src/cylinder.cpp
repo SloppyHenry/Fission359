@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "fission/features/builtin.h"
+
 #include "primitives.h"
 
 namespace fission::features {
@@ -19,8 +20,10 @@ public:
     int version() const override { return 1; }
 
     std::vector<ParamSpec> parameters() const override {
-        return {{"radius", QuantityKind::length, "10"}, {"height", QuantityKind::length, "20"},
-                {"x", QuantityKind::length, "0"},       {"y", QuantityKind::length, "0"},
+        return {{"radius", QuantityKind::length, "10"},
+                {"height", QuantityKind::length, "20"},
+                {"x", QuantityKind::length, "0"},
+                {"y", QuantityKind::length, "0"},
                 {"z", QuantityKind::length, "0"}};
     }
 
