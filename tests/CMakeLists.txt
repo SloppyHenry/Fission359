@@ -45,6 +45,13 @@ set_tests_properties(app_prints_version PROPERTIES
 # Qt (CI) the build tree's executable carries a private copy of the Qt libraries and cannot load
 # Qt's QML plugins; there the same start is done on the finished package (CI job "Package").
 set(_fission_run_app_in_tree ON)
+# Sanitizer builds: fontconfig's own leak is ignored (tests/lsan.supp), and the program is much
+# slower, so the start-time budget is relaxed there (the 3 s of the milestone are for release builds).
+set(_fission_lsan_env "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan.supp")
+set(_fission_budget_env "")
+if(FISSION_SANITIZE)
+  set(_fission_budget_env "FISSION_STARTUP_BUDGET_MS=20000")
+endif()
 if(APPLE AND FISSION_QT_FROM_VCPKG)
   set(_fission_run_app_in_tree OFF)
 endif()
@@ -55,7 +62,7 @@ if(_fission_run_app_in_tree)
   add_test(NAME app_opens_window
     COMMAND fission3d --smoke-test "${CMAKE_BINARY_DIR}/smoke-test.png")
   set_tests_properties(app_opens_window PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QML_IMPORT_PATH=${_fission_qml_path}"
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QML_IMPORT_PATH=${_fission_qml_path};${_fission_lsan_env}"
     TIMEOUT 60)
 endif()
 
@@ -81,7 +88,7 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
               --smoke-test "${CMAKE_BINARY_DIR}/window-${_theme}.png" --theme ${_theme}
               --language de --size 1280x800)
     set_tests_properties(app_window_${_theme} PROPERTIES
-      ENVIRONMENT "${_fission_gui_env}" TIMEOUT 90 FIXTURES_SETUP window_${_theme})
+      ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 FIXTURES_SETUP window_${_theme})
     add_test(NAME app_window_${_theme}_matches_design
       COMMAND fission_screenshot_check "${CMAKE_BINARY_DIR}/window-${_theme}.png" ${_theme} --expect-3d
               --reference "${CMAKE_CURRENT_SOURCE_DIR}/reference/mockup-${_theme}.png")
@@ -91,5 +98,6 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)
-  set_tests_properties(app_start_time PROPERTIES ENVIRONMENT "${_fission_gui_env}" TIMEOUT 180)
+  set_tests_properties(app_start_time PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env};${_fission_budget_env}" TIMEOUT 180)
 endif()
