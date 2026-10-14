@@ -6,11 +6,11 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <stop_token>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include "fission/core/cancel.h"
 #include "fission/core/document.h"
 #include "fission/core/expression.h"
 #include "fission/geo/kernel.h"
@@ -83,13 +83,14 @@ struct FeatureResult {
 struct ExecuteInput {
     const Feature& feature;
     const ResolvedParams& params;
-    /// Results for `feature.inputs`, in the same order.
+    /// Results for `feature.inputs`, in the same order. Their face roles are full names
+    /// ("F1/box/top"), so a step can pass them on.
     const std::vector<FeatureOutput>& inputs;
 };
 
 struct ExecuteContext {
     const geo::GeometryKernel& kernel;
-    std::stop_token cancel; ///< Long steps look at it and give up when asked to.
+    CancelToken cancel; ///< Long steps look at it and give up when asked to.
 };
 
 /// A kind of step (box, cylinder, later extrude, fillet ...). Feature types are plug-ins: a new
