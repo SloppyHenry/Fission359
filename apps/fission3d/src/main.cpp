@@ -22,13 +22,14 @@
 #include <string_view>
 
 #include "fission/core/version.h"
+#include "fission/geo/occt/kernel.h"
 #include "fission/geo/occt/layer.h"
-#include "fission/geo/occt/solids.h"
 #include "fission/render/scene.h"
 #include "fission/services/log.h"
 #include "fission/services/startup_clock.h"
 #include "fission/ui/app_info.h"
 #include "fission/ui/app_options.h"
+#include "fission/ui/document_model.h"
 #include "fission/ui/language.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/theme.h"
@@ -120,17 +121,6 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     return result;
 }
 
-// The first body of Fission3D: a 20 mm cube on the print bed, made by the geometry kernel.
-std::shared_ptr<const fission::render::RenderScene> makeDemoScene() {
-    auto scene = std::make_shared<fission::render::RenderScene>();
-    const fission::geo::Solid cube =
-        fission::geo::occt::makeBox(20.0, 20.0, 20.0, {-10.0, -10.0, 0.0});
-    fission::render::RenderBody body;
-    body.mesh = fission::geo::occt::tessellate(cube);
-    scene->bodies.push_back(std::move(body));
-    return scene;
-}
-
 void loadFonts() {
     // Fallback if the bundled fonts cannot be loaded (docs/08-gestaltung.md §3).
     QFont::insertSubstitutions(QStringLiteral("IBM Plex Sans"),
@@ -184,6 +174,13 @@ int main(int argc, char* argv[]) {
     appOptions.openMenu = options.openMenu;
     fission::ui::Numbers numbers;
 
+    // The document: the one box of the start, calculated before the first frame.
+    std::shared_ptr<const fission::geo::GeometryKernel> kernel = fission::geo::occt::makeKernel();
+    fission::ui::DocumentModel documentModel(kernel);
+    documentModel.setNumbers(&numbers);
+    documentModel.addDemoBox();
+    documentModel.waitForCalculation();
+
     QQmlApplicationEngine engine;
     fission::ui::Language language(&engine);
     language.setCode(options.language.isEmpty() ? QStringLiteral("system") : options.language);
@@ -193,6 +190,7 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "AppInfo", &info);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "AppOptions", &appOptions);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Numbers", &numbers);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "DocumentModel", &documentModel);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Language", &language);
 
     QObject::connect(
@@ -212,11 +210,11 @@ int main(int argc, char* argv[]) {
     }
     auto* viewport = window->findChild<fission::ui::Viewport3D*>(QStringLiteral("viewport"));
     if (viewport != nullptr) {
-        try {
-            viewport->setScene(makeDemoScene());
-        } catch (const std::exception& error) {
-            spdlog::error("the demo body could not be built: {}", error.what());
-        }
+        viewport->setScene(documentModel.scene());
+        QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
+                         [viewport](std::shared_ptr<const fission::render::RenderScene> scene) {
+                             viewport->setScene(std::move(scene));
+                         });
     }
     if (options.about) {
         QTimer::singleShot(0, window, [window] {

@@ -19,7 +19,8 @@ double Numbers::evaluate(const QString& text, const QString& kind) const {
     } else if (kind == QStringLiteral("plain")) {
         quantity = core::QuantityKind::plain;
     }
-    const std::optional<double> value = core::evaluateExpression(text.toStdString(), quantity);
+    const std::optional<double> value =
+        core::evaluateExpression(text.toStdString(), quantity, m_measures);
     return value ? *value : std::numeric_limits<double>::quiet_NaN();
 }
 

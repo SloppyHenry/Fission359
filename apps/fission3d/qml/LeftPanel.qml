@@ -14,7 +14,9 @@ Rectangle {
     property var bodies: []            // [{ name, color, visible }]
     property bool bedVisible: true
     property string bedText: ""
-    property var recipe: []            // [{ text, state }]  state: ok | editing | fails
+    property var recipe: []            // [{ text, state }]  state: ok | warning | fails | off | pending
+    property int currentStep: -1       // the step whose values are shown (highlighted)
+    signal stepRequested(int index)
     signal tabRequested(string tab)
     signal addRequested
     signal bodyVisibilityRequested(int index, bool visible)
@@ -350,8 +352,15 @@ Rectangle {
                         width: parent.width
                         height: stepText.implicitHeight + 12
                         radius: 6
-                        color: modelData.state === "editing" ? Theme.accentSoft
+                        color: index === root.currentStep ? Theme.accentSoft
                              : modelData.state === "fails" ? Theme.badSoft : "transparent"
+                        opacity: modelData.state === "off" ? 0.55 : 1.0
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.stepRequested(index)
+                        }
 
                         Row {
                             anchors.fill: parent
@@ -384,6 +393,14 @@ Rectangle {
                                 size: 13
                                 strokeWidth: 2.4
                                 color: Theme.ok
+                            }
+
+                            Icon {
+                                visible: modelData.state === "warning" || modelData.state === "fails"
+                                name: modelData.state === "fails" ? "x" : "warn"
+                                size: 13
+                                strokeWidth: 2.4
+                                color: modelData.state === "fails" ? Theme.bad : Theme.fg3
                             }
                         }
                     }
