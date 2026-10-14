@@ -77,7 +77,7 @@ set(_fission_gui_env "QSG_RHI_BACKEND=opengl;QT_QPA_PLATFORM=xcb;LIBGL_ALWAYS_SO
 find_program(FISSION_XVFB_RUN xvfb-run)
 set(_fission_gui_runner "")
 if(APPLE)
-  set(_fission_gui_env "")
+  set(_fission_gui_env "FISSION_GUI_TEST=1")
 elseif(FISSION_XVFB_RUN)
   set(_fission_gui_runner ${FISSION_XVFB_RUN} -a -s "-screen 0 1280x800x24")
 endif()
