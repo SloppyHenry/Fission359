@@ -7,7 +7,7 @@ include(FissionPackaging)
 qt_add_executable(fission3d MACOSX_BUNDLE src/main.cpp)
 
 set(FISSION_QML_FILES
-  qml/Main.qml qml/AboutWindow.qml qml/AppMenu.qml qml/Btn.qml qml/DocTabs.qml
+  qml/Main.qml qml/AboutWindow.qml qml/AppMenu.qml qml/BedLabels.qml qml/Btn.qml qml/DocTabs.qml
   qml/Float.qml qml/Focusring.qml qml/Icon.qml qml/IconBtn.qml qml/InfoRow.qml qml/LeftPanel.qml
   qml/LibraryCard.qml qml/Logo.qml qml/MenuStrip.qml qml/NativeMenuBar.qml qml/NavButton.qml
   qml/NumberField.qml qml/PanelHeader.qml qml/RightPanel.qml qml/Section.qml qml/Segmented.qml

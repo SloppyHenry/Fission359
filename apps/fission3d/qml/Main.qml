@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
-import QtQuick.Window
 import QtQuick.Controls.Basic
 import Fission3D.Ui
 import Fission3D.View
@@ -242,6 +241,12 @@ Window {
                 edgeColor: Theme.edge
                 shadowColor: Theme.shadow
                 animated: !AppOptions.reduceMotion
+            }
+
+            BedLabels {
+                anchors.fill: parent
+                viewport: viewport
+                printerText: menuStrip.printerText
             }
 
             ViewOverlay {

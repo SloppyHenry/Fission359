@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Checks a screenshot of the main window (written by `fission3d --smoke-test`):
-//   screenshot_check <file.png> <dark|light> [--expect-3d]
+//   screenshot_check <file.png> <dark|light> [--expect-3d] [--reference mockup.png]
 // The surfaces of the window must have the colours of the design tokens (docs/08-gestaltung.md
 // §1 and §2), and with --expect-3d the cube must be there: bright pixels on the print bed in
-// the dark design, and the dark edge lines in both.
+// the dark design, and the dark edge lines in both. With --reference the surfaces are compared
+// block by block with a picture of the design mockup (docs/08-gestaltung.md §8).
 
 #include <QColor>
 #include <QGuiApplication>
@@ -57,7 +58,15 @@ int main(int argc, char** argv) {
         return 2;
     }
     const bool dark = std::strcmp(argv[2], "dark") == 0;
-    const bool expect3d = argc > 3 && std::strcmp(argv[3], "--expect-3d") == 0;
+    bool expect3d = false;
+    const char* referencePath = nullptr;
+    for (int i = 3; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--expect-3d") == 0) {
+            expect3d = true;
+        } else if (std::strcmp(argv[i], "--reference") == 0 && i + 1 < argc) {
+            referencePath = argv[++i];
+        }
+    }
 
     Shot shot;
     shot.image = QImage(QString::fromUtf8(argv[1])).convertToFormat(QImage::Format_RGB32);
@@ -111,6 +120,73 @@ int main(int argc, char** argv) {
         if (!dark && darkEdge < 40) {
             std::fprintf(stderr, "the cube is not visible (too few edge pixels)\n");
             ++failures;
+        }
+    }
+
+    if (referencePath != nullptr) {
+        Shot reference;
+        reference.image =
+            QImage(QString::fromUtf8(referencePath)).convertToFormat(QImage::Format_RGB32);
+        if (reference.image.isNull()) {
+            std::fprintf(stderr, "cannot read reference %s\n", referencePath);
+            return 2;
+        }
+        reference.scale = reference.image.width() / 1280.0;
+        // The surfaces around the 3D view: the same average colour per 8 x 8 block, except where
+        // the two pictures show different texts (document name, body names): a few percent of
+        // the blocks may differ.
+        struct Region {
+            const char* name;
+            int x0, y0, x1, y1;
+        };
+        const int viewTop = 92;
+        const int statusTop = h - 28;
+        const Region regions[] = {{"menu bar", 0, 0, w, 40},
+                                  {"document bar", 0, 40, w, viewTop},
+                                  {"left side bar", 0, viewTop, 248, statusTop},
+                                  {"right side bar", w - 300, viewTop, w, statusTop},
+                                  {"status line", 0, statusTop, w, h}};
+        constexpr int kBlock = 8;
+        for (const Region& region : regions) {
+            int blocks = 0;
+            int different = 0;
+            for (int y = region.y0; y + kBlock <= region.y1; y += kBlock) {
+                for (int x = region.x0; x + kBlock <= region.x1; x += kBlock) {
+                    double sums[2][3] = {};
+                    for (int j = 0; j < kBlock; ++j) {
+                        for (int i = 0; i < kBlock; ++i) {
+                            const QColor a = shot.at(x + i, y + j);
+                            const QColor b = reference.at(x + i, y + j);
+                            sums[0][0] += a.red();
+                            sums[0][1] += a.green();
+                            sums[0][2] += a.blue();
+                            sums[1][0] += b.red();
+                            sums[1][1] += b.green();
+                            sums[1][2] += b.blue();
+                        }
+                    }
+                    const double n = kBlock * kBlock;
+                    const QColor a(static_cast<int>(sums[0][0] / n),
+                                   static_cast<int>(sums[0][1] / n),
+                                   static_cast<int>(sums[0][2] / n));
+                    const QColor b(static_cast<int>(sums[1][0] / n),
+                                   static_cast<int>(sums[1][1] / n),
+                                   static_cast<int>(sums[1][2] / n));
+                    ++blocks;
+                    if (distance(a, b) > 14.0) {
+                        ++different;
+                    }
+                }
+            }
+            const double share = blocks > 0 ? 100.0 * different / blocks : 0.0;
+            std::printf("compared with the mockup: %-15s %4d of %4d blocks differ (%.1f %%)\n",
+                        region.name, different, blocks, share);
+            // The thin status line is almost only text, which differs more than the surfaces.
+            const double allowed = std::strcmp(region.name, "status line") == 0 ? 35.0 : 15.0;
+            if (share > allowed) {
+                std::fprintf(stderr, "%s differs from the mockup\n", region.name);
+                ++failures;
+            }
         }
     }
 
