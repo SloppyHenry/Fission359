@@ -157,8 +157,11 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
   um die jeweilige Funktion erweitern und `History::execute` benutzen, nie das Dokument direkt.
 - **Nicht rückgängig:** Auswahl, Kamera, Panels (das sind keine Änderungen am Dokument). Den Stapel gibt es nicht in der Datei
   (Architektur §3.5); der Versionsverlauf ist AP-5.7.
-- **Zahlenfeld:** Hat ein Feld getippten, noch nicht bestätigten Text, gilt ⌘Z für diesen Text, sonst für das Dokument. Das ist
-  durch Lesen des Codes begründet (`canUndo` des Eingabefelds), **nicht interaktiv geprüft**: bitte beim Ausprobieren achten.
+- **Zahlenfeld:** Hat ein Feld getippten, noch nicht bestätigten Text (`pendingEdit`), gilt ⌘Z für diesen Text, sonst für das
+  Dokument. Geprüft mit echten Tastendrücken im laufenden Programm (Menüzustand unter macOS ausgelesen): Feld fokussiert → Rückgängig
+  aktiv; „50“ getippt → aus; Enter → „Rückgängig: Breite auf 50 geändert“ aktiv. Der Product Owner meldete trotzdem, dass ⌘Z nicht
+  reagiere; die Ursache ließ sich nicht nachstellen (siehe Rückmeldung zum PR). Ein echter Fehler war ein Feld, das nach einem
+  unveränderten Wert den Fokus behält: dort ging ⌘Z an den Feldtext (behoben).
 - **Schritte ohne Bedienelement im Verlauf-Text:** „Körper ausgeblendet“ nennt den Namen oder den Typ, nicht die Nummer in der Liste.
 - **Doppelte Namen von Maßen** (erlaubt, siehe `Document::addParameter`) werden über ihre Position zurückgenommen, nicht über den
   Namen; die Zufallstests erzeugen absichtlich doppelte Namen.

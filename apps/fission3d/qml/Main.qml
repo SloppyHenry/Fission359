@@ -95,10 +95,12 @@ Window {
     ]
 
     // ---- undo and redo ---------------------------------------------------------------------
-    // While a number field holds text of its own that can be undone, Ctrl+Z is for that text.
+    // While a text field holds text that was typed and not yet accepted, Ctrl+Z is for that
+    // text. A field says so with `pendingEdit` (see NumberField); once the value is accepted,
+    // Ctrl+Z is for the document again, even if the cursor stays in the field.
     readonly property bool textHasHistory: {
         const item = root.activeFocusItem
-        return item !== null && item !== undefined && (item.canUndo === true || item.canRedo === true)
+        return item !== null && item !== undefined && item.pendingEdit === true
     }
     readonly property bool undoAvailable: DocumentModel.canUndo && !textHasHistory
     readonly property bool redoAvailable: DocumentModel.canRedo && !textHasHistory
