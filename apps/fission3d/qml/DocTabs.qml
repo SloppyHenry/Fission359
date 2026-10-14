@@ -10,6 +10,8 @@ Rectangle {
     id: root
 
     property string documentName: ""
+    property string undoTip: ""
+    property string redoTip: ""
     property bool canUndo: false
     property bool canRedo: false
     signal homeRequested
@@ -118,7 +120,9 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             iconName: "undo"
             enabled: root.canUndo
-            tip: Qt.platform.os === "osx" ? qsTr("Undo (⌘Z)") : qsTr("Undo (Ctrl+Z)")
+            tip: root.undoTip !== ""
+                 ? (Qt.platform.os === "osx" ? qsTr("%1 (⌘Z)") : qsTr("%1 (Ctrl+Z)")).arg(root.undoTip)
+                 : (Qt.platform.os === "osx" ? qsTr("Undo (⌘Z)") : qsTr("Undo (Ctrl+Z)"))
             onClicked: root.undoRequested()
         }
 
@@ -126,7 +130,9 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             iconName: "redo"
             enabled: root.canRedo
-            tip: Qt.platform.os === "osx" ? qsTr("Redo (⇧⌘Z)") : qsTr("Redo (Ctrl+Shift+Z)")
+            tip: root.redoTip !== ""
+                 ? (Qt.platform.os === "osx" ? qsTr("%1 (⇧⌘Z)") : qsTr("%1 (Ctrl+Shift+Z)")).arg(root.redoTip)
+                 : (Qt.platform.os === "osx" ? qsTr("Redo (⇧⌘Z)") : qsTr("Redo (Ctrl+Shift+Z)"))
             onClicked: root.redoRequested()
         }
 

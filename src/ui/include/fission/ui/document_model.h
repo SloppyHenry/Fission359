@@ -13,6 +13,7 @@
 
 #include "fission/core/document.h"
 #include "fission/core/feature_type.h"
+#include "fission/core/history.h"
 #include "fission/core/recompute.h"
 #include "fission/geo/kernel.h"
 #include "fission/render/scene.h"
@@ -28,8 +29,9 @@ class Numbers;
 /// thread. It hands QML numbers and codes, never finished sentences: the texts (German and
 /// English) are composed in QML with qsTr (rule 4).
 ///
-/// Until commands exist (AP-1.2) the changes the interface makes (`setStepValue`,
-/// `setBodyVisible`) go straight to the document; they are the places that become commands.
+/// Every change the interface makes is a command in the history (AP-1.2): the model holds a
+/// `core::History`, so the document can only be looked at from outside. Undo, redo and the list
+/// of recent actions are offered here; the sentences for the list are composed in QML.
 class DocumentModel : public QObject {
     Q_OBJECT
     /// [{ index, type, state, values: [number], problem: { code, subject, field, detail } }]
@@ -43,6 +45,17 @@ class DocumentModel : public QObject {
     /// `expression` is empty when the value was typed as a plain number.
     Q_PROPERTY(QVariantList stepValues READ stepValues NOTIFY stepValuesChanged)
     Q_PROPERTY(bool calculating READ calculating NOTIFY calculatingChanged)
+    Q_PROPERTY(bool canUndo READ canUndo NOTIFY historyChanged)
+    Q_PROPERTY(bool canRedo READ canRedo NOTIFY historyChanged)
+    /// What `undo` / `redo` would do next, as { key, type, number, field, value, name } (text
+    /// values of a `CommandDescription`); empty when there is nothing to do.
+    Q_PROPERTY(QVariantMap nextUndo READ nextUndo NOTIFY historyChanged)
+    Q_PROPERTY(QVariantMap nextRedo READ nextRedo NOTIFY historyChanged)
+    /// Recent actions, oldest first: [{ key, type, number, field, value, name, done }].
+    /// `done` is false for the ones that were undone and can be redone.
+    Q_PROPERTY(QVariantList history READ history NOTIFY historyChanged)
+    /// Number of actions that are done (= the position in `history`).
+    Q_PROPERTY(int historyPosition READ historyPosition NOTIFY historyChanged)
 
 public:
     /// `kernel` does the geometry work; the application hands in the OpenCASCADE one.
@@ -56,7 +69,7 @@ public:
     /// The one box the program starts with (replaces the demo body of AP-0.8).
     void addDemoBox();
 
-    const core::Document& document() const noexcept { return m_document; }
+    const core::Document& document() const noexcept { return m_history.document(); }
     std::shared_ptr<const core::RecomputeResult> result() const { return m_result; }
     std::shared_ptr<const render::RenderScene> scene() const { return m_scene; }
 
@@ -69,11 +82,29 @@ public:
     int currentStep() const noexcept { return m_currentStep; }
     QVariantList stepValues() const { return m_stepValues; }
     bool calculating() const noexcept { return m_calculating; }
+    bool canUndo() const noexcept { return m_history.canUndo(); }
+    bool canRedo() const noexcept { return m_history.canRedo(); }
+    QVariantMap nextUndo() const;
+    QVariantMap nextRedo() const;
+    QVariantList history() const;
+    int historyPosition() const noexcept { return static_cast<int>(m_history.position()); }
 
     Q_INVOKABLE void selectStep(int index);
     /// Sets the value `name` of step `index` to what was typed (a number or a formula).
     Q_INVOKABLE bool setStepValue(int index, const QString& name, const QString& text);
     Q_INVOKABLE void setBodyVisible(int index, bool visible);
+
+    Q_INVOKABLE bool undo();
+    Q_INVOKABLE bool redo();
+    /// Goes to the state after `position` actions (0 = the beginning of this session).
+    Q_INVOKABLE bool goToHistory(int position);
+
+    /// A change that takes many small steps (dragging a handle): everything between
+    /// `beginChange` and `commitChange` is one step in the history. `field` names what changes.
+    Q_INVOKABLE void beginChange(const QString& field);
+    Q_INVOKABLE void commitChange();
+    /// Takes back everything since `beginChange` (the person pressed Esc).
+    Q_INVOKABLE void cancelChange();
 
 signals:
     void recipeChanged();
@@ -81,6 +112,7 @@ signals:
     void currentStepChanged();
     void stepValuesChanged();
     void calculatingChanged();
+    void historyChanged();
     /// A new scene for the 3D view.
     void sceneReady(std::shared_ptr<const fission::render::RenderScene> scene);
 
@@ -88,6 +120,10 @@ private:
     void onEngineEvent(const core::RecomputeEvent& event);
     void applyResult(std::shared_ptr<const core::RecomputeResult> result);
     void requestRecompute();
+    /// After the document changed by a command, undo or redo: show it, and calculate again
+    /// unless `geometryChanged` is false (only a look changed).
+    void documentChanged(bool geometryChanged = true);
+    int stepIndexOf(const core::FeatureId& id) const;
     void setCalculating(bool calculating);
     void rebuildLists();
     void rebuildScene();
@@ -96,7 +132,7 @@ private:
 
     std::shared_ptr<const geo::GeometryKernel> m_kernel;
     core::FeatureRegistry m_registry;
-    core::Document m_document;
+    core::History m_history;
     std::shared_ptr<const core::RecomputeResult> m_result;
     std::shared_ptr<const render::RenderScene> m_scene;
     Numbers* m_numbers = nullptr;
@@ -105,6 +141,7 @@ private:
     QVariantList m_bodies;
     QVariantList m_stepValues;
     int m_currentStep = -1;
+    core::FeatureId m_currentFeature; // the chosen step, by id so that undo cannot shift it
     bool m_calculating = false;
 
     // Tessellations by result, made on the worker thread, read when the scene is put together.

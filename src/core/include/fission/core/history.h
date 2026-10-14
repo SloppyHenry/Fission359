@@ -54,7 +54,8 @@ public:
     bool goTo(std::size_t position);
 
     // --- transactions --------------------------------------------------------------------
-    /// Everything executed until `commitTransaction` becomes one step, called `label`. The
+    /// Everything executed until `commitTransaction` becomes one step, called `label` (when it
+    /// was a single change, the step is described by that change). The
     /// changes are applied right away (so the 3D view follows the mouse). Calls may nest; the
     /// outermost one counts.
     void beginTransaction(CommandDescription label);

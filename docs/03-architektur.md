@@ -108,6 +108,11 @@ Feature muss einen Namens-Vertrag erfüllen (alle erzeugten Flächen benennen, H
 - Jede Änderung ist ein `Command` mit `apply()` und `revert()` auf **Dokumentebene** (Parameter, Feature hinzufügen/entfernen …), nicht auf Geometrie-Ebene. Die Geometrie wird neu berechnet oder kommt aus dem Cache.
 - **Transaktionen** fassen zusammen: Ein Zieh-Vorgang mit 200 Zwischenwerten ergibt einen Undo-Schritt.
 - Undo-Stack unbegrenzt (nur durch Speicher begrenzt). Er wird nicht in der Datei gespeichert; der Versionsverlauf übernimmt das (AP-5.7).
+- **Umsetzung (AP-1.2):** `core::History` besitzt das `Document` und gibt es nur als `const&` heraus; geändert wird es allein über
+  `History::execute(Command)`. Dadurch erzwingt der Compiler Regel 3 aus §2. Befehle speichern, was sie zum Zurücknehmen brauchen
+  (alter Wert; bei entfernten Schritten Schritt, Stelle und Körper samt Ids), nicht das ganze Dokument. Ein Befehl, der nichts ändert,
+  und ein abgelehnter Befehl hinterlassen keinen Schritt. Befehle beschreiben sich als Schlüssel plus Werte; die Texte entstehen in
+  der Oberfläche.
 
 ---
 

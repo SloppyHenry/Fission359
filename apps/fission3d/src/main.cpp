@@ -61,6 +61,7 @@ struct CommandLine {
     bool about = false;
     int openMenu = -1;
     bool reduceMotion = false;
+    bool showHistory = false;
     QSize size;
 };
 
@@ -96,13 +97,16 @@ CommandLine parseCommandLine(int& argc, char** argv) {
         QStringLiteral("open-menu"),
         QStringLiteral("Open the menu with this number (0 = first) at start."),
         QStringLiteral("n"));
+    const QCommandLineOption showHistory(
+        QStringLiteral("show-history"),
+        QStringLiteral("Make a few changes, undo one and open the list of recent actions."));
     const QCommandLineOption reduceMotion(QStringLiteral("reduce-motion"),
                                           QStringLiteral("Switch animations off."));
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
                                   QStringLiteral("WxH"));
-    parser.addOptions(
-        {smokeTest, measureStartup, theme, language, focus, about, openMenu, reduceMotion, size});
+    parser.addOptions({smokeTest, measureStartup, theme, language, focus, about, openMenu,
+                       showHistory, reduceMotion, size});
     parser.process(core); // prints help or version and exits when asked
 
     CommandLine result;
@@ -113,6 +117,7 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     result.focus = parser.isSet(focus);
     result.about = parser.isSet(about);
     result.reduceMotion = parser.isSet(reduceMotion);
+    result.showHistory = parser.isSet(showHistory);
     result.openMenu = parser.isSet(openMenu) ? parser.value(openMenu).toInt() : -1;
     const QStringList parts = parser.value(size).split(QLatin1Char('x'));
     if (parts.size() == 2 && parts[0].toInt() > 0 && parts[1].toInt() > 0) {
@@ -172,6 +177,7 @@ int main(int argc, char* argv[]) {
     appOptions.focusMode = options.focus;
     appOptions.reduceMotion = options.reduceMotion;
     appOptions.openMenu = options.openMenu;
+    appOptions.showHistory = options.showHistory;
     fission::ui::Numbers numbers;
 
     // The document: the one box of the start, calculated before the first frame.

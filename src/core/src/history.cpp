@@ -154,7 +154,11 @@ void History::commitTransaction() {
     if (pending_.empty()) {
         return;
     }
-    pushStep(std::make_unique<GroupCommand>(std::move(label_), std::move(pending_)));
+    if (pending_.size() == 1) { // a drag of one value: the step says what changed
+        pushStep(std::move(pending_.front()));
+    } else {
+        pushStep(std::make_unique<GroupCommand>(std::move(label_), std::move(pending_)));
+    }
     pending_.clear();
 }
 
