@@ -167,7 +167,10 @@ jobs:
 
       - name: Install ccache
         run: |
-          if [ "$RUNNER_OS" = "macOS" ]; then brew install ccache; else sudo apt-get install -y ccache; fi
+          if [ "$RUNNER_OS" = "macOS" ]; then brew install ccache; else
+            # xvfb and Mesa: the window tests run in a virtual screen with software OpenGL
+            sudo apt-get install -y ccache xvfb libgl1-mesa-dri libglx-mesa0 libegl1
+          fi
 
       - name: Configure and build
         run: |
@@ -200,6 +203,8 @@ jobs:
           if-no-files-found: ignore
           path: |
             build/${{ matrix.preset }}/smoke-test.png
+            build/${{ matrix.preset }}/window-dark.png
+            build/${{ matrix.preset }}/window-light.png
             build/${{ matrix.preset }}/Testing/Temporary/LastTest.log
             build/${{ matrix.preset }}/vcpkg-manifest-install.log
 
@@ -284,6 +289,21 @@ jobs:
           test -s "$RUNNER_TEMP/dmg-smoke.png"
           hdiutil detach "$mount_point"
 
+      # The window itself, with the graphics device of the runner (Metal). Advisory: runners
+      # without a usable graphics device must not stop the package from being built.
+      - name: Open the window from the .dmg (macOS, advisory)
+        if: runner.os == 'macOS'
+        continue-on-error: true
+        run: |
+          dmg="$(ls build/package/Fission3D-*-macos-arm64.dmg)"
+          mount_point="$RUNNER_TEMP/dmg2"
+          hdiutil attach "$dmg" -mountpoint "$mount_point" -nobrowse -readonly
+          "$mount_point/Fission3D.app/Contents/MacOS/fission3d" --smoke-test "$RUNNER_TEMP/dmg-window.png" \
+            --theme dark --language en --size 1280x800
+          "$mount_point/Fission3D.app/Contents/MacOS/fission3d" --measure-startup
+          cp "$RUNNER_TEMP/dmg-window.png" build/package/ || true
+          hdiutil detach "$mount_point"
+
       # ---- Linux ----------------------------------------------------------------------
       - name: Packaging tools (Linux)
         if: runner.os == 'Linux'
@@ -313,6 +333,20 @@ jobs:
           "$appimage" --version
           "$appimage" --smoke-test "$RUNNER_TEMP/appimage-smoke.png"
           test -s "$RUNNER_TEMP/appimage-smoke.png"
+
+      # The window itself in a virtual screen with software OpenGL (no graphics device here).
+      - name: Open the window from the AppImage (Linux, Xvfb)
+        if: runner.os == 'Linux'
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          QSG_RHI_BACKEND: opengl
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0 libegl1
+          appimage="$(ls build/package/Fission3D-*-x86_64.AppImage)"
+          xvfb-run -a -s "-screen 0 1280x800x24" "$appimage" --smoke-test build/package/appimage-window.png \
+            --theme dark --language en --size 1280x800
+          xvfb-run -a -s "-screen 0 1280x800x24" "$appimage" --measure-startup
 
       - name: Start the Flatpak (Linux)
         if: runner.os == 'Linux'
@@ -355,3 +389,4 @@ jobs:
             build/package/*.dmg
             build/package/*.AppImage
             build/package/*.flatpak
+            build/package/*-window.png

@@ -32,13 +32,13 @@ set(FISSION_ALLOWED_DEPS_fission_analysis fission_core fission_geometry Eigen3::
 set(FISSION_ALLOWED_DEPS_fission_services
   fission_core spdlog::spdlog nlohmann_json::nlohmann_json Qt6::Core)
 set(FISSION_ALLOWED_DEPS_fission_render
-  fission_core fission_geometry Eigen3::Eigen Qt6::Core Qt6::Gui)
+  fission_core fission_geometry Eigen3::Eigen Qt6::Core Qt6::Gui Qt6::GuiPrivate)
 set(FISSION_ALLOWED_DEPS_fission_interaction
   fission_core fission_geometry fission_features fission_render Eigen3::Eigen
   Qt6::Core Qt6::Gui)
 set(FISSION_ALLOWED_DEPS_fission_ui
   fission_core fission_features fission_interaction fission_render fission_services
-  Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
+  Qt6::Core Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick)
 
 # fission_add_library(<name> SOURCES <files...> [PUBLIC <deps...>] [PRIVATE <deps...>])
 # Public headers live in <dir>/include/fission/<layer>/.

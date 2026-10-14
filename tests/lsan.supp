@@ -1,0 +1,3 @@
+# Leaks inside third-party libraries that the program triggers by loading its fonts: fontconfig
+# keeps its pattern cache until the process ends. Not ours, and the process is ending anyway.
+leak:libfontconfig

@@ -39,6 +39,14 @@ describe_test() {
         license_headers)             echo "Alle Quelldateien tragen den Lizenz-Kopf (SPDX)" ;;
         layer_includes)              echo "Schichtregel im Quelltext: Qt und Kernel-Typen nur, wo erlaubt" ;;
         app_opens_window)            echo "Die App startet und zeigt ihr Fenster" ;;
+        app_window_dark)             echo "Das Fenster erscheint im dunklen Design (Bild entsteht)" ;;
+        app_window_light)            echo "Das Fenster erscheint im hellen Design (Bild entsteht)" ;;
+        app_window_dark_matches_design)
+                                     echo "Das dunkle Fenster entspricht dem Design (Farben, Würfel sichtbar)" ;;
+        app_window_light_matches_design)
+                                     echo "Das helle Fenster entspricht dem Design (Farben, Würfel sichtbar)" ;;
+        app_start_time)              echo "Startzeit unter 3 Sekunden (bis zum ersten Bild)" ;;
+        translations_complete)       echo "Alle Texte sind übersetzt (Deutsch und Englisch), nichts ist fest eingebaut" ;;
         app_prints_version)          echo "Die App meldet ihre Version und die geladene OpenCASCADE-Version" ;;
         layering_control_builds)     echo "Kontrolle: Core-Code ohne Qt lässt sich bauen" ;;
         layering_rejects_qt_in_core) echo "Schichtregel: Qt in Core wird vom Compiler abgelehnt" ;;

@@ -11,6 +11,7 @@ add_subdirectory(smoke)
 add_subdirectory(geometry)
 add_subdirectory(naming)
 add_subdirectory(layering)
+add_subdirectory(ui)
 
 # Source-level checks (license headers, kernel types and Qt only where allowed).
 add_test(NAME license_headers
@@ -40,9 +41,63 @@ set_tests_properties(app_prints_version PROPERTIES
   PASS_REGULAR_EXPRESSION "Fission3D [0-9]+\\.[0-9]+\\.[0-9]+ \\(OpenCASCADE [0-9]+\\.[0-9]+\\.[0-9]+\\)"
   TIMEOUT 30)
 
-# Start the real app headless, render one frame and keep it as proof.
-add_test(NAME app_opens_window
-  COMMAND fission3d --smoke-test "${CMAKE_BINARY_DIR}/smoke-test.png")
-set_tests_properties(app_opens_window PROPERTIES
-  ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software"
-  TIMEOUT 60)
+# Start the real app headless, render one frame and keep it as proof. On macOS with vcpkg's
+# Qt (CI) the build tree's executable carries a private copy of the Qt libraries and cannot load
+# Qt's QML plugins; there the same start is done on the finished package (CI job "Package").
+set(_fission_run_app_in_tree ON)
+# Sanitizer builds: fontconfig's own leak is ignored (tests/lsan.supp), and the program is much
+# slower, so the start-time budget is relaxed there (the 3 s of the milestone are for release builds).
+set(_fission_lsan_env "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan.supp")
+set(_fission_budget_env "")
+if(FISSION_SANITIZE)
+  set(_fission_budget_env "FISSION_STARTUP_BUDGET_MS=20000")
+endif()
+if(APPLE AND FISSION_QT_FROM_VCPKG)
+  set(_fission_run_app_in_tree OFF)
+endif()
+if(_fission_run_app_in_tree)
+  # The QML modules of Qt (QtQuick.Controls ...) live next to the Qt libraries; an application
+  # that is not deployed yet has to be told where.
+  set(_fission_qml_path "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_QML}")
+  add_test(NAME app_opens_window
+    COMMAND fission3d --smoke-test "${CMAKE_BINARY_DIR}/smoke-test.png")
+  set_tests_properties(app_opens_window PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QML_IMPORT_PATH=${_fission_qml_path};${_fission_lsan_env}"
+    TIMEOUT 60)
+endif()
+
+# Texts: English in the source, German translation complete, nothing hard-coded (AP-0.8).
+add_test(NAME translations_complete
+  COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_translations.py"
+          "${CMAKE_SOURCE_DIR}")
+
+# The real window with a graphics device: needs a display, so on Linux it runs inside Xvfb with
+# software OpenGL; on macOS the window system of the machine is used. Skipped without either.
+set(_fission_gui_env "QSG_RHI_BACKEND=opengl;QT_QPA_PLATFORM=xcb;LIBGL_ALWAYS_SOFTWARE=1")
+find_program(FISSION_XVFB_RUN xvfb-run)
+set(_fission_gui_runner "")
+if(APPLE)
+  set(_fission_gui_env "FISSION_GUI_TEST=1")
+elseif(FISSION_XVFB_RUN)
+  set(_fission_gui_runner ${FISSION_XVFB_RUN} -a -s "-screen 0 1280x800x24")
+endif()
+if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
+  foreach(_theme dark light)
+    add_test(NAME app_window_${_theme}
+      COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+              --smoke-test "${CMAKE_BINARY_DIR}/window-${_theme}.png" --theme ${_theme}
+              --language de --size 1280x800)
+    set_tests_properties(app_window_${_theme} PROPERTIES
+      ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 FIXTURES_SETUP window_${_theme})
+    add_test(NAME app_window_${_theme}_matches_design
+      COMMAND fission_screenshot_check "${CMAKE_BINARY_DIR}/window-${_theme}.png" ${_theme} --expect-3d
+              --reference "${CMAKE_CURRENT_SOURCE_DIR}/reference/mockup-${_theme}.png")
+    set_tests_properties(app_window_${_theme}_matches_design PROPERTIES
+      ENVIRONMENT "QT_QPA_PLATFORM=offscreen" FIXTURES_REQUIRED window_${_theme} TIMEOUT 60)
+  endforeach()
+  add_test(NAME app_start_time
+    COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
+            "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)
+  set_tests_properties(app_start_time PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env};${_fission_budget_env}" TIMEOUT 180)
+endif()

@@ -6,19 +6,49 @@ include(FissionPackaging)
 
 qt_add_executable(fission3d MACOSX_BUNDLE src/main.cpp)
 
+set(FISSION_QML_FILES
+  qml/Main.qml qml/AboutWindow.qml qml/AppMenu.qml qml/BedLabels.qml qml/Btn.qml qml/DocTabs.qml
+  qml/Float.qml qml/Focusring.qml qml/Icon.qml qml/IconBtn.qml qml/InfoRow.qml qml/LeftPanel.qml
+  qml/LibraryCard.qml qml/Logo.qml qml/MenuStrip.qml qml/NativeMenuBar.qml qml/NavButton.qml
+  qml/NumberField.qml qml/PanelHeader.qml qml/RightPanel.qml qml/Section.qml qml/Segmented.qml
+  qml/StatusBar.qml qml/ToolButton3D.qml qml/TreeRow.qml qml/Txt.qml qml/ViewCube.qml
+  qml/ViewOverlay.qml qml/icons.js)
+
 qt_add_qml_module(fission3d
   URI Fission3D
   VERSION 1.0
-  QML_FILES qml/Main.qml
+  QML_FILES ${FISSION_QML_FILES}
   # The module directory "Fission3D" would collide with the executable "fission3d" on
   # case-insensitive file systems (macOS), so it gets its own parent directory.
   OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/qml-modules/Fission3D")
 
+# The interface font (IBM Plex, SIL Open Font License 1.1) is part of the program.
+qt_add_resources(fission3d "fonts"
+  PREFIX "/fission/fonts"
+  BASE resources/fonts
+  FILES
+    resources/fonts/IBMPlexSans-Regular.ttf resources/fonts/IBMPlexSans-Medium.ttf
+    resources/fonts/IBMPlexSans-SemiBold.ttf resources/fonts/IBMPlexSans-Bold.ttf
+    resources/fonts/IBMPlexMono-Regular.ttf resources/fonts/IBMPlexMono-Medium.ttf
+    resources/fonts/IBMPlexMono-SemiBold.ttf)
+
+# Texts are English in the source (qsTr); the German translation is a Qt Linguist file.
+# `cmake --build <dir> --target update_translations` refreshes the .ts files from the sources.
+set(_fission_tr_sources src/main.cpp)
+foreach(_qml IN LISTS FISSION_QML_FILES)
+  list(APPEND _fission_tr_sources "${CMAKE_CURRENT_SOURCE_DIR}/${_qml}")
+endforeach()
+qt_add_translations(fission3d
+  TS_FILES i18n/fission3d_de.ts i18n/fission3d_en.ts
+  SOURCES ${_fission_tr_sources}
+  RESOURCE_PREFIX "/i18n"
+  LUPDATE_OPTIONS -no-obsolete -locations relative)
+
 # The app wires the layers together. Kernel implementations are linked here only,
 # so that no other layer can depend on them.
 target_link_libraries(fission3d PRIVATE
-  Qt6::Core Qt6::Gui Qt6::Quick
-  fission_core fission_ui
+  Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml
+  fission_core fission_ui fission_services spdlog::spdlog
   fission_geometry_occt fission_geometry_mesh fission_geometry_sketch
   fission_features fission_io fission_analysis)
 
