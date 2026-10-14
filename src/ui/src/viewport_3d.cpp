@@ -143,7 +143,8 @@ void Viewport3D::setScene(std::shared_ptr<const render::RenderScene> scene) {
 }
 
 void Viewport3D::rebuildVisibleScene() {
-    if (m_scene && std::find(m_bodyVisible.begin(), m_bodyVisible.end(), false) != m_bodyVisible.end()) {
+    if (m_scene &&
+        std::find(m_bodyVisible.begin(), m_bodyVisible.end(), false) != m_bodyVisible.end()) {
         auto shown = std::make_shared<render::RenderScene>();
         shown->bed = m_scene->bed;
         for (std::size_t i = 0; i < m_scene->bodies.size(); ++i) {
@@ -334,9 +335,9 @@ void Viewport3D::geometryChange(const QRectF& newGeometry, const QRectF& oldGeom
 Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect) {
     Snapshot snapshot;
     snapshot.scene = m_shown ? m_shown : m_scene;
-    snapshot.displayMode = m_displayMode == QLatin1String("wire")    ? render::DisplayMode::wireframe
+    snapshot.displayMode = m_displayMode == QLatin1String("wire") ? render::DisplayMode::wireframe
                            : m_displayMode == QLatin1String("solid") ? render::DisplayMode::solid
-                                                                      : render::DisplayMode::colors;
+                                                                     : render::DisplayMode::colors;
     snapshot.palette = palette();
     snapshot.view = m_camera.view();
     snapshot.projection = m_camera.projection(aspect);

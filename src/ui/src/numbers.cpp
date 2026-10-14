@@ -3,10 +3,10 @@
 
 #include "fission/ui/numbers.h"
 
+#include <QLocale>
+
 #include <cmath>
 #include <limits>
-
-#include <QLocale>
 
 #include "fission/core/expression.h"
 

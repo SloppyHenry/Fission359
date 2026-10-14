@@ -3,15 +3,16 @@
 
 #include "fission/services/log.h"
 
+#include <QByteArray>
+#include <QString>
+#include <QtLogging>
+
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include <QByteArray>
-#include <QString>
-#include <QtLogging>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
@@ -36,7 +37,8 @@ spdlog::level::level_enum levelOf(QtMsgType type) {
     return spdlog::level::info;
 }
 
-void qtMessageHandler(QtMsgType type, const QMessageLogContext& /*context*/, const QString& message) {
+void qtMessageHandler(QtMsgType type, const QMessageLogContext& /*context*/,
+                      const QString& message) {
     const QByteArray utf8 = message.toUtf8();
     if (auto logger = spdlog::default_logger()) {
         logger->log(levelOf(type), "[qt] {}", utf8.constData());
@@ -52,7 +54,8 @@ void qtMessageHandler(QtMsgType type, const QMessageLogContext& /*context*/, con
 } // namespace
 
 std::filesystem::path logDirectory() {
-    if (const char* override = std::getenv("FISSION_LOG_DIR"); override != nullptr && *override != '\0') {
+    if (const char* override = std::getenv("FISSION_LOG_DIR");
+        override != nullptr && *override != '\0') {
         return override;
     }
     const char* home = std::getenv("HOME");
@@ -85,7 +88,8 @@ std::filesystem::path startLogging(std::string_view program) {
         logFile = "(no log file)";
         fprintf(stderr, "Fission3D: cannot write a log file: %s\n", error.what());
     }
-    auto logger = std::make_shared<spdlog::logger>(std::string(program), sinks.begin(), sinks.end());
+    auto logger =
+        std::make_shared<spdlog::logger>(std::string(program), sinks.begin(), sinks.end());
     logger->set_pattern("%Y-%m-%d %H:%M:%S.%e %^%l%$ %v");
     logger->set_level(spdlog::level::info);
     logger->flush_on(spdlog::level::warn);

@@ -21,8 +21,7 @@ class Theme : public QObject {
     Q_PROPERTY(bool dark READ dark NOTIFY tokensChanged)
     Q_PROPERTY(QColor accentBase READ accentBase WRITE setAccentBase NOTIFY tokensChanged)
 
-#define FISSION_THEME_PROPERTY(name) \
-    Q_PROPERTY(QColor name READ name##Color NOTIFY tokensChanged)
+#define FISSION_THEME_PROPERTY(name) Q_PROPERTY(QColor name READ name##Color NOTIFY tokensChanged)
     FISSION_THEME_TOKENS(FISSION_THEME_PROPERTY)
 #undef FISSION_THEME_PROPERTY
 
@@ -69,7 +68,8 @@ public:
     static QStringList fontFamilies();
     static QStringList monoFamilies();
 
-#define FISSION_THEME_GETTER(name) QColor name##Color() const { return m_tokens.name; }
+#define FISSION_THEME_GETTER(name)                                                                 \
+    QColor name##Color() const { return m_tokens.name; }
     FISSION_THEME_TOKENS(FISSION_THEME_GETTER)
 #undef FISSION_THEME_GETTER
 

@@ -6,9 +6,10 @@
 #include <chrono>
 
 #if defined(__APPLE__)
+#include <unistd.h>
+
 #include <sys/sysctl.h>
 #include <sys/time.h>
-#include <unistd.h>
 #elif defined(__linux__)
 #include <fstream>
 #include <string>

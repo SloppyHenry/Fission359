@@ -4,8 +4,8 @@
 #include "fission/ui/theme.h"
 
 #include <QGuiApplication>
-#include <QtGlobal>
 #include <QStyleHints>
+#include <QtGlobal>
 
 namespace fission::ui {
 

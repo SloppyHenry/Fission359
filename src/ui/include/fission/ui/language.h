@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include <memory>
-
 #include <QObject>
 #include <QString>
 #include <QTranslator>
+
+#include <memory>
 
 class QQmlEngine;
 

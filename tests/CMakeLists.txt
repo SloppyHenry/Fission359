@@ -11,6 +11,7 @@ add_subdirectory(smoke)
 add_subdirectory(geometry)
 add_subdirectory(naming)
 add_subdirectory(layering)
+add_subdirectory(ui)
 
 # Source-level checks (license headers, kernel types and Qt only where allowed).
 add_test(NAME license_headers
@@ -46,3 +47,37 @@ add_test(NAME app_opens_window
 set_tests_properties(app_opens_window PROPERTIES
   ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software"
   TIMEOUT 60)
+
+# Texts: English in the source, German translation complete, nothing hard-coded (AP-0.8).
+add_test(NAME translations_complete
+  COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_translations.py"
+          "${CMAKE_SOURCE_DIR}")
+
+# The real window with a graphics device: needs a display, so on Linux it runs inside Xvfb with
+# software OpenGL; on macOS the window system of the machine is used. Skipped without either.
+set(_fission_gui_env "QSG_RHI_BACKEND=opengl;QT_QPA_PLATFORM=xcb;LIBGL_ALWAYS_SOFTWARE=1")
+find_program(FISSION_XVFB_RUN xvfb-run)
+set(_fission_gui_runner "")
+if(APPLE)
+  set(_fission_gui_env "")
+elseif(FISSION_XVFB_RUN)
+  set(_fission_gui_runner ${FISSION_XVFB_RUN} -a -s "-screen 0 1280x800x24")
+endif()
+if(APPLE OR FISSION_XVFB_RUN)
+  foreach(_theme dark light)
+    add_test(NAME app_window_${_theme}
+      COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+              --smoke-test "${CMAKE_BINARY_DIR}/window-${_theme}.png" --theme ${_theme}
+              --language en --size 1280x800)
+    set_tests_properties(app_window_${_theme} PROPERTIES
+      ENVIRONMENT "${_fission_gui_env}" TIMEOUT 90 FIXTURES_SETUP window_${_theme})
+    add_test(NAME app_window_${_theme}_matches_design
+      COMMAND fission_screenshot_check "${CMAKE_BINARY_DIR}/window-${_theme}.png" ${_theme} --expect-3d)
+    set_tests_properties(app_window_${_theme}_matches_design PROPERTIES
+      ENVIRONMENT "QT_QPA_PLATFORM=offscreen" FIXTURES_REQUIRED window_${_theme} TIMEOUT 60)
+  endforeach()
+  add_test(NAME app_start_time
+    COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
+            "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)
+  set_tests_properties(app_start_time PROPERTIES ENVIRONMENT "${_fission_gui_env}" TIMEOUT 180)
+endif()

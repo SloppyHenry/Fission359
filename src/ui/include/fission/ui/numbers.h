@@ -18,7 +18,8 @@ public:
 
     /// Value of what was typed in; kind is "length" (result in mm), "angle" or "plain".
     /// Returns NaN when the text is not a valid expression.
-    Q_INVOKABLE double evaluate(const QString& text, const QString& kind = QStringLiteral("length")) const;
+    Q_INVOKABLE double evaluate(const QString& text,
+                                const QString& kind = QStringLiteral("length")) const;
 
     /// A number as text with at most `decimals` decimals and no trailing zeros ("12,5" in German,
     /// "12.5" in English).

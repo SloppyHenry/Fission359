@@ -14,15 +14,12 @@
 #include <QQuickWindow>
 #include <QString>
 #include <QTimer>
-#include <QtQml/qqml.h>
 
 #include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <memory>
 #include <string_view>
-
-#include <spdlog/spdlog.h>
 
 #include "fission/core/version.h"
 #include "fission/geo/occt/layer.h"
@@ -36,6 +33,9 @@
 #include "fission/ui/numbers.h"
 #include "fission/ui/theme.h"
 #include "fission/ui/viewport_3d.h"
+
+#include <QtQml/qqml.h>
+#include <spdlog/spdlog.h>
 
 namespace {
 
@@ -52,10 +52,10 @@ QString versionText() {
 }
 
 struct CommandLine {
-    QString smokeTestPath;  // --smoke-test: save a picture of the window and quit
+    QString smokeTestPath; // --smoke-test: save a picture of the window and quit
     bool measureStartup = false;
-    QString theme;          // dark | light | system (empty: dark)
-    QString language;       // de | en | system (empty: system)
+    QString theme;    // dark | light | system (empty: dark)
+    QString language; // de | en | system (empty: system)
     bool focus = false;
     bool about = false;
     bool reduceMotion = false;
@@ -75,7 +75,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     // Developer options: used by scripts/test and for screenshots.
     const QCommandLineOption smokeTest(
         QStringLiteral("smoke-test"),
-        QStringLiteral("Save a screenshot of the first frame and exit."), QStringLiteral("file.png"));
+        QStringLiteral("Save a screenshot of the first frame and exit."),
+        QStringLiteral("file.png"));
     const QCommandLineOption measureStartup(
         QStringLiteral("measure-startup"),
         QStringLiteral("Print the time from process start to the first drawn frame and exit."));
@@ -94,7 +95,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
                                   QStringLiteral("WxH"));
-    parser.addOptions({smokeTest, measureStartup, theme, language, focus, about, reduceMotion, size});
+    parser.addOptions(
+        {smokeTest, measureStartup, theme, language, focus, about, reduceMotion, size});
     parser.process(core); // prints help or version and exits when asked
 
     CommandLine result;
@@ -130,9 +132,9 @@ void loadFonts() {
     QFont::insertSubstitutions(QStringLiteral("IBM Plex Mono"),
                                fission::ui::Theme::monoFamilies().mid(1));
     // IBM Plex (SIL Open Font License 1.1) ships with the program: nothing is downloaded.
-    for (const char* file : {"IBMPlexSans-Regular", "IBMPlexSans-Medium", "IBMPlexSans-SemiBold",
-                             "IBMPlexSans-Bold", "IBMPlexMono-Regular", "IBMPlexMono-Medium",
-                             "IBMPlexMono-SemiBold"}) {
+    for (const char* file :
+         {"IBMPlexSans-Regular", "IBMPlexSans-Medium", "IBMPlexSans-SemiBold", "IBMPlexSans-Bold",
+          "IBMPlexMono-Regular", "IBMPlexMono-Medium", "IBMPlexMono-SemiBold"}) {
         const QString path = QStringLiteral(":/fission/fonts/%1.ttf").arg(QLatin1String(file));
         if (QFontDatabase::addApplicationFont(path) < 0) {
             spdlog::warn("font {} could not be loaded; the system font is used", file);
@@ -211,11 +213,13 @@ int main(int argc, char* argv[]) {
     }
     if (options.about) {
         QTimer::singleShot(0, window, [window] {
-            QMetaObject::invokeMethod(window, "run", Q_ARG(QVariant, QVariant(QStringLiteral("about"))));
+            QMetaObject::invokeMethod(window, "run",
+                                      Q_ARG(QVariant, QVariant(QStringLiteral("about"))));
         });
     }
 
-    const auto reportFirstFrame = [&, mainEntered, ageAtMain, reported = std::make_shared<bool>(false)] {
+    const auto reportFirstFrame = [&, mainEntered, ageAtMain,
+                                   reported = std::make_shared<bool>(false)] {
         if (*reported) {
             return;
         }
@@ -235,7 +239,8 @@ int main(int argc, char* argv[]) {
         }
     };
     if (viewport != nullptr) {
-        QObject::connect(viewport, &fission::ui::Viewport3D::firstFrameShown, &app, reportFirstFrame);
+        QObject::connect(viewport, &fission::ui::Viewport3D::firstFrameShown, &app,
+                         reportFirstFrame);
     } else {
         QTimer::singleShot(0, &app, reportFirstFrame);
     }

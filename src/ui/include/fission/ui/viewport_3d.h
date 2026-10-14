@@ -121,8 +121,8 @@ private:
 
     void rebuildVisibleScene();
 
-    std::shared_ptr<const render::RenderScene> m_scene;        // everything
-    std::shared_ptr<const render::RenderScene> m_shown;        // without hidden bodies
+    std::shared_ptr<const render::RenderScene> m_scene; // everything
+    std::shared_ptr<const render::RenderScene> m_shown; // without hidden bodies
     std::vector<bool> m_bodyVisible;
     QString m_displayMode{QStringLiteral("color")};
     quint64 m_sceneVersion = 1;
