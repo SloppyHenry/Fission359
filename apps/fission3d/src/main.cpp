@@ -58,6 +58,7 @@ struct CommandLine {
     QString language; // de | en | system (empty: system)
     bool focus = false;
     bool about = false;
+    int openMenu = -1;
     bool reduceMotion = false;
     QSize size;
 };
@@ -90,13 +91,17 @@ CommandLine parseCommandLine(int& argc, char** argv) {
                                    QStringLiteral("Start in focus mode (side bars hidden)."));
     const QCommandLineOption about(QStringLiteral("show-about"),
                                    QStringLiteral("Open the About window at start."));
+    const QCommandLineOption openMenu(
+        QStringLiteral("open-menu"),
+        QStringLiteral("Open the menu with this number (0 = first) at start."),
+        QStringLiteral("n"));
     const QCommandLineOption reduceMotion(QStringLiteral("reduce-motion"),
                                           QStringLiteral("Switch animations off."));
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
                                   QStringLiteral("WxH"));
     parser.addOptions(
-        {smokeTest, measureStartup, theme, language, focus, about, reduceMotion, size});
+        {smokeTest, measureStartup, theme, language, focus, about, openMenu, reduceMotion, size});
     parser.process(core); // prints help or version and exits when asked
 
     CommandLine result;
@@ -107,6 +112,7 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     result.focus = parser.isSet(focus);
     result.about = parser.isSet(about);
     result.reduceMotion = parser.isSet(reduceMotion);
+    result.openMenu = parser.isSet(openMenu) ? parser.value(openMenu).toInt() : -1;
     const QStringList parts = parser.value(size).split(QLatin1Char('x'));
     if (parts.size() == 2 && parts[0].toInt() > 0 && parts[1].toInt() > 0) {
         result.size = QSize(parts[0].toInt(), parts[1].toInt());
@@ -175,6 +181,7 @@ int main(int argc, char* argv[]) {
     fission::ui::AppOptions appOptions;
     appOptions.focusMode = options.focus;
     appOptions.reduceMotion = options.reduceMotion;
+    appOptions.openMenu = options.openMenu;
     fission::ui::Numbers numbers;
 
     QQmlApplicationEngine engine;

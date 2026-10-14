@@ -125,6 +125,19 @@ Window {
         }
     }
 
+    Component.onCompleted: {
+        if (AppOptions.openMenu >= 0) {
+            openMenuTimer.start()
+        }
+    }
+
+    Timer {
+        id: openMenuTimer
+
+        interval: 300
+        onTriggered: menuStrip.openMenu(AppOptions.openMenu)
+    }
+
     Timer {
         id: hintTimer
 

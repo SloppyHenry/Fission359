@@ -21,6 +21,14 @@ Rectangle {
     height: Theme.menuBarHeight
     color: Theme.chrome
 
+    // Opens menu number `index` (developer option --open-menu, for screenshots).
+    function openMenu(index) {
+        const button = menuRepeater.itemAt(index)
+        if (button) {
+            button.openPopup()
+        }
+    }
+
     Rectangle {
         anchors.bottom: parent.bottom
         width: parent.width
@@ -57,6 +65,8 @@ Rectangle {
         }
 
         Repeater {
+            id: menuRepeater
+
             model: root.inWindowMenus ? root.menus : []
 
             delegate: AbstractButton {
@@ -69,7 +79,11 @@ Rectangle {
                 implicitWidth: label.implicitWidth + 18
                 hoverEnabled: true
                 Accessible.name: modelData.title
-                onClicked: popup.visible ? popup.close() : popup.popup(0, height + 2)
+                function openPopup() {
+                    popup.popup(0, height + 2)
+                }
+
+                onClicked: popup.visible ? popup.close() : openPopup()
 
                 contentItem: Txt {
                     id: label
