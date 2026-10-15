@@ -69,9 +69,7 @@ public:
     static QStringList monoFamilies();
 
 #define FISSION_THEME_GETTER(name)                                                                 \
-    QColor name##Color() const {                                                                   \
-        return m_tokens.name;                                                                      \
-    }
+    QColor name##Color() const { return m_tokens.name; }
     FISSION_THEME_TOKENS(FISSION_THEME_GETTER)
 #undef FISSION_THEME_GETTER
 
