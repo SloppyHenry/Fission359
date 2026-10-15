@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "fission/render/detail.h"
 #include "fission/render/scene_renderer.h"
 
 #include <QtQml/qqml.h>
@@ -215,6 +216,11 @@ void Viewport3D::setOrthographic(bool orthographic) {
 }
 
 void Viewport3D::cameraMoved() {
+    const int level = render::detailLevelFor(m_camera.pixelsPerMillimetre(), m_detailLevel);
+    if (level != m_detailLevel) {
+        m_detailLevel = level;
+        emit detailLevelWanted(level);
+    }
     emit cameraChanged();
     update();
 }

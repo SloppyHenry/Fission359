@@ -173,7 +173,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.3 Viewport und Navigation
-**Status:** in Arbeit (Teile 1.3a und 1.3b fertig, siehe unten) · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
+**Status:** in Arbeit (Teile 1.3a bis 1.3c fertig, siehe unten) · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
 
 **Umfang:**
 - Rendering aller Körper (Tessellierung mit Face/Edge-IDs, inkrementell nur geänderte Körper)
@@ -202,9 +202,40 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 |---|---|---|
 | 1.3a Navigation | Maus-Stile, Pinch-Zoom, Doppelklick auf Fläche, klickbare Würfel-Kanten und -Ecken | fertig (2026-10-15) |
 | 1.3b Mehrere Körper | je Körper ein eigener Puffer, nur Geändertes wird hochgeladen | fertig (2026-10-15) |
-| 1.3c Feinheit | beim Hineinzoomen im Hintergrund feiner tessellieren | offen |
+| 1.3c Feinheit | beim Hineinzoomen im Hintergrund feiner tessellieren | fertig (2026-10-15) |
 | 1.3d Optik | SSAO („weiche Verdeckungsschatten“), abschaltbar, schaltet sich bei verfehltem Budget selbst ab | offen |
 | 1.3e Messung und Bett | 2 Mio. Dreiecke auf M1 und Linux-GPU; Bettgröße aus einer Druckerliste | offen |
+
+#### Abschlussvermerk Teil 1.3c (2026-10-15)
+
+**Umgesetzt**
+- **Fünf Feinheitsstufen** (`render/detail.h`): Stufe 0 ist die bisherige Anzeige (Sehnenfehler 0,01 mm, 5°), jede Stufe halbiert den
+  Sehnenfehler (bis 0,000625 mm bei Stufe 4; der Winkel schrumpft langsamer). Die nötige Stufe richtet sich nach dem Maßstab: der
+  Fehler auf dem Bildschirm soll höchstens eine Viertel-Bildpunkt-Breite sein. Mit Hysterese, damit die Ansicht an einer Schwelle nicht
+  hin- und herspringt.
+- **Im Hintergrund:** Die 3D-Ansicht meldet beim Zoomen die gewünschte Stufe; das Dokumentmodell wartet 120 ms, bis das Zoomen sich
+  beruhigt hat, und tesselliert dann die sichtbaren Körper auf einem eigenen Arbeitsfaden. Bis das Ergebnis da ist, bleibt die grobe
+  Darstellung stehen (kein Ruckeln, kein Flackern); ein neuer Wunsch bricht eine laufende Arbeit zwischen zwei Körpern ab.
+- Ändert sich das Dokument, bekommt der neue Körper zuerst das grobe Netz und dann das feine. Körper, für die eine feinere Stufe über
+  3 Mio. Dreiecke bräuchte, behalten ihr grobes Netz (Schutz der Bildrate).
+- Der Renderer sendet dank 1.3b nur den einen Körper neu.
+
+**Wie getestet**
+- `tests/unit/render/test_detail.cpp`: Stufen steigen mit dem Maßstab, Hysterese, Fehler ≤ ¼ Bildpunkt auf der gewählten Stufe.
+- **Akzeptanzkriterium „Loch Ø 3 mm ohne sichtbare Facetten“:** Ein Zylinder Ø 3 mm wird für „füllt eine Bildschirmhöhe von
+  1080 Bildpunkten“ (360 Bildpunkte je mm) tesselliert; die größte Abweichung des Kreis-Vielecks vom echten Kreis beträgt **0,03
+  Bildpunkte** (Stufe 4) gegenüber 0,51 Bildpunkten mit dem Grundnetz.
+- `test_document_model.cpp`: Zoomen gibt ein feineres Netz mit neuer Version, Herauszoomen bringt das Grundnetz zurück, eine
+  Änderung des Dokuments bekommt anschließend wieder das feine Netz.
+- Mac `scripts/test` komplett grün.
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Kein Bildschirmfoto als Nachweis:** In der Oberfläche lässt sich noch kein Loch bauen (Formen AP-1.5, Ausschneiden AP-1.7). Der
+  Nachweis ist deshalb die gemessene Abweichung in Bildpunkten, nicht ein Foto. Sobald es Löcher gibt, ein Foto-Test nachliefern.
+- Der Maßstab wird **am Blickpunkt** gemessen. Teile, die der Kamera viel näher sind, sind in Wirklichkeit größer abgebildet; mit
+  Perspektive und sehr nahem Blick kann eine Kante knapp über ¼ Bildpunkt liegen. Behebbar mit einer Stufe je Körper nach Abstand.
+- Eine einzelne Kernel-Tessellierung lässt sich nicht mitten drin abbrechen (nur zwischen Körpern); bei sehr großen Körpern wäre das
+  ein eigenes Thema (siehe AP-1.1: „Abbruch“).
 
 #### Abschlussvermerk Teil 1.3b (2026-10-15)
 

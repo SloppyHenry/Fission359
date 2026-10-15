@@ -4,10 +4,13 @@
 #pragma once
 
 #include <QObject>
+#include <QThreadPool>
+#include <QTimer>
 #include <QVariantList>
 
 #include <cstdint>
 #include <map>
+#include <atomic>
 #include <memory>
 #include <mutex>
 
@@ -106,6 +109,14 @@ public:
     /// Takes back everything since `beginChange` (the person pressed Esc).
     Q_INVOKABLE void cancelChange();
 
+    /// How finely bodies are tessellated for the screen (0 = basic, see render/detail.h). The
+    /// view asks for more when the person zooms in; finer meshes are made in the background and
+    /// replace the coarse ones when they are ready.
+    Q_INVOKABLE void setDetailLevel(int level);
+    int detailLevel() const { return m_detailLevel; }
+    /// The level of the meshes that are on screen now (for tests and the log).
+    int shownDetailLevel() const { return m_shownDetailLevel; }
+
 signals:
     void recipeChanged();
     void bodiesChanged();
@@ -147,6 +158,20 @@ private:
     // Tessellations by result, made on the worker thread, read when the scene is put together.
     std::mutex m_meshMutex;
     std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_meshes;
+
+    // Finer tessellations for the current zoom, by mesh key; made by a pool thread, used on the
+    // interface thread only.
+    void startDetailJob();
+    void applyDetail(std::uint64_t generation, int level,
+                     std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> meshes);
+    int m_detailLevel = 0;
+    int m_shownDetailLevel = 0;
+    std::uint64_t m_detailGeneration = 0;
+    std::shared_ptr<std::atomic<std::uint64_t>> m_detailCurrent =
+        std::make_shared<std::atomic<std::uint64_t>>(0);
+    std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_detailMeshes;
+    QTimer m_detailTimer;
+    QThreadPool m_detailPool;
 
     // Last: its thread must be stopped before the rest goes away.
     std::unique_ptr<core::RecomputeEngine> m_engine;

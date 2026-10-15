@@ -221,6 +221,9 @@ int main(int argc, char* argv[]) {
                          [viewport](std::shared_ptr<const fission::render::RenderScene> scene) {
                              viewport->setScene(std::move(scene));
                          });
+        // Zooming in asks for finer tessellation; the model makes it in the background.
+        QObject::connect(viewport, &fission::ui::Viewport3D::detailLevelWanted, &documentModel,
+                         &fission::ui::DocumentModel::setDetailLevel);
     }
     if (options.about) {
         QTimer::singleShot(0, window, [window] {

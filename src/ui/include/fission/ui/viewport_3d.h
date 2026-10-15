@@ -117,6 +117,8 @@ signals:
     void bedVisibleChanged();
     void orthographicChanged();
     void mouseStyleChanged();
+    /// The view needs finer (or may use coarser) tessellation at the current zoom.
+    void detailLevelWanted(int level);
     void displayModeChanged();
     void cameraChanged();
     void sceneChanged();
@@ -146,6 +148,7 @@ private:
     void applyNavigation(render::NavigationAction action, double dx, double dy);
     std::optional<render::SurfaceHit> surfaceAt(double x, double y) const;
 
+    int m_detailLevel = 0;
     render::MouseStyle m_mouseStyle = render::MouseStyle::fission;
     QString m_displayMode{QStringLiteral("color")};
     quint64 m_sceneVersion = 1;
