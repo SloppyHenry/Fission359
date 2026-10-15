@@ -204,7 +204,53 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 | 1.3b Mehrere Körper | je Körper ein eigener Puffer, nur Geändertes wird hochgeladen | fertig (2026-10-15) |
 | 1.3c Feinheit | beim Hineinzoomen im Hintergrund feiner tessellieren | fertig (2026-10-15) |
 | 1.3d Optik | SSAO („weiche Verdeckungsschatten“), abschaltbar, schaltet sich bei verfehltem Budget selbst ab | fertig (2026-10-15) |
-| 1.3e Messung und Bett | 2 Mio. Dreiecke auf M1 und Linux-GPU; Bettgröße aus einer Druckerliste | offen |
+| 1.3e Messung und Bett | 2 Mio. Dreiecke auf M1 und Linux-GPU; Bettgröße aus einer Druckerliste | Mac fertig, Linux-Messung offen (2026-10-15) |
+
+#### Abschlussvermerk Teil 1.3e (2026-10-15)
+
+**Umgesetzt**
+- **Druckerliste** (`ui/printer_catalog.h`, 12 Einträge mit Bettgröße, Höhe und Düse; Platzhalter für die Druckerprofile aus AP-3.1):
+  Im Reiter **Drucker** rechts wählen; das Druckbett (Größe, Raster, Beschriftung „256 mm“) und die Angabe oben rechts folgen, die
+  Ansicht zeigt wieder alles. Kein Undo-Schritt, weil das eine Einstellung ist, keine Änderung am Modell.
+- **Messmodus** `fission3d --benchmark <Dreiecke> [--no-soft-shadows]`: baut eine Szene mit der gewünschten Zahl Dreiecke (16 gewellte
+  Platten), dreht die Kamera 300 Bilder lang und gibt die **GPU-Zeit je Bild** aus (Zeitstempel der Grafikschnittstelle), die
+  Aufzeichnungszeit auf dem Rechner und den Bildabstand. Die GPU-Zeit ist die Zahl, auf die es ankommt: der Bildschirm begrenzt, wie
+  schnell Bilder gezeigt werden, nicht wie schnell sie gebaut werden könnten.
+
+**Messwerte (Mac, Apple M1, Metal, Release-Bau, 2026-10-15)**
+
+| Dreiecke | weiche Schatten | GPU-Zeit je Bild (Mittel / 95 %) | Budget 16,7 ms |
+|---|---|---|---|
+| 0,5 Mio. | an | 3,5 / 3,7 ms | erfüllt |
+| 0,5 Mio. | aus | 2,4 / 2,5 ms | erfüllt |
+| **2 Mio.** | an | **8,0 / 8,7 ms** | erfüllt (rund 2-fach Reserve) |
+| **2 Mio.** | aus | 5,9 / 6,1 ms | erfüllt |
+| 5 Mio. | an | 13,3 / 13,9 ms | erfüllt (knapp) |
+| 5 Mio. | aus | 8,7 / 9,6 ms | erfüllt |
+
+Der Bildabstand war in allen Läufen 16,7 ms (60 Hz des Bildschirms): **60 fps bei 2 Mio. Dreiecken auf dem M1 sind erreicht.**
+
+**Wie getestet**
+- `test_document_model.cpp`: Druckerwahl ändert die Szene (Bett 250 × 210 mm), unbekannte Kennung ändert nichts, kein Undo-Schritt;
+  `test_printer_catalog.cpp`: Kennungen eindeutig, Maße plausibel, nur der Allgemein-Eintrag ohne Namen.
+- Mac `scripts/test` 225 von 225 grün. Bild: Reiter Drucker mit der Liste (siehe „So probierst du es aus“).
+
+**So probierst du es aus**
+1. `scripts/run`, rechts den Reiter **Drucker** öffnen: „Drucker wählen“ zeigt die Liste.
+2. Klicke „Prusa MINI+“: das Druckbett in der Mitte wird kleiner (180 × 180 mm), die Beschriftung und oben rechts folgen.
+3. Klicke „Prusa XL“: größer; die Ansicht zeigt das ganze Bett.
+4. Optional, die Messung: `scripts/run --release -- --benchmark 2000000` (und noch einmal mit `--no-soft-shadows`). In der letzten Zeile
+   steht `gpu_ms_avg=…`; unter 16,7 heißt: 60 fps und mehr.
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Linux-Messung (Intel/AMD-iGPU) steht aus.** Kriterium 1 nennt M1 *und* eine integrierte Intel/AMD-GPU. Auf der Referenz-Hardware
+  für Linux (Testrechner mit Intel HD 620) habe ich die Messung noch nicht gemacht; ADR-0002 hatte den Spike mit 165 fps bei
+  2 Mio. Dreiecken gemessen, die Produktionsansicht kommt mit Schatten-Durchgang und weichen Schatten dazu. Das Kästchen bleibt
+  offen, bis es gemessen ist.
+- **Druckerliste:** Die Bettmaße stammen aus Herstellerangaben aus dem Gedächtnis und sind nicht gegen die Datenblätter geprüft; bitte
+  vor der Veröffentlichung kontrollieren. „Eigene Maße“ gibt es noch nicht (kommt mit den Druckerprofilen, AP-3.1).
+- Der gewählte Drucker wird **nicht gemerkt** (Einstellungen: AP-1.11) und liegt nicht in der Datei (AP-1.10).
+- Die Höhe des Bauraums (`bedZ`) wird angezeigt, aber noch nicht in der Ansicht gezeichnet.
 
 #### Abschlussvermerk Teil 1.3d (2026-10-15)
 
