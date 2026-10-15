@@ -102,7 +102,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.2 Commands und Undo/Redo
-**Status:** Review (2026-10-14, Branch `ap-1.2-commands`) · **Größe:** M · **Abhängigkeiten:** AP-1.1 (erledigt)
+**Status:** erledigt (2026-10-15, PR #19; vom Product Owner ausprobiert) · **Größe:** M · **Abhängigkeiten:** AP-1.1 (erledigt)
 
 **Umfang:**
 - Command-Basisklasse, Transaktionen (zusammenfassen beim Ziehen), unbegrenzter Undo-Stack
@@ -160,7 +160,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 - **Zahlenfeld:** Hat ein Feld getippten, noch nicht bestätigten Text (`pendingEdit`), gilt ⌘Z für diesen Text, sonst für das
   Dokument. Geprüft mit echten Tastendrücken im laufenden Programm (Menüzustand unter macOS ausgelesen): Feld fokussiert → Rückgängig
   aktiv; „50“ getippt → aus; Enter → „Rückgängig: Breite auf 50 geändert“ aktiv. Der Product Owner meldete trotzdem, dass ⌘Z nicht
-  reagiere; die Ursache ließ sich nicht nachstellen (siehe Rückmeldung zum PR). Ein echter Fehler war ein Feld, das nach einem
+  reagiere. Ursache: Er hatte den Stand von `main` gestartet, der AP-1.2 noch nicht enthielt (nicht das Arbeitsverzeichnis des PRs). Ein echter Fehler war ein Feld, das nach einem
   unveränderten Wert den Fokus behält: dort ging ⌘Z an den Feldtext (behoben).
 - **Schritte ohne Bedienelement im Verlauf-Text:** „Körper ausgeblendet“ nennt den Namen oder den Typ, nicht die Nummer in der Liste.
 - **Doppelte Namen von Maßen** (erlaubt, siehe `Document::addParameter`) werden über ihre Position zurückgenommen, nicht über den
