@@ -10,17 +10,18 @@ namespace fission::render {
 
 namespace {
 
-constexpr double kBaseChord = 0.01;           // mm, also what the export uses
-constexpr double kBaseAngle = 0.0872664626;   // 5°
+constexpr double kBaseChord = 0.01;         // mm, also what the export uses
+constexpr double kBaseAngle = 0.0872664626; // 5°
 constexpr double kWantedErrorPixels = 0.25;
-constexpr double kHysteresis = 1.35;          // going finer at x, coarser below x / 1.35
+constexpr double kHysteresis = 1.35; // going finer at x, coarser below x / 1.35
 
 int levelForScale(double pixelsPerMillimetre) {
     if (pixelsPerMillimetre <= 0.0) {
         return 0;
     }
     // chord(level) * pixelsPerMillimetre <= wanted error
-    const double level = std::ceil(std::log2(kBaseChord * pixelsPerMillimetre / kWantedErrorPixels));
+    const double level =
+        std::ceil(std::log2(kBaseChord * pixelsPerMillimetre / kWantedErrorPixels));
     return std::clamp(static_cast<int>(level), 0, kMaxDetailLevel);
 }
 

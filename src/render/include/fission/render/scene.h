@@ -20,8 +20,8 @@ namespace fission::render {
 /// stay the same, so a change to one body uploads that body only. `mesh` is shared: building a
 /// scene does not copy any triangles.
 struct RenderBody {
-    std::string id;                    ///< Stable for one body across rebuilds of the scene.
-    std::uint64_t meshVersion = 0;     ///< Changes whenever the tessellation is a different one.
+    std::string id;                ///< Stable for one body across rebuilds of the scene.
+    std::uint64_t meshVersion = 0; ///< Changes whenever the tessellation is a different one.
     std::shared_ptr<const geo::TriangleMesh> mesh;
     QColor color{233, 234, 236};
 

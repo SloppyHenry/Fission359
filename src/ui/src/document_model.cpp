@@ -14,8 +14,8 @@
 #include <set>
 
 #include "fission/features/builtin.h"
-#include "fission/render/detail.h"
 #include "fission/geo/error.h"
+#include "fission/render/detail.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/printer_catalog.h"
 
@@ -314,7 +314,7 @@ void DocumentModel::onEngineEvent(const core::RecomputeEvent& event) {
             }
             try {
                 m_meshes.emplace(key, std::make_shared<const geo::TriangleMesh>(
-                                     m_kernel->tessellate(body.solid, {})));
+                                          m_kernel->tessellate(body.solid, {})));
             } catch (const geo::GeometryError& error) {
                 qWarning() << "a body could not be tessellated:" << error.what();
             }

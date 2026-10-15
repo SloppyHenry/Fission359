@@ -19,7 +19,8 @@ std::shared_ptr<const geo::TriangleMesh> makeTile(int cells, float size, int var
     mesh->normals.reserve(mesh->positions.capacity());
     const float step = size / static_cast<float>(cells);
     const float amplitude = 0.08F * size;
-    const float frequency = 2.0F * std::numbers::pi_v<float> * (2.0F + static_cast<float>(variant % 3)) / size;
+    const float frequency =
+        2.0F * std::numbers::pi_v<float> * (2.0F + static_cast<float>(variant % 3)) / size;
     const auto height = [&](float x, float y) {
         return 2.0F + amplitude * (std::sin(frequency * x) * std::cos(frequency * y) + 1.0F);
     };
@@ -27,8 +28,10 @@ std::shared_ptr<const geo::TriangleMesh> makeTile(int cells, float size, int var
         for (int i = 0; i < side; ++i) {
             const float x = static_cast<float>(i) * step - 0.5F * size;
             const float y = static_cast<float>(j) * step - 0.5F * size;
-            const float dx = amplitude * frequency * std::cos(frequency * x) * std::cos(frequency * y);
-            const float dy = -amplitude * frequency * std::sin(frequency * x) * std::sin(frequency * y);
+            const float dx =
+                amplitude * frequency * std::cos(frequency * x) * std::cos(frequency * y);
+            const float dy =
+                -amplitude * frequency * std::sin(frequency * x) * std::sin(frequency * y);
             const float length = std::sqrt(dx * dx + dy * dy + 1.0F);
             mesh->positions.push_back({x, y, height(x, y)});
             mesh->normals.push_back({-dx / length, -dy / length, 1.0F / length});
@@ -66,8 +69,10 @@ std::shared_ptr<const RenderScene> makeBenchmarkScene(std::size_t triangles, int
         body.mesh = makeTile(cells, size, n);
         // the tile is built around the origin: lay it out by moving its vertices
         auto moved = std::make_shared<geo::TriangleMesh>(*body.mesh);
-        const float cx = (static_cast<float>(n % columns) + 0.5F) * pitch - 0.5F * pitch * static_cast<float>(columns);
-        const float cy = (static_cast<float>(n / columns) + 0.5F) * pitch - 0.5F * pitch * static_cast<float>(columns);
+        const float cx = (static_cast<float>(n % columns) + 0.5F) * pitch -
+                         0.5F * pitch * static_cast<float>(columns);
+        const float cy = (static_cast<float>(n / columns) + 0.5F) * pitch -
+                         0.5F * pitch * static_cast<float>(columns);
         for (auto& p : moved->positions) {
             p.x += cx;
             p.y += cy;

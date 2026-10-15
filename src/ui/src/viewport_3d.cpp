@@ -23,8 +23,8 @@ namespace fission::ui {
 namespace {
 
 constexpr int kAnimationMilliseconds = 180;
-constexpr float kWheelStep = 0.9F;     // one notch of a mouse wheel zooms by 10 %
-constexpr float kTrackpadOrbit = 0.6F; // two-finger drag: pixels to orbit pixels
+constexpr float kWheelStep = 0.9F;                // one notch of a mouse wheel zooms by 10 %
+constexpr float kTrackpadOrbit = 0.6F;            // two-finger drag: pixels to orbit pixels
 constexpr double kFrameBudgetMilliseconds = 16.7; // 60 frames per second
 constexpr int kSlowFramesToSwitchOff = 90;
 constexpr double kDragZoomPerPixel = 0.01; // Ctrl + middle button (Blender): drag up zooms in
@@ -79,9 +79,8 @@ public:
         const double cpuMilliseconds =
             std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
                 .count();
-        const double gpuMilliseconds = m_rhi->isFeatureSupported(QRhi::Timestamps)
-                                           ? cb->lastCompletedGpuTime() * 1000.0
-                                           : 0.0;
+        const double gpuMilliseconds =
+            m_rhi->isFeatureSupported(QRhi::Timestamps) ? cb->lastCompletedGpuTime() * 1000.0 : 0.0;
         if (m_item != nullptr) {
             m_item->recordFrame(gpuMilliseconds, cpuMilliseconds);
         }
@@ -291,7 +290,8 @@ Viewport3D::FrameStatistics Viewport3D::finishFrameStatistics() {
     if (!m_gpuTimes.empty()) {
         std::vector<double> sorted = m_gpuTimes;
         std::sort(sorted.begin(), sorted.end());
-        result.gpuP95Ms = sorted[static_cast<std::size_t>(0.95 * static_cast<double>(sorted.size() - 1))];
+        result.gpuP95Ms =
+            sorted[static_cast<std::size_t>(0.95 * static_cast<double>(sorted.size() - 1))];
     }
     return result;
 }
@@ -455,9 +455,8 @@ void Viewport3D::wheelEvent(QWheelEvent* event) {
         // Trackpad: two fingers turn the view, with Shift they move it.
         const render::NavigationAction action =
             render::trackpadAction(m_mouseStyle, event->modifiers());
-        const double scale = action == render::NavigationAction::orbit
-                                 ? static_cast<double>(kTrackpadOrbit)
-                                 : 1.0;
+        const double scale =
+            action == render::NavigationAction::orbit ? static_cast<double>(kTrackpadOrbit) : 1.0;
         applyNavigation(action, pixels.x() * scale, pixels.y() * scale);
     } else if (event->angleDelta().y() != 0) {
         // Mouse wheel: zoom towards the pointer; 120 units are one notch.
@@ -491,8 +490,7 @@ QString Viewport3D::mouseStyle() const {
 }
 
 void Viewport3D::setMouseStyle(const QString& name) {
-    const std::optional<render::MouseStyle> style =
-        render::mouseStyleFromName(name.toStdString());
+    const std::optional<render::MouseStyle> style = render::mouseStyleFromName(name.toStdString());
     if (style && *style != m_mouseStyle) {
         m_mouseStyle = *style;
         emit mouseStyleChanged();
@@ -523,7 +521,8 @@ bool Viewport3D::lookAtSurface(double x, double y) {
     QVector3D center = hit->point;
     if (hit->bodyIndex >= 0) {
         if (const auto shape = render::faceShape(
-                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].geometry(), hit->faceId)) {
+                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].geometry(),
+                hit->faceId)) {
             center = shape->center;
         }
     }
@@ -540,7 +539,8 @@ bool Viewport3D::zoomToSurface(double x, double y) {
     }
     if (hit->bodyIndex >= 0) {
         if (const auto shape = render::faceShape(
-                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].geometry(), hit->faceId)) {
+                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].geometry(),
+                hit->faceId)) {
             animateTo(m_camera.poseFraming(shape->center, shape->radius));
             return true;
         }

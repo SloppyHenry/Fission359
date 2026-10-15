@@ -69,7 +69,8 @@ public:
 
 private:
     void writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* buffer, const QMatrix4x4& mvp,
-                       const Frame& frame, const QSize& targetSize = {}, bool occlusion = false) const;
+                       const Frame& frame, const QSize& targetSize = {},
+                       bool occlusion = false) const;
     /// Depth of the scene, then the occlusion from it, then the blur; fills `m_aoBlurTexture`.
     void renderAmbientOcclusion(QRhiCommandBuffer* cb, const Frame& frame, const QSize& size);
     bool ensureAmbientOcclusionTargets(const QSize& size);

@@ -148,7 +148,8 @@ TEST_CASE("a frame with soft shadows runs through all passes and follows a resiz
         REQUIRE(f.rhi->beginOffscreenFrame(&cb) == QRhi::FrameOpSuccess);
         f.renderer->upload(cb, scene, {});
         SceneRenderer::Frame frame;
-        frame.projection.perspective(45.0F, float(size.width()) / float(size.height()), 1.0F, 1000.0F);
+        frame.projection.perspective(45.0F, float(size.width()) / float(size.height()), 1.0F,
+                                     1000.0F);
         frame.view.lookAt({60, -80, 60}, {0, 0, 5}, {0, 0, 1});
         frame.ambientOcclusion = true;
         f.renderer->draw(cb, target.get(), frame);

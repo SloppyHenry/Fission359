@@ -13,11 +13,11 @@
 namespace fission::ui {
 
 struct PrinterProfile {
-    QString id;         ///< stable key, e.g. "prusa-mk4"
-    QString name;       ///< brand and model; empty for the generic entry (the interface names it)
-    double bedX = 0.0;  ///< mm
-    double bedY = 0.0;  ///< mm
-    double bedZ = 0.0;  ///< mm, how tall a part may be
+    QString id;          ///< stable key, e.g. "prusa-mk4"
+    QString name;        ///< brand and model; empty for the generic entry (the interface names it)
+    double bedX = 0.0;   ///< mm
+    double bedY = 0.0;   ///< mm
+    double bedZ = 0.0;   ///< mm, how tall a part may be
     double nozzle = 0.4; ///< mm
 };
 

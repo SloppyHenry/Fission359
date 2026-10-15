@@ -22,8 +22,8 @@ const std::vector<PrinterProfile>& printerCatalog() {
         {QStringLiteral("creality-k1"), QStringLiteral("Creality K1"), 220.0, 220.0, 250.0, 0.4},
         {QStringLiteral("creality-k1-max"), QStringLiteral("Creality K1 Max"), 300.0, 300.0, 300.0,
          0.4},
-        {QStringLiteral("elegoo-neptune4"), QStringLiteral("Elegoo Neptune 4"), 225.0, 225.0,
-         265.0, 0.4},
+        {QStringLiteral("elegoo-neptune4"), QStringLiteral("Elegoo Neptune 4"), 225.0, 225.0, 265.0,
+         0.4},
         {QStringLiteral("anycubic-kobra2"), QStringLiteral("Anycubic Kobra 2"), 220.0, 220.0, 250.0,
          0.4},
     };

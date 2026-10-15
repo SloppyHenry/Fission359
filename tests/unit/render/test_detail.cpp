@@ -40,7 +40,8 @@ TEST_CASE("every level halves the chord error and the error stays under a quarte
     CHECK(basic.angleTolerance == Approx(0.0872664626));
     for (int level = 1; level <= kMaxDetailLevel; ++level) {
         const auto finer = tessellationForDetail(level);
-        CHECK(finer.chordTolerance == Approx(0.5 * tessellationForDetail(level - 1).chordTolerance));
+        CHECK(finer.chordTolerance ==
+              Approx(0.5 * tessellationForDetail(level - 1).chordTolerance));
         CHECK(finer.angleTolerance < tessellationForDetail(level - 1).angleTolerance);
     }
     // At the scale a level is chosen for, its chord error is at most a quarter of a pixel.

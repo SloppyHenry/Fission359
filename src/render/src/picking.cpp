@@ -159,8 +159,10 @@ std::optional<FaceShape> faceShape(const geo::TriangleMesh& mesh, std::uint32_t 
         weighted += triangleArea * (a + b + c) / 3.0F;
         area += triangleArea;
         for (const QVector3D& p : {a, b, c}) {
-            lo = QVector3D(std::min(lo.x(), p.x()), std::min(lo.y(), p.y()), std::min(lo.z(), p.z()));
-            hi = QVector3D(std::max(hi.x(), p.x()), std::max(hi.y(), p.y()), std::max(hi.z(), p.z()));
+            lo = QVector3D(std::min(lo.x(), p.x()), std::min(lo.y(), p.y()),
+                           std::min(lo.z(), p.z()));
+            hi = QVector3D(std::max(hi.x(), p.x()), std::max(hi.y(), p.y()),
+                           std::max(hi.z(), p.z()));
         }
         any = true;
     }

@@ -366,16 +366,16 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
             }
             gpu.meshVersion = body.meshVersion;
             gpu.color = body.color;
-            gpu.vertices = makeVertexBuffer(updates, vertices.data(),
-                                            vertices.size() * sizeof(MeshVertex),
-                                            QRhiBuffer::VertexBuffer);
+            gpu.vertices =
+                makeVertexBuffer(updates, vertices.data(), vertices.size() * sizeof(MeshVertex),
+                                 QRhiBuffer::VertexBuffer);
             gpu.indices = makeVertexBuffer(updates, mesh.indices.data(),
                                            mesh.indices.size() * sizeof(std::uint32_t),
                                            QRhiBuffer::IndexBuffer);
             gpu.indexCount = mesh.indices.size();
-            gpu.lines = makeVertexBuffer(updates, edgeLines.data(),
-                                         edgeLines.size() * sizeof(FlatVertex),
-                                         QRhiBuffer::VertexBuffer);
+            gpu.lines =
+                makeVertexBuffer(updates, edgeLines.data(), edgeLines.size() * sizeof(FlatVertex),
+                                 QRhiBuffer::VertexBuffer);
             gpu.lineVertexCount = edgeLines.size();
             ++m_lastStats.uploaded;
         }
@@ -589,12 +589,11 @@ bool SceneRenderer::ensureAmbientOcclusionTargets(const QSize& size) {
     m_aoDepthTarget->setRenderPassDescriptor(m_aoDepthPass.get());
     m_aoDepthTarget->create();
     if (!m_aoDepthPipeline) {
-        m_aoDepthPipeline = makePipeline(m_bodyVertex, m_normalFragment, false, false, false,
-                                         true, m_aoDepthPass.get(), 1, m_aoDepthSrb.get());
+        m_aoDepthPipeline = makePipeline(m_bodyVertex, m_normalFragment, false, false, false, true,
+                                         m_aoDepthPass.get(), 1, m_aoDepthSrb.get());
     }
 
-    m_aoRawTexture.reset(
-        m_rhi->newTexture(QRhiTexture::RGBA8, half, 1, QRhiTexture::RenderTarget));
+    m_aoRawTexture.reset(m_rhi->newTexture(QRhiTexture::RGBA8, half, 1, QRhiTexture::RenderTarget));
     m_aoRawTexture->create();
     m_aoBlurTexture.reset(
         m_rhi->newTexture(QRhiTexture::RGBA8, half, 1, QRhiTexture::RenderTarget));
@@ -644,12 +643,11 @@ bool SceneRenderer::ensureAmbientOcclusionTargets(const QSize& size) {
     }
 
     // The shaders of the main pass read the finished occlusion image.
-    m_srb->setBindings(
-        {QRhiShaderResourceBinding::uniformBuffer(0, stages, m_uniforms.get()),
-         QRhiShaderResourceBinding::sampledTexture(1, fragment, m_shadowTexture.get(),
-                                                   m_sampler.get()),
-         QRhiShaderResourceBinding::sampledTexture(2, fragment, m_aoBlurTexture.get(),
-                                                   m_linearSampler.get())});
+    m_srb->setBindings({QRhiShaderResourceBinding::uniformBuffer(0, stages, m_uniforms.get()),
+                        QRhiShaderResourceBinding::sampledTexture(
+                            1, fragment, m_shadowTexture.get(), m_sampler.get()),
+                        QRhiShaderResourceBinding::sampledTexture(
+                            2, fragment, m_aoBlurTexture.get(), m_linearSampler.get())});
     m_srb->create();
     m_aoSize = size;
     return true;

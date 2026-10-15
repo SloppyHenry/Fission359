@@ -124,8 +124,8 @@ CameraPose OrbitCamera::poseLookingFrom(const QVector3D& towardCamera) const {
         return pose;
     }
     const QVector3D n = towardCamera.normalized();
-    pose.pitch = std::clamp(std::asin(std::clamp(n.z(), -1.0F, 1.0F)) / kDegrees, -kMaxPitch,
-                            kMaxPitch);
+    pose.pitch =
+        std::clamp(std::asin(std::clamp(n.z(), -1.0F, 1.0F)) / kDegrees, -kMaxPitch, kMaxPitch);
     // eye() puts the camera at (-cos(p) sin(y), -cos(p) cos(y), sin(p)) * distance.
     if (std::hypot(n.x(), n.y()) > 1e-4F) {
         pose.yaw = std::atan2(-n.x(), -n.y()) / kDegrees;
@@ -137,8 +137,7 @@ CameraPose OrbitCamera::poseFraming(const QVector3D& center, float radius) const
     CameraPose pose = m_pose;
     pose.target = center;
     const float tanLimit = tanHalfFov() * std::min(1.0F, aspect());
-    pose.distance =
-        std::max(std::max(radius, 0.1F) / std::sin(std::atan(tanLimit)) * 1.1F, 2.0F);
+    pose.distance = std::max(std::max(radius, 0.1F) / std::sin(std::atan(tanLimit)) * 1.1F, 2.0F);
     return pose;
 }
 

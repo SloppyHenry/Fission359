@@ -114,9 +114,10 @@ CommandLine parseCommandLine(int& argc, char** argv) {
         QStringLiteral("Measure the frame time with a scene of this many triangles while the "
                        "camera turns, print the result and exit."),
         QStringLiteral("triangles"));
-    const QCommandLineOption rightTab(QStringLiteral("right-tab"),
-                                      QStringLiteral("Start with this tab on the right: object or printer."),
-                                      QStringLiteral("name"));
+    const QCommandLineOption rightTab(
+        QStringLiteral("right-tab"),
+        QStringLiteral("Start with this tab on the right: object or printer."),
+        QStringLiteral("name"));
     const QCommandLineOption noSoftShadows(QStringLiteral("no-soft-shadows"),
                                            QStringLiteral("Start with the soft shadows off."));
     const QCommandLineOption reduceMotion(QStringLiteral("reduce-motion"),
@@ -125,7 +126,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
                                   QStringLiteral("Window size, for example 1280x800."),
                                   QStringLiteral("WxH"));
     parser.addOptions({smokeTest, measureStartup, theme, language, focus, about, openMenu,
-                       showHistory, camera, rightTab, benchmark, noSoftShadows, reduceMotion, size});
+                       showHistory, camera, rightTab, benchmark, noSoftShadows, reduceMotion,
+                       size});
     parser.process(core); // prints help or version and exits when asked
 
     CommandLine result;
@@ -176,10 +178,9 @@ void runBenchmark(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     viewport->startFrameStatistics();
                     state->started = std::chrono::steady_clock::now();
                 } else if (state->frames == kWarmUpFrames + kMeasuredFrames) {
-                    const double wall =
-                        std::chrono::duration<double, std::milli>(
-                            std::chrono::steady_clock::now() - state->started)
-                            .count();
+                    const double wall = std::chrono::duration<double, std::milli>(
+                                            std::chrono::steady_clock::now() - state->started)
+                                            .count();
                     const auto stats = viewport->finishFrameStatistics();
                     std::printf("benchmark triangles=%d soft_shadows=%s backend=%s frames=%d "
                                 "gpu_ms_avg=%.2f gpu_ms_p95=%.2f cpu_ms_avg=%.2f "
@@ -292,11 +293,11 @@ int main(int argc, char* argv[]) {
     auto* viewport = window->findChild<fission::ui::Viewport3D*>(QStringLiteral("viewport"));
     if (viewport != nullptr) {
         viewport->setScene(documentModel.scene());
-        const QMetaObject::Connection sceneConnection = QObject::connect(
-            &documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
-            [viewport](std::shared_ptr<const fission::render::RenderScene> scene) {
-                viewport->setScene(std::move(scene));
-            });
+        const QMetaObject::Connection sceneConnection =
+            QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
+                             [viewport](std::shared_ptr<const fission::render::RenderScene> scene) {
+                                 viewport->setScene(std::move(scene));
+                             });
         if (options.benchmarkTriangles > 0) {
             runBenchmark(window, viewport, sceneConnection,
                          static_cast<std::size_t>(options.benchmarkTriangles));

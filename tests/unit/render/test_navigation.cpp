@@ -51,9 +51,8 @@ TEST_CASE("every mouse style turns, moves and zooms as its program does", "[navi
                                 {middle, shift, A::pan},
                                 {middle, ctrl, A::zoom},
                                 {right, none, A::none}});
-    check(MouseStyle::sketchup, {{middle, none, A::orbit},
-                                 {middle, shift, A::pan},
-                                 {right, none, A::none}});
+    check(MouseStyle::sketchup,
+          {{middle, none, A::orbit}, {middle, shift, A::pan}, {right, none, A::none}});
 }
 
 TEST_CASE("Alt and Shift with the left button work in every style (no middle button)",

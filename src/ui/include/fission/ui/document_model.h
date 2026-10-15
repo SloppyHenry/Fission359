@@ -8,9 +8,9 @@
 #include <QTimer>
 #include <QVariantList>
 
+#include <atomic>
 #include <cstdint>
 #include <map>
-#include <atomic>
 #include <memory>
 #include <mutex>
 

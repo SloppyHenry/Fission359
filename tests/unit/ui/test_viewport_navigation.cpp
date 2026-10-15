@@ -54,7 +54,8 @@ public:
     void drag(Qt::MouseButton button, Qt::KeyboardModifiers modifiers, QPointF delta) {
         const QPointF start(500.0, 300.0);
         const auto* device = QPointingDevice::primaryPointingDevice();
-        QMouseEvent press(QEvent::MouseButtonPress, start, start, button, button, modifiers, device);
+        QMouseEvent press(QEvent::MouseButtonPress, start, start, button, button, modifiers,
+                          device);
         mousePressEvent(&press);
         const QPointF end = start + delta;
         QMouseEvent move(QEvent::MouseMove, end, end, Qt::NoButton, button, modifiers, device);
@@ -120,9 +121,9 @@ std::shared_ptr<const fission::render::RenderScene> cubeScene() {
         float v[3];
     };
     const Side sides[] = {
-        {0, 0, 1, {1, 0, 0}, {0, 1, 0}},   {0, 0, -1, {1, 0, 0}, {0, -1, 0}},
-        {1, 0, 0, {0, 1, 0}, {0, 0, 1}},   {-1, 0, 0, {0, -1, 0}, {0, 0, 1}},
-        {0, -1, 0, {1, 0, 0}, {0, 0, 1}},  {0, 1, 0, {-1, 0, 0}, {0, 0, 1}},
+        {0, 0, 1, {1, 0, 0}, {0, 1, 0}},  {0, 0, -1, {1, 0, 0}, {0, -1, 0}},
+        {1, 0, 0, {0, 1, 0}, {0, 0, 1}},  {-1, 0, 0, {0, -1, 0}, {0, 0, 1}},
+        {0, -1, 0, {1, 0, 0}, {0, 0, 1}}, {0, 1, 0, {-1, 0, 0}, {0, 0, 1}},
     };
     std::uint32_t faceId = 1;
     for (const Side& side : sides) {
@@ -138,8 +139,8 @@ std::shared_ptr<const fission::render::RenderScene> cubeScene() {
                                       cz + 5.0F * (s[0] * side.u[2] + s[1] * side.v[2])});
             mesh.normals.push_back({side.nx, side.ny, side.nz});
         }
-        mesh.indices.insert(mesh.indices.end(), {first, first + 1, first + 2, first, first + 2,
-                                                 first + 3});
+        mesh.indices.insert(mesh.indices.end(),
+                            {first, first + 1, first + 2, first, first + 2, first + 3});
         mesh.faceIds.insert(mesh.faceIds.end(), {faceId, faceId});
         ++faceId;
     }
@@ -164,14 +165,22 @@ TEST_CASE("every mouse style does what the program it imitates does", "[viewport
         NavigationAction expected;
     };
     const Case cases[] = {
-        {"fission", Qt::RightButton, none, A::orbit},  {"fission", Qt::MiddleButton, none, A::pan},
-        {"fission", Qt::RightButton, shift, A::pan},   {"fission", Qt::LeftButton, none, A::none},
-        {"fusion", Qt::MiddleButton, none, A::pan},    {"fusion", Qt::MiddleButton, shift, A::orbit},
-        {"fusion", Qt::RightButton, none, A::none},    {"tinkercad", Qt::RightButton, none, A::orbit},
-        {"tinkercad", Qt::RightButton, shift, A::pan}, {"tinkercad", Qt::MiddleButton, none, A::pan},
-        {"blender", Qt::MiddleButton, none, A::orbit}, {"blender", Qt::MiddleButton, shift, A::pan},
-        {"blender", Qt::MiddleButton, ctrl, A::zoom},  {"blender", Qt::RightButton, none, A::none},
-        {"sketchup", Qt::MiddleButton, none, A::orbit}, {"sketchup", Qt::MiddleButton, shift, A::pan},
+        {"fission", Qt::RightButton, none, A::orbit},
+        {"fission", Qt::MiddleButton, none, A::pan},
+        {"fission", Qt::RightButton, shift, A::pan},
+        {"fission", Qt::LeftButton, none, A::none},
+        {"fusion", Qt::MiddleButton, none, A::pan},
+        {"fusion", Qt::MiddleButton, shift, A::orbit},
+        {"fusion", Qt::RightButton, none, A::none},
+        {"tinkercad", Qt::RightButton, none, A::orbit},
+        {"tinkercad", Qt::RightButton, shift, A::pan},
+        {"tinkercad", Qt::MiddleButton, none, A::pan},
+        {"blender", Qt::MiddleButton, none, A::orbit},
+        {"blender", Qt::MiddleButton, shift, A::pan},
+        {"blender", Qt::MiddleButton, ctrl, A::zoom},
+        {"blender", Qt::RightButton, none, A::none},
+        {"sketchup", Qt::MiddleButton, none, A::orbit},
+        {"sketchup", Qt::MiddleButton, shift, A::pan},
         {"sketchup", Qt::RightButton, none, A::none},
     };
     for (const Case& c : cases) {
