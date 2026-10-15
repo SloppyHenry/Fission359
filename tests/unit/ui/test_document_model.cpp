@@ -39,7 +39,7 @@ struct Extent {
 Extent extentOf(const fission::render::RenderScene& scene) {
     Extent extent;
     for (const auto& body : scene.bodies) {
-        for (const auto& point : body.mesh.positions) {
+        for (const auto& point : body.geometry().positions) {
             extent.minX = std::min(extent.minX, static_cast<double>(point.x));
             extent.maxX = std::max(extent.maxX, static_cast<double>(point.x));
             extent.minZ = std::min(extent.minZ, static_cast<double>(point.z));

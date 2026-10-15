@@ -146,7 +146,7 @@ private:
 
     // Tessellations by result, made on the worker thread, read when the scene is put together.
     std::mutex m_meshMutex;
-    std::map<std::uint64_t, geo::TriangleMesh> m_meshes;
+    std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_meshes;
 
     // Last: its thread must be stopped before the rest goes away.
     std::unique_ptr<core::RecomputeEngine> m_engine;

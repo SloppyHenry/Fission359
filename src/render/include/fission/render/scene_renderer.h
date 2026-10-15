@@ -10,7 +10,10 @@
 #include <QVector3D>
 
 #include <cstddef>
+#include <map>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "fission/render/scene.h"
 
@@ -53,6 +56,14 @@ public:
     /// Triangles drawn per frame (bodies only), for the log and the tests.
     std::size_t bodyTriangleCount() const { return m_bodyIndexCount / 3; }
 
+    /// What the last `upload` did with the bodies: only changed ones are sent to the GPU.
+    struct UploadStats {
+        int uploaded = 0; ///< new or changed bodies
+        int kept = 0;     ///< unchanged bodies whose buffers stayed as they were
+        int removed = 0;  ///< bodies that are gone
+    };
+    UploadStats lastUploadStats() const { return m_lastStats; }
+
 private:
     void writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* buffer, const QMatrix4x4& mvp,
                        const Frame& frame) const;
@@ -62,17 +73,32 @@ private:
     makePipeline(const QShader& vertex, const QShader& fragment, bool colorLayoutOnly, bool lines,
                  bool blend, bool depth, QRhiRenderPassDescriptor* pass, int samples);
 
+    /// The graphics buffers of one body.
+    struct GpuBody {
+        std::uint64_t meshVersion = 0;
+        QColor color;
+        std::unique_ptr<QRhiBuffer> vertices;
+        std::unique_ptr<QRhiBuffer> indices;
+        std::unique_ptr<QRhiBuffer> lines;
+        std::size_t indexCount = 0;
+        std::size_t lineVertexCount = 0;
+        QVector3D boundsMin;
+        QVector3D boundsMax;
+    };
+
     QRhi* m_rhi;
+    std::map<std::string, GpuBody> m_gpuBodies;
+    std::vector<const GpuBody*> m_drawOrder;
+    QColor m_edgeLineColor;
+    UploadStats m_lastStats;
     std::size_t m_bodyIndexCount = 0;
     std::size_t m_bedIndexCount = 0;
     std::size_t m_discVertexCount = 0;
-    std::size_t m_lineVertexCount = 0;
+    std::size_t m_lineVertexCount = 0; ///< axes and the rim of the bed
     bool m_hasShadow = false;
 
     std::unique_ptr<QRhiBuffer> m_uniforms;
     std::unique_ptr<QRhiBuffer> m_shadowUniforms;
-    std::unique_ptr<QRhiBuffer> m_bodyVertices;
-    std::unique_ptr<QRhiBuffer> m_bodyIndices;
     std::unique_ptr<QRhiBuffer> m_bedVertices;
     std::unique_ptr<QRhiBuffer> m_bedIndices;
     std::unique_ptr<QRhiBuffer> m_discVertices;

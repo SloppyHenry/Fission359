@@ -174,7 +174,8 @@ void DocumentModel::onEngineEvent(const core::RecomputeEvent& event) {
                 continue;
             }
             try {
-                m_meshes.emplace(key, m_kernel->tessellate(body.solid, {}));
+                m_meshes.emplace(key, std::make_shared<const geo::TriangleMesh>(
+                                     m_kernel->tessellate(body.solid, {})));
             } catch (const geo::GeometryError& error) {
                 qWarning() << "a body could not be tessellated:" << error.what();
             }
@@ -228,6 +229,8 @@ void DocumentModel::rebuildScene() {
                 continue;
             }
             render::RenderBody drawn;
+            drawn.id = body.id.value;
+            drawn.meshVersion = mesh->first;
             drawn.mesh = mesh->second;
             drawn.color = QColor(body.color.red, body.color.green, body.color.blue);
             scene->bodies.push_back(std::move(drawn));

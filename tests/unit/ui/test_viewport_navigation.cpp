@@ -112,7 +112,8 @@ NavigationAction played(const QString& style, Qt::MouseButton button,
 std::shared_ptr<const fission::render::RenderScene> cubeScene() {
     auto scene = std::make_shared<fission::render::RenderScene>();
     fission::render::RenderBody body;
-    auto& mesh = body.mesh;
+    auto owned = std::make_shared<fission::geo::TriangleMesh>();
+    auto& mesh = *owned;
     struct Side {
         float nx, ny, nz;
         float u[3];
@@ -142,6 +143,7 @@ std::shared_ptr<const fission::render::RenderScene> cubeScene() {
         mesh.faceIds.insert(mesh.faceIds.end(), {faceId, faceId});
         ++faceId;
     }
+    body.mesh = owned;
     scene->bodies.push_back(std::move(body));
     return scene;
 }

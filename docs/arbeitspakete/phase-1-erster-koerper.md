@@ -173,7 +173,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.3 Viewport und Navigation
-**Status:** in Arbeit (Teil 1.3a fertig, siehe unten) · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
+**Status:** in Arbeit (Teile 1.3a und 1.3b fertig, siehe unten) · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
 
 **Umfang:**
 - Rendering aller Körper (Tessellierung mit Face/Edge-IDs, inkrementell nur geänderte Körper)
@@ -201,10 +201,32 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 | Teil | Inhalt | Status |
 |---|---|---|
 | 1.3a Navigation | Maus-Stile, Pinch-Zoom, Doppelklick auf Fläche, klickbare Würfel-Kanten und -Ecken | fertig (2026-10-15) |
-| 1.3b Mehrere Körper | je Körper ein eigener Puffer, nur Geändertes wird hochgeladen | offen |
+| 1.3b Mehrere Körper | je Körper ein eigener Puffer, nur Geändertes wird hochgeladen | fertig (2026-10-15) |
 | 1.3c Feinheit | beim Hineinzoomen im Hintergrund feiner tessellieren | offen |
 | 1.3d Optik | SSAO („weiche Verdeckungsschatten“), abschaltbar, schaltet sich bei verfehltem Budget selbst ab | offen |
 | 1.3e Messung und Bett | 2 Mio. Dreiecke auf M1 und Linux-GPU; Bettgröße aus einer Druckerliste | offen |
+
+#### Abschlussvermerk Teil 1.3b (2026-10-15)
+
+**Umgesetzt**
+- Jeder Körper hat im Renderer **eigene Grafik-Puffer** (Flächen, Index, Kantenlinien) und eine Kennung (`RenderBody::id`, `meshVersion`).
+  Bei jeder neuen Szene werden nur **neue oder geänderte** Körper (anderes Netz oder andere Farbe) hochgeladen, unveränderte behalten
+  ihre Puffer, verschwundene werden freigegeben. Ein neues Kantenlinien-Farbmuster baut alle Linien neu (die Farbe steckt im Puffer).
+- Die Netze werden **geteilt statt kopiert** (`shared_ptr`): eine neue Szene baut kein einziges Dreieck um. Das Dokumentmodell reicht
+  den Zwischenspeicher der Tessellierung direkt durch.
+- Schatten-, Flächen- und Linien-Durchgang zeichnen je Körper; die Reihenfolge der Szene bleibt.
+
+**Wie getestet**
+- `tests/unit/render/test_scene_renderer.cpp` lässt den echten Renderer auf Qts „Null“-Grafikschnittstelle laufen (kein Fenster, keine
+  GPU nötig) und zählt die Uploads: drei Körper → 3; dieselbe Szene → 0 (3 behalten); ein Körper neu → 1; neue Farbe → 1; Körper
+  entfernt → 1 entfernt; neue Kantenfarbe → alle; Körper ohne Kennung werden nach Platz unterschieden.
+- Mac `scripts/test` komplett grün; Bild unverändert zu 1.3a (Würfel, Schatten, Kanten).
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- In der Oberfläche gibt es erst einen Körper (Formen kommen mit AP-1.5); die Wirkung zeigt sich im Test, nicht in einer Bedienung.
+- Die Messung mit sehr vielen Dreiecken (Kriterium 60 fps) folgt in Teil 1.3e.
+- Jeder Körper ist ein eigener Zeichenaufruf. Bei hunderten kleiner Körper wäre ein Zusammenfassen sinnvoll; nicht gemessen, daher
+  nicht gebaut.
 
 #### Abschlussvermerk Teil 1.3a (2026-10-15)
 

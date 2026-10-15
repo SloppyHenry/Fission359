@@ -184,7 +184,7 @@ int Viewport3D::triangleCount() const {
     int count = 0;
     if (m_scene) {
         for (const render::RenderBody& body : m_scene->bodies) {
-            count += static_cast<int>(body.mesh.triangleCount());
+            count += static_cast<int>(body.geometry().triangleCount());
         }
     }
     return count;
@@ -402,7 +402,7 @@ bool Viewport3D::lookAtSurface(double x, double y) {
     QVector3D center = hit->point;
     if (hit->bodyIndex >= 0) {
         if (const auto shape = render::faceShape(
-                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].mesh, hit->faceId)) {
+                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].geometry(), hit->faceId)) {
             center = shape->center;
         }
     }
@@ -419,7 +419,7 @@ bool Viewport3D::zoomToSurface(double x, double y) {
     }
     if (hit->bodyIndex >= 0) {
         if (const auto shape = render::faceShape(
-                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].mesh, hit->faceId)) {
+                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].geometry(), hit->faceId)) {
             animateTo(m_camera.poseFraming(shape->center, shape->radius));
             return true;
         }

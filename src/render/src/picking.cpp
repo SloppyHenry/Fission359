@@ -82,7 +82,7 @@ std::optional<SurfaceHit> pickSurface(const RenderScene& scene, const Ray& ray) 
     std::optional<SurfaceHit> best;
 
     for (std::size_t bodyIndex = 0; bodyIndex < scene.bodies.size(); ++bodyIndex) {
-        const geo::TriangleMesh& mesh = scene.bodies[bodyIndex].mesh;
+        const geo::TriangleMesh& mesh = scene.bodies[bodyIndex].geometry();
         if (mesh.empty()) {
             continue;
         }

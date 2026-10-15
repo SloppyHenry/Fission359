@@ -14,11 +14,13 @@ namespace {
 // A flat square of 10 mm at height `z` (face 7), facing up.
 RenderBody square(float z) {
     RenderBody body;
-    auto& mesh = body.mesh;
+    auto owned = std::make_shared<fission::geo::TriangleMesh>();
+    auto& mesh = *owned;
     mesh.positions = {{-5, -5, z}, {5, -5, z}, {5, 5, z}, {-5, 5, z}};
     mesh.normals = {{0, 0, 1}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1}};
     mesh.indices = {0, 1, 2, 0, 2, 3};
     mesh.faceIds = {7, 7};
+    body.mesh = owned;
     return body;
 }
 
@@ -66,10 +68,10 @@ TEST_CASE("the nearest of two bodies wins", "[picking]") {
 
 TEST_CASE("the shape of a face is its centre and the radius around it", "[picking]") {
     const RenderBody body = square(10.0F);
-    const auto shape = faceShape(body.mesh, 7);
+    const auto shape = faceShape(body.geometry(), 7);
     REQUIRE(shape.has_value());
     CHECK(shape->center.x() == Approx(0.0F).margin(1e-4));
     CHECK(shape->center.z() == Approx(10.0F));
     CHECK(shape->radius == Approx(std::sqrt(50.0F)));
-    CHECK_FALSE(faceShape(body.mesh, 99).has_value());
+    CHECK_FALSE(faceShape(body.geometry(), 99).has_value());
 }
