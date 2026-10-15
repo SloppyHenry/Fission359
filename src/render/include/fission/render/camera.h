@@ -25,6 +25,12 @@ struct CameraPose {
     bool operator==(const CameraPose&) const = default;
 };
 
+/// A ray in world space; `direction` has unit length.
+struct Ray {
+    QVector3D origin;
+    QVector3D direction;
+};
+
 /// Orbit camera for a Z-up world (like a 3D printer bed). Pure mathematics, no graphics API.
 ///
 /// Mouse: orbit, pan and zoom as described in docs/02-ux-konzept.md §10. Zooming goes towards
@@ -50,6 +56,13 @@ public:
     void setPose(const CameraPose& pose);
     /// The pose of a standard view, keeping the current target and distance.
     CameraPose poseFor(StandardView view) const;
+    /// The pose that looks at the target from the side `towardCamera` points to (any length),
+    /// keeping target and distance. Used by the view cube's edges and corners and by a double
+    /// click on a face. Looking straight up or down has no heading of its own: the current one
+    /// stays.
+    CameraPose poseLookingFrom(const QVector3D& towardCamera) const;
+    /// The pose that shows a sphere completely, keeping the angles.
+    CameraPose poseFraming(const QVector3D& center, float radius) const;
 
     QVector3D eye() const;
     QMatrix4x4 view() const;
@@ -60,6 +73,8 @@ public:
 
     /// The point where the ray through `pixel` hits the plane z = planeZ, if it does.
     std::optional<QVector3D> pointOnPlane(const QPointF& pixel, float planeZ = 0.0F) const;
+    /// The ray from the eye through `pixel`.
+    std::optional<Ray> rayThrough(const QPointF& pixel) const;
     /// Window position (view pixels) of a world point.
     QPointF project(const QVector3D& world) const;
 

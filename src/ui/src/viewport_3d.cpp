@@ -4,6 +4,7 @@
 #include "fission/ui/viewport_3d.h"
 
 #include <QMouseEvent>
+#include <QNativeGestureEvent>
 #include <QQuickWindow>
 #include <QWheelEvent>
 
@@ -22,6 +23,7 @@ namespace {
 constexpr int kAnimationMilliseconds = 180;
 constexpr float kWheelStep = 0.9F;     // one notch of a mouse wheel zooms by 10 %
 constexpr float kTrackpadOrbit = 0.6F; // two-finger drag: pixels to orbit pixels
+constexpr double kDragZoomPerPixel = 0.01; // Ctrl + middle button (Blender): drag up zooms in
 
 // Thin adapter: Qt Quick calls initialize / synchronize / render, SceneRenderer does the work.
 class SceneItemRenderer : public QQuickRhiItemRenderer {
@@ -293,27 +295,49 @@ void Viewport3D::mousePressEvent(QMouseEvent* event) {
 void Viewport3D::mouseMoveEvent(QMouseEvent* event) {
     const QPointF delta = event->position() - m_lastMouse;
     m_lastMouse = event->position();
-    const bool alt = event->modifiers().testFlag(Qt::AltModifier);
-    const bool shift = event->modifiers().testFlag(Qt::ShiftModifier);
-    if (event->buttons().testFlag(Qt::RightButton) ||
-        (event->buttons().testFlag(Qt::LeftButton) && alt)) {
-        orbitBy(delta.x(), delta.y());
-    } else if (event->buttons().testFlag(Qt::MiddleButton) ||
-               (event->buttons().testFlag(Qt::LeftButton) && shift)) {
-        panBy(delta.x(), delta.y());
+    applyNavigation(render::dragAction(m_mouseStyle, event->buttons(), event->modifiers()),
+                    delta.x(), delta.y());
+    event->accept();
+}
+
+void Viewport3D::mouseDoubleClickEvent(QMouseEvent* event) {
+    // A double click with the left button on a face turns the view to look at it squarely.
+    // (AP-1.4 may give the double click to the selection; the view then keeps this on a key.)
+    if (event->button() == Qt::LeftButton && event->modifiers() == Qt::NoModifier) {
+        lookAtSurface(event->position().x(), event->position().y());
     }
     event->accept();
+}
+
+bool Viewport3D::event(QEvent* event) {
+    if (event->type() == QEvent::NativeGesture) {
+        const auto* gesture = static_cast<QNativeGestureEvent*>(event);
+        if (gesture->gestureType() == Qt::ZoomNativeGesture) {
+            // Spreading the fingers is a positive value and brings the scene closer.
+            const double factor = 1.0 / std::max(1.0 + gesture->value(), 0.05);
+            zoomBy(factor, gesture->position().x(), gesture->position().y());
+            event->accept();
+            return true;
+        }
+        if (gesture->gestureType() == Qt::SmartZoomNativeGesture) {
+            zoomToSurface(gesture->position().x(), gesture->position().y());
+            event->accept();
+            return true;
+        }
+    }
+    return QQuickRhiItem::event(event);
 }
 
 void Viewport3D::wheelEvent(QWheelEvent* event) {
     const QPoint pixels = event->pixelDelta();
     if (!pixels.isNull()) {
         // Trackpad: two fingers turn the view, with Shift they move it.
-        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-            panBy(pixels.x(), pixels.y());
-        } else {
-            orbitBy(pixels.x() * kTrackpadOrbit, pixels.y() * kTrackpadOrbit);
-        }
+        const render::NavigationAction action =
+            render::trackpadAction(m_mouseStyle, event->modifiers());
+        const double scale = action == render::NavigationAction::orbit
+                                 ? static_cast<double>(kTrackpadOrbit)
+                                 : 1.0;
+        applyNavigation(action, pixels.x() * scale, pixels.y() * scale);
     } else if (event->angleDelta().y() != 0) {
         // Mouse wheel: zoom towards the pointer; 120 units are one notch.
         const double notches = event->angleDelta().y() / 120.0;
@@ -321,6 +345,89 @@ void Viewport3D::wheelEvent(QWheelEvent* event) {
         zoomBy(factor, event->position().x(), event->position().y());
     }
     event->accept();
+}
+
+void Viewport3D::applyNavigation(render::NavigationAction action, double dx, double dy) {
+    switch (action) {
+    case render::NavigationAction::orbit:
+        orbitBy(dx, dy);
+        break;
+    case render::NavigationAction::pan:
+        panBy(dx, dy);
+        break;
+    case render::NavigationAction::zoom:
+        // Dragging up (dy < 0) comes closer.
+        zoomBy(std::exp(dy * kDragZoomPerPixel));
+        break;
+    case render::NavigationAction::none:
+        break;
+    }
+}
+
+QString Viewport3D::mouseStyle() const {
+    return QString::fromUtf8(render::mouseStyleName(m_mouseStyle).data(),
+                             static_cast<qsizetype>(render::mouseStyleName(m_mouseStyle).size()));
+}
+
+void Viewport3D::setMouseStyle(const QString& name) {
+    const std::optional<render::MouseStyle> style =
+        render::mouseStyleFromName(name.toStdString());
+    if (style && *style != m_mouseStyle) {
+        m_mouseStyle = *style;
+        emit mouseStyleChanged();
+    }
+}
+
+void Viewport3D::setViewDirection(double x, double y, double z) {
+    animateTo(m_camera.poseLookingFrom(
+        QVector3D(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z))));
+}
+
+std::optional<render::SurfaceHit> Viewport3D::surfaceAt(double x, double y) const {
+    if (!m_shown) {
+        return std::nullopt;
+    }
+    const std::optional<render::Ray> ray = m_camera.rayThrough(QPointF(x, y));
+    if (!ray) {
+        return std::nullopt;
+    }
+    return render::pickSurface(*m_shown, *ray);
+}
+
+bool Viewport3D::lookAtSurface(double x, double y) {
+    const std::optional<render::SurfaceHit> hit = surfaceAt(x, y);
+    if (!hit) {
+        return false;
+    }
+    QVector3D center = hit->point;
+    if (hit->bodyIndex >= 0) {
+        if (const auto shape = render::faceShape(
+                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].mesh, hit->faceId)) {
+            center = shape->center;
+        }
+    }
+    render::CameraPose pose = m_camera.poseLookingFrom(hit->normal);
+    pose.target = center;
+    animateTo(pose);
+    return true;
+}
+
+bool Viewport3D::zoomToSurface(double x, double y) {
+    const std::optional<render::SurfaceHit> hit = surfaceAt(x, y);
+    if (!hit) {
+        return false;
+    }
+    if (hit->bodyIndex >= 0) {
+        if (const auto shape = render::faceShape(
+                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].mesh, hit->faceId)) {
+            animateTo(m_camera.poseFraming(shape->center, shape->radius));
+            return true;
+        }
+    }
+    render::CameraPose pose = m_camera.pose();
+    pose.target = hit->point;
+    animateTo(pose);
+    return true;
 }
 
 void Viewport3D::geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry) {

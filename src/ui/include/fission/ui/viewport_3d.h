@@ -13,9 +13,12 @@
 #include <QVariantAnimation>
 
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "fission/render/camera.h"
+#include "fission/render/navigation.h"
+#include "fission/render/picking.h"
 #include "fission/render/scene.h"
 #include "fission/render/scene_renderer.h"
 
@@ -38,6 +41,8 @@ class Viewport3D : public QQuickRhiItem {
     Q_PROPERTY(bool orthographic READ orthographic WRITE setOrthographic NOTIFY orthographicChanged)
     Q_PROPERTY(QString displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged)
     Q_PROPERTY(bool animated MEMBER m_animated)
+    /// "fission", "fusion", "tinkercad", "blender" or "sketchup": which gestures move the view.
+    Q_PROPERTY(QString mouseStyle READ mouseStyle WRITE setMouseStyle NOTIFY mouseStyleChanged)
     Q_PROPERTY(double cameraYaw READ cameraYaw NOTIFY cameraChanged)
     Q_PROPERTY(double cameraPitch READ cameraPitch NOTIFY cameraChanged)
     Q_PROPERTY(double pixelsPerMillimetre READ pixelsPerMillimetre NOTIFY cameraChanged)
@@ -56,6 +61,8 @@ public:
     void setBedVisible(bool visible);
     bool orthographic() const { return m_camera.orthographic(); }
     void setOrthographic(bool orthographic);
+    QString mouseStyle() const;
+    void setMouseStyle(const QString& name);
     QString displayMode() const { return m_displayMode; }
     void setDisplayMode(const QString& mode);
     double cameraYaw() const { return m_camera.pose().yaw; }
@@ -68,6 +75,15 @@ public:
 
     /// "home", "top", "bottom", "front", "back", "left" or "right".
     Q_INVOKABLE void setStandardView(const QString& name);
+    /// Looks at the target from the side the vector points to (x, y, z in the world, any
+    /// length): the edges and corners of the view cube.
+    Q_INVOKABLE void setViewDirection(double x, double y, double z);
+    /// Turns the view to look squarely at the surface under the point (x, y) in item pixels and
+    /// makes the face the new centre. Returns false if there is nothing under the pointer.
+    Q_INVOKABLE bool lookAtSurface(double x, double y);
+    /// Moves the face under the point to the middle and zooms to fit it, without turning the
+    /// view (Smart Zoom of the trackpad).
+    Q_INVOKABLE bool zoomToSurface(double x, double y);
     /// Shows or hides one body of the scene (the eye in the body list).
     Q_INVOKABLE void setBodyVisible(int index, bool visible);
     /// Frames the scene again (key F).
@@ -100,6 +116,7 @@ signals:
     void paletteChanged();
     void bedVisibleChanged();
     void orthographicChanged();
+    void mouseStyleChanged();
     void displayModeChanged();
     void cameraChanged();
     void sceneChanged();
@@ -111,6 +128,8 @@ protected:
     QQuickRhiItemRenderer* createRenderer() override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
+    bool event(QEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     void geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry) override;
 
@@ -124,6 +143,10 @@ private:
     std::shared_ptr<const render::RenderScene> m_scene; // everything
     std::shared_ptr<const render::RenderScene> m_shown; // without hidden bodies
     std::vector<bool> m_bodyVisible;
+    void applyNavigation(render::NavigationAction action, double dx, double dy);
+    std::optional<render::SurfaceHit> surfaceAt(double x, double y) const;
+
+    render::MouseStyle m_mouseStyle = render::MouseStyle::fission;
     QString m_displayMode{QStringLiteral("color")};
     quint64 m_sceneVersion = 1;
     quint64 m_paletteVersion = 1;

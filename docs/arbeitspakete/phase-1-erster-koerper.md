@@ -173,7 +173,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.3 Viewport und Navigation
-**Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
+**Status:** in Arbeit (Teil 1.3a fertig, siehe unten) · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
 
 **Umfang:**
 - Rendering aller Körper (Tessellierung mit Face/Edge-IDs, inkrementell nur geänderte Körper)
@@ -195,6 +195,59 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 **Stand nach AP-0.8 (2026-10-14):**
 - *Schon da:* Renderer mit Körpern, mattem Licht, Schatten und Kantenlinien; Druckbett mit Raster (fest 256 × 256 mm, noch nicht aus dem Druckerprofil); Kamera mit Maus und Trackpad (Orbit, Pan, Zoom zum Zeiger); Perspektive/Ortho; Standardansichten mit Übergang; Ansichtswürfel; „Alles zeigen“ per Haus-Symbol.
 - *Offen:* Rendern mehrerer Körper aus dem Dokument inkrementell (AP-1.1d legt den Anfang), SSAO, adaptive Feinheit, Doppelklick auf Fläche, klickbare Würfel-Kanten/-Ecken, Maus-Voreinstellungen (Fusion, Tinkercad, Blender, SketchUp), 2-Mio.-Dreiecke-Messung, Drucker-Bettgröße.
+
+**Zerlegung (vom Product Owner am 2026-10-15 bestätigt):** ein PR je Teil.
+
+| Teil | Inhalt | Status |
+|---|---|---|
+| 1.3a Navigation | Maus-Stile, Pinch-Zoom, Doppelklick auf Fläche, klickbare Würfel-Kanten und -Ecken | fertig (2026-10-15) |
+| 1.3b Mehrere Körper | je Körper ein eigener Puffer, nur Geändertes wird hochgeladen | offen |
+| 1.3c Feinheit | beim Hineinzoomen im Hintergrund feiner tessellieren | offen |
+| 1.3d Optik | SSAO („weiche Verdeckungsschatten“), abschaltbar, schaltet sich bei verfehltem Budget selbst ab | offen |
+| 1.3e Messung und Bett | 2 Mio. Dreiecke auf M1 und Linux-GPU; Bettgröße aus einer Druckerliste | offen |
+
+#### Abschlussvermerk Teil 1.3a (2026-10-15)
+
+**Umgesetzt**
+- **Maus-Stile** als Datentabelle (`render/navigation.h`): *Fission3D* (rechts drehen, Mitte verschieben), *Fusion* (Mitte verschiebt,
+  Umschalt + Mitte dreht), *Tinkercad* (rechts dreht, Umschalt + rechts oder Mitte verschiebt), *Blender* (Mitte dreht, Umschalt + Mitte
+  verschiebt, Strg + Mitte zoomt), *SketchUp* (Mitte dreht, Umschalt + Mitte verschiebt). In jedem Stil: Mausrad zoomt zum Zeiger;
+  Alt + linke Taste dreht, Umschalt + linke Taste verschiebt (für Laptops ohne mittlere Taste). Auswahl im Menü **Ansicht**;
+  die Hinweiszeile und die Hinweise an den Navigationsknöpfen passen sich an.
+- **Trackpad:** zwei Finger drehen, Umschalt verschiebt, Spreizen/Zusammenziehen zoomt zum Zeiger, Smart Zoom (Doppeltipp mit zwei Fingern)
+  rückt die Fläche unter dem Zeiger in die Mitte und passt die Größe an.
+- **Doppelklick auf eine Fläche** (linke Taste): die Ansicht dreht sich senkrecht auf diese Fläche und nimmt sie als neue Mitte. Auf
+  dem Druckbett daneben schaut sie von oben. Gekrümmte Flächen werden an der Klickstelle senkrecht angesehen. Der Strahl-Test läuft
+  auf der CPU über die Anzeige-Dreiecke (`render/picking.h`); das reicht für einen Klick, Hover und Auswahl brauchen in AP-1.4 den
+  ID-Puffer.
+- **Ansichtswürfel:** jede Fläche ist in 3 × 3 Felder geteilt. Mitte = Fläche (wie bisher), Rand = Kante, Ecke = Ecke des Würfels;
+  das Feld unter dem Zeiger leuchtet auf.
+
+**Wie getestet**
+- Mac (arm64, Debug): `scripts/test` 212 von 212 grün. Neu: `tests/unit/render/test_navigation.cpp` (Tabelle je Stil),
+  `test_picking.cpp` (Strahl, Fläche, Bett, nächster Körper), Kamera-Tests (Ecke/Kante/Draufsicht/Rahmen) und
+  `tests/unit/ui/test_viewport_navigation.cpp`, das **alle fünf Stile mit künstlichen Mausereignissen durch das echte
+  3D-Ansichts-Element spielt** (Akzeptanzkriterium „Voreinstellungen im Test-Skript durchgespielt“), außerdem Mausrad, Trackpad,
+  Pinch und Doppelklick auf Fläche, Bett und Hintergrund.
+- Linux: nur CI. Die Maus-Stile sind plattformunabhängig; Pinch und Smart Zoom gibt es nur auf macOS.
+
+**So probierst du es aus**
+1. `scripts/run`. Menü **Ansicht** ▸ unten die fünf „Maus: wie in …“-Einträge; wähle zum Beispiel „wie in Blender“.
+2. Mit der mittleren Taste ziehen dreht jetzt die Ansicht, Umschalt + mittlere Taste verschiebt sie. Die Hinweiszeile unten zeigt das an.
+3. Oben rechts am Ansichtswürfel: fahre über die **Kanten und Ecken** (sie leuchten) und klicke. Die Ansicht fährt dorthin.
+4. Doppelklick auf eine Würfelseite im Bild: die Ansicht dreht sich genau auf diese Seite. Ebenso auf das Druckbett.
+5. Trackpad (Mac): Spreizen zoomt zum Zeiger; zwei Finger drehen; Umschalt + zwei Finger verschiebt.
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Maus-Stil wird nicht gemerkt** (gilt bis zum Schließen). Das Speichern gehört zu den Einstellungen und zum Erststart-Assistenten (AP-1.11).
+- **Doppelklick-Konflikt:** AP-1.4 nennt „Doppelklick wählt den Körper“, UX §10 und AP-1.3 „Doppelklick auf Fläche = senkrecht
+  draufschauen“. Beides gleichzeitig geht nicht. Vorschlag für AP-1.4: Doppelklick wählt den Körper, „Ansicht senkrecht auf Fläche“
+  bleibt als Smart Zoom (Trackpad) und als Eintrag im Rechtsklick-Menü der Fläche.
+- **Umschalt + linke Taste verschiebt die Ansicht** (Laptop-Hilfe). Mit der Rahmenauswahl aus AP-1.4 kollidiert das; dort ist
+  dann Alt + Umschalt + links naheliegend.
+- **Annahmen für die Stile:** Die Belegungen sind aus den Programmen nach Dokumentation übernommen, nicht gegen die Programme geprüft.
+  Fusion und Blender haben mehr Gesten (z. B. Strg + Umschalt + Mitte), die ich bewusst weggelassen habe.
+- Tooltip-Karten und Befehlssuche-Synonyme (Regel 10) für die Stil-Einträge gibt es erst mit der Befehlssuche (AP-1.11).
 
 ---
 

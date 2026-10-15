@@ -18,6 +18,7 @@ Window {
     property string rightTab: "object"
     property bool focusMode: AppOptions.focusMode
     property bool orthographic: false
+    property string mouseStyle: "fission"
     property bool bedVisible: true
     property string transientHint: ""
     readonly property bool narrow: width < Theme.narrowBreakpoint
@@ -73,7 +74,13 @@ Window {
             { id: "view.left", text: qsTr("Left"), shortcut: "3" },
             { id: "view.right", text: qsTr("Right"), shortcut: "4" },
             { id: "view.top", text: qsTr("Top"), shortcut: "5" },
-            { id: "view.bottom", text: qsTr("Bottom"), shortcut: "6" }
+            { id: "view.bottom", text: qsTr("Bottom"), shortcut: "6" },
+            { separator: true },
+            { id: "mouse.fission", text: qsTr("Mouse: like Fission3D"), checked: root.mouseStyle === "fission" },
+            { id: "mouse.fusion", text: qsTr("Mouse: like Fusion"), checked: root.mouseStyle === "fusion" },
+            { id: "mouse.tinkercad", text: qsTr("Mouse: like Tinkercad"), checked: root.mouseStyle === "tinkercad" },
+            { id: "mouse.blender", text: qsTr("Mouse: like Blender"), checked: root.mouseStyle === "blender" },
+            { id: "mouse.sketchup", text: qsTr("Mouse: like SketchUp"), checked: root.mouseStyle === "sketchup" }
         ] },
         { title: qsTr("Body"), items: [
             { id: "hole", text: qsTr("As hole"), enabled: false },
@@ -111,6 +118,19 @@ Window {
     readonly property string redoText: DocumentModel.canRedo
         ? qsTr("Redo: %1").arg(historyText(DocumentModel.nextRedo)) : qsTr("Redo")
 
+    // The permanent line in the status bar: how the chosen mouse style moves the view.
+    readonly property string navigationText: {
+        switch (mouseStyle) {
+        case "fusion":
+            return qsTr("Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.")
+        case "blender":
+        case "sketchup":
+            return qsTr("Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.")
+        default:
+            return qsTr("Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.")
+        }
+    }
+
     function showHint(text) {
         transientHint = text
         hintTimer.restart()
@@ -138,7 +158,9 @@ Window {
             break
         case "view.frame": viewport.frameAll(); break
         default:
-            if (id.indexOf("view.") === 0) {
+            if (id.indexOf("mouse.") === 0) {
+                mouseStyle = id.substring(6)
+            } else if (id.indexOf("view.") === 0) {
                 viewport.setStandardView(id.substring(5))
             } else {
                 showHint(qsTr("This arrives in a later version."))
@@ -296,6 +318,7 @@ Window {
                 edgeColor: Theme.edge
                 shadowColor: Theme.shadow
                 animated: !AppOptions.reduceMotion
+                mouseStyle: root.mouseStyle
             }
 
             BedLabels {
@@ -310,6 +333,7 @@ Window {
                 display: root.display
                 tool: root.tool
                 focusMode: root.focusMode
+                mouseStyle: root.mouseStyle
                 cameraYaw: viewport.cameraYaw
                 cameraPitch: viewport.cameraPitch
                 onOrthographicToggled: root.orthographic = !root.orthographic
@@ -317,6 +341,7 @@ Window {
                 onToolRequested: tool => root.tool = tool
                 onGroupRequested: group => root.showHint(qsTr("This tool group arrives in a later version."))
                 onViewRequested: view => viewport.setStandardView(view)
+                onDirectionRequested: (x, y, z) => viewport.setViewDirection(x, y, z)
                 onFocusToggled: root.focusMode = !root.focusMode
                 onNavigationHint: text => root.showHint(text)
                 onOrbitDragged: (dx, dy) => viewport.orbitBy(dx, dy)
@@ -360,7 +385,7 @@ Window {
         width: parent.width
         toolName: root.toolName(root.tool)
         hint: root.transientHint !== "" && hintTimer.running ? root.transientHint
-            : qsTr("Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.")
+            : root.navigationText
         unitText: qsTr("Unit: mm · Grid 1 mm")
     }
 
