@@ -24,6 +24,8 @@ namespace {
 constexpr int kAnimationMilliseconds = 180;
 constexpr float kWheelStep = 0.9F;     // one notch of a mouse wheel zooms by 10 %
 constexpr float kTrackpadOrbit = 0.6F; // two-finger drag: pixels to orbit pixels
+constexpr double kFrameBudgetMilliseconds = 16.7; // 60 frames per second
+constexpr int kSlowFramesToSwitchOff = 90;
 constexpr double kDragZoomPerPixel = 0.01; // Ctrl + middle button (Blender): drag up zooms in
 
 // Thin adapter: Qt Quick calls initialize / synchronize / render, SceneRenderer does the work.
@@ -70,13 +72,44 @@ public:
         frame.bedVisible = m_snapshot.bedVisible;
         frame.displayMode = m_snapshot.displayMode;
         frame.palette = m_snapshot.palette;
+        frame.ambientOcclusion = m_snapshot.ambientOcclusion;
         m_renderer->draw(cb, renderTarget(), frame);
+        watchFrameTime(cb);
         if (m_item != nullptr) {
             m_item->reportRendered(QString::fromUtf8(m_rhi->backendName()));
         }
     }
 
 private:
+    // The graphics card says how long it took for the last finished frame (where it can).
+    // 90 frames in a row above the budget mean that the soft shadows cost too much.
+    void watchFrameTime(QRhiCommandBuffer* cb) {
+        if (m_item == nullptr || !m_snapshot.ambientOcclusion ||
+            !m_rhi->isFeatureSupported(QRhi::Timestamps)) {
+            m_slowFrames = 0;
+            m_sumMilliseconds = 0.0;
+            return;
+        }
+        const double milliseconds = cb->lastCompletedGpuTime() * 1000.0;
+        if (milliseconds <= 0.0) {
+            return;
+        }
+        if (milliseconds > kFrameBudgetMilliseconds) {
+            ++m_slowFrames;
+            m_sumMilliseconds += milliseconds;
+            if (m_slowFrames >= kSlowFramesToSwitchOff) {
+                m_item->reportSlowFrames(m_sumMilliseconds / m_slowFrames);
+                m_slowFrames = 0;
+                m_sumMilliseconds = 0.0;
+            }
+        } else {
+            m_slowFrames = 0;
+            m_sumMilliseconds = 0.0;
+        }
+    }
+
+    int m_slowFrames = 0;
+    double m_sumMilliseconds = 0.0;
     QRhi* m_rhi = nullptr;
     Viewport3D* m_item = nullptr;
     Viewport3D::Snapshot m_snapshot;
@@ -215,6 +248,27 @@ void Viewport3D::setOrthographic(bool orthographic) {
     }
 }
 
+void Viewport3D::setAmbientOcclusion(bool on) {
+    if (m_ambientOcclusion != on) {
+        m_ambientOcclusion = on;
+        emit ambientOcclusionChanged();
+        update();
+    }
+}
+
+void Viewport3D::reportSlowFrames(double averageMilliseconds) {
+    // Called on the render thread: continue on the interface thread.
+    QMetaObject::invokeMethod(
+        this,
+        [this, averageMilliseconds] {
+            if (m_ambientOcclusion) {
+                setAmbientOcclusion(false);
+                emit ambientOcclusionTurnedOff(averageMilliseconds);
+            }
+        },
+        Qt::QueuedConnection);
+}
+
 void Viewport3D::cameraMoved() {
     const int level = render::detailLevelFor(m_camera.pixelsPerMillimetre(), m_detailLevel);
     if (level != m_detailLevel) {
@@ -240,6 +294,16 @@ void Viewport3D::setStandardView(const QString& name) {
             return;
         }
     }
+}
+
+void Viewport3D::setCamera(double yaw, double pitch, double distance) {
+    m_animation.stop();
+    render::CameraPose pose = m_camera.pose();
+    pose.yaw = static_cast<float>(yaw);
+    pose.pitch = static_cast<float>(pitch);
+    pose.distance = static_cast<float>(distance);
+    m_camera.setPose(pose);
+    cameraMoved();
 }
 
 void Viewport3D::frameAll() {
@@ -456,6 +520,7 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect) {
     snapshot.projection = m_camera.projection(aspect);
     snapshot.pixelsPerMillimetre = m_camera.pixelsPerMillimetre();
     snapshot.bedVisible = m_bedVisible;
+    snapshot.ambientOcclusion = m_ambientOcclusion;
     snapshot.sceneVersion = m_sceneVersion;
     snapshot.paletteVersion = m_paletteVersion;
     return snapshot;

@@ -26,6 +26,7 @@ layout(std140, binding = 0) uniform Params {
     vec4 params;     // x: 1 if texture y runs downwards, y: 1 / shadow map size, z: grid mm, w: major mm
     vec4 bedSize;    // x, y: half size, z: shadow map valid (1/0)
     vec4 bodyOverride; // rgb, a = 1: draw every body in this colour
+    vec4 view;       // x, y: size of the image in pixels, z: 1 if ambient occlusion is on
 } u;
 
 out gl_PerVertex {

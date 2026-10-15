@@ -364,7 +364,7 @@
         <translation>Bearbeiten</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+66"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -374,7 +374,7 @@
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-65"/>
+        <location line="-66"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Strg+Umschalt+Z</translation>
     </message>
@@ -432,6 +432,11 @@
         <location line="+1"/>
         <source>Print bed</source>
         <translation>Druckbett</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Soft shadows</source>
+        <translation>Weiche Schatten</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -515,12 +520,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+313"/>
+        <location line="+325"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-312"/>
+        <location line="-324"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -576,18 +581,18 @@
     </message>
     <message>
         <location line="+17"/>
-        <location line="+139"/>
+        <location line="+149"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-137"/>
-        <location line="+138"/>
+        <location line="-147"/>
+        <location line="+148"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-132"/>
+        <location line="-142"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -627,8 +632,8 @@
         <translation>Die Befehlssuche kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+18"/>
-        <location line="+95"/>
+        <location line="+19"/>
+        <location line="+104"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
@@ -653,7 +658,12 @@
         <translation>Der Export kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+135"/>
+        <location line="+60"/>
+        <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
+        <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
+    </message>
+    <message>
+        <location line="+77"/>
         <source>Cylinder</source>
         <translation>Zylinder</translation>
     </message>
@@ -803,12 +813,12 @@
         <translation>Diese Form ließ sich nicht bauen.</translation>
     </message>
     <message>
-        <location line="-192"/>
+        <location line="-194"/>
         <source>Shapes arrive in a later version.</source>
         <translation>Die Formen kommen in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+55"/>
+        <location line="+57"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
@@ -828,12 +838,12 @@
         <translation>0,4 mm</translation>
     </message>
     <message>
-        <location line="-243"/>
+        <location line="-255"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+259"/>
+        <location line="+271"/>
         <source>Unit: mm · Grid 1 mm</source>
         <translation>Einheit: mm · Raster 1 mm</translation>
     </message>

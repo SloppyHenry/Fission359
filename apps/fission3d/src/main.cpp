@@ -62,6 +62,8 @@ struct CommandLine {
     int openMenu = -1;
     bool reduceMotion = false;
     bool showHistory = false;
+    QString camera;
+    bool softShadows = true;
     QSize size;
 };
 
@@ -100,13 +102,19 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     const QCommandLineOption showHistory(
         QStringLiteral("show-history"),
         QStringLiteral("Make a few changes, undo one and open the list of recent actions."));
+    const QCommandLineOption camera(
+        QStringLiteral("camera"),
+        QStringLiteral("Start with the camera at yaw,pitch,distance (degrees, degrees, mm)."),
+        QStringLiteral("yaw,pitch,distance"));
+    const QCommandLineOption noSoftShadows(QStringLiteral("no-soft-shadows"),
+                                           QStringLiteral("Start with the soft shadows off."));
     const QCommandLineOption reduceMotion(QStringLiteral("reduce-motion"),
                                           QStringLiteral("Switch animations off."));
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
                                   QStringLiteral("WxH"));
     parser.addOptions({smokeTest, measureStartup, theme, language, focus, about, openMenu,
-                       showHistory, reduceMotion, size});
+                       showHistory, camera, noSoftShadows, reduceMotion, size});
     parser.process(core); // prints help or version and exits when asked
 
     CommandLine result;
@@ -118,6 +126,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     result.about = parser.isSet(about);
     result.reduceMotion = parser.isSet(reduceMotion);
     result.showHistory = parser.isSet(showHistory);
+    result.camera = parser.value(camera);
+    result.softShadows = !parser.isSet(noSoftShadows);
     result.openMenu = parser.isSet(openMenu) ? parser.value(openMenu).toInt() : -1;
     const QStringList parts = parser.value(size).split(QLatin1Char('x'));
     if (parts.size() == 2 && parts[0].toInt() > 0 && parts[1].toInt() > 0) {
@@ -178,6 +188,8 @@ int main(int argc, char* argv[]) {
     appOptions.reduceMotion = options.reduceMotion;
     appOptions.openMenu = options.openMenu;
     appOptions.showHistory = options.showHistory;
+    appOptions.camera = options.camera;
+    appOptions.softShadows = options.softShadows;
     fission::ui::Numbers numbers;
 
     // The document: the one box of the start, calculated before the first frame.

@@ -4,6 +4,7 @@
 #pragma once
 
 #include <QObject>
+#include <QString>
 
 namespace fission::ui {
 
@@ -15,6 +16,8 @@ class AppOptions : public QObject {
     Q_PROPERTY(bool reduceMotion MEMBER reduceMotion NOTIFY changed)
     Q_PROPERTY(int openMenu MEMBER openMenu NOTIFY changed)
     Q_PROPERTY(bool showHistory MEMBER showHistory NOTIFY changed)
+    Q_PROPERTY(QString camera MEMBER camera NOTIFY changed)
+    Q_PROPERTY(bool softShadows MEMBER softShadows NOTIFY changed)
 
 public:
     explicit AppOptions(QObject* parent = nullptr) : QObject(parent) {}
@@ -24,6 +27,10 @@ public:
     int openMenu = -1; ///< developer option: open this menu (index) at start, for screenshots
     /// developer option: make a few changes, undo one, and open "Recent actions" (screenshots)
     bool showHistory = false;
+    /// developer option "yaw,pitch,distance" (degrees, degrees, mm): start with this camera
+    QString camera;
+    /// developer option --no-soft-shadows switches the occlusion off for comparison images
+    bool softShadows = true;
 
 signals:
     void changed();

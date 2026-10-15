@@ -120,3 +120,39 @@ TEST_CASE("bodies without an id are told apart by their place", "[render][scene-
     CHECK(stats.uploaded == 2);
     CHECK(f.renderer->bodyTriangleCount() == 2);
 }
+
+TEST_CASE("a frame with soft shadows runs through all passes and follows a resize",
+          "[render][scene-renderer]") {
+    Fixture f;
+    RenderScene scene;
+    scene.bodies = {body("a", 1)};
+
+    for (const QSize size : {QSize(320, 200), QSize(640, 400)}) {
+        std::unique_ptr<QRhiTexture> color(
+            f.rhi->newTexture(QRhiTexture::RGBA8, size, 1, QRhiTexture::RenderTarget));
+        REQUIRE(color->create());
+        std::unique_ptr<QRhiRenderBuffer> depth(
+            f.rhi->newRenderBuffer(QRhiRenderBuffer::DepthStencil, size, 1));
+        REQUIRE(depth->create());
+        QRhiTextureRenderTargetDescription description{QRhiColorAttachment(color.get())};
+        description.setDepthStencilBuffer(depth.get());
+        std::unique_ptr<QRhiTextureRenderTarget> target(f.rhi->newTextureRenderTarget(description));
+        std::unique_ptr<QRhiRenderPassDescriptor> pass(target->newCompatibleRenderPassDescriptor());
+        target->setRenderPassDescriptor(pass.get());
+        REQUIRE(target->create());
+
+        if (!f.renderer->hasPipelines()) {
+            f.renderer->createPipelines(pass.get(), 1);
+        }
+        QRhiCommandBuffer* cb = nullptr;
+        REQUIRE(f.rhi->beginOffscreenFrame(&cb) == QRhi::FrameOpSuccess);
+        f.renderer->upload(cb, scene, {});
+        SceneRenderer::Frame frame;
+        frame.projection.perspective(45.0F, float(size.width()) / float(size.height()), 1.0F, 1000.0F);
+        frame.view.lookAt({60, -80, 60}, {0, 0, 5}, {0, 0, 1});
+        frame.ambientOcclusion = true;
+        f.renderer->draw(cb, target.get(), frame);
+        f.rhi->endOffscreenFrame();
+    }
+    SUCCEED();
+}

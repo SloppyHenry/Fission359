@@ -65,6 +65,7 @@ Window {
         { title: qsTr("View"), items: [
             { id: "orthographic", text: qsTr("Orthographic"), shortcut: "P", checked: root.orthographic },
             { id: "bed", text: qsTr("Print bed"), checked: root.bedVisible },
+            { id: "softshadows", text: qsTr("Soft shadows"), checked: viewport.ambientOcclusion },
             { id: "focus", text: qsTr("Focus"), shortcut: isMac ? "⇧F" : qsTr("Shift+F"), checked: root.focusMode },
             { separator: true },
             { id: "view.frame", text: qsTr("Show everything"), shortcut: "F" },
@@ -151,6 +152,7 @@ Window {
         case "history": historyOpen = !historyOpen; break
         case "orthographic": orthographic = !orthographic; break
         case "bed": bedVisible = !bedVisible; break
+        case "softshadows": viewport.ambientOcclusion = !viewport.ambientOcclusion; break
         case "focus": focusMode = !focusMode; break
         case "minimize": root.showMinimized(); break
         case "fullscreen":
@@ -177,6 +179,15 @@ Window {
             DocumentModel.setBodyVisible(0, true)
             DocumentModel.undo()
             historyOpen = true
+        }
+        if (AppOptions.camera !== "") { // developer option, for comparison images
+            const v = AppOptions.camera.split(",").map(Number)
+            if (v.length === 3 && v.every(x => !isNaN(x))) {
+                viewport.setCamera(v[0], v[1], v[2])
+            }
+        }
+        if (!AppOptions.softShadows) {
+            viewport.ambientOcclusion = false
         }
         if (AppOptions.openMenu >= 0) {
             openMenuTimer.start()
@@ -319,6 +330,8 @@ Window {
                 shadowColor: Theme.shadow
                 animated: !AppOptions.reduceMotion
                 mouseStyle: root.mouseStyle
+                onAmbientOcclusionTurnedOff: root.showHint(
+                    qsTr("Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu."))
             }
 
             BedLabels {

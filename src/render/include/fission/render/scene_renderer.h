@@ -34,6 +34,9 @@ public:
         bool bedVisible = true;
         DisplayMode displayMode = DisplayMode::colors;
         ViewPalette palette;
+        /// Soft shadows in corners and crevices (ambient occlusion). Costs one more pass over
+        /// the scene; the caller turns it off when the graphics card cannot keep up.
+        bool ambientOcclusion = true;
     };
 
     /// Creates buffers and loads the shaders. Needs a current RHI.
@@ -66,12 +69,16 @@ public:
 
 private:
     void writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* buffer, const QMatrix4x4& mvp,
-                       const Frame& frame) const;
+                       const Frame& frame, const QSize& targetSize = {}, bool occlusion = false) const;
+    /// Depth of the scene, then the occlusion from it, then the blur; fills `m_aoBlurTexture`.
+    void renderAmbientOcclusion(QRhiCommandBuffer* cb, const Frame& frame, const QSize& size);
+    bool ensureAmbientOcclusionTargets(const QSize& size);
     std::unique_ptr<QRhiBuffer> makeVertexBuffer(QRhiResourceUpdateBatch* updates, const void* data,
                                                  std::size_t bytes, QRhiBuffer::UsageFlags usage);
     std::unique_ptr<QRhiGraphicsPipeline>
     makePipeline(const QShader& vertex, const QShader& fragment, bool colorLayoutOnly, bool lines,
-                 bool blend, bool depth, QRhiRenderPassDescriptor* pass, int samples);
+                 bool blend, bool depth, QRhiRenderPassDescriptor* pass, int samples,
+                 QRhiShaderResourceBindings* srb = nullptr);
 
     /// The graphics buffers of one body.
     struct GpuBody {
@@ -105,6 +112,31 @@ private:
     std::unique_ptr<QRhiBuffer> m_lineVertices;
 
     std::unique_ptr<QRhiSampler> m_sampler;
+    std::unique_ptr<QRhiSampler> m_linearSampler;
+    // ambient occlusion: depth of the scene (full size), occlusion and its blur (half size)
+    QSize m_aoSize;
+    float m_aoRadius = 6.0F; ///< mm; follows the size of the scene
+    bool m_whiteUploaded = false;
+    std::unique_ptr<QRhiTexture> m_aoWhite;
+    std::unique_ptr<QRhiTexture> m_aoDepthTexture;
+    std::unique_ptr<QRhiTexture> m_aoNormalTexture;
+    std::unique_ptr<QRhiRenderPassDescriptor> m_aoDepthPass;
+    std::unique_ptr<QRhiGraphicsPipeline> m_aoDepthPipeline;
+    std::unique_ptr<QRhiTexture> m_aoRawTexture;
+    std::unique_ptr<QRhiTexture> m_aoBlurTexture;
+    std::unique_ptr<QRhiTextureRenderTarget> m_aoDepthTarget;
+    std::unique_ptr<QRhiTextureRenderTarget> m_aoRawTarget;
+    std::unique_ptr<QRhiTextureRenderTarget> m_aoBlurTarget;
+    std::unique_ptr<QRhiRenderPassDescriptor> m_aoColorPass;
+    std::unique_ptr<QRhiBuffer> m_aoDepthUniforms;
+    std::unique_ptr<QRhiBuffer> m_aoRawUniforms;
+    std::unique_ptr<QRhiBuffer> m_aoBlurUniforms;
+    std::unique_ptr<QRhiShaderResourceBindings> m_aoDepthSrb;
+    std::unique_ptr<QRhiShaderResourceBindings> m_aoRawSrb;
+    std::unique_ptr<QRhiShaderResourceBindings> m_aoBlurSrb;
+    std::unique_ptr<QRhiGraphicsPipeline> m_aoRawPipeline;
+    std::unique_ptr<QRhiGraphicsPipeline> m_aoBlurPipeline;
+    QShader m_fullscreenVertex, m_ssaoFragment, m_aoBlurFragment, m_normalFragment;
     std::unique_ptr<QRhiTexture> m_shadowTexture;
     std::unique_ptr<QRhiTextureRenderTarget> m_shadowTarget;
     std::unique_ptr<QRhiRenderPassDescriptor> m_shadowPass;

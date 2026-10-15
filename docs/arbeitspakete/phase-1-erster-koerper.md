@@ -173,7 +173,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.3 Viewport und Navigation
-**Status:** in Arbeit (Teile 1.3a bis 1.3c fertig, siehe unten) · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
+**Status:** in Arbeit (Teile 1.3a bis 1.3d fertig, siehe unten) · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
 
 **Umfang:**
 - Rendering aller Körper (Tessellierung mit Face/Edge-IDs, inkrementell nur geänderte Körper)
@@ -203,8 +203,35 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 | 1.3a Navigation | Maus-Stile, Pinch-Zoom, Doppelklick auf Fläche, klickbare Würfel-Kanten und -Ecken | fertig (2026-10-15) |
 | 1.3b Mehrere Körper | je Körper ein eigener Puffer, nur Geändertes wird hochgeladen | fertig (2026-10-15) |
 | 1.3c Feinheit | beim Hineinzoomen im Hintergrund feiner tessellieren | fertig (2026-10-15) |
-| 1.3d Optik | SSAO („weiche Verdeckungsschatten“), abschaltbar, schaltet sich bei verfehltem Budget selbst ab | offen |
+| 1.3d Optik | SSAO („weiche Verdeckungsschatten“), abschaltbar, schaltet sich bei verfehltem Budget selbst ab | fertig (2026-10-15) |
 | 1.3e Messung und Bett | 2 Mio. Dreiecke auf M1 und Linux-GPU; Bettgröße aus einer Druckerliste | offen |
+
+#### Abschlussvermerk Teil 1.3d (2026-10-15)
+
+**Umgesetzt**
+- **Weiche Schatten (Ambient Occlusion, SSAO):** Ecken, Spalten und die Stelle, wo ein Körper auf dem Druckbett steht, werden leicht
+  abgedunkelt. Ablauf je Bild: (1) Tiefe und Flächen-Normalen der Szene aus Kamerasicht, (2) Verdeckung aus der Tiefe mit 12 Proben
+  in halber Auflösung, (3) 4×4-Weichzeichnung, (4) die Körper- und Bett-Shader nutzen das Ergebnis. Der Radius richtet sich nach der
+  Größe der Szene.
+- **Schalter** im Menü *Ansicht ▸ Weiche Schatten*.
+- **Schaltet sich selbst ab,** wenn die Grafikkarte mit den Schatten 90 Bilder hintereinander über 16,7 ms braucht (gemessen mit den
+  Zeitstempeln der Grafikschnittstelle, wo sie das kann); dann erscheint ein Hinweis, der erklärt, wie man sie wieder einschaltet.
+- Entwickler-Optionen `--camera yaw,pitch,distance` und `--no-soft-shadows` für Vergleichsbilder.
+
+**Wie getestet**
+- Bild vorher/nachher: [ap-1.3d-weiche-schatten-aus-an.png](../screenshots/ap-1.3d-weiche-schatten-aus-an.png) (links aus, rechts an;
+  Mac, Metal). Ein erster Versuch mit Normalen aus der Tiefe zeigte Muster auf ebenen Flächen; deshalb schreibt der Vorab-Durchgang
+  die echten Flächen-Normalen.
+- `test_scene_renderer.cpp`: ein Bild mit Schatten läuft durch alle Durchgänge und folgt einer Größenänderung (Null-Schnittstelle).
+- Mac `scripts/test` komplett grün. Linux: nur CI (dort wird nur geprüft, dass es baut und läuft, nicht wie es aussieht).
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Die Wirkung ist bei einem einzelnen Würfel dezent.** Deutlicher wird sie bei Teilen mit Vertiefungen, Ecken und Löchern (ab AP-1.5/1.7).
+  Stärke und Radius sind Schätzwerte; bitte am echten Modell beurteilen.
+- **Nur auf dem Mac gesehen.** Metal ist geprüft; Vulkan/OpenGL laufen über denselben Code mit denselben Umrechnungen für die Bildlage
+  (wie beim Schattenwurf), sind aber nicht angesehen worden. Der Linux-Test am Bildschirm steht aus.
+- Kanten-Glättung (4-fach) gilt für die Körper, nicht für das Schattenbild; an Silhouetten kann ein feiner heller Saum bleiben.
+- Die automatische Abschaltung funktioniert nur, wo die Schnittstelle Zeitstempel liefert; sonst bleibt der Schalter von Hand.
 
 #### Abschlussvermerk Teil 1.3c (2026-10-15)
 

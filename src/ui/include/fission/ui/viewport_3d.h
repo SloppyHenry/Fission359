@@ -41,6 +41,10 @@ class Viewport3D : public QQuickRhiItem {
     Q_PROPERTY(bool orthographic READ orthographic WRITE setOrthographic NOTIFY orthographicChanged)
     Q_PROPERTY(QString displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged)
     Q_PROPERTY(bool animated MEMBER m_animated)
+    /// Soft shadows in corners ("Weiche Schatten"). Turns itself off when the graphics card
+    /// cannot keep 60 frames per second with it (then `ambientOcclusionTurnedOff` is emitted).
+    Q_PROPERTY(bool ambientOcclusion READ ambientOcclusion WRITE setAmbientOcclusion NOTIFY
+                   ambientOcclusionChanged)
     /// "fission", "fusion", "tinkercad", "blender" or "sketchup": which gestures move the view.
     Q_PROPERTY(QString mouseStyle READ mouseStyle WRITE setMouseStyle NOTIFY mouseStyleChanged)
     Q_PROPERTY(double cameraYaw READ cameraYaw NOTIFY cameraChanged)
@@ -61,6 +65,10 @@ public:
     void setBedVisible(bool visible);
     bool orthographic() const { return m_camera.orthographic(); }
     void setOrthographic(bool orthographic);
+    bool ambientOcclusion() const { return m_ambientOcclusion; }
+    void setAmbientOcclusion(bool on);
+    /// Called by the renderer (render thread) when frames take too long with occlusion on.
+    void reportSlowFrames(double averageMilliseconds);
     QString mouseStyle() const;
     void setMouseStyle(const QString& name);
     QString displayMode() const { return m_displayMode; }
@@ -84,6 +92,8 @@ public:
     /// Moves the face under the point to the middle and zooms to fit it, without turning the
     /// view (Smart Zoom of the trackpad).
     Q_INVOKABLE bool zoomToSurface(double x, double y);
+    /// Puts the camera at once (no animation) at the given angles and distance from its target.
+    Q_INVOKABLE void setCamera(double yaw, double pitch, double distance);
     /// Shows or hides one body of the scene (the eye in the body list).
     Q_INVOKABLE void setBodyVisible(int index, bool visible);
     /// Frames the scene again (key F).
@@ -106,6 +116,7 @@ public:
         float pixelsPerMillimetre = 2.0F;
         bool bedVisible = true;
         render::DisplayMode displayMode = render::DisplayMode::colors;
+        bool ambientOcclusion = true;
         quint64 sceneVersion = 0;
         quint64 paletteVersion = 0;
     };
@@ -117,6 +128,9 @@ signals:
     void bedVisibleChanged();
     void orthographicChanged();
     void mouseStyleChanged();
+    void ambientOcclusionChanged();
+    /// The soft shadows were switched off because the frames took too long.
+    void ambientOcclusionTurnedOff(double averageMilliseconds);
     /// The view needs finer (or may use coarser) tessellation at the current zoom.
     void detailLevelWanted(int level);
     void displayModeChanged();
@@ -148,6 +162,7 @@ private:
     void applyNavigation(render::NavigationAction action, double dx, double dy);
     std::optional<render::SurfaceHit> surfaceAt(double x, double y) const;
 
+    bool m_ambientOcclusion = true;
     int m_detailLevel = 0;
     render::MouseStyle m_mouseStyle = render::MouseStyle::fission;
     QString m_displayMode{QStringLiteral("color")};

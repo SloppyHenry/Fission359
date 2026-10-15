@@ -18,4 +18,8 @@ qt_add_shaders(fission_render "fission_render_shaders"
     src/shaders/flat.vert
     src/shaders/flat.frag
     src/shaders/shadow.vert
-    src/shaders/shadow.frag)
+    src/shaders/shadow.frag
+    src/shaders/fullscreen.vert
+    src/shaders/ssao.frag
+    src/shaders/normal.frag
+    src/shaders/aoblur.frag)

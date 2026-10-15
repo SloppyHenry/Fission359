@@ -24,9 +24,27 @@ layout(std140, binding = 0) uniform Params {
     vec4 params;
     vec4 bedSize;
     vec4 bodyOverride; // rgb, a = 1: draw every body in this colour
+    vec4 view;       // x, y: size of the image in pixels, z: 1 if ambient occlusion is on
 } u;
 
 layout(binding = 1) uniform sampler2D shadowMap;
+layout(binding = 2) uniform sampler2D aoMap;
+
+// Ambient occlusion at this pixel: 1 = open, smaller = in a corner. Same image orientation
+// rule as the shadow map: y is flipped where textures run downwards.
+float openness() {
+    if (u.view.z < 0.5) {
+        return 1.0;
+    }
+    vec2 ndc = vec2(2.0 * gl_FragCoord.x / u.view.x - 1.0,
+                    u.params.x > 0.5 ? 1.0 - 2.0 * gl_FragCoord.y / u.view.y
+                                     : 2.0 * gl_FragCoord.y / u.view.y - 1.0);
+    vec2 uv = ndc * 0.5 + 0.5;
+    if (u.params.x > 0.5) {
+        uv.y = 1.0 - uv.y;
+    }
+    return texture(aoMap, uv).r;
+}
 
 // 1 = in the light, 0 = in the shadow; a soft edge from 3 x 3 samples.
 float lightAmount(vec3 normal) {
@@ -65,6 +83,7 @@ void main() {
     float fill = max(dot(n, viewDir), 0.0);
     float ambient = 0.46 + 0.14 * n.z;
     vec3 base = u.bodyOverride.a > 0.5 ? u.bodyOverride.rgb : vColor.rgb;
-    vec3 c = base * (ambient + 0.5 * diffuse + 0.1 * fill);
+    float open = openness();
+    vec3 c = base * (ambient * open + 0.5 * diffuse * mix(1.0, open, 0.5) + 0.1 * fill * open);
     fragColor = vec4(c, vColor.a);
 }
