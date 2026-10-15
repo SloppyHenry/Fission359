@@ -14,6 +14,7 @@ class AppOptions : public QObject {
     Q_PROPERTY(bool focusMode MEMBER focusMode NOTIFY changed)
     Q_PROPERTY(bool reduceMotion MEMBER reduceMotion NOTIFY changed)
     Q_PROPERTY(int openMenu MEMBER openMenu NOTIFY changed)
+    Q_PROPERTY(bool showHistory MEMBER showHistory NOTIFY changed)
 
 public:
     explicit AppOptions(QObject* parent = nullptr) : QObject(parent) {}
@@ -21,6 +22,8 @@ public:
     bool focusMode = false;
     bool reduceMotion = false;
     int openMenu = -1; ///< developer option: open this menu (index) at start, for screenshots
+    /// developer option: make a few changes, undo one, and open "Recent actions" (screenshots)
+    bool showHistory = false;
 
 signals:
     void changed();

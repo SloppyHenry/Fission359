@@ -16,6 +16,12 @@ void Document::setSettings(const DocumentSettings& settings) {
     touch();
 }
 
+bool Document::sameContentAs(const Document& other) const {
+    return title == other.title && settings_ == other.settings_ &&
+           parameters_ == other.parameters_ && features_ == other.features_ &&
+           bodies_ == other.bodies_ && lastFeatureNumber_ == other.lastFeatureNumber_;
+}
+
 // --- named measures ----------------------------------------------------------------------
 
 const Parameter* Document::findParameter(std::string_view name) const {
@@ -68,6 +74,41 @@ bool Document::removeParameter(std::string_view name) {
     parameters_.erase(found);
     touch();
     return true;
+}
+
+std::optional<std::size_t> Document::indexOfParameter(std::string_view name) const {
+    const std::string key = foldMeasureName(name);
+    for (std::size_t i = 0; i < parameters_.size(); ++i) {
+        if (foldMeasureName(parameters_[i].name) == key) {
+            return i;
+        }
+    }
+    return std::nullopt;
+}
+
+bool Document::removeParameterAt(std::size_t index) {
+    if (index >= parameters_.size()) {
+        return false;
+    }
+    parameters_.erase(parameters_.begin() + static_cast<std::ptrdiff_t>(index));
+    touch();
+    return true;
+}
+
+bool Document::setParameterNameAt(std::size_t index, std::string newName) {
+    if (index >= parameters_.size()) {
+        return false;
+    }
+    parameters_[index].name = std::move(newName);
+    touch();
+    return true;
+}
+
+void Document::insertParameter(std::size_t index, Parameter parameter) {
+    index = std::min(index, parameters_.size());
+    parameters_.insert(parameters_.begin() + static_cast<std::ptrdiff_t>(index),
+                       std::move(parameter));
+    touch();
 }
 
 std::vector<MeasureDefinition> Document::measureDefinitions() const {
@@ -147,6 +188,36 @@ bool Document::removeFeature(const FeatureId& id) {
     features_.erase(features_.begin() + static_cast<std::ptrdiff_t>(*index));
     touch();
     return true;
+}
+
+std::optional<RemovedFeature> Document::takeFeature(const FeatureId& id) {
+    const auto index = indexOf(id);
+    if (!index) {
+        return std::nullopt;
+    }
+    RemovedFeature removed;
+    removed.index = *index;
+    removed.feature = std::move(features_[*index]);
+    for (std::size_t i = 0; i < bodies_.size(); ++i) {
+        if (bodies_[i].createdBy == id) {
+            removed.bodies.emplace_back(i, bodies_[i]);
+        }
+    }
+    std::erase_if(bodies_, [&](const Body& body) { return body.createdBy == id; });
+    features_.erase(features_.begin() + static_cast<std::ptrdiff_t>(*index));
+    touch();
+    return removed;
+}
+
+void Document::restoreFeature(RemovedFeature removed) {
+    const std::size_t at = std::min(removed.index, features_.size());
+    features_.insert(features_.begin() + static_cast<std::ptrdiff_t>(at),
+                     std::move(removed.feature));
+    for (auto& [index, body] : removed.bodies) { // ascending, so each insert lands in place
+        const std::size_t place = std::min(index, bodies_.size());
+        bodies_.insert(bodies_.begin() + static_cast<std::ptrdiff_t>(place), std::move(body));
+    }
+    touch();
 }
 
 std::vector<FeatureId> Document::dependentsOf(const FeatureId& id) const {

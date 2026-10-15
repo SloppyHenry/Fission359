@@ -130,7 +130,10 @@ void DocumentModel::addDemoBox() {
     if (box == nullptr) {
         return;
     }
-    m_document.addFeature(core::defaultDraft(*box));
+    // The box is where the document starts, not something the person did: not an undo step.
+    core::Document start;
+    start.addFeature(core::defaultDraft(*box));
+    m_history.reset(std::move(start));
     rebuildLists();
     requestRecompute();
 }
@@ -146,7 +149,7 @@ std::uint64_t DocumentModel::meshKey(const core::BodyResult& body) noexcept {
 
 void DocumentModel::requestRecompute() {
     setCalculating(true);
-    m_engine->request(m_document);
+    m_engine->request(m_history.document());
 }
 
 void DocumentModel::setCalculating(bool calculating) {
@@ -215,7 +218,7 @@ void DocumentModel::rebuildScene() {
     auto scene = std::make_shared<render::RenderScene>();
     if (m_result) {
         const std::lock_guard lock(m_meshMutex);
-        for (const core::Body& body : m_document.bodies()) {
+        for (const core::Body& body : m_history.document().bodies()) {
             const auto made = m_result->bodies.find(body.id);
             if (!body.visible || made == m_result->bodies.end()) {
                 continue;
@@ -237,7 +240,7 @@ void DocumentModel::rebuildScene() {
 void DocumentModel::rebuildLists() {
     // Recipe
     QVariantList recipe;
-    const auto& features = m_document.features();
+    const auto& features = m_history.document().features();
     for (std::size_t i = 0; i < features.size(); ++i) {
         const core::Feature& feature = features[i];
         const core::FeatureState* state = m_result ? m_result->state(feature.id) : nullptr;
@@ -273,8 +276,8 @@ void DocumentModel::rebuildLists() {
     QVariantList bodies;
     std::map<std::string, int> counted;
     int index = 0;
-    for (const core::Body& body : m_document.bodies()) {
-        const core::Feature* maker = m_document.findFeature(body.createdBy);
+    for (const core::Body& body : m_history.document().bodies()) {
+        const core::Feature* maker = m_history.document().findFeature(body.createdBy);
         const std::string type = maker != nullptr ? maker->type : std::string();
         QVariantMap entry;
         entry[QStringLiteral("index")] = index++;
@@ -288,8 +291,13 @@ void DocumentModel::rebuildLists() {
     }
     m_bodies = bodies;
 
-    if (m_currentStep >= static_cast<int>(features.size())) {
-        m_currentStep = -1;
+    // The chosen step is followed by its id: undo may remove or add steps before it.
+    const int stepNow = m_currentFeature.empty() ? -1 : stepIndexOf(m_currentFeature);
+    if (stepNow < 0) {
+        m_currentFeature = {};
+    }
+    if (stepNow != m_currentStep) {
+        m_currentStep = stepNow;
         emit currentStepChanged();
     }
     m_stepValues = buildStepValues();
@@ -301,7 +309,7 @@ void DocumentModel::rebuildLists() {
 
 QVariantList DocumentModel::buildStepValues() const {
     QVariantList values;
-    const auto& features = m_document.features();
+    const auto& features = m_history.document().features();
     if (m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size())) {
         return values;
     }
@@ -344,42 +352,133 @@ QVariantList DocumentModel::buildStepValues() const {
     return values;
 }
 
+int DocumentModel::stepIndexOf(const core::FeatureId& id) const {
+    const auto index = m_history.document().indexOf(id);
+    return index ? static_cast<int>(*index) : -1;
+}
+
 void DocumentModel::selectStep(int index) {
-    const int count = static_cast<int>(m_document.features().size());
+    const auto& features = m_history.document().features();
+    const int count = static_cast<int>(features.size());
     const int next = (index >= 0 && index < count) ? index : -1;
     if (next == m_currentStep) {
         return;
     }
     m_currentStep = next;
+    m_currentFeature = next >= 0 ? features[static_cast<std::size_t>(next)].id : core::FeatureId{};
     m_stepValues = buildStepValues();
     emit currentStepChanged();
     emit stepValuesChanged();
 }
 
+void DocumentModel::documentChanged(bool geometryChanged) {
+    rebuildLists();
+    emit historyChanged();
+    rebuildScene(); // at once: what is shown or hidden follows the document without waiting
+    if (geometryChanged) {
+        requestRecompute();
+    }
+}
+
 bool DocumentModel::setStepValue(int index, const QString& name, const QString& text) {
-    const auto& features = m_document.features();
+    const auto& features = m_history.document().features();
     if (index < 0 || index >= static_cast<int>(features.size())) {
         return false;
     }
     const core::FeatureId id = features[static_cast<std::size_t>(index)].id;
-    if (!m_document.setFeatureValue(id, name.toStdString(), text.toStdString())) {
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(core::makeSetFeatureValue(id, name.toStdString(), text.toStdString()))) {
         return false;
     }
-    m_stepValues = buildStepValues();
-    emit stepValuesChanged();
-    requestRecompute();
+    if (m_history.document().revision() != before) { // typing the same value again does nothing
+        documentChanged();
+    }
     return true;
 }
 
 void DocumentModel::setBodyVisible(int index, bool visible) {
-    const auto& bodies = m_document.bodies();
+    const auto& bodies = m_history.document().bodies();
     if (index < 0 || index >= static_cast<int>(bodies.size())) {
         return;
     }
-    if (m_document.setBodyVisible(bodies[static_cast<std::size_t>(index)].id, visible)) {
-        rebuildLists();
-        rebuildScene(); // geometry did not change: no recompute needed
+    const std::uint64_t before = m_history.document().revision();
+    if (m_history.execute(
+            core::makeSetBodyVisible(bodies[static_cast<std::size_t>(index)].id, visible)) &&
+        m_history.document().revision() != before) {
+        documentChanged(false); // geometry did not change: no recompute needed
     }
+}
+
+bool DocumentModel::undo() {
+    if (!m_history.undo()) {
+        return false;
+    }
+    documentChanged();
+    return true;
+}
+
+bool DocumentModel::redo() {
+    if (!m_history.redo()) {
+        return false;
+    }
+    documentChanged();
+    return true;
+}
+
+bool DocumentModel::goToHistory(int position) {
+    if (position < 0 || !m_history.goTo(static_cast<std::size_t>(position))) {
+        return false;
+    }
+    documentChanged();
+    return true;
+}
+
+void DocumentModel::beginChange(const QString& field) {
+    m_history.beginTransaction({"setValue", {{"field", field.toStdString()}}});
+}
+
+void DocumentModel::commitChange() {
+    m_history.commitTransaction();
+    emit historyChanged();
+}
+
+void DocumentModel::cancelChange() {
+    m_history.cancelTransaction();
+    documentChanged();
+}
+
+namespace {
+
+QVariantMap describeStep(const core::CommandDescription& step) {
+    QVariantMap map;
+    map[QStringLiteral("key")] = toQString(step.key);
+    for (const auto& [name, value] : step.values) {
+        map[toQString(name)] = toQString(value);
+    }
+    return map;
+}
+
+} // namespace
+
+QVariantMap DocumentModel::nextUndo() const {
+    const auto step = m_history.nextUndo();
+    return step ? describeStep(*step) : QVariantMap{};
+}
+
+QVariantMap DocumentModel::nextRedo() const {
+    const auto step = m_history.nextRedo();
+    return step ? describeStep(*step) : QVariantMap{};
+}
+
+QVariantList DocumentModel::history() const {
+    QVariantList list;
+    const auto steps = m_history.steps();
+    for (std::size_t i = 0; i < steps.size(); ++i) {
+        QVariantMap entry = describeStep(steps[i]);
+        entry[QStringLiteral("done")] = i < m_history.position();
+        list.push_back(entry);
+    }
+    return list;
 }
 
 } // namespace fission::ui

@@ -7,6 +7,7 @@ add_executable(fission_unit_tests
   core/test_measures.cpp
   core/test_document.cpp
   core/test_recompute.cpp
+  core/test_history.cpp
   features/test_primitives.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp

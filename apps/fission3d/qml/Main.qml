@@ -49,8 +49,9 @@ Window {
             { id: "quit", text: qsTr("Quit Fission3D"), shortcut: primaryKey + "Q", nativeShortcut: "Ctrl+Q", role: "quit" }
         ] },
         { title: qsTr("Edit"), items: [
-            { id: "undo", text: qsTr("Undo"), shortcut: primaryKey + "Z", nativeShortcut: "Ctrl+Z", enabled: false },
-            { id: "redo", text: qsTr("Redo"), shortcut: isMac ? "⇧⌘Z" : qsTr("Ctrl+Shift+Z"), nativeShortcut: "Ctrl+Shift+Z", enabled: false },
+            { id: "undo", text: undoText, shortcut: primaryKey + "Z", nativeShortcut: "Ctrl+Z", enabled: root.undoAvailable },
+            { id: "redo", text: redoText, shortcut: isMac ? "⇧⌘Z" : qsTr("Ctrl+Shift+Z"), nativeShortcut: "Ctrl+Shift+Z", enabled: root.redoAvailable },
+            { id: "history", text: qsTr("Recent actions"), checked: root.historyOpen },
             { separator: true },
             { id: "cut", text: qsTr("Cut"), shortcut: primaryKey + "X", nativeShortcut: "Ctrl+X", enabled: false },
             { id: "copy", text: qsTr("Copy"), shortcut: primaryKey + "C", nativeShortcut: "Ctrl+C", enabled: false },
@@ -93,6 +94,23 @@ Window {
         ] }
     ]
 
+    // ---- undo and redo ---------------------------------------------------------------------
+    // While a text field holds text that was typed and not yet accepted, Ctrl+Z is for that
+    // text. A field says so with `pendingEdit` (see NumberField); once the value is accepted,
+    // Ctrl+Z is for the document again, even if the cursor stays in the field.
+    readonly property bool textHasHistory: {
+        const item = root.activeFocusItem
+        return item !== null && item !== undefined && item.pendingEdit === true
+    }
+    readonly property bool undoAvailable: DocumentModel.canUndo && !textHasHistory
+    readonly property bool redoAvailable: DocumentModel.canRedo && !textHasHistory
+    property bool historyOpen: false
+
+    readonly property string undoText: DocumentModel.canUndo
+        ? qsTr("Undo: %1").arg(historyText(DocumentModel.nextUndo)) : qsTr("Undo")
+    readonly property string redoText: DocumentModel.canRedo
+        ? qsTr("Redo: %1").arg(historyText(DocumentModel.nextRedo)) : qsTr("Redo")
+
     function showHint(text) {
         transientHint = text
         hintTimer.restart()
@@ -108,6 +126,9 @@ Window {
         case "about": aboutWindow.show(); aboutWindow.raise(); break
         case "settings": showHint(qsTr("Settings arrive in a later version.")); break
         case "search": showHint(qsTr("Command search arrives in a later version.")); break
+        case "undo": DocumentModel.undo(); break
+        case "redo": DocumentModel.redo(); break
+        case "history": historyOpen = !historyOpen; break
         case "orthographic": orthographic = !orthographic; break
         case "bed": bedVisible = !bedVisible; break
         case "focus": focusMode = !focusMode; break
@@ -126,6 +147,15 @@ Window {
     }
 
     Component.onCompleted: {
+        if (AppOptions.showHistory) { // developer option, for screenshots
+            DocumentModel.selectStep(0)
+            DocumentModel.setStepValue(0, "width", "35")
+            DocumentModel.setStepValue(0, "height", "2 cm + 5")
+            DocumentModel.setBodyVisible(0, false)
+            DocumentModel.setBodyVisible(0, true)
+            DocumentModel.undo()
+            historyOpen = true
+        }
         if (AppOptions.openMenu >= 0) {
             openMenuTimer.start()
         }
@@ -167,6 +197,13 @@ Window {
     Shortcut { sequence: "Ctrl+K"; onActivated: root.run("search") }
     Shortcut { sequence: "Ctrl+,"; onActivated: root.run("settings") }
     Shortcut { sequence: "Ctrl+Q"; enabled: !root.isMac; onActivated: root.run("quit") }
+    // Undo and redo: on macOS the menu of the system carries them.
+    Shortcut { sequence: "Ctrl+Z"; enabled: !root.isMac && root.undoAvailable; onActivated: root.run("undo") }
+    Shortcut {
+        sequences: ["Ctrl+Y", "Ctrl+Shift+Z"]
+        enabled: !root.isMac && root.redoAvailable
+        onActivated: root.run("redo")
+    }
 
     // ---- layout (docs/08-gestaltung.md §1) ----------------------------------------------------
     MenuStrip {
@@ -192,6 +229,12 @@ Window {
         anchors.top: menuStrip.bottom
         width: parent.width
         documentName: root.documentName
+        canUndo: DocumentModel.canUndo
+        canRedo: DocumentModel.canRedo
+        undoTip: DocumentModel.canUndo ? qsTr("Undo: %1").arg(root.historyText(DocumentModel.nextUndo)) : ""
+        redoTip: DocumentModel.canRedo ? qsTr("Redo: %1").arg(root.historyText(DocumentModel.nextRedo)) : ""
+        onUndoRequested: root.run("undo")
+        onRedoRequested: root.run("redo")
         onHomeRequested: root.showHint(qsTr("The start page arrives in a later version."))
         onNewDocumentRequested: root.showHint(qsTr("This arrives in a later version."))
         onCloseRequested: root.showHint(qsTr("Closing arrives together with saving."))
@@ -280,6 +323,16 @@ Window {
                 onPanDragged: (dx, dy) => viewport.panBy(dx, dy)
                 onZoomRequested: factor => viewport.zoomBy(factor)
             }
+
+            HistoryPanel {
+                x: 100
+                y: 60
+                visible: root.historyOpen
+                entries: root.historyRows
+                position: DocumentModel.historyPosition
+                onGoToRequested: position => DocumentModel.goToHistory(position)
+                onCloseRequested: root.historyOpen = false
+            }
         }
 
         RightPanel {
@@ -341,6 +394,39 @@ Window {
         }
         return typeLabel(step.type)
     }
+
+    // One short sentence for a step of the history ("Width changed to 35").
+    function historyText(step) {
+        if (!step || !step.key) {
+            return ""
+        }
+        const body = step.name !== undefined && step.name !== "" ? step.name : typeLabel(step.type)
+        switch (step.key) {
+        case "addFeature": return qsTr("%1 added").arg(typeLabel(step.type))
+        case "removeFeature": return qsTr("%1 removed").arg(typeLabel(step.type))
+        case "setValue":
+            return step.value !== undefined
+                ? qsTr("%1 changed to %2").arg(valueLabel(step.field)).arg(step.value)
+                : qsTr("%1 changed").arg(valueLabel(step.field))
+        case "setLabel": return qsTr("Step renamed")
+        case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
+        case "unsuppress": return qsTr("%1 step shown").arg(typeLabel(step.type))
+        case "nameBody": return qsTr("Body renamed to “%1”").arg(step.value)
+        case "colorBody": return qsTr("Colour of %1 changed").arg(body)
+        case "showBody": return qsTr("%1 shown").arg(body)
+        case "hideBody": return qsTr("%1 hidden").arg(body)
+        case "addMeasure": return qsTr("Named measure “%1” added").arg(step.name)
+        case "removeMeasure": return qsTr("Named measure “%1” removed").arg(step.name)
+        case "setMeasure": return qsTr("Named measure “%1” changed to %2").arg(step.name).arg(step.value)
+        case "renameMeasure": return qsTr("Named measure “%1” renamed to “%2”").arg(step.name).arg(step.value)
+        default: return qsTr("Several changes")
+        }
+    }
+
+    readonly property var historyRows: DocumentModel.history.map(step => ({
+        text: historyText(step),
+        done: step.done
+    }))
 
     // One short sentence for what went wrong (the full message catalogue comes later).
     function problemText(problem) {

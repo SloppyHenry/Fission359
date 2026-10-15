@@ -71,7 +71,7 @@
 <context>
     <name>DocTabs</name>
     <message>
-        <location filename="../qml/DocTabs.qml" line="+41"/>
+        <location filename="../qml/DocTabs.qml" line="+43"/>
         <source>Start page</source>
         <translation>Start page</translation>
     </message>
@@ -86,7 +86,17 @@
         <translation>New project</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+16"/>
+        <source>%1 (⌘Z)</source>
+        <translation>%1 (⌘Z)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>%1 (Ctrl+Z)</source>
+        <translation>%1 (Ctrl+Z)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Undo (⌘Z)</source>
         <translation>Undo (⌘Z)</translation>
     </message>
@@ -96,7 +106,17 @@
         <translation>Undo (Ctrl+Z)</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
+        <source>%1 (⇧⌘Z)</source>
+        <translation>%1 (⇧⌘Z)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>%1 (Ctrl+Shift+Z)</source>
+        <translation>%1 (Ctrl+Shift+Z)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Redo (⇧⌘Z)</source>
         <translation>Redo (⇧⌘Z)</translation>
     </message>
@@ -109,6 +129,24 @@
         <location line="+8"/>
         <source>Export</source>
         <translation>Export</translation>
+    </message>
+</context>
+<context>
+    <name>HistoryPanel</name>
+    <message>
+        <location filename="../qml/HistoryPanel.qml" line="+17"/>
+        <source>Start of this session</source>
+        <translation>Start of this session</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Recent actions</source>
+        <translation>Recent actions</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Close</source>
+        <translation>Close</translation>
     </message>
 </context>
 <context>
@@ -326,19 +364,24 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+57"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>Redo</source>
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-57"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Recent actions</source>
+        <translation>Recent actions</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -447,12 +490,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+243"/>
+        <location line="+284"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-242"/>
+        <location line="-283"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -507,7 +550,19 @@
         <translation>About Fission3D</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+15"/>
+        <location line="+115"/>
+        <source>Undo: %1</source>
+        <translation>Undo: %1</translation>
+    </message>
+    <message>
+        <location line="-113"/>
+        <location line="+114"/>
+        <source>Redo: %1</source>
+        <translation>Redo: %1</translation>
+    </message>
+    <message>
+        <location line="-106"/>
         <source>Select</source>
         <translation>Select</translation>
     </message>
@@ -537,18 +592,18 @@
         <translation>Command search arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+13"/>
-        <location line="+73"/>
+        <location line="+16"/>
+        <location line="+86"/>
         <source>This arrives in a later version.</source>
         <translation>This arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-17"/>
+        <location line="-23"/>
         <source>My printer · %1 mm</source>
         <translation>My printer · %1 mm</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+22"/>
         <source>The start page arrives in a later version.</source>
         <translation>The start page arrives in a later version.</translation>
     </message>
@@ -563,7 +618,7 @@
         <translation>Export arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+122"/>
+        <location line="+132"/>
         <source>Cylinder</source>
         <translation>Cylinder</translation>
     </message>
@@ -598,7 +653,87 @@
         <translation>Cylinder, radius %1 mm, height %2 mm</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+12"/>
+        <source>%1 added</source>
+        <translation>%1 added</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 removed</source>
+        <translation>%1 removed</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 changed to %2</source>
+        <translation>%1 changed to %2</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 changed</source>
+        <translation>%1 changed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Step renamed</source>
+        <translation>Step renamed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 step hidden</source>
+        <translation>%1 step hidden</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 step shown</source>
+        <translation>%1 step shown</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Body renamed to “%1”</source>
+        <translation>Body renamed to “%1”</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Colour of %1 changed</source>
+        <translation>Colour of %1 changed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 shown</source>
+        <translation>%1 shown</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 hidden</source>
+        <translation>%1 hidden</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Named measure “%1” added</source>
+        <translation>Named measure “%1” added</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Named measure “%1” removed</source>
+        <translation>Named measure “%1” removed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Named measure “%1” changed to %2</source>
+        <translation>Named measure “%1” changed to %2</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Named measure “%1” renamed to “%2”</source>
+        <translation>Named measure “%1” renamed to “%2”</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Several changes</source>
+        <translation>Several changes</translation>
+    </message>
+    <message>
+        <location line="+15"/>
         <source>I don’t know “%1”.</source>
         <translation>I don’t know “%1”.</translation>
     </message>
@@ -633,7 +768,7 @@
         <translation>This shape could not be built.</translation>
     </message>
     <message>
-        <location line="-146"/>
+        <location line="-189"/>
         <source>Shapes arrive in a later version.</source>
         <translation>Shapes arrive in a later version.</translation>
     </message>
@@ -643,7 +778,7 @@
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+28"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>

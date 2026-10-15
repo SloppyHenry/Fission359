@@ -328,6 +328,8 @@ UI-Texte verwenden ausschließlich die Begriffe in der mittleren Spalte. Englisc
 | – | Lotse | Guide | Zeigt in Missionen den nächsten Schritt, ein- und ausschaltbar |
 | – | Fokus | Focus | Blendet die Seitenleisten aus, die 3D-Ansicht wird groß |
 | – | Streuen | Scatter | Ein Motiv zufällig über eine Fläche verteilen |
+| Undo / Redo | Rückgängig / Wiederholen | Undo / Redo | Letzte Änderung zurücknehmen bzw. wieder herstellen |
+| – | Letzte Aktionen | Recent actions | Was du in dieser Sitzung gemacht hast; ein Klick geht zu diesem Stand zurück (nicht das Rezept, das bleibt in der Datei) |
 
 ---
 

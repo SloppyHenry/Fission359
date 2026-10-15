@@ -7,7 +7,7 @@
 ---
 
 ### AP-1.1 Dokumentmodell und Feature-Graph
-**Status:** Review (2026-10-14, PR #14–#18) · **Größe:** L · **Abhängigkeiten:** AP-0.5, AP-0.6
+**Status:** erledigt (2026-10-14, PR #14–#18; vom Product Owner ausprobiert) · **Größe:** L · **Abhängigkeiten:** AP-0.5, AP-0.6
 
 **Umfang:**
 - `Document`, `Feature`, `Value`, `Body`, `Parameter` gemäß [Architektur §3](../03-architektur.md#3-core-datenmodell)
@@ -27,10 +27,10 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 
 | Teil | Status | Inhalt |
 |---|---|---|
-| **a) Werte und Ausdrücke** | Review (PR #15) | AST-Parser mit Fehlerposition, `min`, `max`, `round`, `sin`, `cos`, `sqrt`, Abhängigkeiten zwischen benannten Maßen, Zykluserkennung, Einheiten-Art (Länge/Winkel/Zahl); `evaluateExpression` bleibt als Hülle für das Zahlenfeld; Messung der Testabdeckung |
-| **b) Dokument und Features** | Review (PR #16) | `Document`, `Parameter`, `Feature`, `Body`, Feature-Typ-Registry; `GeometryKernel`-Schnittstelle in der GAL (ADR-0008); `PersistentRef` als Datentyp und Namens-Vertrag; Feature-Typen `box` und `cylinder` |
-| **c) Neuberechnung** | Review (PR #17) | Abhängigkeits-Graph, Dirty-Propagation, Ergebnis-Cache, Worker mit Abbruch, Status je Feature, Ereignisse |
-| **d) Anbindung an die Oberfläche** | Review (PR #18) | `DocumentModel`; der Demo-Würfel wird ein `box`-Feature im Dokument; Rezept-Platzhalter und Maß-Änderung sichtbar |
+| **a) Werte und Ausdrücke** | erledigt (PR #15) | AST-Parser mit Fehlerposition, `min`, `max`, `round`, `sin`, `cos`, `sqrt`, Abhängigkeiten zwischen benannten Maßen, Zykluserkennung, Einheiten-Art (Länge/Winkel/Zahl); `evaluateExpression` bleibt als Hülle für das Zahlenfeld; Messung der Testabdeckung |
+| **b) Dokument und Features** | erledigt (PR #16) | `Document`, `Parameter`, `Feature`, `Body`, Feature-Typ-Registry; `GeometryKernel`-Schnittstelle in der GAL (ADR-0008); `PersistentRef` als Datentyp und Namens-Vertrag; Feature-Typen `box` und `cylinder` |
+| **c) Neuberechnung** | erledigt (PR #17) | Abhängigkeits-Graph, Dirty-Propagation, Ergebnis-Cache, Worker mit Abbruch, Status je Feature, Ereignisse |
+| **d) Anbindung an die Oberfläche** | erledigt (PR #18) | `DocumentModel`; der Demo-Würfel wird ein `box`-Feature im Dokument; Rezept-Platzhalter und Maß-Änderung sichtbar |
 
 **Festlegungen**
 - **Kernel-Zugriff:** Features rufen den Kernel über eine Schnittstelle der GAL auf, die App reicht die OCCT-Umsetzung hinein.
@@ -102,17 +102,73 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.2 Commands und Undo/Redo
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.1
+**Status:** erledigt (2026-10-15, PR #19; vom Product Owner ausprobiert) · **Größe:** M · **Abhängigkeiten:** AP-1.1 (erledigt)
 
 **Umfang:**
 - Command-Basisklasse, Transaktionen (zusammenfassen beim Ziehen), unbegrenzter Undo-Stack
 - Standard-Commands: Feature hinzufügen, entfernen, Parameter setzen, ausblenden, Körper umbenennen, Farbe ändern
 - Menü- und Tastenkürzel: ⌘Z / ⇧⌘Z bzw. Strg+Z / Strg+Y / Strg+⇧+Z
-- Undo-Historie als Liste einsehbar (Bearbeiten → Verlauf)
+- Undo-Historie als Liste einsehbar (Bearbeiten → **Letzte Aktionen**; der Name ist vom Product Owner gewählt, weil
+  „Verlauf“ schon das Rezept meint)
 
 **Akzeptanzkriterien:**
-- [ ] Property-basierter Test: 1000 zufällige Commands, danach komplett rückgängig, ergibt den Ausgangszustand
-- [ ] Ein Zieh-Vorgang erzeugt genau einen Undo-Schritt
+- [x] Property-basierter Test: 1000 zufällige Commands, danach komplett rückgängig, ergibt den Ausgangszustand
+- [x] Ein Zieh-Vorgang erzeugt genau einen Undo-Schritt
+
+#### Abschlussvermerk (2026-10-14)
+
+**Umgesetzt**
+- **Kern:** `Command` (`apply`/`revert`/`describe`), `History` (besitzt das Dokument und gibt es nur lesend heraus, damit die
+  Oberfläche es gar nicht mehr direkt ändern kann), Transaktionen (auch verschachtelt, abbrechbar), „gespeicherter Stand“-Markierung
+  für AP-1.10. Befehle: Schritt hinzufügen / entfernen, Wert setzen, Schritt ausblenden, Bezeichnung, Körper umbenennen /
+  färben / ein- und ausblenden, benanntes Maß anlegen / ändern / umbenennen / löschen. Jeder Befehl beschreibt sich als Schlüssel
+  plus Werte (Regel 4).
+- **Genau wiederherstellen:** Ein zurückgenommenes „Schritt entfernen“ bringt denselben Schritt mit gleicher Id, Nummer, Stelle und
+  denselben Körpern zurück; ein zurückgenommenes „Schritt hinzufügen“ gibt auch die Nummer frei (`Document::takeFeature`,
+  `restoreFeature`).
+- **Oberfläche:** Alle Änderungen (Wert eines Schritts, Auge an/aus) laufen über Befehle. Rückgängig/Wiederholen in der Leiste und im
+  Menü „Bearbeiten“ (mit Text: „Rückgängig: Breite auf 35 geändert“), Kürzel inklusive Strg+Y, schwebende Liste „Letzte Aktionen“
+  (Klick geht zu diesem Stand; Wiederholbares blass). Das gewählte Rezept-Element bleibt gewählt, auch wenn Schritte davor wegfallen.
+- **Zieh-Vorgänge:** `DocumentModel::beginChange / commitChange / cancelChange` für die Griffe aus AP-1.5; Esc nimmt alles zurück.
+- **Entwickler-Option** `--show-history` (Screenshots), siehe [ap-1.2-macos-de.png](../screenshots/ap-1.2-macos-de.png).
+
+**Wie getestet**
+- Mac (arm64, Debug): `scripts/test` 195 von 195 grün; Abdeckung `src/core` 95,0 % (`scripts/coverage`, Mindestwert 85 %).
+- **Zufallstests** (`tests/unit/core/test_history.cpp`): 1000 zufällige Befehle × 5 Startwerte, alles zurück, dann alles vor, jeweils
+  Inhalt gleich (Ids und Nummern inklusive); zusätzlich ein Vergleich mit einem Referenzmodell („nach jedem Schritt eine Kopie“)
+  über Rückgängig, Wiederholen, Springen und abgeschnittene Wiederholen-Äste.
+- **Zieh-Test:** 200 Zwischenwerte = ein Schritt; Zieh-Vorgang, der am Ausgangswert endet, hinterlässt keinen Schritt.
+- **Oberfläche:** Rückgängig/Wiederholen bringen die Form wieder, **ohne dass der Kernel neu baut** (Zähler am Kernel);
+  unveränderter Wert und abgelehnter Wert ergeben keinen Schritt.
+- Linux: nur CI (Ubuntu 24.04). `maintux` wurde nicht benutzt.
+
+**So probierst du es aus**
+1. `scripts/run` (oder das `.dmg` aus dem CI-Lauf des PRs). Links im Rezept steht „Quader 20 × 20 × 20 mm“.
+2. Klicke den Schritt an, tippe bei „Breite“ `35` und Enter. Dann bei „Höhe“ `2 cm + 5`.
+3. Drücke ⌘Z (Linux: Strg+Z): die Höhe geht zurück, dann die Breite. Mit ⇧⌘Z (Linux: Strg+Y oder Strg+Umschalt+Z) kommen sie wieder.
+4. Das Auge neben „Quader 1“ an und aus, dann ⌘Z: der Körper erscheint und verschwindet entsprechend.
+5. Menü **Bearbeiten ▸ Letzte Aktionen**: die Liste. Ein Klick auf „Breite auf 35 geändert“ geht genau dorthin zurück; die
+   späteren Einträge stehen blass da und lassen sich mit Wiederholen holen.
+6. Mach nach einem Rückgängig etwas Neues: die blassen Einträge verschwinden (wie in jedem Programm).
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Noch ohne Bedienelement:** Schritt hinzufügen/entfernen, Körper umbenennen/färben, benannte Maße sind im Kern fertig und getestet,
+  aber die Oberfläche bekommt sie erst mit AP-1.5 (Formen), AP-1.9 (Rezept) und der Maße-Tabelle. Dort bitte `DocumentModel`
+  um die jeweilige Funktion erweitern und `History::execute` benutzen, nie das Dokument direkt.
+- **Nicht rückgängig:** Auswahl, Kamera, Panels (das sind keine Änderungen am Dokument). Den Stapel gibt es nicht in der Datei
+  (Architektur §3.5); der Versionsverlauf ist AP-5.7.
+- **Zahlenfeld:** Hat ein Feld getippten, noch nicht bestätigten Text (`pendingEdit`), gilt ⌘Z für diesen Text, sonst für das
+  Dokument. Geprüft mit echten Tastendrücken im laufenden Programm (Menüzustand unter macOS ausgelesen): Feld fokussiert → Rückgängig
+  aktiv; „50“ getippt → aus; Enter → „Rückgängig: Breite auf 50 geändert“ aktiv. Der Product Owner meldete trotzdem, dass ⌘Z nicht
+  reagiere. Ursache: Er hatte den Stand von `main` gestartet, der AP-1.2 noch nicht enthielt (nicht das Arbeitsverzeichnis des PRs). Ein echter Fehler war ein Feld, das nach einem
+  unveränderten Wert den Fokus behält: dort ging ⌘Z an den Feldtext (behoben).
+- **Schritte ohne Bedienelement im Verlauf-Text:** „Körper ausgeblendet“ nennt den Namen oder den Typ, nicht die Nummer in der Liste.
+- **Doppelte Namen von Maßen** (erlaubt, siehe `Document::addParameter`) werden über ihre Position zurückgenommen, nicht über den
+  Namen; die Zufallstests erzeugen absichtlich doppelte Namen.
+- **Auge an/aus ist ein Schritt.** Wer das nicht möchte (Ansicht statt Änderung), kann es später ausnehmen; die Entscheidung steht
+  in der Annahmenliste der Sitzung.
+- **Vorgeschlagene Folge-Arbeiten:** Wiederherstellen nach Absturz (AP-1.10) nutzt `History::isClean`; Tastenkürzel-Hinweis
+  „⌘Z“ im Rezept-Kopf ist noch eine Attrappe aus dem Mockup und sollte mit AP-1.9 entweder echt werden oder entfallen.
 
 ---
 

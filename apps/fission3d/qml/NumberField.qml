@@ -32,11 +32,14 @@ Item {
 
     function refresh() {
         input.text = shownText()
+        input.pendingEdit = false
     }
 
-    onExpressionChanged: if (!input.activeFocus) refresh()
+    // A value that changes from outside (undo, a formula) shows at once, unless the person is
+    // in the middle of typing here.
+    onExpressionChanged: if (!input.pendingEdit) refresh()
 
-    onValueChanged: if (!input.activeFocus) refresh()
+    onValueChanged: if (!input.pendingEdit) refresh()
     Component.onCompleted: refresh()
     Column {
         id: column
@@ -113,6 +116,10 @@ Item {
                     font.pixelSize: Theme.fontSize
                     font.weight: Font.Medium
                     inputMethodHints: Qt.ImhFormattedNumbersOnly
+                    // True from the first key typed until the value is accepted or dropped. The
+                    // window leaves Ctrl+Z to the field only while this is true; the field's own
+                    // undo list is not used for that (it keeps its entries after Enter).
+                    property bool pendingEdit: false
                     Accessible.name: root.label !== "" ? root.label : root.axis.toUpperCase()
 
                     onActiveFocusChanged: {
@@ -128,7 +135,10 @@ Item {
                         root.refresh()
                         focus = false
                     }
-                    onTextEdited: root.invalid = false
+                    onTextEdited: {
+                        root.invalid = false
+                        pendingEdit = true
+                    }
                 }
 
                 Txt {
