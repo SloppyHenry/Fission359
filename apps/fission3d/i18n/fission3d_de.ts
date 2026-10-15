@@ -309,7 +309,7 @@
         <translation>%1 × %2</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+10"/>
         <source>Fission3D</source>
         <translation>Fission3D</translation>
     </message>
@@ -520,12 +520,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+325"/>
+        <location line="+334"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-324"/>
+        <location line="-333"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -581,18 +581,18 @@
     </message>
     <message>
         <location line="+17"/>
-        <location line="+149"/>
+        <location line="+152"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-147"/>
-        <location line="+148"/>
+        <location line="-150"/>
+        <location line="+151"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-142"/>
+        <location line="-145"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -633,17 +633,12 @@
     </message>
     <message>
         <location line="+19"/>
-        <location line="+104"/>
+        <location line="+107"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-23"/>
-        <source>My printer · %1 mm</source>
-        <translation>Mein Drucker · %1 mm</translation>
-    </message>
-    <message>
-        <location line="+22"/>
+        <location line="-1"/>
         <source>The start page arrives in a later version.</source>
         <translation>Die Startseite kommt in einer späteren Version.</translation>
     </message>
@@ -663,7 +658,12 @@
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
     <message>
-        <location line="+77"/>
+        <location line="+53"/>
+        <source>%1 × %2 mm</source>
+        <translation>%1 × %2 mm</translation>
+    </message>
+    <message>
+        <location line="+30"/>
         <source>Cylinder</source>
         <translation>Zylinder</translation>
     </message>
@@ -813,7 +813,7 @@
         <translation>Diese Form ließ sich nicht bauen.</translation>
     </message>
     <message>
-        <location line="-194"/>
+        <location line="-200"/>
         <source>Shapes arrive in a later version.</source>
         <translation>Die Formen kommen in einer späteren Version.</translation>
     </message>
@@ -823,27 +823,27 @@
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="-329"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+362"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>0.4 mm</source>
-        <translation>0,4 mm</translation>
-    </message>
-    <message>
-        <location line="-255"/>
+        <location line="-260"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+271"/>
+        <location line="+121"/>
+        <source>%1 · %2 mm</source>
+        <translation>%1 · %2 mm</translation>
+    </message>
+    <message>
+        <location line="+159"/>
         <source>Unit: mm · Grid 1 mm</source>
         <translation>Einheit: mm · Raster 1 mm</translation>
     </message>
@@ -892,7 +892,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+47"/>
+        <location filename="../qml/RightPanel.qml" line="+50"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -938,8 +938,8 @@
     </message>
     <message>
         <location line="+13"/>
-        <source>Printer profile · chosen at first start</source>
-        <translation>Druckerprofil · beim ersten Start gewählt</translation>
+        <source>Printer profile</source>
+        <translation>Druckerprofil</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -953,6 +953,26 @@
     </message>
     <message>
         <location line="+8"/>
+        <source>Choose printer</source>
+        <translation>Drucker wählen</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>My printer</source>
+        <translation>Mein Drucker</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 × %2 mm</source>
+        <translation>%1 × %2 mm</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>%1 × %2</source>
+        <translation>%1 × %2</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Filaments</source>
         <translation>Filamente</translation>
     </message>

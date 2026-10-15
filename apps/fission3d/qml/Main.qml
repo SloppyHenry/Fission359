@@ -26,7 +26,9 @@ Window {
     readonly property bool sidebarsShown: !focusMode && !veryNarrow
     readonly property int leftWidth: sidebarsShown ? (narrow ? Theme.leftPanelWidthNarrow : Theme.leftPanelWidth) : 0
     readonly property int rightWidth: sidebarsShown ? (narrow ? Theme.rightPanelWidthNarrow : Theme.rightPanelWidth) : 0
-    readonly property string bedText: qsTr("%1 × %2").arg(viewport.bedSizeX).arg(viewport.bedSizeY)
+    readonly property string bedText: qsTr("%1 × %2").arg(DocumentModel.bedX).arg(DocumentModel.bedY)
+    readonly property string printerTitle: DocumentModel.printerName !== ""
+        ? DocumentModel.printerName : qsTr("My printer")
 
     width: 1280
     height: 800
@@ -186,6 +188,9 @@ Window {
                 viewport.setCamera(v[0], v[1], v[2])
             }
         }
+        if (AppOptions.rightTab === "printer" || AppOptions.rightTab === "object") {
+            rightTab = AppOptions.rightTab
+        }
         if (!AppOptions.softShadows) {
             viewport.ambientOcclusion = false
         }
@@ -246,7 +251,7 @@ Window {
         width: parent.width
         menus: root.menuModel
         inWindowMenus: !root.isMac
-        printerText: qsTr("My printer · %1 mm").arg(root.bedText)
+        printerText: qsTr("%1 · %2 mm").arg(root.printerTitle).arg(root.bedText)
         onActionTriggered: id => root.run(id)
         onSearchRequested: root.run("search")
         onSettingsRequested: root.run("settings")
@@ -381,9 +386,15 @@ Window {
             height: parent.height
             visible: root.rightWidth > 0
             tab: root.rightTab
-            printerName: qsTr("My printer")
-            bedText: qsTr("%1 mm").arg(root.bedText + " × 256")
-            nozzleText: qsTr("0.4 mm")
+            printerName: root.printerTitle
+            printerId: DocumentModel.printerId
+            printers: DocumentModel.printers
+            bedText: qsTr("%1 × %2 mm").arg(root.bedText).arg(DocumentModel.bedZ)
+            nozzleText: qsTr("%1 mm").arg(DocumentModel.nozzle)
+            onPrinterChosen: id => {
+                DocumentModel.setPrinter(id)
+                viewport.frameAll()
+            }
             stepTitle: root.currentStepTitle
             stepValues: root.stepValueList
             onTabRequested: tab => root.rightTab = tab

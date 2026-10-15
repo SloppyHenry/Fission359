@@ -382,3 +382,24 @@ TEST_CASE("a change of the document gives the new body its fine mesh too",
     }
     CHECK(version() % 16 == 2);
 }
+
+TEST_CASE("the print bed has the size of the chosen printer", "[ui][document-model][printer]") {
+    Fixture f;
+    CHECK(f.model->printerId() == "generic");
+    CHECK(f.model->scene()->bed.sizeX == Approx(256.0F));
+
+    REQUIRE(f.model->setPrinter("prusa-mk4"));
+    CHECK(f.model->printerName() == "Prusa MK4");
+    CHECK(f.model->bedX() == Approx(250.0));
+    CHECK(f.model->bedY() == Approx(210.0));
+    // the scene for the 3D view follows, the bodies stay as they are
+    CHECK(f.model->scene()->bed.sizeX == Approx(250.0F));
+    CHECK(f.model->scene()->bed.sizeY == Approx(210.0F));
+    CHECK(f.model->scene()->bodies.size() == 1);
+
+    // an unknown printer changes nothing
+    CHECK_FALSE(f.model->setPrinter("nobody"));
+    CHECK(f.model->printerId() == "prusa-mk4");
+    // choosing a printer is a setting, not a change of the model: no step in the history
+    CHECK_FALSE(f.model->canUndo());
+}

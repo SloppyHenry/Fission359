@@ -17,6 +17,7 @@
 #include "fission/render/detail.h"
 #include "fission/geo/error.h"
 #include "fission/ui/numbers.h"
+#include "fission/ui/printer_catalog.h"
 
 namespace fission::ui {
 
@@ -136,6 +137,58 @@ DocumentModel::~DocumentModel() {
     m_detailCurrent->store(~std::uint64_t{0}); // a running job stops at the next body
     m_detailPool.waitForDone();
     m_engine.reset(); // joins the worker; nothing may call back after this
+}
+
+namespace {
+const PrinterProfile& generic() {
+    return printerCatalog().front();
+}
+} // namespace
+
+QString DocumentModel::printerName() const {
+    const PrinterProfile* printer = findPrinter(m_printerId);
+    return printer != nullptr ? printer->name : QString();
+}
+double DocumentModel::bedX() const {
+    const PrinterProfile* printer = findPrinter(m_printerId);
+    return (printer != nullptr ? *printer : generic()).bedX;
+}
+double DocumentModel::bedY() const {
+    const PrinterProfile* printer = findPrinter(m_printerId);
+    return (printer != nullptr ? *printer : generic()).bedY;
+}
+double DocumentModel::bedZ() const {
+    const PrinterProfile* printer = findPrinter(m_printerId);
+    return (printer != nullptr ? *printer : generic()).bedZ;
+}
+double DocumentModel::nozzle() const {
+    const PrinterProfile* printer = findPrinter(m_printerId);
+    return (printer != nullptr ? *printer : generic()).nozzle;
+}
+
+QVariantList DocumentModel::printers() const {
+    QVariantList list;
+    for (const PrinterProfile& printer : printerCatalog()) {
+        list.push_back(QVariantMap{{QStringLiteral("id"), printer.id},
+                                   {QStringLiteral("name"), printer.name},
+                                   {QStringLiteral("bedX"), printer.bedX},
+                                   {QStringLiteral("bedY"), printer.bedY},
+                                   {QStringLiteral("bedZ"), printer.bedZ},
+                                   {QStringLiteral("nozzle"), printer.nozzle}});
+    }
+    return list;
+}
+
+bool DocumentModel::setPrinter(const QString& id) {
+    if (findPrinter(id) == nullptr) {
+        return false;
+    }
+    if (id != m_printerId) {
+        m_printerId = id;
+        emit printerChanged();
+        rebuildScene(); // the print bed has another size
+    }
+    return true;
 }
 
 void DocumentModel::setDetailLevel(int level) {
@@ -337,6 +390,8 @@ void DocumentModel::rebuildScene() {
             scene->bodies.push_back(std::move(drawn));
         }
     }
+    scene->bed.sizeX = static_cast<float>(bedX());
+    scene->bed.sizeY = static_cast<float>(bedY());
     m_scene = scene;
     emit sceneReady(m_scene);
 }

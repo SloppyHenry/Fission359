@@ -17,6 +17,7 @@ class AppOptions : public QObject {
     Q_PROPERTY(int openMenu MEMBER openMenu NOTIFY changed)
     Q_PROPERTY(bool showHistory MEMBER showHistory NOTIFY changed)
     Q_PROPERTY(QString camera MEMBER camera NOTIFY changed)
+    Q_PROPERTY(QString rightTab MEMBER rightTab NOTIFY changed)
     Q_PROPERTY(bool softShadows MEMBER softShadows NOTIFY changed)
 
 public:
@@ -29,6 +30,8 @@ public:
     bool showHistory = false;
     /// developer option "yaw,pitch,distance" (degrees, degrees, mm): start with this camera
     QString camera;
+    /// developer option: start with this tab of the right side bar ("object" or "printer")
+    QString rightTab;
     /// developer option --no-soft-shadows switches the occlusion off for comparison images
     bool softShadows = true;
 

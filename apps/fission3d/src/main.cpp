@@ -24,6 +24,7 @@
 #include "fission/core/version.h"
 #include "fission/geo/occt/kernel.h"
 #include "fission/geo/occt/layer.h"
+#include "fission/render/benchmark_scene.h"
 #include "fission/render/scene.h"
 #include "fission/services/log.h"
 #include "fission/services/startup_clock.h"
@@ -63,7 +64,9 @@ struct CommandLine {
     bool reduceMotion = false;
     bool showHistory = false;
     QString camera;
+    QString rightTab;
     bool softShadows = true;
+    int benchmarkTriangles = 0;
     QSize size;
 };
 
@@ -106,6 +109,14 @@ CommandLine parseCommandLine(int& argc, char** argv) {
         QStringLiteral("camera"),
         QStringLiteral("Start with the camera at yaw,pitch,distance (degrees, degrees, mm)."),
         QStringLiteral("yaw,pitch,distance"));
+    const QCommandLineOption benchmark(
+        QStringLiteral("benchmark"),
+        QStringLiteral("Measure the frame time with a scene of this many triangles while the "
+                       "camera turns, print the result and exit."),
+        QStringLiteral("triangles"));
+    const QCommandLineOption rightTab(QStringLiteral("right-tab"),
+                                      QStringLiteral("Start with this tab on the right: object or printer."),
+                                      QStringLiteral("name"));
     const QCommandLineOption noSoftShadows(QStringLiteral("no-soft-shadows"),
                                            QStringLiteral("Start with the soft shadows off."));
     const QCommandLineOption reduceMotion(QStringLiteral("reduce-motion"),
@@ -114,7 +125,7 @@ CommandLine parseCommandLine(int& argc, char** argv) {
                                   QStringLiteral("Window size, for example 1280x800."),
                                   QStringLiteral("WxH"));
     parser.addOptions({smokeTest, measureStartup, theme, language, focus, about, openMenu,
-                       showHistory, camera, noSoftShadows, reduceMotion, size});
+                       showHistory, camera, rightTab, benchmark, noSoftShadows, reduceMotion, size});
     parser.process(core); // prints help or version and exits when asked
 
     CommandLine result;
@@ -127,6 +138,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     result.reduceMotion = parser.isSet(reduceMotion);
     result.showHistory = parser.isSet(showHistory);
     result.camera = parser.value(camera);
+    result.rightTab = parser.value(rightTab);
+    result.benchmarkTriangles = parser.value(benchmark).toInt();
     result.softShadows = !parser.isSet(noSoftShadows);
     result.openMenu = parser.isSet(openMenu) ? parser.value(openMenu).toInt() : -1;
     const QStringList parts = parser.value(size).split(QLatin1Char('x'));
@@ -134,6 +147,55 @@ CommandLine parseCommandLine(int& argc, char** argv) {
         result.size = QSize(parts[0].toInt(), parts[1].toInt());
     }
     return result;
+}
+
+// Developer option --benchmark: a scene of the wanted size, the camera turns by itself, and the
+// time per frame is printed (AP-1.3: the viewport must hold 60 frames per second at 2 million
+// triangles). The graphics card's own time is the number that counts: the screen refresh
+// limits how fast frames are shown, not how fast they could be made.
+void runBenchmark(QQuickWindow* window, fission::ui::Viewport3D* viewport,
+                  const QMetaObject::Connection& sceneConnection, std::size_t triangles) {
+    constexpr int kWarmUpFrames = 60;
+    constexpr int kMeasuredFrames = 300; // frame swaps; every one asks for the next frame
+    struct State {
+        int frames = 0;
+        std::chrono::steady_clock::time_point started;
+    };
+    auto state = std::make_shared<State>();
+    QObject::connect(
+        viewport, &fission::ui::Viewport3D::firstFrameShown, viewport,
+        [window, viewport, sceneConnection, triangles, state] {
+            QObject::disconnect(sceneConnection); // the document's scene is not wanted now
+            viewport->setProperty("animated", false);
+            viewport->setScene(fission::render::makeBenchmarkScene(triangles));
+            viewport->frameAll();
+            viewport->orbitBy(0.0, 0.0);
+            QObject::connect(window, &QQuickWindow::frameSwapped, viewport, [viewport, state] {
+                ++state->frames;
+                if (state->frames == kWarmUpFrames) {
+                    viewport->startFrameStatistics();
+                    state->started = std::chrono::steady_clock::now();
+                } else if (state->frames == kWarmUpFrames + kMeasuredFrames) {
+                    const double wall =
+                        std::chrono::duration<double, std::milli>(
+                            std::chrono::steady_clock::now() - state->started)
+                            .count();
+                    const auto stats = viewport->finishFrameStatistics();
+                    std::printf("benchmark triangles=%d soft_shadows=%s backend=%s frames=%d "
+                                "gpu_ms_avg=%.2f gpu_ms_p95=%.2f cpu_ms_avg=%.2f "
+                                "frame_interval_ms=%.2f\n",
+                                viewport->triangleCount(),
+                                viewport->ambientOcclusion() ? "on" : "off",
+                                viewport->backendName().toUtf8().constData(), stats.frames,
+                                stats.gpuAverageMs, stats.gpuP95Ms, stats.cpuAverageMs,
+                                stats.frames > 0 ? wall / stats.frames : 0.0);
+                    std::fflush(stdout);
+                    QCoreApplication::quit();
+                    return;
+                }
+                viewport->orbitBy(1.5, 0.0); // asks for the next frame
+            });
+        });
 }
 
 void loadFonts() {
@@ -189,6 +251,7 @@ int main(int argc, char* argv[]) {
     appOptions.openMenu = options.openMenu;
     appOptions.showHistory = options.showHistory;
     appOptions.camera = options.camera;
+    appOptions.rightTab = options.rightTab;
     appOptions.softShadows = options.softShadows;
     fission::ui::Numbers numbers;
 
@@ -229,10 +292,15 @@ int main(int argc, char* argv[]) {
     auto* viewport = window->findChild<fission::ui::Viewport3D*>(QStringLiteral("viewport"));
     if (viewport != nullptr) {
         viewport->setScene(documentModel.scene());
-        QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
-                         [viewport](std::shared_ptr<const fission::render::RenderScene> scene) {
-                             viewport->setScene(std::move(scene));
-                         });
+        const QMetaObject::Connection sceneConnection = QObject::connect(
+            &documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
+            [viewport](std::shared_ptr<const fission::render::RenderScene> scene) {
+                viewport->setScene(std::move(scene));
+            });
+        if (options.benchmarkTriangles > 0) {
+            runBenchmark(window, viewport, sceneConnection,
+                         static_cast<std::size_t>(options.benchmarkTriangles));
+        }
         // Zooming in asks for finer tessellation; the model makes it in the background.
         QObject::connect(viewport, &fission::ui::Viewport3D::detailLevelWanted, &documentModel,
                          &fission::ui::DocumentModel::setDetailLevel);

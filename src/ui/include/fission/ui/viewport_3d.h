@@ -13,6 +13,7 @@
 #include <QVariantAnimation>
 
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <vector>
 
@@ -67,6 +68,17 @@ public:
     void setOrthographic(bool orthographic);
     bool ambientOcclusion() const { return m_ambientOcclusion; }
     void setAmbientOcclusion(bool on);
+    /// Frame times since `startFrameStatistics` (developer option --benchmark).
+    struct FrameStatistics {
+        int frames = 0;
+        double gpuAverageMs = 0.0; ///< 0 when the graphics interface gives no times
+        double gpuP95Ms = 0.0;
+        double cpuAverageMs = 0.0; ///< time to record a frame on the render thread
+    };
+    void startFrameStatistics();
+    FrameStatistics finishFrameStatistics();
+    /// Called by the renderer (render thread) for every frame.
+    void recordFrame(double gpuMilliseconds, double cpuMilliseconds);
     /// Called by the renderer (render thread) when frames take too long with occlusion on.
     void reportSlowFrames(double averageMilliseconds);
     QString mouseStyle() const;
@@ -162,6 +174,10 @@ private:
     void applyNavigation(render::NavigationAction action, double dx, double dy);
     std::optional<render::SurfaceHit> surfaceAt(double x, double y) const;
 
+    std::mutex m_statisticsMutex;
+    bool m_collecting = false;
+    std::vector<double> m_gpuTimes;
+    std::vector<double> m_cpuTimes;
     bool m_ambientOcclusion = true;
     int m_detailLevel = 0;
     render::MouseStyle m_mouseStyle = render::MouseStyle::fission;

@@ -59,6 +59,16 @@ class DocumentModel : public QObject {
     Q_PROPERTY(QVariantList history READ history NOTIFY historyChanged)
     /// Number of actions that are done (= the position in `history`).
     Q_PROPERTY(int historyPosition READ historyPosition NOTIFY historyChanged)
+    /// The printer whose print bed is shown (id from the printer list).
+    Q_PROPERTY(QString printerId READ printerId NOTIFY printerChanged)
+    /// Brand and model; empty for the generic printer (the interface says "My printer").
+    Q_PROPERTY(QString printerName READ printerName NOTIFY printerChanged)
+    Q_PROPERTY(double bedX READ bedX NOTIFY printerChanged)
+    Q_PROPERTY(double bedY READ bedY NOTIFY printerChanged)
+    Q_PROPERTY(double bedZ READ bedZ NOTIFY printerChanged)
+    Q_PROPERTY(double nozzle READ nozzle NOTIFY printerChanged)
+    /// [{ id, name, bedX, bedY, bedZ, nozzle }]
+    Q_PROPERTY(QVariantList printers READ printers CONSTANT)
 
 public:
     /// `kernel` does the geometry work; the application hands in the OpenCASCADE one.
@@ -92,6 +102,17 @@ public:
     QVariantList history() const;
     int historyPosition() const noexcept { return static_cast<int>(m_history.position()); }
 
+    QString printerId() const { return m_printerId; }
+    QString printerName() const;
+    double bedX() const;
+    double bedY() const;
+    double bedZ() const;
+    double nozzle() const;
+    QVariantList printers() const;
+    /// Chooses the printer; false for an id that is not in the list. Not part of the history:
+    /// the printer is a setting of the program, not a change of the model.
+    Q_INVOKABLE bool setPrinter(const QString& id);
+
     Q_INVOKABLE void selectStep(int index);
     /// Sets the value `name` of step `index` to what was typed (a number or a formula).
     Q_INVOKABLE bool setStepValue(int index, const QString& name, const QString& text);
@@ -124,6 +145,7 @@ signals:
     void stepValuesChanged();
     void calculatingChanged();
     void historyChanged();
+    void printerChanged();
     /// A new scene for the 3D view.
     void sceneReady(std::shared_ptr<const fission::render::RenderScene> scene);
 
@@ -164,6 +186,7 @@ private:
     void startDetailJob();
     void applyDetail(std::uint64_t generation, int level,
                      std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> meshes);
+    QString m_printerId{QStringLiteral("generic")};
     int m_detailLevel = 0;
     int m_shownDetailLevel = 0;
     std::uint64_t m_detailGeneration = 0;

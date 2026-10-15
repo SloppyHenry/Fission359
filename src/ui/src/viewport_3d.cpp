@@ -9,6 +9,7 @@
 #include <QWheelEvent>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 
 #include "fission/render/detail.h"
@@ -73,7 +74,17 @@ public:
         frame.displayMode = m_snapshot.displayMode;
         frame.palette = m_snapshot.palette;
         frame.ambientOcclusion = m_snapshot.ambientOcclusion;
+        const auto started = std::chrono::steady_clock::now();
         m_renderer->draw(cb, renderTarget(), frame);
+        const double cpuMilliseconds =
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
+                .count();
+        const double gpuMilliseconds = m_rhi->isFeatureSupported(QRhi::Timestamps)
+                                           ? cb->lastCompletedGpuTime() * 1000.0
+                                           : 0.0;
+        if (m_item != nullptr) {
+            m_item->recordFrame(gpuMilliseconds, cpuMilliseconds);
+        }
         watchFrameTime(cb);
         if (m_item != nullptr) {
             m_item->reportRendered(QString::fromUtf8(m_rhi->backendName()));
@@ -253,6 +264,46 @@ void Viewport3D::setAmbientOcclusion(bool on) {
         m_ambientOcclusion = on;
         emit ambientOcclusionChanged();
         update();
+    }
+}
+
+void Viewport3D::startFrameStatistics() {
+    const std::lock_guard lock(m_statisticsMutex);
+    m_gpuTimes.clear();
+    m_cpuTimes.clear();
+    m_collecting = true;
+}
+
+Viewport3D::FrameStatistics Viewport3D::finishFrameStatistics() {
+    const std::lock_guard lock(m_statisticsMutex);
+    m_collecting = false;
+    FrameStatistics result;
+    result.frames = static_cast<int>(m_cpuTimes.size());
+    const auto average = [](const std::vector<double>& values) {
+        double sum = 0.0;
+        for (const double v : values) {
+            sum += v;
+        }
+        return values.empty() ? 0.0 : sum / static_cast<double>(values.size());
+    };
+    result.cpuAverageMs = average(m_cpuTimes);
+    result.gpuAverageMs = average(m_gpuTimes);
+    if (!m_gpuTimes.empty()) {
+        std::vector<double> sorted = m_gpuTimes;
+        std::sort(sorted.begin(), sorted.end());
+        result.gpuP95Ms = sorted[static_cast<std::size_t>(0.95 * static_cast<double>(sorted.size() - 1))];
+    }
+    return result;
+}
+
+void Viewport3D::recordFrame(double gpuMilliseconds, double cpuMilliseconds) {
+    const std::lock_guard lock(m_statisticsMutex);
+    if (!m_collecting) {
+        return;
+    }
+    m_cpuTimes.push_back(cpuMilliseconds);
+    if (gpuMilliseconds > 0.0) {
+        m_gpuTimes.push_back(gpuMilliseconds);
     }
 }
 
