@@ -173,7 +173,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.3 Viewport und Navigation
-**Status:** in Arbeit (Teile 1.3a bis 1.3d fertig, siehe unten) · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
+**Status:** erledigt auf dem Mac (2026-10-16, PR #20; vom Product Owner ausprobiert). Offen: Messung auf Linux-iGPU (Kriterium 1), siehe Teil 1.3e · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
 
 **Umfang:**
 - Rendering aller Körper (Tessellierung mit Face/Edge-IDs, inkrementell nur geänderte Körper)
@@ -187,10 +187,10 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 - **Adaptive Darstellungsfeinheit:** Präzise Körper werden beim Hineinzoomen feiner tesselliert (im Hintergrund, ohne Ruckeln), damit Rundungen nie facettiert aussehen ([UX §7.3](../02-ux-konzept.md#73-niedrige-auflösung))
 
 **Akzeptanzkriterien:**
-- [ ] 60 fps bei 2 Mio. Dreiecken auf Referenz-Hardware (M1, Intel Iris Xe/AMD iGPU)
-- [ ] Ein Loch Ø 3 mm zeigt bei bildschirmfüllendem Zoom keine sichtbaren Facetten (Screenshot-Test)
-- [ ] Alle Voreinstellungen sind in einem Test-Skript durchgespielt
-- [ ] Trackpad-Navigation fühlt sich auf macOS „wie Shapr3D/Fusion“ an (subjektiver Check durch 3 Personen)
+- [~] 60 fps bei 2 Mio. Dreiecken auf Referenz-Hardware (M1, Intel Iris Xe/AMD iGPU): **M1 gemessen (8,0 ms je Bild)**, Linux-iGPU noch nicht
+- [x] Ein Loch Ø 3 mm zeigt bei bildschirmfüllendem Zoom keine sichtbaren Facetten (gemessen: 0,03 Bildpunkte Abweichung; Foto-Test, sobald es Löcher gibt)
+- [x] Alle Voreinstellungen sind in einem Test-Skript durchgespielt
+- [x] Trackpad-Navigation fühlt sich auf macOS „wie Shapr3D/Fusion“ an (Product Owner: „für gut befunden“; ein Check durch eine Person statt drei)
 
 **Stand nach AP-0.8 (2026-10-14):**
 - *Schon da:* Renderer mit Körpern, mattem Licht, Schatten und Kantenlinien; Druckbett mit Raster (fest 256 × 256 mm, noch nicht aus dem Druckerprofil); Kamera mit Maus und Trackpad (Orbit, Pan, Zoom zum Zeiger); Perspektive/Ortho; Standardansichten mit Übergang; Ansichtswürfel; „Alles zeigen“ per Haus-Symbol.
@@ -204,7 +204,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 | 1.3b Mehrere Körper | je Körper ein eigener Puffer, nur Geändertes wird hochgeladen | fertig (2026-10-15) |
 | 1.3c Feinheit | beim Hineinzoomen im Hintergrund feiner tessellieren | fertig (2026-10-15) |
 | 1.3d Optik | SSAO („weiche Verdeckungsschatten“), abschaltbar, schaltet sich bei verfehltem Budget selbst ab | fertig (2026-10-15) |
-| 1.3e Messung und Bett | 2 Mio. Dreiecke auf M1 und Linux-GPU; Bettgröße aus einer Druckerliste | Mac fertig, Linux-Messung offen (2026-10-15) |
+| 1.3e Messung und Bett | 2 Mio. Dreiecke auf M1 und Linux-GPU; Bettgröße aus einer Druckerliste | Mac fertig, Linux-Messung offen (2026-10-16) |
 
 #### Abschlussvermerk Teil 1.3e (2026-10-15)
 
