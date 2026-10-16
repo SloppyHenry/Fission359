@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
 
 #include "fission/geo/mesh.h"
 #include "fission/render/camera.h"
@@ -26,8 +27,11 @@ struct SurfaceHit {
     float distance = 0.0F;
 };
 
-/// The nearest surface along `ray`: a body face, or else the top of the print bed.
-std::optional<SurfaceHit> pickSurface(const RenderScene& scene, const Ray& ray);
+/// The nearest surface along `ray`: a body face, or else the top of the print bed. The body whose
+/// `RenderBody::id` is `ignoreBody` is looked through (the shape being put down must not land on
+/// itself).
+std::optional<SurfaceHit> pickSurface(const RenderScene& scene, const Ray& ray,
+                                      const std::string& ignoreBody = {});
 
 /// Centre and radius of the sphere around one face of a body, and the way it faces (the mean of
 /// its triangles' normals, pointing out of the body; for a curved face that is only a direction

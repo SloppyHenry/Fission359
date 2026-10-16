@@ -362,6 +362,20 @@ std::unique_ptr<Command> makeSetBodyVisible(BodyId id, bool visible) {
         });
 }
 
+std::unique_ptr<Command> makeSetBodyHole(BodyId id, bool hole) {
+    std::string key = "bodyHole/" + id.value;
+    return std::make_unique<SetCommand<bool>>(
+        std::move(key), hole,
+        [id](const Document& document) -> std::optional<bool> {
+            const Body* body = document.findBody(id);
+            return body != nullptr ? std::optional<bool>(body->hole) : std::nullopt;
+        },
+        [id](Document& document, const bool& value) { return document.setBodyHole(id, value); },
+        [id](const Document& document, const bool& value) {
+            return bodyLabel(document, id, value ? "holeBody" : "solidBody");
+        });
+}
+
 std::unique_ptr<Command> makeAddParameter(Parameter parameter) {
     return std::make_unique<AddParameterCommand>(std::move(parameter));
 }

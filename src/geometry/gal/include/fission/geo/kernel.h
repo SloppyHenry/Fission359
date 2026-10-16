@@ -55,6 +55,10 @@ public:
     /// One of the other basic shapes (see primitives.h); `base` is the middle of its underside.
     virtual NamedSolid makePrimitive(const PrimitiveSpec& spec, Point3d base) const = 0;
 
+    /// The names of the fonts lettering can use (bundled and installed), sorted. Takes a moment
+    /// the first time (the computer's fonts are read): ask from a background thread.
+    virtual std::vector<std::string> fontFamilies() const { return {}; }
+
     virtual SolidReport measure(const Solid& solid) const = 0;
 
     virtual TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const = 0;

@@ -126,6 +126,18 @@ public:
     Q_INVOKABLE void panBy(double dx, double dy);
     /// Orbit by pixels, like the rotate button.
     Q_INVOKABLE void orbitBy(double dx, double dy);
+    /// Where a shape put down at the point (x, y) in item pixels would land: on the print bed,
+    /// on the flat top of a body, or - over anything else (a wall, nothing) - on the plane
+    /// `planeZ`. `ignoreBody` (a `RenderBody::id`) is looked through. Nothing if the ray misses
+    /// every plane.
+    struct Landing {
+        double x = 0.0;
+        double y = 0.0;
+        double z = 0.0;
+        QString surface; ///< id of the body whose top it is; empty: the bed or the plane
+    };
+    std::optional<Landing> landingAt(double x, double y, const QString& ignoreBody,
+                                     double planeZ) const;
     /// Position of a world point in item pixels (for labels that float in the 3D view).
     Q_INVOKABLE QPointF project(double x, double y, double z) const;
 
