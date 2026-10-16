@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 fission_add_library(fission_render
-  SOURCES src/layer.cpp src/benchmark_scene.cpp src/scene.cpp src/detail.cpp src/camera.cpp src/navigation.cpp src/picking.cpp
+  SOURCES src/layer.cpp src/benchmark_scene.cpp src/scene.cpp src/detail.cpp src/camera.cpp src/navigation.cpp src/picking.cpp src/pick.cpp
           src/scene_renderer.cpp
   PUBLIC fission_core fission_geometry Qt6::Gui Qt6::GuiPrivate)
 
@@ -22,4 +22,9 @@ qt_add_shaders(fission_render "fission_render_shaders"
     src/shaders/fullscreen.vert
     src/shaders/ssao.frag
     src/shaders/normal.frag
-    src/shaders/aoblur.frag)
+    src/shaders/aoblur.frag
+    src/shaders/pick.vert
+    src/shaders/pickcorner.vert
+    src/shaders/pick.frag
+    src/shaders/overlay.vert
+    src/shaders/overlay.frag)

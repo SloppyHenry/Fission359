@@ -20,6 +20,8 @@ Rectangle {
     property string text: ""
     property string count: ""
     signal eyeToggled
+    /// The row was clicked (not its eye). `extend`: with Shift or Ctrl/Cmd held.
+    signal clicked(bool extend)
 
     width: parent ? parent.width : 200
     height: Theme.treeRowHeight
@@ -31,6 +33,16 @@ Rectangle {
 
     HoverHandler {
         id: hover
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        gesturePolicy: TapHandler.ReleaseWithinBounds
+        onTapped: (point, button) => {
+            if (!eyeButton.hovered) {
+                root.clicked((point.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0)
+            }
+        }
     }
 
     Row {
@@ -87,6 +99,8 @@ Rectangle {
         }
 
         AbstractButton {
+            id: eyeButton
+
             visible: root.hasEye
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: 24

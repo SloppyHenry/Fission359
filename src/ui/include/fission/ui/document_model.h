@@ -15,6 +15,7 @@
 #include <mutex>
 
 #include "fission/core/document.h"
+#include "fission/core/element_names.h"
 #include "fission/core/feature_type.h"
 #include "fission/core/history.h"
 #include "fission/core/recompute.h"
@@ -86,6 +87,20 @@ public:
     std::shared_ptr<const core::RecomputeResult> result() const { return m_result; }
     std::shared_ptr<const render::RenderScene> scene() const { return m_scene; }
 
+    /// The names of the faces, edges and corners of every body, from the last result. They
+    /// belong to the numbers of the meshes in `scene()` (the numbers do not change with the
+    /// level of detail).
+    using ElementNameMap = std::map<core::BodyId, core::ElementNames>;
+    std::shared_ptr<const ElementNameMap> elementNames() const { return m_elementNames; }
+    /// Id of the body at a position in `bodies`, or empty.
+    Q_INVOKABLE QString bodyIdAt(int index) const;
+    /// Position of a body in `bodies`, or -1.
+    Q_INVOKABLE int bodyIndexOf(const QString& id) const;
+    /// Position in the recipe of the step that made a body, or -1.
+    Q_INVOKABLE int stepOfBody(const QString& id) const;
+    /// Id of the first body a step made, or empty.
+    Q_INVOKABLE QString bodyOfStep(int step) const;
+
     /// Blocks until the calculation that is running is done and its result is shown
     /// (start of the program, tests).
     void waitForCalculation();
@@ -146,6 +161,8 @@ signals:
     void calculatingChanged();
     void historyChanged();
     void printerChanged();
+    /// A new result arrived: the names of the elements may be different now.
+    void elementsChanged();
     /// A new scene for the 3D view.
     void sceneReady(std::shared_ptr<const fission::render::RenderScene> scene);
 
@@ -168,6 +185,7 @@ private:
     core::History m_history;
     std::shared_ptr<const core::RecomputeResult> m_result;
     std::shared_ptr<const render::RenderScene> m_scene;
+    std::shared_ptr<const ElementNameMap> m_elementNames = std::make_shared<ElementNameMap>();
     Numbers* m_numbers = nullptr;
 
     QVariantList m_recipe;

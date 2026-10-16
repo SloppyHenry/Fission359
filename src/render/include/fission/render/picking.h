@@ -29,10 +29,13 @@ struct SurfaceHit {
 /// The nearest surface along `ray`: a body face, or else the top of the print bed.
 std::optional<SurfaceHit> pickSurface(const RenderScene& scene, const Ray& ray);
 
-/// Centre and radius of the sphere around one face of a body.
+/// Centre and radius of the sphere around one face of a body, and the way it faces (the mean of
+/// its triangles' normals, pointing out of the body; for a curved face that is only a direction
+/// to look from).
 struct FaceShape {
     QVector3D center;
     float radius = 0.0F;
+    QVector3D normal{0.0F, 0.0F, 1.0F};
 };
 std::optional<FaceShape> faceShape(const geo::TriangleMesh& mesh, std::uint32_t faceId);
 

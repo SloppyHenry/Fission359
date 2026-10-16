@@ -7,14 +7,23 @@
 #pragma once
 
 #include <QMatrix4x4>
+#include <QPoint>
+#include <QRect>
+#include <QSize>
 #include <QVector3D>
 
+#include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "fission/core/element_names.h"
+#include "fission/core/selection.h"
+#include "fission/render/pick.h"
 #include "fission/render/scene.h"
 
 #include <rhi/qrhi.h>
@@ -24,6 +33,14 @@ namespace fission::render {
 
 /// How bodies are drawn: only their edges, in one neutral colour, or in their own colours.
 enum class DisplayMode { wireframe, solid, colors };
+
+/// One element drawn highlighted: under the pointer, or chosen. A body is highlighted as a whole.
+struct Highlight {
+    std::string body; ///< `RenderBody::id`
+    core::SelectableKind kind = core::SelectableKind::body;
+    std::uint32_t number = 0; ///< face, edge or corner number; 0 for a body
+    bool hover = false;       ///< under the pointer (lighter) instead of chosen
+};
 
 class SceneRenderer {
 public:
@@ -37,6 +54,9 @@ public:
         /// Soft shadows in corners and crevices (ambient occlusion). Costs one more pass over
         /// the scene; the caller turns it off when the graphics card cannot keep up.
         bool ambientOcclusion = true;
+        /// Highlights drawn over the bodies, in the colour of the accent.
+        std::vector<Highlight> highlights;
+        QColor accent{0x4C, 0x8D, 0xFF};
     };
 
     /// Creates buffers and loads the shaders. Needs a current RHI.
@@ -67,6 +87,29 @@ public:
     };
     UploadStats lastUploadStats() const { return m_lastStats; }
 
+    /// The picture of a pick: `kPickSize`² numbers, top row first (see `choosePicked`).
+    using PickCallback = std::function<void(std::vector<std::uint32_t> picture)>;
+    /// Draws the faces (and, as far as the filter allows, the edges and corners) of all bodies
+    /// as numbers into a small picture around `pixel` of a target of `targetSize`. The picture
+    /// is handed to `done` once the graphics card has finished, which is at the end of this
+    /// frame or a later one. Returns false (and does nothing) when the last pick is still on
+    /// its way or there is nothing to pick.
+    bool pick(QRhiCommandBuffer* cb, const QSize& targetSize, const QPoint& pixel,
+              const QMatrix4x4& view, const QMatrix4x4& projection,
+              const core::SelectionFilter& filter, PickCallback done);
+    /// Like `pick`, but for a rectangle of pixels (a rubber band): the picture has the size of the
+    /// rectangle, clipped to the target. Returns false if the rectangle is empty or too large.
+    bool pickRegion(QRhiCommandBuffer* cb, const QSize& targetSize, const QRect& area,
+                    const QMatrix4x4& view, const QMatrix4x4& projection,
+                    const core::SelectionFilter& filter, PickCallback done);
+    bool pickInFlight() const { return m_pickInFlight; }
+    /// How long the last pick took from drawing the picture to having it back, in milliseconds.
+    double lastPickMilliseconds() const { return m_lastPickMs; }
+    /// The id of the body drawn with this slot number in the pick picture, or empty.
+    std::string bodyOfSlot(unsigned slot) const;
+    /// The slot number of a body, or 0 if it has none (too many bodies).
+    unsigned slotOfBody(const std::string& id) const;
+
 private:
     void writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* buffer, const QMatrix4x4& mvp,
                        const Frame& frame, const QSize& targetSize = {},
@@ -92,6 +135,21 @@ private:
         std::size_t lineVertexCount = 0;
         QVector3D boundsMin;
         QVector3D boundsMax;
+        // --- picking and highlights ---
+        unsigned slot = 0; ///< number in the pick picture; 0: this body cannot be picked
+        std::shared_ptr<const geo::TriangleMesh> mesh;
+        std::unique_ptr<QRhiBuffer> faceNumbers; ///< one pick number per vertex
+        std::unique_ptr<QRhiBuffer> edgePick;    ///< the edge lines with their pick numbers
+        std::unique_ptr<QRhiBuffer> cornerPick;  ///< a small square per corner
+        std::size_t edgePickCount = 0;
+        std::size_t cornerPickCount = 0;
+        /// Where the triangles of each face are in the index buffer, sorted by face.
+        struct FaceRun {
+            std::uint32_t face = 0;
+            std::uint32_t firstTriangle = 0;
+            std::uint32_t triangleCount = 0;
+        };
+        std::vector<FaceRun> faceRuns;
     };
 
     QRhi* m_rhi;
@@ -152,9 +210,60 @@ private:
     std::unique_ptr<QRhiGraphicsPipeline> m_bodyPipeline;
     std::unique_ptr<QRhiGraphicsPipeline> m_discPipeline;
     std::unique_ptr<QRhiGraphicsPipeline> m_linePipeline;
+    std::unique_ptr<QRhiGraphicsPipeline> m_overlayPipeline;
 
     QShader m_bodyVertex, m_bodyFragment, m_bedFragment, m_flatVertex, m_flatFragment,
         m_backgroundVertex, m_backgroundFragment, m_shadowVertex, m_shadowFragment;
+
+    // --- pick pass ---
+    void createPickResources();
+    bool pickPass(QRhiCommandBuffer* cb, const QSize& targetSize, const QRect& window,
+                  const QMatrix4x4& view, const QMatrix4x4& projection,
+                  const core::SelectionFilter& filter, PickCallback done,
+                  QRhiTextureRenderTarget* target, QRhiTexture* texture);
+    static constexpr int kRegionMaxSize = 4096;
+    /// The pick numbers of a body's vertices, edges and corners, and where its faces are.
+    void buildPickBuffers(QRhiResourceUpdateBatch* updates, const geo::TriangleMesh& mesh,
+                          GpuBody& body);
+    std::map<unsigned, std::string> m_slotKeys;
+    std::unique_ptr<QRhiTexture> m_pickTexture;
+    std::unique_ptr<QRhiRenderBuffer> m_pickDepth;
+    std::unique_ptr<QRhiTextureRenderTarget> m_pickTarget;
+    std::unique_ptr<QRhiRenderPassDescriptor> m_pickPass;
+    std::unique_ptr<QRhiBuffer> m_pickUniforms;
+    std::unique_ptr<QRhiShaderResourceBindings> m_pickSrb;
+    std::unique_ptr<QRhiGraphicsPipeline> m_pickFacePipeline;
+    std::unique_ptr<QRhiGraphicsPipeline> m_pickEdgePipeline;
+    std::unique_ptr<QRhiGraphicsPipeline> m_pickCornerPipeline;
+    QShader m_pickVertex, m_pickCornerVertex, m_pickFragment, m_overlayVertex, m_overlayFragment;
+    std::unique_ptr<QRhiTexture> m_regionTexture;
+    std::unique_ptr<QRhiRenderBuffer> m_regionDepth;
+    std::unique_ptr<QRhiTextureRenderTarget> m_regionTarget;
+    QRhiReadbackResult m_pickResult;
+    PickCallback m_pickDone;
+    bool m_pickInFlight = false;
+    double m_lastPickMs = 0.0;
+    std::chrono::steady_clock::time_point m_pickStarted;
+
+    // --- highlights ---
+    /// Works out what to draw for `frame.highlights` and uploads it. Before the pass starts.
+    void prepareHighlights(QRhiResourceUpdateBatch* updates, const Frame& frame,
+                           const QSize& targetSize);
+    /// Draws what `prepareHighlights` made. Inside the pass.
+    void drawHighlights(QRhiCommandBuffer* cb);
+    struct TintDraw {
+        const GpuBody* body = nullptr;
+        int style = 0;          ///< index into the overlay colours
+        std::uint32_t face = 0; ///< the face to tint; 0: the whole body
+    };
+    std::vector<TintDraw> m_tintDraws;
+    std::size_t m_ribbonVertexCount = 0;
+    static constexpr int kOverlayStyles = 4;
+    quint32 m_overlayStride = 0;
+    std::unique_ptr<QRhiBuffer> m_overlayUniforms;
+    std::unique_ptr<QRhiShaderResourceBindings> m_overlaySrb;
+    std::unique_ptr<QRhiBuffer> m_ribbonBuffer;
+    std::size_t m_ribbonCapacity = 0; ///< vertices
 };
 
 } // namespace fission::render

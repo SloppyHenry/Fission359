@@ -152,7 +152,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+50"/>
+        <location filename="../qml/LeftPanel.qml" line="+51"/>
         <source>Bodies</source>
         <translation>Bodies</translation>
     </message>
@@ -186,12 +186,12 @@
         </translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+16"/>
         <source>Visibility: %1</source>
         <translation>Visibility: %1</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+12"/>
         <source>No bodies yet. Get a shape from “Shapes” in the tool bar or with %1.</source>
         <translation>No bodies yet. Get a shape from “Shapes” in the tool bar or with %1.</translation>
     </message>
@@ -364,7 +364,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+66"/>
+        <location line="+71"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -374,7 +374,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-66"/>
+        <location line="-71"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -412,6 +412,16 @@
         <location line="+1"/>
         <source>Select all</source>
         <translation>Select all</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Select nothing</source>
+        <translation>Select nothing</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Esc</source>
+        <translation>Esc</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -452,6 +462,11 @@
         <location line="+2"/>
         <source>Show everything</source>
         <translation>Show everything</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Look at face</source>
+        <translation>Look at face</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -520,12 +535,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+334"/>
+        <location line="+380"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-333"/>
+        <location line="-379"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -580,19 +595,19 @@
         <translation>About Fission3D</translation>
     </message>
     <message>
-        <location line="+17"/>
-        <location line="+152"/>
+        <location line="+20"/>
+        <location line="+164"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-150"/>
-        <location line="+151"/>
+        <location line="-162"/>
+        <location line="+163"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-145"/>
+        <location line="-157"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -632,8 +647,8 @@
         <translation>Command search arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+19"/>
-        <location line="+107"/>
+        <location line="+28"/>
+        <location line="+110"/>
         <source>This arrives in a later version.</source>
         <translation>This arrives in a later version.</translation>
     </message>
@@ -653,17 +668,17 @@
         <translation>Export arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+60"/>
+        <location line="+62"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+79"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+33"/>
         <source>Cylinder</source>
         <translation>Cylinder</translation>
     </message>
@@ -813,37 +828,81 @@
         <translation>This shape could not be built.</translation>
     </message>
     <message>
-        <location line="-200"/>
+        <location line="+26"/>
+        <source>Face of %1</source>
+        <translation>Face of %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Edge of %1</source>
+        <translation>Edge of %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Corner of %1</source>
+        <translation>Corner of %1</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>%1 selected</source>
+        <translation>%1 selected</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n thing(s) selected</source>
+        <translation>
+            <numerusform>%n thing selected</numerusform>
+            <numerusform>%n things selected</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>%1 – click chooses it, double click chooses the whole body.</source>
+        <translation>%1 – click chooses it, double click chooses the whole body.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+1"/>
+        <source>%1 – click chooses it.</source>
+        <translation>%1 – click chooses it.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Shift+click adds or removes. Drag a frame to choose several. Esc chooses nothing.</source>
+        <translation>Shift+click adds or removes. Drag a frame to choose several. Esc chooses nothing.</translation>
+    </message>
+    <message>
+        <location line="-289"/>
         <source>Shapes arrive in a later version.</source>
         <translation>Shapes arrive in a later version.</translation>
     </message>
     <message>
-        <location line="+57"/>
+        <location line="+85"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-329"/>
+        <location line="-374"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+362"/>
+        <location line="+407"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-260"/>
+        <location line="-300"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+121"/>
+        <location line="+133"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+159"/>
+        <location line="+190"/>
         <source>Unit: mm · Grid 1 mm</source>
         <translation>Unit: mm · Grid 1 mm</translation>
     </message>
@@ -1049,7 +1108,7 @@
 <context>
     <name>ViewOverlay</name>
     <message>
-        <location filename="../qml/ViewOverlay.qml" line="+67"/>
+        <location filename="../qml/ViewOverlay.qml" line="+71"/>
         <location line="+10"/>
         <source>Orthographic</source>
         <translation>Orthographic</translation>
@@ -1076,7 +1135,38 @@
         <translation>Colours</translation>
     </message>
     <message>
-        <location line="+77"/>
+        <location line="+55"/>
+        <source>Everything</source>
+        <translation>Everything</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bodies</source>
+        <translation>Bodies</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Faces</source>
+        <translation>Faces</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Edges</source>
+        <translation>Edges</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Corners</source>
+        <translation>Corners</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <location line="+17"/>
+        <source>Choose: %1</source>
+        <translation>Choose: %1</translation>
+    </message>
+    <message>
+        <location line="+58"/>
         <source>Select</source>
         <translation>Select</translation>
     </message>
@@ -1199,17 +1289,17 @@
         <translation>Orbit</translation>
     </message>
     <message>
-        <location line="-271"/>
+        <location line="-347"/>
         <source>Orbit: drag with the right mouse button – or drag this button</source>
         <translation>Orbit: drag with the right mouse button – or drag this button</translation>
     </message>
     <message>
-        <location line="+279"/>
+        <location line="+355"/>
         <source>Pan</source>
         <translation>Pan</translation>
     </message>
     <message>
-        <location line="-272"/>
+        <location line="-348"/>
         <source>Pan: drag with the middle mouse button – or drag this button</source>
         <translation>Pan: drag with the middle mouse button – or drag this button</translation>
     </message>
@@ -1229,7 +1319,7 @@
         <translation>Pan: Shift + middle mouse button – or drag this button</translation>
     </message>
     <message>
-        <location line="+281"/>
+        <location line="+357"/>
         <source>Zoom</source>
         <translation>Zoom</translation>
     </message>

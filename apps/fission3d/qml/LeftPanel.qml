@@ -11,7 +11,7 @@ Rectangle {
 
     property string documentName: ""
     property string tab: "bodies"      // bodies | library
-    property var bodies: []            // [{ name, color, visible }]
+    property var bodies: []            // [{ name, color, visible, chosen }]
     property bool bedVisible: true
     property string bedText: ""
     property var recipe: []            // [{ text, state }]  state: ok | warning | fails | off | pending
@@ -20,6 +20,7 @@ Rectangle {
     signal tabRequested(string tab)
     signal addRequested
     signal bodyVisibilityRequested(int index, bool visible)
+    signal bodyChosen(int index, bool extend)
     signal bedVisibilityRequested(bool visible)
 
     color: Theme.panel
@@ -194,11 +195,13 @@ Rectangle {
                         required property int index
 
                         child: true
+                        selected: modelData.chosen
                         swatch: modelData.color
                         text: modelData.name
                         eyeOn: modelData.visible
                         eyeLabel: qsTr("Visibility: %1").arg(modelData.name)
                         onEyeToggled: root.bodyVisibilityRequested(index, !modelData.visible)
+                        onClicked: extend => root.bodyChosen(index, extend)
                     }
                 }
 

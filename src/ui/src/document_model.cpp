@@ -353,8 +353,20 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
         }
         m_numbers->setNamedMeasures(std::move(names));
     }
+    {
+        auto names = std::make_shared<ElementNameMap>();
+        const std::lock_guard lock(m_meshMutex);
+        for (const auto& [id, body] : m_result->bodies) {
+            const auto mesh = m_meshes.find(meshKey(body));
+            if (mesh != m_meshes.end()) {
+                names->emplace(id, core::ElementNames::build(body.faces, *mesh->second));
+            }
+        }
+        m_elementNames = std::move(names);
+    }
     rebuildLists();
     rebuildScene();
+    emit elementsChanged();
     setCalculating(false);
     if (m_detailLevel > 0) {
         m_detailTimer.start(); // new or changed bodies get their fine mesh in the background
@@ -509,6 +521,41 @@ QVariantList DocumentModel::buildStepValues() const {
         values.push_back(entry);
     }
     return values;
+}
+
+QString DocumentModel::bodyIdAt(int index) const {
+    const auto& bodies = m_history.document().bodies();
+    return index >= 0 && index < static_cast<int>(bodies.size())
+               ? toQString(bodies[static_cast<std::size_t>(index)].id.value)
+               : QString();
+}
+
+int DocumentModel::bodyIndexOf(const QString& id) const {
+    const auto& bodies = m_history.document().bodies();
+    for (std::size_t i = 0; i < bodies.size(); ++i) {
+        if (toQString(bodies[i].id.value) == id) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
+int DocumentModel::stepOfBody(const QString& id) const {
+    for (const core::Body& body : m_history.document().bodies()) {
+        if (toQString(body.id.value) == id) {
+            return stepIndexOf(body.createdBy);
+        }
+    }
+    return -1;
+}
+
+QString DocumentModel::bodyOfStep(int step) const {
+    const auto& features = m_history.document().features();
+    if (step < 0 || step >= static_cast<int>(features.size()) ||
+        features[static_cast<std::size_t>(step)].outputs.empty()) {
+        return {};
+    }
+    return toQString(features[static_cast<std::size_t>(step)].outputs.front().value);
 }
 
 int DocumentModel::stepIndexOf(const core::FeatureId& id) const {

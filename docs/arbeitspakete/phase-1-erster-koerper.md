@@ -368,7 +368,8 @@ Der Bildabstand war in allen Läufen 16,7 ms (60 Hz des Bildschirms): **60 fps b
 - **Maus-Stil wird nicht gemerkt** (gilt bis zum Schließen). Das Speichern gehört zu den Einstellungen und zum Erststart-Assistenten (AP-1.11).
 - **Doppelklick-Konflikt:** AP-1.4 nennt „Doppelklick wählt den Körper“, UX §10 und AP-1.3 „Doppelklick auf Fläche = senkrecht
   draufschauen“. Beides gleichzeitig geht nicht. Vorschlag für AP-1.4: Doppelklick wählt den Körper, „Ansicht senkrecht auf Fläche“
-  bleibt als Smart Zoom (Trackpad) und als Eintrag im Rechtsklick-Menü der Fläche.
+  bleibt als Smart Zoom (Trackpad) und als Eintrag im Rechtsklick-Menü der Fläche. **Gelöst in AP-1.4:** Doppelklick wählt den Körper;
+  „Auf Fläche schauen“ ist Ansicht ▸ Auf Fläche schauen (L); das Rechtsklick-Menü gibt es noch nicht.
 - **Umschalt + linke Taste verschiebt die Ansicht** (Laptop-Hilfe). Mit der Rahmenauswahl aus AP-1.4 kollidiert das; dort ist
   dann Alt + Umschalt + links naheliegend.
 - **Annahmen für die Stile:** Die Belegungen sind aus den Programmen nach Dokumentation übernommen, nicht gegen die Programme geprüft.
@@ -378,7 +379,7 @@ Der Bildabstand war in allen Läufen 16,7 ms (60 Hz des Bildschirms): **60 fps b
 ---
 
 ### AP-1.4 Auswahl und Hover
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.3
+**Status:** erledigt (2026-10-16, PR #21; vom Product Owner ausprobiert und freigegeben; Hover-Zeit siehe Einschränkungen) · **Größe:** M · **Abhängigkeiten:** AP-1.3
 
 **Umfang:**
 - Picking von Körper, Fläche, Kante und Ecke über ID-Buffer; Hover-Hervorhebung
@@ -387,8 +388,109 @@ Der Bildabstand war in allen Läufen 16,7 ms (60 Hz des Bildschirms): **60 fps b
 - Auswahl-Modell im Core (stabil über Neuberechnung via persistente Referenzen)
 
 **Akzeptanzkriterien:**
-- [ ] Hover-Feedback < 16 ms
-- [ ] Nach einer Parameteränderung bleibt die Auswahl erhalten (wenn die Geometrie noch existiert)
+- [~] Hover-Feedback < 16 ms: **die Arbeit der Grafikkarte** (Bild zeichnen und zurücklesen) dauert bei 2 Mio. Dreiecken auf dem M1 im
+  Mittel **2,0 ms** (Test `pick on the graphics card: 2 million triangles in under 16 ms`). **Bis das Leuchten zu sehen ist,** vergeht
+  etwa ein Bild mehr (das Ergebnis kommt mit dem nächsten Bild zurück): im laufenden Programm gemessen 16 ms im Mittel bei 200 000
+  und etwa 47 ms bei 2 Mio. Dreiecken (`fission3d --benchmark <Dreiecke>`, Zeile `pick`; beide Werte mit Bildern von 8 ms Länge).
+  Kürzer geht es mit einem ID-Bild nicht, solange das Zurücklesen auf ein Bild wartet; siehe Einschränkungen.
+- [x] Nach einer Parameteränderung bleibt die Auswahl erhalten (wenn die Geometrie noch existiert): Test
+  `a chosen face stays chosen when a value changes`; Kante und Ecke ebenso; was nicht sicher wiedergefunden wird, wird losgelassen
+
+#### Zerlegung (2026-10-16, vom Product Owner freigegeben: „entscheide nach eigenem Ermessen“)
+
+| Teil | Inhalt | Status |
+|---|---|---|
+| 1.4a Namen und Modell | Kanten und Ecken kennen ihre Flächen (Kernel-Schnittstelle), `core::ElementNames`, `core::Selection` | fertig (2026-10-16) |
+| 1.4b Pick-Durchgang | ID-Bild um den Zeiger (Fläche, Kante, Ecke), Hover-Leuchten | fertig (2026-10-16) |
+| 1.4c Klicken | Klick, Doppelklick, ⇧, Rahmen, Filter | fertig (2026-10-16) |
+| 1.4d Oberfläche | Hinweiszeile, Statuszeile, Körperliste, Rezept-Verknüpfung, „Wählen: …“, Esc, Alles auswählen, Auf Fläche schauen | fertig (2026-10-16) |
+
+Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedienung nicht zu sehen ist).
+
+#### Abschlussvermerk (2026-10-16)
+
+**Umgesetzt**
+- **Wählen mit der Maus:** Fahre über den Körper: die Fläche, Kante oder Ecke unter dem Zeiger leuchtet. Ein Klick wählt sie. Was
+  „näher“ ist, entscheidet der Abstand in Bildpunkten: eine Ecke gewinnt bis 6, eine Kante bis 4,5 Bildpunkte Abstand (Ecken sind
+  klein, deshalb werden sie bevorzugt); sonst gilt die Fläche. **Doppelklick wählt den ganzen Körper.** **⇧-Klick** (oder ⌘/Strg-Klick)
+  fügt hinzu oder nimmt weg. Ein Klick auf den Hintergrund hebt die Auswahl auf (Esc ebenfalls).
+- **Rahmen:** Mit der linken Taste auf leerem Grund (oder irgendwo) ziehen zeichnet einen Rahmen; losgelassen ist gewählt, **was im
+  Rahmen zu sehen ist** (verdeckte Teile zählen nicht). Mit ⌘/Strg wird hinzugefügt. Im Filter „Alles“ wählt der Rahmen Körper, in den
+  anderen Filtern Flächen, Kanten oder Ecken.
+- **Filter** „Wählen: Alles | Körper | Flächen | Kanten | Ecken“ neben der Anzeigeleiste. Nicht Passendes reagiert nicht (Kanten
+  und Ecken werden dann gar nicht erst gezeichnet, die Fläche darunter ist greifbar). Die Verknüpfung mit dem aktiven Werkzeug
+  folgt mit den Werkzeugen (AP-1.5/1.6); die Schnittstelle dafür ist da (`Selection.filter`).
+- **Auswahl bleibt:** Kanten, Ecken und Flächen bekommen **Namen** (siehe [ADR-0009](../adr/0009-auswahl-und-elementnamen.md)):
+  Fläche = was der Schritt sie nannte (`F1/box/top`), Kante = die zwei Flächen, die sie verbindet, Ecke = die Flächen, die sich dort
+  treffen. Nach jeder Neuberechnung sucht die Auswahl ihre Elemente über den Namen wieder und **lässt los, was nicht sicher
+  zu finden ist** (Regel 6), statt es woanders hin zu setzen. Namen, die im Körper doppelt vorkämen, bekommt niemand.
+- **Verknüpfung:** Ein gewählter Körper (oder ein Teil davon) wählt seinen Schritt im Rezept; rechts erscheinen seine Werte. Ein
+  Klick auf einen Schritt oder auf eine Zeile der Körperliste wählt den Körper. Ausgeblendete Körper werden abgewählt.
+- **Hinweis- und Statuszeile:** beim Überfahren „Fläche von Quader 1 – ein Klick wählt sie, ein Doppelklick den ganzen Körper.“, in
+  der Statuszeile „Kante von Quader 1 ausgewählt“ bzw. „3 Dinge ausgewählt“, nach dem Wählen die Hinweise für ⇧, Rahmen und Esc.
+- **Menü:** Bearbeiten ▸ „Alles auswählen“ (⌘A; in einem Zahlenfeld wählt es den Text) und „Nichts auswählen“ (Esc); Ansicht ▸ „Auf
+  Fläche schauen“ (**L**): das ist der frühere Doppelklick-auf-Fläche aus AP-1.3.
+- **Darstellung** nach dem Design-System (Akzent „Auswahl-Umriss“): Fläche getönt, Kante als Streifen, Ecke als Quadrat, Körper
+  getönt mit Umriss aus seinen Kanten. Hover ist heller als „gewählt“.
+- **Entwickler-Optionen:** `fission3d --simulate "hover:x,y;click:x,y;shiftclick:x,y;doubleclick:x,y;frame:x1,y1,x2,y2"` spielt Zeigeraktionen
+  durch den echten Eingabeweg (Grafikkarte, Pick-Durchgang, Auswahl); zusammen mit `--smoke-test bild.png` entstehen so
+  Bilder. `--benchmark` misst zusätzlich die Antwortzeit des Pick-Durchgangs.
+
+**Wie getestet**
+- Mac (arm64, Debug): `scripts/test` 261 von 261 grün; CI auf Mac und Ubuntu grün; Abdeckung `src/core` 95,0 % (`scripts/coverage`, Mindestwert 85 %).
+- **Auswahl-Modell** (`tests/unit/core/test_selection.cpp`): Klick, ⇧-Klick, Hintergrund, Doppelklick, Rahmen, Filter, Namen von Quader und
+  Zylinder (12 Kanten, 8 Ecken, Naht des Zylinders), doppelte Namen gehören niemandem, Wiederfinden nach Maßänderung, Loslassen.
+- **Kernel:** Kanten kennen beide Flächen und Ecken (Quader: jede Fläche 4 Kanten, jede Ecke 3; Zylinder-Naht).
+- **Pick-Durchgang auf der echten Grafikkarte** (`tests/unit/render/test_pick.cpp`, Metal; wo es keine gibt, übersprungen): Fläche, Kante
+  und Ecke eines Quaders, **Bild nicht auf dem Kopf** (Kante 4 Bildpunkte darüber liegt oben im Bild), Filter lässt die Fläche
+  durchscheinen, Körper behalten ihre Nummer, Rahmen, 2 Mio. Dreiecke in 2,0 ms.
+- **Oberfläche:** `test_selection_controller.cpp` (Klick wählt Fläche und Schritt, bleibt nach „Breite 35“, Kante und Ecke ebenso,
+  ausgeblendet = abgewählt, Schritt ↔ Körper, Filter, „Auf Fläche schauen“) und `test_viewport_navigation.cpp` (Klick fragt, ⇧,
+  Doppelklick, Rahmen statt Klick).
+- Bilder im echten Programm mit `--simulate` (Metal): [ap-1.4-hover.png](../screenshots/ap-1.4-hover.png),
+  [ap-1.4-kante.png](../screenshots/ap-1.4-kante.png), [ap-1.4-koerper.png](../screenshots/ap-1.4-koerper.png).
+- **Linux** (CI-gebautes AppImage, Ubuntu 24.04, auf dem Testrechner Debian 13 unter Xvfb mit OpenGL, Mesa-Software-Renderer): Klick
+  auf eine Kante, Rahmen um den Körper und **Hover mit dem echten Mauszeiger** (per `xdotool`) liefern dasselbe wie auf dem Mac,
+  das ID-Bild liegt auch unter OpenGL richtig herum (Kante an der richtigen Stelle). Nicht geprüft: Vulkan (unter Xvfb nicht
+  startbar) und die Zeiten auf einer echten Intel/AMD-GPU (dort war nur der Software-Renderer erreichbar: 155 ms je Bild, die
+  Messung gilt nicht). Die CI (Ubuntu 24.04, Debug mit Speicherprüfung und Release) ist grün; die Grafikkarten-Tests werden dort
+  übersprungen, weil es keine gibt.
+
+**So probierst du es aus**
+1. `scripts/run`. Fahre mit der Maus über den Würfel: Die Fläche unter dem Zeiger leuchtet; unten steht, was ein Klick tut.
+2. Klicke eine **Kante** an (die Linie zwischen zwei Flächen), dann eine **Ecke**: sie werden gewählt, unten steht „Kante von Quader 1
+   ausgewählt“, links ist „Quader 1“ markiert, rechts erscheinen die Maße.
+3. Halte **Umschalt** und klicke eine zweite Fläche: beide sind gewählt („2 Dinge ausgewählt“). Umschalt-Klick auf eine gewählte
+   nimmt sie weg.
+4. **Doppelklick** auf den Würfel wählt den ganzen Körper (Umriss). **Esc** hebt die Auswahl auf.
+5. Wähle eine Fläche und ändere rechts die **Breite**: die Fläche bleibt gewählt. Mit ⌘Z und ⇧⌘Z ebenso.
+6. Ziehe mit der linken Taste einen **Rahmen** um den Würfel: er wird gewählt. Oben „Wählen: Alles“ auf „Kanten“ stellen: jetzt
+   leuchten und wählen nur Kanten. Mit **L** (eine Fläche gewählt) schaust du senkrecht auf die Fläche.
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Antwortzeit des Hovers:** Das Ergebnis des ID-Bildes kommt mit dem nächsten Bild zurück; das Leuchten erscheint also etwa
+  1 bis 2 Bilder nach der Mausbewegung (16 bis 33 ms bei 60 Hz). Das Kriterium „< 16 ms“ ist für die **Arbeit** erfüllt, für die
+  **Gesamtzeit** nicht ganz. Wenn das zu träge wirkt, wäre der Ausweg ein CPU-Suchbaum für Hover (Flächen sofort, ohne Grafikkarte);
+  das ist eine Entscheidung für den Product Owner nach dem Ausprobieren (Vorschlag: erst ausprobieren).
+- **Doppelklick:** wählt jetzt den Körper (Entscheidung zum Konflikt aus AP-1.3). „Senkrecht draufschauen“ ist **Ansicht ▸ Auf Fläche
+  schauen (L)** und weiter Smart Zoom (Trackpad). Ein Rechtsklick-Menü gibt es noch nicht. UX-Konzept §10 ist angepasst.
+- **Rahmen und Umschalt+links:** Umschalt + ziehen verschiebt weiter die Ansicht (Laptop-Hilfe aus AP-1.3); der Rahmen
+  gilt für Ziehen ohne Umschalt/Alt, hinzufügen mit ⌘/Strg + Ziehen. Ein Ziehen auf einem Körper wird später (AP-1.6) das Bewegen
+  sein; dann zeichnet der Rahmen nur noch auf leerem Grund.
+- **Namen nur, wo ein Schritt sie vergibt:** Heute sind das Quader und Zylinder. Bei Features, die Flächen umbauen (Abrunden,
+  Ausschneiden), kommt die Namensweitergabe über die Kernel-Historie mit AP-2.10; bis dahin lassen solche Schritte die Auswahl los.
+  Wo ein Name im Körper doppelt vorkäme (zwei Kanten zwischen denselben zwei Flächen), bleibt er unbenannt: das Element lässt
+  sich wählen, bleibt aber nicht über eine Änderung hinweg gewählt.
+- **Auf Fläche schauen** bei einer ganz um den Körper laufenden Fläche (Zylindermantel) schaut von oben; flache Flächen sind der Fall,
+  für den es gedacht ist.
+- **Umriss des Körpers** besteht aus seinen Kanten (Kugeln ohne Kanten haben keinen Umriss, nur die Tönung). Ein Umriss aus der
+  Silhouette folgt, wenn es Körper ohne Kanten gibt (AP-1.5).
+- **Höchstens 1023 Körper** sind gleichzeitig wählbar (10 Bit im ID-Bild), höchstens eine Million Flächen je Körper.
+- **Ecken-Auswahl:** Quadrate von 9 Bildpunkten Seite; auf sehr dichten Ecken (Netze) wäre Auswählen der Kante einfacher.
+- **Texte:** Tooltip-Karten und Befehlssuche-Synonyme (Regel 10) für „Alles auswählen“, „Auf Fläche schauen“ und den Filter folgen mit der
+  Befehlssuche (AP-1.11).
+- **Vorgeschlagene Folge-Arbeiten:** Auswahl-Filter je Werkzeug (AP-1.5/1.6); Kontextleiste an der Auswahl (UX §2.1) mit AP-1.5/1.6;
+  Rechtsklick-Menü; Namensweitergabe für alle Features (AP-2.10).
 
 ---
 

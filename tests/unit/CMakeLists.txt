@@ -8,17 +8,20 @@ add_executable(fission_unit_tests
   core/test_document.cpp
   core/test_recompute.cpp
   core/test_history.cpp
+  core/test_selection.cpp
   features/test_primitives.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
   render/test_picking.cpp
+  render/test_pick.cpp
   render/test_scene_renderer.cpp
   render/test_detail.cpp
   ui/test_theme_tokens.cpp
   ui/test_numbers.cpp
   ui/test_document_model.cpp
+  ui/test_selection_controller.cpp
   ui/test_viewport_navigation.cpp
   ui/test_printer_catalog.cpp)
 

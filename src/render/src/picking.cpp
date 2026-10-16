@@ -143,6 +143,7 @@ std::optional<SurfaceHit> pickSurface(const RenderScene& scene, const Ray& ray) 
 
 std::optional<FaceShape> faceShape(const geo::TriangleMesh& mesh, std::uint32_t faceId) {
     QVector3D weighted;
+    QVector3D facing;
     float area = 0.0F;
     QVector3D lo(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(),
                  std::numeric_limits<float>::max());
@@ -155,8 +156,10 @@ std::optional<FaceShape> faceShape(const geo::TriangleMesh& mesh, std::uint32_t 
         const QVector3D a = toVector(mesh.positions[mesh.indices[3 * t]]);
         const QVector3D b = toVector(mesh.positions[mesh.indices[3 * t + 1]]);
         const QVector3D c = toVector(mesh.positions[mesh.indices[3 * t + 2]]);
-        const float triangleArea = 0.5F * QVector3D::crossProduct(b - a, c - a).length();
+        const QVector3D cross = QVector3D::crossProduct(b - a, c - a);
+        const float triangleArea = 0.5F * cross.length();
         weighted += triangleArea * (a + b + c) / 3.0F;
+        facing += cross;
         area += triangleArea;
         for (const QVector3D& p : {a, b, c}) {
             lo = QVector3D(std::min(lo.x(), p.x()), std::min(lo.y(), p.y()),
@@ -173,6 +176,9 @@ std::optional<FaceShape> faceShape(const geo::TriangleMesh& mesh, std::uint32_t 
     // A degenerate face (zero area) falls back to the middle of its box.
     shape.center = area > 1e-9F ? weighted / area : 0.5F * (lo + hi);
     shape.radius = 0.5F * (hi - lo).length();
+    if (facing.lengthSquared() > 1e-18F) {
+        shape.normal = facing.normalized();
+    }
     return shape;
 }
 

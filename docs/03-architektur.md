@@ -147,6 +147,11 @@ namespace fission::geo {
 
 - **Tessellierung je Fläche,** mit Face-ID pro Dreieck; Kanten als Polylinien mit Edge-ID; Ecken als Punkte.
 - **Picking über ID-Buffer:** Ein Offscreen-Render-Pass schreibt IDs. Hover wird mit 60 Hz ausgewertet.
+  **Umsetzung (AP-1.4, [ADR-0009](adr/0009-auswahl-und-elementnamen.md)):** Der Durchgang zeichnet nur die 15 × 15 Bildpunkte um den
+  Zeiger in ein winziges Bild (die Projektion wird darauf zugeschnitten) und liest es zurück; eine 32-Bit-Nummer je Element:
+  2 Bit Art, 10 Bit Körper-Platz, 20 Bit Nummer. Kanten (1 Pixel breite Linien) und Ecken (Quadrate fester Pixelgröße) werden nur
+  gezeichnet, wenn der Filter sie zulässt. Für einen Rahmen ist das Bild so groß wie der Rahmen. Auf dem M1 dauert das bei 2 Mio.
+  Dreiecken 2 ms; das Ergebnis kommt mit dem nächsten Bild zurück.
 - **Optik:** einfache PBR (matter Kunststoff), SSAO, weicher Schatten aufs Druckbett, Silhouetten- und Kantenlinien, 4× MSAA, Auswahl als Kontur und Aufhellung.
 - **Overlays** für Griffe, Gizmos, Maße und Wertblasen: Griffe werden in 3D gerendert (Tiefe korrekt), Texte und Eingabefelder als QML-Overlay.
 - **Budget:** 60 fps bei 2 Mio. Dreiecken auf einem M1 bzw. integrierter Intel/AMD-GPU (Linux).

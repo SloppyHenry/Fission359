@@ -17,6 +17,8 @@ Item {
     property real cameraPitch: 0
     property bool focusMode: false
     property string mouseStyle: "fission"  // fission | fusion | tinkercad | blender | sketchup
+    property string filter: "all"          // what can be chosen: all | body | face | edge | vertex
+    signal filterRequested(string filter)
     signal orthographicToggled
     signal displayRequested(string mode)
     signal toolRequested(string tool)
@@ -48,6 +50,8 @@ Item {
 
     // --- display bar (top left) -------------------------------------------------------
     Row {
+        id: displayBar
+
         x: 12
         y: 12
         spacing: 8
@@ -163,6 +167,80 @@ Item {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // --- what can be chosen (next to the display bar) -----------------------------------------
+    readonly property var filterNames: ({
+        all: qsTr("Everything"),
+        body: qsTr("Bodies"),
+        face: qsTr("Faces"),
+        edge: qsTr("Edges"),
+        vertex: qsTr("Corners")
+    })
+
+    Float {
+        x: displayBar.x + displayBar.width + 8
+        y: 12
+        width: filterRow.implicitWidth + 26
+        height: 38
+
+        AbstractButton {
+            id: filterButton
+
+            x: 3
+            y: 4
+            implicitHeight: 30
+            implicitWidth: filterRow.implicitWidth + 20
+            hoverEnabled: true
+            Accessible.name: qsTr("Choose: %1").arg(root.filterNames[root.filter])
+            onClicked: filterMenu.visible ? filterMenu.close() : filterMenu.popup(0, filterButton.height + 8)
+
+            contentItem: Row {
+                id: filterRow
+
+                spacing: 7
+
+                Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: "select"
+                    size: 14
+                    color: filterButton.hovered ? Theme.fg : Theme.fg3
+                }
+
+                Txt {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Choose: %1").arg(root.filterNames[root.filter])
+                    color: filterButton.hovered ? Theme.fg : Theme.fg3
+                    font.pixelSize: Theme.fontSizeSmallPlus
+                    elide: Text.ElideNone
+                }
+
+                Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: "chev"
+                    size: 14
+                    color: filterButton.hovered ? Theme.fg : Theme.fg3
+                }
+            }
+
+            background: Rectangle {
+                radius: Theme.radius
+                color: "transparent"
+
+                Focusring {
+                    visible: filterButton.visualFocus
+                }
+            }
+
+            AppMenu {
+                id: filterMenu
+
+                items: ["all", "body", "face", "edge", "vertex"].map(id => ({
+                    id: id, text: root.filterNames[id], checked: root.filter === id
+                }))
+                onActionTriggered: id => root.filterRequested(id)
             }
         }
     }
