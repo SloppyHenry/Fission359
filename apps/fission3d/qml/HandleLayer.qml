@@ -69,25 +69,29 @@ Item {
             id: dot
 
             required property int index
-            readonly property var modelData: index < Handles.handles.length ? Handles.handles[index] : null
-            readonly property real dirX: modelData ? modelData.dirX : 0
-            readonly property real dirY: modelData ? modelData.dirY : 0
-            readonly property color tone: !modelData ? Theme.accentLine
-                : modelData.parameter === "height" ? Theme.axisZ
-                : modelData.kind === "radius" ? Theme.accentLine
+            readonly property var handle: index < Handles.handles.length ? Handles.handles[index] : null
+            readonly property real dirX: handle ? handle.dirX : 0
+            readonly property real dirY: handle ? handle.dirY : 0
+            readonly property color tone: !handle ? Theme.accentLine
+                : handle.parameter === "height" ? Theme.axisZ
+                : handle.kind === "radius" ? Theme.accentLine
                 : Math.abs(dirX) > Math.abs(dirY) ? Theme.axisX : Theme.axisY
             readonly property bool active: Handles.editing && bubble.index === index
 
-            x: (modelData ? modelData.x : 0) - width / 2
-            y: (modelData ? modelData.y : 0) - height / 2
+            // A dot that is held stays in the view, even when the shape is pulled far beyond it: a
+            // dot that disappears under the pointer ends the drag (the pointer loses it).
+            readonly property real keptX: handle ? Math.min(Math.max(handle.x, 8), root.width - 8) : 0
+            readonly property real keptY: handle ? Math.min(Math.max(handle.y, 8), root.height - 8) : 0
+            x: (active ? keptX : (handle ? handle.x : 0)) - width / 2
+            y: (active ? keptY : (handle ? handle.y : 0)) - height / 2
             width: 22
             height: 22
-            visible: modelData !== null && modelData.x > -20 && modelData.x < root.width + 20
-                     && modelData.y > -20 && modelData.y < root.height + 20
+            visible: active || (handle !== null && handle.x > -20 && handle.x < root.width + 20
+                                && handle.y > -20 && handle.y < root.height + 20)
 
             // The arrow: where the dot moves when the value grows.
             Rectangle {
-                visible: dot.modelData !== null && dot.modelData.pixelsPerMillimetre > 0.5
+                visible: dot.handle !== null && dot.handle.pixelsPerMillimetre > 0.5
                 x: dot.width / 2 + dot.dirX * 17 - width / 2
                 y: dot.height / 2 + dot.dirY * 17 - height / 2
                 width: 7
@@ -115,7 +119,7 @@ Item {
                 preventStealing: true
                 cursorShape: Qt.SizeAllCursor
                 Accessible.role: Accessible.Slider
-                Accessible.name: dot.modelData ? root.labelFor(dot.modelData.parameter) : ""
+                Accessible.name: dot.handle ? root.labelFor(dot.handle.parameter) : ""
 
                 onPressed: mouse => {
                     // The pointer position in the view, not in the dot: the dot moves with the
@@ -137,9 +141,11 @@ Item {
                         bubble.hide()
                     }
                 }
+                // The grab was taken away (a gesture of the system, a window that lost the focus):
+                // the drag ends with what it has, it is not thrown away. Esc is what takes back.
                 onCanceled: {
-                    if (!bubble.typing) {
-                        Handles.cancelDrag()
+                    if (Handles.editing && !bubble.typing) {
+                        Handles.endDrag()
                         bubble.hide()
                     }
                 }

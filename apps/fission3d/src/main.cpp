@@ -150,7 +150,7 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "(click its tile), type:50,tab,20,enter (type sizes), set:style,bold (a word "
             "of the chosen step), grab:width,40,0,8 (press a handle, pull it by view pixels "
             "in small moves, let go), expect:width,40 (fail unless the chosen step has at least "
-            "that value and no drag is left), separated by "
+            "that value, no drag is left and its handles are still shown), separated by "
             "semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
@@ -212,13 +212,16 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                         value = entry.toMap()["value"].toDouble();
                     }
                 }
-                if (value < spec.value(1).toDouble() || handles->editing()) {
+                if (value < spec.value(1).toDouble() || handles->editing() ||
+                    handles->handles().isEmpty()) {
                     qWarning().noquote()
-                        << QStringLiteral("expected %1 >= %2 and nothing being dragged, found %3 "
-                                          "(editing: %4)")
+                        << QStringLiteral(
+                               "expected %1 >= %2, nothing being dragged and the handles "
+                               "still there; found %3 (editing: %4, handles: %5)")
                                .arg(spec.value(0), spec.value(1))
                                .arg(value)
-                               .arg(handles->editing());
+                               .arg(handles->editing())
+                               .arg(handles->handles().size());
                     g_simulationFailure = 4;
                 }
             });
@@ -631,8 +634,11 @@ int main(int argc, char* argv[]) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
         const QString simulate = options.simulate;
+        // True once the pictures are being taken: the fallback below must not end a long
+        // simulation after 4 seconds (and report success for what never ran).
+        const auto started = std::make_shared<bool>(false);
         auto grab = [window, viewport, placementController, &documentModel, handleController, path,
-                     simulate, started = std::make_shared<bool>(false)] {
+                     simulate, started] {
             if (*started) {
                 return; // the first frame can be reported more than once
             }
@@ -654,7 +660,10 @@ int main(int argc, char* argv[]) {
         if (viewport != nullptr) {
             QObject::connect(viewport, &fission::ui::Viewport3D::firstFrameShown, &app, grab);
             // No graphics device (software rendering): the 3D view never reports a frame.
-            QTimer::singleShot(4000, &app, [window, path] {
+            QTimer::singleShot(4000, &app, [window, path, started] {
+                if (*started) {
+                    return;
+                }
                 const QImage frame = window->grabWindow();
                 QCoreApplication::exit(!frame.isNull() && frame.save(path) ? 0 : 3);
             });

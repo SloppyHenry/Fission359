@@ -116,6 +116,14 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=0,90,260 --simulate "put:box;grab:width,120,0,12;expect:width,45")
   set_tests_properties(app_handle_drag PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90)
+  # Pulled far beyond the edge of the view the handle must stay with the pointer: it once vanished
+  # under it, the drag was thrown away and the handles were gone.
+  add_test(NAME app_handle_drag_far
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-handle-far.png" --language en --size 1280x800
+            --camera=-30,36,300 --simulate "put:box;grab:width,900,0,30;expect:width,100")
+  set_tests_properties(app_handle_drag_far PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)
