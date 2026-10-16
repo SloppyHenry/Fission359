@@ -573,12 +573,19 @@ void Viewport3D::mouseDoubleClickEvent(QMouseEvent* event) {
 }
 
 void Viewport3D::hoverMoveEvent(QHoverEvent* event) {
+    m_hoverSimulated = false;
     m_hoverPosition = event->position();
     hoverAgain();
     QQuickRhiItem::hoverMoveEvent(event);
 }
 
 void Viewport3D::hoverLeaveEvent(QHoverEvent* event) {
+    if (m_hoverSimulated) {
+        // The pointer that was played by hand (--simulate) stays where it was put, whatever
+        // the real pointer does.
+        QQuickRhiItem::hoverLeaveEvent(event);
+        return;
+    }
     m_hoverPosition.reset();
     m_pickQueue.erase(
         std::remove_if(m_pickQueue.begin(), m_pickQueue.end(),
@@ -625,6 +632,7 @@ void Viewport3D::requestPick(PickIntent intent, const QPointF& position, bool ex
 }
 
 void Viewport3D::hoverAt(double x, double y) {
+    m_hoverSimulated = true;
     m_hoverPosition = QPointF(x, y);
     hoverAgain();
 }

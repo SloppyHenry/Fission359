@@ -265,6 +265,7 @@ private:
     std::atomic<int> m_picksInFlight{0}; ///< asked of the renderer, answer not yet here
     quint64 m_nextPickId = 1;
     std::optional<QPointF> m_hoverPosition; ///< where the pointer is (no button pressed)
+    bool m_hoverSimulated = false;          ///< `hoverAt` put it there, not a real pointer
     QPointF m_pressPosition;
     Qt::MouseButton m_pressButton = Qt::NoButton;
     Qt::KeyboardModifiers m_pressModifiers;

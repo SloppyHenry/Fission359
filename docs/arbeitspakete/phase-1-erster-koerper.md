@@ -437,7 +437,7 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
   Bilder. `--benchmark` misst zusätzlich die Antwortzeit des Pick-Durchgangs.
 
 **Wie getestet**
-- Mac (arm64, Debug): `scripts/test` 261 von 261 grün; Abdeckung `src/core` 95,0 % (`scripts/coverage`, Mindestwert 85 %).
+- Mac (arm64, Debug): `scripts/test` 261 von 261 grün; CI auf Mac und Ubuntu grün; Abdeckung `src/core` 95,0 % (`scripts/coverage`, Mindestwert 85 %).
 - **Auswahl-Modell** (`tests/unit/core/test_selection.cpp`): Klick, ⇧-Klick, Hintergrund, Doppelklick, Rahmen, Filter, Namen von Quader und
   Zylinder (12 Kanten, 8 Ecken, Naht des Zylinders), doppelte Namen gehören niemandem, Wiederfinden nach Maßänderung, Loslassen.
 - **Kernel:** Kanten kennen beide Flächen und Ecken (Quader: jede Fläche 4 Kanten, jede Ecke 3; Zylinder-Naht).
@@ -449,7 +449,12 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
   Doppelklick, Rahmen statt Klick).
 - Bilder im echten Programm mit `--simulate` (Metal): [ap-1.4-hover.png](../screenshots/ap-1.4-hover.png),
   [ap-1.4-kante.png](../screenshots/ap-1.4-kante.png), [ap-1.4-koerper.png](../screenshots/ap-1.4-koerper.png).
-- Linux: siehe „Linux“ unten.
+- **Linux** (CI-gebautes AppImage, Ubuntu 24.04, auf dem Testrechner Debian 13 unter Xvfb mit OpenGL, Mesa-Software-Renderer): Klick
+  auf eine Kante, Rahmen um den Körper und **Hover mit dem echten Mauszeiger** (per `xdotool`) liefern dasselbe wie auf dem Mac,
+  das ID-Bild liegt auch unter OpenGL richtig herum (Kante an der richtigen Stelle). Nicht geprüft: Vulkan (unter Xvfb nicht
+  startbar) und die Zeiten auf einer echten Intel/AMD-GPU (dort war nur der Software-Renderer erreichbar: 155 ms je Bild, die
+  Messung gilt nicht). Die CI (Ubuntu 24.04, Debug mit Speicherprüfung und Release) ist grün; die Grafikkarten-Tests werden dort
+  übersprungen, weil es keine gibt.
 
 **So probierst du es aus**
 1. `scripts/run`. Fahre mit der Maus über den Würfel: Die Fläche unter dem Zeiger leuchtet; unten steht, was ein Klick tut.
