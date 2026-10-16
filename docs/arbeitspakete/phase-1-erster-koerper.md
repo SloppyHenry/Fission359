@@ -379,7 +379,7 @@ Der Bildabstand war in allen Läufen 16,7 ms (60 Hz des Bildschirms): **60 fps b
 ---
 
 ### AP-1.4 Auswahl und Hover
-**Status:** Review (2026-10-16, PR #21; Mac getestet, Linux über CI und Testrechner) · **Größe:** M · **Abhängigkeiten:** AP-1.3
+**Status:** erledigt (2026-10-16, PR #21; vom Product Owner ausprobiert und freigegeben; Hover-Zeit siehe Einschränkungen) · **Größe:** M · **Abhängigkeiten:** AP-1.3
 
 **Umfang:**
 - Picking von Körper, Fläche, Kante und Ecke über ID-Buffer; Hover-Hervorhebung
