@@ -162,3 +162,10 @@ Starten mit Fenster: `~/tools/tart-2.41.0/tart.app/Contents/MacOS/tart run fissi
 Was damit geprüft wurde (AP-0.7): Die App aus dem CI-`.dmg` startet dort und meldet ihre Version; die Quarantäne wird von
 Gatekeeper erkannt (App-Translocation), der Start wartet dann auf die Entscheidung im Dialog. Der Dialog selbst und das
 Fenster ließen sich ohne Bildschirm nicht prüfen, das macht der Product Owner im VM-Fenster.
+
+## Bedienung ohne Bildschirm prüfen (AP-1.4, Testrechner B)
+
+Das CI-gebaute AppImage lässt sich auf Testrechner B unter einem virtuellen Bildschirm (Xvfb) mit echtem Mauszeiger prüfen:
+`Xvfb :97 -screen 0 1600x1000x24 &`, dann `DISPLAY=:97 QT_QPA_PLATFORM=xcb QSG_RHI_BACKEND=opengl ./squashfs-root/AppRun --smoke-test bild.png
+--simulate "…"`, und währenddessen `xdotool mousemove x y` (dafür ist das Paket `xdotool` dort installiert). Es läuft der Software-Renderer
+(OpenGL über Mesa); Vulkan startet unter Xvfb nicht, und Zeiten sind damit nicht aussagekräftig. Danach `Xvfb` beenden und das Kopierte löschen.
