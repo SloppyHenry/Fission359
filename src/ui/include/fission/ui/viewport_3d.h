@@ -10,9 +10,11 @@
 #include <QPointF>
 #include <QQuickRhiItem>
 #include <QString>
+#include <QTimer>
 #include <QVariantAnimation>
 #include <QVariantList>
 
+#include <atomic>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -155,6 +157,7 @@ public:
             std::uint32_t number = 0;
         };
         std::vector<Element> elements; ///< for a region: everything found in it
+        double workMilliseconds = 0.0; ///< drawing the picture and getting it back
     };
 
     /// Which kinds of things can be hovered and chosen right now.
@@ -213,6 +216,8 @@ signals:
     void firstFrameShown();
     /// The answer to `requestPick`. `body` is empty when the pointer was over nothing.
     void picked(int intent, bool extend, const QString& body, int kind, int number);
+    /// How long the graphics card needed for the last answer (developer option --benchmark).
+    void pickTimed(double milliseconds);
     /// The element under the pointer changed (`body` empty: none).
     void hoverChanged(const QString& body, int kind, int number);
     void highlightsChanged();
@@ -256,6 +261,8 @@ private:
     std::vector<render::Highlight> m_selectionHighlights;
     std::optional<render::Highlight> m_hover;
     std::deque<PickRequest> m_pickQueue;
+    QTimer m_pickTimer;
+    std::atomic<int> m_picksInFlight{0}; ///< asked of the renderer, answer not yet here
     quint64 m_nextPickId = 1;
     std::optional<QPointF> m_hoverPosition; ///< where the pointer is (no button pressed)
     QPointF m_pressPosition;

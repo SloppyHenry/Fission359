@@ -15,6 +15,7 @@
 #include <QString>
 #include <QTimer>
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -197,6 +198,63 @@ void playActions(fission::ui::Viewport3D* viewport, const QString& actions,
     QTimer::singleShot(delay + 500, viewport, std::move(done));
 }
 
+// Part of --benchmark: how long the 3D view needs to say what is under the pointer (AP-1.4,
+// "hover feedback under 16 ms"). The pointer moves over the scene; every answer starts the next
+// question after 8 ms, about as often as a mouse reports. The time runs from the question until
+// the answer is in the interface thread.
+void measurePicks(fission::ui::Viewport3D* viewport) {
+    constexpr int kSamples = 150;
+    struct State {
+        std::vector<double> milliseconds;
+        std::vector<double> work; ///< the graphics card's part of it
+        std::chrono::steady_clock::time_point asked;
+        int hits = 0;
+    };
+    auto state = std::make_shared<State>();
+    auto ask = [viewport, state] {
+        const int n = static_cast<int>(state->milliseconds.size());
+        state->asked = std::chrono::steady_clock::now();
+        const double cx = 0.5 * viewport->width();
+        const double cy = 0.5 * viewport->height();
+        viewport->hoverAt(cx - 200.0 + (n * 37) % 400, cy - 150.0 + (n * 53) % 300);
+    };
+    QObject::connect(viewport, &fission::ui::Viewport3D::pickTimed, viewport,
+                     [state](double ms) { state->work.push_back(ms); });
+    QObject::connect(
+        viewport, &fission::ui::Viewport3D::picked, viewport,
+        [viewport, state, ask](int, bool, const QString& body, int, int) {
+            state->milliseconds.push_back(std::chrono::duration<double, std::milli>(
+                                              std::chrono::steady_clock::now() - state->asked)
+                                              .count());
+            state->hits += body.isEmpty() ? 0 : 1;
+            if (static_cast<int>(state->milliseconds.size()) < kSamples) {
+                QTimer::singleShot(8, viewport, ask);
+                return;
+            }
+            std::vector<double> sorted = state->milliseconds;
+            std::sort(sorted.begin(), sorted.end());
+            double sum = 0.0;
+            for (const double v : sorted) {
+                sum += v;
+            }
+            double workSum = 0.0;
+            double workMax = 0.0;
+            for (const double v : state->work) {
+                workSum += v;
+                workMax = std::max(workMax, v);
+            }
+            const double workAvg = state->work.empty() ? 0.0 : workSum / state->work.size();
+            std::printf("pick samples=%d hits=%d answer_ms_avg=%.2f answer_ms_p95=%.2f "
+                        "answer_ms_max=%.2f card_ms_avg=%.2f card_ms_max=%.2f\n",
+                        kSamples, state->hits, sum / kSamples,
+                        sorted[static_cast<std::size_t>(0.95 * (kSamples - 1))], sorted.back(),
+                        workAvg, workMax);
+            std::fflush(stdout);
+            QCoreApplication::quit();
+        });
+    ask();
+}
+
 // Developer option --benchmark: a scene of the wanted size, the camera turns by itself, and the
 // time per frame is printed (AP-1.3: the viewport must hold 60 frames per second at 2 million
 // triangles). The graphics card's own time is the number that counts: the screen refresh
@@ -207,6 +265,7 @@ void runBenchmark(QQuickWindow* window, fission::ui::Viewport3D* viewport,
     constexpr int kMeasuredFrames = 300; // frame swaps; every one asks for the next frame
     struct State {
         int frames = 0;
+        bool orbiting = true;
         std::chrono::steady_clock::time_point started;
     };
     auto state = std::make_shared<State>();
@@ -237,10 +296,13 @@ void runBenchmark(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                                 stats.gpuAverageMs, stats.gpuP95Ms, stats.cpuAverageMs,
                                 stats.frames > 0 ? wall / stats.frames : 0.0);
                     std::fflush(stdout);
-                    QCoreApplication::quit();
+                    state->orbiting = false;
+                    measurePicks(viewport);
                     return;
                 }
-                viewport->orbitBy(1.5, 0.0); // asks for the next frame
+                if (state->orbiting) {
+                    viewport->orbitBy(1.5, 0.0); // asks for the next frame
+                }
             });
         });
 }

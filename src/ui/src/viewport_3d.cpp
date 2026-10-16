@@ -158,6 +158,7 @@ private:
             [item, request, renderer](std::vector<std::uint32_t> picture) {
                 Viewport3D::PickResult result;
                 result.request = request;
+                result.workMilliseconds = renderer->lastPickMilliseconds();
                 if (const auto found = render::choosePicked(picture, request.filter)) {
                     result.body = QString::fromStdString(renderer->bodyOfSlot(found->slot));
                     result.kind = found->kind;
@@ -238,6 +239,17 @@ Viewport3D::Viewport3D(QQuickItem* parent) : QQuickRhiItem(parent) {
         m_camera.setPose(
             render::blend(m_animationFrom, m_animationTo, static_cast<float>(value.toDouble())));
         cameraMoved();
+    });
+
+    // The graphics card hands over the pick picture with a later frame. While a question is
+    // open, frames are asked for, so that the answer does not wait for the next mouse move.
+    m_pickTimer.setInterval(8);
+    connect(&m_pickTimer, &QTimer::timeout, this, [this] {
+        if (m_pickQueue.empty() && m_picksInFlight.load() == 0) {
+            m_pickTimer.stop();
+        } else {
+            update();
+        }
     });
 
     connect(this, &Viewport3D::paletteChanged, this, [this] {
@@ -607,6 +619,9 @@ void Viewport3D::requestPick(PickIntent intent, const QPointF& position, bool ex
     }
     m_pickQueue.push_back(request);
     update();
+    if (!m_pickTimer.isActive()) {
+        m_pickTimer.start();
+    }
 }
 
 void Viewport3D::hoverAt(double x, double y) {
@@ -623,6 +638,9 @@ void Viewport3D::requestRegionPick(const QRectF& area, bool extend) {
     request.filter = m_filter;
     m_pickQueue.push_back(request);
     update();
+    if (!m_pickTimer.isActive()) {
+        m_pickTimer.start();
+    }
 }
 
 void Viewport3D::hoverAgain() {
@@ -657,6 +675,8 @@ void Viewport3D::reportPicked(PickResult result) {
 }
 
 void Viewport3D::finishPick(const PickResult& result) {
+    --m_picksInFlight;
+    emit pickTimed(result.workMilliseconds);
     const PickRequest& request = result.request;
     if (request.intent == PickIntent::region) {
         QVariantList elements;
@@ -874,6 +894,7 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect, bool pickIdle) {
     if (pickIdle && !m_pickQueue.empty()) {
         snapshot.pick = m_pickQueue.front();
         m_pickQueue.pop_front();
+        ++m_picksInFlight;
     }
     return snapshot;
 }

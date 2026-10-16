@@ -1138,7 +1138,11 @@ bool SceneRenderer::pickPass(QRhiCommandBuffer* cb, const QSize& targetSize, con
 
     m_pickDone = std::move(done);
     m_pickResult = {};
+    m_pickStarted = std::chrono::steady_clock::now();
     m_pickResult.completed = [this, size] {
+        m_lastPickMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() -
+                                                                 m_pickStarted)
+                           .count();
         const std::size_t count = static_cast<std::size_t>(size.width()) * size.height();
         std::vector<std::uint32_t> picture(count, 0);
         if (m_pickResult.data.size() >= static_cast<qsizetype>(count * sizeof(std::uint32_t))) {

@@ -21,6 +21,7 @@ add_executable(fission_unit_tests
   ui/test_theme_tokens.cpp
   ui/test_numbers.cpp
   ui/test_document_model.cpp
+  ui/test_selection_controller.cpp
   ui/test_viewport_navigation.cpp
   ui/test_printer_catalog.cpp)
 

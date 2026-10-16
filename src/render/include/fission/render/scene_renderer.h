@@ -12,6 +12,7 @@
 #include <QSize>
 #include <QVector3D>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -102,6 +103,8 @@ public:
                     const QMatrix4x4& view, const QMatrix4x4& projection,
                     const core::SelectionFilter& filter, PickCallback done);
     bool pickInFlight() const { return m_pickInFlight; }
+    /// How long the last pick took from drawing the picture to having it back, in milliseconds.
+    double lastPickMilliseconds() const { return m_lastPickMs; }
     /// The id of the body drawn with this slot number in the pick picture, or empty.
     std::string bodyOfSlot(unsigned slot) const;
     /// The slot number of a body, or 0 if it has none (too many bodies).
@@ -239,6 +242,8 @@ private:
     QRhiReadbackResult m_pickResult;
     PickCallback m_pickDone;
     bool m_pickInFlight = false;
+    double m_lastPickMs = 0.0;
+    std::chrono::steady_clock::time_point m_pickStarted;
 
     // --- highlights ---
     /// Works out what to draw for `frame.highlights` and uploads it. Before the pass starts.

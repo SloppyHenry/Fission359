@@ -11,12 +11,14 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <memory>
 #include <optional>
 #include <vector>
 
 #include "fission/geo/occt/kernel.h"
+#include "fission/render/benchmark_scene.h"
 #include "fission/render/pick.h"
 #include "fission/render/scene_renderer.h"
 
@@ -357,4 +359,97 @@ TEST_CASE("pick on the graphics card: bodies keep their numbers", "[pick][gpu]")
     CHECK(gpu.renderer->slotOfBody("box") == box);
     CHECK(gpu.renderer->slotOfBody("a") == 0);
     CHECK(gpu.renderer->bodyOfSlot(box) == "box");
+}
+
+TEST_CASE("pick on the graphics card: 2 million triangles in under 16 ms", "[pick][gpu][perf]") {
+    Gpu gpu;
+    if (!gpu.rhi) {
+        SKIP("no graphics interface on this machine");
+    }
+    // Drawing the picture and having it back must fit the budget of one frame
+    // (docs/03-architektur.md §10), at the size of the scene the budget is given for.
+    gpu.upload(*makeBenchmarkScene(2'000'000));
+    constexpr int kRuns = 30;
+    std::vector<double> milliseconds;
+    for (int run = 0; run < kRuns; ++run) {
+        const auto started = std::chrono::steady_clock::now();
+        const auto picture = gpu.pick({kWidth / 2 + run, kHeight / 2}, SelectionFilter::all());
+        milliseconds.push_back(
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
+                .count());
+        REQUIRE(picture.size() == static_cast<std::size_t>(kPickSize * kPickSize));
+    }
+    std::sort(milliseconds.begin(), milliseconds.end());
+    const double median = milliseconds[milliseconds.size() / 2];
+    WARN("pick at 2 million triangles: median " << median << " ms, worst " << milliseconds.back()
+                                                << " ms");
+    CHECK(median < 16.0);
+}
+
+TEST_CASE("pick region: everything in a rectangle, one entry each", "[pick]") {
+    std::vector<std::uint32_t> picture(6 * 6, 0);
+    picture[0] = packPickId(SelectableKind::face, 1, 5);
+    picture[1] = packPickId(SelectableKind::face, 1, 5);
+    picture[2] = packPickId(SelectableKind::face, 1, 6);
+    picture[7] = packPickId(SelectableKind::face, 2, 1);
+    picture[8] = packPickId(SelectableKind::edge, 2, 3);
+    picture[9] = packPickId(SelectableKind::vertex, 3, 8);
+
+    // Bodies can be chosen: one entry per body, in the order they were first seen.
+    auto found = chooseInRegion(picture, SelectionFilter::all());
+    REQUIRE(found.size() == 3);
+    CHECK(found[0].slot == 1);
+    CHECK(found[1].slot == 2);
+    CHECK(found[2].slot == 3);
+    for (const auto& element : found) {
+        CHECK(element.kind == SelectableKind::body);
+    }
+
+    // Only faces: each face once.
+    found = chooseInRegion(picture, SelectionFilter::only(SelectableKind::face));
+    REQUIRE(found.size() == 3);
+    CHECK(found[0].number == 5);
+    CHECK(found[1].number == 6);
+    CHECK(found[2].number == 1);
+
+    found = chooseInRegion(picture, SelectionFilter::only(SelectableKind::edge));
+    REQUIRE(found.size() == 1);
+    CHECK(found[0].number == 3);
+
+    CHECK(chooseInRegion(std::vector<std::uint32_t>(4, 0), SelectionFilter::all()).empty());
+    SelectionFilter nothing{false, false, false, false};
+    CHECK(chooseInRegion(picture, nothing).empty());
+}
+
+TEST_CASE("pick on the graphics card: a rectangle finds what is inside it", "[pick][gpu]") {
+    Gpu gpu;
+    if (!gpu.rhi) {
+        SKIP("no graphics interface on this machine");
+    }
+    const auto region = [&](const QRect& area, const SelectionFilter& filter) {
+        std::vector<std::uint32_t> picture;
+        QRhiCommandBuffer* cb = nullptr;
+        REQUIRE(gpu.rhi->beginOffscreenFrame(&cb) == QRhi::FrameOpSuccess);
+        REQUIRE(gpu.renderer->pickRegion(
+            cb, QSize(kWidth, kHeight), area, gpu.camera.view, gpu.camera.projection, filter,
+            [&picture](std::vector<std::uint32_t> p) { picture = std::move(p); }));
+        gpu.rhi->endOffscreenFrame();
+        REQUIRE(picture.size() == static_cast<std::size_t>(area.width() * area.height()));
+        return chooseInRegion(picture, filter);
+    };
+    const QPoint inside = gpu.camera.pixel(10.0F, 10.0F);
+
+    // A rectangle on the box finds the body; one beside it finds nothing.
+    auto found = region(QRect(inside.x() - 20, inside.y() - 20, 40, 40), SelectionFilter::all());
+    REQUIRE(found.size() == 1);
+    CHECK(gpu.renderer->bodyOfSlot(found[0].slot) == "box");
+    CHECK(region(QRect(5, 5, 40, 40), SelectionFilter::all()).empty());
+
+    // Looking down, the rectangle over the whole box sees the top face and the four edges of
+    // the top; the sides are edge-on and the bottom is hidden.
+    const QRect whole(gpu.camera.pixel(-1.0F, 21.0F), gpu.camera.pixel(21.0F, -1.0F));
+    found = region(whole, SelectionFilter::only(SelectableKind::face));
+    CHECK(found.size() == 1);
+    found = region(whole, SelectionFilter::only(SelectableKind::vertex));
+    CHECK(found.size() == 4);
 }
