@@ -188,7 +188,7 @@ struct Gpu {
         }
         renderer = std::make_unique<SceneRenderer>(rhi.get());
         const auto kernel = fission::geo::occt::makeKernel();
-        const auto box = kernel->makeBox(20, 20, 20, {0, 0, 0});
+        const auto box = kernel->makeBox(20, 20, 20, {0, 0, 0}, 0.0);
         mesh = std::make_shared<fission::geo::TriangleMesh>(kernel->tessellate(box.solid, {}));
         RenderScene scene;
         RenderBody body;

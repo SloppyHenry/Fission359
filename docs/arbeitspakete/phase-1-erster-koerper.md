@@ -495,7 +495,7 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
 ---
 
 ### AP-1.5 Grundformen
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
+**Status:** in Arbeit (Teil a erledigt, b–d offen) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
 
 **Umfang:**
 - Quader (mit optionalem Eckenradius), Zylinder, Kugel, Kegel, Torus, Röhre, Prisma (n-eckig), Pyramide, Halbkugel, Keil, Stern (2D-Stern hochgezogen), Text (flach, System- und mitgelieferte Schriften)
@@ -510,7 +510,34 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
 - [ ] Jede Form lässt sich per Drag-and-drop platzieren und über Griffe oder Tastatur exakt bemaßen
 - [ ] Quader mit Eckenradius 5 mm auf doppelte Breite gezogen → Radius bleibt exakt 5 mm (Golden-Test; Ablauf D, Schritt 1)
 - [ ] Text: Umlaute, ß, Emojis werden sauber abgelehnt („Diese Schrift hat kein Zeichen für …“)
-- [ ] Golden-Tests: Volumen jeder Form = analytischer Wert (rel. 1e-6)
+- [x] Golden-Tests: Volumen jeder Form = analytischer Wert (rel. 1e-6) *(Teil a; Text folgt mit Teil b)*
+
+#### Zerlegung (2026-10-16, vom Product Owner bestätigt)
+Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpkg.json` bleibt unberührt).
+
+| Teil | Status | Inhalt |
+|---|---|---|
+| **a) Formen im Kern** | erledigt | Alle Formen als Feature-Typen (Kugel, Halbkugel, Kegel, Torus, Röhre, Prisma, Pyramide, Keil, Stern), Quader mit Eckenradius, Namen für jede Fläche; Golden-Tests mit analytischen Werten |
+| **b) Text** | offen | Text-Feature, mitgelieferte Schriften (IBM Plex) plus Systemschriften, Meldung „Diese Schrift hat kein Zeichen für …“ |
+| **c) Galerie und Platzieren** | offen | Formen-Galerie mit 3D-Vorschau, Drag-and-drop, „Auf Fläche legen“, „Als Loch“-Schalter, Hinweiszeile, Tooltip-Karten, Synonyme (Regel 10), Texte für alle Formen (Deutsch und Englisch) |
+| **d) Griffe** | offen | Maß-Griffe in 3D (Griff-Art „Achsen“; „Klassisch“ kommt mit AP-1.11), Wertblase, Tippen ersetzt Ziehen, `Tab` wechselt das Maß, Esc nimmt zurück; Ablauf D Schritt 1 als automatischer Test |
+
+**Festlegungen (Product Owner, 2026-10-16)**
+- Griffe: nur „Achsen“ in diesem AP; „Klassisch“ gehört zu den Einstellungen (AP-1.11).
+- „Umlaute, ß, Emojis werden sauber abgelehnt“ heißt: Umlaute und ß funktionieren, wenn die Schrift sie hat; nur Zeichen, die
+  die gewählte Schrift nicht kennt (z. B. Emojis), werden mit der Meldung abgelehnt.
+- Schriften: IBM Plex Sans und Mono (liegen schon im Projekt, OFL) plus die Systemschriften; Deko-Schriften kommen mit den Motiven.
+
+**Entwurfsentscheidungen Teil a** (keine Rückfrage nötig, im Abschlussvermerk wiederholt)
+- Alle Formen stehen mit der Unterseite auf der Ebene z und sind in der Draufsicht um (x, y) zentriert (wie der Quader).
+- **Eckenradius** rundet die vier senkrechten Kanten (Ablauf D: „Ecken messen“); er darf höchstens die halbe kürzere Seite sein.
+  Ein größerer Wert ist ein Fehler am Schritt, nie ein stilles Abschneiden (Regel 6). Die Griffe (Teil d) sperren deshalb beim
+  Ziehen von Breite/Tiefe ab, bevor der Radius nicht mehr passt.
+- **Kegel** mit Deckelradius 0 ist spitz, mit Deckelradius > 0 ein Kegelstumpf; gleiche Radien ergeben einen Zylinder.
+- **Pyramide** hat ein Rechteck (Breite × Tiefe) als Grundfläche, **Prisma** und **Stern** n Ecken (3 bis 64, ganze Zahl).
+- **Keil** ist eine Rampe: vorne (−Y) Höhe 0, hinten (+Y) volle Höhe.
+- Flächen-Namen: `top`, `bottom`, `side`, `surface`; bei Prisma und Stern `side1` … (Prisma: `side1` schaut nach vorn, dann gegen den
+  Uhrzeigersinn von oben; Stern: `side1` folgt der Spitze nach hinten); Eckenradius: `cornerFrontLeft` …
 
 ---
 

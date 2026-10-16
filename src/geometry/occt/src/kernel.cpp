@@ -11,8 +11,12 @@ namespace {
 
 class OcctKernel final : public GeometryKernel {
 public:
-    NamedSolid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner) const override {
-        return makeNamedBox(sizeX, sizeY, sizeZ, corner);
+    NamedSolid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner,
+                       double cornerRadius) const override {
+        return makeNamedBox(sizeX, sizeY, sizeZ, corner, cornerRadius);
+    }
+    NamedSolid makePrimitive(const PrimitiveSpec& spec, Point3d base) const override {
+        return makeNamedPrimitive(spec, base);
     }
     NamedSolid makeCylinder(double radius, double height, Point3d base) const override {
         return makeNamedCylinder(radius, height, base);

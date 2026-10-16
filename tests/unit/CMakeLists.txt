@@ -12,6 +12,7 @@ add_executable(fission_unit_tests
   features/test_primitives.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
+  geometry/test_shapes.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
   render/test_picking.cpp

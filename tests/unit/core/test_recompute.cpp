@@ -26,19 +26,23 @@ public:
     explicit CountingKernel(std::unique_ptr<fission::geo::GeometryKernel> inner)
         : inner_(std::move(inner)) {}
 
-    fission::geo::NamedSolid makeBox(double x, double y, double z,
-                                     fission::geo::Point3d corner) const override {
+    fission::geo::NamedSolid makeBox(double x, double y, double z, fission::geo::Point3d corner,
+                                     double cornerRadius) const override {
         ++boxes;
         if (failBoxes) {
             throw fission::geo::GeometryError(fission::geo::GeometryErrorCode::kernelFailure,
                                               "boom (raw kernel text)");
         }
-        return inner_->makeBox(x, y, z, corner);
+        return inner_->makeBox(x, y, z, corner, cornerRadius);
     }
     fission::geo::NamedSolid makeCylinder(double r, double h,
                                           fission::geo::Point3d base) const override {
         ++cylinders;
         return inner_->makeCylinder(r, h, base);
+    }
+    fission::geo::NamedSolid makePrimitive(const fission::geo::PrimitiveSpec& spec,
+                                           fission::geo::Point3d base) const override {
+        return inner_->makePrimitive(spec, base);
     }
     fission::geo::SolidReport measure(const fission::geo::Solid& s) const override {
         return inner_->measure(s);
@@ -76,7 +80,7 @@ public:
         return std::nullopt;
     }
     FeatureResult execute(const ExecuteInput& input, const ExecuteContext& context) const override {
-        auto made = context.kernel.makeBox(10, 10, input.params.at("height").value, {});
+        auto made = context.kernel.makeBox(10, 10, input.params.at("height").value, {}, 0.0);
         FeatureResult result;
         result.outputs.push_back({input.feature.outputs.at(0), made.solid, made.faces});
         return result;
@@ -105,7 +109,7 @@ public:
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
-        auto made = context.kernel.makeBox(5, 5, 5, {});
+        auto made = context.kernel.makeBox(5, 5, 5, {}, 0.0);
         FeatureResult result;
         result.outputs.push_back({input.feature.outputs.at(0), made.solid, made.faces});
         return result;
@@ -122,7 +126,7 @@ public:
     std::vector<ParamSpec> parameters() const override { return {}; }
     std::optional<FeatureIssue> validate(const ResolvedParams&) const override { return {}; }
     FeatureResult execute(const ExecuteInput& input, const ExecuteContext& context) const override {
-        auto made = context.kernel.makeBox(5, 5, 5, {});
+        auto made = context.kernel.makeBox(5, 5, 5, {}, 0.0);
         FeatureResult result;
         result.outputs.push_back({input.feature.outputs.at(0), made.solid, {}});
         return result;

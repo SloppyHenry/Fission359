@@ -262,3 +262,45 @@ TEST_CASE("selection: lets go of what cannot be found for certain", "[selection]
     CHECK(selection.items()[0].kind == SelectableKind::body);
     CHECK(selection.items()[1].name == "F1/x/a");
 }
+
+TEST_CASE("names: every basic shape names all its faces", "[selection][naming]") {
+    const std::vector<std::pair<const char*, std::map<std::string, std::string>>> shapes{
+        {"box", {{"cornerRadius", "4"}}},
+        {"sphere", {}},
+        {"hemisphere", {}},
+        {"cone", {}},
+        {"cone", {{"topRadius", "4"}}},
+        {"torus", {}},
+        {"tube", {}},
+        {"prism", {}},
+        {"pyramid", {}},
+        {"wedge", {}},
+        {"star", {}},
+    };
+    for (const auto& [type, values] : shapes) {
+        INFO(type);
+        Scene scene;
+        const BodyId body = scene.add(type, values);
+        const auto result = recompute(scene.document, scene.registry, *scene.kernel, scene.cache);
+        REQUIRE(result.has_value());
+        const auto& made = result->bodies.at(body);
+        const auto report = scene.kernel->measure(made.solid);
+        const ElementNames names =
+            ElementNames::build(made.faces, scene.kernel->tessellate(made.solid, {}));
+        CHECK(report.valid);
+        CHECK(static_cast<int>(names.faceCount()) == report.faces);
+    }
+}
+
+TEST_CASE("names: a box with rounded corners names its edges as well", "[selection][naming]") {
+    Scene scene;
+    const BodyId body = scene.add("box", {{"cornerRadius", "4"}});
+    const auto names = scene.names();
+    const ElementNames& n = names.at(body);
+    CHECK(n.faceCount() == 10);
+    // 10 faces: top and bottom have 8 edges each, the 8 vertical ones join a flat side and a
+    // rounded corner: every edge joins two different faces, so each has a name.
+    CHECK(n.edgeCount() == 24);
+    CHECK(n.cornerCount() == 16);
+    CHECK(n.findFace("F1/box/cornerFrontLeft").has_value());
+}

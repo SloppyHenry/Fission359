@@ -42,7 +42,13 @@ Punkte auf, an denen die Architekturskizze nicht ausreicht oder dem Code im Weg 
 8. **Eingänge vor Ausgängen:** Ein Schritt darf nur Körper benutzen, die ein früherer Schritt erzeugt (`addFeature`
    lehnt anderes ab). Der Graph ist dadurch von Konstruktion an kreisfrei; Verweise auf Flächen anderer Schritte
    kommen mit AP-2.10 dazu.
-9. **Ausdrücke:** Funktionsargumente trennt `;` (oder Komma mit Leerzeichen), weil das Komma Dezimaltrenner ist.
+9. **Grundformen über eine Beschreibung (AP-1.5):** Außer Quader und Zylinder (eigene Aufrufe) baut der Kernel alle
+   Grundformen über `makePrimitive(PrimitiveSpec, base)`. `PrimitiveSpec` ist ein `std::variant` aus kleinen
+   Beschreibungen (`SphereSpec`, `ConeSpec`, …) in `fission/geo/primitives.h`. Eine neue Form ist eine Beschreibung plus
+   ein Feature-Typ; die Schnittstelle bekommt keine zehn neuen Aufrufe, und die Zähl-Hüllen der Tests brauchen genau
+   eine Weiterleitung. Alle Formen stehen auf der Ebene z und sind in der Draufsicht um (x, y) zentriert; `makeBox`
+   bekommt den Eckenradius als Parameter.
+10. **Ausdrücke:** Funktionsargumente trennt `;` (oder Komma mit Leerzeichen), weil das Komma Dezimaltrenner ist.
    Rechnen mit Dimensionen (Länge, Winkel, Potenzen davon), damit `sqrt(a*a + b*b)` geht; ein Feld nimmt am Ende nur
    Länge, Winkel oder Zahl. Eine Zahl ohne Einheit ist in einem Längenfeld die Standardeinheit des Dokuments.
 

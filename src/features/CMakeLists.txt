@@ -3,5 +3,5 @@
 
 # Feature types talk to the geometry kernel only through the GAL interface (GeometryKernel).
 fission_add_library(fission_features
-  SOURCES src/layer.cpp src/builtin.cpp src/box.cpp src/cylinder.cpp
+  SOURCES src/layer.cpp src/builtin.cpp src/box.cpp src/cylinder.cpp src/shapes.cpp
   PUBLIC fission_core)
