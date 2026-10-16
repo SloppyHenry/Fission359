@@ -108,6 +108,14 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --show-shapes --simulate "put:sphere;drop:box,640,420;puthole:cylinder;put:text;put:star;put:box;type:50,tab,20,tab,4,enter")
   set_tests_properties(app_shape_gallery PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90)
+  # A handle can be held and pulled: the real mouse path of the window, in small moves. Before the
+  # fix the dot was rebuilt after every millimetre, the pointer lost it and the width stopped at 23.
+  add_test(NAME app_handle_drag
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-handle-drag.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "put:box;grab:width,120,0,12;expect:width,45")
+  set_tests_properties(app_handle_drag PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

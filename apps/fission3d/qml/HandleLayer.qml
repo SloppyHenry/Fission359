@@ -58,29 +58,38 @@ Item {
         return bubble.index >= 0 && bubble.index < Handles.handles.length ? Handles.handles[bubble.index] : null
     }
 
+    // One dot per handle, and the dots stay: the list of handles is made anew whenever a value
+    // changes, and a dot that was rebuilt with it would be gone from under the pointer in the
+    // middle of a drag (the pointer lets go of it after every millimetre). The model is only the
+    // number of handles; each dot reads its own entry.
     Repeater {
-        model: Handles.handles
+        model: Handles.handles.length
 
         delegate: Item {
             id: dot
 
-            required property var modelData
-            readonly property color tone: modelData.parameter === "height" ? Theme.axisZ
+            required property int index
+            readonly property var modelData: index < Handles.handles.length ? Handles.handles[index] : null
+            readonly property real dirX: modelData ? modelData.dirX : 0
+            readonly property real dirY: modelData ? modelData.dirY : 0
+            readonly property color tone: !modelData ? Theme.accentLine
+                : modelData.parameter === "height" ? Theme.axisZ
                 : modelData.kind === "radius" ? Theme.accentLine
-                : Math.abs(modelData.dirX) > Math.abs(modelData.dirY) ? Theme.axisX : Theme.axisY
-            readonly property bool active: Handles.editing && bubble.index === modelData.index
+                : Math.abs(dirX) > Math.abs(dirY) ? Theme.axisX : Theme.axisY
+            readonly property bool active: Handles.editing && bubble.index === index
 
-            x: modelData.x - width / 2
-            y: modelData.y - height / 2
+            x: (modelData ? modelData.x : 0) - width / 2
+            y: (modelData ? modelData.y : 0) - height / 2
             width: 22
             height: 22
-            visible: modelData.x > -20 && modelData.x < root.width + 20 && modelData.y > -20 && modelData.y < root.height + 20
+            visible: modelData !== null && modelData.x > -20 && modelData.x < root.width + 20
+                     && modelData.y > -20 && modelData.y < root.height + 20
 
             // The arrow: where the dot moves when the value grows.
             Rectangle {
-                visible: modelData.pixelsPerMillimetre > 0.5
-                x: dot.width / 2 + modelData.dirX * 17 - width / 2
-                y: dot.height / 2 + modelData.dirY * 17 - height / 2
+                visible: dot.modelData !== null && dot.modelData.pixelsPerMillimetre > 0.5
+                x: dot.width / 2 + dot.dirX * 17 - width / 2
+                y: dot.height / 2 + dot.dirY * 17 - height / 2
                 width: 7
                 height: 7
                 radius: 4
@@ -106,12 +115,14 @@ Item {
                 preventStealing: true
                 cursorShape: Qt.SizeAllCursor
                 Accessible.role: Accessible.Slider
-                Accessible.name: root.labelFor(dot.modelData.parameter)
+                Accessible.name: dot.modelData ? root.labelFor(dot.modelData.parameter) : ""
 
                 onPressed: mouse => {
+                    // The pointer position in the view, not in the dot: the dot moves with the
+                    // shape while it is dragged.
                     const p = area.mapToItem(root, mouse.x, mouse.y)
-                    if (Handles.beginDrag(dot.modelData.index, p.x, p.y)) {
-                        bubble.showDrag(dot.modelData.index)
+                    if (Handles.beginDrag(dot.index, p.x, p.y)) {
+                        bubble.showDrag(dot.index)
                     }
                 }
                 onPositionChanged: mouse => {
@@ -127,8 +138,10 @@ Item {
                     }
                 }
                 onCanceled: {
-                    Handles.cancelDrag()
-                    bubble.hide()
+                    if (!bubble.typing) {
+                        Handles.cancelDrag()
+                        bubble.hide()
+                    }
                 }
             }
 
