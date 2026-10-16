@@ -4,7 +4,10 @@
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QDir>
 #include <QElapsedTimer>
+#include <QFile>
+#include <QFileInfo>
 #include <QFont>
 #include <QFontDatabase>
 #include <QGuiApplication>
@@ -12,6 +15,8 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QSaveFile>
+#include <QStandardPaths>
 #include <QString>
 #include <QTimer>
 
@@ -21,7 +26,9 @@
 #include <cstdio>
 #include <functional>
 #include <memory>
+#include <string>
 #include <string_view>
+#include <vector>
 
 #include "fission/core/version.h"
 #include "fission/geo/occt/kernel.h"
@@ -324,6 +331,37 @@ void loadFonts() {
     }
 }
 
+// The geometry kernel reads fonts from files, not from the program's resources. The two Plex
+// fonts that lettering offers are copied (once, and again when they change) to the cache folder.
+std::vector<std::string> bundledFontFiles() {
+    std::vector<std::string> paths;
+    const QString folder =
+        QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/fonts");
+    if (!QDir().mkpath(folder)) {
+        spdlog::warn("the font folder {} could not be made; lettering uses system fonts only",
+                     folder.toStdString());
+        return paths;
+    }
+    for (const char* file : {"IBMPlexSans-Regular", "IBMPlexMono-Regular"}) {
+        QFile source(QStringLiteral(":/fission/fonts/%1.ttf").arg(QLatin1String(file)));
+        const QString target = QStringLiteral("%1/%2.ttf").arg(folder, QLatin1String(file));
+        if (!source.open(QIODevice::ReadOnly)) {
+            continue;
+        }
+        const QByteArray data = source.readAll();
+        if (QFileInfo(target).size() != data.size()) {
+            QSaveFile out(target); // all or nothing: never a half-written font
+            if (!out.open(QIODevice::WriteOnly) || out.write(data) != data.size() ||
+                !out.commit()) {
+                spdlog::warn("font {} could not be copied for lettering", file);
+                continue;
+            }
+        }
+        paths.push_back(target.toStdString());
+    }
+    return paths;
+}
+
 } // namespace
 
 int main(int argc, char* argv[]) {
@@ -365,7 +403,10 @@ int main(int argc, char* argv[]) {
     fission::ui::Numbers numbers;
 
     // The document: the one box of the start, calculated before the first frame.
-    std::shared_ptr<const fission::geo::GeometryKernel> kernel = fission::geo::occt::makeKernel();
+    fission::geo::occt::KernelOptions kernelOptions;
+    kernelOptions.fontFiles = bundledFontFiles();
+    std::shared_ptr<const fission::geo::GeometryKernel> kernel =
+        fission::geo::occt::makeKernel(kernelOptions);
     fission::ui::DocumentModel documentModel(kernel);
     documentModel.setNumbers(&numbers);
     documentModel.addDemoBox();

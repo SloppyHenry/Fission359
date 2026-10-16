@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <string>
 #include <variant>
 
 namespace fission::geo {
@@ -75,7 +76,19 @@ struct StarSpec {
     double height = 5.0;
 };
 
+/// Text pulled up from the plane. `text` is UTF-8 (new lines allowed), `font` a family name,
+/// `size` the height of a capital letter, `height` how far the letters stand up. The text is
+/// centred on `base` (by its ink, not by the line box). Faces: for every separate piece of
+/// lettering n (counted from 0) glyph<n>Top, glyph<n>Bottom and glyph<n>Side<k>.
+/// Throws textEmpty, glyphsMissing (never a stand-in character) or fontNotFound.
+struct TextSpec {
+    std::string text = "Text";
+    std::string font = "IBM Plex Sans";
+    double size = 10.0;
+    double height = 2.0;
+};
+
 using PrimitiveSpec = std::variant<SphereSpec, HemisphereSpec, ConeSpec, TorusSpec, TubeSpec,
-                                   PrismSpec, PyramidSpec, WedgeSpec, StarSpec>;
+                                   PrismSpec, PyramidSpec, WedgeSpec, StarSpec, TextSpec>;
 
 } // namespace fission::geo

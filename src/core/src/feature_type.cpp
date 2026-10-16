@@ -42,6 +42,9 @@ FeatureDraft defaultDraft(const FeatureType& type) {
     for (const ParamSpec& spec : type.parameters()) {
         draft.params[spec.name] = Value{spec.defaultExpression, spec.kind};
     }
+    for (const TextFieldSpec& spec : type.texts()) {
+        draft.texts[spec.name] = spec.defaultValue;
+    }
     return draft;
 }
 

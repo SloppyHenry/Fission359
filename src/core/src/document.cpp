@@ -163,6 +163,7 @@ std::optional<FeatureId> Document::addFeature(FeatureDraft draft,
     feature.typeVersion = draft.typeVersion;
     feature.label = std::move(draft.label);
     feature.params = std::move(draft.params);
+    feature.texts = std::move(draft.texts);
     feature.refs = std::move(draft.refs);
     feature.inputs = std::move(draft.inputs);
     for (int i = 0; i < draft.newBodies; ++i) {
@@ -260,6 +261,22 @@ bool Document::setFeatureValue(const FeatureId& id, std::string_view name, std::
     }
     if (found->second.expression != expression) {
         found->second.expression = std::move(expression);
+        touch();
+    }
+    return true;
+}
+
+bool Document::setFeatureText(const FeatureId& id, std::string_view name, std::string text) {
+    Feature* feature = mutableFeature(id);
+    if (feature == nullptr) {
+        return false;
+    }
+    const auto found = feature->texts.find(std::string(name));
+    if (found == feature->texts.end()) {
+        return false;
+    }
+    if (found->second != text) {
+        found->second = std::move(text);
         touch();
     }
     return true;

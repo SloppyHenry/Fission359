@@ -5,6 +5,7 @@
 
 #include "fission/geo/kernel.h"
 #include "fission/geo/mesh.h"
+#include "fission/geo/occt/fonts.h"
 #include "fission/geo/primitives.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
@@ -26,7 +27,11 @@ NamedSolid makeNamedBox(double sizeX, double sizeY, double sizeZ, Point3d corner
 
 /// The basic shapes of `fission/geo/primitives.h`, with the role of every face.
 /// Throws GeometryError for sizes that are not usable or an invalid result.
-NamedSolid makeNamedPrimitive(const PrimitiveSpec& spec, Point3d base = {});
+NamedSolid makeNamedPrimitive(const PrimitiveSpec& spec, Point3d base = {},
+                              const FontBook& fonts = {});
+
+/// Lettering with the fonts of `fonts` (see `TextSpec`).
+NamedSolid makeNamedText(const TextSpec& spec, Point3d base, const FontBook& fonts);
 
 /// Like `makeCylinder`, with the role of every face (bottom, top, side).
 NamedSolid makeNamedCylinder(double radius, double height, Point3d base = {});

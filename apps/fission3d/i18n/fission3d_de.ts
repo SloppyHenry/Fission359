@@ -708,6 +708,41 @@
         <translation>Eckenradius</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Top radius</source>
+        <translation>Radius oben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Tube radius</source>
+        <translation>Radius des Rings</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Inner radius</source>
+        <translation>Innenradius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Wall</source>
+        <translation>Wand</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sides</source>
+        <translation>Seiten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Points</source>
+        <translation>Zacken</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Letter size</source>
+        <translation>Schriftgröße</translation>
+    </message>
+    <message>
         <location line="+9"/>
         <source>Box %1 × %2 × %3 mm</source>
         <translation>Quader %1 × %2 × %3 mm</translation>
@@ -814,11 +849,56 @@
     </message>
     <message>
         <location line="+3"/>
+        <source>This font has no character for %1. Choose another font or remove it.</source>
+        <translation>Diese Schrift hat kein Zeichen für %1. Wähle eine andere Schrift oder lösche es.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The font “%1” is not on this computer. Choose another font.</source>
+        <translation>Die Schrift „%1“ gibt es auf diesem Rechner nicht. Wähle eine andere Schrift.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Type some text.</source>
+        <translation>Gib einen Text ein.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The corners are too round for this size.</source>
+        <translation>Die Ecken sind zu rund für diese Größe.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Use a whole number from 3 to 64.</source>
+        <translation>Nimm eine ganze Zahl von 3 bis 64.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The wall must be thinner than the radius.</source>
+        <translation>Die Wand muss dünner sein als der Radius.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The tube must be thinner than the ring radius.</source>
+        <translation>Der Ring muss dünner sein als sein Radius.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The notches must lie closer to the middle than the tips.</source>
+        <translation>Die Einkerbungen müssen näher an der Mitte liegen als die Spitzen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The top radius cannot be negative.</source>
+        <translation>Der Radius oben darf nicht negativ sein.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>%1 must be bigger than zero.</source>
         <translation>%1 muss größer als null sein.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>An earlier step has a problem.</source>
         <translation>Ein früherer Schritt hat ein Problem.</translation>
     </message>
@@ -877,7 +957,7 @@
         <translation>Umschalt+Klick fügt hinzu oder nimmt weg. Mit einem Rahmen wählst du mehrere. Esc wählt nichts aus.</translation>
     </message>
     <message>
-        <location line="-290"/>
+        <location line="-313"/>
         <source>Shapes arrive in a later version.</source>
         <translation>Die Formen kommen in einer späteren Version.</translation>
     </message>

@@ -256,6 +256,32 @@ std::unique_ptr<Command> makeSetFeatureValue(FeatureId id, std::string name,
         });
 }
 
+std::unique_ptr<Command> makeSetFeatureText(FeatureId id, std::string name, std::string text) {
+    std::string key = "text/" + id.value + "/" + name;
+    return std::make_unique<SetCommand<std::string>>(
+        std::move(key), std::move(text),
+        [id, name](const Document& document) -> std::optional<std::string> {
+            const Feature* feature = document.findFeature(id);
+            if (feature == nullptr) {
+                return std::nullopt;
+            }
+            const auto found = feature->texts.find(name);
+            if (found == feature->texts.end()) {
+                return std::nullopt;
+            }
+            return found->second;
+        },
+        [id, name](Document& document, const std::string& value) {
+            return document.setFeatureText(id, name, value);
+        },
+        [id, name](const Document& document, const std::string& value) {
+            CommandDescription description = featureLabel(document, id, "setText");
+            description.values["field"] = name;
+            description.values["value"] = value;
+            return description;
+        });
+}
+
 std::unique_ptr<Command> makeSetFeatureLabel(FeatureId id, std::string label) {
     std::string key = "label/" + id.value;
     return std::make_unique<SetCommand<std::string>>(

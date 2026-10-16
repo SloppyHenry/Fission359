@@ -72,6 +72,10 @@ const char* issueCodeName(core::FeatureIssueCode code) {
         return "kernelFailed";
     case core::FeatureIssueCode::cancelled:
         return "cancelled";
+    case core::FeatureIssueCode::textGlyphsMissing:
+        return "textGlyphsMissing";
+    case core::FeatureIssueCode::fontNotFound:
+        return "fontNotFound";
     }
     return "kernelFailed";
 }

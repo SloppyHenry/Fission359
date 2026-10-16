@@ -477,6 +477,13 @@ Window {
         case "height": return qsTr("Height")
         case "radius": return qsTr("Radius")
         case "cornerRadius": return qsTr("Corner radius")
+        case "topRadius": return qsTr("Top radius")
+        case "tubeRadius": return qsTr("Tube radius")
+        case "innerRadius": return qsTr("Inner radius")
+        case "wall": return qsTr("Wall")
+        case "sides": return qsTr("Sides")
+        case "points": return qsTr("Points")
+        case "size": return qsTr("Letter size")
         default: return name
         }
     }
@@ -540,8 +547,24 @@ Window {
         if (problem.detail === "divisionByZero") {
             return qsTr("That divides by zero.")
         }
+        if (problem.code === "textGlyphsMissing") {
+            return qsTr("This font has no character for %1. Choose another font or remove it.").arg(problem.field)
+        }
+        if (problem.code === "fontNotFound") {
+            return qsTr("The font “%1” is not on this computer. Choose another font.").arg(problem.field)
+        }
         if (problem.code === "parameterOutOfRange") {
-            return qsTr("%1 must be bigger than zero.").arg(valueLabel(problem.field))
+            switch (problem.field) {
+            case "text": return qsTr("Type some text.")
+            case "cornerRadius": return qsTr("The corners are too round for this size.")
+            case "sides":
+            case "points": return qsTr("Use a whole number from 3 to 64.")
+            case "wall": return qsTr("The wall must be thinner than the radius.")
+            case "tubeRadius": return qsTr("The tube must be thinner than the ring radius.")
+            case "innerRadius": return qsTr("The notches must lie closer to the middle than the tips.")
+            case "topRadius": return qsTr("The top radius cannot be negative.")
+            default: return qsTr("%1 must be bigger than zero.").arg(valueLabel(problem.field))
+            }
         }
         if (problem.code === "inputFailed" || problem.code === "inputMissing") {
             return qsTr("An earlier step has a problem.")

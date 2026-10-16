@@ -708,6 +708,41 @@
         <translation>Corner radius</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Top radius</source>
+        <translation>Top radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Tube radius</source>
+        <translation>Tube radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Inner radius</source>
+        <translation>Inner radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Wall</source>
+        <translation>Wall</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sides</source>
+        <translation>Sides</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Points</source>
+        <translation>Points</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Letter size</source>
+        <translation>Letter size</translation>
+    </message>
+    <message>
         <location line="+9"/>
         <source>Box %1 × %2 × %3 mm</source>
         <translation>Box %1 × %2 × %3 mm</translation>
@@ -814,11 +849,56 @@
     </message>
     <message>
         <location line="+3"/>
+        <source>This font has no character for %1. Choose another font or remove it.</source>
+        <translation>This font has no character for %1. Choose another font or remove it.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The font “%1” is not on this computer. Choose another font.</source>
+        <translation>The font “%1” is not on this computer. Choose another font.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Type some text.</source>
+        <translation>Type some text.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The corners are too round for this size.</source>
+        <translation>The corners are too round for this size.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Use a whole number from 3 to 64.</source>
+        <translation>Use a whole number from 3 to 64.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The wall must be thinner than the radius.</source>
+        <translation>The wall must be thinner than the radius.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The tube must be thinner than the ring radius.</source>
+        <translation>The tube must be thinner than the ring radius.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The notches must lie closer to the middle than the tips.</source>
+        <translation>The notches must lie closer to the middle than the tips.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The top radius cannot be negative.</source>
+        <translation>The top radius cannot be negative.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>%1 must be bigger than zero.</source>
         <translation>%1 must be bigger than zero.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>An earlier step has a problem.</source>
         <translation>An earlier step has a problem.</translation>
     </message>
@@ -877,7 +957,7 @@
         <translation>Shift+click adds or removes. Drag a frame to choose several. Esc chooses nothing.</translation>
     </message>
     <message>
-        <location line="-290"/>
+        <location line="-313"/>
         <source>Shapes arrive in a later version.</source>
         <translation>Shapes arrive in a later version.</translation>
     </message>

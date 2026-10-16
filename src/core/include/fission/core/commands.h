@@ -45,6 +45,8 @@ std::unique_ptr<Command> makeRemoveFeature(FeatureId id);
 /// Sets a value of a step (a number or a formula).
 std::unique_ptr<Command> makeSetFeatureValue(FeatureId id, std::string name,
                                              std::string expression);
+/// Sets a word-valued field of a step (the text of a lettering, the name of its font).
+std::unique_ptr<Command> makeSetFeatureText(FeatureId id, std::string name, std::string text);
 std::unique_ptr<Command> makeSetFeatureLabel(FeatureId id, std::string label);
 /// Switches a step off or on ("ausblenden").
 std::unique_ptr<Command> makeSetFeatureSuppressed(FeatureId id, bool suppressed);
