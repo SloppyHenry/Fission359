@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <map>
 #include <numbers>
 #include <set>
 
@@ -172,4 +173,56 @@ TEST_CASE("bodies reject impossible sizes with a geometry error", "[solid]") {
     CHECK(codeOf([] { occt::makeCylinder(5.0, 0.0); }) == GeometryErrorCode::invalidInput);
     CHECK_THROWS_AS(occt::measure(Solid{}), GeometryError);
     CHECK_THROWS_AS(occt::tessellate(Solid{}), GeometryError);
+}
+
+TEST_CASE("box: every edge knows its two faces and its two corners", "[solid][golden]") {
+    const TriangleMesh mesh = occt::tessellate(occt::makeBox(20.0, 30.0, 40.0));
+    REQUIRE(mesh.edges.size() == 12);
+    REQUIRE(mesh.corners.size() == 8);
+
+    std::map<std::uint32_t, int> edgesPerFace;
+    std::map<std::uint32_t, int> edgesPerCorner;
+    for (const EdgePolyline& edge : mesh.edges) {
+        CHECK(edge.faces[0] != 0);
+        CHECK(edge.faces[1] != 0);
+        CHECK(edge.faces[0] != edge.faces[1]);
+        CHECK(edge.corners[0] != 0);
+        CHECK(edge.corners[1] != 0);
+        CHECK(edge.corners[0] != edge.corners[1]);
+        ++edgesPerFace[edge.faces[0]];
+        ++edgesPerFace[edge.faces[1]];
+        ++edgesPerCorner[edge.corners[0]];
+        ++edgesPerCorner[edge.corners[1]];
+    }
+    CHECK(edgesPerFace.size() == 6);
+    for (const auto& [face, count] : edgesPerFace) {
+        CHECK(count == 4); // a face of a box has four edges
+    }
+    CHECK(edgesPerCorner.size() == 8);
+    for (const auto& [corner, count] : edgesPerCorner) {
+        CHECK(count == 3); // three edges meet in a corner
+    }
+
+    // The corner points sit on the corners of the box (20 x 30 x 40, origin at the corner).
+    for (const CornerPoint& corner : mesh.corners) {
+        CHECK((corner.position.x == 0.0F || corner.position.x == 20.0F));
+        CHECK((corner.position.y == 0.0F || corner.position.y == 30.0F));
+        CHECK((corner.position.z == 0.0F || corner.position.z == 40.0F));
+    }
+}
+
+TEST_CASE("cylinder: the seam belongs to the same face on both sides", "[solid][golden]") {
+    const TriangleMesh mesh = occt::tessellate(occt::makeCylinder(10.0, 25.0, {0.0, 0.0, 0.0}));
+    int seams = 0;
+    int rims = 0;
+    for (const EdgePolyline& edge : mesh.edges) {
+        if (edge.faces[0] == edge.faces[1]) {
+            ++seams;
+        } else {
+            ++rims;
+        }
+        CHECK(edge.faces[0] != 0);
+    }
+    CHECK(seams == 1);
+    CHECK(rims == 2);
 }

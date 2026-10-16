@@ -27,7 +27,9 @@
 #include <GCPnts_TangentialDeflection.hxx>
 #include <GProp_GProps.hxx>
 #include <GeomAbs_SurfaceType.hxx>
+#include <NCollection_IndexedDataMap.hxx>
 #include <NCollection_IndexedMap.hxx>
+#include <NCollection_List.hxx>
 #include <Poly_Triangulation.hxx>
 #include <Standard_Failure.hxx>
 #include <TopAbs_ShapeEnum.hxx>
@@ -37,6 +39,7 @@
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
+#include <TopoDS_Vertex.hxx>
 #include <gp_Ax2.hxx>
 #include <gp_Dir.hxx>
 #include <gp_Pln.hxx>
@@ -49,6 +52,8 @@ namespace fission::geo::occt {
 namespace {
 
 using ShapeMap = NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher>;
+using AncestorMap = NCollection_IndexedDataMap<TopoDS_Shape, NCollection_List<TopoDS_Shape>,
+                                               TopTools_ShapeMapHasher>;
 
 bool isPositiveFinite(double value) {
     return std::isfinite(value) && value > 0.0;
@@ -341,8 +346,17 @@ TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) {
             appendFace(TopoDS::Face(faces(i)), static_cast<std::uint32_t>(i), mesh);
         }
 
+        ShapeMap corners;
+        TopExp::MapShapes(shape, TopAbs_VERTEX, corners);
+        for (int i = 1; i <= corners.Extent(); ++i) {
+            mesh.corners.push_back({static_cast<std::uint32_t>(i),
+                                    toFloat(BRep_Tool::Pnt(TopoDS::Vertex(corners(i))))});
+        }
+
         ShapeMap edges;
         TopExp::MapShapes(shape, TopAbs_EDGE, edges);
+        AncestorMap facesOfEdge;
+        TopExp::MapShapesAndAncestors(shape, TopAbs_EDGE, TopAbs_FACE, facesOfEdge);
         for (int i = 1; i <= edges.Extent(); ++i) {
             const TopoDS_Edge edge = TopoDS::Edge(edges(i));
             if (BRep_Tool::Degenerated(edge)) {
@@ -353,6 +367,26 @@ TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) {
                                                      params.chordTolerance);
             EdgePolyline line;
             line.edgeId = static_cast<std::uint32_t>(i);
+            // The faces beside the edge. A seam is listed with its one face only: it has it twice.
+            int slot = 0;
+            for (const TopoDS_Shape& face : facesOfEdge.FindFromKey(edge)) {
+                if (slot < 2) {
+                    line.faces[static_cast<std::size_t>(slot++)] =
+                        static_cast<std::uint32_t>(faces.FindIndex(face));
+                }
+            }
+            if (slot == 1) {
+                line.faces[1] = line.faces[0];
+            }
+            TopoDS_Vertex first;
+            TopoDS_Vertex last;
+            TopExp::Vertices(edge, first, last);
+            if (!first.IsNull()) {
+                line.corners[0] = static_cast<std::uint32_t>(corners.FindIndex(first));
+            }
+            if (!last.IsNull()) {
+                line.corners[1] = static_cast<std::uint32_t>(corners.FindIndex(last));
+            }
             for (int p = 1; p <= points.NbPoints(); ++p) {
                 line.points.push_back(toFloat(points.Value(p)));
             }
