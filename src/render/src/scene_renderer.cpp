@@ -9,7 +9,6 @@
 #include <cmath>
 #include <cstring>
 #include <numbers>
-#include <type_traits>
 #include <vector>
 
 namespace fission::render {
@@ -1361,19 +1360,11 @@ void SceneRenderer::drawHighlights(QRhiCommandBuffer* cb) {
                 cb->drawIndexed(static_cast<quint32>(body.indexCount));
                 continue;
             }
-            const auto range = std::equal_range(
-                body.faceRuns.begin(), body.faceRuns.end(), tint.face,
-                [](const auto& a, const auto& b) {
-                    const auto faceOf = [](const auto& x) {
-                        if constexpr (std::is_same_v<std::decay_t<decltype(x)>, std::uint32_t>) {
-                            return x;
-                        } else {
-                            return x.face;
-                        }
-                    };
-                    return faceOf(a) < faceOf(b);
-                });
-            for (auto run = range.first; run != range.second; ++run) {
+            auto run = std::lower_bound(body.faceRuns.begin(), body.faceRuns.end(), tint.face,
+                                        [](const GpuBody::FaceRun& candidate, std::uint32_t face) {
+                                            return candidate.face < face;
+                                        });
+            for (; run != body.faceRuns.end() && run->face == tint.face; ++run) {
                 cb->drawIndexed(run->triangleCount * 3, 1, run->firstTriangle * 3, 0, 0);
             }
         }
