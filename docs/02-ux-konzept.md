@@ -265,7 +265,8 @@ Die Texte stammen aus einem **Meldungskatalog** (siehe AP-2.14). Technische Kern
 - **Voreinstellungen** für Umsteiger: „wie Fusion“, „wie Tinkercad“, „wie Blender“, „wie SketchUp“. Das wird beim ersten Start abgefragt; bis dahin im Menü Ansicht. Belegung: Fusion = Mitte verschiebt, Umschalt + Mitte dreht; Tinkercad = rechts dreht, Umschalt + rechts oder Mitte verschiebt; Blender = Mitte dreht, Umschalt + Mitte verschiebt, Strg + Mitte zoomt; SketchUp = Mitte dreht, Umschalt + Mitte verschiebt. In allen Stilen: Mausrad zoomt zum Zeiger, Alt + links dreht, Umschalt + links verschiebt.
 - **Trackpad (macOS):** zwei Finger = drehen, Shift + zwei Finger = verschieben, Pinch = Zoom. Smart Zoom (Doppeltipp) zentriert auf die Fläche.
 - **ViewCube** oben rechts: Flächen, Kanten und Ecken sind klickbar (je Fläche 3 × 3 Felder), mit animierten Übergängen.
-- **Doppelklick auf eine Fläche:** Die Ansicht dreht sich senkrecht auf die Fläche.
+- **Auswahl (AP-1.4):** Fahren leuchtet, Klick wählt Fläche, Kante oder Ecke (was näher ist), **Doppelklick wählt den Körper**, Umschalt-Klick fügt hinzu oder nimmt weg, mit der linken Taste einen Rahmen ziehen wählt, was zu sehen ist; Esc wählt nichts. „Wählen: Alles | Körper | Flächen | Kanten | Ecken“ begrenzt, was reagiert.
+- **Senkrecht auf eine Fläche schauen:** Fläche wählen und **L** (Ansicht ▸ Auf Fläche schauen); auf dem Trackpad Smart Zoom (Doppeltipp mit zwei Fingern). Das war bis AP-1.3 der Doppelklick auf die Fläche; der Doppelklick wählt jetzt den Körper (wie in Tinkercad).
 - `F` = alles zeigen, `⇧F` = Fokus-Modus (Seitenleisten aus und wieder an), `Pos1`/`Home` = Startansicht, `1–7` = Standardansichten, `P` = Perspektive/Orthografisch.
 - **3D-Maus (SpaceMouse):** später (Backlog).
 
