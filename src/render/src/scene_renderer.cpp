@@ -1151,19 +1151,19 @@ bool SceneRenderer::pickPass(QRhiCommandBuffer* cb, const QSize& targetSize, con
         if (m_rhi->isYUpInFramebuffer()) {
             // The first row of the data is the bottom one.
             const auto rows = static_cast<std::size_t>(size.height());
-            const auto width = static_cast<std::size_t>(size.width());
+            const auto columns = static_cast<std::size_t>(size.width());
             for (std::size_t row = 0; row < rows / 2; ++row) {
-                std::swap_ranges(picture.begin() + static_cast<std::ptrdiff_t>(row * width),
-                                 picture.begin() + static_cast<std::ptrdiff_t>((row + 1) * width),
+                std::swap_ranges(picture.begin() + static_cast<std::ptrdiff_t>(row * columns),
+                                 picture.begin() + static_cast<std::ptrdiff_t>((row + 1) * columns),
                                  picture.begin() +
-                                     static_cast<std::ptrdiff_t>((rows - 1 - row) * width));
+                                     static_cast<std::ptrdiff_t>((rows - 1 - row) * columns));
             }
         }
         m_pickInFlight = false;
         if (m_pickDone) {
-            PickCallback done = std::move(m_pickDone);
+            PickCallback finished = std::move(m_pickDone);
             m_pickDone = nullptr;
-            done(std::move(picture));
+            finished(std::move(picture));
         }
     };
     QRhiResourceUpdateBatch* readback = m_rhi->nextResourceUpdateBatch();
