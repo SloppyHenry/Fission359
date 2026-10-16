@@ -52,6 +52,9 @@ class DocumentModel : public QObject {
     Q_PROPERTY(QVariantList stepValues READ stepValues NOTIFY stepValuesChanged)
     /// Words of the current step (text, font): [{ name, value, kind }], `kind` is text | font.
     Q_PROPERTY(QVariantList stepTexts READ stepTexts NOTIFY stepValuesChanged)
+    /// The handles of the current step in the world (mm): [{ parameter, kind, x, y, z, dx, dy, dz,
+    /// sign, value }]. `kind` is distance | radius. Empty when the step has none or failed.
+    Q_PROPERTY(QVariantList stepHandles READ stepHandles NOTIFY stepValuesChanged)
     /// The fonts lettering can use; filled in the background shortly after the start.
     Q_PROPERTY(QStringList fontFamilies READ fontFamilies NOTIFY fontsChanged)
     /// A shape is being put down (dragged in): not yet a step in the history.
@@ -124,6 +127,10 @@ public:
     int currentStep() const noexcept { return m_currentStep; }
     QVariantList stepValues() const { return m_stepValues; }
     QVariantList stepTexts() const { return m_stepTexts; }
+    QVariantList stepHandles() const { return m_stepHandles; }
+    /// Would the current step accept `value` for `parameter` (checked without geometry)? A handle
+    /// that is dragged stops where the shape stops being possible.
+    bool acceptsValue(const QString& parameter, double value) const;
     QStringList fontFamilies() const { return m_fontFamilies; }
     bool placing() const noexcept { return m_placing; }
     QString placingBodyId() const;
@@ -225,6 +232,7 @@ private:
     void rebuildScene();
     QVariantList buildStepValues() const;
     QVariantList buildStepTexts() const;
+    QVariantList buildStepHandles() const;
     bool setValueQuietly(const core::FeatureId& id, const char* name, double value);
     std::pair<double, double> freeSpot() const;
     static std::uint64_t meshKey(const core::BodyResult& body) noexcept;
@@ -241,6 +249,7 @@ private:
     QVariantList m_bodies;
     QVariantList m_stepValues;
     QVariantList m_stepTexts;
+    QVariantList m_stepHandles;
     QStringList m_fontFamilies;
     bool m_placing = false;
     core::FeatureId m_placingFeature;

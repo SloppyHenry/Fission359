@@ -495,7 +495,7 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
 ---
 
 ### AP-1.5 Grundformen
-**Status:** in Arbeit (Teil a bis c erledigt, d offen) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
+**Status:** Review (Teile a–d umgesetzt, wartet auf Ausprobieren durch den Product Owner) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
 
 **Umfang:**
 - Quader (mit optionalem Eckenradius), Zylinder, Kugel, Kegel, Torus, Röhre, Prisma (n-eckig), Pyramide, Halbkugel, Keil, Stern (2D-Stern hochgezogen), Text (flach, System- und mitgelieferte Schriften)
@@ -507,9 +507,9 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
 - **Griffe ändern Parameter, nie die Skalierung** ([UX §7.2](../02-ux-konzept.md#72-rundungen-verziehen-sich-beim-größe-ändern)). Ist ein Körper aus einer Grundform entstanden, zeigen seine Griffe auch später die Maße dieser Grundform.
 
 **Akzeptanzkriterien:**
-- [ ] Jede Form lässt sich per Drag-and-drop platzieren und über Griffe oder Tastatur exakt bemaßen
-- [ ] Quader mit Eckenradius 5 mm auf doppelte Breite gezogen → Radius bleibt exakt 5 mm (Golden-Test; Ablauf D, Schritt 1)
-- [ ] Text: Umlaute, ß, Emojis werden sauber abgelehnt („Diese Schrift hat kein Zeichen für …“)
+- [x] Jede Form lässt sich per Drag-and-drop platzieren und über Griffe oder Tastatur exakt bemaßen
+- [x] Quader mit Eckenradius 5 mm auf doppelte Breite gezogen → Radius bleibt exakt 5 mm (Golden-Test; Ablauf D, Schritt 1)
+- [x] Text: Umlaute und ß gehen, Emojis werden sauber abgelehnt („Diese Schrift hat kein Zeichen für …“) *(Deutung siehe Festlegungen)*
 - [x] Golden-Tests: Volumen jeder Form = analytischer Wert (rel. 1e-6) *(Teil a; Text folgt mit Teil b)*
 
 #### Zerlegung (2026-10-16, vom Product Owner bestätigt)
@@ -520,7 +520,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 | **a) Formen im Kern** | erledigt | Alle Formen als Feature-Typen (Kugel, Halbkugel, Kegel, Torus, Röhre, Prisma, Pyramide, Keil, Stern), Quader mit Eckenradius, Namen für jede Fläche; Golden-Tests mit analytischen Werten |
 | **b) Text** | erledigt | Text-Feature, mitgelieferte Schriften (IBM Plex) plus Systemschriften, Meldung „Diese Schrift hat kein Zeichen für …“ |
 | **c) Galerie und Platzieren** | erledigt | Formen-Galerie mit 3D-Vorschau, Drag-and-drop, „Auf Fläche legen“, „Als Loch“-Schalter, Hinweiszeile, Tooltip-Karten, Synonyme (Regel 10), Texte für alle Formen (Deutsch und Englisch) |
-| **d) Griffe** | offen | Maß-Griffe in 3D (Griff-Art „Achsen“; „Klassisch“ kommt mit AP-1.11), Wertblase, Tippen ersetzt Ziehen, `Tab` wechselt das Maß, Esc nimmt zurück; Ablauf D Schritt 1 als automatischer Test |
+| **d) Griffe** | erledigt | Maß-Griffe in 3D (Griff-Art „Achsen“; „Klassisch“ kommt mit AP-1.11), Wertblase, Tippen ersetzt Ziehen, `Tab` wechselt das Maß, Esc nimmt zurück; Ablauf D Schritt 1 als automatischer Test |
 
 **Festlegungen (Product Owner, 2026-10-16)**
 - Griffe: nur „Achsen“ in diesem AP; „Klassisch“ gehört zu den Einstellungen (AP-1.11).
@@ -554,6 +554,58 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
   markiertem Text; die Schrift wählt man in einer Liste mit Suche (alle Schriften des Rechners).
 - Flächen-Namen: `top`, `bottom`, `side`, `surface`; bei Prisma und Stern `side1` … (Prisma: `side1` schaut nach vorn, dann gegen den
   Uhrzeigersinn von oben; Stern: `side1` folgt der Spitze nach hinten); Eckenradius: `cornerFrontLeft` …
+
+
+#### Abschlussvermerk (2026-10-16)
+
+**Umgesetzt**
+- **a) Kern:** Kugel, Halbkugel, Kegel (auch Stumpf), Torus, Röhre, Prisma, Pyramide, Keil, Stern; Quader mit Eckenradius; jede Fläche
+  hat einen Namen; ein Aufruf `makePrimitive` statt neun neuer (ADR-0008).
+- **b) Text:** Beschriftung mit IBM Plex (mitgeliefert) und allen Schriften des Rechners; fehlende Zeichen oder Schriften sind
+  verständliche Fehler, es gibt keine stille Ersatzschrift; Worte (Text, Schrift) sind eigene Felder im Dokument mit Undo.
+- **c) Galerie:** 12 Kacheln mit Bildern der echten Formen; Ziehen in die Ansicht (die Form folgt dem Zeiger, landet auf Bett oder
+  ebener Oberseite, Loslassen = ein Schritt, Esc = zurück) oder Anklicken (freier Platz); „Als Loch“ als Geisterform;
+  Textfelder und Schriftliste rechts; Sätze, Hinweise, Tooltips und Suchwörter auf Deutsch und Englisch.
+- **d) Griffe:** Punkte an der gewählten Form (je Maß einer, beim Quader auch für den Eckenradius); Ziehen ändert das Maß (nie
+  skalieren), Wertblase am Griff, Tippen ersetzt Ziehen (auch mitten im Ziehen), `Tab` springt zum nächsten Maß, Enter übernimmt,
+  Esc nimmt alles zurück; das Ziehen hört auf, wo die Form unmöglich würde (z. B. Breite unter 2 × Eckenradius).
+
+**Wie getestet**
+- Mac (arm64, Debug): `ctest` alle grün, darunter Golden-Tests (Volumen und Oberfläche jeder Form gleich dem analytischen Wert,
+  rel. 1e-6, Gültigkeit, Flächen-Namen gegen die Normalen), Text (Größe, Mitte, Umlaute, Emojis mit der echten Plex-Schrift),
+  Platzieren, Abbrechen, Loch, Kachelbilder, Griffe und **Ablauf D, Schritt 1 automatisch** (Quader 40 × 40 × 10 mit 5-mm-Ecken über
+  den Griff auf 80 mm gezogen: alle vier Ecken sind weiter Kreisbögen mit R 5 mm, Netzpunkte gemessen, Volumen exakt).
+- Fenster mit offener Galerie, abgelegten Formen und getippten Maßen (`app_shape_gallery`); Bilder:
+  [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png).
+- Linux: nur CI (Ubuntu 24.04, `release` und `debug-asan`); nicht von Hand auf dem Testrechner ausprobiert.
+
+**So probierst du es aus**
+1. `scripts/run`. Links in der Werkzeugleiste auf **Formen** klicken: die Galerie öffnet sich.
+2. Die **Kugel** in die 3D-Ansicht ziehen und loslassen: sie liegt auf dem Bett. Ziehe einen **Zylinder** auf die Oberseite des
+   Würfels: er sitzt oben auf. Esc beim Ziehen nimmt die Form wieder weg.
+3. Gleich nach dem Ablegen **`50` ⇥ `20` ⇥ `4` Enter** tippen: die Form bekommt diese Maße (ein Schritt im Verlauf, ⌘Z nimmt alles zurück).
+4. An einer gewählten Form einen **Punkt ziehen**: das Maß ändert sich, die Wertblase zeigt es; während des Ziehens eine Zahl tippen
+   ersetzt den Wert. Beim Quader: rechts „Eckenradius“ auf 5 stellen, dann die Breite am Punkt verdoppeln: die Ecken bleiben rund.
+5. **Als Loch** in der Galerie einschalten und einen Zylinder ablegen: er ist durchsichtig (Geisterform), in der Körperliste ein leerer
+   Umriss. Ausschneiden tut er erst mit AP-1.7.
+6. Kachel **Text** ablegen: das Feld „Worte“ rechts ist markiert, `LENA` tippen. Schrift darunter wählen. Probiere ein Emoji: die
+   Meldung nennt das Zeichen.
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Ablegen nur auf waagerechten Flächen:** Auf Wänden und Schrägen bleibt die Form auf der Arbeitsebene (Höhe der zuletzt benutzten
+  Fläche). Eine Form an einer senkrechten Fläche auszurichten braucht Drehen (AP-1.6).
+- **Griffe sind ein Zeichenelement über der Ansicht:** Sie sind nicht tiefenrichtig (sie scheinen durch Körper hindurch) und es gibt
+  keine Maßbänder; nur die Griff-Art „Achsen“ (Punkte mit Pfeil). „Klassisch“ kommt mit den Einstellungen (AP-1.11).
+- **Tippen ohne Ziehen:** Ziffern fangen nur direkt nach dem Ablegen an zu tippen (sonst sind 1 bis 6 die Ansichten). Auch `Tab` oder
+  Enter beginnen das Tippen. Bei einer schon vorhandenen Form: Punkt anfassen und dann tippen, oder die Felder rechts benutzen.
+- **Seiten und Zacken** (Prisma, Stern) haben keinen Griff; sie stehen als Zahl im Feld rechts.
+- **Text:** nur Schnitt „Regular“; fett und kursiv fehlen. Die Schrift wird nicht in der Datei mitgespeichert (kommt mit AP-1.10); fehlt
+  sie auf einem anderen Rechner, steht dort die Meldung „Die Schrift … gibt es auf diesem Rechner nicht“.
+- **Raster:** Positionen und gezogene Maße rasten auf ganze Millimeter (feiner bei starkem Zoom); das echte Fangen kommt mit AP-1.6.
+- **Neu im Kern:** `fission_geometry_occt` linkt jetzt `TKService` und `TKV3d` (nur OpenCASCADE, schon im Paket); beim ersten Start
+  kopiert das Programm zwei Schriftdateien in den Cache-Ordner.
+- **Vorgeschlagene Folge-Arbeiten:** Ausrichten an schrägen Flächen (AP-1.6), Ausschneiden der Löcher (AP-1.7), Griffe tiefenrichtig
+  im Renderer, Befehlssuche mit den Suchwörtern der Formen (AP-1.12), Schrift in der Datei (AP-1.10).
 
 ---
 
