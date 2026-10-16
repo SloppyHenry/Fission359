@@ -304,12 +304,12 @@
         <translation>Unbenannt</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>%1 × %2</source>
         <translation>%1 × %2</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+10"/>
         <source>Fission3D</source>
         <translation>Fission3D</translation>
     </message>
@@ -364,7 +364,7 @@
         <translation>Bearbeiten</translation>
     </message>
     <message>
-        <location line="+57"/>
+        <location line="+66"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -374,7 +374,7 @@
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-57"/>
+        <location line="-66"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Strg+Umschalt+Z</translation>
     </message>
@@ -435,6 +435,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Soft shadows</source>
+        <translation>Weiche Schatten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Focus</source>
         <translation>Fokus</translation>
     </message>
@@ -490,12 +495,37 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+284"/>
+        <source>Mouse: like Fission3D</source>
+        <translation>Maus: wie in Fission3D</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mouse: like Fusion</source>
+        <translation>Maus: wie in Fusion</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mouse: like Tinkercad</source>
+        <translation>Maus: wie in Tinkercad</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mouse: like Blender</source>
+        <translation>Maus: wie in Blender</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mouse: like SketchUp</source>
+        <translation>Maus: wie in SketchUp</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+334"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-283"/>
+        <location line="-333"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -550,19 +580,29 @@
         <translation>Über Fission3D</translation>
     </message>
     <message>
-        <location line="+15"/>
-        <location line="+115"/>
+        <location line="+17"/>
+        <location line="+152"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-113"/>
-        <location line="+114"/>
+        <location line="-150"/>
+        <location line="+151"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-106"/>
+        <location line="-145"/>
+        <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
+        <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.</source>
+        <translation>Mittlere Maustaste ziehen dreht die Ansicht, Umschalt + mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
         <source>Select</source>
         <translation>Wählen</translation>
     </message>
@@ -592,18 +632,13 @@
         <translation>Die Befehlssuche kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+16"/>
-        <location line="+86"/>
+        <location line="+19"/>
+        <location line="+107"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-23"/>
-        <source>My printer · %1 mm</source>
-        <translation>Mein Drucker · %1 mm</translation>
-    </message>
-    <message>
-        <location line="+22"/>
+        <location line="-1"/>
         <source>The start page arrives in a later version.</source>
         <translation>Die Startseite kommt in einer späteren Version.</translation>
     </message>
@@ -618,7 +653,17 @@
         <translation>Der Export kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+132"/>
+        <location line="+60"/>
+        <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
+        <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>%1 × %2 mm</source>
+        <translation>%1 × %2 mm</translation>
+    </message>
+    <message>
+        <location line="+30"/>
         <source>Cylinder</source>
         <translation>Zylinder</translation>
     </message>
@@ -768,37 +813,37 @@
         <translation>Diese Form ließ sich nicht bauen.</translation>
     </message>
     <message>
-        <location line="-189"/>
+        <location line="-200"/>
         <source>Shapes arrive in a later version.</source>
         <translation>Die Formen kommen in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+57"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="-329"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+362"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>0.4 mm</source>
-        <translation>0,4 mm</translation>
-    </message>
-    <message>
-        <location line="+15"/>
+        <location line="-260"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+121"/>
+        <source>%1 · %2 mm</source>
+        <translation>%1 · %2 mm</translation>
+    </message>
+    <message>
+        <location line="+159"/>
         <source>Unit: mm · Grid 1 mm</source>
         <translation>Einheit: mm · Raster 1 mm</translation>
     </message>
@@ -839,7 +884,7 @@
 <context>
     <name>NumberField</name>
     <message>
-        <location filename="../qml/NumberField.qml" line="+149"/>
+        <location filename="../qml/NumberField.qml" line="+159"/>
         <source>That is not a number or formula.</source>
         <translation>Das ist keine Zahl und keine Formel.</translation>
     </message>
@@ -847,7 +892,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+47"/>
+        <location filename="../qml/RightPanel.qml" line="+50"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -893,8 +938,8 @@
     </message>
     <message>
         <location line="+13"/>
-        <source>Printer profile · chosen at first start</source>
-        <translation>Druckerprofil · beim ersten Start gewählt</translation>
+        <source>Printer profile</source>
+        <translation>Druckerprofil</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -908,6 +953,26 @@
     </message>
     <message>
         <location line="+8"/>
+        <source>Choose printer</source>
+        <translation>Drucker wählen</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>My printer</source>
+        <translation>Mein Drucker</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 × %2 mm</source>
+        <translation>%1 × %2 mm</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>%1 × %2</source>
+        <translation>%1 × %2</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Filaments</source>
         <translation>Filamente</translation>
     </message>
@@ -951,7 +1016,7 @@
 <context>
     <name>ViewCube</name>
     <message>
-        <location filename="../qml/ViewCube.qml" line="+37"/>
+        <location filename="../qml/ViewCube.qml" line="+40"/>
         <source>TOP</source>
         <translation>OBEN</translation>
     </message>
@@ -984,7 +1049,7 @@
 <context>
     <name>ViewOverlay</name>
     <message>
-        <location filename="../qml/ViewOverlay.qml" line="+48"/>
+        <location filename="../qml/ViewOverlay.qml" line="+67"/>
         <location line="+10"/>
         <source>Orthographic</source>
         <translation>Orthografisch</translation>
@@ -1109,7 +1174,7 @@
         <translation>Messen, Schnitt, Druckcheck, Gewicht.</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+36"/>
         <source>Home view (Home)</source>
         <translation>Startansicht (Pos1)</translation>
     </message>
@@ -1134,22 +1199,37 @@
         <translation>Drehen</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-271"/>
         <source>Orbit: drag with the right mouse button – or drag this button</source>
         <translation>Drehen: rechte Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+279"/>
         <source>Pan</source>
         <translation>Verschieben</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-272"/>
         <source>Pan: drag with the middle mouse button – or drag this button</source>
         <translation>Verschieben: mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
     <message>
+        <location line="-10"/>
+        <source>Orbit: Shift + middle mouse button – or drag this button</source>
+        <translation>Drehen: Umschalt + mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Orbit: drag with the middle mouse button – or drag this button</source>
+        <translation>Drehen: mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
+    </message>
+    <message>
         <location line="+7"/>
+        <source>Pan: Shift + middle mouse button – or drag this button</source>
+        <translation>Verschieben: Umschalt + mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
+    </message>
+    <message>
+        <location line="+281"/>
         <source>Zoom</source>
         <translation>Zoom</translation>
     </message>

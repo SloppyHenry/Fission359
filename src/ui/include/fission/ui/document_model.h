@@ -4,8 +4,11 @@
 #pragma once
 
 #include <QObject>
+#include <QThreadPool>
+#include <QTimer>
 #include <QVariantList>
 
+#include <atomic>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -56,6 +59,16 @@ class DocumentModel : public QObject {
     Q_PROPERTY(QVariantList history READ history NOTIFY historyChanged)
     /// Number of actions that are done (= the position in `history`).
     Q_PROPERTY(int historyPosition READ historyPosition NOTIFY historyChanged)
+    /// The printer whose print bed is shown (id from the printer list).
+    Q_PROPERTY(QString printerId READ printerId NOTIFY printerChanged)
+    /// Brand and model; empty for the generic printer (the interface says "My printer").
+    Q_PROPERTY(QString printerName READ printerName NOTIFY printerChanged)
+    Q_PROPERTY(double bedX READ bedX NOTIFY printerChanged)
+    Q_PROPERTY(double bedY READ bedY NOTIFY printerChanged)
+    Q_PROPERTY(double bedZ READ bedZ NOTIFY printerChanged)
+    Q_PROPERTY(double nozzle READ nozzle NOTIFY printerChanged)
+    /// [{ id, name, bedX, bedY, bedZ, nozzle }]
+    Q_PROPERTY(QVariantList printers READ printers CONSTANT)
 
 public:
     /// `kernel` does the geometry work; the application hands in the OpenCASCADE one.
@@ -89,6 +102,17 @@ public:
     QVariantList history() const;
     int historyPosition() const noexcept { return static_cast<int>(m_history.position()); }
 
+    QString printerId() const { return m_printerId; }
+    QString printerName() const;
+    double bedX() const;
+    double bedY() const;
+    double bedZ() const;
+    double nozzle() const;
+    QVariantList printers() const;
+    /// Chooses the printer; false for an id that is not in the list. Not part of the history:
+    /// the printer is a setting of the program, not a change of the model.
+    Q_INVOKABLE bool setPrinter(const QString& id);
+
     Q_INVOKABLE void selectStep(int index);
     /// Sets the value `name` of step `index` to what was typed (a number or a formula).
     Q_INVOKABLE bool setStepValue(int index, const QString& name, const QString& text);
@@ -106,6 +130,14 @@ public:
     /// Takes back everything since `beginChange` (the person pressed Esc).
     Q_INVOKABLE void cancelChange();
 
+    /// How finely bodies are tessellated for the screen (0 = basic, see render/detail.h). The
+    /// view asks for more when the person zooms in; finer meshes are made in the background and
+    /// replace the coarse ones when they are ready.
+    Q_INVOKABLE void setDetailLevel(int level);
+    int detailLevel() const { return m_detailLevel; }
+    /// The level of the meshes that are on screen now (for tests and the log).
+    int shownDetailLevel() const { return m_shownDetailLevel; }
+
 signals:
     void recipeChanged();
     void bodiesChanged();
@@ -113,6 +145,7 @@ signals:
     void stepValuesChanged();
     void calculatingChanged();
     void historyChanged();
+    void printerChanged();
     /// A new scene for the 3D view.
     void sceneReady(std::shared_ptr<const fission::render::RenderScene> scene);
 
@@ -146,7 +179,22 @@ private:
 
     // Tessellations by result, made on the worker thread, read when the scene is put together.
     std::mutex m_meshMutex;
-    std::map<std::uint64_t, geo::TriangleMesh> m_meshes;
+    std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_meshes;
+
+    // Finer tessellations for the current zoom, by mesh key; made by a pool thread, used on the
+    // interface thread only.
+    void startDetailJob();
+    void applyDetail(std::uint64_t generation, int level,
+                     std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> meshes);
+    QString m_printerId{QStringLiteral("generic")};
+    int m_detailLevel = 0;
+    int m_shownDetailLevel = 0;
+    std::uint64_t m_detailGeneration = 0;
+    std::shared_ptr<std::atomic<std::uint64_t>> m_detailCurrent =
+        std::make_shared<std::atomic<std::uint64_t>>(0);
+    std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_detailMeshes;
+    QTimer m_detailTimer;
+    QThreadPool m_detailPool;
 
     // Last: its thread must be stopped before the rest goes away.
     std::unique_ptr<core::RecomputeEngine> m_engine;

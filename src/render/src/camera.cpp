@@ -118,6 +118,29 @@ CameraPose OrbitCamera::poseFor(StandardView standard) const {
     return pose;
 }
 
+CameraPose OrbitCamera::poseLookingFrom(const QVector3D& towardCamera) const {
+    CameraPose pose = m_pose;
+    if (towardCamera.lengthSquared() < 1e-12F) {
+        return pose;
+    }
+    const QVector3D n = towardCamera.normalized();
+    pose.pitch =
+        std::clamp(std::asin(std::clamp(n.z(), -1.0F, 1.0F)) / kDegrees, -kMaxPitch, kMaxPitch);
+    // eye() puts the camera at (-cos(p) sin(y), -cos(p) cos(y), sin(p)) * distance.
+    if (std::hypot(n.x(), n.y()) > 1e-4F) {
+        pose.yaw = std::atan2(-n.x(), -n.y()) / kDegrees;
+    }
+    return pose;
+}
+
+CameraPose OrbitCamera::poseFraming(const QVector3D& center, float radius) const {
+    CameraPose pose = m_pose;
+    pose.target = center;
+    const float tanLimit = tanHalfFov() * std::min(1.0F, aspect());
+    pose.distance = std::max(std::max(radius, 0.1F) / std::sin(std::atan(tanLimit)) * 1.1F, 2.0F);
+    return pose;
+}
+
 QVector3D OrbitCamera::eye() const {
     // yaw 0 looks from the front (the -Y side); positive yaw turns the camera to the left.
     const float yaw = m_pose.yaw * kDegrees;
@@ -179,6 +202,23 @@ std::optional<QVector3D> OrbitCamera::pointOnPlane(const QPointF& pixel, float p
         return std::nullopt;
     }
     return nearPoint + direction * t;
+}
+
+std::optional<Ray> OrbitCamera::rayThrough(const QPointF& pixel) const {
+    const float nx = static_cast<float>(2.0 * pixel.x() / m_viewport.width() - 1.0);
+    const float ny = static_cast<float>(1.0 - 2.0 * pixel.y() / m_viewport.height());
+    bool invertible = false;
+    const QMatrix4x4 inverse = (projection(aspect()) * view()).inverted(&invertible);
+    if (!invertible) {
+        return std::nullopt;
+    }
+    const QVector3D nearPoint = inverse.map(QVector3D(nx, ny, -1.0F));
+    const QVector3D farPoint = inverse.map(QVector3D(nx, ny, 1.0F));
+    const QVector3D direction = farPoint - nearPoint;
+    if (direction.lengthSquared() < 1e-12F) {
+        return std::nullopt;
+    }
+    return Ray{nearPoint, direction.normalized()};
 }
 
 QPointF OrbitCamera::project(const QVector3D& world) const {

@@ -262,9 +262,9 @@ Die Texte stammen aus einem **Meldungskatalog** (siehe AP-2.14). Technische Kern
 ## 10. Navigation und Eingabegeräte
 
 - **Maus (Standard):** Rechte Taste ziehen = drehen, mittlere Taste ziehen = verschieben, Rad = Zoom zum Zeiger.
-- **Voreinstellungen** für Umsteiger: „wie Fusion“, „wie Tinkercad“, „wie Blender“, „wie SketchUp“. Das wird beim ersten Start abgefragt.
+- **Voreinstellungen** für Umsteiger: „wie Fusion“, „wie Tinkercad“, „wie Blender“, „wie SketchUp“. Das wird beim ersten Start abgefragt; bis dahin im Menü Ansicht. Belegung: Fusion = Mitte verschiebt, Umschalt + Mitte dreht; Tinkercad = rechts dreht, Umschalt + rechts oder Mitte verschiebt; Blender = Mitte dreht, Umschalt + Mitte verschiebt, Strg + Mitte zoomt; SketchUp = Mitte dreht, Umschalt + Mitte verschiebt. In allen Stilen: Mausrad zoomt zum Zeiger, Alt + links dreht, Umschalt + links verschiebt.
 - **Trackpad (macOS):** zwei Finger = drehen, Shift + zwei Finger = verschieben, Pinch = Zoom. Smart Zoom (Doppeltipp) zentriert auf die Fläche.
-- **ViewCube** oben rechts: klickbar, mit animierten Übergängen.
+- **ViewCube** oben rechts: Flächen, Kanten und Ecken sind klickbar (je Fläche 3 × 3 Felder), mit animierten Übergängen.
 - **Doppelklick auf eine Fläche:** Die Ansicht dreht sich senkrecht auf die Fläche.
 - `F` = alles zeigen, `⇧F` = Fokus-Modus (Seitenleisten aus und wieder an), `Pos1`/`Home` = Startansicht, `1–7` = Standardansichten, `P` = Perspektive/Orthografisch.
 - **3D-Maus (SpaceMouse):** später (Backlog).

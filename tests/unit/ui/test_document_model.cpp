@@ -5,6 +5,8 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <QCoreApplication>
+#include <QElapsedTimer>
+#include <QEventLoop>
 #include <QVariantMap>
 
 #include <algorithm>
@@ -39,7 +41,7 @@ struct Extent {
 Extent extentOf(const fission::render::RenderScene& scene) {
     Extent extent;
     for (const auto& body : scene.bodies) {
-        for (const auto& point : body.mesh.positions) {
+        for (const auto& point : body.geometry().positions) {
             extent.minX = std::min(extent.minX, static_cast<double>(point.x));
             extent.maxX = std::max(extent.maxX, static_cast<double>(point.x));
             extent.minZ = std::min(extent.minZ, static_cast<double>(point.z));
@@ -71,10 +73,15 @@ public:
     fission::geo::TriangleMesh
     tessellate(const fission::geo::Solid& solid,
                const fission::geo::TessellationParams& p) const override {
+        double finest = finestChord.load();
+        while (p.chordTolerance < finest &&
+               !finestChord.compare_exchange_weak(finest, p.chordTolerance)) {
+        }
         return inner_->tessellate(solid, p);
     }
 
     mutable std::atomic<int> builds{0};
+    mutable std::atomic<double> finestChord{1.0}; ///< the finest tolerance asked for so far
 
 private:
     std::unique_ptr<fission::geo::GeometryKernel> inner_;
@@ -325,4 +332,74 @@ TEST_CASE("the chosen step stays chosen while its values go back and forth",
     CHECK(f.model->currentStep() == 0);
     const QVariantMap width = f.model->stepValues().at(0).toMap();
     CHECK(width["value"].toDouble() == Approx(20.0));
+}
+
+TEST_CASE("zooming in gets a finer mesh in the background, zooming out the basic one again",
+          "[ui][document-model][detail]") {
+    Fixture f;
+    const auto basic = f.model->scene()->bodies.at(0);
+    CHECK(f.counter->finestChord.load() == Approx(0.01));
+
+    const auto waitFor = [&](int level) {
+        QElapsedTimer timer;
+        timer.start();
+        while (f.model->shownDetailLevel() != level && timer.elapsed() < 5000) {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+        }
+        return f.model->shownDetailLevel() == level;
+    };
+
+    f.model->setDetailLevel(3);
+    REQUIRE(waitFor(3));
+    const auto fine = f.model->scene()->bodies.at(0);
+    CHECK(fine.id == basic.id);
+    CHECK(fine.meshVersion != basic.meshVersion); // the renderer sends the new mesh
+    CHECK(f.counter->finestChord.load() == Approx(0.01 / 8.0));
+
+    f.model->setDetailLevel(0);
+    REQUIRE(waitFor(0));
+    CHECK(f.model->scene()->bodies.at(0).meshVersion == basic.meshVersion);
+}
+
+TEST_CASE("a change of the document gives the new body its fine mesh too",
+          "[ui][document-model][detail]") {
+    Fixture f;
+    f.model->setDetailLevel(2);
+    QElapsedTimer timer;
+    timer.start();
+    while (f.model->shownDetailLevel() != 2 && timer.elapsed() < 5000) {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+    }
+    REQUIRE(f.model->shownDetailLevel() == 2);
+
+    REQUIRE(f.model->setStepValue(0, "width", "35"));
+    f.model->waitForCalculation();
+    // the new body is shown at once with the basic mesh, then the fine one follows
+    timer.restart();
+    const auto version = [&] { return f.model->scene()->bodies.at(0).meshVersion; };
+    while (version() % 16 != 2 && timer.elapsed() < 5000) {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+    }
+    CHECK(version() % 16 == 2);
+}
+
+TEST_CASE("the print bed has the size of the chosen printer", "[ui][document-model][printer]") {
+    Fixture f;
+    CHECK(f.model->printerId() == "generic");
+    CHECK(f.model->scene()->bed.sizeX == Approx(256.0F));
+
+    REQUIRE(f.model->setPrinter("prusa-mk4"));
+    CHECK(f.model->printerName() == "Prusa MK4");
+    CHECK(f.model->bedX() == Approx(250.0));
+    CHECK(f.model->bedY() == Approx(210.0));
+    // the scene for the 3D view follows, the bodies stay as they are
+    CHECK(f.model->scene()->bed.sizeX == Approx(250.0F));
+    CHECK(f.model->scene()->bed.sizeY == Approx(210.0F));
+    CHECK(f.model->scene()->bodies.size() == 1);
+
+    // an unknown printer changes nothing
+    CHECK_FALSE(f.model->setPrinter("nobody"));
+    CHECK(f.model->printerId() == "prusa-mk4");
+    // choosing a printer is a setting, not a change of the model: no step in the history
+    CHECK_FALSE(f.model->canUndo());
 }

@@ -34,8 +34,19 @@ struct Params {
     float params[4];
     float bedSize[4];
     float bodyOverride[4];
+    float view[4];
 };
-static_assert(sizeof(Params) == 64 * 3 + 16 * 11, "Params must match the std140 block");
+static_assert(sizeof(Params) == 64 * 3 + 16 * 12, "Params must match the std140 block");
+
+// The block of the ambient-occlusion shaders (fullscreen.vert, ssao.frag, aoblur.frag).
+struct AoParams {
+    float invViewProj[16];
+    float corr[16];
+    float eye[4];
+    float a[4];
+    float b[4];
+};
+static_assert(sizeof(AoParams) == 64 * 2 + 16 * 3, "AoParams must match the std140 block");
 
 struct MeshVertex {
     float position[3];
@@ -133,6 +144,13 @@ SceneRenderer::SceneRenderer(QRhi* rhi) : m_rhi(rhi) {
     m_sampler.reset(m_rhi->newSampler(QRhiSampler::Nearest, QRhiSampler::Nearest, QRhiSampler::None,
                                       QRhiSampler::ClampToEdge, QRhiSampler::ClampToEdge));
     m_sampler->create();
+    m_linearSampler.reset(m_rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear,
+                                            QRhiSampler::None, QRhiSampler::ClampToEdge,
+                                            QRhiSampler::ClampToEdge));
+    m_linearSampler->create();
+    // Until there is an occlusion image, the shaders get a white one (nothing is occluded).
+    m_aoWhite.reset(m_rhi->newTexture(QRhiTexture::RGBA8, QSize(1, 1)));
+    m_aoWhite->create();
     QRhiTextureRenderTargetDescription shadowDescription;
     shadowDescription.setDepthTexture(m_shadowTexture.get());
     m_shadowTarget.reset(m_rhi->newTextureRenderTarget(shadowDescription));
@@ -144,7 +162,9 @@ SceneRenderer::SceneRenderer(QRhi* rhi) : m_rhi(rhi) {
     m_srb->setBindings(
         {QRhiShaderResourceBinding::uniformBuffer(0, stages, m_uniforms.get()),
          QRhiShaderResourceBinding::sampledTexture(1, QRhiShaderResourceBinding::FragmentStage,
-                                                   m_shadowTexture.get(), m_sampler.get())});
+                                                   m_shadowTexture.get(), m_sampler.get()),
+         QRhiShaderResourceBinding::sampledTexture(2, QRhiShaderResourceBinding::FragmentStage,
+                                                   m_aoWhite.get(), m_linearSampler.get())});
     m_srb->create();
     m_shadowSrb.reset(m_rhi->newShaderResourceBindings());
     m_shadowSrb->setBindings(
@@ -160,6 +180,10 @@ SceneRenderer::SceneRenderer(QRhi* rhi) : m_rhi(rhi) {
     m_backgroundFragment = loadShader("background.frag");
     m_shadowVertex = loadShader("shadow.vert");
     m_shadowFragment = loadShader("shadow.frag");
+    m_fullscreenVertex = loadShader("fullscreen.vert");
+    m_ssaoFragment = loadShader("ssao.frag");
+    m_aoBlurFragment = loadShader("aoblur.frag");
+    m_normalFragment = loadShader("normal.frag");
 
     // Depth only: the position comes from the body layout, there is no colour attachment.
     m_shadowPipeline.reset(m_rhi->newGraphicsPipeline());
@@ -185,7 +209,7 @@ SceneRenderer::~SceneRenderer() = default;
 std::unique_ptr<QRhiGraphicsPipeline>
 SceneRenderer::makePipeline(const QShader& vertex, const QShader& fragment, bool colorLayoutOnly,
                             bool lines, bool blend, bool depth, QRhiRenderPassDescriptor* pass,
-                            int samples) {
+                            int samples, QRhiShaderResourceBindings* srb) {
     std::unique_ptr<QRhiGraphicsPipeline> pipeline(m_rhi->newGraphicsPipeline());
     pipeline->setShaderStages(
         {{QRhiShaderStage::Vertex, vertex}, {QRhiShaderStage::Fragment, fragment}});
@@ -221,7 +245,7 @@ SceneRenderer::makePipeline(const QShader& vertex, const QShader& fragment, bool
         pipeline->setTargetBlends({blendState});
     }
     pipeline->setSampleCount(samples);
-    pipeline->setShaderResourceBindings(m_srb.get());
+    pipeline->setShaderResourceBindings(srb != nullptr ? srb : m_srb.get());
     pipeline->setRenderPassDescriptor(pass);
     pipeline->create();
     return pipeline;
@@ -256,10 +280,14 @@ std::unique_ptr<QRhiBuffer> SceneRenderer::makeVertexBuffer(QRhiResourceUpdateBa
 void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
                            const ViewPalette& palette) {
     QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
+    if (!m_whiteUploaded) {
+        const std::uint8_t white[4] = {255, 255, 255, 255};
+        QRhiTextureSubresourceUploadDescription pixel(white, 4);
+        updates->uploadTexture(m_aoWhite.get(), QRhiTextureUploadEntry(0, 0, pixel));
+        m_whiteUploaded = true;
+    }
 
-    // --- bodies: one vertex and index buffer for all of them -------------------------------
-    std::vector<MeshVertex> vertices;
-    std::vector<quint32> indices;
+    // --- bodies: buffers per body; only new or changed ones are built and sent ------------
     std::vector<FlatVertex> lines;
     QVector3D boundsMin(1e30F, 1e30F, 1e30F);
     QVector3D boundsMax(-1e30F, -1e30F, -1e30F);
@@ -267,7 +295,7 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
 
     const float hx = 0.5F * scene.bed.sizeX;
     const float hy = 0.5F * scene.bed.sizeY;
-    // Axes and the rim of the plate come first, the bodies' edge lines last.
+    // Axes and the rim of the plate.
     lines.push_back(flatVertex(-hx, 0.0F, 0.0F, palette.axisX, kAxisAlpha));
     lines.push_back(flatVertex(hx, 0.0F, 0.0F, palette.axisX, kAxisAlpha));
     lines.push_back(flatVertex(0.0F, -hy, 0.0F, palette.axisY, kAxisAlpha));
@@ -283,42 +311,97 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
                                    palette.bedEdge));
     }
 
-    for (const RenderBody& body : scene.bodies) {
-        const geo::TriangleMesh& mesh = body.mesh;
-        const auto base = static_cast<quint32>(vertices.size());
-        for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
-            const geo::Point3f& p = mesh.positions[i];
-            const geo::Point3f& n = mesh.normals[i];
-            MeshVertex vertex = meshVertex(p.x, p.y, p.z, n.x, n.y, n.z);
-            setColor(vertex.color, body.color);
-            vertices.push_back(vertex);
-            boundsMin = QVector3D(std::min(boundsMin.x(), p.x), std::min(boundsMin.y(), p.y),
-                                  std::min(boundsMin.z(), p.z));
-            boundsMax = QVector3D(std::max(boundsMax.x(), p.x), std::max(boundsMax.y(), p.y),
-                                  std::max(boundsMax.z(), p.z));
+    // The edge colour is part of the line buffers: a new colour rebuilds them all.
+    const bool edgeColorChanged = palette.edgeLine != m_edgeLineColor;
+    m_edgeLineColor = palette.edgeLine;
+
+    std::map<std::string, GpuBody> next;
+    std::vector<std::string> order;
+    m_drawOrder.clear();
+    m_lastStats = {};
+    std::size_t totalIndices = 0;
+    for (std::size_t position = 0; position < scene.bodies.size(); ++position) {
+        const RenderBody& body = scene.bodies[position];
+        // Bodies without an id (tests, previews) are told apart by their place in the list.
+        const std::string key = body.id.empty() ? "#" + std::to_string(position) : body.id;
+        if (next.contains(key)) {
+            continue; // the same id twice: the first one wins
+        }
+        GpuBody gpu;
+        const auto known = m_gpuBodies.find(key);
+        const bool sameMesh = known != m_gpuBodies.end() &&
+                              known->second.meshVersion == body.meshVersion &&
+                              known->second.color == body.color;
+        if (sameMesh && !edgeColorChanged) {
+            gpu = std::move(known->second);
+            m_gpuBodies.erase(known);
+            ++m_lastStats.kept;
+        } else {
+            const geo::TriangleMesh& mesh = body.geometry();
+            std::vector<MeshVertex> vertices;
+            std::vector<FlatVertex> edgeLines;
+            vertices.reserve(mesh.positions.size());
+            gpu.boundsMin = QVector3D(1e30F, 1e30F, 1e30F);
+            gpu.boundsMax = QVector3D(-1e30F, -1e30F, -1e30F);
+            for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
+                const geo::Point3f& p = mesh.positions[i];
+                const geo::Point3f& n = mesh.normals[i];
+                MeshVertex vertex = meshVertex(p.x, p.y, p.z, n.x, n.y, n.z);
+                setColor(vertex.color, body.color);
+                vertices.push_back(vertex);
+                gpu.boundsMin =
+                    QVector3D(std::min(gpu.boundsMin.x(), p.x), std::min(gpu.boundsMin.y(), p.y),
+                              std::min(gpu.boundsMin.z(), p.z));
+                gpu.boundsMax =
+                    QVector3D(std::max(gpu.boundsMax.x(), p.x), std::max(gpu.boundsMax.y(), p.y),
+                              std::max(gpu.boundsMax.z(), p.z));
+            }
+            for (const geo::EdgePolyline& edge : mesh.edges) {
+                for (std::size_t i = 0; i + 1 < edge.points.size(); ++i) {
+                    const geo::Point3f& a = edge.points[i];
+                    const geo::Point3f& b = edge.points[i + 1];
+                    edgeLines.push_back(flatVertex(a.x, a.y, a.z, palette.edgeLine));
+                    edgeLines.push_back(flatVertex(b.x, b.y, b.z, palette.edgeLine));
+                }
+            }
+            gpu.meshVersion = body.meshVersion;
+            gpu.color = body.color;
+            gpu.vertices =
+                makeVertexBuffer(updates, vertices.data(), vertices.size() * sizeof(MeshVertex),
+                                 QRhiBuffer::VertexBuffer);
+            gpu.indices = makeVertexBuffer(updates, mesh.indices.data(),
+                                           mesh.indices.size() * sizeof(std::uint32_t),
+                                           QRhiBuffer::IndexBuffer);
+            gpu.indexCount = mesh.indices.size();
+            gpu.lines =
+                makeVertexBuffer(updates, edgeLines.data(), edgeLines.size() * sizeof(FlatVertex),
+                                 QRhiBuffer::VertexBuffer);
+            gpu.lineVertexCount = edgeLines.size();
+            ++m_lastStats.uploaded;
+        }
+        if (gpu.vertices) {
+            boundsMin = QVector3D(std::min(boundsMin.x(), gpu.boundsMin.x()),
+                                  std::min(boundsMin.y(), gpu.boundsMin.y()),
+                                  std::min(boundsMin.z(), gpu.boundsMin.z()));
+            boundsMax = QVector3D(std::max(boundsMax.x(), gpu.boundsMax.x()),
+                                  std::max(boundsMax.y(), gpu.boundsMax.y()),
+                                  std::max(boundsMax.z(), gpu.boundsMax.z()));
             anyBody = true;
         }
-        for (const std::uint32_t index : mesh.indices) {
-            indices.push_back(base + index);
-        }
-        for (const geo::EdgePolyline& edge : mesh.edges) {
-            for (std::size_t i = 0; i + 1 < edge.points.size(); ++i) {
-                const geo::Point3f& a = edge.points[i];
-                const geo::Point3f& b = edge.points[i + 1];
-                lines.push_back(flatVertex(a.x, a.y, a.z, palette.edgeLine));
-                lines.push_back(flatVertex(b.x, b.y, b.z, palette.edgeLine));
-            }
-        }
+        totalIndices += gpu.indexCount;
+        next.emplace(key, std::move(gpu));
+        order.push_back(key);
     }
-
-    m_bodyVertices = makeVertexBuffer(
-        updates, vertices.data(), vertices.size() * sizeof(MeshVertex), QRhiBuffer::VertexBuffer);
-    m_bodyIndices = makeVertexBuffer(updates, indices.data(), indices.size() * sizeof(quint32),
-                                     QRhiBuffer::IndexBuffer);
-    m_bodyIndexCount = indices.size();
+    m_lastStats.removed = static_cast<int>(m_gpuBodies.size());
+    m_gpuBodies = std::move(next); // what is left in the old map is gone: its buffers are freed
+    // Drawing follows the order of the scene.
+    for (const std::string& key : order) {
+        m_drawOrder.push_back(&m_gpuBodies.at(key));
+    }
+    m_bodyIndexCount = totalIndices;
+    m_lineVertexCount = lines.size();
     m_lineVertices = makeVertexBuffer(updates, lines.data(), lines.size() * sizeof(FlatVertex),
                                       QRhiBuffer::VertexBuffer);
-    m_lineVertexCount = lines.size();
 
     // --- the plate: top as a fan around the origin, edge as a strip -------------------------
     std::vector<MeshVertex> bedVertices;
@@ -381,6 +464,8 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
 
     // --- light: orthographic shadow frustum around the bodies ------------------------------
     m_hasShadow = anyBody;
+    // How far corners reach into their surroundings follows the size of the scene.
+    m_aoRadius = anyBody ? std::clamp(0.15F * (boundsMax - boundsMin).length(), 2.0F, 25.0F) : 6.0F;
     m_lightDirection = QVector3D(-0.4F, -0.5F, 0.8F).normalized();
     if (anyBody) {
         const QVector3D center = 0.5F * (boundsMin + boundsMax);
@@ -393,7 +478,7 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
     }
     cb->resourceUpdate(updates);
 
-    if (!m_hasShadow || m_bodyIndexCount == 0) {
+    if (!m_hasShadow || m_drawOrder.empty()) {
         return;
     }
     // Shadow map: depth of the bodies seen from the light.
@@ -402,19 +487,28 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
     none.palette = palette;
     writeUniforms(shadowUpdates, m_shadowUniforms.get(),
                   m_rhi->clipSpaceCorrMatrix() * m_lightViewProjection, none);
-    const QRhiCommandBuffer::VertexInput input(m_bodyVertices.get(), 0);
     cb->beginPass(m_shadowTarget.get(), QColor(0, 0, 0, 255), {1.0F, 0}, shadowUpdates);
     cb->setGraphicsPipeline(m_shadowPipeline.get());
     cb->setViewport({0, 0, float(kShadowSize), float(kShadowSize)});
     cb->setShaderResources(m_shadowSrb.get());
-    cb->setVertexInput(0, 1, &input, m_bodyIndices.get(), 0, QRhiCommandBuffer::IndexUInt32);
-    cb->drawIndexed(static_cast<quint32>(m_bodyIndexCount));
+    for (const GpuBody* body : m_drawOrder) {
+        if (!body->vertices || !body->indices) {
+            continue;
+        }
+        const QRhiCommandBuffer::VertexInput input(body->vertices.get(), 0);
+        cb->setVertexInput(0, 1, &input, body->indices.get(), 0, QRhiCommandBuffer::IndexUInt32);
+        cb->drawIndexed(static_cast<quint32>(body->indexCount));
+    }
     cb->endPass();
 }
 
 void SceneRenderer::writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* buffer,
-                                  const QMatrix4x4& mvp, const Frame& frame) const {
+                                  const QMatrix4x4& mvp, const Frame& frame,
+                                  const QSize& targetSize, bool occlusion) const {
     Params p{};
+    p.view[0] = static_cast<float>(targetSize.width());
+    p.view[1] = static_cast<float>(targetSize.height());
+    p.view[2] = occlusion ? 1.0F : 0.0F;
     copyMatrix(p.mvp, mvp);
     copyMatrix(p.lightVp, m_lightViewProjection);
     copyMatrix(p.corr, m_rhi->clipSpaceCorrMatrix());
@@ -449,15 +543,201 @@ void SceneRenderer::writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* 
     updates->updateDynamicBuffer(buffer, 0, sizeof(Params), &p);
 }
 
+bool SceneRenderer::ensureAmbientOcclusionTargets(const QSize& size) {
+    if (size.isEmpty()) {
+        return false;
+    }
+    if (m_aoSize == size && m_aoBlurTarget) {
+        return true;
+    }
+    const QSize half(std::max(1, size.width() / 2), std::max(1, size.height() / 2));
+    const auto stages =
+        QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
+    const auto fragment = QRhiShaderResourceBinding::FragmentStage;
+
+    // The pipelines and buffers do not depend on the size and are made once.
+    if (!m_aoDepthUniforms) {
+        m_aoDepthUniforms.reset(
+            m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, sizeof(Params)));
+        m_aoDepthUniforms->create();
+        m_aoRawUniforms.reset(
+            m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, sizeof(AoParams)));
+        m_aoRawUniforms->create();
+        m_aoBlurUniforms.reset(
+            m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, sizeof(AoParams)));
+        m_aoBlurUniforms->create();
+        m_aoDepthSrb.reset(m_rhi->newShaderResourceBindings());
+        m_aoDepthSrb->setBindings(
+            {QRhiShaderResourceBinding::uniformBuffer(0, stages, m_aoDepthUniforms.get())});
+        m_aoDepthSrb->create();
+    }
+
+    // Depth of the scene as seen from the camera, with the surface normals as colour.
+    m_aoDepthTexture.reset(
+        m_rhi->newTexture(QRhiTexture::D32F, size, 1, QRhiTexture::RenderTarget));
+    m_aoDepthTexture->create();
+    m_aoNormalTexture.reset(
+        m_rhi->newTexture(QRhiTexture::RGBA8, size, 1, QRhiTexture::RenderTarget));
+    m_aoNormalTexture->create();
+    QRhiTextureRenderTargetDescription depthDescription(
+        QRhiColorAttachment(m_aoNormalTexture.get()));
+    depthDescription.setDepthTexture(m_aoDepthTexture.get());
+    m_aoDepthTarget.reset(m_rhi->newTextureRenderTarget(depthDescription));
+    if (!m_aoDepthPass) {
+        m_aoDepthPass.reset(m_aoDepthTarget->newCompatibleRenderPassDescriptor());
+    }
+    m_aoDepthTarget->setRenderPassDescriptor(m_aoDepthPass.get());
+    m_aoDepthTarget->create();
+    if (!m_aoDepthPipeline) {
+        m_aoDepthPipeline = makePipeline(m_bodyVertex, m_normalFragment, false, false, false, true,
+                                         m_aoDepthPass.get(), 1, m_aoDepthSrb.get());
+    }
+
+    m_aoRawTexture.reset(m_rhi->newTexture(QRhiTexture::RGBA8, half, 1, QRhiTexture::RenderTarget));
+    m_aoRawTexture->create();
+    m_aoBlurTexture.reset(
+        m_rhi->newTexture(QRhiTexture::RGBA8, half, 1, QRhiTexture::RenderTarget));
+    m_aoBlurTexture->create();
+    m_aoRawTarget.reset(m_rhi->newTextureRenderTarget({m_aoRawTexture.get()}));
+    if (!m_aoColorPass) {
+        m_aoColorPass.reset(m_aoRawTarget->newCompatibleRenderPassDescriptor());
+    }
+    m_aoRawTarget->setRenderPassDescriptor(m_aoColorPass.get());
+    m_aoRawTarget->create();
+    m_aoBlurTarget.reset(m_rhi->newTextureRenderTarget({m_aoBlurTexture.get()}));
+    m_aoBlurTarget->setRenderPassDescriptor(m_aoColorPass.get());
+    m_aoBlurTarget->create();
+
+    m_aoRawSrb.reset(m_rhi->newShaderResourceBindings());
+    m_aoRawSrb->setBindings(
+        {QRhiShaderResourceBinding::uniformBuffer(0, stages, m_aoRawUniforms.get()),
+         QRhiShaderResourceBinding::sampledTexture(1, fragment, m_aoDepthTexture.get(),
+                                                   m_sampler.get()),
+         QRhiShaderResourceBinding::sampledTexture(2, fragment, m_aoNormalTexture.get(),
+                                                   m_sampler.get())});
+    m_aoRawSrb->create();
+    m_aoBlurSrb.reset(m_rhi->newShaderResourceBindings());
+    m_aoBlurSrb->setBindings(
+        {QRhiShaderResourceBinding::uniformBuffer(0, stages, m_aoBlurUniforms.get()),
+         QRhiShaderResourceBinding::sampledTexture(1, fragment, m_aoRawTexture.get(),
+                                                   m_linearSampler.get())});
+    m_aoBlurSrb->create();
+
+    const auto makeFullscreen = [&](const QShader& fragmentShader,
+                                    QRhiShaderResourceBindings* srb) {
+        std::unique_ptr<QRhiGraphicsPipeline> pipeline(m_rhi->newGraphicsPipeline());
+        pipeline->setShaderStages({{QRhiShaderStage::Vertex, m_fullscreenVertex},
+                                   {QRhiShaderStage::Fragment, fragmentShader}});
+        QRhiVertexInputLayout empty;
+        pipeline->setVertexInputLayout(empty);
+        pipeline->setTopology(QRhiGraphicsPipeline::Triangles);
+        pipeline->setCullMode(QRhiGraphicsPipeline::None);
+        pipeline->setShaderResourceBindings(srb);
+        pipeline->setRenderPassDescriptor(m_aoColorPass.get());
+        pipeline->create();
+        return pipeline;
+    };
+    if (!m_aoRawPipeline) {
+        m_aoRawPipeline = makeFullscreen(m_ssaoFragment, m_aoRawSrb.get());
+        m_aoBlurPipeline = makeFullscreen(m_aoBlurFragment, m_aoBlurSrb.get());
+    }
+
+    // The shaders of the main pass read the finished occlusion image.
+    m_srb->setBindings({QRhiShaderResourceBinding::uniformBuffer(0, stages, m_uniforms.get()),
+                        QRhiShaderResourceBinding::sampledTexture(
+                            1, fragment, m_shadowTexture.get(), m_sampler.get()),
+                        QRhiShaderResourceBinding::sampledTexture(
+                            2, fragment, m_aoBlurTexture.get(), m_linearSampler.get())});
+    m_srb->create();
+    m_aoSize = size;
+    return true;
+}
+
+void SceneRenderer::renderAmbientOcclusion(QRhiCommandBuffer* cb, const Frame& frame,
+                                           const QSize& size) {
+    const QSize half(std::max(1, size.width() / 2), std::max(1, size.height() / 2));
+    const QMatrix4x4 viewProjection = frame.projection * frame.view;
+    QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
+
+    writeUniforms(updates, m_aoDepthUniforms.get(), m_rhi->clipSpaceCorrMatrix() * viewProjection,
+                  frame, size, false);
+
+    // pixels per mm at distance 1 (perspective) or everywhere (orthographic)
+    const float scale = 0.5F * static_cast<float>(size.height()) * frame.projection(1, 1);
+    const bool orthographic = frame.projection(3, 3) > 0.5F;
+    const QVector3D eye = frame.view.inverted().map(QVector3D(0, 0, 0));
+    const auto fill = [&](QRhiBuffer* buffer, const QSize& image) {
+        AoParams p{};
+        copyMatrix(p.invViewProj, viewProjection.inverted());
+        copyMatrix(p.corr, m_rhi->clipSpaceCorrMatrix());
+        p.eye[0] = eye.x();
+        p.eye[1] = eye.y();
+        p.eye[2] = eye.z();
+        p.a[0] = m_rhi->isYUpInFramebuffer() ? 0.0F : 1.0F;
+        p.a[1] = m_aoRadius;
+        p.a[2] = orthographic ? 0.0F : scale;
+        p.a[3] = orthographic ? scale : 0.0F;
+        p.b[0] = static_cast<float>(image.width());
+        p.b[1] = static_cast<float>(image.height());
+        p.b[2] = 0.85F; // strength
+        updates->updateDynamicBuffer(buffer, 0, sizeof(AoParams), &p);
+    };
+    fill(m_aoRawUniforms.get(), size);  // the depth image is read at full size
+    fill(m_aoBlurUniforms.get(), half); // the blur reads texels of the half-size image
+
+    // 1. depth of the bodies and the plate, from the camera
+    cb->beginPass(m_aoDepthTarget.get(), QColor(128, 128, 255, 255), {1.0F, 0}, updates);
+    cb->setGraphicsPipeline(m_aoDepthPipeline.get());
+    cb->setViewport({0, 0, float(size.width()), float(size.height())});
+    cb->setShaderResources(m_aoDepthSrb.get());
+    for (const GpuBody* body : m_drawOrder) {
+        if (!body->vertices || !body->indices) {
+            continue;
+        }
+        const QRhiCommandBuffer::VertexInput input(body->vertices.get(), 0);
+        cb->setVertexInput(0, 1, &input, body->indices.get(), 0, QRhiCommandBuffer::IndexUInt32);
+        cb->drawIndexed(static_cast<quint32>(body->indexCount));
+    }
+    if (m_bedVertices && m_bedIndices) {
+        const QRhiCommandBuffer::VertexInput input(m_bedVertices.get(), 0);
+        cb->setVertexInput(0, 1, &input, m_bedIndices.get(), 0, QRhiCommandBuffer::IndexUInt32);
+        cb->drawIndexed(static_cast<quint32>(m_bedIndexCount));
+    }
+    cb->endPass();
+
+    // 2. occlusion from the depth, 3. blur
+    cb->beginPass(m_aoRawTarget.get(), QColor(255, 255, 255, 255), {1.0F, 0});
+    cb->setGraphicsPipeline(m_aoRawPipeline.get());
+    cb->setViewport({0, 0, float(half.width()), float(half.height())});
+    cb->setShaderResources(m_aoRawSrb.get());
+    cb->draw(3);
+    cb->endPass();
+
+    cb->beginPass(m_aoBlurTarget.get(), QColor(255, 255, 255, 255), {1.0F, 0});
+    cb->setGraphicsPipeline(m_aoBlurPipeline.get());
+    cb->setViewport({0, 0, float(half.width()), float(half.height())});
+    cb->setShaderResources(m_aoBlurSrb.get());
+    cb->draw(3);
+    cb->endPass();
+}
+
 void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const Frame& frame) {
     if (!m_bodyPipeline) {
         return;
     }
+    const QSize size = target->pixelSize();
+    // Without bodies there is nothing that could be in a corner.
+    const bool occlusion = frame.ambientOcclusion && !m_drawOrder.empty() &&
+                           frame.displayMode != DisplayMode::wireframe &&
+                           ensureAmbientOcclusionTargets(size);
+    if (occlusion) {
+        renderAmbientOcclusion(cb, frame, size);
+    }
     QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
     writeUniforms(updates, m_uniforms.get(),
-                  m_rhi->clipSpaceCorrMatrix() * frame.projection * frame.view, frame);
+                  m_rhi->clipSpaceCorrMatrix() * frame.projection * frame.view, frame, size,
+                  occlusion);
 
-    const QSize size = target->pixelSize();
     cb->beginPass(target, frame.palette.viewEdge, {1.0F, 0}, updates);
     cb->setViewport({0, 0, float(size.width()), float(size.height())});
 
@@ -472,12 +752,18 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
         cb->setVertexInput(0, 1, &input, m_bedIndices.get(), 0, QRhiCommandBuffer::IndexUInt32);
         cb->drawIndexed(static_cast<quint32>(m_bedIndexCount));
     }
-    if (m_bodyVertices && m_bodyIndexCount > 0 && frame.displayMode != DisplayMode::wireframe) {
-        const QRhiCommandBuffer::VertexInput input(m_bodyVertices.get(), 0);
+    if (frame.displayMode != DisplayMode::wireframe) {
         cb->setGraphicsPipeline(m_bodyPipeline.get());
         cb->setShaderResources(m_srb.get());
-        cb->setVertexInput(0, 1, &input, m_bodyIndices.get(), 0, QRhiCommandBuffer::IndexUInt32);
-        cb->drawIndexed(static_cast<quint32>(m_bodyIndexCount));
+        for (const GpuBody* body : m_drawOrder) {
+            if (!body->vertices || !body->indices) {
+                continue;
+            }
+            const QRhiCommandBuffer::VertexInput input(body->vertices.get(), 0);
+            cb->setVertexInput(0, 1, &input, body->indices.get(), 0,
+                               QRhiCommandBuffer::IndexUInt32);
+            cb->drawIndexed(static_cast<quint32>(body->indexCount));
+        }
     }
     if (frame.bedVisible && m_discVertices) {
         const QRhiCommandBuffer::VertexInput input(m_discVertices.get(), 0);
@@ -486,13 +772,23 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
         cb->setVertexInput(0, 1, &input);
         cb->draw(static_cast<quint32>(m_discVertexCount));
     }
-    if (m_lineVertices) {
-        const QRhiCommandBuffer::VertexInput input(m_lineVertices.get(), 0);
+    if (m_lineVertices || !m_drawOrder.empty()) {
         cb->setGraphicsPipeline(m_linePipeline.get());
         cb->setShaderResources(m_srb.get());
-        cb->setVertexInput(0, 1, &input);
-        // Axes and the plate's rim belong to the bed; the rest are the bodies' edges.
-        cb->draw(static_cast<quint32>(m_lineVertexCount));
+        // Axes and the plate's rim belong to the bed, then come the bodies' edges.
+        if (m_lineVertices) {
+            const QRhiCommandBuffer::VertexInput input(m_lineVertices.get(), 0);
+            cb->setVertexInput(0, 1, &input);
+            cb->draw(static_cast<quint32>(m_lineVertexCount));
+        }
+        for (const GpuBody* body : m_drawOrder) {
+            if (!body->lines || body->lineVertexCount == 0) {
+                continue;
+            }
+            const QRhiCommandBuffer::VertexInput input(body->lines.get(), 0);
+            cb->setVertexInput(0, 1, &input);
+            cb->draw(static_cast<quint32>(body->lineVertexCount));
+        }
     }
     cb->endPass();
 }

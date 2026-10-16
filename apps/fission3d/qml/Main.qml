@@ -18,6 +18,7 @@ Window {
     property string rightTab: "object"
     property bool focusMode: AppOptions.focusMode
     property bool orthographic: false
+    property string mouseStyle: "fission"
     property bool bedVisible: true
     property string transientHint: ""
     readonly property bool narrow: width < Theme.narrowBreakpoint
@@ -25,7 +26,9 @@ Window {
     readonly property bool sidebarsShown: !focusMode && !veryNarrow
     readonly property int leftWidth: sidebarsShown ? (narrow ? Theme.leftPanelWidthNarrow : Theme.leftPanelWidth) : 0
     readonly property int rightWidth: sidebarsShown ? (narrow ? Theme.rightPanelWidthNarrow : Theme.rightPanelWidth) : 0
-    readonly property string bedText: qsTr("%1 × %2").arg(viewport.bedSizeX).arg(viewport.bedSizeY)
+    readonly property string bedText: qsTr("%1 × %2").arg(DocumentModel.bedX).arg(DocumentModel.bedY)
+    readonly property string printerTitle: DocumentModel.printerName !== ""
+        ? DocumentModel.printerName : qsTr("My printer")
 
     width: 1280
     height: 800
@@ -64,6 +67,7 @@ Window {
         { title: qsTr("View"), items: [
             { id: "orthographic", text: qsTr("Orthographic"), shortcut: "P", checked: root.orthographic },
             { id: "bed", text: qsTr("Print bed"), checked: root.bedVisible },
+            { id: "softshadows", text: qsTr("Soft shadows"), checked: viewport.ambientOcclusion },
             { id: "focus", text: qsTr("Focus"), shortcut: isMac ? "⇧F" : qsTr("Shift+F"), checked: root.focusMode },
             { separator: true },
             { id: "view.frame", text: qsTr("Show everything"), shortcut: "F" },
@@ -73,7 +77,13 @@ Window {
             { id: "view.left", text: qsTr("Left"), shortcut: "3" },
             { id: "view.right", text: qsTr("Right"), shortcut: "4" },
             { id: "view.top", text: qsTr("Top"), shortcut: "5" },
-            { id: "view.bottom", text: qsTr("Bottom"), shortcut: "6" }
+            { id: "view.bottom", text: qsTr("Bottom"), shortcut: "6" },
+            { separator: true },
+            { id: "mouse.fission", text: qsTr("Mouse: like Fission3D"), checked: root.mouseStyle === "fission" },
+            { id: "mouse.fusion", text: qsTr("Mouse: like Fusion"), checked: root.mouseStyle === "fusion" },
+            { id: "mouse.tinkercad", text: qsTr("Mouse: like Tinkercad"), checked: root.mouseStyle === "tinkercad" },
+            { id: "mouse.blender", text: qsTr("Mouse: like Blender"), checked: root.mouseStyle === "blender" },
+            { id: "mouse.sketchup", text: qsTr("Mouse: like SketchUp"), checked: root.mouseStyle === "sketchup" }
         ] },
         { title: qsTr("Body"), items: [
             { id: "hole", text: qsTr("As hole"), enabled: false },
@@ -111,6 +121,19 @@ Window {
     readonly property string redoText: DocumentModel.canRedo
         ? qsTr("Redo: %1").arg(historyText(DocumentModel.nextRedo)) : qsTr("Redo")
 
+    // The permanent line in the status bar: how the chosen mouse style moves the view.
+    readonly property string navigationText: {
+        switch (mouseStyle) {
+        case "fusion":
+            return qsTr("Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.")
+        case "blender":
+        case "sketchup":
+            return qsTr("Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.")
+        default:
+            return qsTr("Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.")
+        }
+    }
+
     function showHint(text) {
         transientHint = text
         hintTimer.restart()
@@ -131,6 +154,7 @@ Window {
         case "history": historyOpen = !historyOpen; break
         case "orthographic": orthographic = !orthographic; break
         case "bed": bedVisible = !bedVisible; break
+        case "softshadows": viewport.ambientOcclusion = !viewport.ambientOcclusion; break
         case "focus": focusMode = !focusMode; break
         case "minimize": root.showMinimized(); break
         case "fullscreen":
@@ -138,7 +162,9 @@ Window {
             break
         case "view.frame": viewport.frameAll(); break
         default:
-            if (id.indexOf("view.") === 0) {
+            if (id.indexOf("mouse.") === 0) {
+                mouseStyle = id.substring(6)
+            } else if (id.indexOf("view.") === 0) {
                 viewport.setStandardView(id.substring(5))
             } else {
                 showHint(qsTr("This arrives in a later version."))
@@ -155,6 +181,18 @@ Window {
             DocumentModel.setBodyVisible(0, true)
             DocumentModel.undo()
             historyOpen = true
+        }
+        if (AppOptions.camera !== "") { // developer option, for comparison images
+            const v = AppOptions.camera.split(",").map(Number)
+            if (v.length === 3 && v.every(x => !isNaN(x))) {
+                viewport.setCamera(v[0], v[1], v[2])
+            }
+        }
+        if (AppOptions.rightTab === "printer" || AppOptions.rightTab === "object") {
+            rightTab = AppOptions.rightTab
+        }
+        if (!AppOptions.softShadows) {
+            viewport.ambientOcclusion = false
         }
         if (AppOptions.openMenu >= 0) {
             openMenuTimer.start()
@@ -213,7 +251,7 @@ Window {
         width: parent.width
         menus: root.menuModel
         inWindowMenus: !root.isMac
-        printerText: qsTr("My printer · %1 mm").arg(root.bedText)
+        printerText: qsTr("%1 · %2 mm").arg(root.printerTitle).arg(root.bedText)
         onActionTriggered: id => root.run(id)
         onSearchRequested: root.run("search")
         onSettingsRequested: root.run("settings")
@@ -296,6 +334,9 @@ Window {
                 edgeColor: Theme.edge
                 shadowColor: Theme.shadow
                 animated: !AppOptions.reduceMotion
+                mouseStyle: root.mouseStyle
+                onAmbientOcclusionTurnedOff: root.showHint(
+                    qsTr("Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu."))
             }
 
             BedLabels {
@@ -310,6 +351,7 @@ Window {
                 display: root.display
                 tool: root.tool
                 focusMode: root.focusMode
+                mouseStyle: root.mouseStyle
                 cameraYaw: viewport.cameraYaw
                 cameraPitch: viewport.cameraPitch
                 onOrthographicToggled: root.orthographic = !root.orthographic
@@ -317,6 +359,7 @@ Window {
                 onToolRequested: tool => root.tool = tool
                 onGroupRequested: group => root.showHint(qsTr("This tool group arrives in a later version."))
                 onViewRequested: view => viewport.setStandardView(view)
+                onDirectionRequested: (x, y, z) => viewport.setViewDirection(x, y, z)
                 onFocusToggled: root.focusMode = !root.focusMode
                 onNavigationHint: text => root.showHint(text)
                 onOrbitDragged: (dx, dy) => viewport.orbitBy(dx, dy)
@@ -343,9 +386,15 @@ Window {
             height: parent.height
             visible: root.rightWidth > 0
             tab: root.rightTab
-            printerName: qsTr("My printer")
-            bedText: qsTr("%1 mm").arg(root.bedText + " × 256")
-            nozzleText: qsTr("0.4 mm")
+            printerName: root.printerTitle
+            printerId: DocumentModel.printerId
+            printers: DocumentModel.printers
+            bedText: qsTr("%1 × %2 mm").arg(root.bedText).arg(DocumentModel.bedZ)
+            nozzleText: qsTr("%1 mm").arg(DocumentModel.nozzle)
+            onPrinterChosen: id => {
+                DocumentModel.setPrinter(id)
+                viewport.frameAll()
+            }
             stepTitle: root.currentStepTitle
             stepValues: root.stepValueList
             onTabRequested: tab => root.rightTab = tab
@@ -360,7 +409,7 @@ Window {
         width: parent.width
         toolName: root.toolName(root.tool)
         hint: root.transientHint !== "" && hintTimer.running ? root.transientHint
-            : qsTr("Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.")
+            : root.navigationText
         unitText: qsTr("Unit: mm · Grid 1 mm")
     }
 

@@ -24,9 +24,27 @@ layout(std140, binding = 0) uniform Params {
     vec4 params;
     vec4 bedSize;
     vec4 bodyOverride; // rgb, a = 1: draw every body in this colour
+    vec4 view;       // x, y: size of the image in pixels, z: 1 if ambient occlusion is on
 } u;
 
 layout(binding = 1) uniform sampler2D shadowMap;
+layout(binding = 2) uniform sampler2D aoMap;
+
+// Ambient occlusion at this pixel: 1 = open, smaller = in a corner. Same image orientation
+// rule as the shadow map: y is flipped where textures run downwards.
+float openness() {
+    if (u.view.z < 0.5) {
+        return 1.0;
+    }
+    vec2 ndc = vec2(2.0 * gl_FragCoord.x / u.view.x - 1.0,
+                    u.params.x > 0.5 ? 1.0 - 2.0 * gl_FragCoord.y / u.view.y
+                                     : 2.0 * gl_FragCoord.y / u.view.y - 1.0);
+    vec2 uv = ndc * 0.5 + 0.5;
+    if (u.params.x > 0.5) {
+        uv.y = 1.0 - uv.y;
+    }
+    return texture(aoMap, uv).r;
+}
 
 float shadowAmount() {
     if (u.bedSize.z < 0.5) {
@@ -69,6 +87,7 @@ void main() {
         color = mix(color, u.gridColor.rgb, minor);
         color = mix(color, u.gridMajor.rgb, major);
         color = mix(color, u.shadowColor.rgb, u.shadowColor.a * shadowAmount());
+        color *= mix(1.0, openness(), 0.9); // contact shadow where a body meets the plate
     } else {
         // the plate's edge, a little darker than the top
         color *= 0.8 + 0.2 * clamp(dot(normalize(vNormal), u.lightDir.xyz), 0.0, 1.0);

@@ -133,3 +133,53 @@ TEST_CASE("pixels per millimetre follow the distance", "[camera]") {
     camera.zoomAt(2.0F);
     CHECK(camera.pixelsPerMillimetre() == Approx(near / 2.0F).epsilon(1e-4));
 }
+
+TEST_CASE("looking from an edge or a corner of the view cube", "[camera]") {
+    OrbitCamera camera = makeCamera();
+    const QVector3D target = camera.pose().target;
+
+    // Corner at the front, right, top: the camera stands at +x, -y, +z of the target.
+    camera.setPose(camera.poseLookingFrom({1.0F, -1.0F, 1.0F}));
+    const QVector3D corner = camera.eye() - target;
+    CHECK(corner.x() > 0.0F);
+    CHECK(corner.y() < 0.0F);
+    CHECK(corner.z() > 0.0F);
+    CHECK(corner.x() == Approx(-corner.y()).margin(1e-3));
+    CHECK(camera.pose().pitch == Approx(35.264F).margin(0.01));
+
+    // Edge between the left and the back face, at the middle height.
+    camera.setPose(camera.poseLookingFrom({-1.0F, 1.0F, 0.0F}));
+    const QVector3D edge = camera.eye() - target;
+    CHECK(edge.x() < 0.0F);
+    CHECK(edge.y() > 0.0F);
+    CHECK(edge.z() == Approx(0.0F).margin(1e-3));
+}
+
+TEST_CASE("looking straight down keeps the heading", "[camera]") {
+    OrbitCamera camera = makeCamera();
+    CameraPose pose = camera.pose();
+    pose.yaw = 40.0F;
+    camera.setPose(pose);
+    camera.setPose(camera.poseLookingFrom({0.0F, 0.0F, 1.0F}));
+    CHECK(camera.pose().yaw == Approx(40.0F));
+    CHECK(camera.pose().pitch == Approx(89.5F));
+}
+
+TEST_CASE("a ray through the view centre passes through the target", "[camera]") {
+    const OrbitCamera camera = makeCamera();
+    const auto ray = camera.rayThrough({500.0, 300.0});
+    REQUIRE(ray.has_value());
+    const QVector3D toTarget = (camera.pose().target - ray->origin).normalized();
+    CHECK(QVector3D::dotProduct(toTarget, ray->direction) == Approx(1.0F).margin(1e-4));
+}
+
+TEST_CASE("framing a sphere puts it in the middle and keeps the angles", "[camera]") {
+    OrbitCamera camera = makeCamera();
+    const CameraPose before = camera.pose();
+    const CameraPose pose = camera.poseFraming({10.0F, 20.0F, 5.0F}, 3.0F);
+    CHECK(pose.target.x() == Approx(10.0F));
+    CHECK(pose.yaw == Approx(before.yaw));
+    CHECK(pose.pitch == Approx(before.pitch));
+    CHECK(pose.distance < before.distance);
+    CHECK(pose.distance >= 2.0F);
+}

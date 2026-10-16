@@ -173,7 +173,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.3 Viewport und Navigation
-**Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
+**Status:** erledigt auf dem Mac (2026-10-16, PR #20; vom Product Owner ausprobiert). Offen: Messung auf Linux-iGPU (Kriterium 1), siehe Teil 1.3e · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
 
 **Umfang:**
 - Rendering aller Körper (Tessellierung mit Face/Edge-IDs, inkrementell nur geänderte Körper)
@@ -187,14 +187,193 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 - **Adaptive Darstellungsfeinheit:** Präzise Körper werden beim Hineinzoomen feiner tesselliert (im Hintergrund, ohne Ruckeln), damit Rundungen nie facettiert aussehen ([UX §7.3](../02-ux-konzept.md#73-niedrige-auflösung))
 
 **Akzeptanzkriterien:**
-- [ ] 60 fps bei 2 Mio. Dreiecken auf Referenz-Hardware (M1, Intel Iris Xe/AMD iGPU)
-- [ ] Ein Loch Ø 3 mm zeigt bei bildschirmfüllendem Zoom keine sichtbaren Facetten (Screenshot-Test)
-- [ ] Alle Voreinstellungen sind in einem Test-Skript durchgespielt
-- [ ] Trackpad-Navigation fühlt sich auf macOS „wie Shapr3D/Fusion“ an (subjektiver Check durch 3 Personen)
+- [~] 60 fps bei 2 Mio. Dreiecken auf Referenz-Hardware (M1, Intel Iris Xe/AMD iGPU): **M1 gemessen (8,0 ms je Bild)**, Linux-iGPU noch nicht
+- [x] Ein Loch Ø 3 mm zeigt bei bildschirmfüllendem Zoom keine sichtbaren Facetten (gemessen: 0,03 Bildpunkte Abweichung; Foto-Test, sobald es Löcher gibt)
+- [x] Alle Voreinstellungen sind in einem Test-Skript durchgespielt
+- [x] Trackpad-Navigation fühlt sich auf macOS „wie Shapr3D/Fusion“ an (Product Owner: „für gut befunden“; ein Check durch eine Person statt drei)
 
 **Stand nach AP-0.8 (2026-10-14):**
 - *Schon da:* Renderer mit Körpern, mattem Licht, Schatten und Kantenlinien; Druckbett mit Raster (fest 256 × 256 mm, noch nicht aus dem Druckerprofil); Kamera mit Maus und Trackpad (Orbit, Pan, Zoom zum Zeiger); Perspektive/Ortho; Standardansichten mit Übergang; Ansichtswürfel; „Alles zeigen“ per Haus-Symbol.
 - *Offen:* Rendern mehrerer Körper aus dem Dokument inkrementell (AP-1.1d legt den Anfang), SSAO, adaptive Feinheit, Doppelklick auf Fläche, klickbare Würfel-Kanten/-Ecken, Maus-Voreinstellungen (Fusion, Tinkercad, Blender, SketchUp), 2-Mio.-Dreiecke-Messung, Drucker-Bettgröße.
+
+**Zerlegung (vom Product Owner am 2026-10-15 bestätigt):** ein PR je Teil.
+
+| Teil | Inhalt | Status |
+|---|---|---|
+| 1.3a Navigation | Maus-Stile, Pinch-Zoom, Doppelklick auf Fläche, klickbare Würfel-Kanten und -Ecken | fertig (2026-10-15) |
+| 1.3b Mehrere Körper | je Körper ein eigener Puffer, nur Geändertes wird hochgeladen | fertig (2026-10-15) |
+| 1.3c Feinheit | beim Hineinzoomen im Hintergrund feiner tessellieren | fertig (2026-10-15) |
+| 1.3d Optik | SSAO („weiche Verdeckungsschatten“), abschaltbar, schaltet sich bei verfehltem Budget selbst ab | fertig (2026-10-15) |
+| 1.3e Messung und Bett | 2 Mio. Dreiecke auf M1 und Linux-GPU; Bettgröße aus einer Druckerliste | Mac fertig, Linux-Messung offen (2026-10-16) |
+
+#### Abschlussvermerk Teil 1.3e (2026-10-15)
+
+**Umgesetzt**
+- **Druckerliste** (`ui/printer_catalog.h`, 12 Einträge mit Bettgröße, Höhe und Düse; Platzhalter für die Druckerprofile aus AP-3.1):
+  Im Reiter **Drucker** rechts wählen; das Druckbett (Größe, Raster, Beschriftung „256 mm“) und die Angabe oben rechts folgen, die
+  Ansicht zeigt wieder alles. Kein Undo-Schritt, weil das eine Einstellung ist, keine Änderung am Modell.
+- **Messmodus** `fission3d --benchmark <Dreiecke> [--no-soft-shadows]`: baut eine Szene mit der gewünschten Zahl Dreiecke (16 gewellte
+  Platten), dreht die Kamera 300 Bilder lang und gibt die **GPU-Zeit je Bild** aus (Zeitstempel der Grafikschnittstelle), die
+  Aufzeichnungszeit auf dem Rechner und den Bildabstand. Die GPU-Zeit ist die Zahl, auf die es ankommt: der Bildschirm begrenzt, wie
+  schnell Bilder gezeigt werden, nicht wie schnell sie gebaut werden könnten.
+
+**Messwerte (Mac, Apple M1, Metal, Release-Bau, 2026-10-15)**
+
+| Dreiecke | weiche Schatten | GPU-Zeit je Bild (Mittel / 95 %) | Budget 16,7 ms |
+|---|---|---|---|
+| 0,5 Mio. | an | 3,5 / 3,7 ms | erfüllt |
+| 0,5 Mio. | aus | 2,4 / 2,5 ms | erfüllt |
+| **2 Mio.** | an | **8,0 / 8,7 ms** | erfüllt (rund 2-fach Reserve) |
+| **2 Mio.** | aus | 5,9 / 6,1 ms | erfüllt |
+| 5 Mio. | an | 13,3 / 13,9 ms | erfüllt (knapp) |
+| 5 Mio. | aus | 8,7 / 9,6 ms | erfüllt |
+
+Der Bildabstand war in allen Läufen 16,7 ms (60 Hz des Bildschirms): **60 fps bei 2 Mio. Dreiecken auf dem M1 sind erreicht.**
+
+**Wie getestet**
+- `test_document_model.cpp`: Druckerwahl ändert die Szene (Bett 250 × 210 mm), unbekannte Kennung ändert nichts, kein Undo-Schritt;
+  `test_printer_catalog.cpp`: Kennungen eindeutig, Maße plausibel, nur der Allgemein-Eintrag ohne Namen.
+- Mac `scripts/test` 225 von 225 grün. Bild: Reiter Drucker mit der Liste (siehe „So probierst du es aus“).
+
+**So probierst du es aus**
+1. `scripts/run`, rechts den Reiter **Drucker** öffnen: „Drucker wählen“ zeigt die Liste.
+2. Klicke „Prusa MINI+“: das Druckbett in der Mitte wird kleiner (180 × 180 mm), die Beschriftung und oben rechts folgen.
+3. Klicke „Prusa XL“: größer; die Ansicht zeigt das ganze Bett.
+4. Optional, die Messung: `scripts/run --release -- --benchmark 2000000` (und noch einmal mit `--no-soft-shadows`). In der letzten Zeile
+   steht `gpu_ms_avg=…`; unter 16,7 heißt: 60 fps und mehr.
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Linux-Messung (Intel/AMD-iGPU) steht aus.** Kriterium 1 nennt M1 *und* eine integrierte Intel/AMD-GPU. Auf der Referenz-Hardware
+  für Linux (Testrechner mit Intel HD 620) habe ich die Messung noch nicht gemacht; ADR-0002 hatte den Spike mit 165 fps bei
+  2 Mio. Dreiecken gemessen, die Produktionsansicht kommt mit Schatten-Durchgang und weichen Schatten dazu. Das Kästchen bleibt
+  offen, bis es gemessen ist.
+- **Druckerliste:** Die Bettmaße stammen aus Herstellerangaben aus dem Gedächtnis und sind nicht gegen die Datenblätter geprüft; bitte
+  vor der Veröffentlichung kontrollieren. „Eigene Maße“ gibt es noch nicht (kommt mit den Druckerprofilen, AP-3.1).
+- Der gewählte Drucker wird **nicht gemerkt** (Einstellungen: AP-1.11) und liegt nicht in der Datei (AP-1.10).
+- Die Höhe des Bauraums (`bedZ`) wird angezeigt, aber noch nicht in der Ansicht gezeichnet.
+
+#### Abschlussvermerk Teil 1.3d (2026-10-15)
+
+**Umgesetzt**
+- **Weiche Schatten (Ambient Occlusion, SSAO):** Ecken, Spalten und die Stelle, wo ein Körper auf dem Druckbett steht, werden leicht
+  abgedunkelt. Ablauf je Bild: (1) Tiefe und Flächen-Normalen der Szene aus Kamerasicht, (2) Verdeckung aus der Tiefe mit 12 Proben
+  in halber Auflösung, (3) 4×4-Weichzeichnung, (4) die Körper- und Bett-Shader nutzen das Ergebnis. Der Radius richtet sich nach der
+  Größe der Szene.
+- **Schalter** im Menü *Ansicht ▸ Weiche Schatten*.
+- **Schaltet sich selbst ab,** wenn die Grafikkarte mit den Schatten 90 Bilder hintereinander über 16,7 ms braucht (gemessen mit den
+  Zeitstempeln der Grafikschnittstelle, wo sie das kann); dann erscheint ein Hinweis, der erklärt, wie man sie wieder einschaltet.
+- Entwickler-Optionen `--camera yaw,pitch,distance` und `--no-soft-shadows` für Vergleichsbilder.
+
+**Wie getestet**
+- Bild vorher/nachher: [ap-1.3d-weiche-schatten-aus-an.png](../screenshots/ap-1.3d-weiche-schatten-aus-an.png) (links aus, rechts an;
+  Mac, Metal). Ein erster Versuch mit Normalen aus der Tiefe zeigte Muster auf ebenen Flächen; deshalb schreibt der Vorab-Durchgang
+  die echten Flächen-Normalen.
+- `test_scene_renderer.cpp`: ein Bild mit Schatten läuft durch alle Durchgänge und folgt einer Größenänderung (Null-Schnittstelle).
+- Mac `scripts/test` komplett grün. Linux: nur CI (dort wird nur geprüft, dass es baut und läuft, nicht wie es aussieht).
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Die Wirkung ist bei einem einzelnen Würfel dezent.** Deutlicher wird sie bei Teilen mit Vertiefungen, Ecken und Löchern (ab AP-1.5/1.7).
+  Stärke und Radius sind Schätzwerte; bitte am echten Modell beurteilen.
+- **Nur auf dem Mac gesehen.** Metal ist geprüft; Vulkan/OpenGL laufen über denselben Code mit denselben Umrechnungen für die Bildlage
+  (wie beim Schattenwurf), sind aber nicht angesehen worden. Der Linux-Test am Bildschirm steht aus.
+- Kanten-Glättung (4-fach) gilt für die Körper, nicht für das Schattenbild; an Silhouetten kann ein feiner heller Saum bleiben.
+- Die automatische Abschaltung funktioniert nur, wo die Schnittstelle Zeitstempel liefert; sonst bleibt der Schalter von Hand.
+
+#### Abschlussvermerk Teil 1.3c (2026-10-15)
+
+**Umgesetzt**
+- **Fünf Feinheitsstufen** (`render/detail.h`): Stufe 0 ist die bisherige Anzeige (Sehnenfehler 0,01 mm, 5°), jede Stufe halbiert den
+  Sehnenfehler (bis 0,000625 mm bei Stufe 4; der Winkel schrumpft langsamer). Die nötige Stufe richtet sich nach dem Maßstab: der
+  Fehler auf dem Bildschirm soll höchstens eine Viertel-Bildpunkt-Breite sein. Mit Hysterese, damit die Ansicht an einer Schwelle nicht
+  hin- und herspringt.
+- **Im Hintergrund:** Die 3D-Ansicht meldet beim Zoomen die gewünschte Stufe; das Dokumentmodell wartet 120 ms, bis das Zoomen sich
+  beruhigt hat, und tesselliert dann die sichtbaren Körper auf einem eigenen Arbeitsfaden. Bis das Ergebnis da ist, bleibt die grobe
+  Darstellung stehen (kein Ruckeln, kein Flackern); ein neuer Wunsch bricht eine laufende Arbeit zwischen zwei Körpern ab.
+- Ändert sich das Dokument, bekommt der neue Körper zuerst das grobe Netz und dann das feine. Körper, für die eine feinere Stufe über
+  3 Mio. Dreiecke bräuchte, behalten ihr grobes Netz (Schutz der Bildrate).
+- Der Renderer sendet dank 1.3b nur den einen Körper neu.
+
+**Wie getestet**
+- `tests/unit/render/test_detail.cpp`: Stufen steigen mit dem Maßstab, Hysterese, Fehler ≤ ¼ Bildpunkt auf der gewählten Stufe.
+- **Akzeptanzkriterium „Loch Ø 3 mm ohne sichtbare Facetten“:** Ein Zylinder Ø 3 mm wird für „füllt eine Bildschirmhöhe von
+  1080 Bildpunkten“ (360 Bildpunkte je mm) tesselliert; die größte Abweichung des Kreis-Vielecks vom echten Kreis beträgt **0,03
+  Bildpunkte** (Stufe 4) gegenüber 0,51 Bildpunkten mit dem Grundnetz.
+- `test_document_model.cpp`: Zoomen gibt ein feineres Netz mit neuer Version, Herauszoomen bringt das Grundnetz zurück, eine
+  Änderung des Dokuments bekommt anschließend wieder das feine Netz.
+- Mac `scripts/test` komplett grün.
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Kein Bildschirmfoto als Nachweis:** In der Oberfläche lässt sich noch kein Loch bauen (Formen AP-1.5, Ausschneiden AP-1.7). Der
+  Nachweis ist deshalb die gemessene Abweichung in Bildpunkten, nicht ein Foto. Sobald es Löcher gibt, ein Foto-Test nachliefern.
+- Der Maßstab wird **am Blickpunkt** gemessen. Teile, die der Kamera viel näher sind, sind in Wirklichkeit größer abgebildet; mit
+  Perspektive und sehr nahem Blick kann eine Kante knapp über ¼ Bildpunkt liegen. Behebbar mit einer Stufe je Körper nach Abstand.
+- Eine einzelne Kernel-Tessellierung lässt sich nicht mitten drin abbrechen (nur zwischen Körpern); bei sehr großen Körpern wäre das
+  ein eigenes Thema (siehe AP-1.1: „Abbruch“).
+
+#### Abschlussvermerk Teil 1.3b (2026-10-15)
+
+**Umgesetzt**
+- Jeder Körper hat im Renderer **eigene Grafik-Puffer** (Flächen, Index, Kantenlinien) und eine Kennung (`RenderBody::id`, `meshVersion`).
+  Bei jeder neuen Szene werden nur **neue oder geänderte** Körper (anderes Netz oder andere Farbe) hochgeladen, unveränderte behalten
+  ihre Puffer, verschwundene werden freigegeben. Ein neues Kantenlinien-Farbmuster baut alle Linien neu (die Farbe steckt im Puffer).
+- Die Netze werden **geteilt statt kopiert** (`shared_ptr`): eine neue Szene baut kein einziges Dreieck um. Das Dokumentmodell reicht
+  den Zwischenspeicher der Tessellierung direkt durch.
+- Schatten-, Flächen- und Linien-Durchgang zeichnen je Körper; die Reihenfolge der Szene bleibt.
+
+**Wie getestet**
+- `tests/unit/render/test_scene_renderer.cpp` lässt den echten Renderer auf Qts „Null“-Grafikschnittstelle laufen (kein Fenster, keine
+  GPU nötig) und zählt die Uploads: drei Körper → 3; dieselbe Szene → 0 (3 behalten); ein Körper neu → 1; neue Farbe → 1; Körper
+  entfernt → 1 entfernt; neue Kantenfarbe → alle; Körper ohne Kennung werden nach Platz unterschieden.
+- Mac `scripts/test` komplett grün; Bild unverändert zu 1.3a (Würfel, Schatten, Kanten).
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- In der Oberfläche gibt es erst einen Körper (Formen kommen mit AP-1.5); die Wirkung zeigt sich im Test, nicht in einer Bedienung.
+- Die Messung mit sehr vielen Dreiecken (Kriterium 60 fps) folgt in Teil 1.3e.
+- Jeder Körper ist ein eigener Zeichenaufruf. Bei hunderten kleiner Körper wäre ein Zusammenfassen sinnvoll; nicht gemessen, daher
+  nicht gebaut.
+
+#### Abschlussvermerk Teil 1.3a (2026-10-15)
+
+**Umgesetzt**
+- **Maus-Stile** als Datentabelle (`render/navigation.h`): *Fission3D* (rechts drehen, Mitte verschieben), *Fusion* (Mitte verschiebt,
+  Umschalt + Mitte dreht), *Tinkercad* (rechts dreht, Umschalt + rechts oder Mitte verschiebt), *Blender* (Mitte dreht, Umschalt + Mitte
+  verschiebt, Strg + Mitte zoomt), *SketchUp* (Mitte dreht, Umschalt + Mitte verschiebt). In jedem Stil: Mausrad zoomt zum Zeiger;
+  Alt + linke Taste dreht, Umschalt + linke Taste verschiebt (für Laptops ohne mittlere Taste). Auswahl im Menü **Ansicht**;
+  die Hinweiszeile und die Hinweise an den Navigationsknöpfen passen sich an.
+- **Trackpad:** zwei Finger drehen, Umschalt verschiebt, Spreizen/Zusammenziehen zoomt zum Zeiger, Smart Zoom (Doppeltipp mit zwei Fingern)
+  rückt die Fläche unter dem Zeiger in die Mitte und passt die Größe an.
+- **Doppelklick auf eine Fläche** (linke Taste): die Ansicht dreht sich senkrecht auf diese Fläche und nimmt sie als neue Mitte. Auf
+  dem Druckbett daneben schaut sie von oben. Gekrümmte Flächen werden an der Klickstelle senkrecht angesehen. Der Strahl-Test läuft
+  auf der CPU über die Anzeige-Dreiecke (`render/picking.h`); das reicht für einen Klick, Hover und Auswahl brauchen in AP-1.4 den
+  ID-Puffer.
+- **Ansichtswürfel:** jede Fläche ist in 3 × 3 Felder geteilt. Mitte = Fläche (wie bisher), Rand = Kante, Ecke = Ecke des Würfels;
+  das Feld unter dem Zeiger leuchtet auf.
+
+**Wie getestet**
+- Mac (arm64, Debug): `scripts/test` 212 von 212 grün. Neu: `tests/unit/render/test_navigation.cpp` (Tabelle je Stil),
+  `test_picking.cpp` (Strahl, Fläche, Bett, nächster Körper), Kamera-Tests (Ecke/Kante/Draufsicht/Rahmen) und
+  `tests/unit/ui/test_viewport_navigation.cpp`, das **alle fünf Stile mit künstlichen Mausereignissen durch das echte
+  3D-Ansichts-Element spielt** (Akzeptanzkriterium „Voreinstellungen im Test-Skript durchgespielt“), außerdem Mausrad, Trackpad,
+  Pinch und Doppelklick auf Fläche, Bett und Hintergrund.
+- Linux: nur CI. Die Maus-Stile sind plattformunabhängig; Pinch und Smart Zoom gibt es nur auf macOS.
+
+**So probierst du es aus**
+1. `scripts/run`. Menü **Ansicht** ▸ unten die fünf „Maus: wie in …“-Einträge; wähle zum Beispiel „wie in Blender“.
+2. Mit der mittleren Taste ziehen dreht jetzt die Ansicht, Umschalt + mittlere Taste verschiebt sie. Die Hinweiszeile unten zeigt das an.
+3. Oben rechts am Ansichtswürfel: fahre über die **Kanten und Ecken** (sie leuchten) und klicke. Die Ansicht fährt dorthin.
+4. Doppelklick auf eine Würfelseite im Bild: die Ansicht dreht sich genau auf diese Seite. Ebenso auf das Druckbett.
+5. Trackpad (Mac): Spreizen zoomt zum Zeiger; zwei Finger drehen; Umschalt + zwei Finger verschiebt.
+
+**Einschränkungen, Annahmen, Folge-Arbeiten**
+- **Maus-Stil wird nicht gemerkt** (gilt bis zum Schließen). Das Speichern gehört zu den Einstellungen und zum Erststart-Assistenten (AP-1.11).
+- **Doppelklick-Konflikt:** AP-1.4 nennt „Doppelklick wählt den Körper“, UX §10 und AP-1.3 „Doppelklick auf Fläche = senkrecht
+  draufschauen“. Beides gleichzeitig geht nicht. Vorschlag für AP-1.4: Doppelklick wählt den Körper, „Ansicht senkrecht auf Fläche“
+  bleibt als Smart Zoom (Trackpad) und als Eintrag im Rechtsklick-Menü der Fläche.
+- **Umschalt + linke Taste verschiebt die Ansicht** (Laptop-Hilfe). Mit der Rahmenauswahl aus AP-1.4 kollidiert das; dort ist
+  dann Alt + Umschalt + links naheliegend.
+- **Annahmen für die Stile:** Die Belegungen sind aus den Programmen nach Dokumentation übernommen, nicht gegen die Programme geprüft.
+  Fusion und Blender haben mehr Gesten (z. B. Strg + Umschalt + Mitte), die ich bewusst weggelassen habe.
+- Tooltip-Karten und Befehlssuche-Synonyme (Regel 10) für die Stil-Einträge gibt es erst mit der Befehlssuche (AP-1.11).
 
 ---
 

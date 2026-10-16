@@ -6,13 +6,16 @@ import QtQuick.Shapes
 import Fission3D.Ui
 
 // The view cube with the axis gizmo (docs/02-ux-konzept.md §10): shows how the camera looks at
-// the bed and jumps to a standard view when a face is clicked.
+// the bed and jumps to a standard view when a face is clicked. Every face is cut into 3 x 3
+// fields: the middle one is the face, the ones at the border are the edges, the corner ones
+// the corners of the cube. Each field looks at the cube from its own side.
 Item {
     id: root
 
     property real yaw: 0       // degrees, like the camera
     property real pitch: 0
     signal viewRequested(string view)
+    signal directionRequested(real x, real y, real z)
 
     width: 112
     height: 134
@@ -73,12 +76,11 @@ Item {
 
                 anchors.fill: parent
                 preferredRendererType: Shape.CurveRenderer
-                containsMode: Shape.FillContains
 
                 ShapePath {
-                    strokeColor: hover.hovered ? Theme.accentLine : Theme.line3
+                    strokeColor: Theme.line3
                     strokeWidth: 1
-                    fillColor: hover.hovered ? Theme.accentSoft : Theme.field
+                    fillColor: Theme.field
                     joinStyle: ShapePath.RoundJoin
 
                     PathPolyline {
@@ -93,15 +95,68 @@ Item {
                         }
                     }
                 }
+            }
 
-                HoverHandler {
-                    id: hover
+            // the nine fields of the face: face, four edges, four corners
+            Repeater {
+                model: 9
 
-                    cursorShape: Qt.PointingHandCursor
-                }
+                delegate: Shape {
+                    id: field
 
-                TapHandler {
-                    onTapped: root.viewRequested(face.modelData.key)
+                    required property int index
+
+                    // position in the face: -1, 0 or 1 along its two directions
+                    readonly property int fu: index % 3 - 1
+                    readonly property int fv: Math.floor(index / 3) - 1
+                    readonly property var edges: [-1, -1 / 3, 1 / 3, 1]
+
+                    function corner(a, b) {
+                        const m = face.modelData
+                        return root.px(m.c[0] + a * m.u[0] + b * m.v[0],
+                                       m.c[1] + a * m.u[1] + b * m.v[1],
+                                       m.c[2] + a * m.u[2] + b * m.v[2],
+                                       root.cx, root.cy, root.unit)
+                    }
+
+                    anchors.fill: parent
+                    preferredRendererType: Shape.CurveRenderer
+                    containsMode: Shape.FillContains
+
+                    ShapePath {
+                        strokeColor: "transparent"
+                        fillColor: hover.hovered ? Theme.accentSoft : "transparent"
+
+                        PathPolyline {
+                            path: {
+                                const a0 = field.edges[field.fu + 1]
+                                const a1 = field.edges[field.fu + 2]
+                                const b0 = field.edges[field.fv + 1]
+                                const b1 = field.edges[field.fv + 2]
+                                return [field.corner(a0, b0), field.corner(a1, b0),
+                                        field.corner(a1, b1), field.corner(a0, b1), field.corner(a0, b0)]
+                            }
+                        }
+                    }
+
+                    HoverHandler {
+                        id: hover
+
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
+                    TapHandler {
+                        onTapped: {
+                            const m = face.modelData
+                            if (field.fu === 0 && field.fv === 0) {
+                                root.viewRequested(m.key)
+                            } else {
+                                root.directionRequested(m.c[0] + field.fu * m.u[0] + field.fv * m.v[0],
+                                                        m.c[1] + field.fu * m.u[1] + field.fv * m.v[1],
+                                                        m.c[2] + field.fu * m.u[2] + field.fv * m.v[2])
+                            }
+                        }
+                    }
                 }
             }
 

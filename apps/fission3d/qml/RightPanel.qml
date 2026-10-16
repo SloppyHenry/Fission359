@@ -18,7 +18,10 @@ Rectangle {
     property string printerName: ""
     property string bedText: ""
     property string nozzleText: ""
+    property string printerId: ""
+    property var printers: []          // [{ id, name, bedX, bedY, bedZ, nozzle }]
     signal tabRequested(string tab)
+    signal printerChosen(string id)
 
     color: Theme.panel
     clip: true
@@ -218,7 +221,7 @@ Rectangle {
                 visible: root.tab === "printer"
                 iconName: "printer"
                 title: root.printerName
-                subtitle: qsTr("Printer profile · chosen at first start")
+                subtitle: qsTr("Printer profile")
             }
 
             Section {
@@ -234,6 +237,61 @@ Rectangle {
                     label: qsTr("Nozzle")
                     value: root.nozzleText
                     mono: true
+                }
+            }
+
+            Section {
+                visible: root.tab === "printer"
+                heading: qsTr("Choose printer")
+
+                Column {
+                    width: parent.width
+                    spacing: 2
+
+                    Repeater {
+                        model: root.printers
+
+                        delegate: AbstractButton {
+                            id: printerRow
+
+                            required property var modelData
+                            readonly property bool selected: root.printerId === modelData.id
+                            readonly property string title: modelData.name !== "" ? modelData.name : qsTr("My printer")
+
+                            width: parent.width
+                            height: 34
+                            hoverEnabled: true
+                            Accessible.name: title + ", " + qsTr("%1 × %2 mm").arg(modelData.bedX).arg(modelData.bedY)
+                            Accessible.checkable: true
+                            Accessible.checked: selected
+                            onClicked: root.printerChosen(modelData.id)
+
+                            background: Rectangle {
+                                radius: 8
+                                color: printerRow.selected ? Theme.accentSoft : (printerRow.hovered ? Theme.field : "transparent")
+                            }
+
+                            contentItem: Item {
+                                Txt {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 10
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: printerRow.title
+                                    color: printerRow.selected ? Theme.accentText : Theme.fg
+                                }
+
+                                Txt {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 10
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: qsTr("%1 × %2").arg(printerRow.modelData.bedX).arg(printerRow.modelData.bedY)
+                                    color: Theme.fg4
+                                    mono: true
+                                    font.pixelSize: Theme.fontSizeSmall
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

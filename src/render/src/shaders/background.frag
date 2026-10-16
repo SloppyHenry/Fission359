@@ -20,6 +20,7 @@ layout(std140, binding = 0) uniform Params {
     vec4 params;
     vec4 bedSize;
     vec4 bodyOverride; // rgb, a = 1: draw every body in this colour
+    vec4 view;       // x, y: size of the image in pixels, z: 1 if ambient occlusion is on
 } u;
 
 void main() {

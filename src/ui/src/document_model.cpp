@@ -15,9 +15,17 @@
 
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
+#include "fission/render/detail.h"
 #include "fission/ui/numbers.h"
+#include "fission/ui/printer_catalog.h"
 
 namespace fission::ui {
+
+namespace {
+/// A finer tessellation that would need more triangles than this is not used (the view would
+/// get slow); the body keeps its basic mesh.
+constexpr std::size_t kMaxDetailTriangles = 3'000'000;
+} // namespace
 
 namespace {
 
@@ -117,12 +125,143 @@ bool isPlainNumber(const std::string& text) {
 DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel, QObject* parent)
     : QObject(parent), m_kernel(std::move(kernel)) {
     features::registerBuiltinFeatures(m_registry);
+    m_detailPool.setMaxThreadCount(1);
+    m_detailTimer.setSingleShot(true);
+    m_detailTimer.setInterval(120); // zooming in steps: wait until it settles
+    connect(&m_detailTimer, &QTimer::timeout, this, [this] { startDetailJob(); });
     m_engine = std::make_unique<core::RecomputeEngine>(
         m_registry, *m_kernel, [this](const core::RecomputeEvent& event) { onEngineEvent(event); });
 }
 
 DocumentModel::~DocumentModel() {
+    m_detailCurrent->store(~std::uint64_t{0}); // a running job stops at the next body
+    m_detailPool.waitForDone();
     m_engine.reset(); // joins the worker; nothing may call back after this
+}
+
+namespace {
+const PrinterProfile& generic() {
+    return printerCatalog().front();
+}
+} // namespace
+
+QString DocumentModel::printerName() const {
+    const PrinterProfile* printer = findPrinter(m_printerId);
+    return printer != nullptr ? printer->name : QString();
+}
+double DocumentModel::bedX() const {
+    const PrinterProfile* printer = findPrinter(m_printerId);
+    return (printer != nullptr ? *printer : generic()).bedX;
+}
+double DocumentModel::bedY() const {
+    const PrinterProfile* printer = findPrinter(m_printerId);
+    return (printer != nullptr ? *printer : generic()).bedY;
+}
+double DocumentModel::bedZ() const {
+    const PrinterProfile* printer = findPrinter(m_printerId);
+    return (printer != nullptr ? *printer : generic()).bedZ;
+}
+double DocumentModel::nozzle() const {
+    const PrinterProfile* printer = findPrinter(m_printerId);
+    return (printer != nullptr ? *printer : generic()).nozzle;
+}
+
+QVariantList DocumentModel::printers() const {
+    QVariantList list;
+    for (const PrinterProfile& printer : printerCatalog()) {
+        list.push_back(QVariantMap{{QStringLiteral("id"), printer.id},
+                                   {QStringLiteral("name"), printer.name},
+                                   {QStringLiteral("bedX"), printer.bedX},
+                                   {QStringLiteral("bedY"), printer.bedY},
+                                   {QStringLiteral("bedZ"), printer.bedZ},
+                                   {QStringLiteral("nozzle"), printer.nozzle}});
+    }
+    return list;
+}
+
+bool DocumentModel::setPrinter(const QString& id) {
+    if (findPrinter(id) == nullptr) {
+        return false;
+    }
+    if (id != m_printerId) {
+        m_printerId = id;
+        emit printerChanged();
+        rebuildScene(); // the print bed has another size
+    }
+    return true;
+}
+
+void DocumentModel::setDetailLevel(int level) {
+    level = std::clamp(level, 0, render::kMaxDetailLevel);
+    if (level == m_detailLevel) {
+        return;
+    }
+    m_detailLevel = level;
+    m_detailTimer.start();
+}
+
+void DocumentModel::startDetailJob() {
+    // A newer wish replaces a running job: the job looks at the generation between bodies.
+    const std::uint64_t generation = ++m_detailGeneration;
+    m_detailCurrent->store(generation);
+    const int level = m_detailLevel;
+    if (level == 0 || !m_result) {
+        // Back to the basic meshes: nothing to calculate, they are still in the cache.
+        applyDetail(generation, 0, {});
+        return;
+    }
+    struct Work {
+        std::uint64_t key;
+        geo::Solid solid;
+    };
+    std::vector<Work> work;
+    for (const core::Body& body : m_history.document().bodies()) {
+        const auto made = m_result->bodies.find(body.id);
+        if (body.visible && made != m_result->bodies.end()) {
+            work.push_back({meshKey(made->second), made->second.solid});
+        }
+    }
+    const auto kernel = m_kernel;
+    const auto current = m_detailCurrent;
+    m_detailPool.start([this, kernel, current, generation, level, work = std::move(work)] {
+        std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> meshes;
+        const geo::TessellationParams params = render::tessellationForDetail(level);
+        for (const Work& item : work) {
+            if (current->load() != generation) {
+                return; // somebody asked for something else meanwhile
+            }
+            try {
+                auto mesh = std::make_shared<const geo::TriangleMesh>(
+                    kernel->tessellate(item.solid, params));
+                // A body that would need too many triangles keeps its basic mesh.
+                if (mesh->triangleCount() <= kMaxDetailTriangles) {
+                    meshes.emplace(item.key, std::move(mesh));
+                }
+            } catch (const geo::GeometryError& error) {
+                qWarning() << "a body could not be tessellated finer:" << error.what();
+            }
+        }
+        if (current->load() != generation) {
+            return;
+        }
+        QMetaObject::invokeMethod(
+            this,
+            [this, generation, level, meshes = std::move(meshes)]() mutable {
+                applyDetail(generation, level, std::move(meshes));
+            },
+            Qt::QueuedConnection);
+    });
+}
+
+void DocumentModel::applyDetail(
+    std::uint64_t generation, int level,
+    std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> meshes) {
+    if (generation != m_detailGeneration) {
+        return; // outdated
+    }
+    m_detailMeshes = std::move(meshes);
+    m_shownDetailLevel = m_detailMeshes.empty() ? 0 : level;
+    rebuildScene();
 }
 
 void DocumentModel::addDemoBox() {
@@ -174,7 +313,8 @@ void DocumentModel::onEngineEvent(const core::RecomputeEvent& event) {
                 continue;
             }
             try {
-                m_meshes.emplace(key, m_kernel->tessellate(body.solid, {}));
+                m_meshes.emplace(key, std::make_shared<const geo::TriangleMesh>(
+                                          m_kernel->tessellate(body.solid, {})));
             } catch (const geo::GeometryError& error) {
                 qWarning() << "a body could not be tessellated:" << error.what();
             }
@@ -199,6 +339,10 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
         for (auto it = m_meshes.begin(); it != m_meshes.end();) {
             it = alive.contains(it->first) ? std::next(it) : m_meshes.erase(it);
         }
+        // Finer meshes of bodies that changed are gone; new bodies get theirs again below.
+        for (auto it = m_detailMeshes.begin(); it != m_detailMeshes.end();) {
+            it = alive.contains(it->first) ? std::next(it) : m_detailMeshes.erase(it);
+        }
     }
     if (m_numbers != nullptr) {
         core::NamedMeasures names;
@@ -212,6 +356,9 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
     rebuildLists();
     rebuildScene();
     setCalculating(false);
+    if (m_detailLevel > 0) {
+        m_detailTimer.start(); // new or changed bodies get their fine mesh in the background
+    }
 }
 
 void DocumentModel::rebuildScene() {
@@ -223,16 +370,28 @@ void DocumentModel::rebuildScene() {
             if (!body.visible || made == m_result->bodies.end()) {
                 continue;
             }
-            const auto mesh = m_meshes.find(meshKey(made->second));
+            const std::uint64_t key = meshKey(made->second);
+            const auto mesh = m_meshes.find(key);
             if (mesh == m_meshes.end()) {
                 continue;
             }
             render::RenderBody drawn;
-            drawn.mesh = mesh->second;
+            drawn.id = body.id.value;
+            // The finer mesh of the current zoom if it is ready, otherwise the basic one.
+            const auto fine = m_detailMeshes.find(key);
+            if (fine != m_detailMeshes.end()) {
+                drawn.mesh = fine->second;
+                drawn.meshVersion = key * 16 + static_cast<std::uint64_t>(m_shownDetailLevel);
+            } else {
+                drawn.mesh = mesh->second;
+                drawn.meshVersion = key * 16;
+            }
             drawn.color = QColor(body.color.red, body.color.green, body.color.blue);
             scene->bodies.push_back(std::move(drawn));
         }
     }
+    scene->bed.sizeX = static_cast<float>(bedX());
+    scene->bed.sizeY = static_cast<float>(bedY());
     m_scene = scene;
     emit sceneReady(m_scene);
 }

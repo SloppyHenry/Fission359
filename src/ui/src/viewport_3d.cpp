@@ -4,12 +4,15 @@
 #include "fission/ui/viewport_3d.h"
 
 #include <QMouseEvent>
+#include <QNativeGestureEvent>
 #include <QQuickWindow>
 #include <QWheelEvent>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 
+#include "fission/render/detail.h"
 #include "fission/render/scene_renderer.h"
 
 #include <QtQml/qqml.h>
@@ -20,8 +23,11 @@ namespace fission::ui {
 namespace {
 
 constexpr int kAnimationMilliseconds = 180;
-constexpr float kWheelStep = 0.9F;     // one notch of a mouse wheel zooms by 10 %
-constexpr float kTrackpadOrbit = 0.6F; // two-finger drag: pixels to orbit pixels
+constexpr float kWheelStep = 0.9F;                // one notch of a mouse wheel zooms by 10 %
+constexpr float kTrackpadOrbit = 0.6F;            // two-finger drag: pixels to orbit pixels
+constexpr double kFrameBudgetMilliseconds = 16.7; // 60 frames per second
+constexpr int kSlowFramesToSwitchOff = 90;
+constexpr double kDragZoomPerPixel = 0.01; // Ctrl + middle button (Blender): drag up zooms in
 
 // Thin adapter: Qt Quick calls initialize / synchronize / render, SceneRenderer does the work.
 class SceneItemRenderer : public QQuickRhiItemRenderer {
@@ -67,13 +73,53 @@ public:
         frame.bedVisible = m_snapshot.bedVisible;
         frame.displayMode = m_snapshot.displayMode;
         frame.palette = m_snapshot.palette;
+        frame.ambientOcclusion = m_snapshot.ambientOcclusion;
+        const auto started = std::chrono::steady_clock::now();
         m_renderer->draw(cb, renderTarget(), frame);
+        const double cpuMilliseconds =
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
+                .count();
+        const double gpuMilliseconds =
+            m_rhi->isFeatureSupported(QRhi::Timestamps) ? cb->lastCompletedGpuTime() * 1000.0 : 0.0;
+        if (m_item != nullptr) {
+            m_item->recordFrame(gpuMilliseconds, cpuMilliseconds);
+        }
+        watchFrameTime(cb);
         if (m_item != nullptr) {
             m_item->reportRendered(QString::fromUtf8(m_rhi->backendName()));
         }
     }
 
 private:
+    // The graphics card says how long it took for the last finished frame (where it can).
+    // 90 frames in a row above the budget mean that the soft shadows cost too much.
+    void watchFrameTime(QRhiCommandBuffer* cb) {
+        if (m_item == nullptr || !m_snapshot.ambientOcclusion ||
+            !m_rhi->isFeatureSupported(QRhi::Timestamps)) {
+            m_slowFrames = 0;
+            m_sumMilliseconds = 0.0;
+            return;
+        }
+        const double milliseconds = cb->lastCompletedGpuTime() * 1000.0;
+        if (milliseconds <= 0.0) {
+            return;
+        }
+        if (milliseconds > kFrameBudgetMilliseconds) {
+            ++m_slowFrames;
+            m_sumMilliseconds += milliseconds;
+            if (m_slowFrames >= kSlowFramesToSwitchOff) {
+                m_item->reportSlowFrames(m_sumMilliseconds / m_slowFrames);
+                m_slowFrames = 0;
+                m_sumMilliseconds = 0.0;
+            }
+        } else {
+            m_slowFrames = 0;
+            m_sumMilliseconds = 0.0;
+        }
+    }
+
+    int m_slowFrames = 0;
+    double m_sumMilliseconds = 0.0;
     QRhi* m_rhi = nullptr;
     Viewport3D* m_item = nullptr;
     Viewport3D::Snapshot m_snapshot;
@@ -182,7 +228,7 @@ int Viewport3D::triangleCount() const {
     int count = 0;
     if (m_scene) {
         for (const render::RenderBody& body : m_scene->bodies) {
-            count += static_cast<int>(body.mesh.triangleCount());
+            count += static_cast<int>(body.geometry().triangleCount());
         }
     }
     return count;
@@ -212,7 +258,74 @@ void Viewport3D::setOrthographic(bool orthographic) {
     }
 }
 
+void Viewport3D::setAmbientOcclusion(bool on) {
+    if (m_ambientOcclusion != on) {
+        m_ambientOcclusion = on;
+        emit ambientOcclusionChanged();
+        update();
+    }
+}
+
+void Viewport3D::startFrameStatistics() {
+    const std::lock_guard lock(m_statisticsMutex);
+    m_gpuTimes.clear();
+    m_cpuTimes.clear();
+    m_collecting = true;
+}
+
+Viewport3D::FrameStatistics Viewport3D::finishFrameStatistics() {
+    const std::lock_guard lock(m_statisticsMutex);
+    m_collecting = false;
+    FrameStatistics result;
+    result.frames = static_cast<int>(m_cpuTimes.size());
+    const auto average = [](const std::vector<double>& values) {
+        double sum = 0.0;
+        for (const double v : values) {
+            sum += v;
+        }
+        return values.empty() ? 0.0 : sum / static_cast<double>(values.size());
+    };
+    result.cpuAverageMs = average(m_cpuTimes);
+    result.gpuAverageMs = average(m_gpuTimes);
+    if (!m_gpuTimes.empty()) {
+        std::vector<double> sorted = m_gpuTimes;
+        std::sort(sorted.begin(), sorted.end());
+        result.gpuP95Ms =
+            sorted[static_cast<std::size_t>(0.95 * static_cast<double>(sorted.size() - 1))];
+    }
+    return result;
+}
+
+void Viewport3D::recordFrame(double gpuMilliseconds, double cpuMilliseconds) {
+    const std::lock_guard lock(m_statisticsMutex);
+    if (!m_collecting) {
+        return;
+    }
+    m_cpuTimes.push_back(cpuMilliseconds);
+    if (gpuMilliseconds > 0.0) {
+        m_gpuTimes.push_back(gpuMilliseconds);
+    }
+}
+
+void Viewport3D::reportSlowFrames(double averageMilliseconds) {
+    // Called on the render thread: continue on the interface thread.
+    QMetaObject::invokeMethod(
+        this,
+        [this, averageMilliseconds] {
+            if (m_ambientOcclusion) {
+                setAmbientOcclusion(false);
+                emit ambientOcclusionTurnedOff(averageMilliseconds);
+            }
+        },
+        Qt::QueuedConnection);
+}
+
 void Viewport3D::cameraMoved() {
+    const int level = render::detailLevelFor(m_camera.pixelsPerMillimetre(), m_detailLevel);
+    if (level != m_detailLevel) {
+        m_detailLevel = level;
+        emit detailLevelWanted(level);
+    }
     emit cameraChanged();
     update();
 }
@@ -232,6 +345,16 @@ void Viewport3D::setStandardView(const QString& name) {
             return;
         }
     }
+}
+
+void Viewport3D::setCamera(double yaw, double pitch, double distance) {
+    m_animation.stop();
+    render::CameraPose pose = m_camera.pose();
+    pose.yaw = static_cast<float>(yaw);
+    pose.pitch = static_cast<float>(pitch);
+    pose.distance = static_cast<float>(distance);
+    m_camera.setPose(pose);
+    cameraMoved();
 }
 
 void Viewport3D::frameAll() {
@@ -293,27 +416,48 @@ void Viewport3D::mousePressEvent(QMouseEvent* event) {
 void Viewport3D::mouseMoveEvent(QMouseEvent* event) {
     const QPointF delta = event->position() - m_lastMouse;
     m_lastMouse = event->position();
-    const bool alt = event->modifiers().testFlag(Qt::AltModifier);
-    const bool shift = event->modifiers().testFlag(Qt::ShiftModifier);
-    if (event->buttons().testFlag(Qt::RightButton) ||
-        (event->buttons().testFlag(Qt::LeftButton) && alt)) {
-        orbitBy(delta.x(), delta.y());
-    } else if (event->buttons().testFlag(Qt::MiddleButton) ||
-               (event->buttons().testFlag(Qt::LeftButton) && shift)) {
-        panBy(delta.x(), delta.y());
+    applyNavigation(render::dragAction(m_mouseStyle, event->buttons(), event->modifiers()),
+                    delta.x(), delta.y());
+    event->accept();
+}
+
+void Viewport3D::mouseDoubleClickEvent(QMouseEvent* event) {
+    // A double click with the left button on a face turns the view to look at it squarely.
+    // (AP-1.4 may give the double click to the selection; the view then keeps this on a key.)
+    if (event->button() == Qt::LeftButton && event->modifiers() == Qt::NoModifier) {
+        lookAtSurface(event->position().x(), event->position().y());
     }
     event->accept();
+}
+
+bool Viewport3D::event(QEvent* event) {
+    if (event->type() == QEvent::NativeGesture) {
+        const auto* gesture = static_cast<QNativeGestureEvent*>(event);
+        if (gesture->gestureType() == Qt::ZoomNativeGesture) {
+            // Spreading the fingers is a positive value and brings the scene closer.
+            const double factor = 1.0 / std::max(1.0 + gesture->value(), 0.05);
+            zoomBy(factor, gesture->position().x(), gesture->position().y());
+            event->accept();
+            return true;
+        }
+        if (gesture->gestureType() == Qt::SmartZoomNativeGesture) {
+            zoomToSurface(gesture->position().x(), gesture->position().y());
+            event->accept();
+            return true;
+        }
+    }
+    return QQuickRhiItem::event(event);
 }
 
 void Viewport3D::wheelEvent(QWheelEvent* event) {
     const QPoint pixels = event->pixelDelta();
     if (!pixels.isNull()) {
         // Trackpad: two fingers turn the view, with Shift they move it.
-        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-            panBy(pixels.x(), pixels.y());
-        } else {
-            orbitBy(pixels.x() * kTrackpadOrbit, pixels.y() * kTrackpadOrbit);
-        }
+        const render::NavigationAction action =
+            render::trackpadAction(m_mouseStyle, event->modifiers());
+        const double scale =
+            action == render::NavigationAction::orbit ? static_cast<double>(kTrackpadOrbit) : 1.0;
+        applyNavigation(action, pixels.x() * scale, pixels.y() * scale);
     } else if (event->angleDelta().y() != 0) {
         // Mouse wheel: zoom towards the pointer; 120 units are one notch.
         const double notches = event->angleDelta().y() / 120.0;
@@ -321,6 +465,90 @@ void Viewport3D::wheelEvent(QWheelEvent* event) {
         zoomBy(factor, event->position().x(), event->position().y());
     }
     event->accept();
+}
+
+void Viewport3D::applyNavigation(render::NavigationAction action, double dx, double dy) {
+    switch (action) {
+    case render::NavigationAction::orbit:
+        orbitBy(dx, dy);
+        break;
+    case render::NavigationAction::pan:
+        panBy(dx, dy);
+        break;
+    case render::NavigationAction::zoom:
+        // Dragging up (dy < 0) comes closer.
+        zoomBy(std::exp(dy * kDragZoomPerPixel));
+        break;
+    case render::NavigationAction::none:
+        break;
+    }
+}
+
+QString Viewport3D::mouseStyle() const {
+    return QString::fromUtf8(render::mouseStyleName(m_mouseStyle).data(),
+                             static_cast<qsizetype>(render::mouseStyleName(m_mouseStyle).size()));
+}
+
+void Viewport3D::setMouseStyle(const QString& name) {
+    const std::optional<render::MouseStyle> style = render::mouseStyleFromName(name.toStdString());
+    if (style && *style != m_mouseStyle) {
+        m_mouseStyle = *style;
+        emit mouseStyleChanged();
+    }
+}
+
+void Viewport3D::setViewDirection(double x, double y, double z) {
+    animateTo(m_camera.poseLookingFrom(
+        QVector3D(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z))));
+}
+
+std::optional<render::SurfaceHit> Viewport3D::surfaceAt(double x, double y) const {
+    if (!m_shown) {
+        return std::nullopt;
+    }
+    const std::optional<render::Ray> ray = m_camera.rayThrough(QPointF(x, y));
+    if (!ray) {
+        return std::nullopt;
+    }
+    return render::pickSurface(*m_shown, *ray);
+}
+
+bool Viewport3D::lookAtSurface(double x, double y) {
+    const std::optional<render::SurfaceHit> hit = surfaceAt(x, y);
+    if (!hit) {
+        return false;
+    }
+    QVector3D center = hit->point;
+    if (hit->bodyIndex >= 0) {
+        if (const auto shape = render::faceShape(
+                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].geometry(),
+                hit->faceId)) {
+            center = shape->center;
+        }
+    }
+    render::CameraPose pose = m_camera.poseLookingFrom(hit->normal);
+    pose.target = center;
+    animateTo(pose);
+    return true;
+}
+
+bool Viewport3D::zoomToSurface(double x, double y) {
+    const std::optional<render::SurfaceHit> hit = surfaceAt(x, y);
+    if (!hit) {
+        return false;
+    }
+    if (hit->bodyIndex >= 0) {
+        if (const auto shape = render::faceShape(
+                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].geometry(),
+                hit->faceId)) {
+            animateTo(m_camera.poseFraming(shape->center, shape->radius));
+            return true;
+        }
+    }
+    render::CameraPose pose = m_camera.pose();
+    pose.target = hit->point;
+    animateTo(pose);
+    return true;
 }
 
 void Viewport3D::geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry) {
@@ -343,6 +571,7 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect) {
     snapshot.projection = m_camera.projection(aspect);
     snapshot.pixelsPerMillimetre = m_camera.pixelsPerMillimetre();
     snapshot.bedVisible = m_bedVisible;
+    snapshot.ambientOcclusion = m_ambientOcclusion;
     snapshot.sceneVersion = m_sceneVersion;
     snapshot.paletteVersion = m_paletteVersion;
     return snapshot;

@@ -16,16 +16,35 @@ Item {
     property real cameraYaw: 0
     property real cameraPitch: 0
     property bool focusMode: false
+    property string mouseStyle: "fission"  // fission | fusion | tinkercad | blender | sketchup
     signal orthographicToggled
     signal displayRequested(string mode)
     signal toolRequested(string tool)
     signal groupRequested(string group)
     signal viewRequested(string view)
+    signal directionRequested(real x, real y, real z)
     signal focusToggled
     signal navigationHint(string hint)
     signal orbitDragged(real dx, real dy)
     signal panDragged(real dx, real dy)
     signal zoomRequested(real factor)
+
+    // How the mouse does it depends on the style chosen in the View menu.
+    readonly property string orbitHint: {
+        switch (mouseStyle) {
+        case "fusion": return qsTr("Orbit: Shift + middle mouse button – or drag this button")
+        case "blender":
+        case "sketchup": return qsTr("Orbit: drag with the middle mouse button – or drag this button")
+        default: return qsTr("Orbit: drag with the right mouse button – or drag this button")
+        }
+    }
+    readonly property string panHint: {
+        switch (mouseStyle) {
+        case "blender":
+        case "sketchup": return qsTr("Pan: Shift + middle mouse button – or drag this button")
+        default: return qsTr("Pan: drag with the middle mouse button – or drag this button")
+        }
+    }
 
     // --- display bar (top left) -------------------------------------------------------
     Row {
@@ -248,6 +267,7 @@ Item {
             yaw: root.cameraYaw
             pitch: root.cameraPitch
             onViewRequested: view => root.viewRequested(view)
+            onDirectionRequested: (x, y, z) => root.directionRequested(x, y, z)
         }
 
         Row {
@@ -287,7 +307,7 @@ Item {
             NavButton {
                 iconName: "orbit"
                 label: qsTr("Orbit")
-                hint: qsTr("Orbit: drag with the right mouse button – or drag this button")
+                hint: root.orbitHint
                 onHintRequested: text => root.navigationHint(text)
                 onDragged: (dx, dy) => root.orbitDragged(dx, dy)
             }
@@ -295,7 +315,7 @@ Item {
             NavButton {
                 iconName: "hand"
                 label: qsTr("Pan")
-                hint: qsTr("Pan: drag with the middle mouse button – or drag this button")
+                hint: root.panHint
                 onHintRequested: text => root.navigationHint(text)
                 onDragged: (dx, dy) => root.panDragged(dx, dy)
             }

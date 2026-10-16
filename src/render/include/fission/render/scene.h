@@ -5,6 +5,9 @@
 
 #include <QColor>
 
+#include <cstdint>
+#include <memory>
+#include <string>
 #include <vector>
 
 #include "fission/geo/mesh.h"
@@ -12,9 +15,21 @@
 namespace fission::render {
 
 /// A body as the renderer wants it: its tessellation and the colour it is drawn in.
+///
+/// The renderer keeps the graphics buffers of a body as long as `id`, `meshVersion` and `color`
+/// stay the same, so a change to one body uploads that body only. `mesh` is shared: building a
+/// scene does not copy any triangles.
 struct RenderBody {
-    geo::TriangleMesh mesh;
+    std::string id;                ///< Stable for one body across rebuilds of the scene.
+    std::uint64_t meshVersion = 0; ///< Changes whenever the tessellation is a different one.
+    std::shared_ptr<const geo::TriangleMesh> mesh;
     QColor color{233, 234, 236};
+
+    /// The tessellation, or an empty one if there is none yet.
+    const geo::TriangleMesh& geometry() const;
+    bool operator==(const RenderBody& other) const {
+        return id == other.id && meshVersion == other.meshVersion && color == other.color;
+    }
 };
 
 /// The print bed (Druckbett): a flat plate with rounded corners, origin in the middle.
