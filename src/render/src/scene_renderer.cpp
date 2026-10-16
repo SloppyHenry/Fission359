@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstring>
 #include <numbers>
+#include <type_traits>
 #include <vector>
 
 namespace fission::render {
@@ -58,6 +59,32 @@ struct FlatVertex {
     float color[4];
 };
 static_assert(sizeof(MeshVertex) == 40 && sizeof(FlatVertex) == 28);
+
+// The pick pass: a position and the number of the element it belongs to.
+struct PickVertex {
+    float position[3];
+    std::uint32_t id;
+};
+struct PickCornerVertex {
+    float position[3];
+    std::uint32_t id;
+    float offset[2]; ///< from the corner point, in pixels
+};
+static_assert(sizeof(PickVertex) == 16 && sizeof(PickCornerVertex) == 24);
+
+// Mirrors the block of pick.vert and pickcorner.vert.
+struct PickParams {
+    float mvp[16];
+    float misc[4];
+};
+static_assert(sizeof(PickParams) == 64 + 16);
+
+// Mirrors the block of overlay.vert and overlay.frag.
+struct OverlayParams {
+    float mvp[16];
+    float color[4];
+};
+static_assert(sizeof(OverlayParams) == 64 + 16);
 
 QShader loadShader(const char* name) {
     QFile file(QStringLiteral(":/fission/render/shaders/%1.qsb").arg(QLatin1String(name)));
@@ -184,6 +211,12 @@ SceneRenderer::SceneRenderer(QRhi* rhi) : m_rhi(rhi) {
     m_ssaoFragment = loadShader("ssao.frag");
     m_aoBlurFragment = loadShader("aoblur.frag");
     m_normalFragment = loadShader("normal.frag");
+    m_pickVertex = loadShader("pick.vert");
+    m_pickCornerVertex = loadShader("pickcorner.vert");
+    m_pickFragment = loadShader("pick.frag");
+    m_overlayVertex = loadShader("overlay.vert");
+    m_overlayFragment = loadShader("overlay.frag");
+    createPickResources();
 
     // Depth only: the position comes from the body layout, there is no colour attachment.
     m_shadowPipeline.reset(m_rhi->newGraphicsPipeline());
@@ -262,6 +295,30 @@ void SceneRenderer::createPipelines(QRhiRenderPassDescriptor* pass, int sampleCo
         makePipeline(m_flatVertex, m_flatFragment, true, false, true, true, pass, sampleCount);
     m_linePipeline =
         makePipeline(m_flatVertex, m_flatFragment, true, true, true, true, pass, sampleCount);
+
+    // Highlights of faces: the body's own vertices, one colour, blended over the body.
+    m_overlayPipeline.reset(m_rhi->newGraphicsPipeline());
+    m_overlayPipeline->setShaderStages({{QRhiShaderStage::Vertex, m_overlayVertex},
+                                        {QRhiShaderStage::Fragment, m_overlayFragment}});
+    QRhiVertexInputLayout layout;
+    layout.setBindings({{sizeof(MeshVertex)}});
+    layout.setAttributes({{0, 0, QRhiVertexInputAttribute::Float3, 0}});
+    m_overlayPipeline->setVertexInputLayout(layout);
+    m_overlayPipeline->setDepthTest(true);
+    m_overlayPipeline->setDepthWrite(false);
+    m_overlayPipeline->setDepthOp(QRhiGraphicsPipeline::LessOrEqual);
+    m_overlayPipeline->setCullMode(QRhiGraphicsPipeline::None);
+    QRhiGraphicsPipeline::TargetBlend blendState;
+    blendState.enable = true;
+    blendState.srcColor = QRhiGraphicsPipeline::SrcAlpha;
+    blendState.dstColor = QRhiGraphicsPipeline::OneMinusSrcAlpha;
+    blendState.srcAlpha = QRhiGraphicsPipeline::One;
+    blendState.dstAlpha = QRhiGraphicsPipeline::OneMinusSrcAlpha;
+    m_overlayPipeline->setTargetBlends({blendState});
+    m_overlayPipeline->setSampleCount(sampleCount);
+    m_overlayPipeline->setShaderResourceBindings(m_overlaySrb.get());
+    m_overlayPipeline->setRenderPassDescriptor(pass);
+    m_overlayPipeline->create();
 }
 
 std::unique_ptr<QRhiBuffer> SceneRenderer::makeVertexBuffer(QRhiResourceUpdateBatch* updates,
@@ -315,6 +372,23 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
     const bool edgeColorChanged = palette.edgeLine != m_edgeLineColor;
     m_edgeLineColor = palette.edgeLine;
 
+    // Every body gets a number for the pick picture. Bodies that stay keep theirs; new ones take
+    // a free one (the numbers of bodies that are going away are free from the next upload on).
+    std::vector<bool> slotUsed(kPickSlots, false);
+    slotUsed[0] = true;
+    for (const auto& entry : m_gpuBodies) {
+        slotUsed[entry.second.slot] = true;
+    }
+    const auto takeSlot = [&slotUsed]() -> unsigned {
+        for (unsigned slot = 1; slot < kPickSlots; ++slot) {
+            if (!slotUsed[slot]) {
+                slotUsed[slot] = true;
+                return slot;
+            }
+        }
+        return 0;
+    };
+
     std::map<std::string, GpuBody> next;
     std::vector<std::string> order;
     m_drawOrder.clear();
@@ -366,6 +440,12 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
             }
             gpu.meshVersion = body.meshVersion;
             gpu.color = body.color;
+            gpu.mesh = body.mesh;
+            gpu.slot = known != m_gpuBodies.end() && known->second.slot != 0 ? known->second.slot
+                                                                             : takeSlot();
+            if (gpu.slot != 0) {
+                buildPickBuffers(updates, mesh, gpu);
+            }
             gpu.vertices =
                 makeVertexBuffer(updates, vertices.data(), vertices.size() * sizeof(MeshVertex),
                                  QRhiBuffer::VertexBuffer);
@@ -394,6 +474,12 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
     }
     m_lastStats.removed = static_cast<int>(m_gpuBodies.size());
     m_gpuBodies = std::move(next); // what is left in the old map is gone: its buffers are freed
+    m_slotKeys.clear();
+    for (const auto& entry : m_gpuBodies) {
+        if (entry.second.slot != 0) {
+            m_slotKeys[entry.second.slot] = entry.first;
+        }
+    }
     // Drawing follows the order of the scene.
     for (const std::string& key : order) {
         m_drawOrder.push_back(&m_gpuBodies.at(key));
@@ -737,6 +823,7 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
     writeUniforms(updates, m_uniforms.get(),
                   m_rhi->clipSpaceCorrMatrix() * frame.projection * frame.view, frame, size,
                   occlusion);
+    prepareHighlights(updates, frame, size);
 
     cb->beginPass(target, frame.palette.viewEdge, {1.0F, 0}, updates);
     cb->setViewport({0, 0, float(size.width()), float(size.height())});
@@ -790,7 +877,510 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
             cb->draw(static_cast<quint32>(body->lineVertexCount));
         }
     }
+    drawHighlights(cb);
     cb->endPass();
+}
+
+// --- picking -------------------------------------------------------------------------------
+
+void SceneRenderer::createPickResources() {
+    const QSize size(kPickSize, kPickSize);
+    m_pickTexture.reset(
+        m_rhi->newTexture(QRhiTexture::RGBA8, size, 1,
+                          QRhiTexture::RenderTarget | QRhiTexture::UsedAsTransferSource));
+    m_pickTexture->create();
+    m_pickDepth.reset(m_rhi->newRenderBuffer(QRhiRenderBuffer::DepthStencil, size, 1));
+    m_pickDepth->create();
+    QRhiTextureRenderTargetDescription description{QRhiColorAttachment(m_pickTexture.get())};
+    description.setDepthStencilBuffer(m_pickDepth.get());
+    m_pickTarget.reset(m_rhi->newTextureRenderTarget(description));
+    m_pickPass.reset(m_pickTarget->newCompatibleRenderPassDescriptor());
+    m_pickTarget->setRenderPassDescriptor(m_pickPass.get());
+    m_pickTarget->create();
+
+    m_pickUniforms.reset(
+        m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, sizeof(PickParams)));
+    m_pickUniforms->create();
+    m_pickSrb.reset(m_rhi->newShaderResourceBindings());
+    m_pickSrb->setBindings({QRhiShaderResourceBinding::uniformBuffer(
+        0, QRhiShaderResourceBinding::VertexStage, m_pickUniforms.get())});
+    m_pickSrb->create();
+
+    const auto make = [this](const QShader& vertex, QRhiVertexInputLayout layout,
+                             QRhiGraphicsPipeline::Topology topology, bool surfaceBias) {
+        std::unique_ptr<QRhiGraphicsPipeline> pipeline(m_rhi->newGraphicsPipeline());
+        pipeline->setShaderStages(
+            {{QRhiShaderStage::Vertex, vertex}, {QRhiShaderStage::Fragment, m_pickFragment}});
+        pipeline->setVertexInputLayout(layout);
+        pipeline->setTopology(topology);
+        pipeline->setDepthTest(true);
+        pipeline->setDepthWrite(true);
+        pipeline->setDepthOp(QRhiGraphicsPipeline::LessOrEqual);
+        pipeline->setCullMode(QRhiGraphicsPipeline::None);
+        if (surfaceBias) {
+            // As in the view: surfaces sit a little behind, so edges and corners win.
+            pipeline->setDepthBias(2);
+            pipeline->setSlopeScaledDepthBias(1.0F);
+        }
+        pipeline->setShaderResourceBindings(m_pickSrb.get());
+        pipeline->setRenderPassDescriptor(m_pickPass.get());
+        pipeline->create();
+        return pipeline;
+    };
+
+    QRhiVertexInputLayout faces;
+    faces.setBindings({{sizeof(MeshVertex)}, {sizeof(std::uint32_t)}});
+    faces.setAttributes(
+        {{0, 0, QRhiVertexInputAttribute::Float3, 0}, {1, 1, QRhiVertexInputAttribute::UInt, 0}});
+    m_pickFacePipeline = make(m_pickVertex, faces, QRhiGraphicsPipeline::Triangles, true);
+
+    QRhiVertexInputLayout lines;
+    lines.setBindings({{sizeof(PickVertex)}});
+    lines.setAttributes({{0, 0, QRhiVertexInputAttribute::Float3, 0},
+                         {0, 1, QRhiVertexInputAttribute::UInt, 3 * sizeof(float)}});
+    m_pickEdgePipeline = make(m_pickVertex, lines, QRhiGraphicsPipeline::Lines, false);
+
+    QRhiVertexInputLayout corners;
+    corners.setBindings({{sizeof(PickCornerVertex)}});
+    corners.setAttributes({{0, 0, QRhiVertexInputAttribute::Float3, 0},
+                           {0, 1, QRhiVertexInputAttribute::UInt, 3 * sizeof(float)},
+                           {0, 2, QRhiVertexInputAttribute::Float2, 4 * sizeof(float)}});
+    m_pickCornerPipeline =
+        make(m_pickCornerVertex, corners, QRhiGraphicsPipeline::Triangles, false);
+
+    // The highlights' colours: four styles in one buffer, each at the alignment the graphics
+    // interface asks for.
+    m_overlayStride = static_cast<quint32>(m_rhi->ubufAligned(sizeof(OverlayParams)));
+    m_overlayUniforms.reset(m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer,
+                                             m_overlayStride * kOverlayStyles));
+    m_overlayUniforms->create();
+    m_overlaySrb.reset(m_rhi->newShaderResourceBindings());
+    m_overlaySrb->setBindings({QRhiShaderResourceBinding::uniformBufferWithDynamicOffset(
+        0, QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage,
+        m_overlayUniforms.get(), sizeof(OverlayParams))});
+    m_overlaySrb->create();
+}
+
+void SceneRenderer::buildPickBuffers(QRhiResourceUpdateBatch* updates,
+                                     const geo::TriangleMesh& mesh, GpuBody& body) {
+    // Every face has its own vertices, so a number per vertex says which face it is.
+    std::vector<std::uint32_t> numbers(mesh.positions.size(), 0);
+    for (std::size_t t = 0; t < mesh.triangleCount(); ++t) {
+        const std::uint32_t face = t < mesh.faceIds.size() ? mesh.faceIds[t] : 0;
+        const std::uint32_t id = packPickId(core::SelectableKind::face, body.slot, face);
+        for (std::size_t k = 0; k < 3; ++k) {
+            numbers[mesh.indices[3 * t + k]] = id;
+        }
+    }
+    body.faceNumbers = makeVertexBuffer(
+        updates, numbers.data(), numbers.size() * sizeof(std::uint32_t), QRhiBuffer::VertexBuffer);
+
+    // Where the triangles of each face are, for highlighting one face.
+    body.faceRuns.clear();
+    for (std::size_t t = 0; t < mesh.triangleCount(); ++t) {
+        const std::uint32_t face = t < mesh.faceIds.size() ? mesh.faceIds[t] : 0;
+        if (!body.faceRuns.empty() && body.faceRuns.back().face == face &&
+            body.faceRuns.back().firstTriangle + body.faceRuns.back().triangleCount == t) {
+            ++body.faceRuns.back().triangleCount;
+        } else {
+            body.faceRuns.push_back({face, static_cast<std::uint32_t>(t), 1});
+        }
+    }
+    std::sort(body.faceRuns.begin(), body.faceRuns.end(), [](const auto& a, const auto& b) {
+        return a.face != b.face ? a.face < b.face : a.firstTriangle < b.firstTriangle;
+    });
+
+    std::vector<PickVertex> lines;
+    for (const geo::EdgePolyline& edge : mesh.edges) {
+        const std::uint32_t id = packPickId(core::SelectableKind::edge, body.slot, edge.edgeId);
+        for (std::size_t i = 0; i + 1 < edge.points.size(); ++i) {
+            for (const geo::Point3f* p : {&edge.points[i], &edge.points[i + 1]}) {
+                lines.push_back({{p->x, p->y, p->z}, id});
+            }
+        }
+    }
+    body.edgePick = makeVertexBuffer(updates, lines.data(), lines.size() * sizeof(PickVertex),
+                                     QRhiBuffer::VertexBuffer);
+    body.edgePickCount = lines.size();
+
+    std::vector<PickCornerVertex> squares;
+    constexpr float h = kCornerHalfSize;
+    constexpr float corners[6][2] = {{-h, -h}, {h, -h}, {h, h}, {-h, -h}, {h, h}, {-h, h}};
+    for (const geo::CornerPoint& corner : mesh.corners) {
+        const std::uint32_t id =
+            packPickId(core::SelectableKind::vertex, body.slot, corner.cornerId);
+        for (const auto& offset : corners) {
+            squares.push_back({{corner.position.x, corner.position.y, corner.position.z},
+                               id,
+                               {offset[0], offset[1]}});
+        }
+    }
+    body.cornerPick =
+        makeVertexBuffer(updates, squares.data(), squares.size() * sizeof(PickCornerVertex),
+                         QRhiBuffer::VertexBuffer);
+    body.cornerPickCount = squares.size();
+}
+
+std::string SceneRenderer::bodyOfSlot(unsigned slot) const {
+    const auto found = m_slotKeys.find(slot);
+    return found == m_slotKeys.end() ? std::string{} : found->second;
+}
+
+unsigned SceneRenderer::slotOfBody(const std::string& id) const {
+    const auto found = m_gpuBodies.find(id);
+    return found == m_gpuBodies.end() ? 0U : found->second.slot;
+}
+
+bool SceneRenderer::pick(QRhiCommandBuffer* cb, const QSize& targetSize, const QPoint& pixel,
+                         const QMatrix4x4& view, const QMatrix4x4& projection,
+                         const core::SelectionFilter& filter, PickCallback done) {
+    const QRect window(pixel.x() - kPickRadius, pixel.y() - kPickRadius, kPickSize, kPickSize);
+    return pickPass(cb, targetSize, window, view, projection, filter, std::move(done),
+                    m_pickTarget.get(), m_pickTexture.get());
+}
+
+bool SceneRenderer::pickRegion(QRhiCommandBuffer* cb, const QSize& targetSize, const QRect& area,
+                               const QMatrix4x4& view, const QMatrix4x4& projection,
+                               const core::SelectionFilter& filter, PickCallback done) {
+    const QRect inside = area.intersected(QRect(QPoint(0, 0), targetSize));
+    if (inside.width() < 1 || inside.height() < 1 || inside.width() > kRegionMaxSize ||
+        inside.height() > kRegionMaxSize) {
+        return false;
+    }
+    // The picture of a region has the size of the region: a target of that size is made for it.
+    if (!m_regionTexture || m_regionTexture->pixelSize() != inside.size()) {
+        m_regionTexture.reset(
+            m_rhi->newTexture(QRhiTexture::RGBA8, inside.size(), 1,
+                              QRhiTexture::RenderTarget | QRhiTexture::UsedAsTransferSource));
+        m_regionTexture->create();
+        m_regionDepth.reset(
+            m_rhi->newRenderBuffer(QRhiRenderBuffer::DepthStencil, inside.size(), 1));
+        m_regionDepth->create();
+        QRhiTextureRenderTargetDescription description{QRhiColorAttachment(m_regionTexture.get())};
+        description.setDepthStencilBuffer(m_regionDepth.get());
+        m_regionTarget.reset(m_rhi->newTextureRenderTarget(description));
+        m_regionTarget->setRenderPassDescriptor(m_pickPass.get()); // same formats: compatible
+        m_regionTarget->create();
+    }
+    return pickPass(cb, targetSize, inside, view, projection, filter, std::move(done),
+                    m_regionTarget.get(), m_regionTexture.get());
+}
+
+bool SceneRenderer::pickPass(QRhiCommandBuffer* cb, const QSize& targetSize, const QRect& window,
+                             const QMatrix4x4& view, const QMatrix4x4& projection,
+                             const core::SelectionFilter& filter, PickCallback done,
+                             QRhiTextureRenderTarget* target, QRhiTexture* texture) {
+    if (m_pickInFlight || m_drawOrder.empty() || targetSize.isEmpty()) {
+        return false;
+    }
+    const QSize size = window.size();
+    // Crop the projection so that the pixels of `window` fill the picture.
+    const float width = static_cast<float>(targetSize.width());
+    const float height = static_cast<float>(targetSize.height());
+    const float centerX = static_cast<float>(window.x()) + 0.5F * static_cast<float>(size.width());
+    const float centerY = static_cast<float>(window.y()) + 0.5F * static_cast<float>(size.height());
+    const float nx = 2.0F * centerX / width - 1.0F;
+    const float ny = 1.0F - 2.0F * centerY / height;
+    const float scaleX = width / static_cast<float>(size.width());
+    const float scaleY = height / static_cast<float>(size.height());
+    QMatrix4x4 crop;
+    crop(0, 0) = scaleX;
+    crop(1, 1) = scaleY;
+    crop(0, 3) = -nx * scaleX;
+    crop(1, 3) = -ny * scaleY;
+
+    PickParams params{};
+    copyMatrix(params.mvp, m_rhi->clipSpaceCorrMatrix() * crop * projection * view);
+    params.misc[0] = 2.0F / static_cast<float>(size.width());
+    params.misc[1] = 2.0F / static_cast<float>(size.height());
+    QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
+    updates->updateDynamicBuffer(m_pickUniforms.get(), 0, sizeof(PickParams), &params);
+
+    cb->beginPass(target, QColor(0, 0, 0, 0), {1.0F, 0}, updates);
+    cb->setViewport({0, 0, static_cast<float>(size.width()), static_cast<float>(size.height())});
+
+    cb->setGraphicsPipeline(m_pickFacePipeline.get());
+    cb->setShaderResources(m_pickSrb.get());
+    for (const GpuBody* body : m_drawOrder) {
+        if (body->slot == 0 || !body->vertices || !body->indices || !body->faceNumbers) {
+            continue;
+        }
+        const QRhiCommandBuffer::VertexInput inputs[] = {{body->vertices.get(), 0},
+                                                         {body->faceNumbers.get(), 0}};
+        cb->setVertexInput(0, 2, inputs, body->indices.get(), 0, QRhiCommandBuffer::IndexUInt32);
+        cb->drawIndexed(static_cast<quint32>(body->indexCount));
+    }
+    // Edges and corners only where they can be chosen: otherwise they would hide the face.
+    if (filter.edges) {
+        cb->setGraphicsPipeline(m_pickEdgePipeline.get());
+        cb->setShaderResources(m_pickSrb.get());
+        for (const GpuBody* body : m_drawOrder) {
+            if (body->slot == 0 || !body->edgePick || body->edgePickCount == 0) {
+                continue;
+            }
+            const QRhiCommandBuffer::VertexInput input(body->edgePick.get(), 0);
+            cb->setVertexInput(0, 1, &input);
+            cb->draw(static_cast<quint32>(body->edgePickCount));
+        }
+    }
+    if (filter.vertices) {
+        cb->setGraphicsPipeline(m_pickCornerPipeline.get());
+        cb->setShaderResources(m_pickSrb.get());
+        for (const GpuBody* body : m_drawOrder) {
+            if (body->slot == 0 || !body->cornerPick || body->cornerPickCount == 0) {
+                continue;
+            }
+            const QRhiCommandBuffer::VertexInput input(body->cornerPick.get(), 0);
+            cb->setVertexInput(0, 1, &input);
+            cb->draw(static_cast<quint32>(body->cornerPickCount));
+        }
+    }
+
+    m_pickDone = std::move(done);
+    m_pickResult = {};
+    m_pickResult.completed = [this, size] {
+        const std::size_t count = static_cast<std::size_t>(size.width()) * size.height();
+        std::vector<std::uint32_t> picture(count, 0);
+        if (m_pickResult.data.size() >= static_cast<qsizetype>(count * sizeof(std::uint32_t))) {
+            std::memcpy(picture.data(), m_pickResult.data.constData(),
+                        count * sizeof(std::uint32_t));
+        }
+        if (m_rhi->isYUpInFramebuffer()) {
+            // The first row of the data is the bottom one.
+            const auto rows = static_cast<std::size_t>(size.height());
+            const auto width = static_cast<std::size_t>(size.width());
+            for (std::size_t row = 0; row < rows / 2; ++row) {
+                std::swap_ranges(picture.begin() + static_cast<std::ptrdiff_t>(row * width),
+                                 picture.begin() + static_cast<std::ptrdiff_t>((row + 1) * width),
+                                 picture.begin() +
+                                     static_cast<std::ptrdiff_t>((rows - 1 - row) * width));
+            }
+        }
+        m_pickInFlight = false;
+        if (m_pickDone) {
+            PickCallback done = std::move(m_pickDone);
+            m_pickDone = nullptr;
+            done(std::move(picture));
+        }
+    };
+    QRhiResourceUpdateBatch* readback = m_rhi->nextResourceUpdateBatch();
+    readback->readBackTexture(QRhiReadbackDescription(texture), &m_pickResult);
+    m_pickInFlight = true;
+    cb->endPass(readback);
+    return true;
+}
+
+// --- highlights ------------------------------------------------------------------------------
+
+namespace {
+
+// Camera-facing strips and squares for edges and corners: lines are one pixel wide on every
+// graphics interface, so a highlighted edge is built from triangles of a width in pixels.
+class HighlightShapes {
+public:
+    HighlightShapes(const QMatrix4x4& view, const QMatrix4x4& projection, int heightInPixels,
+                    std::vector<FlatVertex>& out)
+        : m_viewProjection(projection * view), m_out(out) {
+        m_right = view.row(0).toVector3D();
+        m_up = view.row(1).toVector3D();
+        m_forward = -view.row(2).toVector3D();
+        m_pixelsToWorld = 2.0F / (static_cast<float>(heightInPixels) * projection(1, 1));
+    }
+
+    // World size of one pixel at a point: depends on how far it is in a perspective view.
+    float pixelSize(const QVector3D& p) const {
+        const QVector4D clip = m_viewProjection * QVector4D(p, 1.0F);
+        return clip.w() > 1e-6F ? clip.w() * m_pixelsToWorld : 0.0F;
+    }
+
+    void strip(const QVector3D& a, const QVector3D& b, float widthPixels, const QColor& color) {
+        QVector3D direction = b - a;
+        if (direction.lengthSquared() < 1e-12F) {
+            return;
+        }
+        direction.normalize();
+        QVector3D side = QVector3D::crossProduct(direction, m_forward);
+        if (side.lengthSquared() < 1e-8F) {
+            return; // the edge points at the viewer: nothing to see
+        }
+        side.normalize();
+        const QVector3D sa = side * (0.5F * widthPixels * pixelSize(a));
+        const QVector3D sb = side * (0.5F * widthPixels * pixelSize(b));
+        push(a - sa, color);
+        push(a + sa, color);
+        push(b + sb, color);
+        push(a - sa, color);
+        push(b + sb, color);
+        push(b - sb, color);
+    }
+
+    void square(const QVector3D& center, float sidePixels, const QColor& color) {
+        const float h = 0.5F * sidePixels * pixelSize(center);
+        const QVector3D r = m_right * h;
+        const QVector3D u = m_up * h;
+        push(center - r - u, color);
+        push(center + r - u, color);
+        push(center + r + u, color);
+        push(center - r - u, color);
+        push(center + r + u, color);
+        push(center - r + u, color);
+    }
+
+private:
+    void push(const QVector3D& p, const QColor& color) {
+        m_out.push_back(flatVertex(p.x(), p.y(), p.z(), color));
+    }
+
+    QMatrix4x4 m_viewProjection;
+    QVector3D m_right, m_up, m_forward;
+    float m_pixelsToWorld = 0.0F;
+    std::vector<FlatVertex>& m_out;
+};
+
+QVector3D toVector(const geo::Point3f& p) {
+    return {p.x, p.y, p.z};
+}
+
+QColor withAlpha(QColor color, float alpha) {
+    color.setAlphaF(alpha);
+    return color;
+}
+
+QColor lighter(const QColor& color) {
+    return QColor::fromRgbF(0.5F * color.redF() + 0.5F, 0.5F * color.greenF() + 0.5F,
+                            0.5F * color.blueF() + 0.5F);
+}
+
+} // namespace
+
+void SceneRenderer::prepareHighlights(QRhiResourceUpdateBatch* updates, const Frame& frame,
+                                      const QSize& targetSize) {
+    m_tintDraws.clear();
+    m_ribbonVertexCount = 0;
+    if (frame.highlights.empty() || !m_overlayPipeline) {
+        return;
+    }
+
+    // Colours of the four tints: face under the pointer, chosen face, body under the pointer,
+    // chosen body.
+    const QColor styleColors[kOverlayStyles] = {
+        withAlpha(lighter(frame.accent), 0.30F), withAlpha(frame.accent, 0.45F),
+        withAlpha(lighter(frame.accent), 0.14F), withAlpha(frame.accent, 0.22F)};
+    OverlayParams overlay{};
+    copyMatrix(overlay.mvp, m_rhi->clipSpaceCorrMatrix() * frame.projection * frame.view);
+    for (int style = 0; style < kOverlayStyles; ++style) {
+        setColor(overlay.color, styleColors[style]);
+        updates->updateDynamicBuffer(m_overlayUniforms.get(),
+                                     static_cast<int>(m_overlayStride) * style,
+                                     sizeof(OverlayParams), &overlay);
+    }
+
+    std::vector<FlatVertex> shapes;
+    HighlightShapes builder(frame.view, frame.projection, std::max(1, targetSize.height()), shapes);
+    for (const Highlight& highlight : frame.highlights) {
+        const auto found = m_gpuBodies.find(highlight.body);
+        if (found == m_gpuBodies.end() || !found->second.vertices) {
+            continue;
+        }
+        const GpuBody& body = found->second;
+        const geo::TriangleMesh* mesh = body.mesh.get();
+        const QColor line = highlight.hover ? lighter(frame.accent) : frame.accent;
+        const float lineWidth = highlight.hover ? 3.5F : 3.0F;
+        switch (highlight.kind) {
+        case core::SelectableKind::body:
+            m_tintDraws.push_back({&body, highlight.hover ? 2 : 3, 0});
+            if (mesh != nullptr) {
+                for (const geo::EdgePolyline& edge : mesh->edges) {
+                    for (std::size_t i = 0; i + 1 < edge.points.size(); ++i) {
+                        builder.strip(toVector(edge.points[i]), toVector(edge.points[i + 1]), 2.0F,
+                                      line);
+                    }
+                }
+            }
+            break;
+        case core::SelectableKind::face:
+            m_tintDraws.push_back({&body, highlight.hover ? 0 : 1, highlight.number});
+            break;
+        case core::SelectableKind::edge:
+            if (mesh != nullptr) {
+                for (const geo::EdgePolyline& edge : mesh->edges) {
+                    if (edge.edgeId != highlight.number) {
+                        continue;
+                    }
+                    for (std::size_t i = 0; i + 1 < edge.points.size(); ++i) {
+                        builder.strip(toVector(edge.points[i]), toVector(edge.points[i + 1]),
+                                      lineWidth, line);
+                    }
+                }
+            }
+            break;
+        case core::SelectableKind::vertex:
+            if (mesh != nullptr) {
+                for (const geo::CornerPoint& corner : mesh->corners) {
+                    if (corner.cornerId == highlight.number) {
+                        builder.square(toVector(corner.position), highlight.hover ? 11.0F : 9.0F,
+                                       line);
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    m_ribbonVertexCount = shapes.size();
+    if (shapes.empty()) {
+        return;
+    }
+    if (!m_ribbonBuffer || m_ribbonCapacity < shapes.size()) {
+        m_ribbonCapacity = std::max<std::size_t>(shapes.size() * 2, 4096);
+        m_ribbonBuffer.reset(
+            m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer,
+                             static_cast<quint32>(m_ribbonCapacity * sizeof(FlatVertex))));
+        m_ribbonBuffer->create();
+    }
+    updates->updateDynamicBuffer(m_ribbonBuffer.get(), 0,
+                                 static_cast<quint32>(shapes.size() * sizeof(FlatVertex)),
+                                 shapes.data());
+}
+
+void SceneRenderer::drawHighlights(QRhiCommandBuffer* cb) {
+    if (!m_tintDraws.empty()) {
+        cb->setGraphicsPipeline(m_overlayPipeline.get());
+        for (const TintDraw& tint : m_tintDraws) {
+            const GpuBody& body = *tint.body;
+            const QRhiCommandBuffer::DynamicOffset offset{0, static_cast<quint32>(tint.style) *
+                                                                 m_overlayStride};
+            cb->setShaderResources(m_overlaySrb.get(), 1, &offset);
+            const QRhiCommandBuffer::VertexInput input(body.vertices.get(), 0);
+            cb->setVertexInput(0, 1, &input, body.indices.get(), 0, QRhiCommandBuffer::IndexUInt32);
+            if (tint.face == 0) {
+                cb->drawIndexed(static_cast<quint32>(body.indexCount));
+                continue;
+            }
+            const auto range = std::equal_range(
+                body.faceRuns.begin(), body.faceRuns.end(), tint.face,
+                [](const auto& a, const auto& b) {
+                    const auto faceOf = [](const auto& x) {
+                        if constexpr (std::is_same_v<std::decay_t<decltype(x)>, std::uint32_t>) {
+                            return x;
+                        } else {
+                            return x.face;
+                        }
+                    };
+                    return faceOf(a) < faceOf(b);
+                });
+            for (auto run = range.first; run != range.second; ++run) {
+                cb->drawIndexed(run->triangleCount * 3, 1, run->firstTriangle * 3, 0, 0);
+            }
+        }
+    }
+    if (m_ribbonVertexCount > 0 && m_ribbonBuffer) {
+        const QRhiCommandBuffer::VertexInput input(m_ribbonBuffer.get(), 0);
+        cb->setGraphicsPipeline(m_discPipeline.get());
+        cb->setShaderResources(m_srb.get());
+        cb->setVertexInput(0, 1, &input);
+        cb->draw(static_cast<quint32>(m_ribbonVertexCount));
+    }
 }
 
 } // namespace fission::render

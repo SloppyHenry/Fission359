@@ -18,6 +18,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <functional>
 #include <memory>
 #include <string_view>
 
@@ -33,6 +34,7 @@
 #include "fission/ui/document_model.h"
 #include "fission/ui/language.h"
 #include "fission/ui/numbers.h"
+#include "fission/ui/selection_controller.h"
 #include "fission/ui/theme.h"
 #include "fission/ui/viewport_3d.h"
 
@@ -67,6 +69,7 @@ struct CommandLine {
     QString rightTab;
     bool softShadows = true;
     int benchmarkTriangles = 0;
+    QString simulate;
     QSize size;
 };
 
@@ -122,12 +125,18 @@ CommandLine parseCommandLine(int& argc, char** argv) {
                                            QStringLiteral("Start with the soft shadows off."));
     const QCommandLineOption reduceMotion(QStringLiteral("reduce-motion"),
                                           QStringLiteral("Switch animations off."));
+    const QCommandLineOption simulate(
+        QStringLiteral("simulate"),
+        QStringLiteral("Play pointer actions after the first frame, before the screenshot: "
+                       "hover:x,y  click:x,y  shiftclick:x,y  doubleclick:x,y  frame:x1,y1,x2,y2 "
+                       "(window pixels of the 3D view), separated by semicolons."),
+        QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
                                   QStringLiteral("WxH"));
     parser.addOptions({smokeTest, measureStartup, theme, language, focus, about, openMenu,
                        showHistory, camera, rightTab, benchmark, noSoftShadows, reduceMotion,
-                       size});
+                       simulate, size});
     parser.process(core); // prints help or version and exits when asked
 
     CommandLine result;
@@ -142,6 +151,7 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     result.camera = parser.value(camera);
     result.rightTab = parser.value(rightTab);
     result.benchmarkTriangles = parser.value(benchmark).toInt();
+    result.simulate = parser.value(simulate);
     result.softShadows = !parser.isSet(noSoftShadows);
     result.openMenu = parser.isSet(openMenu) ? parser.value(openMenu).toInt() : -1;
     const QStringList parts = parser.value(size).split(QLatin1Char('x'));
@@ -149,6 +159,42 @@ CommandLine parseCommandLine(int& argc, char** argv) {
         result.size = QSize(parts[0].toInt(), parts[1].toInt());
     }
     return result;
+}
+
+// Developer option --simulate: plays pointer actions through the real input path of the 3D view
+// (graphics card, pick pass, selection), one every 350 ms. Calls `done` when the last one had
+// time to show its result.
+void playActions(fission::ui::Viewport3D* viewport, const QString& actions,
+                 std::function<void()> done) {
+    int delay = 0;
+    for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
+        const int colon = action.indexOf(QLatin1Char(':'));
+        const QString kind = action.left(colon).trimmed();
+        QList<double> numbers;
+        for (const QString& number : action.mid(colon + 1).split(QLatin1Char(','))) {
+            numbers.push_back(number.toDouble());
+        }
+        delay += 350;
+        QTimer::singleShot(delay, viewport, [viewport, kind, numbers] {
+            using fission::ui::Viewport3D;
+            if (numbers.size() >= 2) {
+                const QPointF at(numbers[0], numbers[1]);
+                if (kind == QLatin1String("hover")) {
+                    viewport->hoverAt(at.x(), at.y());
+                } else if (kind == QLatin1String("click")) {
+                    viewport->requestPick(Viewport3D::PickIntent::click, at, false);
+                } else if (kind == QLatin1String("shiftclick")) {
+                    viewport->requestPick(Viewport3D::PickIntent::click, at, true);
+                } else if (kind == QLatin1String("doubleclick")) {
+                    viewport->requestPick(Viewport3D::PickIntent::doubleClick, at, false);
+                } else if (kind == QLatin1String("frame") && numbers.size() >= 4) {
+                    viewport->requestRegionPick(
+                        QRectF(at, QPointF(numbers[2], numbers[3])).normalized(), false);
+                }
+            }
+        });
+    }
+    QTimer::singleShot(delay + 500, viewport, std::move(done));
 }
 
 // Developer option --benchmark: a scene of the wanted size, the camera turns by itself, and the
@@ -273,6 +319,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "AppOptions", &appOptions);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Numbers", &numbers);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "DocumentModel", &documentModel);
+    fission::ui::SelectionController selection(&documentModel);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Selection", &selection);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Language", &language);
 
     QObject::connect(
@@ -292,6 +340,7 @@ int main(int argc, char* argv[]) {
     }
     auto* viewport = window->findChild<fission::ui::Viewport3D*>(QStringLiteral("viewport"));
     if (viewport != nullptr) {
+        selection.attach(viewport);
         viewport->setScene(documentModel.scene());
         const QMetaObject::Connection sceneConnection =
             QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
@@ -343,12 +392,20 @@ int main(int argc, char* argv[]) {
     if (!options.smokeTestPath.isEmpty()) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
-        auto grab = [window, path] {
-            QTimer::singleShot(600, window, [window, path] {
-                const QImage frame = window->grabWindow();
-                const bool saved = !frame.isNull() && frame.save(path);
-                QCoreApplication::exit(saved ? 0 : 3);
-            });
+        const QString simulate = options.simulate;
+        auto grab = [window, viewport, path, simulate] {
+            auto shoot = [window, path] {
+                QTimer::singleShot(600, window, [window, path] {
+                    const QImage frame = window->grabWindow();
+                    const bool saved = !frame.isNull() && frame.save(path);
+                    QCoreApplication::exit(saved ? 0 : 3);
+                });
+            };
+            if (viewport != nullptr && !simulate.isEmpty()) {
+                playActions(viewport, simulate, shoot);
+            } else {
+                shoot();
+            }
         };
         if (viewport != nullptr) {
             QObject::connect(viewport, &fission::ui::Viewport3D::firstFrameShown, &app, grab);

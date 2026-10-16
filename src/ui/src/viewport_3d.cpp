@@ -3,8 +3,10 @@
 
 #include "fission/ui/viewport_3d.h"
 
+#include <QHoverEvent>
 #include <QMouseEvent>
 #include <QNativeGestureEvent>
+#include <QPointer>
 #include <QQuickWindow>
 #include <QWheelEvent>
 
@@ -28,6 +30,7 @@ constexpr float kTrackpadOrbit = 0.6F;            // two-finger drag: pixels to 
 constexpr double kFrameBudgetMilliseconds = 16.7; // 60 frames per second
 constexpr int kSlowFramesToSwitchOff = 90;
 constexpr double kDragZoomPerPixel = 0.01; // Ctrl + middle button (Blender): drag up zooms in
+constexpr double kClickReach = 4.0;        // pixels the pointer may move and still click
 
 // Thin adapter: Qt Quick calls initialize / synchronize / render, SceneRenderer does the work.
 class SceneItemRenderer : public QQuickRhiItemRenderer {
@@ -53,11 +56,12 @@ public:
         m_item = static_cast<Viewport3D*>(item);
         const QSize size = renderTarget() ? renderTarget()->pixelSize() : QSize(1, 1);
         const float aspect = size.height() > 0 ? float(size.width()) / float(size.height()) : 1.0F;
-        m_snapshot = m_item->takeSnapshot(aspect);
+        m_snapshot = m_item->takeSnapshot(aspect, m_renderer && !m_renderer->pickInFlight());
     }
 
     void render(QRhiCommandBuffer* cb) override {
         if (!m_renderer || !m_snapshot.scene) {
+            answerNothing();
             return;
         }
         if (m_uploadedScene != m_snapshot.sceneVersion ||
@@ -74,6 +78,8 @@ public:
         frame.displayMode = m_snapshot.displayMode;
         frame.palette = m_snapshot.palette;
         frame.ambientOcclusion = m_snapshot.ambientOcclusion;
+        frame.highlights = m_snapshot.highlights;
+        frame.accent = m_snapshot.accent;
         const auto started = std::chrono::steady_clock::now();
         m_renderer->draw(cb, renderTarget(), frame);
         const double cpuMilliseconds =
@@ -85,12 +91,91 @@ public:
             m_item->recordFrame(gpuMilliseconds, cpuMilliseconds);
         }
         watchFrameTime(cb);
+        startPick(cb);
         if (m_item != nullptr) {
             m_item->reportRendered(QString::fromUtf8(m_rhi->backendName()));
         }
     }
 
 private:
+    // The answer "nothing" for a request that could not be drawn.
+    void answerNothing() {
+        if (m_snapshot.pick && m_item != nullptr) {
+            Viewport3D::PickResult none;
+            none.request = *m_snapshot.pick;
+            m_item->reportPicked(std::move(none));
+            m_snapshot.pick.reset();
+        }
+    }
+
+    // Draws the pick picture for the request of this frame. The graphics card finishes it
+    // during this or a later frame; the answer goes to the interface thread from there.
+    void startPick(QRhiCommandBuffer* cb) {
+        if (!m_snapshot.pick || m_item == nullptr) {
+            return;
+        }
+        const Viewport3D::PickRequest request = *m_snapshot.pick;
+        m_snapshot.pick.reset();
+        const QSize size = renderTarget()->pixelSize();
+        const double ratio =
+            m_snapshot.itemSize.width() > 0.0 ? size.width() / m_snapshot.itemSize.width() : 1.0;
+        const QPoint pixel(static_cast<int>(std::floor(request.position.x() * ratio)),
+                           static_cast<int>(std::floor(request.position.y() * ratio)));
+        const QPointer<Viewport3D> item = m_item;
+        render::SceneRenderer* renderer = m_renderer.get();
+        if (request.intent == Viewport3D::PickIntent::region) {
+            const QRect area(static_cast<int>(std::floor(request.area.left() * ratio)),
+                             static_cast<int>(std::floor(request.area.top() * ratio)),
+                             static_cast<int>(std::ceil(request.area.width() * ratio)),
+                             static_cast<int>(std::ceil(request.area.height() * ratio)));
+            const bool regionStarted = renderer->pickRegion(
+                cb, size, area, m_snapshot.view, m_snapshot.projection, request.filter,
+                [item, request, renderer](std::vector<std::uint32_t> picture) {
+                    Viewport3D::PickResult result;
+                    result.request = request;
+                    for (const auto& found : render::chooseInRegion(picture, request.filter)) {
+                        const std::string body = renderer->bodyOfSlot(found.slot);
+                        if (!body.empty()) {
+                            result.elements.push_back(
+                                {QString::fromStdString(body), found.kind, found.number});
+                        }
+                    }
+                    if (item) {
+                        item->reportPicked(std::move(result));
+                    }
+                });
+            if (regionStarted) {
+                update();
+            } else {
+                Viewport3D::PickResult none;
+                none.request = request;
+                m_item->reportPicked(std::move(none));
+            }
+            return;
+        }
+        const bool started = renderer->pick(
+            cb, size, pixel, m_snapshot.view, m_snapshot.projection, request.filter,
+            [item, request, renderer](std::vector<std::uint32_t> picture) {
+                Viewport3D::PickResult result;
+                result.request = request;
+                if (const auto found = render::choosePicked(picture, request.filter)) {
+                    result.body = QString::fromStdString(renderer->bodyOfSlot(found->slot));
+                    result.kind = found->kind;
+                    result.number = found->number;
+                }
+                if (item) {
+                    item->reportPicked(std::move(result));
+                }
+            });
+        if (started) {
+            update(); // one more frame, so that the graphics card's answer is collected
+        } else {
+            Viewport3D::PickResult none;
+            none.request = request;
+            m_item->reportPicked(std::move(none));
+        }
+    }
+
     // The graphics card says how long it took for the last finished frame (where it can).
     // 90 frames in a row above the budget mean that the soft shadows cost too much.
     void watchFrameTime(QRhiCommandBuffer* cb) {
@@ -135,6 +220,7 @@ private:
 Viewport3D::Viewport3D(QQuickItem* parent) : QQuickRhiItem(parent) {
     setSampleCount(4); // smooth edges
     setAcceptedMouseButtons(Qt::AllButtons);
+    setAcceptHoverEvents(true);
     setFlag(ItemAcceptsInputMethod, false);
 
     m_scene = std::make_shared<render::RenderScene>();
@@ -186,6 +272,7 @@ void Viewport3D::setScene(std::shared_ptr<const render::RenderScene> scene) {
     rebuildVisibleScene();
     emit sceneChanged();
     update();
+    hoverAgain(); // what is under the pointer may be another thing now
 }
 
 void Viewport3D::rebuildVisibleScene() {
@@ -328,6 +415,7 @@ void Viewport3D::cameraMoved() {
     }
     emit cameraChanged();
     update();
+    hoverAgain();
 }
 
 void Viewport3D::setStandardView(const QString& name) {
@@ -410,24 +498,197 @@ QPointF Viewport3D::project(double x, double y, double z) const {
 void Viewport3D::mousePressEvent(QMouseEvent* event) {
     m_lastMouse = event->position();
     m_animation.stop();
+    m_pressPosition = event->position();
+    m_pressButton = event->button();
+    m_pressModifiers = event->modifiers();
+    forceActiveFocus(); // a click in the view takes the keyboard from a number field
+    m_dragged = false;
+    m_rubberBanding = false;
+    setHover(std::nullopt); // while the view is being moved, nothing lights up
     event->accept();
 }
 
 void Viewport3D::mouseMoveEvent(QMouseEvent* event) {
     const QPointF delta = event->position() - m_lastMouse;
     m_lastMouse = event->position();
-    applyNavigation(render::dragAction(m_mouseStyle, event->buttons(), event->modifiers()),
-                    delta.x(), delta.y());
+    const render::NavigationAction action =
+        render::dragAction(m_mouseStyle, event->buttons(), event->modifiers());
+    applyNavigation(action, delta.x(), delta.y());
+    if (m_pressButton != Qt::NoButton) {
+        const QPointF moved = event->position() - m_pressPosition;
+        if (!m_dragged && std::hypot(moved.x(), moved.y()) > kClickReach) {
+            m_dragged = true;
+        }
+        // A drag with the left button that does not move the view draws a rectangle.
+        if (m_dragged && m_pressButton == Qt::LeftButton && event->buttons() == Qt::LeftButton &&
+            action == render::NavigationAction::none) {
+            m_rubberBanding = true;
+            emit rubberBandChanged(QRectF(m_pressPosition, event->position()).normalized());
+        }
+    }
+    event->accept();
+}
+
+void Viewport3D::mouseReleaseEvent(QMouseEvent* event) {
+    if (event->button() != m_pressButton) {
+        event->accept();
+        return;
+    }
+    const bool extend = (event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier)) != 0;
+    if (m_pressButton == Qt::LeftButton && !m_dragged) {
+        requestPick(PickIntent::click, event->position(), extend);
+    } else if (m_rubberBanding) {
+        emit rubberBandChanged(QRectF());
+        emit rubberBandFinished(QRectF(m_pressPosition, event->position()).normalized(),
+                                (event->modifiers() & Qt::ControlModifier) != 0);
+    }
+    m_pressButton = Qt::NoButton;
+    m_rubberBanding = false;
+    m_hoverPosition = event->position();
+    hoverAgain();
     event->accept();
 }
 
 void Viewport3D::mouseDoubleClickEvent(QMouseEvent* event) {
-    // A double click with the left button on a face turns the view to look at it squarely.
-    // (AP-1.4 may give the double click to the selection; the view then keeps this on a key.)
-    if (event->button() == Qt::LeftButton && event->modifiers() == Qt::NoModifier) {
-        lookAtSurface(event->position().x(), event->position().y());
+    // A double click chooses the whole body. (Looking squarely at a face moved to the view
+    // cube and the View menu, AP-1.4.)
+    if (event->button() == Qt::LeftButton) {
+        const bool extend = (event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier)) != 0;
+        requestPick(PickIntent::doubleClick, event->position(), extend);
     }
+    m_pressButton = Qt::NoButton; // the release that follows is not a click
     event->accept();
+}
+
+void Viewport3D::hoverMoveEvent(QHoverEvent* event) {
+    m_hoverPosition = event->position();
+    hoverAgain();
+    QQuickRhiItem::hoverMoveEvent(event);
+}
+
+void Viewport3D::hoverLeaveEvent(QHoverEvent* event) {
+    m_hoverPosition.reset();
+    m_pickQueue.erase(
+        std::remove_if(m_pickQueue.begin(), m_pickQueue.end(),
+                       [](const PickRequest& r) { return r.intent == PickIntent::hover; }),
+        m_pickQueue.end());
+    setHover(std::nullopt);
+    QQuickRhiItem::hoverLeaveEvent(event);
+}
+
+// --- selection --------------------------------------------------------------------------
+
+void Viewport3D::setSelectionFilter(core::SelectionFilter filter) {
+    if (!(m_filter == filter)) {
+        m_filter = filter;
+        setHover(std::nullopt);
+        hoverAgain();
+    }
+}
+
+void Viewport3D::setSelectionHighlights(std::vector<render::Highlight> highlights) {
+    m_selectionHighlights = std::move(highlights);
+    emit highlightsChanged();
+    update();
+}
+
+void Viewport3D::requestPick(PickIntent intent, const QPointF& position, bool extend) {
+    PickRequest request;
+    request.id = m_nextPickId++;
+    request.intent = intent;
+    request.position = position;
+    request.extend = extend;
+    request.filter = m_filter;
+    if (intent == PickIntent::hover) {
+        // Only the newest position matters.
+        while (!m_pickQueue.empty() && m_pickQueue.back().intent == PickIntent::hover) {
+            m_pickQueue.pop_back();
+        }
+    }
+    m_pickQueue.push_back(request);
+    update();
+}
+
+void Viewport3D::hoverAt(double x, double y) {
+    m_hoverPosition = QPointF(x, y);
+    hoverAgain();
+}
+
+void Viewport3D::requestRegionPick(const QRectF& area, bool extend) {
+    PickRequest request;
+    request.id = m_nextPickId++;
+    request.intent = PickIntent::region;
+    request.area = area;
+    request.extend = extend;
+    request.filter = m_filter;
+    m_pickQueue.push_back(request);
+    update();
+}
+
+void Viewport3D::hoverAgain() {
+    if (m_hoverPosition && m_pressButton == Qt::NoButton) {
+        requestPick(PickIntent::hover, *m_hoverPosition);
+    }
+}
+
+void Viewport3D::setHover(std::optional<render::Highlight> hover) {
+    const auto same = [](const std::optional<render::Highlight>& a,
+                         const std::optional<render::Highlight>& b) {
+        return a.has_value() == b.has_value() &&
+               (!a || (a->body == b->body && a->kind == b->kind && a->number == b->number));
+    };
+    if (same(m_hover, hover)) {
+        return;
+    }
+    m_hover = std::move(hover);
+    if (m_hover) {
+        emit hoverChanged(QString::fromStdString(m_hover->body), static_cast<int>(m_hover->kind),
+                          static_cast<int>(m_hover->number));
+    } else {
+        emit hoverChanged(QString(), 0, 0);
+    }
+    update();
+}
+
+void Viewport3D::reportPicked(PickResult result) {
+    // Called on the render thread: continue on the interface thread.
+    QMetaObject::invokeMethod(
+        this, [this, result = std::move(result)] { finishPick(result); }, Qt::QueuedConnection);
+}
+
+void Viewport3D::finishPick(const PickResult& result) {
+    const PickRequest& request = result.request;
+    if (request.intent == PickIntent::region) {
+        QVariantList elements;
+        for (const PickResult::Element& element : result.elements) {
+            QVariantMap entry;
+            entry[QStringLiteral("body")] = element.body;
+            entry[QStringLiteral("kind")] = static_cast<int>(element.kind);
+            entry[QStringLiteral("number")] = static_cast<int>(element.number);
+            elements.push_back(entry);
+        }
+        emit regionPicked(elements, request.extend);
+        if (!m_pickQueue.empty()) {
+            update();
+        }
+        return;
+    }
+    if (request.intent == PickIntent::hover) {
+        // The pointer may have left or started a drag since the question was asked.
+        if (m_hoverPosition && m_pressButton == Qt::NoButton) {
+            if (result.hit()) {
+                setHover(
+                    render::Highlight{result.body.toStdString(), result.kind, result.number, true});
+            } else {
+                setHover(std::nullopt);
+            }
+        }
+    }
+    emit picked(static_cast<int>(request.intent), request.extend, result.body,
+                static_cast<int>(result.kind), static_cast<int>(result.number));
+    if (!m_pickQueue.empty()) {
+        update();
+    }
 }
 
 bool Viewport3D::event(QEvent* event) {
@@ -532,6 +793,27 @@ bool Viewport3D::lookAtSurface(double x, double y) {
     return true;
 }
 
+bool Viewport3D::lookAtFace(const QString& body, int face) {
+    if (!m_shown || face <= 0) {
+        return false;
+    }
+    const std::string id = body.toStdString();
+    for (const render::RenderBody& drawn : m_shown->bodies) {
+        if (drawn.id != id) {
+            continue;
+        }
+        const auto shape = render::faceShape(drawn.geometry(), static_cast<std::uint32_t>(face));
+        if (!shape) {
+            return false;
+        }
+        render::CameraPose pose = m_camera.poseLookingFrom(shape->normal);
+        pose.target = shape->center;
+        animateTo(pose);
+        return true;
+    }
+    return false;
+}
+
 bool Viewport3D::zoomToSurface(double x, double y) {
     const std::optional<render::SurfaceHit> hit = surfaceAt(x, y);
     if (!hit) {
@@ -560,7 +842,7 @@ void Viewport3D::geometryChange(const QRectF& newGeometry, const QRectF& oldGeom
     }
 }
 
-Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect) {
+Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect, bool pickIdle) {
     Snapshot snapshot;
     snapshot.scene = m_shown ? m_shown : m_scene;
     snapshot.displayMode = m_displayMode == QLatin1String("wire") ? render::DisplayMode::wireframe
@@ -574,6 +856,25 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect) {
     snapshot.ambientOcclusion = m_ambientOcclusion;
     snapshot.sceneVersion = m_sceneVersion;
     snapshot.paletteVersion = m_paletteVersion;
+    snapshot.highlights = m_selectionHighlights;
+    if (m_hover) {
+        // What is chosen already is drawn as chosen, not twice.
+        const bool chosen = std::any_of(m_selectionHighlights.begin(), m_selectionHighlights.end(),
+                                        [this](const render::Highlight& h) {
+                                            return h.body == m_hover->body &&
+                                                   h.kind == m_hover->kind &&
+                                                   h.number == m_hover->number;
+                                        });
+        if (!chosen) {
+            snapshot.highlights.push_back(*m_hover);
+        }
+    }
+    snapshot.accent = m_accent;
+    snapshot.itemSize = QSizeF(width(), height());
+    if (pickIdle && !m_pickQueue.empty()) {
+        snapshot.pick = m_pickQueue.front();
+        m_pickQueue.pop_front();
+    }
     return snapshot;
 }
 

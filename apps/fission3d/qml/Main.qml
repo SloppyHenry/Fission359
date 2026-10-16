@@ -60,7 +60,8 @@ Window {
             { id: "copy", text: qsTr("Copy"), shortcut: primaryKey + "C", nativeShortcut: "Ctrl+C", enabled: false },
             { id: "paste", text: qsTr("Paste"), shortcut: primaryKey + "V", nativeShortcut: "Ctrl+V", enabled: false },
             { id: "delete", text: qsTr("Delete"), shortcut: isMac ? "⌫" : qsTr("Del"), enabled: false },
-            { id: "selectall", text: qsTr("Select all"), shortcut: primaryKey + "A", nativeShortcut: "Ctrl+A", enabled: false },
+            { id: "selectall", text: qsTr("Select all"), shortcut: primaryKey + "A", nativeShortcut: "Ctrl+A", enabled: DocumentModel.bodies.length > 0 || root.typing },
+            { id: "selectnone", text: qsTr("Select nothing"), shortcut: qsTr("Esc"), enabled: Selection.count > 0 },
             { separator: true },
             { id: "settings", text: qsTr("Settings…"), shortcut: primaryKey + ",", nativeShortcut: "Ctrl+,", role: "preferences" }
         ] },
@@ -71,6 +72,7 @@ Window {
             { id: "focus", text: qsTr("Focus"), shortcut: isMac ? "⇧F" : qsTr("Shift+F"), checked: root.focusMode },
             { separator: true },
             { id: "view.frame", text: qsTr("Show everything"), shortcut: "F" },
+            { id: "view.lookat", text: qsTr("Look at face"), shortcut: "L", enabled: Selection.singleFaceChosen },
             { id: "view.home", text: qsTr("Home view"), shortcut: isMac ? "Home" : qsTr("Pos1") },
             { id: "view.front", text: qsTr("Front"), shortcut: "1" },
             { id: "view.back", text: qsTr("Back"), shortcut: "2" },
@@ -115,6 +117,9 @@ Window {
     readonly property bool undoAvailable: DocumentModel.canUndo && !textHasHistory
     readonly property bool redoAvailable: DocumentModel.canRedo && !textHasHistory
     property bool historyOpen: false
+    // A text field has the keyboard: keys such as Esc and Ctrl+A are for the text then.
+    readonly property bool typing: root.activeFocusItem !== null && root.activeFocusItem !== undefined
+                                   && root.activeFocusItem.cursorPosition !== undefined
 
     readonly property string undoText: DocumentModel.canUndo
         ? qsTr("Undo: %1").arg(historyText(DocumentModel.nextUndo)) : qsTr("Undo")
@@ -161,6 +166,15 @@ Window {
             root.visibility = root.visibility === Window.FullScreen ? Window.Windowed : Window.FullScreen
             break
         case "view.frame": viewport.frameAll(); break
+        case "view.lookat": Selection.lookAtChosenFace(); break
+        case "selectall":
+            if (typing) {
+                root.activeFocusItem.selectAll() // the text of a field, not the bodies
+            } else {
+                Selection.chooseAllBodies()
+            }
+            break
+        case "selectnone": Selection.clear(); break
         default:
             if (id.indexOf("mouse.") === 0) {
                 mouseStyle = id.substring(6)
@@ -224,6 +238,9 @@ Window {
     // ---- shortcuts (the menus of macOS bring their own) ------------------------------------
     Shortcut { sequence: "Shift+F"; onActivated: root.run("focus") }
     Shortcut { sequence: "F"; onActivated: root.run("view.frame") }
+    Shortcut { sequence: "L"; enabled: Selection.singleFaceChosen; onActivated: root.run("view.lookat") }
+    Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
+    Shortcut { sequence: "Escape"; enabled: Selection.count > 0 && !root.typing; onActivated: root.run("selectnone") }
     Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
     Shortcut { sequence: "Home"; onActivated: root.run("view.home") }
     Shortcut { sequence: "1"; onActivated: root.run("view.front") }
@@ -303,6 +320,7 @@ Window {
             onAddRequested: root.showHint(qsTr("Shapes arrive in a later version."))
             onStepRequested: index => DocumentModel.selectStep(DocumentModel.currentStep === index ? -1 : index)
             onBodyVisibilityRequested: (index, visible) => DocumentModel.setBodyVisible(index, visible)
+            onBodyChosen: (index, extend) => Selection.chooseBody(index, extend)
             onBedVisibilityRequested: visible => root.bedVisible = visible
         }
 
@@ -333,10 +351,35 @@ Window {
                 originColor: Theme.fg3
                 edgeColor: Theme.edge
                 shadowColor: Theme.shadow
+                accentColor: Theme.accentLine
                 animated: !AppOptions.reduceMotion
                 mouseStyle: root.mouseStyle
                 onAmbientOcclusionTurnedOff: root.showHint(
                     qsTr("Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu."))
+            }
+
+            // the frame being dragged to choose several things
+            Rectangle {
+                id: rubberBand
+
+                property rect area: Qt.rect(0, 0, 0, 0)
+
+                visible: area.width > 0 && area.height > 0
+                x: area.x
+                y: area.y
+                width: area.width
+                height: area.height
+                color: Qt.rgba(Theme.accentLine.r, Theme.accentLine.g, Theme.accentLine.b, 0.12)
+                border.width: 1
+                border.color: Theme.accentLine
+            }
+
+            Connections {
+                target: viewport
+
+                function onRubberBandChanged(area) {
+                    rubberBand.area = area
+                }
             }
 
             BedLabels {
@@ -352,6 +395,8 @@ Window {
                 tool: root.tool
                 focusMode: root.focusMode
                 mouseStyle: root.mouseStyle
+                filter: Selection.filter
+                onFilterRequested: filter => Selection.filter = filter
                 cameraYaw: viewport.cameraYaw
                 cameraPitch: viewport.cameraPitch
                 onOrthographicToggled: root.orthographic = !root.orthographic
@@ -407,8 +452,11 @@ Window {
 
         anchors.bottom: parent.bottom
         width: parent.width
+        selection: root.selectionText
         toolName: root.toolName(root.tool)
         hint: root.transientHint !== "" && hintTimer.running ? root.transientHint
+            : root.hoverText !== "" ? root.hoverText
+            : Selection.count > 0 ? root.selectionHint
             : root.navigationText
         unitText: qsTr("Unit: mm · Grid 1 mm")
     }
@@ -508,11 +556,57 @@ Window {
         state: step.state
     }))
 
+    readonly property var chosenBodyIndexes: Selection.items.map(item => item.bodyIndex)
+
     readonly property var bodyList: DocumentModel.bodies.map(body => ({
         name: body.name !== "" ? body.name : typeLabel(body.type) + " " + body.number,
         color: body.color,
-        visible: body.visible
+        visible: body.visible,
+        chosen: chosenBodyIndexes.indexOf(body.index) >= 0
     }))
+
+    // --- what is chosen and what is under the pointer, in words ----------------------------
+    function bodyName(index) {
+        return index >= 0 && index < bodyList.length ? bodyList[index].name : ""
+    }
+
+    // "Face of Box 1": which part of which body.
+    function partName(kind, bodyIndex) {
+        const body = bodyName(bodyIndex)
+        switch (kind) {
+        case "face": return qsTr("Face of %1").arg(body)
+        case "edge": return qsTr("Edge of %1").arg(body)
+        case "vertex": return qsTr("Corner of %1").arg(body)
+        default: return body
+        }
+    }
+
+    readonly property string selectionText: {
+        const items = Selection.items
+        if (items.length === 0) {
+            return ""
+        }
+        if (items.length === 1) {
+            return qsTr("%1 selected").arg(partName(items[0].kind, items[0].bodyIndex))
+        }
+        return qsTr("%n thing(s) selected", "", items.length)
+    }
+
+    readonly property string hoverText: {
+        const hover = Selection.hover
+        if (hover.kind === undefined) {
+            return ""
+        }
+        const what = partName(hover.kind, hover.bodyIndex)
+        switch (hover.kind) {
+        case "face": return qsTr("%1 – click chooses it, double click chooses the whole body.").arg(what)
+        case "body": return qsTr("%1 – click chooses it.").arg(what)
+        default: return qsTr("%1 – click chooses it.").arg(what)
+        }
+    }
+
+    readonly property string selectionHint:
+        qsTr("Shift+click adds or removes. Drag a frame to choose several. Esc chooses nothing.")
 
     readonly property string currentStepTitle: {
         const index = DocumentModel.currentStep

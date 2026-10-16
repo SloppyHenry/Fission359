@@ -15,6 +15,7 @@ add_executable(fission_unit_tests
   render/test_camera.cpp
   render/test_navigation.cpp
   render/test_picking.cpp
+  render/test_pick.cpp
   render/test_scene_renderer.cpp
   render/test_detail.cpp
   ui/test_theme_tokens.cpp
