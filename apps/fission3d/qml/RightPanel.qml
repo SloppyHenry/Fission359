@@ -13,6 +13,16 @@ Rectangle {
     property var stepValues: []        // [{ name, label, group, expression, value, kind, error }]
     property var stepTexts: []         // [{ name, value, kind }] kind: text | font
     property var fonts: []             // names of the fonts lettering can use
+    property var fontStyles: []        // the styles the chosen font has: regular | bold | italic | boldItalic
+    readonly property string currentStyle: {
+        const entry = stepTexts.find(t => t.kind === "style")
+        return entry ? entry.value : "regular"
+    }
+    readonly property bool isBold: currentStyle === "bold" || currentStyle === "boldItalic"
+    readonly property bool isItalic: currentStyle === "italic" || currentStyle === "boldItalic"
+    function styleWith(bold, italic) {
+        return bold ? (italic ? "boldItalic" : "bold") : (italic ? "italic" : "regular")
+    }
     signal valueCommitted(string name, string text)
     signal textCommitted(string name, string text)
     function focusText() {
@@ -165,6 +175,31 @@ Rectangle {
                         value: modelData.value
                         fonts: root.fonts
                         onChosen: name => root.textCommitted(modelData.name, name)
+                    }
+                }
+
+                // Bold and italic: a button is available when the font has the style that
+                // pressing it would give.
+                Row {
+                    visible: root.stepTexts.some(t => t.kind === "style")
+                    spacing: 8
+
+                    StyleButton {
+                        letter: "B"
+                        bold: true
+                        tip: qsTr("Bold")
+                        checked: root.isBold
+                        enabled: root.fontStyles.indexOf(root.styleWith(!root.isBold, root.isItalic)) >= 0
+                        onClicked: root.textCommitted("style", root.styleWith(!root.isBold, root.isItalic))
+                    }
+
+                    StyleButton {
+                        letter: "I"
+                        italic: true
+                        tip: qsTr("Italic")
+                        checked: root.isItalic
+                        enabled: root.fontStyles.indexOf(root.styleWith(root.isBold, !root.isItalic)) >= 0
+                        onClicked: root.textCommitted("style", root.styleWith(root.isBold, !root.isItalic))
                     }
                 }
             }

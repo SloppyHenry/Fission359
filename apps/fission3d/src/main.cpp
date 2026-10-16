@@ -141,12 +141,14 @@ CommandLine parseCommandLine(int& argc, char** argv) {
                                           QStringLiteral("Switch animations off."));
     const QCommandLineOption simulate(
         QStringLiteral("simulate"),
-        QStringLiteral("Play pointer actions after the first frame, before the screenshot: "
-                       "hover:x,y  click:x,y  shiftclick:x,y  doubleclick:x,y  frame:x1,y1,x2,y2 "
-                       "(window pixels of the 3D view), drop:shape,x,y  drophole:shape,x,y "
-                       "(drag a shape of the gallery there and let go), put:shape  puthole:shape "
-                       "(click its tile), type:50,tab,20,enter (type sizes), separated by "
-                       "semicolons."),
+        QStringLiteral(
+            "Play pointer actions after the first frame, before the screenshot: "
+            "hover:x,y  click:x,y  shiftclick:x,y  doubleclick:x,y  frame:x1,y1,x2,y2 "
+            "(window pixels of the 3D view), drop:shape,x,y  drophole:shape,x,y "
+            "(drag a shape of the gallery there and let go), put:shape  puthole:shape "
+            "(click its tile), type:50,tab,20,enter (type sizes), set:style,bold (a word "
+            "of the chosen step), separated by "
+            "semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
@@ -183,14 +185,24 @@ CommandLine parseCommandLine(int& argc, char** argv) {
 // (graphics card, pick pass, selection), one every 350 ms. Calls `done` when the last one had
 // time to show its result.
 void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
-                 fission::ui::PlacementController* placement, const QString& actions,
-                 std::function<void()> done) {
+                 fission::ui::PlacementController* placement, fission::ui::DocumentModel* model,
+                 const QString& actions, std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
         const QString kind = action.left(colon).trimmed();
         QList<double> numbers;
         QString shape; // drop:sphere,x,y and put:sphere start with the name of a shape
+        if (kind == QLatin1String("set")) { // set:style,boldItalic - words of the chosen step
+            const QStringList pair = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 350;
+            if (pair.size() == 2 && model != nullptr) {
+                QTimer::singleShot(delay, viewport, [model, pair] {
+                    model->setStepText(model->currentStep(), pair[0], pair[1]);
+                });
+            }
+            continue;
+        }
         QStringList parts = action.mid(colon + 1).split(QLatin1Char(','));
         if (kind == QLatin1String("type")) { // type:50,tab,20,enter - what the keys would do
             delay += 350;
@@ -370,7 +382,7 @@ void loadFonts() {
     }
 }
 
-// The geometry kernel reads fonts from files, not from the program's resources. The two Plex
+// The geometry kernel reads fonts from files, not from the program's resources. The Plex
 // fonts that lettering offers are copied (once, and again when they change) to the cache folder.
 std::vector<std::string> bundledFontFiles() {
     std::vector<std::string> paths;
@@ -381,7 +393,9 @@ std::vector<std::string> bundledFontFiles() {
                      folder.toStdString());
         return paths;
     }
-    for (const char* file : {"IBMPlexSans-Regular", "IBMPlexMono-Regular"}) {
+    for (const char* file : {"IBMPlexSans-Regular", "IBMPlexSans-Bold", "IBMPlexSans-Italic",
+                             "IBMPlexSans-BoldItalic", "IBMPlexMono-Regular", "IBMPlexMono-Bold",
+                             "IBMPlexMono-Italic", "IBMPlexMono-BoldItalic"}) {
         QFile source(QStringLiteral(":/fission/fonts/%1.ttf").arg(QLatin1String(file)));
         const QString target = QStringLiteral("%1/%2.ttf").arg(folder, QLatin1String(file));
         if (!source.open(QIODevice::ReadOnly)) {
@@ -545,7 +559,7 @@ int main(int argc, char* argv[]) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
         const QString simulate = options.simulate;
-        auto grab = [window, viewport, placementController, path, simulate,
+        auto grab = [window, viewport, placementController, &documentModel, path, simulate,
                      started = std::make_shared<bool>(false)] {
             if (*started) {
                 return; // the first frame can be reported more than once
@@ -559,7 +573,7 @@ int main(int argc, char* argv[]) {
                 });
             };
             if (viewport != nullptr && !simulate.isEmpty()) {
-                playActions(window, viewport, placementController, simulate, shoot);
+                playActions(window, viewport, placementController, &documentModel, simulate, shoot);
             } else {
                 shoot();
             }

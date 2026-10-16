@@ -31,6 +31,23 @@ std::string lower(std::string text) {
     return text;
 }
 
+constexpr FontStyle kStyles[] = {FontStyle::regular, FontStyle::bold, FontStyle::italic,
+                                 FontStyle::boldItalic};
+
+Font_FontAspect aspectOf(FontStyle style) {
+    switch (style) {
+    case FontStyle::bold:
+        return Font_FontAspect_Bold;
+    case FontStyle::italic:
+        return Font_FontAspect_Italic;
+    case FontStyle::boldItalic:
+        return Font_FontAspect_BoldItalic;
+    case FontStyle::regular:
+        break;
+    }
+    return Font_FontAspect_Regular;
+}
+
 } // namespace
 
 FontBook::FontBook(const std::vector<std::string>& bundledFiles) {
@@ -46,21 +63,25 @@ FontBook::FontBook(const std::vector<std::string>& bundledFiles) {
             continue;
         }
         for (const occ::handle<Font_SystemFont>& font : found) {
-            if (!font->HasFontAspect(Font_FontAspect_Regular)) {
-                continue;
-            }
             const std::string name = font->FontName().ToCString();
-            bundled_.try_emplace(lower(name),
-                                 Bundled{name,
-                                         {font->FontPath(Font_FontAspect_Regular).ToCString(),
-                                          font->FontFaceId(Font_FontAspect_Regular)}});
+            Bundled& entry = bundled_.try_emplace(lower(name), Bundled{name, {}}).first->second;
+            for (const FontStyle style : kStyles) {
+                const Font_FontAspect aspect = aspectOf(style);
+                if (font->HasFontAspect(aspect)) {
+                    entry.faces.try_emplace(
+                        style, Face{font->FontPath(aspect).ToCString(), font->FontFaceId(aspect)});
+                }
+            }
         }
     }
 }
 
-std::optional<FontBook::Face> FontBook::find(const std::string& family) const {
+std::optional<FontBook::Face> FontBook::find(const std::string& family, FontStyle style) const {
     if (const auto bundled = bundled_.find(lower(family)); bundled != bundled_.end()) {
-        return bundled->second.face;
+        if (const auto face = bundled->second.faces.find(style);
+            face != bundled->second.faces.end()) {
+            return face->second;
+        }
     }
     const std::lock_guard lock(systemFontsMutex());
     try {
@@ -68,14 +89,27 @@ std::optional<FontBook::Face> FontBook::find(const std::string& family) const {
         const occ::handle<Font_SystemFont> font = Font_FontMgr::GetInstance()->FindFont(
             TCollection_AsciiString(family.c_str()), Font_StrictLevel_Strict, aspect,
             /*theDoFailMsg=*/false);
-        if (font.IsNull() || !font->HasFontAspect(Font_FontAspect_Regular)) {
+        if (font.IsNull() || !font->HasFontAspect(aspectOf(style))) {
             return std::nullopt;
         }
-        return Face{font->FontPath(Font_FontAspect_Regular).ToCString(),
-                    font->FontFaceId(Font_FontAspect_Regular)};
+        return Face{font->FontPath(aspectOf(style)).ToCString(), font->FontFaceId(aspectOf(style))};
     } catch (const Standard_Failure&) {
         return std::nullopt;
     }
+}
+
+std::vector<FontStyle> FontBook::styles(const std::string& family) const {
+    std::vector<FontStyle> result;
+    for (const FontStyle style : kStyles) {
+        if (find(family, style)) {
+            result.push_back(style);
+        }
+    }
+    return result;
+}
+
+bool FontBook::hasFamily(const std::string& family) const {
+    return !styles(family).empty();
 }
 
 std::vector<std::string> FontBook::families() const {

@@ -554,12 +554,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+452"/>
+        <location line="+489"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-451"/>
+        <location line="-488"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -615,18 +615,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+208"/>
+        <location line="+244"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-206"/>
-        <location line="+207"/>
+        <location line="-242"/>
+        <location line="+243"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-201"/>
+        <location line="-237"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -667,12 +667,37 @@
     </message>
     <message>
         <location line="+35"/>
-        <location line="+147"/>
+        <location line="+183"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1"/>
+        <location line="-158"/>
+        <source>“%1” has no %2 style, so the lettering is regular again.</source>
+        <translation>„%1“ gibt es nicht in %2, deshalb ist die Schrift wieder normal.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>bold</source>
+        <translation>fett</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>italic</source>
+        <translation>kursiv</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>bold italic</source>
+        <translation>fett kursiv</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>regular</source>
+        <translation>normal</translation>
+    </message>
+    <message>
+        <location line="+145"/>
         <source>The start page arrives in a later version.</source>
         <translation>Die Startseite kommt in einer späteren Version.</translation>
     </message>
@@ -697,7 +722,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+25"/>
         <source>Enter accepts, Tab goes to the next size, Esc leaves everything as it was.</source>
         <translation>Enter übernimmt, Tab geht zum nächsten Maß, Esc lässt alles, wie es war.</translation>
     </message>
@@ -730,6 +755,16 @@
         <location line="+1"/>
         <source>Corner radius</source>
         <translation>Eckenradius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Font</source>
+        <translation>Schrift</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Style</source>
+        <translation>Stil</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -827,7 +862,12 @@
         <translation>Stern mit %1 Zacken, Radius %2 mm, Höhe %3 mm</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
+        <source>Text “%1” (%2), letters %3 mm, height %4 mm</source>
+        <translation>Text „%1“ (%2), Buchstaben %3 mm, Höhe %4 mm</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Text “%1”, letters %2 mm, height %3 mm</source>
         <translation>Text „%1“, Buchstaben %2 mm, Höhe %3 mm</translation>
     </message>
@@ -948,6 +988,11 @@
     </message>
     <message>
         <location line="+3"/>
+        <source>“%1” has no %2 style. Choose another font or style.</source>
+        <translation>„%1“ gibt es nicht in %2. Wähle eine andere Schrift oder einen anderen Stil.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>The font “%1” is not on this computer. Choose another font.</source>
         <translation>Die Schrift „%1“ gibt es auf diesem Rechner nicht. Wähle eine andere Schrift.</translation>
     </message>
@@ -1051,32 +1096,32 @@
         <translation>Umschalt+Klick fügt hinzu oder nimmt weg. Mit einem Rahmen wählst du mehrere. Esc wählt nichts aus.</translation>
     </message>
     <message>
-        <location line="-281"/>
+        <location line="-291"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-432"/>
+        <location line="-468"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+467"/>
+        <location line="+503"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-360"/>
+        <location line="-396"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+177"/>
+        <location line="+213"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+205"/>
+        <location line="+206"/>
         <source>Let go to put the shape down here. Esc takes it back.</source>
         <translation>Loslassen, um die Form hier abzulegen. Esc nimmt sie zurück.</translation>
     </message>
@@ -1130,7 +1175,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+56"/>
+        <location filename="../qml/RightPanel.qml" line="+66"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -1168,6 +1213,16 @@
         <location line="+13"/>
         <source>Font</source>
         <translation>Schrift</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Bold</source>
+        <translation>Fett</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Italic</source>
+        <translation>Kursiv</translation>
     </message>
     <message>
         <location line="+10"/>

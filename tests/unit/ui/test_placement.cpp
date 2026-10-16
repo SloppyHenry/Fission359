@@ -271,7 +271,10 @@ TEST_CASE("placing: lettering has words and a font to change", "[ui][placement]"
     REQUIRE(step >= 0);
     f.model->selectStep(step);
     const QVariantList texts = f.model->stepTexts();
-    REQUIRE(texts.size() == 2);
+    REQUIRE(texts.size() == 3);
+    CHECK(texts[2].toMap()["name"].toString() == "style");
+    CHECK(texts[2].toMap()["kind"].toString() == "style");
+    CHECK(texts[2].toMap()["value"].toString() == "regular");
     CHECK(texts[0].toMap()["name"].toString() == "text");
     CHECK(texts[0].toMap()["value"].toString() == "Text");
     CHECK(texts[1].toMap()["name"].toString() == "font");
@@ -298,4 +301,22 @@ TEST_CASE("placing: a count of sides has no unit, lengths do", "[ui][placement]"
     CHECK(values[0].toMap()["name"].toString() == "sides");
     CHECK(values[0].toMap()["kind"].toString() == "plain");
     CHECK(values[1].toMap()["kind"].toString() == "length");
+}
+
+TEST_CASE("placing: the styles of a font are offered, bold changes the lettering",
+          "[ui][placement]") {
+    Fixture f;
+    // The font that ships with the program has all four styles; one that does not exist, none.
+    // (The test kernel has no bundled fonts: this is about the answer being a list of names.)
+    CHECK(f.model->fontStyles("Gibt Es Nicht Sans").isEmpty());
+
+    const int step = f.model->addShape("text", false);
+    f.refresh();
+    f.model->selectStep(step);
+    REQUIRE(f.model->setStepText(step, "style", "bold"));
+    CHECK(f.model->stepTexts()[2].toMap()["value"].toString() == "bold");
+    CHECK(f.model->nextUndo()["key"].toString() == "setText");
+    CHECK(f.model->nextUndo()["field"].toString() == "style");
+    f.model->undo();
+    CHECK(f.model->stepTexts()[2].toMap()["value"].toString() == "regular");
 }

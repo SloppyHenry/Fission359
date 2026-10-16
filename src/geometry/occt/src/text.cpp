@@ -124,8 +124,15 @@ NamedSolid makeNamedText(const TextSpec& spec, Point3d base, const FontBook& fon
                      [](char32_t c) { return !isLayoutOnly(c) && c != U' ' && c != U'\t'; })) {
         throw GeometryError(GeometryErrorCode::textEmpty, "text: nothing to letter");
     }
-    const std::optional<FontBook::Face> face = fonts.find(spec.font);
+    const std::optional<FontBook::Face> face = fonts.find(spec.font, spec.style);
     if (!face) {
+        // The font may exist without the style: that is a different thing to tell the person.
+        if (fonts.hasFamily(spec.font)) {
+            throw GeometryError(GeometryErrorCode::fontStyleMissing,
+                                std::string("text: no ") + fontStyleName(spec.style) +
+                                    " style in " + spec.font,
+                                spec.font);
+        }
         throw GeometryError(GeometryErrorCode::fontNotFound, "text: font not found: " + spec.font,
                             spec.font);
     }

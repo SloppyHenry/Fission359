@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "fission/geo/primitives.h"
+
 namespace fission::geo::occt {
 
 /// The fonts the kernel can letter with: the ones that ship with the program (font files handed
@@ -27,8 +29,14 @@ public:
         int faceId = 0;
     };
 
-    /// Case does not matter. Nothing when no such font exists.
-    std::optional<Face> find(const std::string& family) const;
+    /// Case does not matter. Nothing when the font does not exist or has no such style.
+    std::optional<Face> find(const std::string& family, FontStyle style = FontStyle::regular) const;
+
+    /// Does a font of that name exist (in any style)?
+    bool hasFamily(const std::string& family) const;
+
+    /// The styles of a font, in the order regular, bold, italic, boldItalic.
+    std::vector<FontStyle> styles(const std::string& family) const;
 
     /// Family names to offer, sorted, without repeats: bundled and installed fonts.
     std::vector<std::string> families() const;
@@ -36,7 +44,7 @@ public:
 private:
     struct Bundled {
         std::string name;
-        Face face;
+        std::map<FontStyle, Face> faces;
     };
     std::map<std::string, Bundled> bundled_; ///< Keyed by the lower-case family name.
 };

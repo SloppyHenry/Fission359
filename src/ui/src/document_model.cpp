@@ -78,6 +78,8 @@ const char* issueCodeName(core::FeatureIssueCode code) {
         return "textGlyphsMissing";
     case core::FeatureIssueCode::fontNotFound:
         return "fontNotFound";
+    case core::FeatureIssueCode::fontStyleMissing:
+        return "fontStyleMissing";
     }
     return "kernelFailed";
 }
@@ -575,8 +577,9 @@ QVariantList DocumentModel::buildStepTexts() const {
         entry[QStringLiteral("name")] = toQString(spec.name);
         entry[QStringLiteral("value")] =
             toQString(given != feature.texts.end() ? given->second : spec.defaultValue);
-        entry[QStringLiteral("kind")] =
-            spec.name == "font" ? QStringLiteral("font") : QStringLiteral("text");
+        entry[QStringLiteral("kind")] = spec.name == "font"    ? QStringLiteral("font")
+                                        : spec.name == "style" ? QStringLiteral("style")
+                                                               : QStringLiteral("text");
         texts.push_back(entry);
     }
     return texts;
@@ -779,6 +782,14 @@ void DocumentModel::commitChange() {
 void DocumentModel::cancelChange() {
     m_history.cancelTransaction();
     documentChanged();
+}
+
+QStringList DocumentModel::fontStyles(const QString& family) const {
+    QStringList names;
+    for (const geo::FontStyle style : m_kernel->fontStyles(family.toStdString())) {
+        names.push_back(QString::fromLatin1(geo::fontStyleName(style)));
+    }
+    return names;
 }
 
 bool DocumentModel::setStepText(int index, const QString& name, const QString& text) {

@@ -161,6 +161,9 @@ public:
     Q_INVOKABLE void setBodyVisible(int index, bool visible);
     /// Marks a body as a hole ("Als Loch") or takes the mark away.
     Q_INVOKABLE void setBodyHole(int index, bool hole);
+    /// The styles a font has, as names ("regular", "bold", "italic", "boldItalic"); empty if the
+    /// font is not on this computer.
+    Q_INVOKABLE QStringList fontStyles(const QString& family) const;
     /// Sets a word of step `index` (the text of a lettering, the name of its font).
     Q_INVOKABLE bool setStepText(int index, const QString& name, const QString& text);
 

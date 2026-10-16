@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "fission/geo/error.h"
 #include "fission/geo/occt/fonts.h"
@@ -166,4 +167,86 @@ TEST_CASE("text: the font that ships with the program has umlauts and sharp s bu
         CHECK(error.code() == GeometryErrorCode::glyphsMissing);
         CHECK(error.subject() == "😀🎄");
     }
+}
+
+namespace {
+
+const occt::FontBook& plexBook() {
+    static const std::string dir = FISSION_APP_FONTS_DIR;
+    static const occt::FontBook book(
+        {dir + "/IBMPlexSans-Regular.ttf", dir + "/IBMPlexSans-Bold.ttf",
+         dir + "/IBMPlexSans-Italic.ttf", dir + "/IBMPlexSans-BoldItalic.ttf",
+         dir + "/IBMPlexMono-Regular.ttf"});
+    return book;
+}
+
+SolidReport lettered(const std::string& text, FontStyle style, const char* font = "IBM Plex Sans") {
+    TextSpec spec{text, font, 10.0, 2.0};
+    spec.style = style;
+    return occt::measure(occt::makeNamedText(spec, {}, plexBook()).solid);
+}
+
+} // namespace
+
+TEST_CASE("text: the font book knows which styles a font has", "[text]") {
+    using S = FontStyle;
+    CHECK(plexBook().styles("IBM Plex Sans") ==
+          std::vector<S>{S::regular, S::bold, S::italic, S::boldItalic});
+    CHECK(plexBook().styles("ibm plex sans").size() == 4); // case does not matter
+    // The mono font only came with its regular style in this book.
+    CHECK(plexBook().styles("IBM Plex Mono") == std::vector<S>{S::regular});
+    CHECK(plexBook().styles("Gibt Es Nicht Sans").empty());
+    CHECK(plexBook().hasFamily("IBM Plex Mono"));
+    CHECK_FALSE(plexBook().hasFamily("Gibt Es Nicht Sans"));
+    CHECK_FALSE(plexBook().find("IBM Plex Mono", S::bold).has_value());
+}
+
+TEST_CASE("text: bold is heavier and italic is slanted, the size stays", "[text][golden]") {
+    const SolidReport regular = lettered("Hallo", FontStyle::regular);
+    const SolidReport bold = lettered("Hallo", FontStyle::bold);
+    const SolidReport italic = lettered("Hallo", FontStyle::italic);
+    const SolidReport both = lettered("Hallo", FontStyle::boldItalic);
+    for (const SolidReport* report : {&regular, &bold, &italic, &both}) {
+        CHECK(report->valid);
+        // A capital letter is as tall as the size says in every style.
+        CHECK(report->boxMax.y - report->boxMin.y ==
+              Approx(regular.boxMax.y - regular.boxMin.y).epsilon(0.05));
+    }
+    CHECK(bold.volume > regular.volume * 1.1); // more ink in the same height
+    CHECK(both.volume > italic.volume * 1.1);
+    // The strokes of an italic leaning right reach further to the right than upright ones: its
+    // lettering is not the same width and not the same shape.
+    CHECK(italic.boxMax.x - italic.boxMin.x !=
+          Approx(regular.boxMax.x - regular.boxMin.x).epsilon(1e-3));
+    CHECK(italic.volume != Approx(regular.volume).epsilon(1e-3));
+}
+
+TEST_CASE("text: a style the font does not have is refused and named, never replaced",
+          "[text][golden]") {
+    try {
+        lettered("Hallo", FontStyle::bold, "IBM Plex Mono");
+        FAIL("the mono font has no bold style in this book");
+    } catch (const GeometryError& error) {
+        CHECK(error.code() == GeometryErrorCode::fontStyleMissing);
+        CHECK(error.subject() == "IBM Plex Mono");
+    }
+    // A font that does not exist at all stays a different thing.
+    try {
+        lettered("Hallo", FontStyle::bold, "Gibt Es Nicht Sans");
+        FAIL("no such font");
+    } catch (const GeometryError& error) {
+        CHECK(error.code() == GeometryErrorCode::fontNotFound);
+    }
+    // The test font has only its regular style as well.
+    TextSpec spec{"A", kFont, 10.0, 2.0};
+    spec.style = FontStyle::italic;
+    CHECK_THROWS_AS(occt::makeNamedText(spec, {}, testFonts()), GeometryError);
+}
+
+TEST_CASE("text: style names round trip", "[text]") {
+    for (const FontStyle style :
+         {FontStyle::regular, FontStyle::bold, FontStyle::italic, FontStyle::boldItalic}) {
+        CHECK(parseFontStyle(fontStyleName(style)) == style);
+    }
+    CHECK_FALSE(parseFontStyle("heavy").has_value());
 }

@@ -495,7 +495,7 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
 ---
 
 ### AP-1.5 Grundformen
-**Status:** Review (Teile a–d umgesetzt, wartet auf Ausprobieren durch den Product Owner) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
+**Status:** Review (Teile a–e umgesetzt, wartet auf Ausprobieren durch den Product Owner) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
 
 **Umfang:**
 - Quader (mit optionalem Eckenradius), Zylinder, Kugel, Kegel, Torus, Röhre, Prisma (n-eckig), Pyramide, Halbkugel, Keil, Stern (2D-Stern hochgezogen), Text (flach, System- und mitgelieferte Schriften)
@@ -521,6 +521,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 | **b) Text** | erledigt | Text-Feature, mitgelieferte Schriften (IBM Plex) plus Systemschriften, Meldung „Diese Schrift hat kein Zeichen für …“ |
 | **c) Galerie und Platzieren** | erledigt | Formen-Galerie mit 3D-Vorschau, Drag-and-drop, „Auf Fläche legen“, „Als Loch“-Schalter, Hinweiszeile, Tooltip-Karten, Synonyme (Regel 10), Texte für alle Formen (Deutsch und Englisch) |
 | **d) Griffe** | erledigt | Maß-Griffe in 3D (Griff-Art „Achsen“; „Klassisch“ kommt mit AP-1.11), Wertblase, Tippen ersetzt Ziehen, `Tab` wechselt das Maß, Esc nimmt zurück; Ablauf D Schritt 1 als automatischer Test |
+| **e) Fett und Kursiv** | erledigt | Schnitt als Feld des Text-Schritts (normal, fett, kursiv, fett kursiv), Schnitt-Suche in der Schriftverwaltung, Knöpfe **B** und **I** im rechten Panel, eigene Meldung „… gibt es nicht in fett“ (auf Wunsch des Product Owners nachgezogen) |
 
 **Festlegungen (Product Owner, 2026-10-16)**
 - Griffe: nur „Achsen“ in diesem AP; „Klassisch“ gehört zu den Einstellungen (AP-1.11).
@@ -561,7 +562,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 **Umgesetzt**
 - **a) Kern:** Kugel, Halbkugel, Kegel (auch Stumpf), Torus, Röhre, Prisma, Pyramide, Keil, Stern; Quader mit Eckenradius; jede Fläche
   hat einen Namen; ein Aufruf `makePrimitive` statt neun neuer (ADR-0008).
-- **b) Text:** Beschriftung mit IBM Plex (mitgeliefert) und allen Schriften des Rechners; fehlende Zeichen oder Schriften sind
+- **b) Text:** Beschriftung mit IBM Plex (mitgeliefert, auch fett und kursiv) und allen Schriften des Rechners; fehlende Zeichen oder Schriften sind
   verständliche Fehler, es gibt keine stille Ersatzschrift; Worte (Text, Schrift) sind eigene Felder im Dokument mit Undo.
 - **c) Galerie:** 12 Kacheln mit Bildern der echten Formen; Ziehen in die Ansicht (die Form folgt dem Zeiger, landet auf Bett oder
   ebener Oberseite, Loslassen = ein Schritt, Esc = zurück) oder Anklicken (freier Platz); „Als Loch“ als Geisterform;
@@ -576,7 +577,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
   Platzieren, Abbrechen, Loch, Kachelbilder, Griffe und **Ablauf D, Schritt 1 automatisch** (Quader 40 × 40 × 10 mit 5-mm-Ecken über
   den Griff auf 80 mm gezogen: alle vier Ecken sind weiter Kreisbögen mit R 5 mm, Netzpunkte gemessen, Volumen exakt).
 - Fenster mit offener Galerie, abgelegten Formen und getippten Maßen (`app_shape_gallery`); Bilder:
-  [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png).
+  [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png), [ap-1.5-schnitt-de.png](../screenshots/ap-1.5-schnitt-de.png).
 - Linux: nur CI (Ubuntu 24.04, `release` und `debug-asan`); nicht von Hand auf dem Testrechner ausprobiert.
 
 **So probierst du es aus**
@@ -588,8 +589,8 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
    ersetzt den Wert. Beim Quader: rechts „Eckenradius“ auf 5 stellen, dann die Breite am Punkt verdoppeln: die Ecken bleiben rund.
 5. **Als Loch** in der Galerie einschalten und einen Zylinder ablegen: er ist durchsichtig (Geisterform), in der Körperliste ein leerer
    Umriss. Ausschneiden tut er erst mit AP-1.7.
-6. Kachel **Text** ablegen: das Feld „Worte“ rechts ist markiert, `LENA` tippen. Schrift darunter wählen. Probiere ein Emoji: die
-   Meldung nennt das Zeichen.
+6. Kachel **Text** ablegen: das Feld „Worte“ rechts ist markiert, `LENA` tippen. Schrift darunter wählen, mit **B** und **I** fett
+   und kursiv schalten. Probiere ein Emoji: die Meldung nennt das Zeichen.
 
 **Einschränkungen, Annahmen, Folge-Arbeiten**
 - **Ablegen nur auf waagerechten Flächen:** Auf Wänden und Schrägen bleibt die Form auf der Arbeitsebene (Höhe der zuletzt benutzten
@@ -599,8 +600,14 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 - **Tippen ohne Ziehen:** Ziffern fangen nur direkt nach dem Ablegen an zu tippen (sonst sind 1 bis 6 die Ansichten). Auch `Tab` oder
   Enter beginnen das Tippen. Bei einer schon vorhandenen Form: Punkt anfassen und dann tippen, oder die Felder rechts benutzen.
 - **Seiten und Zacken** (Prisma, Stern) haben keinen Griff; sie stehen als Zahl im Feld rechts.
-- **Text:** nur Schnitt „Regular“; fett und kursiv fehlen. Die Schrift wird nicht in der Datei mitgespeichert (kommt mit AP-1.10); fehlt
-  sie auf einem anderen Rechner, steht dort die Meldung „Die Schrift … gibt es auf diesem Rechner nicht“.
+- **Text (Teil e):** Der Schnitt ist ein eigenes Feld im Text-Schritt. Mitgeliefert sind IBM Plex Sans und Mono jeweils normal, fett,
+  kursiv und fett kursiv (die Dateien stammen aus dem IBM-Plex-Repository, Lizenz OFL, liegen unter `apps/fission3d/resources/fonts`).
+  Bei Systemschriften sind genau die Schnitte wählbar, die die Schrift auf dem Rechner hat. Gibt es einen Schnitt nicht, ist **B**
+  bzw. **I** grau; wechselt man zu einer Schrift ohne den benutzten Schnitt, wird die Schrift wieder normal, mit Hinweis, in
+  demselben Schritt. Ein Schnitt, der in einer geladenen Datei fehlt, ist ein Fehler am Schritt („… gibt es nicht in fett“), nie ein
+  stiller Ersatz. Gesperrt bleibt: Das Dokument speichert die Schrift nicht in der Datei (kommt mit AP-1.10); fehlt sie auf einem anderen
+  Rechner, steht dort die Meldung „Die Schrift … gibt es auf diesem Rechner nicht“. Die Plex-Dateien kommen von der aktuellen Version
+  des IBM-Repositorys, die normale Schrift vom früheren Stand: die Buchstabenformen sind gleich, Feinheiten der Abstände können abweichen.
 - **Raster:** Positionen und gezogene Maße rasten auf ganze Millimeter (feiner bei starkem Zoom); das echte Fangen kommt mit AP-1.6.
 - **Neu im Kern:** `fission_geometry_occt` linkt jetzt `TKService` und `TKV3d` (nur OpenCASCADE, schon im Paket); beim ersten Start
   kopiert das Programm zwei Schriftdateien in den Cache-Ordner.

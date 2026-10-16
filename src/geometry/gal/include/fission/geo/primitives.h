@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <variant>
 
@@ -76,16 +77,48 @@ struct StarSpec {
     double height = 5.0;
 };
 
+/// How heavy and how slanted the letters of a font are.
+enum class FontStyle { regular, bold, italic, boldItalic };
+
+/// The name of a style in documents and in the interface code: "regular", "bold", "italic",
+/// "boldItalic". The words people read come from the interface.
+inline const char* fontStyleName(FontStyle style) {
+    switch (style) {
+    case FontStyle::bold:
+        return "bold";
+    case FontStyle::italic:
+        return "italic";
+    case FontStyle::boldItalic:
+        return "boldItalic";
+    case FontStyle::regular:
+        break;
+    }
+    return "regular";
+}
+
+/// The style a name stands for; nothing for a name nobody knows.
+inline std::optional<FontStyle> parseFontStyle(const std::string& name) {
+    for (const FontStyle style :
+         {FontStyle::regular, FontStyle::bold, FontStyle::italic, FontStyle::boldItalic}) {
+        if (name == fontStyleName(style)) {
+            return style;
+        }
+    }
+    return std::nullopt;
+}
+
 /// Text pulled up from the plane. `text` is UTF-8 (new lines allowed), `font` a family name,
 /// `size` the height of a capital letter, `height` how far the letters stand up. The text is
 /// centred on `base` (by its ink, not by the line box). Faces: for every separate piece of
 /// lettering n (counted from 0) glyph<n>Top, glyph<n>Bottom and glyph<n>Side<k>.
-/// Throws textEmpty, glyphsMissing (never a stand-in character) or fontNotFound.
+/// Throws textEmpty, glyphsMissing (never a stand-in character), fontNotFound or
+/// fontStyleMissing (never another style).
 struct TextSpec {
     std::string text = "Text";
     std::string font = "IBM Plex Sans";
     double size = 10.0;
     double height = 2.0;
+    FontStyle style = FontStyle::regular;
 };
 
 using PrimitiveSpec = std::variant<SphereSpec, HemisphereSpec, ConeSpec, TorusSpec, TubeSpec,
