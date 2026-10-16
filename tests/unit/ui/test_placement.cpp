@@ -287,3 +287,15 @@ TEST_CASE("placing: lettering has words and a font to change", "[ui][placement]"
     // A name the step does not have is refused.
     CHECK_FALSE(f.model->setStepText(step, "colour", "red"));
 }
+
+TEST_CASE("placing: a count of sides has no unit, lengths do", "[ui][placement]") {
+    Fixture f;
+    const int step = f.model->addShape("prism", false);
+    f.refresh();
+    f.model->selectStep(step);
+    const QVariantList values = f.model->stepValues();
+    REQUIRE(values.size() >= 3);
+    CHECK(values[0].toMap()["name"].toString() == "sides");
+    CHECK(values[0].toMap()["kind"].toString() == "plain");
+    CHECK(values[1].toMap()["kind"].toString() == "length");
+}

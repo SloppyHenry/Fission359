@@ -453,6 +453,11 @@ void DocumentModel::rebuildLists() {
             }
         }
         entry[QStringLiteral("values")] = values;
+        QVariantMap words; // typed words of the step (text, font) for its sentence
+        for (const auto& [name, text] : feature.texts) {
+            words[toQString(name)] = toQString(text);
+        }
+        entry[QStringLiteral("texts")] = words;
         if (state != nullptr && state->issue) {
             QVariantMap problem;
             problem[QStringLiteral("code")] =
@@ -543,9 +548,10 @@ QVariantList DocumentModel::buildStepValues() const {
         }
         entry[QStringLiteral("value")] = number;
         entry[QStringLiteral("error")] = error && !isPlainNumber(text);
-        entry[QStringLiteral("kind")] = spec.kind == core::QuantityKind::angle
-                                            ? QStringLiteral("angle")
-                                            : QStringLiteral("length");
+        entry[QStringLiteral("kind")] =
+            spec.kind == core::QuantityKind::angle   ? QStringLiteral("angle")
+            : spec.kind == core::QuantityKind::plain ? QStringLiteral("plain") // a count: no unit
+                                                     : QStringLiteral("length");
         values.push_back(entry);
     }
     return values;
@@ -813,11 +819,15 @@ bool DocumentModel::finishPlacing() {
     }
     m_history.commitTransaction();
     m_placing = false;
+    const int placedStep = stepIndexOf(m_placingFeature);
+    const core::Feature* placed = m_history.document().findFeature(m_placingFeature);
+    const QString placedType = placed != nullptr ? toQString(placed->type) : QString();
     m_workplaneZ = m_placingZ;
     m_workplaneBody = m_placingSurface;
     emit historyChanged();
     emit placingChanged();
     emit workplaneChanged();
+    emit shapePlaced(placedStep, placedType);
     return true;
 }
 

@@ -16,6 +16,7 @@ class AppOptions : public QObject {
     Q_PROPERTY(bool reduceMotion MEMBER reduceMotion NOTIFY changed)
     Q_PROPERTY(int openMenu MEMBER openMenu NOTIFY changed)
     Q_PROPERTY(bool showHistory MEMBER showHistory NOTIFY changed)
+    Q_PROPERTY(bool showShapes MEMBER showShapes NOTIFY changed)
     Q_PROPERTY(QString camera MEMBER camera NOTIFY changed)
     Q_PROPERTY(QString rightTab MEMBER rightTab NOTIFY changed)
     Q_PROPERTY(bool softShadows MEMBER softShadows NOTIFY changed)
@@ -28,6 +29,8 @@ public:
     int openMenu = -1; ///< developer option: open this menu (index) at start, for screenshots
     /// developer option: make a few changes, undo one, and open "Recent actions" (screenshots)
     bool showHistory = false;
+    /// developer option: open the shape gallery at start (screenshots)
+    bool showShapes = false;
     /// developer option "yaw,pitch,distance" (degrees, degrees, mm): start with this camera
     QString camera;
     /// developer option: start with this tab of the right side bar ("object" or "printer")

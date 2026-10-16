@@ -495,7 +495,7 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
 ---
 
 ### AP-1.5 Grundformen
-**Status:** in Arbeit (Teil a und b erledigt, c–d offen) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
+**Status:** in Arbeit (Teil a bis c erledigt, d offen) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
 
 **Umfang:**
 - Quader (mit optionalem Eckenradius), Zylinder, Kugel, Kegel, Torus, Röhre, Prisma (n-eckig), Pyramide, Halbkugel, Keil, Stern (2D-Stern hochgezogen), Text (flach, System- und mitgelieferte Schriften)
@@ -519,7 +519,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 |---|---|---|
 | **a) Formen im Kern** | erledigt | Alle Formen als Feature-Typen (Kugel, Halbkugel, Kegel, Torus, Röhre, Prisma, Pyramide, Keil, Stern), Quader mit Eckenradius, Namen für jede Fläche; Golden-Tests mit analytischen Werten |
 | **b) Text** | erledigt | Text-Feature, mitgelieferte Schriften (IBM Plex) plus Systemschriften, Meldung „Diese Schrift hat kein Zeichen für …“ |
-| **c) Galerie und Platzieren** | offen | Formen-Galerie mit 3D-Vorschau, Drag-and-drop, „Auf Fläche legen“, „Als Loch“-Schalter, Hinweiszeile, Tooltip-Karten, Synonyme (Regel 10), Texte für alle Formen (Deutsch und Englisch) |
+| **c) Galerie und Platzieren** | erledigt | Formen-Galerie mit 3D-Vorschau, Drag-and-drop, „Auf Fläche legen“, „Als Loch“-Schalter, Hinweiszeile, Tooltip-Karten, Synonyme (Regel 10), Texte für alle Formen (Deutsch und Englisch) |
 | **d) Griffe** | offen | Maß-Griffe in 3D (Griff-Art „Achsen“; „Klassisch“ kommt mit AP-1.11), Wertblase, Tippen ersetzt Ziehen, `Tab` wechselt das Maß, Esc nimmt zurück; Ablauf D Schritt 1 als automatischer Test |
 
 **Festlegungen (Product Owner, 2026-10-16)**
@@ -543,6 +543,15 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
   Großbuchstabens; „Höhe“ ist, wie weit die Buchstaben aufragen. Der Text sitzt mit seiner Tinte mittig auf dem Punkt (x, y), mehrere
   Zeilen (Enter) gehen. Jeder getrennte Buchstabenteil ist ein eigener Körperteil im selben Körper (`glyph0Top`, `glyph0Side3` …).
   Worte (Text, Schrift) sind eigene Felder im Schritt (`Feature::texts`), keine Formeln, mit eigenem Undo-Befehl.
+- **Galerie und Platzieren (Teil c):** Die Formen-Galerie öffnet sich neben der Werkzeugleiste („Formen“) oder über das Plus links; die
+  Bilder auf den Kacheln sind die echten Formen aus dem Kern (Standardmaße, schräg von vorn links oben, mit Tiefenpuffer
+  gezeichnet). Eine Kachel lässt sich in die Ansicht ziehen (die Form folgt dem Zeiger, landet aufs Bett oder auf die ebene Oberseite
+  eines Körpers, Loslassen = ein Schritt im Verlauf, Esc = zurück, nichts bleibt liegen) oder anklicken (freier Platz auf dem Bett).
+  Die Fläche, auf der zuletzt abgelegt wurde, ist die **Arbeitsebene** (nur die Höhe z; sie gilt, wenn der Zeiger über einer Wand oder
+  neben dem Bett ist). Positionen rasten auf ganze Millimeter. **„Als Loch“** (Schalter in der Galerie, Menü Körper ▸ Als Loch) markiert
+  den Körper (`Body::hole`, Undo-Befehl); er wird als halbdurchsichtige Geisterform gezeichnet und in der Körperliste als leerer
+  Umriss gezeigt. Ausgeschnitten wird erst mit AP-1.7. Text: Nach dem Ablegen liegt der Cursor im Feld „Worte“ (rechts) mit
+  markiertem Text; die Schrift wählt man in einer Liste mit Suche (alle Schriften des Rechners).
 - Flächen-Namen: `top`, `bottom`, `side`, `surface`; bei Prisma und Stern `side1` … (Prisma: `side1` schaut nach vorn, dann gegen den
   Uhrzeigersinn von oben; Stern: `side1` folgt der Spitze nach hinten); Eckenradius: `cornerFrontLeft` …
 

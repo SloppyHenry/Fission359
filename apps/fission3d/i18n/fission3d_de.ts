@@ -132,6 +132,25 @@
     </message>
 </context>
 <context>
+    <name>FontField</name>
+    <message>
+        <location filename="../qml/FontField.qml" line="+120"/>
+        <location line="+5"/>
+        <source>Search fonts</source>
+        <translation>Schriften suchen</translation>
+    </message>
+    <message>
+        <location line="+46"/>
+        <source>Looking for fonts …</source>
+        <translation>Suche Schriften …</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>No font with that name.</source>
+        <translation>Keine Schrift mit diesem Namen.</translation>
+    </message>
+</context>
+<context>
     <name>HistoryPanel</name>
     <message>
         <location filename="../qml/HistoryPanel.qml" line="+17"/>
@@ -186,7 +205,7 @@
         </translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+17"/>
         <source>Visibility: %1</source>
         <translation>Sichtbarkeit: %1</translation>
     </message>
@@ -304,7 +323,7 @@
         <translation>Unbenannt</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+16"/>
         <source>%1 × %2</source>
         <translation>%1 × %2</translation>
     </message>
@@ -535,12 +554,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+380"/>
+        <location line="+421"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-379"/>
+        <location line="-420"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -596,18 +615,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+164"/>
+        <location line="+186"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-162"/>
-        <location line="+163"/>
+        <location line="-184"/>
+        <location line="+185"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-157"/>
+        <location line="-179"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -647,8 +666,8 @@
         <translation>Die Befehlssuche kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+28"/>
-        <location line="+110"/>
+        <location line="+35"/>
+        <location line="+125"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
@@ -673,17 +692,12 @@
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
     <message>
-        <location line="+79"/>
+        <location line="+88"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+33"/>
-        <source>Cylinder</source>
-        <translation>Zylinder</translation>
-    </message>
-    <message>
-        <location line="+5"/>
+        <location line="+48"/>
         <source>Width</source>
         <translation>Breite</translation>
     </message>
@@ -753,6 +767,61 @@
         <translation>Zylinder, Radius %1 mm, Höhe %2 mm</translation>
     </message>
     <message>
+        <location line="+3"/>
+        <source>Sphere, radius %1 mm</source>
+        <translation>Kugel, Radius %1 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Hemisphere, radius %1 mm</source>
+        <translation>Halbkugel, Radius %1 mm</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm</source>
+        <translation>Kegel, Radius %1 mm unten, %2 mm oben, Höhe %3 mm</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cone, radius %1 mm, height %2 mm</source>
+        <translation>Kegel, Radius %1 mm, Höhe %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Torus, ring radius %1 mm, tube radius %2 mm</source>
+        <translation>Torus, Ringradius %1 mm, Röhrenradius %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Tube, radius %1 mm, wall %2 mm, height %3 mm</source>
+        <translation>Röhre, Radius %1 mm, Wand %2 mm, Höhe %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Prism with %1 sides, radius %2 mm, height %3 mm</source>
+        <translation>Prisma mit %1 Seiten, Radius %2 mm, Höhe %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Pyramid %1 × %2 × %3 mm</source>
+        <translation>Pyramide %1 × %2 × %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Wedge %1 × %2 × %3 mm</source>
+        <translation>Keil %1 × %2 × %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Star with %1 points, radius %2 mm, height %3 mm</source>
+        <translation>Stern mit %1 Zacken, Radius %2 mm, Höhe %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Text “%1”, letters %2 mm, height %3 mm</source>
+        <translation>Text „%1“, Buchstaben %2 mm, Höhe %3 mm</translation>
+    </message>
+    <message>
         <location line="+12"/>
         <source>%1 added</source>
         <translation>%1 hinzugefügt</translation>
@@ -771,6 +840,21 @@
         <location line="+1"/>
         <source>%1 changed</source>
         <translation>%1 geändert</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text of %1 changed</source>
+        <translation>Text von %1 geändert</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 made a hole</source>
+        <translation>%1 zum Loch gemacht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 made a part again</source>
+        <translation>%1 wieder zum Körper gemacht</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -913,7 +997,7 @@
         <translation>Diese Form ließ sich nicht bauen.</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+30"/>
         <source>Face of %1</source>
         <translation>Fläche von %1</translation>
     </message>
@@ -957,44 +1041,44 @@
         <translation>Umschalt+Klick fügt hinzu oder nimmt weg. Mit einem Rahmen wählst du mehrere. Esc wählt nichts aus.</translation>
     </message>
     <message>
-        <location line="-313"/>
-        <source>Shapes arrive in a later version.</source>
-        <translation>Die Formen kommen in einer späteren Version.</translation>
-    </message>
-    <message>
-        <location line="+85"/>
+        <location line="-279"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-374"/>
+        <location line="-403"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+407"/>
+        <location line="+438"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-300"/>
+        <location line="-331"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+155"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+190"/>
-        <source>Unit: mm · Grid 1 mm</source>
-        <translation>Einheit: mm · Raster 1 mm</translation>
+        <location line="+198"/>
+        <source>Let go to put the shape down here. Esc takes it back.</source>
+        <translation>Loslassen, um die Form hier abzulegen. Esc nimmt sie zurück.</translation>
     </message>
     <message>
-        <location line="+9"/>
-        <source>Box</source>
-        <translation>Quader</translation>
+        <location line="+2"/>
+        <source>Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.</source>
+        <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an. Mit „Als Loch“ wird sie zum Loch.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Unit: mm · Grid 1 mm</source>
+        <translation>Einheit: mm · Raster 1 mm</translation>
     </message>
 </context>
 <context>
@@ -1036,7 +1120,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+50"/>
+        <location filename="../qml/RightPanel.qml" line="+56"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -1062,6 +1146,21 @@
     </message>
     <message>
         <location line="+5"/>
+        <source>Text</source>
+        <translation>Text</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Words</source>
+        <translation>Worte</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Font</source>
+        <translation>Schrift</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Size</source>
         <translation>Größe</translation>
     </message>
@@ -1150,6 +1249,97 @@
     </message>
 </context>
 <context>
+    <name>ShapeCatalog</name>
+    <message>
+        <location filename="../qml/ShapeCatalog.qml" line="+10"/>
+        <source>Drag onto the bed. Lands on the face under the pointer.</source>
+        <translation>Aufs Druckbett ziehen. Landet auf der Fläche unter dem Zeiger.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A click puts it on a free place of the bed.</source>
+        <translation>Ein Klick legt sie auf einen freien Platz.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Box</source>
+        <translation>Quader</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Cylinder</source>
+        <translation>Zylinder</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Sphere</source>
+        <translation>Kugel</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Hemisphere</source>
+        <translation>Halbkugel</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Cone</source>
+        <translation>Kegel</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Torus</source>
+        <translation>Torus</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Tube</source>
+        <translation>Röhre</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Prism</source>
+        <translation>Prisma</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Pyramid</source>
+        <translation>Pyramide</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Wedge</source>
+        <translation>Keil</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Star</source>
+        <translation>Stern</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Text</source>
+        <translation>Text</translation>
+    </message>
+</context>
+<context>
+    <name>ShapeFlyout</name>
+    <message>
+        <location filename="../qml/ShapeFlyout.qml" line="+81"/>
+        <source>Shapes</source>
+        <translation>Formen</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>As hole</source>
+        <translation>Als Loch</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Close</source>
+        <translation>Schließen</translation>
+    </message>
+</context>
+<context>
     <name>StatusBar</name>
     <message>
         <location filename="../qml/StatusBar.qml" line="+45"/>
@@ -1193,7 +1383,7 @@
 <context>
     <name>ViewOverlay</name>
     <message>
-        <location filename="../qml/ViewOverlay.qml" line="+71"/>
+        <location filename="../qml/ViewOverlay.qml" line="+73"/>
         <location line="+10"/>
         <source>Orthographic</source>
         <translation>Orthografisch</translation>
@@ -1279,7 +1469,7 @@
         <translation>Größe</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+32"/>
         <source>Shapes</source>
         <translation>Formen</translation>
     </message>
@@ -1349,7 +1539,7 @@
         <translation>Messen, Schnitt, Druckcheck, Gewicht.</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+52"/>
         <source>Home view (Home)</source>
         <translation>Startansicht (Pos1)</translation>
     </message>
@@ -1374,17 +1564,17 @@
         <translation>Drehen</translation>
     </message>
     <message>
-        <location line="-347"/>
+        <location line="-365"/>
         <source>Orbit: drag with the right mouse button – or drag this button</source>
         <translation>Drehen: rechte Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
     <message>
-        <location line="+355"/>
+        <location line="+373"/>
         <source>Pan</source>
         <translation>Verschieben</translation>
     </message>
     <message>
-        <location line="-348"/>
+        <location line="-366"/>
         <source>Pan: drag with the middle mouse button – or drag this button</source>
         <translation>Verschieben: mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
@@ -1404,7 +1594,7 @@
         <translation>Verschieben: Umschalt + mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
     <message>
-        <location line="+357"/>
+        <location line="+375"/>
         <source>Zoom</source>
         <translation>Zoom</translation>
     </message>

@@ -202,6 +202,8 @@ signals:
     void calculatingChanged();
     void fontsChanged();
     void placingChanged();
+    /// A shape was put down for good (dragged in or clicked): its step number and type.
+    void shapePlaced(int step, const QString& type);
     void workplaneChanged();
     void historyChanged();
     void printerChanged();

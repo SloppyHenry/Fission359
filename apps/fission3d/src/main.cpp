@@ -42,7 +42,9 @@
 #include "fission/ui/document_model.h"
 #include "fission/ui/language.h"
 #include "fission/ui/numbers.h"
+#include "fission/ui/placement_controller.h"
 #include "fission/ui/selection_controller.h"
+#include "fission/ui/shape_previews.h"
 #include "fission/ui/theme.h"
 #include "fission/ui/viewport_3d.h"
 
@@ -73,6 +75,7 @@ struct CommandLine {
     int openMenu = -1;
     bool reduceMotion = false;
     bool showHistory = false;
+    bool showShapes = false;
     QString camera;
     QString rightTab;
     bool softShadows = true;
@@ -116,6 +119,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     const QCommandLineOption showHistory(
         QStringLiteral("show-history"),
         QStringLiteral("Make a few changes, undo one and open the list of recent actions."));
+    const QCommandLineOption showShapes(QStringLiteral("show-shapes"),
+                                        QStringLiteral("Open the shape gallery at start."));
     const QCommandLineOption camera(
         QStringLiteral("camera"),
         QStringLiteral("Start with the camera at yaw,pitch,distance (degrees, degrees, mm)."),
@@ -137,14 +142,16 @@ CommandLine parseCommandLine(int& argc, char** argv) {
         QStringLiteral("simulate"),
         QStringLiteral("Play pointer actions after the first frame, before the screenshot: "
                        "hover:x,y  click:x,y  shiftclick:x,y  doubleclick:x,y  frame:x1,y1,x2,y2 "
-                       "(window pixels of the 3D view), separated by semicolons."),
+                       "(window pixels of the 3D view), drop:shape,x,y  drophole:shape,x,y "
+                       "(drag a shape of the gallery there and let go), put:shape  puthole:shape "
+                       "(click its tile), separated by semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
                                   QStringLiteral("WxH"));
     parser.addOptions({smokeTest, measureStartup, theme, language, focus, about, openMenu,
-                       showHistory, camera, rightTab, benchmark, noSoftShadows, reduceMotion,
-                       simulate, size});
+                       showHistory, showShapes, camera, rightTab, benchmark, noSoftShadows,
+                       reduceMotion, simulate, size});
     parser.process(core); // prints help or version and exits when asked
 
     CommandLine result;
@@ -156,6 +163,7 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     result.about = parser.isSet(about);
     result.reduceMotion = parser.isSet(reduceMotion);
     result.showHistory = parser.isSet(showHistory);
+    result.showShapes = parser.isSet(showShapes);
     result.camera = parser.value(camera);
     result.rightTab = parser.value(rightTab);
     result.benchmarkTriangles = parser.value(benchmark).toInt();
@@ -172,19 +180,37 @@ CommandLine parseCommandLine(int& argc, char** argv) {
 // Developer option --simulate: plays pointer actions through the real input path of the 3D view
 // (graphics card, pick pass, selection), one every 350 ms. Calls `done` when the last one had
 // time to show its result.
-void playActions(fission::ui::Viewport3D* viewport, const QString& actions,
-                 std::function<void()> done) {
+void playActions(fission::ui::Viewport3D* viewport, fission::ui::PlacementController* placement,
+                 const QString& actions, std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
         const QString kind = action.left(colon).trimmed();
         QList<double> numbers;
-        for (const QString& number : action.mid(colon + 1).split(QLatin1Char(','))) {
+        QString shape; // drop:sphere,x,y and put:sphere start with the name of a shape
+        QStringList parts = action.mid(colon + 1).split(QLatin1Char(','));
+        if (kind.startsWith(QLatin1String("drop")) || kind.startsWith(QLatin1String("put"))) {
+            shape = parts.takeFirst().trimmed();
+        }
+        for (const QString& number : parts) {
             numbers.push_back(number.toDouble());
         }
         delay += 350;
-        QTimer::singleShot(delay, viewport, [viewport, kind, numbers] {
+        QTimer::singleShot(delay, viewport, [viewport, placement, kind, shape, numbers] {
             using fission::ui::Viewport3D;
+            // The same calls the gallery makes when a tile is dragged or clicked.
+            if (kind == QLatin1String("drop") || kind == QLatin1String("drophole")) {
+                if (numbers.size() >= 2 &&
+                    placement->begin(shape, kind == QLatin1String("drophole"), numbers[0],
+                                     numbers[1])) {
+                    placement->finish();
+                }
+                return;
+            }
+            if (kind == QLatin1String("put") || kind == QLatin1String("puthole")) {
+                placement->add(shape, kind == QLatin1String("puthole"));
+                return;
+            }
             if (numbers.size() >= 2) {
                 const QPointF at(numbers[0], numbers[1]);
                 if (kind == QLatin1String("hover")) {
@@ -397,6 +423,7 @@ int main(int argc, char* argv[]) {
     appOptions.reduceMotion = options.reduceMotion;
     appOptions.openMenu = options.openMenu;
     appOptions.showHistory = options.showHistory;
+    appOptions.showShapes = options.showShapes;
     appOptions.camera = options.camera;
     appOptions.rightTab = options.rightTab;
     appOptions.softShadows = options.softShadows;
@@ -424,6 +451,10 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "DocumentModel", &documentModel);
     fission::ui::SelectionController selection(&documentModel);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Selection", &selection);
+    fission::ui::PlacementController placement(&documentModel);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Placement", &placement);
+    // The pictures on the tiles of the shape gallery come from the geometry kernel.
+    engine.addImageProvider(QStringLiteral("shapes"), new fission::ui::ShapePreviews(kernel));
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Language", &language);
 
     QObject::connect(
@@ -444,6 +475,7 @@ int main(int argc, char* argv[]) {
     auto* viewport = window->findChild<fission::ui::Viewport3D*>(QStringLiteral("viewport"));
     if (viewport != nullptr) {
         selection.attach(viewport);
+        placement.attach(viewport);
         viewport->setScene(documentModel.scene());
         const QMetaObject::Connection sceneConnection =
             QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
@@ -492,11 +524,17 @@ int main(int argc, char* argv[]) {
         QTimer::singleShot(0, &app, reportFirstFrame);
     }
 
+    fission::ui::PlacementController* const placementController = &placement;
     if (!options.smokeTestPath.isEmpty()) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
         const QString simulate = options.simulate;
-        auto grab = [window, viewport, path, simulate] {
+        auto grab = [window, viewport, placementController, path, simulate,
+                     started = std::make_shared<bool>(false)] {
+            if (*started) {
+                return; // the first frame can be reported more than once
+            }
+            *started = true;
             auto shoot = [window, path] {
                 QTimer::singleShot(600, window, [window, path] {
                     const QImage frame = window->grabWindow();
@@ -505,7 +543,7 @@ int main(int argc, char* argv[]) {
                 });
             };
             if (viewport != nullptr && !simulate.isEmpty()) {
-                playActions(viewport, simulate, shoot);
+                playActions(viewport, placementController, simulate, shoot);
             } else {
                 shoot();
             }

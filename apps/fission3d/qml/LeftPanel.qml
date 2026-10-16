@@ -197,6 +197,7 @@ Rectangle {
                         child: true
                         selected: modelData.chosen
                         swatch: modelData.color
+                        hole: modelData.hole === true
                         text: modelData.name
                         eyeOn: modelData.visible
                         eyeLabel: qsTr("Visibility: %1").arg(modelData.name)

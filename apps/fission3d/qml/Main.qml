@@ -21,6 +21,7 @@ Window {
     property string mouseStyle: "fission"
     property bool bedVisible: true
     property string transientHint: ""
+    property string flyout: ""         // the open tool group of the palette: "" or "shapes"
     readonly property bool narrow: width < Theme.narrowBreakpoint
     readonly property bool veryNarrow: width < Theme.veryNarrowBreakpoint
     readonly property bool sidebarsShown: !focusMode && !veryNarrow
@@ -88,7 +89,7 @@ Window {
             { id: "mouse.sketchup", text: qsTr("Mouse: like SketchUp"), checked: root.mouseStyle === "sketchup" }
         ] },
         { title: qsTr("Body"), items: [
-            { id: "hole", text: qsTr("As hole"), enabled: false },
+            { id: "hole", text: qsTr("As hole"), checked: root.chosenAreHoles, enabled: Selection.count > 0 },
             { separator: true },
             { id: "merge", text: qsTr("Merge"), enabled: false },
             { id: "subtract", text: qsTr("Subtract"), enabled: false },
@@ -175,6 +176,13 @@ Window {
             }
             break
         case "selectnone": Selection.clear(); break
+        case "hole": {
+            const holeNow = !root.chosenAreHoles
+            for (const index of root.chosenBodyIndexes) {
+                DocumentModel.setBodyHole(index, holeNow)
+            }
+            break
+        }
         default:
             if (id.indexOf("mouse.") === 0) {
                 mouseStyle = id.substring(6)
@@ -182,6 +190,18 @@ Window {
                 viewport.setStandardView(id.substring(5))
             } else {
                 showHint(qsTr("This arrives in a later version."))
+            }
+        }
+    }
+
+    // A shape that was just put down: lettering is typed right away.
+    Connections {
+        target: DocumentModel
+
+        function onShapePlaced(step, type) {
+            if (type === "text") {
+                rightTab = "object"
+                rightPanel.focusText()
             }
         }
     }
@@ -195,6 +215,9 @@ Window {
             DocumentModel.setBodyVisible(0, true)
             DocumentModel.undo()
             historyOpen = true
+        }
+        if (AppOptions.showShapes) { // developer option, for screenshots
+            flyout = "shapes"
         }
         if (AppOptions.camera !== "") { // developer option, for comparison images
             const v = AppOptions.camera.split(",").map(Number)
@@ -317,7 +340,7 @@ Window {
             recipe: root.recipeList
             currentStep: DocumentModel.currentStep
             onTabRequested: tab => root.leftTab = tab
-            onAddRequested: root.showHint(qsTr("Shapes arrive in a later version."))
+            onAddRequested: root.flyout = "shapes"
             onStepRequested: index => DocumentModel.selectStep(DocumentModel.currentStep === index ? -1 : index)
             onBodyVisibilityRequested: (index, visible) => DocumentModel.setBodyVisible(index, visible)
             onBodyChosen: (index, extend) => Selection.chooseBody(index, extend)
@@ -402,7 +425,16 @@ Window {
                 onOrthographicToggled: root.orthographic = !root.orthographic
                 onDisplayRequested: mode => root.display = mode
                 onToolRequested: tool => root.tool = tool
-                onGroupRequested: group => root.showHint(qsTr("This tool group arrives in a later version."))
+                flyout: root.flyout
+                onFlyoutCloseRequested: root.flyout = ""
+                onGroupRequested: group => {
+                    if (group === "shapes") {
+                        root.flyout = root.flyout === "shapes" ? "" : "shapes"
+                    } else {
+                        root.flyout = ""
+                        root.showHint(qsTr("This tool group arrives in a later version."))
+                    }
+                }
                 onViewRequested: view => viewport.setStandardView(view)
                 onDirectionRequested: (x, y, z) => viewport.setViewDirection(x, y, z)
                 onFocusToggled: root.focusMode = !root.focusMode
@@ -442,6 +474,9 @@ Window {
             }
             stepTitle: root.currentStepTitle
             stepValues: root.stepValueList
+            stepTexts: DocumentModel.stepTexts
+            fonts: DocumentModel.fontFamilies
+            onTextCommitted: (name, text) => DocumentModel.setStepText(DocumentModel.currentStep, name, text)
             onTabRequested: tab => root.rightTab = tab
             onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)
         }
@@ -454,7 +489,9 @@ Window {
         width: parent.width
         selection: root.selectionText
         toolName: root.toolName(root.tool)
-        hint: root.transientHint !== "" && hintTimer.running ? root.transientHint
+        hint: Placement.active ? qsTr("Let go to put the shape down here. Esc takes it back.")
+            : root.transientHint !== "" && hintTimer.running ? root.transientHint
+            : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.")
             : root.hoverText !== "" ? root.hoverText
             : Selection.count > 0 ? root.selectionHint
             : root.navigationText
@@ -466,8 +503,13 @@ Window {
     }
 
     // --- the document as the interface shows it (texts are composed here, see DocumentModel) ---
+    ShapeCatalog {
+        id: shapeCatalog
+    }
+
     function typeLabel(type) {
-        return type === "box" ? qsTr("Box") : type === "cylinder" ? qsTr("Cylinder") : qsTr("Body")
+        const name = shapeCatalog.nameOf(type)
+        return name !== "" ? name : qsTr("Body")
     }
 
     function valueLabel(name) {
@@ -497,6 +539,38 @@ Window {
         if (step.type === "cylinder" && v.length === 2) {
             return qsTr("Cylinder, radius %1 mm, height %2 mm").arg(n(v[0])).arg(n(v[1]))
         }
+        if (step.type === "sphere" && v.length === 1) {
+            return qsTr("Sphere, radius %1 mm").arg(n(v[0]))
+        }
+        if (step.type === "hemisphere" && v.length === 1) {
+            return qsTr("Hemisphere, radius %1 mm").arg(n(v[0]))
+        }
+        if (step.type === "cone" && v.length === 3) {
+            return v[1] > 0
+                ? qsTr("Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+                : qsTr("Cone, radius %1 mm, height %2 mm").arg(n(v[0])).arg(n(v[2]))
+        }
+        if (step.type === "torus" && v.length === 2) {
+            return qsTr("Torus, ring radius %1 mm, tube radius %2 mm").arg(n(v[0])).arg(n(v[1]))
+        }
+        if (step.type === "tube" && v.length === 3) {
+            return qsTr("Tube, radius %1 mm, wall %2 mm, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+        }
+        if (step.type === "prism" && v.length === 3) {
+            return qsTr("Prism with %1 sides, radius %2 mm, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+        }
+        if (step.type === "pyramid" && v.length === 3) {
+            return qsTr("Pyramid %1 × %2 × %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+        }
+        if (step.type === "wedge" && v.length === 3) {
+            return qsTr("Wedge %1 × %2 × %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+        }
+        if (step.type === "star" && v.length === 3) {
+            return qsTr("Star with %1 points, radius %2 mm, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+        }
+        if (step.type === "text" && v.length === 2) {
+            return qsTr("Text “%1”, letters %2 mm, height %3 mm").arg(step.texts.text).arg(n(v[0])).arg(n(v[1]))
+        }
         return typeLabel(step.type)
     }
 
@@ -513,6 +587,9 @@ Window {
             return step.value !== undefined
                 ? qsTr("%1 changed to %2").arg(valueLabel(step.field)).arg(step.value)
                 : qsTr("%1 changed").arg(valueLabel(step.field))
+        case "setText": return qsTr("Text of %1 changed").arg(body)
+        case "holeBody": return qsTr("%1 made a hole").arg(body)
+        case "solidBody": return qsTr("%1 made a part again").arg(body)
         case "setLabel": return qsTr("Step renamed")
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
         case "unsuppress": return qsTr("%1 step shown").arg(typeLabel(step.type))
@@ -581,11 +658,15 @@ Window {
     }))
 
     readonly property var chosenBodyIndexes: Selection.items.map(item => item.bodyIndex)
+    // Every chosen body is a hole: "As hole" in the menu is ticked and a click turns it off.
+    readonly property bool chosenAreHoles: chosenBodyIndexes.length > 0
+        && chosenBodyIndexes.every(index => index >= 0 && index < DocumentModel.bodies.length && DocumentModel.bodies[index].hole)
 
     readonly property var bodyList: DocumentModel.bodies.map(body => ({
         name: body.name !== "" ? body.name : typeLabel(body.type) + " " + body.number,
         color: body.color,
         visible: body.visible,
+        hole: body.hole,
         chosen: chosenBodyIndexes.indexOf(body.index) >= 0
     }))
 

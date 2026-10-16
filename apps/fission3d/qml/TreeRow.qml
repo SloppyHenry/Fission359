@@ -17,6 +17,7 @@ Rectangle {
     property string eyeLabel: ""
     property string iconName: ""
     property color swatch: "transparent"
+    property bool hole: false          // a hole: the swatch is an empty outline (a ghost)
     property string text: ""
     property string count: ""
     signal eyeToggled
@@ -70,9 +71,9 @@ Rectangle {
                 width: 12
                 height: 12
                 radius: 3
-                color: root.swatch
-                border.width: 1
-                border.color: Theme.edge
+                color: root.hole ? "transparent" : root.swatch
+                border.width: root.hole ? 2 : 1
+                border.color: root.hole ? root.swatch : Theme.edge
             }
         }
 

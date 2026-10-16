@@ -100,6 +100,14 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
     set_tests_properties(app_window_${_theme}_matches_design PROPERTIES
       ENVIRONMENT "QT_QPA_PLATFORM=offscreen" FIXTURES_REQUIRED window_${_theme} TIMEOUT 60)
   endforeach()
+  # AP-1.5: the shape gallery opens, shapes are put down (also as hole, also lettering) through
+  # the calls the tiles make, and the window still draws.
+  add_test(NAME app_shape_gallery
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-gallery.png" --language en --size 1280x800
+            --show-shapes --simulate "put:sphere;drop:box,640,420;puthole:cylinder;put:text;put:star")
+  set_tests_properties(app_shape_gallery PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

@@ -11,7 +11,13 @@ Rectangle {
 
     property string stepTitle: ""
     property var stepValues: []        // [{ name, label, group, expression, value, kind, error }]
+    property var stepTexts: []         // [{ name, value, kind }] kind: text | font
+    property var fonts: []             // names of the fonts lettering can use
     signal valueCommitted(string name, string text)
+    signal textCommitted(string name, string text)
+    function focusText() {
+        wordRepeater.itemAt(0)?.focusAndSelect()
+    }
     readonly property var sizeValues: stepValues.filter(v => v.group === "size")
     readonly property var positionValues: stepValues.filter(v => v.group === "position")
     property string tab: "object"      // object | printer
@@ -130,6 +136,40 @@ Rectangle {
             }
 
             Section {
+                visible: root.tab === "object" && root.stepTexts.length > 0
+                heading: qsTr("Text")
+
+                Repeater {
+                    id: wordRepeater
+
+                    model: root.stepTexts.filter(t => t.kind === "text")
+
+                    delegate: WordField {
+                        required property var modelData
+
+                        width: parent.width
+                        label: qsTr("Words")
+                        value: modelData.value
+                        onCommitted: text => root.textCommitted(modelData.name, text)
+                    }
+                }
+
+                Repeater {
+                    model: root.stepTexts.filter(t => t.kind === "font")
+
+                    delegate: FontField {
+                        required property var modelData
+
+                        width: parent.width
+                        label: qsTr("Font")
+                        value: modelData.value
+                        fonts: root.fonts
+                        onChosen: name => root.textCommitted(modelData.name, name)
+                    }
+                }
+            }
+
+            Section {
                 visible: root.tab === "object" && root.sizeValues.length > 0
                 heading: qsTr("Size")
 
@@ -144,7 +184,7 @@ Rectangle {
                         width: parent.width
                         label: modelData.label
                         kind: modelData.kind
-                        unit: modelData.kind === "angle" ? "°" : "mm"
+                        unit: modelData.kind === "angle" ? "°" : modelData.kind === "plain" ? "" : "mm"
                         invalid: modelData.error
                         onTextCommitted: text => root.valueCommitted(modelData.name, text)
 
