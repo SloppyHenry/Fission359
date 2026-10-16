@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <vector>
 
 namespace fission::ui {
 
@@ -71,38 +72,175 @@ void HandleController::refresh() {
     QVariantList shown;
     if (m_model != nullptr && m_viewport != nullptr) {
         const QVariantList world = m_model->stepHandles();
+        const QVector3D eye = m_viewport->eyePosition();
+        const auto origin = [](const QVariantMap& handle) {
+            return QVector3D(static_cast<float>(handle["x"].toDouble()),
+                             static_cast<float>(handle["y"].toDouble()),
+                             static_cast<float>(handle["z"].toDouble()));
+        };
+
+        // One handle for each value, at the place that is nearest to the viewer. While a value is
+        // being changed, its place stays (the handle must not jump to another side of the shape).
+        QStringList order;
+        std::map<QString, int> best;
         for (int i = 0; i < world.size(); ++i) {
             const QVariantMap handle = world[i].toMap();
-            QVector3D at(static_cast<float>(handle["x"].toDouble()),
-                         static_cast<float>(handle["y"].toDouble()),
-                         static_cast<float>(handle["z"].toDouble()));
-            const QVector3D direction(static_cast<float>(handle["dx"].toDouble()),
-                                      static_cast<float>(handle["dy"].toDouble()),
-                                      static_cast<float>(handle["dz"].toDouble()));
-            double value = handle["value"].toDouble();
-            if (m_dragging && i == m_dragIndex) {
+            const QString parameter = handle["parameter"].toString();
+            if (!best.contains(parameter)) {
+                order.push_back(parameter);
+                best[parameter] = i;
+                continue;
+            }
+            const double here = (origin(handle) - eye).lengthSquared();
+            const double before = (origin(world[best[parameter]].toMap()) - eye).lengthSquared();
+            if (here < before - 1e-6) {
+                best[parameter] = i;
+            }
+        }
+        if (m_editing) {
+            for (const QString& parameter : order) {
+                const auto kept = m_chosen.find(parameter);
+                if (kept != m_chosen.end() && kept->second < world.size() &&
+                    world[kept->second].toMap()["parameter"].toString() == parameter) {
+                    best[parameter] = kept->second;
+                }
+            }
+        } else {
+            m_chosen = best;
+        }
+
+        struct Raw {
+            int candidate = 0;
+            QVariantMap handle;
+            QPointF at;    // the measured end, on the shape
+            QPointF start; // the other end
+            double value = 0.0;
+            double length = 0.0; // pixels per millimetre along the handle
+            QPointF way;         // the way it grows, on screen (unit vector)
+        };
+        std::vector<Raw> raws;
+        for (int shownIndex = 0; shownIndex < order.size(); ++shownIndex) {
+            Raw raw;
+            raw.candidate = best[order[shownIndex]];
+            raw.handle = world[raw.candidate].toMap();
+            QVector3D at = origin(raw.handle);
+            const QVector3D direction(static_cast<float>(raw.handle["dx"].toDouble()),
+                                      static_cast<float>(raw.handle["dy"].toDouble()),
+                                      static_cast<float>(raw.handle["dz"].toDouble()));
+            raw.value = raw.handle["value"].toDouble();
+            double extent = raw.handle["extent"].toDouble();
+            if (m_dragging && shownIndex == m_dragIndex) {
                 // The shape is calculated a moment later: the dot goes where the pointer took it
                 // at once, so that it does not trail behind.
-                value = m_dragValue;
+                raw.value = m_dragValue;
+                extent = m_dragExtent + (m_dragValue - m_dragStartValue);
                 at = m_dragOrigin +
                      m_dragAxis * static_cast<float>((m_dragValue - m_dragStartValue) * m_dragSign *
                                                      m_dragTravel);
             }
-            const QPointF here = m_viewport->project(at.x(), at.y(), at.z());
-            // One millimetre further along the handle's direction: which way the dot moves.
+            const QVector3D from = at - direction.normalized() * static_cast<float>(extent);
+            raw.at = m_viewport->project(at.x(), at.y(), at.z());
+            raw.start = m_viewport->project(from.x(), from.y(), from.z());
             const QVector3D next = at + direction;
-            const QPointF step = m_viewport->project(next.x(), next.y(), next.z()) - here;
-            const double length = std::hypot(step.x(), step.y());
+            const QPointF step = m_viewport->project(next.x(), next.y(), next.z()) - raw.at;
+            raw.length = std::hypot(step.x(), step.y());
+            raw.way = raw.length > 1e-9 ? step / raw.length : QPointF(0.0, -1.0);
+            raws.push_back(raw);
+        }
+
+        // Like the measures of a drawing: the band lies beside the shape, not across it, with
+        // lines from its ends to the points it measures. "Beside" is away from the middle of all
+        // the handles, and the labels make room for each other.
+        QPointF middle(0.0, 0.0);
+        for (const Raw& raw : raws) {
+            middle += raw.at + raw.start;
+        }
+        if (!raws.empty()) {
+            middle /= 2.0 * static_cast<double>(raws.size());
+        }
+        constexpr double kOffset = 26.0;
+        constexpr double kChipWidth = 112.0;
+        constexpr double kChipHeight = 24.0;
+        std::vector<QPointF> chips;
+        std::vector<QPointF> normals;
+        for (const Raw& raw : raws) {
+            const double length =
+                std::hypot(raw.at.x() - raw.start.x(), raw.at.y() - raw.start.y());
+            const QPointF centre = (raw.at + raw.start) / 2.0; // where the band lies
+            QPointF normal;
+            if (length > 6.0) {
+                normal = QPointF(-raw.way.y(), raw.way.x());
+                if (QPointF::dotProduct(normal, centre - middle) < 0.0) {
+                    normal = -normal;
+                }
+            } else {
+                // Nothing to measure yet (a corner radius of 0): out of the shape, along the way
+                // from the middle.
+                const QPointF out = raw.at - middle;
+                const double outLength = std::hypot(out.x(), out.y());
+                normal = outLength > 1e-6 ? out / outLength : QPointF(0.0, -1.0);
+            }
+            normals.push_back(normal);
+            // The label sits beyond the arrow of the handle, where the band points to.
+            const QPointF way = raw.way;
+            const double reach =
+                24.0 + std::abs(way.x()) * kChipWidth / 2.0 + std::abs(way.y()) * kChipHeight / 2.0;
+            chips.push_back(raw.at + normal * kOffset + way * reach);
+        }
+        for (int pass = 0; pass < 4; ++pass) { // pushed apart where they would lie on each other
+            for (std::size_t i = 0; i < chips.size(); ++i) {
+                for (std::size_t j = i + 1; j < chips.size(); ++j) {
+                    const QPointF gap = chips[j] - chips[i];
+                    if (std::abs(gap.x()) < kChipWidth && std::abs(gap.y()) < kChipHeight) {
+                        const double push = (kChipHeight - std::abs(gap.y())) / 2.0 + 1.0;
+                        const double direction = gap.y() >= 0.0 ? 1.0 : -1.0;
+                        chips[i].ry() -= direction * push;
+                        chips[j].ry() += direction * push;
+                    }
+                }
+            }
+        }
+
+        for (std::size_t i = 0; i < raws.size(); ++i) {
+            const Raw& raw = raws[i];
+            const QPointF shift = normals[i] * kOffset;
+            const QPointF dot = raw.at + shift;
+            const QPointF bandStart = raw.start + shift;
+            const QPointF along = raw.way;
+            // The colour of the axis it runs along, whatever the view (round shapes: their own).
+            QString axis = QStringLiteral("radial");
+            const QString name = raw.handle["parameter"].toString();
+            const bool measuresAxis = name != QLatin1String("cornerRadius") &&
+                                      name != QLatin1String("wall") &&
+                                      name != QLatin1String("tubeRadius");
+            if (raw.handle["kind"].toString() != QLatin1String("radius") && measuresAxis) {
+                const double ax = std::abs(raw.handle["dx"].toDouble());
+                const double ay = std::abs(raw.handle["dy"].toDouble());
+                const double az = std::abs(raw.handle["dz"].toDouble());
+                axis = az >= ax && az >= ay ? QStringLiteral("z")
+                       : ax >= ay           ? QStringLiteral("x")
+                                            : QStringLiteral("y");
+            }
             QVariantMap entry;
-            entry["index"] = i;
-            entry["parameter"] = handle["parameter"];
-            entry["kind"] = handle["kind"];
-            entry["x"] = here.x();
-            entry["y"] = here.y();
-            entry["dirX"] = length > 1e-9 ? step.x() / length : 0.0;
-            entry["dirY"] = length > 1e-9 ? step.y() / length : 0.0;
-            entry["pixelsPerMillimetre"] = length;
-            entry["value"] = value;
+            entry["index"] = static_cast<int>(i);
+            entry["candidate"] = raw.candidate;
+            entry["parameter"] = raw.handle["parameter"];
+            entry["kind"] = raw.handle["kind"];
+            entry["axis"] = axis;
+            entry["x"] = dot.x(); // the handle
+            entry["y"] = dot.y();
+            entry["fromX"] = bandStart.x(); // the other end of the band
+            entry["fromY"] = bandStart.y();
+            entry["pointX"] = raw.at.x(); // the points on the shape that it measures
+            entry["pointY"] = raw.at.y();
+            entry["startPointX"] = raw.start.x();
+            entry["startPointY"] = raw.start.y();
+            entry["chipX"] = chips[i].x();
+            entry["chipY"] = chips[i].y();
+            entry["dirX"] = along.x(); // which way it grows, on screen
+            entry["dirY"] = along.y();
+            entry["pixelsPerMillimetre"] = raw.length;
+            entry["value"] = raw.value;
             shown.push_back(entry);
         }
     }
@@ -114,10 +252,15 @@ void HandleController::refresh() {
 
 bool HandleController::beginDrag(int index, double x, double y) {
     if (m_model == nullptr || m_viewport == nullptr || m_editing || index < 0 ||
-        index >= m_model->stepHandles().size()) {
+        index >= m_handles.size()) {
         return false;
     }
-    const QVariantMap world = m_model->stepHandles()[index].toMap();
+    const int candidate = m_handles[index].toMap()["candidate"].toInt();
+    if (candidate < 0 || candidate >= m_model->stepHandles().size()) {
+        return false;
+    }
+    const QVariantMap world = m_model->stepHandles()[candidate].toMap();
+    m_dragExtent = world["extent"].toDouble();
     m_dragOrigin = QVector3D(static_cast<float>(world["x"].toDouble()),
                              static_cast<float>(world["y"].toDouble()),
                              static_cast<float>(world["z"].toDouble()));
@@ -228,21 +371,20 @@ bool HandleController::typeInsteadOfDrag() {
 }
 
 bool HandleController::beginEdit(int index) {
-    if (m_model == nullptr || m_editing || index < 0 || index >= m_model->stepHandles().size()) {
+    if (m_model == nullptr || m_editing || index < 0 || index >= m_handles.size()) {
         return false;
     }
-    m_model->beginChange(m_model->stepHandles()[index].toMap()["parameter"].toString());
+    m_model->beginChange(m_handles[index].toMap()["parameter"].toString());
     setEditing(true);
     return true;
 }
 
 bool HandleController::setValue(int index, const QString& text) {
-    if (!m_editing || m_model == nullptr || index < 0 || index >= m_model->stepHandles().size()) {
+    if (!m_editing || m_model == nullptr || index < 0 || index >= m_handles.size()) {
         return false;
     }
     return m_model->setStepValue(m_model->currentStep(),
-                                 m_model->stepHandles()[index].toMap()["parameter"].toString(),
-                                 text);
+                                 m_handles[index].toMap()["parameter"].toString(), text);
 }
 
 bool HandleController::commitEdit() {

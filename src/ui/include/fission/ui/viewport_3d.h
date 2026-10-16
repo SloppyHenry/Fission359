@@ -138,6 +138,8 @@ public:
     };
     std::optional<Landing> landingAt(double x, double y, const QString& ignoreBody,
                                      double planeZ) const;
+    /// Where the eye is in the world (mm): handles are shown on the side that faces it.
+    QVector3D eyePosition() const { return m_camera.eye(); }
     /// The ray from the eye through a point of the view (item pixels), in the world (mm).
     struct WorldRay {
         QVector3D origin;

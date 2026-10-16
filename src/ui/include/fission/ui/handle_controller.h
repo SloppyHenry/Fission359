@@ -9,6 +9,8 @@
 #include <QVariantList>
 #include <QVector3D>
 
+#include <map>
+
 #include "fission/ui/document_model.h"
 #include "fission/ui/viewport_3d.h"
 
@@ -24,9 +26,14 @@ namespace fission::ui {
 /// value) is one step in the history; `cancelEdit` (Esc) takes it all back.
 class HandleController : public QObject {
     Q_OBJECT
-    /// The handles on screen: [{ index, parameter, kind, x, y, dirX, dirY, value,
-    /// pixelsPerMillimetre }] (x, y in view pixels, dir a unit vector on screen). Empty when
-    /// nothing is shown.
+    /// The handles on screen, one for each value, in the order they are shown:
+    /// [{ index, candidate, parameter, kind, axis, x, y, fromX, fromY, pointX, pointY,
+    /// startPointX, startPointY, chipX, chipY, dirX, dirY, value, pixelsPerMillimetre }] (view
+    /// pixels; dir a unit vector on screen). The handle sits at the place facing the viewer. Like
+    /// a measure in a drawing, its band runs beside the shape from (fromX, fromY) to the handle
+    /// at (x, y), with lines to the two points on the shape it measures; `chipX`, `chipY` is
+    /// where its label goes. `axis` is x | y | z | radial (the colour of the handle).
+    /// `candidate` is the place in `DocumentModel::stepHandles`. Empty when nothing is shown.
     Q_PROPERTY(QVariantList handles READ handles NOTIFY handlesChanged)
     /// A drag or typing is going on.
     Q_PROPERTY(bool editing READ editing NOTIFY editingChanged)
@@ -86,6 +93,7 @@ private:
     QPointer<DocumentModel> m_model;
     QPointer<Viewport3D> m_viewport;
     QVariantList m_handles;
+    std::map<QString, int> m_chosen; ///< the place of each value while it is being changed
     bool m_editing = false;
     bool m_armed = false;
     int m_armedStep = -1;
@@ -93,7 +101,8 @@ private:
     // The drag in progress. The pointer is a ray into the scene; it is laid on a plane that holds
     // the axis of the handle and faces the viewer, and the handle follows where the ray meets it.
     bool m_dragging = false;
-    int m_dragIndex = -1;
+    int m_dragIndex = -1;       ///< the handle as shown (position in `handles`)
+    double m_dragExtent = 0.0;  ///< the length it measured when grabbed
     QVector3D m_dragOrigin;     ///< where the handle sat when it was grabbed (mm)
     QVector3D m_dragAxis;       ///< unit vector along which it moves
     QVector3D m_dragPlane;      ///< normal of the plane the pointer is laid on

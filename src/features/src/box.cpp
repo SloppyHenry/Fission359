@@ -71,32 +71,20 @@ public:
         const double x = valueOf(params, "x");
         const double y = valueOf(params, "y");
         const double z = valueOf(params, "z");
-        return {
-            {"width",
-             HandleKind::distance,
-             "width",
-             {x + w / 2.0, y, z + h / 2.0},
-             {1, 0, 0},
-             1.0,
-             0.5},
-            {"depth",
-             HandleKind::distance,
-             "depth",
-             {x, y + d / 2.0, z + h / 2.0},
-             {0, 1, 0},
-             1.0,
-             0.5},
-            {"height", HandleKind::distance, "height", {x, y, z + h}, {0, 0, 1}, 1.0, 1.0},
-            // On the top edge of the front right corner, where the curve begins: dragging it
-            // along the edge (to the left) makes the corner rounder, one to one.
-            {"cornerRadius",
-             HandleKind::distance,
-             "cornerRadius",
-             {x + w / 2.0 - r, y - d / 2.0, z + h},
-             {-1, 0, 0},
-             1.0,
-             1.0},
-        };
+        std::vector<HandleSpec> out;
+        addBothEnds(out, "width", {x, y, z + h / 2.0}, {1, 0, 0}, w / 2.0, w, 0.5);
+        addBothEnds(out, "depth", {x, y, z + h / 2.0}, {0, 1, 0}, d / 2.0, d, 0.5);
+        out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
+        // At each corner on the top edge, where the curve begins: dragging along the edge, away
+        // from the corner, makes the corner rounder, one to one.
+        for (const double sx : {1.0, -1.0}) {
+            for (const double sy : {1.0, -1.0}) {
+                out.push_back(makeHandle("cornerRadius", HandleKind::distance,
+                                         {x + sx * (w / 2.0 - r), y + sy * d / 2.0, z + h},
+                                         {-sx, 0, 0}, r));
+            }
+        }
+        return out;
     }
 };
 

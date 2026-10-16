@@ -80,6 +80,9 @@ struct HandleSpec {
     /// grows alone; 0.5 for a face of a shape that grows to both sides around its middle (the
     /// width of a box): the face then follows the pointer when the value changes twice as much.
     double travel = 1.0;
+    /// The length (mm) this handle measures, along `direction` and ending at `origin`: the
+    /// interface draws it as a measure band from `origin − direction × extent` to `origin`.
+    double extent = 0.0;
 };
 
 /// One body a step made or changed, with the role of each of its faces.
@@ -141,6 +144,10 @@ public:
 
     virtual Description describe(const ResolvedParams& params) const = 0;
 
+    /// The handles of the step, in the order they are shown. A value that can be changed from
+    /// several equal places (both ends of a box, all around a cylinder) is listed once for
+    /// each place, with the same `parameter`: the interface picks the one facing the viewer, so
+    /// the handle is always where one expects it.
     virtual std::vector<HandleSpec> handles(const ResolvedParams& params) const = 0;
 };
 

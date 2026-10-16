@@ -4,8 +4,10 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <memory>
@@ -203,18 +205,50 @@ TEST_CASE("steps describe themselves and offer handles that change values", "[fe
     CHECK(box.values[1].value == Approx(30.0));
 
     const auto handles = setup.registry.find("box")->handles(values);
-    REQUIRE(handles.size() == 4);
+    // A value that can be taken from several equal places is listed once for each place: both
+    // ends of the width and the depth, one for the height, one at each of the four corners.
+    REQUIRE(handles.size() == 9);
+    std::map<std::string, int> places;
     for (const HandleSpec& handle : handles) {
         // Every handle names the value it changes; none of them scales anything (rule 11).
         CHECK(values.contains(handle.parameter));
+        ++places[handle.parameter];
+        // The band it measures ends at the handle and is as long as the value says.
+        if (handle.parameter != "cornerRadius") {
+            CHECK(handle.extent == Approx(values.at(handle.parameter).value));
+        } else {
+            CHECK(handle.extent == Approx(3.0));
+        }
     }
-    CHECK(handles[2].parameter == "height");
-    CHECK(handles[2].origin.z == Approx(40.0));
+    CHECK(places == std::map<std::string, int>{
+                        {"width", 2}, {"depth", 2}, {"height", 1}, {"cornerRadius", 4}});
+    const auto height = std::find_if(handles.begin(), handles.end(), [](const HandleSpec& handle) {
+        return handle.parameter == "height";
+    });
+    REQUIRE(height != handles.end());
+    CHECK(height->origin.z == Approx(40.0));
+    // The two ends of the width face opposite ways and sit half a width from the middle.
+    std::vector<HandleSpec> width;
+    std::copy_if(handles.begin(), handles.end(), std::back_inserter(width),
+                 [](const HandleSpec& handle) { return handle.parameter == "width"; });
+    REQUIRE(width.size() == 2);
+    CHECK(width[0].direction.x == Approx(-width[1].direction.x));
+    CHECK(width[0].origin.x == Approx(-width[1].origin.x));
+    CHECK(std::abs(width[0].origin.x) == Approx(10.0));
 
     const auto cylinder = params({{"radius", 10}, {"height", 20}, {"x", 0}, {"y", 0}, {"z", 0}});
     const auto round = setup.registry.find("cylinder")->handles(cylinder);
-    REQUIRE(round.size() == 2);
+    // Round: the radius can be taken at eight places all around, the height at the top.
+    REQUIRE(round.size() == 9);
     CHECK(round[0].kind == HandleKind::radius);
+    for (int k = 0; k < 8; ++k) {
+        CHECK(round[static_cast<std::size_t>(k)].parameter == "radius");
+        // Every place is 10 mm from the axis and measures from the axis to there.
+        CHECK(std::hypot(round[static_cast<std::size_t>(k)].origin.x,
+                         round[static_cast<std::size_t>(k)].origin.y) == Approx(10.0));
+        CHECK(round[static_cast<std::size_t>(k)].extent == Approx(10.0));
+    }
+    CHECK(round[8].parameter == "height");
 }
 
 TEST_CASE("a default draft has every value and its body", "[features]") {

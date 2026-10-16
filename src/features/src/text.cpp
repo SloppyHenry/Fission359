@@ -73,18 +73,12 @@ public:
         const double y = valueOf(params, "y");
         const double z = valueOf(params, "z");
         const double h = valueOf(params, "height");
-        return {
-            {"height", HandleKind::distance, "height", {x, y, z + h}, {0, 0, 1}, 1.0},
-            // At the top edge of capital letters: dragging towards the back makes the letters
-            // taller.
-            {"size",
-             HandleKind::distance,
-             "size",
-             {x, y + valueOf(params, "size") / 2.0, z + h},
-             {0, 1, 0},
-             1.0,
-             0.5},
-        };
+        const double size = valueOf(params, "size");
+        std::vector<HandleSpec> out;
+        out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
+        // The height of capital letters, taken at the top or at the bottom edge.
+        addBothEnds(out, "size", {x, y, z + h}, {0, 1, 0}, size / 2.0, size, 0.5);
+        return out;
     }
 };
 

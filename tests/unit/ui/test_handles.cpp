@@ -360,3 +360,41 @@ TEST_CASE("handles: rounding a corner goes in whole millimetres, also in a slant
     CHECK(changes >= 8);         // 10 mm in the steps of one
     CHECK(last == Approx(10.0)); // the pointer went 10 mm along the edge: the radius followed
 }
+
+TEST_CASE("handles: each value is taken on the side that faces the viewer", "[ui][handles]") {
+    Fixture f;
+    roundedPlate(f);
+    const auto placeOf = [&](const QString& parameter) {
+        const int candidate = f.handle(parameter)["candidate"].toInt();
+        return f.model->stepHandles()[candidate].toMap();
+    };
+
+    f.viewport.setCamera(0.0, 36.0, 300.0); // from the front (-Y)
+    f.refresh();
+    CHECK(placeOf("depth")["y"].toDouble() < 0.0);
+    f.viewport.setCamera(180.0, 36.0, 300.0); // from the back
+    f.refresh();
+    CHECK(placeOf("depth")["y"].toDouble() > 0.0);
+    f.viewport.setCamera(90.0, 36.0, 300.0); // from the side: the width is taken on that side
+    f.refresh();
+    const double sideA = placeOf("width")["x"].toDouble();
+    f.viewport.setCamera(-90.0, 36.0, 300.0);
+    f.refresh();
+    CHECK(placeOf("width")["x"].toDouble() == Approx(-sideA));
+
+    // The value of the handle does not depend on the side: the same width either way.
+    CHECK(f.handle("width")["value"].toDouble() == Approx(40.0));
+
+    // One handle for each value, whatever the number of places.
+    CHECK(f.handles->handles().size() == 4);
+}
+
+TEST_CASE("handles: pulling the handle on the far side changes the value the same way",
+          "[ui][handles]") {
+    Fixture f;
+    roundedPlate(f);
+    f.viewport.setCamera(180.0, 90.0, 300.0); // straight down, turned round: +x points left
+    f.refresh();
+    f.pull("width", 10.0); // the face goes 10 mm outwards on whichever side the handle is
+    CHECK(f.value("width") == Approx(60.0));
+}

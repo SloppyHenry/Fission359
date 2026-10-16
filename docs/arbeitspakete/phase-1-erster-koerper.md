@@ -567,9 +567,13 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 - **c) Galerie:** 12 Kacheln mit Bildern der echten Formen; Ziehen in die Ansicht (die Form folgt dem Zeiger, landet auf Bett oder
   ebener Oberseite, Loslassen = ein Schritt, Esc = zurück) oder Anklicken (freier Platz); „Als Loch“ als Geisterform;
   Textfelder und Schriftliste rechts; Sätze, Hinweise, Tooltips und Suchwörter auf Deutsch und Englisch.
-- **d) Griffe:** Punkte an der gewählten Form (je Maß einer, beim Quader auch für den Eckenradius); Ziehen ändert das Maß (nie
-  skalieren), Wertblase am Griff, Tippen ersetzt Ziehen (auch mitten im Ziehen), `Tab` springt zum nächsten Maß, Enter übernimmt,
-  Esc nimmt alles zurück; das Ziehen hört auf, wo die Form unmöglich würde (z. B. Breite unter 2 × Eckenradius).
+- **d) Griffe (nach der Vorlage „Achsen“ überarbeitet):** Jedes Maß hat ein **Maßband** wie in einer Zeichnung: eine farbige Linie
+  neben der Form (Breite rot, Tiefe grün, Höhe blau, Rundungen in der Akzentfarbe) mit Hilfslinien zu den gemessenen Punkten, einem
+  Pfeil am Griff und einer Beschriftung („Breite 40“), die man anklicken und überschreiben kann. Der Griff sitzt auf der Seite, die
+  **dir zugewandt** ist (jede Form meldet alle gleichwertigen Stellen: beide Enden der Breite, alle Ecken, rundherum bei runden Formen).
+  Ziehen ändert das Maß (nie skalieren), der Punkt bleibt unter dem Zeiger, Tippen ersetzt Ziehen (auch mitten im Ziehen), `Tab`
+  springt zum nächsten Maß, Enter übernimmt, Esc nimmt alles zurück; das Ziehen hört auf, wo die Form unmöglich würde (z. B. Breite
+  unter 2 × Eckenradius). Ein Griff, der fast auf den Betrachter zeigt, wird nicht gezogen, kein Maß geht über 2000 mm.
 
 **Wie getestet**
 - Mac (arm64, Debug): `ctest` alle grün, darunter Golden-Tests (Volumen und Oberfläche jeder Form gleich dem analytischen Wert,
@@ -577,7 +581,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
   Platzieren, Abbrechen, Loch, Kachelbilder, Griffe und **Ablauf D, Schritt 1 automatisch** (Quader 40 × 40 × 10 mit 5-mm-Ecken über
   den Griff auf 80 mm gezogen: alle vier Ecken sind weiter Kreisbögen mit R 5 mm, Netzpunkte gemessen, Volumen exakt).
 - Fenster mit offener Galerie, abgelegten Formen und getippten Maßen (`app_shape_gallery`); Bilder:
-  [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png), [ap-1.5-schnitt-de.png](../screenshots/ap-1.5-schnitt-de.png).
+  [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png), [ap-1.5-schnitt-de.png](../screenshots/ap-1.5-schnitt-de.png), [ap-1.5-griffe-de.png](../screenshots/ap-1.5-griffe-de.png).
 - Linux: nur CI (Ubuntu 24.04, `release` und `debug-asan`); nicht von Hand auf dem Testrechner ausprobiert.
 
 **So probierst du es aus**
@@ -595,8 +599,8 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 **Einschränkungen, Annahmen, Folge-Arbeiten**
 - **Ablegen nur auf waagerechten Flächen:** Auf Wänden und Schrägen bleibt die Form auf der Arbeitsebene (Höhe der zuletzt benutzten
   Fläche). Eine Form an einer senkrechten Fläche auszurichten braucht Drehen (AP-1.6).
-- **Griffe sind ein Zeichenelement über der Ansicht:** Sie sind nicht tiefenrichtig (sie scheinen durch Körper hindurch) und es gibt
-  keine Maßbänder; nur die Griff-Art „Achsen“ (Punkte mit Pfeil). „Klassisch“ kommt mit den Einstellungen (AP-1.11).
+- **Griffe sind ein Zeichenelement über der Ansicht:** Sie sind nicht tiefenrichtig (Bänder und Beschriftungen scheinen durch Körper
+  hindurch) und bei kleinen Körpern im Bild können sich Beschriftungen nahekommen (sie weichen einander aus); nur die Griff-Art „Achsen“. „Klassisch“ kommt mit den Einstellungen (AP-1.11).
 - **Tippen ohne Ziehen:** Ziffern fangen nur direkt nach dem Ablegen an zu tippen (sonst sind 1 bis 6 die Ansichten). Auch `Tab` oder
   Enter beginnen das Tippen. Bei einer schon vorhandenen Form: Punkt anfassen und dann tippen, oder die Felder rechts benutzen.
 - **Seiten und Zacken** (Prisma, Stern) haben keinen Griff; sie stehen als Zahl im Feld rechts.

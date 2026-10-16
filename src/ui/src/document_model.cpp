@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
+#include <vector>
 
 #include "fission/core/commands.h"
 #include "fission/features/builtin.h"
@@ -361,8 +362,20 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
             alive.insert(meshKey(body));
         }
         const std::lock_guard lock(m_meshMutex);
-        for (auto it = m_meshes.begin(); it != m_meshes.end();) {
-            it = alive.contains(it->first) ? std::next(it) : m_meshes.erase(it);
+        // The worker makes the mesh of a newer result before this one is applied here (changes
+        // come faster than they are shown, e.g. while a handle is dragged). Its mesh must not be
+        // swept away as "not in this result": that left the body out of the view and let go of
+        // the selection. So the newest meshes that are not part of this result stay; only older
+        // ones go (the keys grow with time).
+        constexpr std::size_t kKeptNewer = 24;
+        std::vector<std::uint64_t> others;
+        for (const auto& [key, mesh] : m_meshes) {
+            if (!alive.contains(key)) {
+                others.push_back(key);
+            }
+        }
+        for (std::size_t i = 0; i + kKeptNewer < others.size(); ++i) { // `others` is ascending
+            m_meshes.erase(others[i]);
         }
         // Finer meshes of bodies that changed are gone; new bodies get theirs again below.
         for (auto it = m_detailMeshes.begin(); it != m_detailMeshes.end();) {
@@ -617,6 +630,7 @@ QVariantList DocumentModel::buildStepHandles() const {
         entry[QStringLiteral("dz")] = spec.direction.z;
         entry[QStringLiteral("sign")] = spec.sign;
         entry[QStringLiteral("travel")] = spec.travel;
+        entry[QStringLiteral("extent")] = spec.extent;
         entry[QStringLiteral("value")] = value->second.value;
         handles.push_back(entry);
     }
