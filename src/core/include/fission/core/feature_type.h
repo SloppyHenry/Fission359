@@ -76,6 +76,10 @@ struct HandleSpec {
     geo::Point3d origin;    ///< Where it sits (mm).
     geo::Point3d direction; ///< Unit vector along which it is dragged.
     double sign = 1.0;      ///< +1: dragging along `direction` increases the value, -1: decreases.
+    /// How far the handle moves (mm) when the value grows by 1 mm. 1 for a handle on a face that
+    /// grows alone; 0.5 for a face of a shape that grows to both sides around its middle (the
+    /// width of a box): the face then follows the pointer when the value changes twice as much.
+    double travel = 1.0;
 };
 
 /// One body a step made or changed, with the role of each of its faces.

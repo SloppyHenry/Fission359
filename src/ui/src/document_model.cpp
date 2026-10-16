@@ -616,6 +616,7 @@ QVariantList DocumentModel::buildStepHandles() const {
         entry[QStringLiteral("dy")] = spec.direction.y;
         entry[QStringLiteral("dz")] = spec.direction.z;
         entry[QStringLiteral("sign")] = spec.sign;
+        entry[QStringLiteral("travel")] = spec.travel;
         entry[QStringLiteral("value")] = value->second.value;
         handles.push_back(entry);
     }

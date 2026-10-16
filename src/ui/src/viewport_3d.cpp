@@ -802,6 +802,14 @@ std::optional<render::SurfaceHit> Viewport3D::surfaceAt(double x, double y) cons
     return render::pickSurface(*m_shown, *ray);
 }
 
+std::optional<Viewport3D::WorldRay> Viewport3D::rayAt(double x, double y) const {
+    const std::optional<render::Ray> ray = m_camera.rayThrough(QPointF(x, y));
+    if (!ray) {
+        return std::nullopt;
+    }
+    return WorldRay{ray->origin, ray->direction};
+}
+
 std::optional<Viewport3D::Landing>
 Viewport3D::landingAt(double x, double y, const QString& ignoreBody, double planeZ) const {
     const std::optional<render::Ray> ray = m_camera.rayThrough(QPointF(x, y));

@@ -52,13 +52,19 @@ void HandleController::setEditing(bool editing) {
 }
 
 double HandleController::snapStep(double pixelsPerMillimetre) {
-    if (pixelsPerMillimetre >= 30.0) {
+    // Whole millimetres are the everyday step: a corner radius of 0 to 10 mm must not come in
+    // jumps of 5. Finer when zoomed in, coarser only when the handle is hardly longer than a
+    // pixel per millimetre.
+    if (pixelsPerMillimetre >= 20.0) {
         return 0.1;
     }
-    if (pixelsPerMillimetre >= 3.0) {
+    if (pixelsPerMillimetre >= 6.0) {
+        return 0.5;
+    }
+    if (pixelsPerMillimetre >= 0.8) {
         return 1.0;
     }
-    return pixelsPerMillimetre >= 0.6 ? 5.0 : 10.0;
+    return pixelsPerMillimetre >= 0.3 ? 5.0 : 10.0;
 }
 
 void HandleController::refresh() {
@@ -67,26 +73,36 @@ void HandleController::refresh() {
         const QVariantList world = m_model->stepHandles();
         for (int i = 0; i < world.size(); ++i) {
             const QVariantMap handle = world[i].toMap();
-            const double x = handle["x"].toDouble();
-            const double y = handle["y"].toDouble();
-            const double z = handle["z"].toDouble();
-            const QPointF at = m_viewport->project(x, y, z);
-            // One millimetre further along the handle's direction: where the pointer has to go.
-            const QPointF along =
-                m_viewport->project(x + handle["dx"].toDouble(), y + handle["dy"].toDouble(),
-                                    z + handle["dz"].toDouble());
-            const QPointF step = along - at;
+            QVector3D at(static_cast<float>(handle["x"].toDouble()),
+                         static_cast<float>(handle["y"].toDouble()),
+                         static_cast<float>(handle["z"].toDouble()));
+            const QVector3D direction(static_cast<float>(handle["dx"].toDouble()),
+                                      static_cast<float>(handle["dy"].toDouble()),
+                                      static_cast<float>(handle["dz"].toDouble()));
+            double value = handle["value"].toDouble();
+            if (m_dragging && i == m_dragIndex) {
+                // The shape is calculated a moment later: the dot goes where the pointer took it
+                // at once, so that it does not trail behind.
+                value = m_dragValue;
+                at = m_dragOrigin +
+                     m_dragAxis * static_cast<float>((m_dragValue - m_dragStartValue) * m_dragSign *
+                                                     m_dragTravel);
+            }
+            const QPointF here = m_viewport->project(at.x(), at.y(), at.z());
+            // One millimetre further along the handle's direction: which way the dot moves.
+            const QVector3D next = at + direction;
+            const QPointF step = m_viewport->project(next.x(), next.y(), next.z()) - here;
             const double length = std::hypot(step.x(), step.y());
             QVariantMap entry;
             entry["index"] = i;
             entry["parameter"] = handle["parameter"];
             entry["kind"] = handle["kind"];
-            entry["x"] = at.x();
-            entry["y"] = at.y();
+            entry["x"] = here.x();
+            entry["y"] = here.y();
             entry["dirX"] = length > 1e-9 ? step.x() / length : 0.0;
             entry["dirY"] = length > 1e-9 ? step.y() / length : 0.0;
             entry["pixelsPerMillimetre"] = length;
-            entry["value"] = handle["value"];
+            entry["value"] = value;
             shown.push_back(entry);
         }
     }
@@ -102,18 +118,45 @@ bool HandleController::beginDrag(int index, double x, double y) {
         return false;
     }
     const QVariantMap world = m_model->stepHandles()[index].toMap();
-    const QPointF at =
-        m_viewport->project(world["x"].toDouble(), world["y"].toDouble(), world["z"].toDouble());
-    const QPointF along = m_viewport->project(world["x"].toDouble() + world["dx"].toDouble(),
-                                              world["y"].toDouble() + world["dy"].toDouble(),
-                                              world["z"].toDouble() + world["dz"].toDouble());
-    m_dragPerMillimetre = along - at;
-    m_dragIndex = index;
-    m_dragStart = QPointF(x, y);
+    m_dragOrigin = QVector3D(static_cast<float>(world["x"].toDouble()),
+                             static_cast<float>(world["y"].toDouble()),
+                             static_cast<float>(world["z"].toDouble()));
+    m_dragAxis = QVector3D(static_cast<float>(world["dx"].toDouble()),
+                           static_cast<float>(world["dy"].toDouble()),
+                           static_cast<float>(world["dz"].toDouble()))
+                     .normalized();
     m_dragStartValue = world["value"].toDouble();
     m_dragValue = m_dragStartValue;
     m_dragSign = world["sign"].toDouble();
+    m_dragTravel = std::max(world["travel"].toDouble(), 0.05);
     m_dragParameter = world["parameter"].toString();
+    m_dragIndex = index;
+
+    // The plane through the axis that faces the viewer most: the part of the line of sight that
+    // does not run along the axis.
+    m_dragUsable = false;
+    m_dragPlane = {};
+    m_dragGrabbed = 0.0;
+    if (const auto ray = m_viewport->rayAt(x, y)) {
+        const QVector3D across =
+            ray->direction - QVector3D::dotProduct(ray->direction, m_dragAxis) * m_dragAxis;
+        if (across.length() >= kLeastSight) {
+            m_dragPlane = across.normalized();
+            const float denominator = QVector3D::dotProduct(ray->direction, m_dragPlane);
+            if (std::abs(denominator) > 1e-6F) {
+                const float reach =
+                    QVector3D::dotProduct(m_dragOrigin - ray->origin, m_dragPlane) / denominator;
+                const QVector3D met = ray->origin + ray->direction * reach;
+                m_dragGrabbed = QVector3D::dotProduct(met - m_dragOrigin, m_dragAxis);
+                m_dragUsable = reach > 0.0F;
+            }
+        }
+    }
+    const QPointF here = m_viewport->project(m_dragOrigin.x(), m_dragOrigin.y(), m_dragOrigin.z());
+    const QVector3D next = m_dragOrigin + m_dragAxis;
+    const QPointF step = m_viewport->project(next.x(), next.y(), next.z()) - here;
+    m_dragPixelsPerMillimetre = std::hypot(step.x(), step.y());
+
     m_dragging = true;
     m_model->beginChange(m_dragParameter);
     setEditing(true);
@@ -121,27 +164,37 @@ bool HandleController::beginDrag(int index, double x, double y) {
 }
 
 double HandleController::dragTo(double x, double y) {
-    if (!m_dragging || m_model == nullptr) {
+    if (!m_dragging || m_model == nullptr || !m_dragUsable) {
         return m_dragValue;
     }
-    const double length2 = m_dragPerMillimetre.x() * m_dragPerMillimetre.x() +
-                           m_dragPerMillimetre.y() * m_dragPerMillimetre.y();
-    // Looking along the handle: the pointer cannot tell how far to go. The value stays.
-    if (length2 < 0.25) {
+    const auto ray = m_viewport->rayAt(x, y);
+    if (!ray) {
         return m_dragValue;
     }
-    const QPointF moved = QPointF(x, y) - m_dragStart;
-    const double millimetres =
-        (moved.x() * m_dragPerMillimetre.x() + moved.y() * m_dragPerMillimetre.y()) / length2;
-    const double step = snapStep(std::sqrt(length2));
-    const double wanted = std::round((m_dragStartValue + m_dragSign * millimetres) / step) * step;
+    const float denominator = QVector3D::dotProduct(ray->direction, m_dragPlane);
+    if (std::abs(denominator) < 1e-6F) {
+        return m_dragValue;
+    }
+    const float reach =
+        QVector3D::dotProduct(m_dragOrigin - ray->origin, m_dragPlane) / denominator;
+    if (reach <= 0.0F) {
+        return m_dragValue; // behind the eye
+    }
+    const QVector3D met = ray->origin + ray->direction * reach;
+    // How far along the axis the pointer has gone since it grabbed the handle. The face under the
+    // pointer follows it one to one; a shape that grows to both sides changes its value by more.
+    const double moved = QVector3D::dotProduct(met - m_dragOrigin, m_dragAxis) - m_dragGrabbed;
+    const double step = snapStep(m_dragPixelsPerMillimetre);
+    double wanted =
+        std::round((m_dragStartValue + m_dragSign * moved / m_dragTravel) / step) * step;
+    wanted = std::min(wanted, kLargestMillimetres);
     // Where the shape stops being possible (a corner radius wider than half the box, no wall left),
     // the handle stops, too.
-    if (wanted != m_dragValue && m_model->acceptsValue(m_dragParameter, wanted)) {
-        if (m_model->setStepValue(m_model->currentStep(), m_dragParameter,
-                                  QString::number(wanted, 'g', 12))) {
-            m_dragValue = wanted;
-        }
+    if (wanted != m_dragValue && m_model->acceptsValue(m_dragParameter, wanted) &&
+        m_model->setStepValue(m_model->currentStep(), m_dragParameter,
+                              QString::number(wanted, 'g', 12))) {
+        m_dragValue = wanted;
+        refresh(); // the dot goes with the pointer at once
     }
     return m_dragValue;
 }
@@ -153,6 +206,7 @@ bool HandleController::endDrag() {
     m_dragging = false;
     m_model->commitChange();
     setEditing(false);
+    refresh();
     return true;
 }
 

@@ -138,6 +138,12 @@ public:
     };
     std::optional<Landing> landingAt(double x, double y, const QString& ignoreBody,
                                      double planeZ) const;
+    /// The ray from the eye through a point of the view (item pixels), in the world (mm).
+    struct WorldRay {
+        QVector3D origin;
+        QVector3D direction; ///< unit length
+    };
+    std::optional<WorldRay> rayAt(double x, double y) const;
     /// Position of a world point in item pixels (for labels that float in the 3D view).
     Q_INVOKABLE QPointF project(double x, double y, double z) const;
 

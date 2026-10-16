@@ -72,9 +72,21 @@ public:
         const double y = valueOf(params, "y");
         const double z = valueOf(params, "z");
         return {
-            {"width", HandleKind::distance, "width", {x + w / 2.0, y, z + h / 2.0}, {1, 0, 0}, 1.0},
-            {"depth", HandleKind::distance, "depth", {x, y + d / 2.0, z + h / 2.0}, {0, 1, 0}, 1.0},
-            {"height", HandleKind::distance, "height", {x, y, z + h}, {0, 0, 1}, 1.0},
+            {"width",
+             HandleKind::distance,
+             "width",
+             {x + w / 2.0, y, z + h / 2.0},
+             {1, 0, 0},
+             1.0,
+             0.5},
+            {"depth",
+             HandleKind::distance,
+             "depth",
+             {x, y + d / 2.0, z + h / 2.0},
+             {0, 1, 0},
+             1.0,
+             0.5},
+            {"height", HandleKind::distance, "height", {x, y, z + h}, {0, 0, 1}, 1.0, 1.0},
             // On the top edge of the front right corner, where the curve begins: dragging it
             // along the edge (to the left) makes the corner rounder, one to one.
             {"cornerRadius",
@@ -82,6 +94,7 @@ public:
              "cornerRadius",
              {x + w / 2.0 - r, y - d / 2.0, z + h},
              {-1, 0, 0},
+             1.0,
              1.0},
         };
     }

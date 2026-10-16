@@ -82,7 +82,8 @@ public:
              "size",
              {x, y + valueOf(params, "size") / 2.0, z + h},
              {0, 1, 0},
-             1.0},
+             1.0,
+             0.5},
         };
     }
 };

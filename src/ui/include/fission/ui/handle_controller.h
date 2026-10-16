@@ -7,6 +7,7 @@
 #include <QPointF>
 #include <QPointer>
 #include <QVariantList>
+#include <QVector3D>
 
 #include "fission/ui/document_model.h"
 #include "fission/ui/viewport_3d.h"
@@ -66,6 +67,13 @@ public:
 
     /// The step of a value: whole millimetres, finer when zoomed in, coarser when far away.
     static double snapStep(double pixelsPerMillimetre);
+    /// No length of a shape is taken beyond this (mm): a slip of the hand must not make a body
+    /// the size of a house.
+    static constexpr double kLargestMillimetres = 2000.0;
+    /// A handle whose axis is closer than this (sine of the angle, 0.5 = 30 degrees) to the line
+    /// of sight cannot be dragged: the pointer would have to go ever so far for a little change.
+    /// (Typing and turning the view still work.)
+    static constexpr double kLeastSight = 0.5;
 
 signals:
     void handlesChanged();
@@ -82,13 +90,19 @@ private:
     bool m_armed = false;
     int m_armedStep = -1;
 
-    // The drag in progress.
+    // The drag in progress. The pointer is a ray into the scene; it is laid on a plane that holds
+    // the axis of the handle and faces the viewer, and the handle follows where the ray meets it.
     bool m_dragging = false;
     int m_dragIndex = -1;
-    QPointF m_dragStart;
-    QPointF m_dragPerMillimetre; ///< screen movement for one millimetre along the handle
+    QVector3D m_dragOrigin;     ///< where the handle sat when it was grabbed (mm)
+    QVector3D m_dragAxis;       ///< unit vector along which it moves
+    QVector3D m_dragPlane;      ///< normal of the plane the pointer is laid on
+    bool m_dragUsable = false;  ///< the axis is not (nearly) along the line of sight
+    double m_dragGrabbed = 0.0; ///< where along the axis the pointer was when it grabbed
+    double m_dragPixelsPerMillimetre = 1.0;
     double m_dragStartValue = 0.0;
     double m_dragSign = 1.0;
+    double m_dragTravel = 1.0;
     double m_dragValue = 0.0;
     QString m_dragParameter;
 };
