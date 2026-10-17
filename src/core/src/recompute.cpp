@@ -81,6 +81,16 @@ std::string cacheKey(const Feature& feature, const FeatureType& type, const Reso
         key += ',';
         key += std::to_string(value.dimension.angle);
     }
+    for (const TextFieldSpec& spec : type.texts()) {
+        const auto given = feature.texts.find(spec.name);
+        const std::string& text = given != feature.texts.end() ? given->second : spec.defaultValue;
+        key += '\x1f';
+        key += spec.name;
+        key += '=';
+        key += std::to_string(text.size()); // length first: the words may contain any character
+        key += ':';
+        key += text;
+    }
     for (const BodyResult* input : inputs) {
         key += "\x1f#";
         key += std::to_string(input->token);
@@ -96,6 +106,12 @@ FeatureIssue issueFromKernel(const geo::GeometryError& error) {
         return issueOf(FeatureIssueCode::kernelRejected, {}, error.what());
     case geo::GeometryErrorCode::invalidResult:
         return issueOf(FeatureIssueCode::kernelResultInvalid, {}, error.what());
+    case geo::GeometryErrorCode::textEmpty:
+        return issueOf(FeatureIssueCode::parameterOutOfRange, "text", error.what());
+    case geo::GeometryErrorCode::glyphsMissing:
+        return issueOf(FeatureIssueCode::textGlyphsMissing, error.subject(), error.what());
+    case geo::GeometryErrorCode::fontNotFound:
+        return issueOf(FeatureIssueCode::fontNotFound, error.subject(), error.what());
     case geo::GeometryErrorCode::kernelFailure:
         break;
     }

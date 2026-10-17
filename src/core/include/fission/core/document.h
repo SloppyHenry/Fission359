@@ -47,6 +47,7 @@ struct Feature {
     int typeVersion = 1; ///< For migrations of one feature type.
     std::string label;   ///< Optional name given by the person.
     std::map<std::string, Value> params;
+    std::map<std::string, std::string> texts; ///< Words the person typed (not formulas).
     std::map<std::string, std::vector<PersistentRef>> refs;
     std::vector<BodyId> inputs;  ///< Bodies this step works on (made by earlier steps).
     std::vector<BodyId> outputs; ///< Bodies this step creates or changes.
@@ -91,6 +92,7 @@ struct FeatureDraft {
     int typeVersion = 1;
     std::string label;
     std::map<std::string, Value> params;
+    std::map<std::string, std::string> texts;
     std::map<std::string, std::vector<PersistentRef>> refs;
     std::vector<BodyId> inputs;
     int newBodies = 0; ///< How many new bodies the step creates.
@@ -171,6 +173,8 @@ public:
     void setLastFeatureNumber(int number) noexcept { lastFeatureNumber_ = number; }
 
     bool setFeatureValue(const FeatureId& id, std::string_view name, std::string expression);
+    /// Sets a text of a step; false when the step has no text of that name.
+    bool setFeatureText(const FeatureId& id, std::string_view name, std::string text);
     bool setFeatureLabel(const FeatureId& id, std::string label);
     bool setFeatureSuppressed(const FeatureId& id, bool suppressed);
     bool setFeatureRefs(const FeatureId& id, std::string_view name,

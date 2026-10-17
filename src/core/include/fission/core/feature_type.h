@@ -30,6 +30,8 @@ enum class FeatureIssueCode {
     kernelResultInvalid,    ///< The kernel's result failed the validity check.
     kernelFailed,           ///< The kernel could not compute it.
     cancelled,              ///< A newer change replaced this calculation.
+    textGlyphsMissing,      ///< The font has no character for part of a text; `subject` lists them.
+    fontNotFound,           ///< The font is not on this computer; `subject` is its name.
 };
 
 struct FeatureIssue {
@@ -44,6 +46,12 @@ struct ParamSpec {
     std::string name;
     QuantityKind kind = QuantityKind::length;
     std::string defaultExpression;
+};
+
+/// A word-valued field of a step (a text, the name of a font) with its default.
+struct TextFieldSpec {
+    std::string name;
+    std::string defaultValue;
 };
 
 /// Values of a step after formulas and named measures were worked out (mm, degrees).
@@ -114,6 +122,10 @@ public:
 
     /// The values the step takes, with their defaults.
     virtual std::vector<ParamSpec> parameters() const = 0;
+
+    /// The words the step takes (most steps take none), with their defaults. They are read from
+    /// `Feature::texts` in `execute`.
+    virtual std::vector<TextFieldSpec> texts() const { return {}; }
 
     /// Checks the resolved values before the kernel is asked (cheap, no geometry).
     virtual std::optional<FeatureIssue> validate(const ResolvedParams& params) const = 0;

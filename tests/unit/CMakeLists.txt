@@ -10,9 +10,11 @@ add_executable(fission_unit_tests
   core/test_history.cpp
   core/test_selection.cpp
   features/test_primitives.cpp
+  features/test_text_feature.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp
+  geometry/test_text.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
   render/test_picking.cpp
@@ -29,5 +31,9 @@ add_executable(fission_unit_tests
 target_link_libraries(fission_unit_tests PRIVATE
   fission_core fission_features fission_geometry_occt fission_render fission_ui Catch2::Catch2WithMain)
 fission_apply_compiler_options(fission_unit_tests)
+
+target_compile_definitions(fission_unit_tests PRIVATE
+  FISSION_TEST_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures"
+  FISSION_APP_FONTS_DIR="${CMAKE_SOURCE_DIR}/apps/fission3d/resources/fonts")
 
 catch_discover_tests(fission_unit_tests)

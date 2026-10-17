@@ -11,12 +11,14 @@ namespace detail {
 std::unique_ptr<const core::FeatureType> makeBoxType();
 std::unique_ptr<const core::FeatureType> makeCylinderType();
 void addShapeTypes(core::FeatureRegistry& registry);
+std::unique_ptr<const core::FeatureType> makeTextType();
 } // namespace detail
 
 void registerBuiltinFeatures(core::FeatureRegistry& registry) {
     registry.add(detail::makeBoxType());
     registry.add(detail::makeCylinderType());
     detail::addShapeTypes(registry);
+    registry.add(detail::makeTextType());
 }
 
 } // namespace fission::features

@@ -495,7 +495,7 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
 ---
 
 ### AP-1.5 Grundformen
-**Status:** in Arbeit (Teil a erledigt, b–d offen) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
+**Status:** in Arbeit (Teil a und b erledigt, c–d offen) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
 
 **Umfang:**
 - Quader (mit optionalem Eckenradius), Zylinder, Kugel, Kegel, Torus, Röhre, Prisma (n-eckig), Pyramide, Halbkugel, Keil, Stern (2D-Stern hochgezogen), Text (flach, System- und mitgelieferte Schriften)
@@ -518,7 +518,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 | Teil | Status | Inhalt |
 |---|---|---|
 | **a) Formen im Kern** | erledigt | Alle Formen als Feature-Typen (Kugel, Halbkugel, Kegel, Torus, Röhre, Prisma, Pyramide, Keil, Stern), Quader mit Eckenradius, Namen für jede Fläche; Golden-Tests mit analytischen Werten |
-| **b) Text** | offen | Text-Feature, mitgelieferte Schriften (IBM Plex) plus Systemschriften, Meldung „Diese Schrift hat kein Zeichen für …“ |
+| **b) Text** | erledigt | Text-Feature, mitgelieferte Schriften (IBM Plex) plus Systemschriften, Meldung „Diese Schrift hat kein Zeichen für …“ |
 | **c) Galerie und Platzieren** | offen | Formen-Galerie mit 3D-Vorschau, Drag-and-drop, „Auf Fläche legen“, „Als Loch“-Schalter, Hinweiszeile, Tooltip-Karten, Synonyme (Regel 10), Texte für alle Formen (Deutsch und Englisch) |
 | **d) Griffe** | offen | Maß-Griffe in 3D (Griff-Art „Achsen“; „Klassisch“ kommt mit AP-1.11), Wertblase, Tippen ersetzt Ziehen, `Tab` wechselt das Maß, Esc nimmt zurück; Ablauf D Schritt 1 als automatischer Test |
 
@@ -536,6 +536,13 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 - **Kegel** mit Deckelradius 0 ist spitz, mit Deckelradius > 0 ein Kegelstumpf; gleiche Radien ergeben einen Zylinder.
 - **Pyramide** hat ein Rechteck (Breite × Tiefe) als Grundfläche, **Prisma** und **Stern** n Ecken (3 bis 64, ganze Zahl).
 - **Keil** ist eine Rampe: vorne (−Y) Höhe 0, hinten (+Y) volle Höhe.
+- **Text (Teil b):** Schrift gewählt per Familienname (Regular); mitgeliefert sind IBM Plex Sans und Mono (werden beim Start in den
+  Cache-Ordner kopiert, weil der Kernel Dateien liest), dazu alle Schriften des Rechners. Eine fehlende Schrift wird **nie** durch
+  eine andere ersetzt (Regel 6): „Die Schrift … gibt es auf diesem Rechner nicht“. Fehlt ihr ein Zeichen, steht es in der Meldung
+  („Diese Schrift hat kein Zeichen für 😀“), auch Ersatzschriften des Betriebssystems sind abgeschaltet. „Größe“ ist die Höhe eines
+  Großbuchstabens; „Höhe“ ist, wie weit die Buchstaben aufragen. Der Text sitzt mit seiner Tinte mittig auf dem Punkt (x, y), mehrere
+  Zeilen (Enter) gehen. Jeder getrennte Buchstabenteil ist ein eigener Körperteil im selben Körper (`glyph0Top`, `glyph0Side3` …).
+  Worte (Text, Schrift) sind eigene Felder im Schritt (`Feature::texts`), keine Formeln, mit eigenem Undo-Befehl.
 - Flächen-Namen: `top`, `bottom`, `side`, `surface`; bei Prisma und Stern `side1` … (Prisma: `side1` schaut nach vorn, dann gegen den
   Uhrzeigersinn von oben; Stern: `side1` folgt der Spitze nach hinten); Eckenradius: `cornerFrontLeft` …
 

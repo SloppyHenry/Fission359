@@ -262,13 +262,13 @@ NamedSolid makeWedge(const WedgeSpec& spec, const Point3d& base) {
 
 } // namespace
 
-NamedSolid makeNamedPrimitive(const PrimitiveSpec& spec, Point3d base) {
+NamedSolid makeNamedPrimitive(const PrimitiveSpec& spec, Point3d base, const FontBook& fonts) {
     if (!isFinite(base)) {
         throw GeometryError(GeometryErrorCode::invalidInput, "shape: the position must be finite");
     }
     try {
         return std::visit(
-            [&base](const auto& shape) -> NamedSolid {
+            [&base, &fonts](const auto& shape) -> NamedSolid {
                 using Shape = std::decay_t<decltype(shape)>;
                 if constexpr (std::is_same_v<Shape, SphereSpec>) {
                     return makeSphere(shape, base);
@@ -286,6 +286,8 @@ NamedSolid makeNamedPrimitive(const PrimitiveSpec& spec, Point3d base) {
                     return makePyramid(shape, base);
                 } else if constexpr (std::is_same_v<Shape, WedgeSpec>) {
                     return makeWedge(shape, base);
+                } else if constexpr (std::is_same_v<Shape, TextSpec>) {
+                    return makeNamedText(shape, base, fonts);
                 } else {
                     return makeStar(shape, base);
                 }

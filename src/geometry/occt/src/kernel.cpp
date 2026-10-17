@@ -11,12 +11,14 @@ namespace {
 
 class OcctKernel final : public GeometryKernel {
 public:
+    explicit OcctKernel(const KernelOptions& options) : fonts_(options.fontFiles) {}
+
     NamedSolid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner,
                        double cornerRadius) const override {
         return makeNamedBox(sizeX, sizeY, sizeZ, corner, cornerRadius);
     }
     NamedSolid makePrimitive(const PrimitiveSpec& spec, Point3d base) const override {
-        return makeNamedPrimitive(spec, base);
+        return makeNamedPrimitive(spec, base, fonts_);
     }
     NamedSolid makeCylinder(double radius, double height, Point3d base) const override {
         return makeNamedCylinder(radius, height, base);
@@ -25,12 +27,15 @@ public:
     TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const override {
         return occt::tessellate(solid, params);
     }
+
+private:
+    FontBook fonts_;
 };
 
 } // namespace
 
-std::unique_ptr<GeometryKernel> makeKernel() {
-    return std::make_unique<OcctKernel>();
+std::unique_ptr<GeometryKernel> makeKernel(const KernelOptions& options) {
+    return std::make_unique<OcctKernel>(options);
 }
 
 } // namespace fission::geo::occt
