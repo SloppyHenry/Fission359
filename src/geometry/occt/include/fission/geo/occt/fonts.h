@@ -21,7 +21,8 @@ class FontBook {
 public:
     FontBook() = default;
     /// `bundledFiles` are paths of font files that come with the program. They win over system
-    /// fonts of the same name, so a document looks the same on every computer.
+    /// fonts of the same name, so a document looks the same on every computer; a style that a
+    /// bundled font lacks is missing, also when an installed font of that name has it.
     explicit FontBook(const std::vector<std::string>& bundledFiles);
 
     struct Face {

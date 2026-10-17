@@ -78,10 +78,14 @@ FontBook::FontBook(const std::vector<std::string>& bundledFiles) {
 
 std::optional<FontBook::Face> FontBook::find(const std::string& family, FontStyle style) const {
     if (const auto bundled = bundled_.find(lower(family)); bundled != bundled_.end()) {
-        if (const auto face = bundled->second.faces.find(style);
-            face != bundled->second.faces.end()) {
-            return face->second;
+        // A font that comes with the program is the whole font: a style it lacks is not taken
+        // from an installed font of the same name, which may be another version, so a document
+        // looks the same on every computer.
+        const auto face = bundled->second.faces.find(style);
+        if (face == bundled->second.faces.end()) {
+            return std::nullopt;
         }
+        return face->second;
     }
     const std::lock_guard lock(systemFontsMutex());
     try {
