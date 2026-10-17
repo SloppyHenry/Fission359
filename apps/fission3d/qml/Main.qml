@@ -476,6 +476,7 @@ Window {
         case "depth": return qsTr("Depth")
         case "height": return qsTr("Height")
         case "radius": return qsTr("Radius")
+        case "cornerRadius": return qsTr("Corner radius")
         default: return name
         }
     }

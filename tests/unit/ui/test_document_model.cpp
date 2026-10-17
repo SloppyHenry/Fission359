@@ -57,10 +57,15 @@ public:
     explicit CountingKernel(std::unique_ptr<fission::geo::GeometryKernel> inner)
         : inner_(std::move(inner)) {}
 
-    fission::geo::NamedSolid makeBox(double x, double y, double z,
-                                     fission::geo::Point3d corner) const override {
+    fission::geo::NamedSolid makeBox(double x, double y, double z, fission::geo::Point3d corner,
+                                     double cornerRadius) const override {
         ++builds;
-        return inner_->makeBox(x, y, z, corner);
+        return inner_->makeBox(x, y, z, corner, cornerRadius);
+    }
+    fission::geo::NamedSolid makePrimitive(const fission::geo::PrimitiveSpec& spec,
+                                           fission::geo::Point3d base) const override {
+        ++builds;
+        return inner_->makePrimitive(spec, base);
     }
     fission::geo::NamedSolid makeCylinder(double radius, double height,
                                           fission::geo::Point3d base) const override {
@@ -160,11 +165,12 @@ TEST_CASE("values of the chosen step, formulas stay visible", "[ui][document-mod
     f.model->selectStep(0);
     CHECK(f.model->currentStep() == 0);
     QVariantList values = f.model->stepValues();
-    REQUIRE(values.size() == 6); // width depth height x y z
+    REQUIRE(values.size() == 7); // width depth height cornerRadius x y z
     CHECK(values[0].toMap()["name"].toString() == "width");
     CHECK(values[0].toMap()["group"].toString() == "size");
     CHECK(values[0].toMap()["expression"].toString().isEmpty()); // typed as a plain number
-    CHECK(values[3].toMap()["group"].toString() == "position");
+    CHECK(values[3].toMap()["name"].toString() == "cornerRadius");
+    CHECK(values[4].toMap()["group"].toString() == "position");
 
     f.model->setStepValue(0, "depth", "10 + 5");
     f.model->waitForCalculation();

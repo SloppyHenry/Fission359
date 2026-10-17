@@ -52,7 +52,13 @@ Made make(Setup& setup, const char* type, std::map<std::string, double> values) 
     REQUIRE(featureType != nullptr);
     made.id = *made.document.addFeature(defaultDraft(*featureType));
     const Feature& feature = *made.document.findFeature(made.id);
-    const ResolvedParams resolved = params(std::move(values));
+    // Values the test does not mention keep their defaults.
+    ResolvedParams resolved = params(std::move(values));
+    for (const ParamSpec& spec : featureType->parameters()) {
+        if (!resolved.contains(spec.name)) {
+            resolved[spec.name] = Quantity{std::stod(spec.defaultExpression), {1, 0}};
+        }
+    }
     REQUIRE_FALSE(featureType->validate(resolved).has_value());
     const std::vector<FeatureOutput> none;
     const ExecuteContext context{*setup.kernel, {}};
@@ -101,7 +107,9 @@ std::uint32_t faceOf(const FeatureOutput& output, const std::string& role) {
 
 TEST_CASE("the built-in feature types are registered", "[features]") {
     Setup setup;
-    CHECK(setup.registry.ids() == std::vector<std::string>{"box", "cylinder"});
+    CHECK(setup.registry.ids() == std::vector<std::string>{"box", "cone", "cylinder", "hemisphere",
+                                                           "prism", "pyramid", "sphere", "star",
+                                                           "torus", "tube", "wedge"});
 }
 
 TEST_CASE("box: size, place, faces and their names", "[features]") {
@@ -164,7 +172,7 @@ TEST_CASE("values that cannot make a body are stopped before the kernel", "[feat
     Setup setup;
     const FeatureType* box = setup.registry.find("box");
     const double nan = std::numeric_limits<double>::quiet_NaN();
-    const auto good = params({{"width", 1}, {"depth", 1}, {"height", 1}});
+    const auto good = params({{"width", 1}, {"depth", 1}, {"height", 1}, {"cornerRadius", 0}});
 
     CHECK_FALSE(box->validate(good).has_value());
     for (const auto& [name, value] :
@@ -181,8 +189,13 @@ TEST_CASE("values that cannot make a body are stopped before the kernel", "[feat
 
 TEST_CASE("steps describe themselves and offer handles that change values", "[features]") {
     Setup setup;
-    const auto values =
-        params({{"width", 20}, {"depth", 30}, {"height", 40}, {"x", 0}, {"y", 0}, {"z", 0}});
+    const auto values = params({{"width", 20},
+                                {"depth", 30},
+                                {"height", 40},
+                                {"cornerRadius", 3},
+                                {"x", 0},
+                                {"y", 0},
+                                {"z", 0}});
 
     const Description box = setup.registry.find("box")->describe(values);
     CHECK(box.key == "box");
@@ -190,7 +203,7 @@ TEST_CASE("steps describe themselves and offer handles that change values", "[fe
     CHECK(box.values[1].value == Approx(30.0));
 
     const auto handles = setup.registry.find("box")->handles(values);
-    REQUIRE(handles.size() == 3);
+    REQUIRE(handles.size() == 4);
     for (const HandleSpec& handle : handles) {
         // Every handle names the value it changes; none of them scales anything (rule 11).
         CHECK(values.contains(handle.parameter));
@@ -209,7 +222,131 @@ TEST_CASE("a default draft has every value and its body", "[features]") {
     const FeatureDraft draft = defaultDraft(*setup.registry.find("box"));
     CHECK(draft.type == "box");
     CHECK(draft.newBodies == 1);
-    CHECK(draft.params.size() == 6);
+    CHECK(draft.params.size() == 7);
     CHECK(draft.params.at("width").expression == "20");
     CHECK(draft.params.at("x").kind == QuantityKind::length);
+}
+
+TEST_CASE("box: rounded corners keep their radius when the box gets wider", "[features]") {
+    // Ablauf D, step 1: the handle changes the width, never scales (rule 11).
+    Setup setup;
+    for (const double width : {40.0, 80.0}) {
+        INFO("width " << width);
+        const Made made = make(
+            setup, "box", {{"width", width}, {"depth", 40}, {"height", 10}, {"cornerRadius", 5}});
+        CHECK(made.report.valid);
+        CHECK(made.report.volume ==
+              Approx((width * 40.0 - (4.0 - kPi) * 25.0) * 10.0).epsilon(1e-6));
+        CHECK_FALSE(checkNamingContract(made.result.outputs[0], made.report).has_value());
+        CHECK(made.report.faces == 10);
+    }
+}
+
+TEST_CASE("box: a corner radius that does not fit is stopped before the kernel", "[features]") {
+    Setup setup;
+    const FeatureType* box = setup.registry.find("box");
+    auto values = params({{"width", 40}, {"depth", 10}, {"height", 5}, {"cornerRadius", 5}});
+    CHECK_FALSE(box->validate(values).has_value()); // exactly half the shorter side is fine
+    for (const double bad : {5.5, -1.0, std::numeric_limits<double>::quiet_NaN()}) {
+        INFO("radius " << bad);
+        values["cornerRadius"].value = bad;
+        const auto issue = box->validate(values);
+        REQUIRE(issue.has_value());
+        CHECK(issue->code == FeatureIssueCode::parameterOutOfRange);
+        CHECK(issue->subject == "cornerRadius");
+    }
+}
+
+namespace {
+
+struct ShapeCase {
+    const char* type;
+    std::map<std::string, double> values;
+    double volume;
+    int faces;
+};
+
+} // namespace
+
+TEST_CASE("every basic shape is made, named and offers handles for its own values", "[features]") {
+    Setup setup;
+    const std::vector<ShapeCase> shapes{
+        {"sphere", {{"radius", 10}}, 4.0 / 3.0 * kPi * 1000.0, 1},
+        {"hemisphere", {{"radius", 10}}, 2.0 / 3.0 * kPi * 1000.0, 2},
+        {"cone", {{"radius", 10}, {"topRadius", 0}, {"height", 24}}, kPi * 100.0 * 24.0 / 3.0, 2},
+        {"torus", {{"radius", 15}, {"tubeRadius", 5}}, 2.0 * kPi * kPi * 15.0 * 25.0, 1},
+        {"tube", {{"radius", 10}, {"wall", 2}, {"height", 30}}, kPi * 30.0 * 36.0, 4},
+        {"prism",
+         {{"sides", 6}, {"radius", 10}, {"height", 7}},
+         0.5 * 6 * 100.0 * std::sin(kPi / 3.0) * 7.0,
+         8},
+        {"pyramid", {{"width", 30}, {"depth", 20}, {"height", 12}}, 30.0 * 20.0 * 12.0 / 3.0, 5},
+        {"wedge", {{"width", 20}, {"depth", 30}, {"height", 10}}, 20.0 * 30.0 * 10.0 / 2.0, 5},
+        {"star",
+         {{"points", 5}, {"radius", 20}, {"innerRadius", 8}, {"height", 5}},
+         5 * 20.0 * 8.0 * std::sin(kPi / 5.0) * 5.0,
+         12},
+    };
+    for (const ShapeCase& shape : shapes) {
+        INFO(shape.type);
+        const FeatureType* type = setup.registry.find(shape.type);
+        REQUIRE(type != nullptr);
+        const Made made = make(setup, shape.type, shape.values);
+        CHECK(made.report.valid);
+        CHECK(made.report.volume == Approx(shape.volume).epsilon(1e-6));
+        CHECK(made.report.faces == shape.faces);
+        CHECK_FALSE(checkNamingContract(made.result.outputs[0], made.report).has_value());
+
+        // Every handle names a value of the step; none of them scales anything (rule 11).
+        const auto resolved = [&] {
+            ResolvedParams all;
+            for (const ParamSpec& spec : type->parameters()) {
+                all[spec.name] = Quantity{std::stod(spec.defaultExpression), {1, 0}};
+            }
+            for (const auto& [name, value] : shape.values) {
+                all[name].value = value;
+            }
+            return all;
+        }();
+        const auto handles = type->handles(resolved);
+        CHECK_FALSE(handles.empty());
+        for (const HandleSpec& handle : handles) {
+            INFO(handle.parameter);
+            CHECK(resolved.contains(handle.parameter));
+            CHECK(handle.sign == 1.0);
+        }
+        CHECK(type->describe(resolved).key == shape.type);
+        CHECK_FALSE(type->validate(resolved).has_value());
+    }
+}
+
+TEST_CASE("shapes with impossible values are stopped before the kernel", "[features]") {
+    Setup setup;
+    const auto stopped = [&](const char* type, std::map<std::string, double> values,
+                             const char* subject) {
+        INFO(type << " " << subject);
+        const FeatureType* featureType = setup.registry.find(type);
+        ResolvedParams all;
+        for (const ParamSpec& spec : featureType->parameters()) {
+            all[spec.name] = Quantity{std::stod(spec.defaultExpression), {1, 0}};
+        }
+        for (const auto& [name, value] : values) {
+            all[name].value = value;
+        }
+        const auto issue = featureType->validate(all);
+        REQUIRE(issue.has_value());
+        CHECK(issue->code == FeatureIssueCode::parameterOutOfRange);
+        CHECK(issue->subject == subject);
+    };
+    stopped("sphere", {{"radius", 0}}, "radius");
+    stopped("cone", {{"topRadius", -1}}, "topRadius");
+    stopped("torus", {{"tubeRadius", 15}}, "tubeRadius");
+    stopped("tube", {{"wall", 10}}, "wall");
+    stopped("prism", {{"sides", 2}}, "sides");
+    stopped("prism", {{"sides", 5.5}}, "sides");
+    stopped("prism", {{"sides", 100}}, "sides");
+    stopped("star", {{"innerRadius", 20}}, "innerRadius");
+    stopped("star", {{"points", 2}}, "points");
+    stopped("pyramid", {{"depth", 0}}, "depth");
+    stopped("wedge", {{"height", -4}}, "height");
 }

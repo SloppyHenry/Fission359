@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "fission/geo/mesh.h"
+#include "fission/geo/primitives.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
 
@@ -41,12 +42,18 @@ public:
     virtual ~GeometryKernel() = default;
 
     /// Box with the given edge lengths (mm); `corner` has the smallest coordinates.
-    /// Faces: bottom, top, front (−Y), back (+Y), left (−X), right (+X).
-    virtual NamedSolid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner) const = 0;
+    /// `cornerRadius` rounds the four vertical edges (0 = sharp, at most half the shorter side).
+    /// Faces: bottom, top, front (−Y), back (+Y), left (−X), right (+X), and with rounded
+    /// corners cornerFrontLeft, cornerFrontRight, cornerBackLeft, cornerBackRight.
+    virtual NamedSolid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner,
+                               double cornerRadius) const = 0;
 
     /// Cylinder standing on `base` (centre of its bottom), axis +Z.
     /// Faces: bottom, top, side.
     virtual NamedSolid makeCylinder(double radius, double height, Point3d base) const = 0;
+
+    /// One of the other basic shapes (see primitives.h); `base` is the middle of its underside.
+    virtual NamedSolid makePrimitive(const PrimitiveSpec& spec, Point3d base) const = 0;
 
     virtual SolidReport measure(const Solid& solid) const = 0;
 

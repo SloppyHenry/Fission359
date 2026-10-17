@@ -703,6 +703,11 @@
         <translation>Radius</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Corner radius</source>
+        <translation>Eckenradius</translation>
+    </message>
+    <message>
         <location line="+9"/>
         <source>Box %1 × %2 × %3 mm</source>
         <translation>Quader %1 × %2 × %3 mm</translation>
@@ -872,7 +877,7 @@
         <translation>Umschalt+Klick fügt hinzu oder nimmt weg. Mit einem Rahmen wählst du mehrere. Esc wählt nichts aus.</translation>
     </message>
     <message>
-        <location line="-289"/>
+        <location line="-290"/>
         <source>Shapes arrive in a later version.</source>
         <translation>Die Formen kommen in einer späteren Version.</translation>
     </message>
