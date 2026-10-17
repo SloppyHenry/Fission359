@@ -78,12 +78,13 @@ bool hitsBox(const Ray& ray, const QVector3D& lo, const QVector3D& hi) {
 
 } // namespace
 
-std::optional<SurfaceHit> pickSurface(const RenderScene& scene, const Ray& ray) {
+std::optional<SurfaceHit> pickSurface(const RenderScene& scene, const Ray& ray,
+                                      const std::string& ignoreBody) {
     std::optional<SurfaceHit> best;
 
     for (std::size_t bodyIndex = 0; bodyIndex < scene.bodies.size(); ++bodyIndex) {
         const geo::TriangleMesh& mesh = scene.bodies[bodyIndex].geometry();
-        if (mesh.empty()) {
+        if (mesh.empty() || (!ignoreBody.empty() && scene.bodies[bodyIndex].id == ignoreBody)) {
             continue;
         }
         QVector3D lo(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(),

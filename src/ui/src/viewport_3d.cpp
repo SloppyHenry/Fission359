@@ -802,6 +802,33 @@ std::optional<render::SurfaceHit> Viewport3D::surfaceAt(double x, double y) cons
     return render::pickSurface(*m_shown, *ray);
 }
 
+std::optional<Viewport3D::Landing>
+Viewport3D::landingAt(double x, double y, const QString& ignoreBody, double planeZ) const {
+    const std::optional<render::Ray> ray = m_camera.rayThrough(QPointF(x, y));
+    if (!ray) {
+        return std::nullopt;
+    }
+    if (m_shown) {
+        const std::optional<render::SurfaceHit> hit =
+            render::pickSurface(*m_shown, *ray, ignoreBody.toStdString());
+        if (hit && hit->bodyIndex < 0) {
+            return Landing{hit->point.x(), hit->point.y(), 0.0, {}};
+        }
+        // A flat top (normal straight up) takes the shape; a wall or a slope does not.
+        if (hit && hit->normal.z() > 0.9995F) {
+            return Landing{hit->point.x(), hit->point.y(), hit->point.z(),
+                           QString::fromStdString(
+                               m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].id)};
+        }
+    }
+    const std::optional<QVector3D> onPlane =
+        m_camera.pointOnPlane(QPointF(x, y), static_cast<float>(planeZ));
+    if (!onPlane) {
+        return std::nullopt;
+    }
+    return Landing{onPlane->x(), onPlane->y(), planeZ, {}};
+}
+
 bool Viewport3D::lookAtSurface(double x, double y) {
     const std::optional<render::SurfaceHit> hit = surfaceAt(x, y);
     if (!hit) {

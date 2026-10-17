@@ -54,6 +54,8 @@ std::unique_ptr<Command> makeSetFeatureSuppressed(FeatureId id, bool suppressed)
 std::unique_ptr<Command> makeSetBodyName(BodyId id, std::string name);
 std::unique_ptr<Command> makeSetBodyColor(BodyId id, Color color);
 std::unique_ptr<Command> makeSetBodyVisible(BodyId id, bool visible);
+/// Marks a body as a hole ("Als Loch") or takes the mark away.
+std::unique_ptr<Command> makeSetBodyHole(BodyId id, bool hole);
 
 // Named measures
 std::unique_ptr<Command> makeAddParameter(Parameter parameter);

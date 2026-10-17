@@ -151,6 +151,8 @@ private:
         };
         std::vector<FaceRun> faceRuns;
     };
+    /// A body drawn see-through (a hole): its colour is not opaque.
+    static bool isGhost(const GpuBody& body) { return body.color.alpha() < 255; }
 
     QRhi* m_rhi;
     std::map<std::string, GpuBody> m_gpuBodies;
@@ -208,6 +210,7 @@ private:
     std::unique_ptr<QRhiGraphicsPipeline> m_backgroundPipeline;
     std::unique_ptr<QRhiGraphicsPipeline> m_bedPipeline;
     std::unique_ptr<QRhiGraphicsPipeline> m_bodyPipeline;
+    std::unique_ptr<QRhiGraphicsPipeline> m_ghostPipeline; ///< see-through bodies (holes)
     std::unique_ptr<QRhiGraphicsPipeline> m_discPipeline;
     std::unique_ptr<QRhiGraphicsPipeline> m_linePipeline;
     std::unique_ptr<QRhiGraphicsPipeline> m_overlayPipeline;

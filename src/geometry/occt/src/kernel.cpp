@@ -23,6 +23,7 @@ public:
     NamedSolid makeCylinder(double radius, double height, Point3d base) const override {
         return makeNamedCylinder(radius, height, base);
     }
+    std::vector<std::string> fontFamilies() const override { return fonts_.families(); }
     SolidReport measure(const Solid& solid) const override { return occt::measure(solid); }
     TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const override {
         return occt::tessellate(solid, params);

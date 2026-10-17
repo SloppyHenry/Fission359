@@ -73,6 +73,9 @@ struct Body {
     std::string name; ///< Empty = the interface shows a default name for the type.
     Color color;
     bool visible = true;
+    /// Marked "as hole" (Als Loch): the body is a tool that cuts out of the bodies it touches
+    /// instead of being part. Shown as a ghost; the cutting itself arrives with AP-1.7.
+    bool hole = false;
     BodyKind kind = BodyKind::precise;
     FeatureId createdBy;
 
@@ -186,6 +189,7 @@ public:
     bool setBodyName(const BodyId& id, std::string name);
     bool setBodyColor(const BodyId& id, Color color);
     bool setBodyVisible(const BodyId& id, bool visible);
+    bool setBodyHole(const BodyId& id, bool hole);
 
 private:
     Feature* mutableFeature(const FeatureId& id);

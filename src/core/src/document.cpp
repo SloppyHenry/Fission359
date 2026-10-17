@@ -359,4 +359,14 @@ bool Document::setBodyVisible(const BodyId& id, bool visible) {
     return true;
 }
 
+bool Document::setBodyHole(const BodyId& id, bool hole) {
+    Body* body = mutableBody(id);
+    if (body == nullptr) {
+        return false;
+    }
+    body->hole = hole;
+    touch();
+    return true;
+}
+
 } // namespace fission::core

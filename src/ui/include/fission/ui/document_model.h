@@ -4,6 +4,7 @@
 #pragma once
 
 #include <QObject>
+#include <QStringList>
 #include <QThreadPool>
 #include <QTimer>
 #include <QVariantList>
@@ -41,13 +42,26 @@ class DocumentModel : public QObject {
     /// [{ index, type, state, values: [number], problem: { code, subject, field, detail } }]
     /// `state` is ok | warning | fails | off | pending.
     Q_PROPERTY(QVariantList recipe READ recipe NOTIFY recipeChanged)
-    /// [{ index, type, number, name, color, visible }]; `name` is empty unless the person named it.
+    /// [{ index, type, number, name, color, visible, hole }]; `name` is empty unless the person
+    /// named it. `hole` is true for a body marked "As hole".
     Q_PROPERTY(QVariantList bodies READ bodies NOTIFY bodiesChanged)
     /// Index in the recipe of the step whose values are shown, or -1.
     Q_PROPERTY(int currentStep READ currentStep NOTIFY currentStepChanged)
     /// Values of the current step: [{ name, group, expression, value, kind, error }].
     /// `expression` is empty when the value was typed as a plain number.
     Q_PROPERTY(QVariantList stepValues READ stepValues NOTIFY stepValuesChanged)
+    /// Words of the current step (text, font): [{ name, value, kind }], `kind` is text | font.
+    Q_PROPERTY(QVariantList stepTexts READ stepTexts NOTIFY stepValuesChanged)
+    /// The fonts lettering can use; filled in the background shortly after the start.
+    Q_PROPERTY(QStringList fontFamilies READ fontFamilies NOTIFY fontsChanged)
+    /// A shape is being put down (dragged in): not yet a step in the history.
+    Q_PROPERTY(bool placing READ placing NOTIFY placingChanged)
+    /// The body of the shape being put down (empty when none).
+    Q_PROPERTY(QString placingBodyId READ placingBodyId NOTIFY placingChanged)
+    /// The height of the surface the last shape was put down on (0 = the print bed) and the
+    /// body whose top it is (empty = the bed): the work plane (Arbeitsebene).
+    Q_PROPERTY(double workplaneZ READ workplaneZ NOTIFY workplaneChanged)
+    Q_PROPERTY(QString workplaneBodyId READ workplaneBodyId NOTIFY workplaneChanged)
     Q_PROPERTY(bool calculating READ calculating NOTIFY calculatingChanged)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY historyChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY historyChanged)
@@ -109,6 +123,12 @@ public:
     QVariantList bodies() const { return m_bodies; }
     int currentStep() const noexcept { return m_currentStep; }
     QVariantList stepValues() const { return m_stepValues; }
+    QVariantList stepTexts() const { return m_stepTexts; }
+    QStringList fontFamilies() const { return m_fontFamilies; }
+    bool placing() const noexcept { return m_placing; }
+    QString placingBodyId() const;
+    double workplaneZ() const noexcept { return m_workplaneZ; }
+    QString workplaneBodyId() const { return m_workplaneBody; }
     bool calculating() const noexcept { return m_calculating; }
     bool canUndo() const noexcept { return m_history.canUndo(); }
     bool canRedo() const noexcept { return m_history.canRedo(); }
@@ -132,6 +152,27 @@ public:
     /// Sets the value `name` of step `index` to what was typed (a number or a formula).
     Q_INVOKABLE bool setStepValue(int index, const QString& name, const QString& text);
     Q_INVOKABLE void setBodyVisible(int index, bool visible);
+    /// Marks a body as a hole ("Als Loch") or takes the mark away.
+    Q_INVOKABLE void setBodyHole(int index, bool hole);
+    /// Sets a word of step `index` (the text of a lettering, the name of its font).
+    Q_INVOKABLE bool setStepText(int index, const QString& name, const QString& text);
+
+    // --- putting shapes down (AP-1.5) ---
+    /// Starts putting a shape of `type` ("sphere", "box" ...) down at (x, y) on the plane z, as
+    /// one undo step that is only finished by `finishPlacing`. Returns its step number, or -1
+    /// for an unknown type. A shape that is already being put down is taken back first.
+    Q_INVOKABLE int startPlacing(const QString& type, bool asHole, double x, double y, double z);
+    /// Moves the shape being put down. `surfaceBody` is the body whose top it stands on (empty:
+    /// the print bed).
+    Q_INVOKABLE void placeAt(double x, double y, double z, const QString& surfaceBody);
+    /// Puts the shape down for good: one step in the history. The surface it stands on becomes
+    /// the work plane. False if nothing was being put down.
+    Q_INVOKABLE bool finishPlacing();
+    /// Takes the shape back; nothing is left in the history.
+    Q_INVOKABLE void cancelPlacing();
+    /// A shape of `type` on the print bed at the first free place near the middle (a click on
+    /// its tile), as one undo step. Returns its step number, or -1.
+    Q_INVOKABLE int addShape(const QString& type, bool asHole);
 
     Q_INVOKABLE bool undo();
     Q_INVOKABLE bool redo();
@@ -159,6 +200,11 @@ signals:
     void currentStepChanged();
     void stepValuesChanged();
     void calculatingChanged();
+    void fontsChanged();
+    void placingChanged();
+    /// A shape was put down for good (dragged in or clicked): its step number and type.
+    void shapePlaced(int step, const QString& type);
+    void workplaneChanged();
     void historyChanged();
     void printerChanged();
     /// A new result arrived: the names of the elements may be different now.
@@ -178,6 +224,9 @@ private:
     void rebuildLists();
     void rebuildScene();
     QVariantList buildStepValues() const;
+    QVariantList buildStepTexts() const;
+    bool setValueQuietly(const core::FeatureId& id, const char* name, double value);
+    std::pair<double, double> freeSpot() const;
     static std::uint64_t meshKey(const core::BodyResult& body) noexcept;
 
     std::shared_ptr<const geo::GeometryKernel> m_kernel;
@@ -191,6 +240,14 @@ private:
     QVariantList m_recipe;
     QVariantList m_bodies;
     QVariantList m_stepValues;
+    QVariantList m_stepTexts;
+    QStringList m_fontFamilies;
+    bool m_placing = false;
+    core::FeatureId m_placingFeature;
+    double m_placingZ = 0.0;
+    QString m_placingSurface;
+    double m_workplaneZ = 0.0;
+    QString m_workplaneBody;
     int m_currentStep = -1;
     core::FeatureId m_currentFeature; // the chosen step, by id so that undo cannot shift it
     bool m_calculating = false;

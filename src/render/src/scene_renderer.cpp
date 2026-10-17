@@ -290,6 +290,9 @@ void SceneRenderer::createPipelines(QRhiRenderPassDescriptor* pass, int sampleCo
         makePipeline(m_bodyVertex, m_bedFragment, false, false, false, true, pass, sampleCount);
     m_bodyPipeline =
         makePipeline(m_bodyVertex, m_bodyFragment, false, false, false, true, pass, sampleCount);
+    // Holes are drawn see-through, after everything solid, and cast no shadow.
+    m_ghostPipeline =
+        makePipeline(m_bodyVertex, m_bodyFragment, false, false, true, true, pass, sampleCount);
     m_discPipeline =
         makePipeline(m_flatVertex, m_flatFragment, true, false, true, true, pass, sampleCount);
     m_linePipeline =
@@ -577,7 +580,7 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
     cb->setViewport({0, 0, float(kShadowSize), float(kShadowSize)});
     cb->setShaderResources(m_shadowSrb.get());
     for (const GpuBody* body : m_drawOrder) {
-        if (!body->vertices || !body->indices) {
+        if (!body->vertices || !body->indices || isGhost(*body)) {
             continue;
         }
         const QRhiCommandBuffer::VertexInput input(body->vertices.get(), 0);
@@ -776,7 +779,7 @@ void SceneRenderer::renderAmbientOcclusion(QRhiCommandBuffer* cb, const Frame& f
     cb->setViewport({0, 0, float(size.width()), float(size.height())});
     cb->setShaderResources(m_aoDepthSrb.get());
     for (const GpuBody* body : m_drawOrder) {
-        if (!body->vertices || !body->indices) {
+        if (!body->vertices || !body->indices || isGhost(*body)) {
             continue;
         }
         const QRhiCommandBuffer::VertexInput input(body->vertices.get(), 0);
@@ -839,16 +842,19 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
         cb->drawIndexed(static_cast<quint32>(m_bedIndexCount));
     }
     if (frame.displayMode != DisplayMode::wireframe) {
-        cb->setGraphicsPipeline(m_bodyPipeline.get());
-        cb->setShaderResources(m_srb.get());
-        for (const GpuBody* body : m_drawOrder) {
-            if (!body->vertices || !body->indices) {
-                continue;
+        // Solid bodies first, then the see-through ones over them.
+        for (const bool ghosts : {false, true}) {
+            cb->setGraphicsPipeline(ghosts ? m_ghostPipeline.get() : m_bodyPipeline.get());
+            cb->setShaderResources(m_srb.get());
+            for (const GpuBody* body : m_drawOrder) {
+                if (!body->vertices || !body->indices || isGhost(*body) != ghosts) {
+                    continue;
+                }
+                const QRhiCommandBuffer::VertexInput input(body->vertices.get(), 0);
+                cb->setVertexInput(0, 1, &input, body->indices.get(), 0,
+                                   QRhiCommandBuffer::IndexUInt32);
+                cb->drawIndexed(static_cast<quint32>(body->indexCount));
             }
-            const QRhiCommandBuffer::VertexInput input(body->vertices.get(), 0);
-            cb->setVertexInput(0, 1, &input, body->indices.get(), 0,
-                               QRhiCommandBuffer::IndexUInt32);
-            cb->drawIndexed(static_cast<quint32>(body->indexCount));
         }
     }
     if (frame.bedVisible && m_discVertices) {

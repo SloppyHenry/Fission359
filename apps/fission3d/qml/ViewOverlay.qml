@@ -18,6 +18,8 @@ Item {
     property bool focusMode: false
     property string mouseStyle: "fission"  // fission | fusion | tinkercad | blender | sketchup
     property string filter: "all"          // what can be chosen: all | body | face | edge | vertex
+    property string flyout: ""             // the open tool group: "" or "shapes"
+    signal flyoutCloseRequested
     signal filterRequested(string filter)
     signal orthographicToggled
     signal displayRequested(string mode)
@@ -304,6 +306,8 @@ Item {
                 }
 
                 Repeater {
+                    id: groupRepeater
+
                     model: [
                         { id: "shapes", text: qsTr("Shapes"), icon: "cube",
                           tip: qsTr("Basic shapes, text and kits. With “As Hole” any shape becomes a hole.") },
@@ -327,12 +331,28 @@ Item {
                         width: paletteColumn.width
                         text: modelData.text
                         iconName: modelData.icon
+                        expanded: root.flyout === modelData.id
                         tipText: modelData.tip
                         onClicked: root.groupRequested(modelData.id)
                     }
                 }
             }
         }
+    }
+
+    // --- the shape gallery, next to its button in the palette ------------------------------------
+    ShapeFlyout {
+        id: shapeFlyout
+
+        visible: root.flyout === "shapes"
+        x: 98
+        y: {
+            const button = groupRepeater.itemAt(0)
+            const wanted = button ? button.mapToItem(root, 0, 0).y - 6 : 60
+            return Math.max(60, Math.min(wanted, root.height - height - 12))
+        }
+        width: Math.min(460, root.width - 98 - 130)
+        onCloseRequested: root.flyoutCloseRequested()
     }
 
     // --- view cube and buttons (top right) -------------------------------------------------
