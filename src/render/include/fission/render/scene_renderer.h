@@ -42,6 +42,47 @@ struct Highlight {
     bool hover = false;       ///< under the pointer (lighter) instead of chosen
 };
 
+/// The size handles of the chosen shape (AP-1.5), drawn in the scene like everything else: what a
+/// body hides of them is drawn faint, the rest in full, so that a handle is seen where it is.
+/// Positions are in mm, sizes in pixels of the image.
+struct HandleLine {
+    QVector3D from;
+    QVector3D to;
+    float width = 1.5F;
+    QColor color;
+    bool operator==(const HandleLine&) const = default;
+};
+/// A round dot facing the viewer. It is drawn a little in front of the face it sits on.
+struct HandleDot {
+    QVector3D centre;
+    float radius = 7.0F;
+    QColor fill;
+    QColor ring;
+    float ringWidth = 2.0F;
+    bool rounding = false; ///< with a quarter circle on it (the grip of a rounding)
+    bool operator==(const HandleDot&) const = default;
+};
+/// The arrow beyond a dot: which way the handle goes.
+struct HandleArrow {
+    QVector3D at;
+    QVector3D direction;
+    QColor color;
+    QColor halo; ///< drawn wider beneath, so that the arrow shows on a body and beside it
+    bool operator==(const HandleArrow&) const = default;
+};
+struct HandleGraphics {
+    std::vector<HandleLine> lines;
+    std::vector<HandleDot> dots;
+    std::vector<HandleArrow> arrows;
+    /// How strong what is hidden behind a body is drawn (0 to 1).
+    float hiddenAlpha = 0.3F;
+    /// Pixels of the image per pixel of the window (2 on a Retina screen): the sizes above are
+    /// window pixels.
+    float pixelScale = 1.0F;
+    bool empty() const { return lines.empty() && dots.empty() && arrows.empty(); }
+    bool operator==(const HandleGraphics&) const = default;
+};
+
 class SceneRenderer {
 public:
     struct Frame {
@@ -57,6 +98,8 @@ public:
         /// Highlights drawn over the bodies, in the colour of the accent.
         std::vector<Highlight> highlights;
         QColor accent{0x4C, 0x8D, 0xFF};
+        /// The size handles, drawn last.
+        HandleGraphics handles;
     };
 
     /// Creates buffers and loads the shaders. Needs a current RHI.
@@ -75,6 +118,9 @@ public:
 
     /// Draws everything into `target`, including the background gradient.
     void draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const Frame& frame);
+
+    /// Vertices of the handles of the last frame: what is hidden and what is seen, for the tests.
+    std::size_t handleVertexCount() const { return m_handleVertexCount; }
 
     /// Triangles drawn per frame (bodies only), for the log and the tests.
     std::size_t bodyTriangleCount() const { return m_bodyIndexCount / 3; }
@@ -122,7 +168,9 @@ private:
     std::unique_ptr<QRhiGraphicsPipeline>
     makePipeline(const QShader& vertex, const QShader& fragment, bool colorLayoutOnly, bool lines,
                  bool blend, bool depth, QRhiRenderPassDescriptor* pass, int samples,
-                 QRhiShaderResourceBindings* srb = nullptr);
+                 QRhiShaderResourceBindings* srb = nullptr,
+                 QRhiGraphicsPipeline::CompareOp depthOp = QRhiGraphicsPipeline::LessOrEqual,
+                 bool surfaceBias = true);
 
     /// The graphics buffers of one body.
     struct GpuBody {
@@ -267,6 +315,18 @@ private:
     std::unique_ptr<QRhiShaderResourceBindings> m_overlaySrb;
     std::unique_ptr<QRhiBuffer> m_ribbonBuffer;
     std::size_t m_ribbonCapacity = 0; ///< vertices
+
+    // --- handles ---
+    /// Builds the triangles of `frame.handles` and uploads them. Before the pass starts.
+    void prepareHandles(QRhiResourceUpdateBatch* updates, const Frame& frame,
+                        const QSize& targetSize);
+    /// Draws them: first what is hidden (faint), then what is seen. Inside the pass.
+    void drawHandles(QRhiCommandBuffer* cb);
+    std::unique_ptr<QRhiGraphicsPipeline> m_handleHiddenPipeline; ///< passes behind the depth
+    std::unique_ptr<QRhiGraphicsPipeline> m_handlePipeline;
+    std::unique_ptr<QRhiBuffer> m_handleBuffer;
+    std::size_t m_handleCapacity = 0;    ///< vertices
+    std::size_t m_handleVertexCount = 0; ///< both halves together
 };
 
 } // namespace fission::render

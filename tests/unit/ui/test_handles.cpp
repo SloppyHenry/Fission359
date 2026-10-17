@@ -547,3 +547,47 @@ TEST_CASE("handles: a radius is taken at the outline, where it is seen from the 
         CHECK(std::abs(QVector3D::dotProduct(way, flat)) < 0.75F);
     }
 }
+
+TEST_CASE("handles: dots, bands and arrows are drawn in the scene, the arrow on hover",
+          "[ui][handles]") {
+    Fixture f;
+    roundedPlate(f);
+    f.viewport.setCamera(-35.0, 32.0, 260.0);
+    f.refresh();
+    const auto& graphics = f.viewport.handleGraphics();
+    CHECK(graphics.dots.size() == 4);   // width, depth, height, corner radius
+    CHECK(graphics.lines.size() == 15); // three bands of five strokes each
+    CHECK(graphics.arrows.empty());     // nothing pointed at yet
+    // Every dot sits where its handle is in the scene.
+    const QVariantMap width = f.handle("width");
+    const QVariantMap place = f.model->stepHandles()[width["candidate"].toInt()].toMap();
+    CHECK(graphics.dots[0].centre.x() == Approx(place["x"].toDouble()));
+
+    f.handles->setPointed(width["index"].toInt(), true);
+    REQUIRE(f.viewport.handleGraphics().arrows.size() == 1);
+    CHECK(f.viewport.handleGraphics().dots[0].radius > graphics.dots[1].radius);
+    f.handles->setPointed(width["index"].toInt(), false);
+    CHECK(f.viewport.handleGraphics().arrows.empty());
+
+    // The corner radius shows what it measures while the pointer is on it.
+    f.handles->setPointed(f.handle("cornerRadius")["index"].toInt(), true);
+    CHECK(f.viewport.handleGraphics().lines.size() == 15 + 2);
+    CHECK(f.viewport.handleGraphics().dots[3].rounding);
+}
+
+TEST_CASE("handles: a label steps back when a body is in front of its band", "[ui][handles]") {
+    Fixture f;
+    roundedPlate(f);
+    f.viewport.setCamera(-35.0, 32.0, 260.0);
+    f.refresh();
+    CHECK_FALSE(f.handle("width")["hidden"].toBool());
+    // A tall wall right in front of the box, between it and the eye.
+    const int wall = f.model->addShape("box", false);
+    f.model->setStepValue(wall, "width", "200");
+    f.model->setStepValue(wall, "depth", "4");
+    f.model->setStepValue(wall, "height", "80");
+    f.model->setStepValue(wall, "y", "-60");
+    f.model->selectStep(0);
+    f.refresh();
+    CHECK(f.handle("width")["hidden"].toBool());
+}

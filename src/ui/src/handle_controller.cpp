@@ -176,6 +176,7 @@ bool HandleController::bodyBounds(QVector3D& lo, QVector3D& hi) {
 
 void HandleController::refresh() {
     QVariantList shown;
+    render::HandleGraphics graphics;
     bool compact = false;
     if (m_model != nullptr && m_viewport != nullptr) {
         const QVariantList world = m_model->stepHandles();
@@ -361,6 +362,12 @@ void HandleController::refresh() {
             QPointF edgeStart; // the points on the body it measures
             QPointF edgeEnd;
             QPointF chip;
+            // The same in the scene (mm), for drawing it there, and the stroke across an end.
+            QVector3D bandStartWorld;
+            QVector3D bandEndWorld;
+            QVector3D edgeStartWorld;
+            QVector3D edgeEndWorld;
+            QVector3D tick;
         };
         std::vector<Placed> placed;
         for (const Raw& raw : raws) {
@@ -434,8 +441,13 @@ void HandleController::refresh() {
                         const double wanted = kBandGap + reachOf(normal, kChipWidth, kChipHeight);
                         const auto offset = out * static_cast<float>(wanted / perMillimetre);
                         place.band = true;
-                        place.bandStart = onScreen(edgeFrom + offset);
-                        place.bandEnd = onScreen(edgeTo + offset);
+                        place.bandStartWorld = edgeFrom + offset;
+                        place.bandEndWorld = edgeTo + offset;
+                        place.edgeStartWorld = edgeFrom;
+                        place.edgeEndWorld = edgeTo;
+                        place.tick = out * static_cast<float>(kTickPixels / perMillimetre);
+                        place.bandStart = onScreen(place.bandStartWorld);
+                        place.bandEnd = onScreen(place.bandEndWorld);
                         place.chip = (place.bandStart + place.bandEnd) / 2.0;
                     }
                 }
@@ -471,9 +483,14 @@ void HandleController::refresh() {
             }
         }
 
+        // Whether a body is in front: the label of a hidden band steps back, like the band.
+        const bool solidBodies = m_viewport->displayMode() != QLatin1String("wire");
         for (std::size_t i = 0; i < raws.size(); ++i) {
             const Raw& raw = raws[i];
             const Placed& place = placed[i];
+            const QVector3D probe =
+                place.band ? (place.bandStartWorld + place.bandEndWorld) / 2.0F : raw.atWorld;
+            const bool hidden = solidBodies && hiddenFromEye(probe, eye);
             // The colour of the axis it runs along, whatever the view; round values and details
             // have no axis and are drawn plain.
             QString axis = QStringLiteral("none");
@@ -510,8 +527,16 @@ void HandleController::refresh() {
             entry["dirY"] = raw.way.y();
             entry["pixelsPerMillimetre"] = raw.length;
             entry["value"] = raw.value;
+            entry["hidden"] = hidden;
             shown.push_back(entry);
+            drawHandle(graphics, raw.atWorld, raw.startWorld, raw.axisWorld, place.band,
+                       place.edgeStartWorld, place.edgeEndWorld, place.bandStartWorld,
+                       place.bandEndWorld, place.tick, static_cast<int>(i), axis,
+                       entry["role"].toString(), compact);
         }
+    }
+    if (m_viewport != nullptr) {
+        m_viewport->setHandleGraphics(std::move(graphics));
     }
     if (compact != m_compact) {
         m_compact = compact;
@@ -521,6 +546,174 @@ void HandleController::refresh() {
         m_handles = shown;
         emit handlesChanged();
     }
+}
+
+void HandleController::drawHandle(render::HandleGraphics& graphics, const QVector3D& at,
+                                  const QVector3D& start, const QVector3D& axisWorld, bool band,
+                                  const QVector3D& edgeStart, const QVector3D& edgeEnd,
+                                  const QVector3D& bandStart, const QVector3D& bandEnd,
+                                  const QVector3D& tick, int index, const QString& axis,
+                                  const QString& role, bool compact) const {
+    const bool active = m_editing && m_current == index;
+    const bool pointed = m_pointed == index;
+    const bool detail = role != QLatin1String("size");
+    if (compact && detail && !active) {
+        return; // on a small body the details step aside (typing and the panel reach them)
+    }
+    // Lines and labels in the colour of the axis; values without an axis plain, with dark dots
+    // and arrows that show on a light body.
+    const QColor tone = axis == QLatin1String("x")   ? m_colours.x
+                        : axis == QLatin1String("y") ? m_colours.y
+                        : axis == QLatin1String("z") ? m_colours.z
+                                                     : m_colours.plain;
+    const QColor ink = axis == QLatin1String("none") ? m_colours.ink : tone;
+    // While another value changes, the rest steps back.
+    const float calm = m_editing && !active ? kCalm : 1.0F;
+    const auto faded = [calm](QColor color) {
+        color.setAlphaF(color.alphaF() * calm);
+        return color;
+    };
+    if (band && (!compact || pointed || active)) {
+        // As in a drawing: thin lines from the points it measures, the band between them with a
+        // stroke across each end.
+        graphics.lines.push_back({edgeStart, bandStart, 1.0F, faded(tone)});
+        graphics.lines.push_back({edgeEnd, bandEnd, 1.0F, faded(tone)});
+        graphics.lines.push_back({bandStart, bandEnd, 1.5F, faded(tone)});
+        graphics.lines.push_back({bandStart - tick, bandStart + tick, 1.5F, faded(tone)});
+        graphics.lines.push_back({bandEnd - tick, bandEnd + tick, 1.5F, faded(tone)});
+    }
+    if (!band && (pointed || active)) {
+        // A radius, a rounding, a wall: what it measures, on the shape (inside a body it shows
+        // faint, seen through).
+        graphics.lines.push_back({start, at, 3.5F, m_colours.fill});
+        graphics.lines.push_back({start, at, 1.5F, ink});
+    }
+    if (pointed || active) {
+        graphics.arrows.push_back({at, axisWorld, ink, m_colours.fill});
+    }
+    render::HandleDot dot;
+    dot.centre = at;
+    dot.rounding = role == QLatin1String("rounding");
+    dot.radius = (dot.rounding ? 8.0F : detail ? 6.0F : 7.0F) + (pointed || active ? 2.0F : 0.0F);
+    dot.fill = faded(active ? ink : m_colours.fill);
+    dot.ring = faded(active ? m_colours.fill : ink);
+    graphics.dots.push_back(dot);
+}
+
+bool HandleController::hiddenFromEye(const QVector3D& point, const QVector3D& eye) {
+    const auto scene = m_model != nullptr ? m_model->scene() : nullptr;
+    if (!scene) {
+        return false;
+    }
+    const QVector3D way = point - eye;
+    const float length = way.length();
+    if (length < 1e-6F) {
+        return false;
+    }
+    const QVector3D unit = way / length;
+    // Up to a hair before the point: a dot on a face is not hidden by that face.
+    const float reach = length - std::max(0.5F, 1e-3F * length);
+    // The body of the handles is left out: its bands lie on the side facing the viewer, and its
+    // dots on faces turned towards the eye.
+    const std::string own = m_model->bodyOfStep(m_model->currentStep()).toStdString();
+    for (const render::RenderBody& body : scene->bodies) {
+        if (!body.mesh || body.mesh->indices.empty() || body.color.alpha() < 255 ||
+            body.id == own) {
+            continue; // holes are seen through
+        }
+        auto& box = m_boxes[body.id];
+        if (box.version != body.meshVersion || box.empty) {
+            box = {};
+            box.version = body.meshVersion;
+            for (const geo::Point3f& p : body.mesh->positions) {
+                box.low = QVector3D(std::min(box.low.x(), p.x), std::min(box.low.y(), p.y),
+                                    std::min(box.low.z(), p.z));
+                box.high = QVector3D(std::max(box.high.x(), p.x), std::max(box.high.y(), p.y),
+                                     std::max(box.high.z(), p.z));
+            }
+            box.empty = body.mesh->positions.empty();
+        }
+        // Does the line of sight pass the box round the body at all (slab test)?
+        float enter = 0.0F;
+        float leave = reach;
+        for (int a = 0; a < 3 && enter <= leave; ++a) {
+            if (std::abs(unit[a]) < 1e-9F) {
+                if (eye[a] < box.low[a] || eye[a] > box.high[a]) {
+                    leave = -1.0F;
+                }
+                continue;
+            }
+            const float t0 = (box.low[a] - eye[a]) / unit[a];
+            const float t1 = (box.high[a] - eye[a]) / unit[a];
+            enter = std::max(enter, std::min(t0, t1));
+            leave = std::min(leave, std::max(t0, t1));
+        }
+        if (enter > leave) {
+            continue;
+        }
+        // Then its triangles (Moeller-Trumbore).
+        const auto& positions = body.mesh->positions;
+        const auto& indices = body.mesh->indices;
+        for (std::size_t t = 0; t + 2 < indices.size(); t += 3) {
+            const geo::Point3f& p0 = positions[indices[t]];
+            const geo::Point3f& p1 = positions[indices[t + 1]];
+            const geo::Point3f& p2 = positions[indices[t + 2]];
+            const QVector3D v0(p0.x, p0.y, p0.z);
+            const QVector3D e1 = QVector3D(p1.x, p1.y, p1.z) - v0;
+            const QVector3D e2 = QVector3D(p2.x, p2.y, p2.z) - v0;
+            const QVector3D h = QVector3D::crossProduct(unit, e2);
+            const float det = QVector3D::dotProduct(e1, h);
+            if (std::abs(det) < 1e-12F) {
+                continue;
+            }
+            const QVector3D s = eye - v0;
+            const float u = QVector3D::dotProduct(s, h) / det;
+            if (u < 0.0F || u > 1.0F) {
+                continue;
+            }
+            const QVector3D q = QVector3D::crossProduct(s, e1);
+            const float v = QVector3D::dotProduct(unit, q) / det;
+            if (v < 0.0F || u + v > 1.0F) {
+                continue;
+            }
+            const float hit = QVector3D::dotProduct(e2, q) / det;
+            if (hit > 0.0F && hit < reach) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void HandleController::setPointed(int index, bool on) {
+    const int pointed = on ? index : (m_pointed == index ? -1 : m_pointed);
+    if (pointed != m_pointed) {
+        m_pointed = pointed;
+        refresh();
+    }
+}
+
+void HandleController::setCurrent(int index) {
+    if (index != m_current) {
+        m_current = index;
+        refresh();
+    }
+}
+
+void HandleController::setColours(const QVariantMap& colours) {
+    const auto colour = [&colours](const char* name, const QColor& fallback) {
+        const QVariant value = colours.value(QLatin1String(name));
+        return value.isValid() ? value.value<QColor>() : fallback;
+    };
+    m_colours.x = colour("x", m_colours.x);
+    m_colours.y = colour("y", m_colours.y);
+    m_colours.z = colour("z", m_colours.z);
+    m_colours.plain = colour("plain", m_colours.plain);
+    m_colours.ink = colour("ink", m_colours.ink);
+    m_colours.fill = colour("fill", m_colours.fill);
+    m_colourMap = colours;
+    emit coloursChanged();
+    refresh();
 }
 
 bool HandleController::beginDrag(int index, double x, double y) {

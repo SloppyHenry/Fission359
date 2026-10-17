@@ -3,10 +3,12 @@
 
 #pragma once
 
+#include <QColor>
 #include <QObject>
 #include <QPointF>
 #include <QPointer>
 #include <QVariantList>
+#include <QVariantMap>
 #include <QVector3D>
 
 #include <cstdint>
@@ -39,7 +41,12 @@ class HandleController : public QObject {
     /// lines from the points it measures (edgeStart, edgeEnd). `chipX`, `chipY` is where the
     /// label goes: on the band, or beside the dot when there is none. `role` is size | detail |
     /// rounding, `axis` is x | y | z | none (the colour of the handle). `candidate` is the place
-    /// in `DocumentModel::stepHandles`. Empty when nothing is shown.
+    /// in `DocumentModel::stepHandles`. `hidden`: a body is in front of its band (or its dot), so
+    /// its label steps back. Empty when nothing is shown.
+    ///
+    /// The dots, bands and arrows themselves are drawn in the scene (`Viewport3D::
+    /// setHandleGraphics`): what a body hides of them is drawn faint. The labels and the places to
+    /// grab are left to the window.
     Q_PROPERTY(QVariantList handles READ handles NOTIFY handlesChanged)
     /// A drag or typing is going on.
     Q_PROPERTY(bool editing READ editing NOTIFY editingChanged)
@@ -48,6 +55,9 @@ class HandleController : public QObject {
     /// The body is small on screen: only the dots are shown, a band and its label when the pointer
     /// is on the dot.
     Q_PROPERTY(bool compact READ compact NOTIFY compactChanged)
+    /// The colours of the handles, from the theme: { x, y, z (axes), plain (lines without an
+    /// axis), ink (dots and arrows without an axis), fill (inside of a dot, light line beneath) }.
+    Q_PROPERTY(QVariantMap colours READ colours WRITE setColours NOTIFY coloursChanged)
 
 public:
     explicit HandleController(DocumentModel* model, QObject* parent = nullptr);
@@ -58,6 +68,13 @@ public:
     bool editing() const noexcept { return m_editing; }
     bool armed() const noexcept { return m_armed; }
     bool compact() const noexcept { return m_compact; }
+    QVariantMap colours() const { return m_colourMap; }
+    void setColours(const QVariantMap& colours);
+
+    /// The pointer is on handle `index` (`on`), or left it: its band, arrow and label show.
+    Q_INVOKABLE void setPointed(int index, bool on);
+    /// The handle that is dragged or typed (-1: none).
+    Q_INVOKABLE void setCurrent(int index);
     void setArmed(bool armed);
 
     /// Positions are worked out again (the camera moved, the shape changed).
@@ -99,11 +116,20 @@ signals:
     void editingChanged();
     void armedChanged();
     void compactChanged();
+    void coloursChanged();
 
 private:
     void setEditing(bool editing);
     /// The box round the body of the current step as last calculated (mm); false if none.
     bool bodyBounds(QVector3D& low, QVector3D& high);
+    /// Whether a solid body is between the eye and `point`.
+    bool hiddenFromEye(const QVector3D& point, const QVector3D& eye);
+    /// Adds the dot, band, line and arrow of the shown handle `index` to `graphics`.
+    void drawHandle(render::HandleGraphics& graphics, const QVector3D& at, const QVector3D& start,
+                    const QVector3D& axisWorld, bool band, const QVector3D& edgeStart,
+                    const QVector3D& edgeEnd, const QVector3D& bandStart, const QVector3D& bandEnd,
+                    const QVector3D& tick, int index, const QString& axis, const QString& role,
+                    bool compact) const;
 
     // Room on screen (pixels): the size of a label, how far a band lies off the body beyond what
     // its label needs, how far a label sits off its dot, the shortest band worth drawing.
@@ -112,6 +138,8 @@ private:
     static constexpr double kBandGap = 10.0;
     static constexpr double kDotGap = 16.0;
     static constexpr double kShortestBand = 14.0;
+    static constexpr double kTickPixels = 5.0; ///< half the stroke across the end of a band
+    static constexpr float kCalm = 0.35F;      ///< strength of the others while one is changed
 
     QPointer<DocumentModel> m_model;
     QPointer<Viewport3D> m_viewport;
@@ -120,6 +148,25 @@ private:
     bool m_editing = false;
     bool m_armed = false;
     bool m_compact = false;
+    int m_pointed = -1;
+    int m_current = -1;
+    struct Colours {
+        QColor x{0xE5, 0x53, 0x4B};
+        QColor y{0x57, 0xAB, 0x5A};
+        QColor z{0x5B, 0x97, 0xFF};
+        QColor plain{0xB8, 0xBC, 0xC4};
+        QColor ink{0x16, 0x18, 0x1B};
+        QColor fill{0xFF, 0xFF, 0xFF};
+    } m_colours;
+    QVariantMap m_colourMap;
+    /// The boxes round the bodies, for `hiddenFromEye`, by body and mesh.
+    struct Box {
+        std::uint64_t version = 0;
+        bool empty = true;
+        QVector3D low{1e30F, 1e30F, 1e30F};
+        QVector3D high{-1e30F, -1e30F, -1e30F};
+    };
+    std::map<std::string, Box> m_boxes;
     std::string m_boundsBody; ///< whose box `m_boundsLow`/`m_boundsHigh` are, and of which mesh
     std::uint64_t m_boundsVersion = 0;
     QVector3D m_boundsLow;

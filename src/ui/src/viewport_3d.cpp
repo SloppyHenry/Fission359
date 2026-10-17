@@ -79,6 +79,7 @@ public:
         frame.palette = m_snapshot.palette;
         frame.ambientOcclusion = m_snapshot.ambientOcclusion;
         frame.highlights = m_snapshot.highlights;
+        frame.handles = m_snapshot.handles;
         frame.accent = m_snapshot.accent;
         const auto started = std::chrono::steady_clock::now();
         m_renderer->draw(cb, renderTarget(), frame);
@@ -611,6 +612,14 @@ void Viewport3D::setSelectionHighlights(std::vector<render::Highlight> highlight
     update();
 }
 
+void Viewport3D::setHandleGraphics(render::HandleGraphics graphics) {
+    if (graphics == m_handleGraphics) {
+        return;
+    }
+    m_handleGraphics = std::move(graphics);
+    update();
+}
+
 void Viewport3D::requestPick(PickIntent intent, const QPointF& position, bool extend) {
     PickRequest request;
     request.id = m_nextPickId++;
@@ -932,6 +941,9 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect, bool pickIdle) {
             snapshot.highlights.push_back(*m_hover);
         }
     }
+    snapshot.handles = m_handleGraphics;
+    snapshot.handles.pixelScale =
+        window() != nullptr ? static_cast<float>(window()->effectiveDevicePixelRatio()) : 1.0F;
     snapshot.accent = m_accent;
     snapshot.itemSize = QSizeF(width(), height());
     if (pickIdle && !m_pickQueue.empty()) {

@@ -137,7 +137,8 @@ Hinweis; gesperrt wird sie nicht. Die Referenz-Umsetzung steht im Mockup (`accen
   - Maß-Griffe der Grundformen: Punkt auf der Fläche, die er bewegt (weiß, Rand in `ax-x/y/z`); Maßband außerhalb des
     Körpers (auf dem Bett davor bzw. an der Außenkante), Maß-Pille mittig auf dem Band. Maße ohne Achse (Radius) und
     Neben-Maße (Rundung, Wand) neutral: weißer Punkt mit Rand `handle-line`, Rundung mit Viertelkreis; Pille der
-    Neben-Maße und alle Pfeile erst beim Überfahren. Nie zwei Bedeutungen in derselben Farbe.
+    Neben-Maße und alle Pfeile erst beim Überfahren. Nie zwei Bedeutungen in derselben Farbe. Griffe sind tiefenrichtig:
+    was ein Körper verdeckt, ist blass (etwa 30 % Deckkraft), die Pille dazu ebenso.
   - Klassisch: weiße Quadrate 10 px mit dunklem Rand, Hebe-Pfeil, Maßkästchen.
 - **Fehler und Hinweise** stehen als Karte am Modell, mit Linie zur Stelle (UX §9); nie als Fenster.
 - Druckbett: Raster 5/10 mm (je nach Zoom), Achsen rot/grün, Ursprung als Punkt in der Mitte.

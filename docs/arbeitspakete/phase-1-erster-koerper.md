@@ -577,7 +577,10 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
   Körper im Bild sehr klein, bleiben nur die Punkte der Hauptmaße, Bänder kommen beim Überfahren. Schaut man genau auf ein Maß (Höhe
   von oben), fällt sein Band weg und die Beschriftung steht neben dem Körper. Der Griff sitzt auf der Seite, die **dir zugewandt** ist
   (jede Form meldet alle gleichwertigen Stellen: beide Enden der Breite, alle Ecken, rundherum bei runden Formen; ein Radius wird am
-  Umriss genommen, wo man ihn von der Seite sieht).
+  Umriss genommen, wo man ihn von der Seite sieht). **Griffe mit Tiefe:** Punkte, Bänder und Pfeile zeichnet die 3D-Ansicht selbst, in
+  zwei Durchgängen gegen die Tiefe der Szene: was ein Körper verdeckt, erscheint blass (Röntgenblick), der Rest kräftig. Ein Band hinter
+  einem Nachbarkörper liegt also dahinter statt darüber, und seine Beschriftung tritt ebenfalls zurück. Die Beschriftungen und die
+  Anfassflächen bleiben Bausteine der Oberfläche (gestochen scharfe Schrift, Tippen wie bisher).
   Ziehen ändert das Maß (nie skalieren), der Punkt bleibt unter dem Zeiger, Tippen ersetzt Ziehen (auch mitten im Ziehen), `Tab`
   springt zum nächsten Maß, Enter übernimmt, Esc nimmt alles zurück; das Ziehen hört auf, wo die Form unmöglich würde (z. B. Breite
   unter 2 × Eckenradius). Ein Griff, der fast auf den Betrachter zeigt, wird nicht gezogen, kein Maß geht über 2000 mm.
@@ -586,10 +589,11 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 - Mac (arm64, Debug): `ctest` alle grün, darunter Golden-Tests (Volumen und Oberfläche jeder Form gleich dem analytischen Wert,
   rel. 1e-6, Gültigkeit, Flächen-Namen gegen die Normalen), Text (Größe, Mitte, Umlaute, Emojis mit der echten Plex-Schrift),
   Platzieren, Abbrechen, Loch, Kachelbilder, Griffe (auch: Punkt auf der Fläche, Band und Beschriftung nie auf dem Körper aus vier
-  Blickrichtungen, Radius am Umriss, kleine Körper nur mit Punkten) und **Ablauf D, Schritt 1 automatisch** (Quader 40 × 40 × 10 mit 5-mm-Ecken über
+  Blickrichtungen, Radius am Umriss, kleine Körper nur mit Punkten, Punkte/Bänder/Pfeile als 3D-Zeichnung, Beschriftung tritt hinter
+  einer Wand zurück, Renderer zeichnet Griffe blass und kräftig) und **Ablauf D, Schritt 1 automatisch** (Quader 40 × 40 × 10 mit 5-mm-Ecken über
   den Griff auf 80 mm gezogen: alle vier Ecken sind weiter Kreisbögen mit R 5 mm, Netzpunkte gemessen, Volumen exakt).
 - Fenster mit offener Galerie, abgelegten Formen und getippten Maßen (`app_shape_gallery`); Bilder:
-  [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png), [ap-1.5-schnitt-de.png](../screenshots/ap-1.5-schnitt-de.png), [ap-1.5-griffe-de.png](../screenshots/ap-1.5-griffe-de.png).
+  [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png), [ap-1.5-schnitt-de.png](../screenshots/ap-1.5-schnitt-de.png), [ap-1.5-griffe-de.png](../screenshots/ap-1.5-griffe-de.png), [ap-1.5-griffe-tiefe-de.png](../screenshots/ap-1.5-griffe-tiefe-de.png) (Band hinter dem Nachbarwürfel).
 - Linux: nur CI (Ubuntu 24.04, `release` und `debug-asan`); nicht von Hand auf dem Testrechner ausprobiert.
 
 **So probierst du es aus**
@@ -607,9 +611,9 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 **Einschränkungen, Annahmen, Folge-Arbeiten**
 - **Ablegen nur auf waagerechten Flächen:** Auf Wänden und Schrägen bleibt die Form auf der Arbeitsebene (Höhe der zuletzt benutzten
   Fläche). Eine Form an einer senkrechten Fläche auszurichten braucht Drehen (AP-1.6).
-- **Griffe sind ein Zeichenelement über der Ansicht:** Sie sind nicht tiefenrichtig (Bänder und Beschriftungen scheinen durch Körper
-  hindurch), Bänder können über einem Nachbarkörper liegen, und bei kleinen Körpern im Bild können sich Beschriftungen nahekommen (sie
-  weichen einander aus). Die Lage der Bänder richtet sich nach dem Quader um den Körper; bei runden Formen beginnen die Hilfslinien der
+- **Griffe:** Bei kleinen Körpern im Bild können sich Beschriftungen nahekommen (sie weichen einander aus). Ob eine Beschriftung verdeckt
+  ist, prüft das Programm an einem Punkt (Mitte des Bandes bzw. der Punkt selbst), nicht an der ganzen Beschriftung. Ein verdeckter Punkt
+  lässt sich weiter anfassen. Die Lage der Bänder richtet sich nach dem Quader um den Körper; bei runden Formen beginnen die Hilfslinien der
   Höhe deshalb kurz neben dem Umriss. Nur die Griff-Art „Achsen“. „Klassisch“ kommt mit den Einstellungen (AP-1.11).
 - **Tippen ohne Ziehen:** Ziffern fangen nur direkt nach dem Ablegen an zu tippen (sonst sind 1 bis 6 die Ansichten). Auch `Tab` oder
   Enter beginnen das Tippen. Bei einer schon vorhandenen Form: Punkt anfassen und dann tippen, oder die Felder rechts benutzen.
@@ -625,8 +629,11 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 - **Raster:** Positionen und gezogene Maße rasten auf ganze Millimeter (feiner bei starkem Zoom); das echte Fangen kommt mit AP-1.6.
 - **Neu im Kern:** `fission_geometry_occt` linkt jetzt `TKService` und `TKV3d` (nur OpenCASCADE, schon im Paket); beim ersten Start
   kopiert das Programm zwei Schriftdateien in den Cache-Ordner.
-- **Vorgeschlagene Folge-Arbeiten:** Ausrichten an schrägen Flächen (AP-1.6), Ausschneiden der Löcher (AP-1.7), Griffe tiefenrichtig
-  im Renderer, Befehlssuche mit den Suchwörtern der Formen (AP-1.12), Schrift in der Datei (AP-1.10).
+- **Nebenbei behoben:** Beim Beenden konnte das Programm abstürzen, wenn gerade noch eine Abfrage „was liegt unter dem Zeiger“
+  unterwegs war (aus AP-1.4; die Antwort kam an einen schon abgebauten Baustein). Die beiden Zieh-Tests im echten Fenster laufen allein
+  (`RUN_SERIAL`): auf dem Mac nahm ihnen sonst ein gleichzeitig startendes Testfenster den Fokus.
+- **Vorgeschlagene Folge-Arbeiten:** Ausrichten an schrägen Flächen (AP-1.6; das Gizmo kann die Griff-Zeichnung im Renderer
+  mitbenutzen), Ausschneiden der Löcher (AP-1.7), Befehlssuche mit den Suchwörtern der Formen (AP-1.12), Schrift in der Datei (AP-1.10).
 
 ---
 
