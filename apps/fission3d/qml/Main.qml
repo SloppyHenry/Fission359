@@ -175,7 +175,7 @@ Window {
                 Selection.chooseAllBodies()
             }
             break
-        case "selectnone": Selection.clear(); break
+        case "selectnone": Selection.clear(); Handles.armed = false; break
         case "hole": {
             const holeNow = !root.chosenAreHoles
             for (const index of root.chosenBodyIndexes) {
@@ -266,12 +266,34 @@ Window {
     Shortcut { sequence: "Escape"; enabled: Selection.count > 0 && !root.typing; onActivated: root.run("selectnone") }
     Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
     Shortcut { sequence: "Home"; onActivated: root.run("view.home") }
-    Shortcut { sequence: "1"; onActivated: root.run("view.front") }
-    Shortcut { sequence: "2"; onActivated: root.run("view.back") }
-    Shortcut { sequence: "3"; onActivated: root.run("view.left") }
-    Shortcut { sequence: "4"; onActivated: root.run("view.right") }
-    Shortcut { sequence: "5"; onActivated: root.run("view.top") }
-    Shortcut { sequence: "6"; onActivated: root.run("view.bottom") }
+    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.front") }
+    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.back") }
+    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.left") }
+    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.right") }
+    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.top") }
+    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.bottom") }
+    // A shape that was just put down waits for its sizes: digits type them (they are the views
+    // again as soon as something else is chosen). Tab or Enter start typing, too.
+    Repeater {
+        model: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ",", "."]
+
+        delegate: Item {
+            id: digit
+
+            required property string modelData
+
+            Shortcut {
+                sequence: digit.modelData
+                enabled: (Handles.armed || Handles.editing) && !handleLayer.typing && !root.typing
+                onActivated: handleLayer.startTyping(digit.modelData)
+            }
+        }
+    }
+    Shortcut {
+        sequences: ["Tab", "Return", "Enter"]
+        enabled: Handles.armed && !Handles.editing && !root.typing
+        onActivated: handleLayer.startTyping("")
+    }
     Shortcut { sequence: "Ctrl+K"; onActivated: root.run("search") }
     Shortcut { sequence: "Ctrl+,"; onActivated: root.run("settings") }
     Shortcut { sequence: "Ctrl+Q"; enabled: !root.isMac; onActivated: root.run("quit") }
@@ -405,6 +427,13 @@ Window {
                 }
             }
 
+            HandleLayer {
+                id: handleLayer
+
+                anchors.fill: parent
+                labelFor: root.valueLabel
+            }
+
             BedLabels {
                 anchors.fill: parent
                 viewport: viewport
@@ -490,6 +519,8 @@ Window {
         selection: root.selectionText
         toolName: root.toolName(root.tool)
         hint: Placement.active ? qsTr("Let go to put the shape down here. Esc takes it back.")
+            : Handles.editing ? qsTr("Enter accepts, Tab goes to the next size, Esc leaves everything as it was.")
+            : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
             : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.")
             : root.hoverText !== "" ? root.hoverText

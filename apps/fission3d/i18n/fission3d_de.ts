@@ -554,12 +554,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+421"/>
+        <location line="+452"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-420"/>
+        <location line="-451"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -615,18 +615,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+186"/>
+        <location line="+208"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-184"/>
-        <location line="+185"/>
+        <location line="-206"/>
+        <location line="+207"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-179"/>
+        <location line="-201"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -667,7 +667,7 @@
     </message>
     <message>
         <location line="+35"/>
-        <location line="+125"/>
+        <location line="+147"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
@@ -692,12 +692,22 @@
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
     <message>
-        <location line="+88"/>
+        <location line="+95"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+48"/>
+        <location line="+24"/>
+        <source>Enter accepts, Tab goes to the next size, Esc leaves everything as it was.</source>
+        <translation>Enter übernimmt, Tab geht zum nächsten Maß, Esc lässt alles, wie es war.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Type a size (Tab for the next one, Enter to finish) or drag the dots.</source>
+        <translation>Tippe ein Maß (Tab für das nächste, Enter zum Beenden) oder ziehe an den Punkten.</translation>
+    </message>
+    <message>
+        <location line="+25"/>
         <source>Width</source>
         <translation>Breite</translation>
     </message>
@@ -1041,37 +1051,37 @@
         <translation>Umschalt+Klick fügt hinzu oder nimmt weg. Mit einem Rahmen wählst du mehrere. Esc wählt nichts aus.</translation>
     </message>
     <message>
-        <location line="-279"/>
+        <location line="-281"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-403"/>
+        <location line="-432"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+438"/>
+        <location line="+467"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-331"/>
+        <location line="-360"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+155"/>
+        <location line="+177"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+198"/>
+        <location line="+205"/>
         <source>Let go to put the shape down here. Esc takes it back.</source>
         <translation>Loslassen, um die Form hier abzulegen. Esc nimmt sie zurück.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+4"/>
         <source>Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.</source>
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>

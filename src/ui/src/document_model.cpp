@@ -505,6 +505,7 @@ void DocumentModel::rebuildLists() {
     }
     m_stepValues = buildStepValues();
     m_stepTexts = buildStepTexts();
+    m_stepHandles = buildStepHandles();
 
     emit recipeChanged();
     emit bodiesChanged();
@@ -581,6 +582,63 @@ QVariantList DocumentModel::buildStepTexts() const {
     return texts;
 }
 
+QVariantList DocumentModel::buildStepHandles() const {
+    QVariantList handles;
+    const auto& features = m_history.document().features();
+    if (m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size()) || !m_result) {
+        return handles;
+    }
+    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    const core::FeatureType* type = m_registry.find(feature.type);
+    const core::FeatureState* state = m_result->state(feature.id);
+    if (type == nullptr || state == nullptr || feature.suppressed ||
+        state->status == core::FeatureStatus::error ||
+        state->status == core::FeatureStatus::suppressed || !state->description) {
+        return handles;
+    }
+    for (const core::HandleSpec& spec : type->handles(state->params)) {
+        const auto value = state->params.find(spec.parameter);
+        if (value == state->params.end()) {
+            continue;
+        }
+        QVariantMap entry;
+        entry[QStringLiteral("parameter")] = toQString(spec.parameter);
+        entry[QStringLiteral("kind")] = spec.kind == core::HandleKind::radius
+                                            ? QStringLiteral("radius")
+                                            : QStringLiteral("distance");
+        entry[QStringLiteral("x")] = spec.origin.x;
+        entry[QStringLiteral("y")] = spec.origin.y;
+        entry[QStringLiteral("z")] = spec.origin.z;
+        entry[QStringLiteral("dx")] = spec.direction.x;
+        entry[QStringLiteral("dy")] = spec.direction.y;
+        entry[QStringLiteral("dz")] = spec.direction.z;
+        entry[QStringLiteral("sign")] = spec.sign;
+        entry[QStringLiteral("value")] = value->second.value;
+        handles.push_back(entry);
+    }
+    return handles;
+}
+
+bool DocumentModel::acceptsValue(const QString& parameter, double value) const {
+    const auto& features = m_history.document().features();
+    if (m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size()) || !m_result) {
+        return false;
+    }
+    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    const core::FeatureType* type = m_registry.find(feature.type);
+    const core::FeatureState* state = m_result->state(feature.id);
+    if (type == nullptr || state == nullptr) {
+        return false;
+    }
+    core::ResolvedParams params = state->params;
+    const auto found = params.find(parameter.toStdString());
+    if (found == params.end()) {
+        return false;
+    }
+    found->second.value = value;
+    return !type->validate(params).has_value();
+}
+
 QString DocumentModel::placingBodyId() const {
     if (!m_placing) {
         return {};
@@ -642,6 +700,7 @@ void DocumentModel::selectStep(int index) {
     m_currentFeature = next >= 0 ? features[static_cast<std::size_t>(next)].id : core::FeatureId{};
     m_stepValues = buildStepValues();
     m_stepTexts = buildStepTexts();
+    m_stepHandles = buildStepHandles();
     emit currentStepChanged();
     emit stepValuesChanged();
 }

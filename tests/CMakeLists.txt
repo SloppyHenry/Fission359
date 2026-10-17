@@ -105,7 +105,7 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
   add_test(NAME app_shape_gallery
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-gallery.png" --language en --size 1280x800
-            --show-shapes --simulate "put:sphere;drop:box,640,420;puthole:cylinder;put:text;put:star")
+            --show-shapes --simulate "put:sphere;drop:box,640,420;puthole:cylinder;put:text;put:star;put:box;type:50,tab,20,tab,4,enter")
   set_tests_properties(app_shape_gallery PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90)
   add_test(NAME app_start_time

@@ -40,6 +40,7 @@
 #include "fission/ui/app_info.h"
 #include "fission/ui/app_options.h"
 #include "fission/ui/document_model.h"
+#include "fission/ui/handle_controller.h"
 #include "fission/ui/language.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/placement_controller.h"
@@ -144,7 +145,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
                        "hover:x,y  click:x,y  shiftclick:x,y  doubleclick:x,y  frame:x1,y1,x2,y2 "
                        "(window pixels of the 3D view), drop:shape,x,y  drophole:shape,x,y "
                        "(drag a shape of the gallery there and let go), put:shape  puthole:shape "
-                       "(click its tile), separated by semicolons."),
+                       "(click its tile), type:50,tab,20,enter (type sizes), separated by "
+                       "semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
@@ -180,8 +182,9 @@ CommandLine parseCommandLine(int& argc, char** argv) {
 // Developer option --simulate: plays pointer actions through the real input path of the 3D view
 // (graphics card, pick pass, selection), one every 350 ms. Calls `done` when the last one had
 // time to show its result.
-void playActions(fission::ui::Viewport3D* viewport, fission::ui::PlacementController* placement,
-                 const QString& actions, std::function<void()> done) {
+void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
+                 fission::ui::PlacementController* placement, const QString& actions,
+                 std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
@@ -189,6 +192,16 @@ void playActions(fission::ui::Viewport3D* viewport, fission::ui::PlacementContro
         QList<double> numbers;
         QString shape; // drop:sphere,x,y and put:sphere start with the name of a shape
         QStringList parts = action.mid(colon + 1).split(QLatin1Char(','));
+        if (kind == QLatin1String("type")) { // type:50,tab,20,enter - what the keys would do
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [window, parts] {
+                if (QObject* layer = window->findChild<QObject*>(QStringLiteral("handleLayer"))) {
+                    QMetaObject::invokeMethod(
+                        layer, "simulate", Q_ARG(QVariant, QVariant(QVariant::fromValue(parts))));
+                }
+            });
+            continue;
+        }
         if (kind.startsWith(QLatin1String("drop")) || kind.startsWith(QLatin1String("put"))) {
             shape = parts.takeFirst().trimmed();
         }
@@ -453,6 +466,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Selection", &selection);
     fission::ui::PlacementController placement(&documentModel);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Placement", &placement);
+    fission::ui::HandleController handles(&documentModel);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Handles", &handles);
     // The pictures on the tiles of the shape gallery come from the geometry kernel.
     engine.addImageProvider(QStringLiteral("shapes"), new fission::ui::ShapePreviews(kernel));
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Language", &language);
@@ -476,6 +491,7 @@ int main(int argc, char* argv[]) {
     if (viewport != nullptr) {
         selection.attach(viewport);
         placement.attach(viewport);
+        handles.attach(viewport);
         viewport->setScene(documentModel.scene());
         const QMetaObject::Connection sceneConnection =
             QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
@@ -543,7 +559,7 @@ int main(int argc, char* argv[]) {
                 });
             };
             if (viewport != nullptr && !simulate.isEmpty()) {
-                playActions(viewport, placementController, simulate, shoot);
+                playActions(window, viewport, placementController, simulate, shoot);
             } else {
                 shoot();
             }
