@@ -495,7 +495,7 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
 ---
 
 ### AP-1.5 Grundformen
-**Status:** Review (Teile a–e umgesetzt, wartet auf Ausprobieren durch den Product Owner) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
+**Status:** erledigt (2026-10-17, PR #22–#26; vom Product Owner freigegeben, Griffe nach seinem Feedback überarbeitet) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
 
 **Umfang:**
 - Quader (mit optionalem Eckenradius), Zylinder, Kugel, Kegel, Torus, Röhre, Prisma (n-eckig), Pyramide, Halbkugel, Keil, Stern (2D-Stern hochgezogen), Text (flach, System- und mitgelieferte Schriften)
@@ -557,7 +557,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
   Uhrzeigersinn von oben; Stern: `side1` folgt der Spitze nach hinten); Eckenradius: `cornerFrontLeft` …
 
 
-#### Abschlussvermerk (2026-10-16)
+#### Abschlussvermerk (2026-10-16, ergänzt 2026-10-17)
 
 **Umgesetzt**
 - **a) Kern:** Kugel, Halbkugel, Kegel (auch Stumpf), Torus, Röhre, Prisma, Pyramide, Keil, Stern; Quader mit Eckenradius; jede Fläche
@@ -594,7 +594,9 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
   den Griff auf 80 mm gezogen: alle vier Ecken sind weiter Kreisbögen mit R 5 mm, Netzpunkte gemessen, Volumen exakt).
 - Fenster mit offener Galerie, abgelegten Formen und getippten Maßen (`app_shape_gallery`); Bilder:
   [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png), [ap-1.5-schnitt-de.png](../screenshots/ap-1.5-schnitt-de.png), [ap-1.5-griffe-de.png](../screenshots/ap-1.5-griffe-de.png), [ap-1.5-griffe-tiefe-de.png](../screenshots/ap-1.5-griffe-tiefe-de.png) (Band hinter dem Nachbarwürfel).
-- Linux: nur CI (Ubuntu 24.04, `release` und `debug-asan`); nicht von Hand auf dem Testrechner ausprobiert.
+- Linux: nur CI (Ubuntu 24.04, `release` und `debug-asan`); nicht von Hand auf dem Testrechner ausprobiert. Ein Text-Test war dort rot:
+  eine mitgelieferte Schrift lieh sich einen fehlenden Schnitt (kursiv) von einer gleichnamigen Systemschrift. Jetzt gilt eine
+  mitgelieferte Schrift als vollständig; ein Schnitt, den sie nicht hat, fehlt (Meldung statt stiller Ersatz).
 
 **So probierst du es aus**
 1. `scripts/run`. Links in der Werkzeugleiste auf **Formen** klicken: die Galerie öffnet sich.
