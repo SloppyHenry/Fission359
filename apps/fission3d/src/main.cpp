@@ -149,7 +149,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "(drag a shape of the gallery there and let go), put:shape  puthole:shape "
             "(click its tile), type:50,tab,20,enter (type sizes), set:style,bold (a word "
             "of the chosen step), grab:width,40,0,8 (press a handle, pull it by view pixels "
-            "in small moves, let go), expect:width,40 (fail unless the chosen step has at least "
+            "in small moves, let go), point:cornerRadius (put the pointer on that handle and leave "
+            "it there), expect:width,40 (fail unless the chosen step has at least "
             "that value, no drag is left and its handles are still shown), separated by "
             "semicolons."),
         QStringLiteral("actions"));
@@ -223,6 +224,26 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                                .arg(handles->editing())
                                .arg(handles->handles().size());
                     g_simulationFailure = 4;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("point")) {
+            // point:cornerRadius - the pointer goes onto the handle of that value and stays there
+            // (a real mouse move through the window): what it shows then can be photographed.
+            const QString parameter = action.mid(colon + 1);
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [window, viewport, handles, parameter] {
+                for (const QVariant& entry : handles->handles()) {
+                    if (entry.toMap()["parameter"].toString() != parameter) {
+                        continue;
+                    }
+                    const QPointF scene = viewport->mapToScene(
+                        QPointF(entry.toMap()["x"].toDouble(), entry.toMap()["y"].toDouble()));
+                    QMouseEvent event(QEvent::MouseMove, scene,
+                                      window->mapToGlobal(scene.toPoint()), Qt::NoButton,
+                                      Qt::NoButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(window, &event);
                 }
             });
             continue;

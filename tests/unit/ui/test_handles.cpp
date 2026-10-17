@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Fission3D contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// The size handles (AP-1.5d): drag and typing change values, never scale. Ablauf D, step 1
+// The size handles (AP-1.5d): drag and typing change values, never scale. They are placed like
+// the measures of a drawing: dot on the face, band and label beside the body. Ablauf D, step 1
 // (docs/02-ux-konzept.md §15): a box with rounded corners is pulled wider and its corners are
 // still quarter circles of the same radius.
 
@@ -9,14 +10,18 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <QCoreApplication>
+#include <QPointF>
 #include <QVariantMap>
+#include <QVector3D>
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <memory>
 #include <numbers>
 #include <string>
+#include <vector>
 
 #include "fission/geo/occt/kernel.h"
 #include "fission/ui/document_model.h"
@@ -397,4 +402,148 @@ TEST_CASE("handles: pulling the handle on the far side changes the value the sam
     f.refresh();
     f.pull("width", 10.0); // the face goes 10 mm outwards on whichever side the handle is
     CHECK(f.value("width") == Approx(60.0));
+}
+
+namespace {
+
+// Whether a screen point is inside the outline of the box round the chosen box (its eight
+// corners as seen on screen).
+bool onTheBody(Fixture& f, const QPointF& point) {
+    const double w = f.value("width");
+    const double d = f.value("depth");
+    const double h = f.value("height");
+    const double x = f.value("x");
+    const double y = f.value("y");
+    const double z = f.value("z");
+    std::vector<QPointF> corners;
+    for (int corner = 0; corner < 8; ++corner) {
+        corners.push_back(f.viewport.project(x + ((corner & 1) != 0 ? w : -w) / 2.0,
+                                             y + ((corner & 2) != 0 ? d : -d) / 2.0,
+                                             z + ((corner & 4) != 0 ? h : 0.0)));
+    }
+    // The outline is the convex hull of the corners (monotone chain).
+    std::sort(corners.begin(), corners.end(), [](const QPointF& a, const QPointF& b) {
+        return a.x() < b.x() || (a.x() == b.x() && a.y() < b.y());
+    });
+    const auto turn = [](const QPointF& o, const QPointF& a, const QPointF& b) {
+        return (a.x() - o.x()) * (b.y() - o.y()) - (a.y() - o.y()) * (b.x() - o.x());
+    };
+    std::vector<QPointF> hull(2 * corners.size());
+    std::size_t k = 0;
+    for (const QPointF& p : corners) {
+        while (k >= 2 && turn(hull[k - 2], hull[k - 1], p) <= 0.0) {
+            --k;
+        }
+        hull[k++] = p;
+    }
+    for (std::size_t i = corners.size() - 1, low = k + 1; i-- > 0;) {
+        while (k >= low && turn(hull[k - 2], hull[k - 1], corners[i]) <= 0.0) {
+            --k;
+        }
+        hull[k++] = corners[i];
+    }
+    hull.resize(k - 1);
+    for (std::size_t i = 0; i < hull.size(); ++i) {
+        if (turn(hull[i], hull[(i + 1) % hull.size()], point) < 0.0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+} // namespace
+
+TEST_CASE("handles: the dot sits on the face it moves, the band and its label beside the body",
+          "[ui][handles]") {
+    Fixture f;
+    roundedPlate(f);
+    for (const double yaw : {-35.0, 30.0, 150.0, -120.0}) {
+        f.viewport.setCamera(yaw, 32.0, 260.0);
+        f.refresh();
+        for (const QString& parameter :
+             {QStringLiteral("width"), QStringLiteral("depth"), QStringLiteral("height")}) {
+            CAPTURE(yaw, parameter.toStdString());
+            const QVariantMap shown = f.handle(parameter);
+            const QVariantMap place = f.model->stepHandles()[shown["candidate"].toInt()].toMap();
+            const QPointF onFace = f.viewport.project(place["x"].toDouble(), place["y"].toDouble(),
+                                                      place["z"].toDouble());
+            CHECK(shown["x"].toDouble() == Approx(onFace.x()).margin(0.5));
+            CHECK(shown["y"].toDouble() == Approx(onFace.y()).margin(0.5));
+            REQUIRE(shown["band"].toBool());
+            const QPointF bandStart(shown["bandStartX"].toDouble(), shown["bandStartY"].toDouble());
+            const QPointF bandEnd(shown["bandEndX"].toDouble(), shown["bandEndY"].toDouble());
+            CHECK_FALSE(onTheBody(f, (bandStart + bandEnd) / 2.0));
+            CHECK_FALSE(onTheBody(f, {shown["chipX"].toDouble(), shown["chipY"].toDouble()}));
+            // As long as what it measures.
+            const QPointF edgeStart(shown["edgeStartX"].toDouble(), shown["edgeStartY"].toDouble());
+            const QPointF edgeEnd(shown["edgeEndX"].toDouble(), shown["edgeEndY"].toDouble());
+            const double band =
+                std::hypot(bandEnd.x() - bandStart.x(), bandEnd.y() - bandStart.y());
+            const double edge =
+                std::hypot(edgeEnd.x() - edgeStart.x(), edgeEnd.y() - edgeStart.y());
+            CHECK(band == Approx(edge).epsilon(0.25));
+        }
+    }
+}
+
+TEST_CASE("handles: sizes have axis colours, a rounding is a quiet detail", "[ui][handles]") {
+    Fixture f;
+    roundedPlate(f);
+    f.viewport.setCamera(-35.0, 32.0, 260.0);
+    f.refresh();
+    CHECK(f.handle("width")["axis"].toString() == "x");
+    CHECK(f.handle("depth")["axis"].toString() == "y");
+    CHECK(f.handle("height")["axis"].toString() == "z");
+    CHECK(f.handle("width")["role"].toString() == "size");
+    CHECK(f.handle("cornerRadius")["role"].toString() == "rounding");
+    CHECK(f.handle("cornerRadius")["axis"].toString() == "none"); // not blue like the height
+    CHECK_FALSE(f.handle("cornerRadius")["band"].toBool());
+    CHECK_FALSE(onTheBody(f, {f.handle("cornerRadius")["chipX"].toDouble(),
+                              f.handle("cornerRadius")["chipY"].toDouble()}));
+}
+
+TEST_CASE("handles: looked at end on, a size has no band and its label is beside the body",
+          "[ui][handles]") {
+    Fixture f;
+    roundedPlate(f); // the fixture looks straight down: the height points at the eye
+    CHECK_FALSE(f.handle("height")["band"].toBool());
+    CHECK(f.handle("width")["band"].toBool());
+    CHECK_FALSE(onTheBody(
+        f, {f.handle("height")["chipX"].toDouble(), f.handle("height")["chipY"].toDouble()}));
+}
+
+TEST_CASE("handles: a body small on screen shows its dots only", "[ui][handles]") {
+    Fixture f;
+    roundedPlate(f);
+    f.viewport.setCamera(-35.0, 32.0, 260.0);
+    f.refresh();
+    CHECK_FALSE(f.handles->compact());
+    f.viewport.setCamera(-35.0, 32.0, 3000.0);
+    f.refresh();
+    CHECK(f.handles->compact());
+}
+
+TEST_CASE("handles: a radius is taken at the outline, where it is seen from the side",
+          "[ui][handles]") {
+    Fixture f;
+    f.model->addShape("cylinder", false);
+    f.refresh();
+    for (const double yaw : {-35.0, 0.0, 70.0, 200.0}) {
+        f.viewport.setCamera(yaw, 30.0, 260.0);
+        f.refresh();
+        CAPTURE(yaw);
+        const QVariantMap shown = f.handle("radius");
+        const QVariantMap place = f.model->stepHandles()[shown["candidate"].toInt()].toMap();
+        const QVector3D at(static_cast<float>(place["x"].toDouble()),
+                           static_cast<float>(place["y"].toDouble()),
+                           static_cast<float>(place["z"].toDouble()));
+        const QVector3D way(static_cast<float>(place["dx"].toDouble()),
+                            static_cast<float>(place["dy"].toDouble()), 0.0F);
+        const QVector3D toEye = f.viewport.eyePosition() - at;
+        const QVector3D flat = QVector3D(toEye.x(), toEye.y(), 0.0F).normalized();
+        // Facing the viewer or at the outline, never behind; and well round to the side (the
+        // places are 45 degrees apart).
+        CHECK(QVector3D::dotProduct(way, toEye) >= 0.0F);
+        CHECK(std::abs(QVector3D::dotProduct(way, flat)) < 0.75F);
+    }
 }

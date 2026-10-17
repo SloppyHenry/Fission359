@@ -84,6 +84,13 @@ inline void addRing(std::vector<core::HandleSpec>& out, const char* parameter,
     }
 }
 
+/// Gives the handles from place `first` on the role `role` (the ones just added).
+inline void markRole(std::vector<core::HandleSpec>& out, std::size_t first, core::HandleRole role) {
+    for (std::size_t i = first; i < out.size(); ++i) {
+        out[i].role = role;
+    }
+}
+
 inline double valueOf(const core::ResolvedParams& params, const char* name) {
     return params.at(name).value;
 }

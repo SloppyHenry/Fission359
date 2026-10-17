@@ -9,7 +9,9 @@
 #include <QVariantList>
 #include <QVector3D>
 
+#include <cstdint>
 #include <map>
+#include <string>
 
 #include "fission/ui/document_model.h"
 #include "fission/ui/viewport_3d.h"
@@ -26,19 +28,26 @@ namespace fission::ui {
 /// value) is one step in the history; `cancelEdit` (Esc) takes it all back.
 class HandleController : public QObject {
     Q_OBJECT
-    /// The handles on screen, one for each value, in the order they are shown:
-    /// [{ index, candidate, parameter, kind, axis, x, y, fromX, fromY, pointX, pointY,
-    /// startPointX, startPointY, chipX, chipY, dirX, dirY, value, pixelsPerMillimetre }] (view
-    /// pixels; dir a unit vector on screen). The handle sits at the place facing the viewer. Like
-    /// a measure in a drawing, its band runs beside the shape from (fromX, fromY) to the handle
-    /// at (x, y), with lines to the two points on the shape it measures; `chipX`, `chipY` is
-    /// where its label goes. `axis` is x | y | z | radial (the colour of the handle).
-    /// `candidate` is the place in `DocumentModel::stepHandles`. Empty when nothing is shown.
+    /// The handles on screen, one for each value, in the order they are shown (view pixels):
+    /// [{ index, candidate, parameter, kind, role, axis, x, y, startX, startY, band, bandStartX,
+    /// bandStartY, bandEndX, bandEndY, edgeStartX, edgeStartY, edgeEndX, edgeEndY, chipX, chipY,
+    /// dirX, dirY, value, pixelsPerMillimetre }].
+    /// The dot (x, y) sits on the shape, on the face it moves; (startX, startY) is the other end
+    /// of what it measures, and (dirX, dirY) the way it grows on screen (a unit vector). A main
+    /// size along an axis has a measure band like in a drawing (`band`): it lies outside the
+    /// body, on the bed in front of it or beside its outline, from bandStart to bandEnd, with
+    /// lines from the points it measures (edgeStart, edgeEnd). `chipX`, `chipY` is where the
+    /// label goes: on the band, or beside the dot when there is none. `role` is size | detail |
+    /// rounding, `axis` is x | y | z | none (the colour of the handle). `candidate` is the place
+    /// in `DocumentModel::stepHandles`. Empty when nothing is shown.
     Q_PROPERTY(QVariantList handles READ handles NOTIFY handlesChanged)
     /// A drag or typing is going on.
     Q_PROPERTY(bool editing READ editing NOTIFY editingChanged)
     /// Digits start typing: a shape was just put down and nothing else was done since.
     Q_PROPERTY(bool armed READ armed WRITE setArmed NOTIFY armedChanged)
+    /// The body is small on screen: only the dots are shown, a band and its label when the pointer
+    /// is on the dot.
+    Q_PROPERTY(bool compact READ compact NOTIFY compactChanged)
 
 public:
     explicit HandleController(DocumentModel* model, QObject* parent = nullptr);
@@ -48,6 +57,7 @@ public:
     QVariantList handles() const { return m_handles; }
     bool editing() const noexcept { return m_editing; }
     bool armed() const noexcept { return m_armed; }
+    bool compact() const noexcept { return m_compact; }
     void setArmed(bool armed);
 
     /// Positions are worked out again (the camera moved, the shape changed).
@@ -81,14 +91,27 @@ public:
     /// of sight cannot be dragged: the pointer would have to go ever so far for a little change.
     /// (Typing and turning the view still work.)
     static constexpr double kLeastSight = 0.5;
+    /// Below this size on screen (diagonal of the body, pixels) the handles are `compact`.
+    static constexpr double kCompactPixels = 120.0;
 
 signals:
     void handlesChanged();
     void editingChanged();
     void armedChanged();
+    void compactChanged();
 
 private:
     void setEditing(bool editing);
+    /// The box round the body of the current step as last calculated (mm); false if none.
+    bool bodyBounds(QVector3D& low, QVector3D& high);
+
+    // Room on screen (pixels): the size of a label, how far a band lies off the body beyond what
+    // its label needs, how far a label sits off its dot, the shortest band worth drawing.
+    static constexpr double kChipWidth = 76.0;
+    static constexpr double kChipHeight = 24.0;
+    static constexpr double kBandGap = 10.0;
+    static constexpr double kDotGap = 16.0;
+    static constexpr double kShortestBand = 14.0;
 
     QPointer<DocumentModel> m_model;
     QPointer<Viewport3D> m_viewport;
@@ -96,6 +119,11 @@ private:
     std::map<QString, int> m_chosen; ///< the place of each value while it is being changed
     bool m_editing = false;
     bool m_armed = false;
+    bool m_compact = false;
+    std::string m_boundsBody; ///< whose box `m_boundsLow`/`m_boundsHigh` are, and of which mesh
+    std::uint64_t m_boundsVersion = 0;
+    QVector3D m_boundsLow;
+    QVector3D m_boundsHigh;
     int m_armedStep = -1;
 
     // The drag in progress. The pointer is a ray into the scene; it is laid on a plane that holds

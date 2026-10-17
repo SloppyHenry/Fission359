@@ -77,6 +77,7 @@ public:
         out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
         // At each corner on the top edge, where the curve begins: dragging along the edge, away
         // from the corner, makes the corner rounder, one to one.
+        const std::size_t corners = out.size();
         for (const double sx : {1.0, -1.0}) {
             for (const double sy : {1.0, -1.0}) {
                 out.push_back(makeHandle("cornerRadius", HandleKind::distance,
@@ -84,6 +85,7 @@ public:
                                          {-sx, 0, 0}, r));
             }
         }
+        markRole(out, corners, HandleRole::rounding);
         return out;
     }
 };

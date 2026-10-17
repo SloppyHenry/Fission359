@@ -622,6 +622,10 @@ QVariantList DocumentModel::buildStepHandles() const {
         entry[QStringLiteral("kind")] = spec.kind == core::HandleKind::radius
                                             ? QStringLiteral("radius")
                                             : QStringLiteral("distance");
+        entry[QStringLiteral("role")] =
+            spec.role == core::HandleRole::rounding ? QStringLiteral("rounding")
+            : spec.role == core::HandleRole::detail ? QStringLiteral("detail")
+                                                    : QStringLiteral("size");
         entry[QStringLiteral("x")] = spec.origin.x;
         entry[QStringLiteral("y")] = spec.origin.y;
         entry[QStringLiteral("z")] = spec.origin.z;

@@ -186,7 +186,9 @@ public:
         const double t = valueOf(p, "tubeRadius");
         std::vector<HandleSpec> out;
         addRing(out, "radius", HandleKind::radius, x, y, z + t, big, big);
+        const std::size_t tube = out.size();
         addRing(out, "tubeRadius", HandleKind::distance, x, y, z + t, big + t, t);
+        markRole(out, tube, HandleRole::detail);
         return out;
     }
 
@@ -222,7 +224,9 @@ public:
         std::vector<HandleSpec> out;
         addRing(out, "radius", HandleKind::radius, x, y, z + h / 2.0, r, r);
         // On the inner rim at the top: pulled towards the middle the wall gets thicker.
+        const std::size_t walls = out.size();
         addRing(out, "wall", HandleKind::distance, x, y, z + h, r - wall, wall, /*inward=*/true);
+        markRole(out, walls, HandleRole::detail);
         out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
         return out;
     }
@@ -301,9 +305,11 @@ public:
         // The tips, and the notches between them (half a step further round).
         addRing(out, "radius", HandleKind::radius, x, y, z + h / 2.0, valueOf(p, "radius"),
                 valueOf(p, "radius"), false, points, kPi / 2.0);
+        const std::size_t notches = out.size();
         addRing(out, "innerRadius", HandleKind::radius, x, y, z + h / 2.0,
                 valueOf(p, "innerRadius"), valueOf(p, "innerRadius"), false, points,
                 kPi / 2.0 + kPi / points);
+        markRole(out, notches, HandleRole::detail);
         out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
         return out;
     }

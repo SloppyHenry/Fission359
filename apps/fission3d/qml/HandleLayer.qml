@@ -6,9 +6,10 @@ import QtQuick.Shapes
 import Fission3D.Ui
 
 // The size handles of the chosen shape, drawn over the 3D view (handle style "Axes", AP-1.5):
-// a dot for every size, with an arrow along the way it moves. Drag a dot, or type: digits replace
-// the value, Tab goes to the next size, Enter accepts, Esc leaves everything as it was. While a
-// value changes, a bubble at the dot shows it (docs/02-ux-konzept.md §2.2).
+// a dot on the face that a size moves, and a measure band beside the body with the label on it,
+// like in a drawing. Drag a dot, or type: digits replace the value, Tab goes to the next size,
+// Enter accepts, Esc leaves everything as it was. While a value is typed, its label turns into
+// the field (docs/02-ux-konzept.md §2.2).
 Item {
     id: root
 
@@ -59,10 +60,10 @@ Item {
         return bubble.index >= 0 && bubble.index < Handles.handles.length ? Handles.handles[bubble.index] : null
     }
 
-    // One measure band with its label and its handle for every value. The delegates stay: the list
-    // of handles is made anew whenever a value changes, and a handle that was rebuilt with it
-    // would be gone from under the pointer in the middle of a drag. The model is only the number
-    // of handles; each one reads its own entry.
+    // One handle for every value: its dot on the shape, its measure band beside the body and its
+    // label. The delegates stay: the list of handles is made anew whenever a value changes, and a
+    // handle that was rebuilt with it would be gone from under the pointer in the middle of a
+    // drag. The model is only the number of handles; each one reads its own entry.
     Repeater {
         model: Handles.handles.length
 
@@ -72,80 +73,142 @@ Item {
             required property int index
             readonly property var handle: index < Handles.handles.length ? Handles.handles[index] : null
             readonly property bool active: Handles.editing && bubble.index === index
-            readonly property color tone: !handle ? Theme.accentLine
+            readonly property bool pointed: area.containsMouse || chipArea.containsMouse
+            readonly property bool plain: !handle || handle.axis === "none"
+            readonly property bool detail: handle !== null && handle.role !== "size"
+            // Lines and labels in the colour of the axis; values without an axis plain.
+            readonly property color tone: !handle ? Theme.fg2
                 : handle.axis === "x" ? Theme.axisX
                 : handle.axis === "y" ? Theme.axisY
-                : handle.axis === "z" ? Theme.axisZ : Theme.accentLine
+                : handle.axis === "z" ? Theme.axisZ : Theme.fg2
+            // What is drawn on the body (dot, arrow): plain ones dark, so they show on a light body.
+            readonly property color ink: plain ? Theme.handleLine : tone
             // A held handle stays in the view, even when the shape is pulled far beyond it: a
             // handle that disappears under the pointer ends the drag (the pointer loses it).
             readonly property real dotX: handle ? (active ? Math.min(Math.max(handle.x, 10), root.width - 10) : handle.x) : 0
             readonly property real dotY: handle ? (active ? Math.min(Math.max(handle.y, 10), root.height - 10) : handle.y) : 0
-            readonly property real fromX: handle ? handle.fromX : 0
-            readonly property real fromY: handle ? handle.fromY : 0
             readonly property real dirX: handle ? handle.dirX : 0
             readonly property real dirY: handle ? handle.dirY : 0
-            readonly property real normalX: -dirY
-            readonly property real normalY: dirX
-            readonly property real length: Math.hypot(dotX - fromX, dotY - fromY)
-            // The label is where the controller made room for it.
             readonly property real chipX: handle ? Math.min(Math.max(handle.chipX, 60), root.width - 60) : 0
             readonly property real chipY: handle ? Math.min(Math.max(handle.chipY, 16), root.height - 16) : 0
+            // Quiet until wanted: a small body shows its dots only, a detail shows its label when
+            // the pointer is on it. While another value changes, the rest steps back.
+            readonly property bool showBand: handle !== null && handle.band && (!Handles.compact || pointed || active)
+            readonly property bool showLabel: handle !== null && (pointed || active || (!detail && !Handles.compact))
+            readonly property bool showLeader: handle !== null && !handle.band && (pointed || active)
+            readonly property real calm: Handles.editing && !active ? 0.35 : 1.0
 
             width: root.width
             height: root.height
-            visible: handle !== null && (active || (dotX > -40 && dotX < root.width + 40
+            // On a small body the details step aside (typing and the panel still reach them):
+            // their dots would cover the ones of the sizes.
+            visible: handle !== null && (active || (!(Handles.compact && detail)
+                                                    && dotX > -40 && dotX < root.width + 40
                                                     && dotY > -40 && dotY < root.height + 40))
 
-            // The band, as in a drawing: a line beside the shape, lines from its ends to the
-            // points it measures, a stroke across each end.
+            // The band, as in a drawing: thin lines from the points it measures, and the line
+            // between them with a stroke across each end.
             Shape {
                 anchors.fill: parent
-                visible: part.handle !== null
+                visible: part.showBand
+                opacity: part.calm
 
                 ShapePath {
                     strokeColor: part.tone
                     strokeWidth: 1
-                    strokeStyle: ShapePath.DashLine
-                    dashPattern: [3, 3]
                     fillColor: "transparent"
-                    startX: part.handle ? part.handle.startPointX : 0
-                    startY: part.handle ? part.handle.startPointY : 0
-                    PathLine { x: part.fromX; y: part.fromY }
-                    PathMove { x: part.handle ? part.handle.pointX : 0; y: part.handle ? part.handle.pointY : 0 }
-                    PathLine { x: part.dotX; y: part.dotY }
+                    startX: part.handle ? part.handle.edgeStartX : 0
+                    startY: part.handle ? part.handle.edgeStartY : 0
+                    PathLine { x: part.handle ? part.handle.bandStartX : 0; y: part.handle ? part.handle.bandStartY : 0 }
+                    PathMove { x: part.handle ? part.handle.edgeEndX : 0; y: part.handle ? part.handle.edgeEndY : 0 }
+                    PathLine { x: part.handle ? part.handle.bandEndX : 0; y: part.handle ? part.handle.bandEndY : 0 }
                 }
 
                 ShapePath {
+                    id: band
+
+                    readonly property real sx: part.handle ? part.handle.bandStartX : 0
+                    readonly property real sy: part.handle ? part.handle.bandStartY : 0
+                    readonly property real ex: part.handle ? part.handle.bandEndX : 0
+                    readonly property real ey: part.handle ? part.handle.bandEndY : 0
+                    readonly property real len: Math.max(Math.hypot(ex - sx, ey - sy), 1e-6)
+                    // Across the band, for the strokes at its ends.
+                    readonly property real nx: -(ey - sy) / len * 5
+                    readonly property real ny: (ex - sx) / len * 5
+
                     strokeColor: part.tone
-                    strokeWidth: 2
+                    strokeWidth: 1.5
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
-                    startX: part.fromX
-                    startY: part.fromY
-                    PathLine { x: part.dotX; y: part.dotY }
-                    PathMove { x: part.fromX + part.normalX * 5; y: part.fromY + part.normalY * 5 }
-                    PathLine { x: part.fromX - part.normalX * 5; y: part.fromY - part.normalY * 5 }
+                    startX: band.sx
+                    startY: band.sy
+                    PathLine { x: band.ex; y: band.ey }
+                    PathMove { x: band.sx + band.nx; y: band.sy + band.ny }
+                    PathLine { x: band.sx - band.nx; y: band.sy - band.ny }
+                    PathMove { x: band.ex + band.nx; y: band.ey + band.ny }
+                    PathLine { x: band.ex - band.nx; y: band.ey - band.ny }
                 }
             }
 
-            // The arrow tip beyond the handle.
+            // A radius, a rounding, a wall: what it measures, on the shape, while the pointer is
+            // on it. A light line under a dark one, so that it shows on the body and beside it.
             Shape {
                 anchors.fill: parent
+                visible: part.showLeader
 
                 ShapePath {
-                    strokeColor: part.tone
+                    strokeColor: Theme.handle
+                    strokeWidth: 3.5
+                    fillColor: "transparent"
+                    capStyle: ShapePath.RoundCap
+                    startX: part.handle ? part.handle.startX : 0
+                    startY: part.handle ? part.handle.startY : 0
+                    PathLine { x: part.dotX; y: part.dotY }
+                }
+
+                ShapePath {
+                    strokeColor: part.ink
+                    strokeWidth: 1.5
+                    strokeStyle: ShapePath.DashLine
+                    dashPattern: [3, 2]
+                    fillColor: "transparent"
+                    startX: part.handle ? part.handle.startX : 0
+                    startY: part.handle ? part.handle.startY : 0
+                    PathLine { x: part.dotX; y: part.dotY }
+                }
+            }
+
+            // The arrow beyond the dot: which way it goes, while the pointer is on it.
+            Shape {
+                anchors.fill: parent
+                visible: part.pointed || part.active
+
+                ShapePath {
+                    strokeColor: Theme.handle
+                    strokeWidth: 4.5
+                    fillColor: "transparent"
+                    capStyle: ShapePath.RoundCap
+                    joinStyle: ShapePath.RoundJoin
+                    startX: part.dotX + part.dirX * 13 - part.dirY * 5
+                    startY: part.dotY + part.dirY * 13 + part.dirX * 5
+                    PathLine { x: part.dotX + part.dirX * 19; y: part.dotY + part.dirY * 19 }
+                    PathLine { x: part.dotX + part.dirX * 13 + part.dirY * 5; y: part.dotY + part.dirY * 13 - part.dirX * 5 }
+                }
+
+                ShapePath {
+                    strokeColor: part.ink
                     strokeWidth: 2
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
                     joinStyle: ShapePath.RoundJoin
-                    startX: part.dotX + part.dirX * 10 - part.dirY * 5
-                    startY: part.dotY + part.dirY * 10 + part.dirX * 5
-                    PathLine { x: part.dotX + part.dirX * 16; y: part.dotY + part.dirY * 16 }
-                    PathLine { x: part.dotX + part.dirX * 10 + part.dirY * 5; y: part.dotY + part.dirY * 10 - part.dirX * 5 }
+                    startX: part.dotX + part.dirX * 13 - part.dirY * 5
+                    startY: part.dotY + part.dirY * 13 + part.dirX * 5
+                    PathLine { x: part.dotX + part.dirX * 19; y: part.dotY + part.dirY * 19 }
+                    PathLine { x: part.dotX + part.dirX * 13 + part.dirY * 5; y: part.dotY + part.dirY * 13 - part.dirX * 5 }
                 }
             }
 
-            // The label: what it is and how much, at the band. A click types a value.
+            // The label: what it is and how much, on its band. A click types a value.
             Rectangle {
                 id: chip
 
@@ -157,8 +220,8 @@ Item {
                 color: part.active ? part.tone : Theme.panel
                 border.width: 1
                 border.color: part.tone
-                opacity: Handles.editing && !part.active ? 0.55 : 1.0
-                visible: part.handle !== null && !(bubble.typing && bubble.index === part.index)
+                opacity: part.calm
+                visible: part.showLabel && !(bubble.typing && bubble.index === part.index)
 
                 Row {
                     id: chipRow
@@ -186,8 +249,11 @@ Item {
                 }
 
                 MouseArea {
+                    id: chipArea
+
                     anchors.fill: parent
                     enabled: !Handles.editing
+                    hoverEnabled: true
                     cursorShape: Qt.IBeamCursor
                     Accessible.role: Accessible.Button
                     Accessible.name: part.handle ? root.labelFor(part.handle.parameter) : ""
@@ -195,7 +261,7 @@ Item {
                 }
             }
 
-            // The handle itself.
+            // The handle itself, on the face it moves.
             Item {
                 id: dot
 
@@ -205,13 +271,41 @@ Item {
                 height: 24
 
                 Rectangle {
+                    id: disc
+
+                    readonly property real size: part.handle && part.handle.role === "rounding" ? 16
+                        : part.detail ? 12 : 14
+
                     anchors.centerIn: parent
-                    width: area.containsMouse || part.active ? 18 : 14
+                    width: area.containsMouse || part.active ? size + 4 : size
                     height: width
                     radius: width / 2
-                    color: part.active ? part.tone : Theme.handle
+                    color: part.active ? part.ink : Theme.handle
                     border.width: 2
-                    border.color: part.tone
+                    border.color: part.ink
+                }
+
+                // A rounding has a quarter circle on its dot (docs/02-ux-konzept.md §2.2).
+                Shape {
+                    anchors.centerIn: parent
+                    width: disc.width
+                    height: disc.width
+                    visible: part.handle !== null && part.handle.role === "rounding"
+
+                    ShapePath {
+                        strokeColor: part.active ? Theme.handle : part.ink
+                        strokeWidth: 1.5
+                        fillColor: "transparent"
+                        capStyle: ShapePath.RoundCap
+                        startX: disc.width * 0.3
+                        startY: disc.width * 0.72
+                        PathArc {
+                            x: disc.width * 0.72
+                            y: disc.width * 0.3
+                            radiusX: disc.width * 0.42
+                            radiusY: disc.width * 0.42
+                        }
+                    }
                 }
 
                 MouseArea {
@@ -267,7 +361,7 @@ Item {
         }
     }
 
-    // The bubble: the value of the handle that is dragged or typed, at the handle.
+    // The bubble: the field for the value that is typed, where its label was.
     Rectangle {
         id: bubble
 
@@ -327,8 +421,9 @@ Item {
         }
 
         visible: false
-        x: handle ? Math.min(Math.max(handle.x + 16, 4), root.width - width - 4) : 0
-        y: handle ? Math.min(Math.max(handle.y - height - 12, 4), root.height - height - 4) : 0
+        // Where the label of the value is: the label turns into the field.
+        x: handle ? Math.min(Math.max(handle.chipX - width / 2, 4), root.width - width - 4) : 0
+        y: handle ? Math.min(Math.max(handle.chipY - height / 2, 4), root.height - height - 4) : 0
         width: bubbleRow.implicitWidth + 20
         height: 30
         radius: Theme.radius

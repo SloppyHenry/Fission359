@@ -67,11 +67,17 @@ struct Description {
 
 enum class HandleKind { distance, radius };
 
+/// What a handle is for, which decides how loudly it is shown: a main size of the shape (with its
+/// measure band and label), a detail that refines it (a wall, an inner radius: its label shows
+/// when the pointer is on it), or a rounding (a detail with the quarter-circle grip).
+enum class HandleRole { size, detail, rounding };
+
 /// A handle in the 3D view that changes one value of the step (rule 1). The handle changes the
 /// value, never scales the geometry (rule 11).
 struct HandleSpec {
     std::string id;
     HandleKind kind = HandleKind::distance;
+    HandleRole role = HandleRole::size;
     std::string parameter;  ///< The value it changes.
     geo::Point3d origin;    ///< Where it sits (mm).
     geo::Point3d direction; ///< Unit vector along which it is dragged.

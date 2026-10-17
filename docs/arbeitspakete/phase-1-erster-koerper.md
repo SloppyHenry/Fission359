@@ -567,10 +567,17 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 - **c) Galerie:** 12 Kacheln mit Bildern der echten Formen; Ziehen in die Ansicht (die Form folgt dem Zeiger, landet auf Bett oder
   ebener Oberseite, Loslassen = ein Schritt, Esc = zurück) oder Anklicken (freier Platz); „Als Loch“ als Geisterform;
   Textfelder und Schriftliste rechts; Sätze, Hinweise, Tooltips und Suchwörter auf Deutsch und Englisch.
-- **d) Griffe (nach der Vorlage „Achsen“ überarbeitet):** Jedes Maß hat ein **Maßband** wie in einer Zeichnung: eine farbige Linie
-  neben der Form (Breite rot, Tiefe grün, Höhe blau, Rundungen in der Akzentfarbe) mit Hilfslinien zu den gemessenen Punkten, einem
-  Pfeil am Griff und einer Beschriftung („Breite 40“), die man anklicken und überschreiben kann. Der Griff sitzt auf der Seite, die
-  **dir zugewandt** ist (jede Form meldet alle gleichwertigen Stellen: beide Enden der Breite, alle Ecken, rundherum bei runden Formen).
+- **d) Griffe (nach der Vorlage „Achsen“ überarbeitet, Darstellung am 2026-10-17 nach Feedback neu geordnet):** Der **Punkt sitzt auf
+  der Fläche, die er bewegt** (Breite auf der Seitenfläche, Tiefe auf der Vorderseite, Höhe oben). Jedes Hauptmaß hat ein **Maßband** wie
+  in einer Zeichnung: es liegt **außerhalb des Körpers** im Raum (Breite und Tiefe auf dem Bett vor dem Körper, Höhe an der linken
+  Außenkante), mit Hilfslinien zu den gemessenen Ecken; die **Beschriftung steht auf dem Band** („Breite 40“) und wird beim Anklicken
+  zum Eingabefeld. Farben: Breite rot, Tiefe grün, Höhe blau; Radius und Neben-Maße neutral (weißer Punkt mit dunklem Rand).
+  **Neben-Maße** (Eckenradius, Wand, Röhrendicke, Innenradius des Sterns) bleiben ruhig: Beschriftung erst beim Überfahren, der
+  Eckenradius hat einen eigenen Griff mit Viertelkreis an der rechten oberen Ecke. **Pfeile** erscheinen beim Überfahren. Ist der
+  Körper im Bild sehr klein, bleiben nur die Punkte der Hauptmaße, Bänder kommen beim Überfahren. Schaut man genau auf ein Maß (Höhe
+  von oben), fällt sein Band weg und die Beschriftung steht neben dem Körper. Der Griff sitzt auf der Seite, die **dir zugewandt** ist
+  (jede Form meldet alle gleichwertigen Stellen: beide Enden der Breite, alle Ecken, rundherum bei runden Formen; ein Radius wird am
+  Umriss genommen, wo man ihn von der Seite sieht).
   Ziehen ändert das Maß (nie skalieren), der Punkt bleibt unter dem Zeiger, Tippen ersetzt Ziehen (auch mitten im Ziehen), `Tab`
   springt zum nächsten Maß, Enter übernimmt, Esc nimmt alles zurück; das Ziehen hört auf, wo die Form unmöglich würde (z. B. Breite
   unter 2 × Eckenradius). Ein Griff, der fast auf den Betrachter zeigt, wird nicht gezogen, kein Maß geht über 2000 mm.
@@ -578,7 +585,8 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 **Wie getestet**
 - Mac (arm64, Debug): `ctest` alle grün, darunter Golden-Tests (Volumen und Oberfläche jeder Form gleich dem analytischen Wert,
   rel. 1e-6, Gültigkeit, Flächen-Namen gegen die Normalen), Text (Größe, Mitte, Umlaute, Emojis mit der echten Plex-Schrift),
-  Platzieren, Abbrechen, Loch, Kachelbilder, Griffe und **Ablauf D, Schritt 1 automatisch** (Quader 40 × 40 × 10 mit 5-mm-Ecken über
+  Platzieren, Abbrechen, Loch, Kachelbilder, Griffe (auch: Punkt auf der Fläche, Band und Beschriftung nie auf dem Körper aus vier
+  Blickrichtungen, Radius am Umriss, kleine Körper nur mit Punkten) und **Ablauf D, Schritt 1 automatisch** (Quader 40 × 40 × 10 mit 5-mm-Ecken über
   den Griff auf 80 mm gezogen: alle vier Ecken sind weiter Kreisbögen mit R 5 mm, Netzpunkte gemessen, Volumen exakt).
 - Fenster mit offener Galerie, abgelegten Formen und getippten Maßen (`app_shape_gallery`); Bilder:
   [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png), [ap-1.5-schnitt-de.png](../screenshots/ap-1.5-schnitt-de.png), [ap-1.5-griffe-de.png](../screenshots/ap-1.5-griffe-de.png).
@@ -589,8 +597,8 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 2. Die **Kugel** in die 3D-Ansicht ziehen und loslassen: sie liegt auf dem Bett. Ziehe einen **Zylinder** auf die Oberseite des
    Würfels: er sitzt oben auf. Esc beim Ziehen nimmt die Form wieder weg.
 3. Gleich nach dem Ablegen **`50` ⇥ `20` ⇥ `4` Enter** tippen: die Form bekommt diese Maße (ein Schritt im Verlauf, ⌘Z nimmt alles zurück).
-4. An einer gewählten Form einen **Punkt ziehen**: das Maß ändert sich, die Wertblase zeigt es; während des Ziehens eine Zahl tippen
-   ersetzt den Wert. Beim Quader: rechts „Eckenradius“ auf 5 stellen, dann die Breite am Punkt verdoppeln: die Ecken bleiben rund.
+4. An einer gewählten Form einen **Punkt ziehen**: das Maß ändert sich, die Beschriftung auf dem Band zeigt es; während des Ziehens eine
+   Zahl tippen ersetzt den Wert. Mit dem Zeiger über einen Punkt fahren: der Pfeil zeigt, wohin er geht. Beim Quader: rechts „Eckenradius“ auf 5 stellen, dann die Breite am Punkt verdoppeln: die Ecken bleiben rund.
 5. **Als Loch** in der Galerie einschalten und einen Zylinder ablegen: er ist durchsichtig (Geisterform), in der Körperliste ein leerer
    Umriss. Ausschneiden tut er erst mit AP-1.7.
 6. Kachel **Text** ablegen: das Feld „Worte“ rechts ist markiert, `LENA` tippen. Schrift darunter wählen, mit **B** und **I** fett
@@ -600,7 +608,9 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 - **Ablegen nur auf waagerechten Flächen:** Auf Wänden und Schrägen bleibt die Form auf der Arbeitsebene (Höhe der zuletzt benutzten
   Fläche). Eine Form an einer senkrechten Fläche auszurichten braucht Drehen (AP-1.6).
 - **Griffe sind ein Zeichenelement über der Ansicht:** Sie sind nicht tiefenrichtig (Bänder und Beschriftungen scheinen durch Körper
-  hindurch) und bei kleinen Körpern im Bild können sich Beschriftungen nahekommen (sie weichen einander aus); nur die Griff-Art „Achsen“. „Klassisch“ kommt mit den Einstellungen (AP-1.11).
+  hindurch), Bänder können über einem Nachbarkörper liegen, und bei kleinen Körpern im Bild können sich Beschriftungen nahekommen (sie
+  weichen einander aus). Die Lage der Bänder richtet sich nach dem Quader um den Körper; bei runden Formen beginnen die Hilfslinien der
+  Höhe deshalb kurz neben dem Umriss. Nur die Griff-Art „Achsen“. „Klassisch“ kommt mit den Einstellungen (AP-1.11).
 - **Tippen ohne Ziehen:** Ziffern fangen nur direkt nach dem Ablegen an zu tippen (sonst sind 1 bis 6 die Ansichten). Auch `Tab` oder
   Enter beginnen das Tippen. Bei einer schon vorhandenen Form: Punkt anfassen und dann tippen, oder die Felder rechts benutzen.
 - **Seiten und Zacken** (Prisma, Stern) haben keinen Griff; sie stehen als Zahl im Feld rechts.
