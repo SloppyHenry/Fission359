@@ -52,10 +52,10 @@ public:
         const double x = valueOf(params, "x");
         const double y = valueOf(params, "y");
         const double z = valueOf(params, "z");
-        return {
-            {"radius", HandleKind::radius, "radius", {x + r, y, z + h / 2.0}, {1, 0, 0}, 1.0},
-            {"height", HandleKind::distance, "height", {x, y, z + h}, {0, 0, 1}, 1.0},
-        };
+        std::vector<HandleSpec> out;
+        addRing(out, "radius", HandleKind::radius, x, y, z + h / 2.0, r, r);
+        out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
+        return out;
     }
 };
 

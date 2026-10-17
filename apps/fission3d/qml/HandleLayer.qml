@@ -4,10 +4,12 @@
 import QtQuick
 import Fission3D.Ui
 
-// The size handles of the chosen shape, drawn over the 3D view (handle style "Axes", AP-1.5):
-// a dot for every size, with an arrow along the way it moves. Drag a dot, or type: digits replace
-// the value, Tab goes to the next size, Enter accepts, Esc leaves everything as it was. While a
-// value changes, a bubble at the dot shows it (docs/02-ux-konzept.md §2.2).
+// The size handles of the chosen shape (handle style "Axes", AP-1.5): a dot on the face that a
+// size moves, and a measure band beside the body with the label on it, like in a drawing. The
+// dots, bands and arrows are drawn in the 3D view itself (what a body hides of them is faint);
+// this layer holds their labels and the places to grab. Drag a dot, or type: digits replace the value, Tab goes to the next size,
+// Enter accepts, Esc leaves everything as it was. While a value is typed, its label turns into
+// the field (docs/02-ux-konzept.md §2.2).
 Item {
     id: root
 
@@ -18,6 +20,16 @@ Item {
     readonly property bool typing: bubble.typing
     objectName: "handleLayer"
     readonly property bool busy: Handles.editing
+
+    // The colours of what the 3D view draws, from the theme.
+    Binding {
+        target: Handles
+        property: "colours"
+        value: ({
+            x: Theme.axisX, y: Theme.axisY, z: Theme.axisZ,
+            plain: Theme.fg2, ink: Theme.handleLine, fill: Theme.handle
+        })
+    }
 
     function startTyping(first) {
         if (Handles.handles.length === 0) {
@@ -58,83 +70,154 @@ Item {
         return bubble.index >= 0 && bubble.index < Handles.handles.length ? Handles.handles[bubble.index] : null
     }
 
+    // One handle for every value: the place to grab its dot, and its label. The delegates stay:
+    // the list of handles is made anew whenever a value changes, and a handle that was rebuilt
+    // with it would be gone from under the pointer in the middle of a drag. The model is only the number of handles; each one reads its own entry.
     Repeater {
-        model: Handles.handles
+        model: Handles.handles.length
 
         delegate: Item {
-            id: dot
+            id: part
 
-            required property var modelData
-            readonly property color tone: modelData.parameter === "height" ? Theme.axisZ
-                : modelData.kind === "radius" ? Theme.accentLine
-                : Math.abs(modelData.dirX) > Math.abs(modelData.dirY) ? Theme.axisX : Theme.axisY
-            readonly property bool active: Handles.editing && bubble.index === modelData.index
+            required property int index
+            readonly property var handle: index < Handles.handles.length ? Handles.handles[index] : null
+            readonly property bool active: Handles.editing && bubble.index === index
+            readonly property bool pointed: area.containsMouse || chipArea.containsMouse
+            readonly property bool detail: handle !== null && handle.role !== "size"
+            // Labels in the colour of the axis; values without an axis plain.
+            readonly property color tone: !handle ? Theme.fg2
+                : handle.axis === "x" ? Theme.axisX
+                : handle.axis === "y" ? Theme.axisY
+                : handle.axis === "z" ? Theme.axisZ : Theme.fg2
+            // A held handle stays in the view, even when the shape is pulled far beyond it: a
+            // handle that disappears under the pointer ends the drag (the pointer loses it).
+            readonly property real dotX: handle ? (active ? Math.min(Math.max(handle.x, 10), root.width - 10) : handle.x) : 0
+            readonly property real dotY: handle ? (active ? Math.min(Math.max(handle.y, 10), root.height - 10) : handle.y) : 0
+            readonly property real chipX: handle ? Math.min(Math.max(handle.chipX, 60), root.width - 60) : 0
+            readonly property real chipY: handle ? Math.min(Math.max(handle.chipY, 16), root.height - 16) : 0
+            // Quiet until wanted: a small body shows its dots only, a detail shows its label when
+            // the pointer is on it. While another value changes, the rest steps back, and so does
+            // a label whose band is behind a body.
+            readonly property bool showLabel: handle !== null && (pointed || active || (!detail && !Handles.compact))
+            readonly property real calm: (Handles.editing && !active ? 0.35 : 1.0) * (handle && handle.hidden ? 0.45 : 1.0)
 
-            x: modelData.x - width / 2
-            y: modelData.y - height / 2
-            width: 22
-            height: 22
-            visible: modelData.x > -20 && modelData.x < root.width + 20 && modelData.y > -20 && modelData.y < root.height + 20
+            onPointedChanged: Handles.setPointed(index, pointed)
 
-            // The arrow: where the dot moves when the value grows.
+            width: root.width
+            height: root.height
+            // On a small body the details step aside (typing and the panel still reach them):
+            // their dots would cover the ones of the sizes.
+            visible: handle !== null && (active || (!(Handles.compact && detail)
+                                                    && dotX > -40 && dotX < root.width + 40
+                                                    && dotY > -40 && dotY < root.height + 40))
+
+            // The label: what it is and how much, on its band. A click types a value.
             Rectangle {
-                visible: modelData.pixelsPerMillimetre > 0.5
-                x: dot.width / 2 + modelData.dirX * 17 - width / 2
-                y: dot.height / 2 + modelData.dirY * 17 - height / 2
-                width: 7
-                height: 7
-                radius: 4
-                color: dot.tone
-                opacity: 0.9
-            }
+                id: chip
 
-            Rectangle {
-                anchors.centerIn: parent
-                width: area.containsMouse || dot.active ? 16 : 13
-                height: width
-                radius: width / 2
-                color: dot.active ? dot.tone : Theme.handle
-                border.width: 2
-                border.color: dot.tone
-            }
+                x: part.chipX - width / 2
+                y: part.chipY - height / 2
+                width: chipRow.implicitWidth + 14
+                height: 22
+                radius: 11
+                color: part.active ? part.tone : Theme.panel
+                border.width: 1
+                border.color: part.tone
+                opacity: part.calm
+                visible: part.showLabel && !(bubble.typing && bubble.index === part.index)
 
-            MouseArea {
-                id: area
+                Row {
+                    id: chipRow
 
-                anchors.fill: parent
-                hoverEnabled: true
-                preventStealing: true
-                cursorShape: Qt.SizeAllCursor
-                Accessible.role: Accessible.Slider
-                Accessible.name: root.labelFor(dot.modelData.parameter)
+                    anchors.centerIn: parent
+                    spacing: 4
 
-                onPressed: mouse => {
-                    const p = area.mapToItem(root, mouse.x, mouse.y)
-                    if (Handles.beginDrag(dot.modelData.index, p.x, p.y)) {
-                        bubble.showDrag(dot.modelData.index)
+                    Txt {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: part.handle ? root.labelFor(part.handle.parameter) : ""
+                        color: part.active ? Theme.accentFg : Theme.fg3
+                        font.pixelSize: Theme.fontSizeSmall
+                        elide: Text.ElideNone
+                    }
+
+                    Txt {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: part.handle ? Numbers.format(part.handle.value, 2) : ""
+                        color: part.active ? Theme.accentFg : Theme.fg
+                        font.weight: Font.Medium
+                        mono: true
+                        font.pixelSize: Theme.fontSizeSmall
+                        elide: Text.ElideNone
                     }
                 }
-                onPositionChanged: mouse => {
-                    if (pressed) {
+
+                MouseArea {
+                    id: chipArea
+
+                    anchors.fill: parent
+                    enabled: !Handles.editing
+                    hoverEnabled: true
+                    cursorShape: Qt.IBeamCursor
+                    Accessible.role: Accessible.Button
+                    Accessible.name: part.handle ? root.labelFor(part.handle.parameter) : ""
+                    onClicked: bubble.begin(part.index, "")
+                }
+            }
+
+            // Where the dot is grabbed (the 3D view draws it).
+            Item {
+                id: dot
+
+                x: part.dotX - width / 2
+                y: part.dotY - height / 2
+                width: 24
+                height: 24
+
+                MouseArea {
+                    id: area
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    preventStealing: true
+                    cursorShape: Qt.SizeAllCursor
+                    Accessible.role: Accessible.Slider
+                    Accessible.name: part.handle ? root.labelFor(part.handle.parameter) : ""
+
+                    onPressed: mouse => {
+                        // The pointer position in the view, not in the dot: the dot moves with
+                        // the shape while it is dragged.
                         const p = area.mapToItem(root, mouse.x, mouse.y)
-                        bubble.dragValue = Handles.dragTo(p.x, p.y)
+                        if (Handles.beginDrag(part.index, p.x, p.y)) {
+                            bubble.showDrag(part.index)
+                        }
                     }
-                }
-                onReleased: {
-                    if (Handles.editing && !bubble.typing) {
-                        Handles.endDrag()
-                        bubble.hide()
+                    onPositionChanged: mouse => {
+                        if (pressed) {
+                            const p = area.mapToItem(root, mouse.x, mouse.y)
+                            bubble.dragValue = Handles.dragTo(p.x, p.y)
+                        }
                     }
-                }
-                onCanceled: {
-                    Handles.cancelDrag()
-                    bubble.hide()
+                    onReleased: {
+                        if (Handles.editing && !bubble.typing) {
+                            Handles.endDrag()
+                            bubble.hide()
+                        }
+                    }
+                    // The grab was taken away (a gesture of the system, a window that lost the
+                    // focus): the drag ends with what it has, it is not thrown away. Esc is what
+                    // takes back.
+                    onCanceled: {
+                        if (Handles.editing && !bubble.typing) {
+                            Handles.endDrag()
+                            bubble.hide()
+                        }
+                    }
                 }
             }
 
             Shortcut {
                 sequence: "Escape"
-                enabled: dot.active && !bubble.typing
+                enabled: part.active && !bubble.typing
                 onActivated: {
                     Handles.cancelDrag()
                     bubble.hide()
@@ -143,12 +226,14 @@ Item {
         }
     }
 
-    // The bubble: the value of the handle that is dragged or typed, at the handle.
+    // The bubble: the field for the value that is typed, where its label was.
     Rectangle {
         id: bubble
 
         property int index: -1
         property bool typing: false
+
+        onIndexChanged: Handles.setCurrent(index)
         property real dragValue: 0
         readonly property var handle: index >= 0 && index < Handles.handles.length ? Handles.handles[index] : null
 
@@ -156,7 +241,7 @@ Item {
             index = i
             typing = false
             dragValue = Handles.handles[i].value
-            visible = true
+            visible = false // the label of the handle shows the value while it is pulled
         }
 
         function begin(i, first) {
@@ -203,8 +288,9 @@ Item {
         }
 
         visible: false
-        x: handle ? Math.min(Math.max(handle.x + 16, 4), root.width - width - 4) : 0
-        y: handle ? Math.min(Math.max(handle.y - height - 12, 4), root.height - height - 4) : 0
+        // Where the label of the value is: the label turns into the field.
+        x: handle ? Math.min(Math.max(handle.chipX - width / 2, 4), root.width - width - 4) : 0
+        y: handle ? Math.min(Math.max(handle.chipY - height / 2, 4), root.height - height - 4) : 0
         width: bubbleRow.implicitWidth + 20
         height: 30
         radius: Theme.radius

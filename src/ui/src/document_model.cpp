@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
+#include <vector>
 
 #include "fission/core/commands.h"
 #include "fission/features/builtin.h"
@@ -78,6 +79,8 @@ const char* issueCodeName(core::FeatureIssueCode code) {
         return "textGlyphsMissing";
     case core::FeatureIssueCode::fontNotFound:
         return "fontNotFound";
+    case core::FeatureIssueCode::fontStyleMissing:
+        return "fontStyleMissing";
     }
     return "kernelFailed";
 }
@@ -359,8 +362,20 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
             alive.insert(meshKey(body));
         }
         const std::lock_guard lock(m_meshMutex);
-        for (auto it = m_meshes.begin(); it != m_meshes.end();) {
-            it = alive.contains(it->first) ? std::next(it) : m_meshes.erase(it);
+        // The worker makes the mesh of a newer result before this one is applied here (changes
+        // come faster than they are shown, e.g. while a handle is dragged). Its mesh must not be
+        // swept away as "not in this result": that left the body out of the view and let go of
+        // the selection. So the newest meshes that are not part of this result stay; only older
+        // ones go (the keys grow with time).
+        constexpr std::size_t kKeptNewer = 24;
+        std::vector<std::uint64_t> others;
+        for (const auto& [key, mesh] : m_meshes) {
+            if (!alive.contains(key)) {
+                others.push_back(key);
+            }
+        }
+        for (std::size_t i = 0; i + kKeptNewer < others.size(); ++i) { // `others` is ascending
+            m_meshes.erase(others[i]);
         }
         // Finer meshes of bodies that changed are gone; new bodies get theirs again below.
         for (auto it = m_detailMeshes.begin(); it != m_detailMeshes.end();) {
@@ -575,8 +590,9 @@ QVariantList DocumentModel::buildStepTexts() const {
         entry[QStringLiteral("name")] = toQString(spec.name);
         entry[QStringLiteral("value")] =
             toQString(given != feature.texts.end() ? given->second : spec.defaultValue);
-        entry[QStringLiteral("kind")] =
-            spec.name == "font" ? QStringLiteral("font") : QStringLiteral("text");
+        entry[QStringLiteral("kind")] = spec.name == "font"    ? QStringLiteral("font")
+                                        : spec.name == "style" ? QStringLiteral("style")
+                                                               : QStringLiteral("text");
         texts.push_back(entry);
     }
     return texts;
@@ -606,6 +622,10 @@ QVariantList DocumentModel::buildStepHandles() const {
         entry[QStringLiteral("kind")] = spec.kind == core::HandleKind::radius
                                             ? QStringLiteral("radius")
                                             : QStringLiteral("distance");
+        entry[QStringLiteral("role")] =
+            spec.role == core::HandleRole::rounding ? QStringLiteral("rounding")
+            : spec.role == core::HandleRole::detail ? QStringLiteral("detail")
+                                                    : QStringLiteral("size");
         entry[QStringLiteral("x")] = spec.origin.x;
         entry[QStringLiteral("y")] = spec.origin.y;
         entry[QStringLiteral("z")] = spec.origin.z;
@@ -613,6 +633,8 @@ QVariantList DocumentModel::buildStepHandles() const {
         entry[QStringLiteral("dy")] = spec.direction.y;
         entry[QStringLiteral("dz")] = spec.direction.z;
         entry[QStringLiteral("sign")] = spec.sign;
+        entry[QStringLiteral("travel")] = spec.travel;
+        entry[QStringLiteral("extent")] = spec.extent;
         entry[QStringLiteral("value")] = value->second.value;
         handles.push_back(entry);
     }
@@ -779,6 +801,14 @@ void DocumentModel::commitChange() {
 void DocumentModel::cancelChange() {
     m_history.cancelTransaction();
     documentChanged();
+}
+
+QStringList DocumentModel::fontStyles(const QString& family) const {
+    QStringList names;
+    for (const geo::FontStyle style : m_kernel->fontStyles(family.toStdString())) {
+        names.push_back(QString::fromLatin1(geo::fontStyleName(style)));
+    }
+    return names;
 }
 
 bool DocumentModel::setStepText(int index, const QString& name, const QString& text) {

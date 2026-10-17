@@ -84,12 +84,10 @@ public:
     }
     std::vector<HandleSpec> handles(const ResolvedParams& p) const override {
         const double r = valueOf(p, "radius");
-        return {{"radius",
-                 HandleKind::radius,
-                 "radius",
-                 {valueOf(p, "x") + r, valueOf(p, "y"), valueOf(p, "z") + r},
-                 {1, 0, 0},
-                 1.0}};
+        std::vector<HandleSpec> out;
+        addRing(out, "radius", HandleKind::radius, valueOf(p, "x"), valueOf(p, "y"),
+                valueOf(p, "z") + r, r, r);
+        return out;
     }
 
 protected:
@@ -109,12 +107,11 @@ public:
         return {"hemisphere", {p.at("radius")}};
     }
     std::vector<HandleSpec> handles(const ResolvedParams& p) const override {
-        return {{"radius",
-                 HandleKind::radius,
-                 "radius",
-                 {valueOf(p, "x") + valueOf(p, "radius"), valueOf(p, "y"), valueOf(p, "z")},
-                 {1, 0, 0},
-                 1.0}};
+        const double r = valueOf(p, "radius");
+        std::vector<HandleSpec> out;
+        addRing(out, "radius", HandleKind::radius, valueOf(p, "x"), valueOf(p, "y"),
+                valueOf(p, "z"), r, r);
+        return out;
     }
 
 protected:
@@ -147,21 +144,15 @@ public:
         const double y = valueOf(p, "y");
         const double z = valueOf(p, "z");
         const double h = valueOf(p, "height");
-        return {
-            {"radius",
-             HandleKind::radius,
-             "radius",
-             {x + valueOf(p, "radius"), y, z},
-             {1, 0, 0},
-             1.0},
-            {"topRadius",
-             HandleKind::radius,
-             "topRadius",
-             {x + valueOf(p, "topRadius"), y, z + h},
-             {1, 0, 0},
-             1.0},
-            {"height", HandleKind::distance, "height", {x, y, z + h}, {0, 0, 1}, 1.0},
-        };
+        const double top = valueOf(p, "topRadius");
+        std::vector<HandleSpec> out;
+        addRing(out, "radius", HandleKind::radius, x, y, z, valueOf(p, "radius"),
+                valueOf(p, "radius"));
+        if (top > 0.0) { // a point has nothing to pull on; the height handle sits there
+            addRing(out, "topRadius", HandleKind::radius, x, y, z + h, top, top);
+        }
+        out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
+        return out;
     }
 
 protected:
@@ -191,22 +182,14 @@ public:
         const double x = valueOf(p, "x");
         const double y = valueOf(p, "y");
         const double z = valueOf(p, "z");
+        const double big = valueOf(p, "radius");
         const double t = valueOf(p, "tubeRadius");
-        return {
-            {"radius",
-             HandleKind::radius,
-             "radius",
-             {x + valueOf(p, "radius"), y, z + t},
-             {1, 0, 0},
-             1.0},
-            // On the outside of the tube, level with its middle: dragging out thickens the tube.
-            {"tubeRadius",
-             HandleKind::distance,
-             "tubeRadius",
-             {x + valueOf(p, "radius") + t, y, z + t},
-             {1, 0, 0},
-             1.0},
-        };
+        std::vector<HandleSpec> out;
+        addRing(out, "radius", HandleKind::radius, x, y, z + t, big, big);
+        const std::size_t tube = out.size();
+        addRing(out, "tubeRadius", HandleKind::distance, x, y, z + t, big + t, t);
+        markRole(out, tube, HandleRole::detail);
+        return out;
     }
 
 protected:
@@ -237,17 +220,15 @@ public:
         const double z = valueOf(p, "z");
         const double r = valueOf(p, "radius");
         const double h = valueOf(p, "height");
-        return {
-            {"radius", HandleKind::radius, "radius", {x + r, y, z + h / 2.0}, {1, 0, 0}, 1.0},
-            // On the inner rim of the top: dragging towards the middle makes the wall thicker.
-            {"wall",
-             HandleKind::distance,
-             "wall",
-             {x + r - valueOf(p, "wall"), y, z + h},
-             {-1, 0, 0},
-             1.0},
-            {"height", HandleKind::distance, "height", {x, y + r, z + h}, {0, 0, 1}, 1.0},
-        };
+        const double wall = valueOf(p, "wall");
+        std::vector<HandleSpec> out;
+        addRing(out, "radius", HandleKind::radius, x, y, z + h / 2.0, r, r);
+        // On the inner rim at the top: pulled towards the middle the wall gets thicker.
+        const std::size_t walls = out.size();
+        addRing(out, "wall", HandleKind::distance, x, y, z + h, r - wall, wall, /*inward=*/true);
+        markRole(out, walls, HandleRole::detail);
+        out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
+        return out;
     }
 
 protected:
@@ -277,20 +258,14 @@ public:
         const double z = valueOf(p, "z");
         const double h = valueOf(p, "height");
         const double r = valueOf(p, "radius");
-        // The corner that ends the front side on the right: dragging it outwards along its own
-        // direction makes the prism wider.
-        const double angle = -kPi / 2.0 + kPi / std::round(valueOf(p, "sides"));
-        const double dx = std::cos(angle);
-        const double dy = std::sin(angle);
-        return {
-            {"radius",
-             HandleKind::radius,
-             "radius",
-             {x + r * dx, y + r * dy, z + h / 2.0},
-             {dx, dy, 0},
-             1.0},
-            {"height", HandleKind::distance, "height", {x, y, z + h}, {0, 0, 1}, 1.0},
-        };
+        const int sides = static_cast<int>(std::lround(valueOf(p, "sides")));
+        std::vector<HandleSpec> out;
+        // At every corner: the one facing the viewer is shown. The corners are where the kernel
+        // puts them (a flat side faces front).
+        addRing(out, "radius", HandleKind::radius, x, y, z + h / 2.0, r, r, false, sides,
+                -kPi / 2.0 - kPi / sides);
+        out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
+        return out;
     }
 
 protected:
@@ -325,26 +300,18 @@ public:
         const double y = valueOf(p, "y");
         const double z = valueOf(p, "z");
         const double h = valueOf(p, "height");
-        // The back tip, and the notch that follows it.
-        const double notch = kPi / 2.0 + kPi / std::round(valueOf(p, "points"));
-        const double dx = std::cos(notch);
-        const double dy = std::sin(notch);
-        const double inner = valueOf(p, "innerRadius");
-        return {
-            {"radius",
-             HandleKind::radius,
-             "radius",
-             {x, y + valueOf(p, "radius"), z + h / 2.0},
-             {0, 1, 0},
-             1.0},
-            {"innerRadius",
-             HandleKind::radius,
-             "innerRadius",
-             {x + inner * dx, y + inner * dy, z + h / 2.0},
-             {dx, dy, 0},
-             1.0},
-            {"height", HandleKind::distance, "height", {x, y, z + h}, {0, 0, 1}, 1.0},
-        };
+        const int points = static_cast<int>(std::lround(valueOf(p, "points")));
+        std::vector<HandleSpec> out;
+        // The tips, and the notches between them (half a step further round).
+        addRing(out, "radius", HandleKind::radius, x, y, z + h / 2.0, valueOf(p, "radius"),
+                valueOf(p, "radius"), false, points, kPi / 2.0);
+        const std::size_t notches = out.size();
+        addRing(out, "innerRadius", HandleKind::radius, x, y, z + h / 2.0,
+                valueOf(p, "innerRadius"), valueOf(p, "innerRadius"), false, points,
+                kPi / 2.0 + kPi / points);
+        markRole(out, notches, HandleRole::detail);
+        out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
+        return out;
     }
 
 protected:
@@ -374,26 +341,14 @@ public:
         const double x = valueOf(p, "x");
         const double y = valueOf(p, "y");
         const double z = valueOf(p, "z");
-        return {
-            {"width",
-             HandleKind::distance,
-             "width",
-             {x + valueOf(p, "width") / 2.0, y, z},
-             {1, 0, 0},
-             1.0},
-            {"depth",
-             HandleKind::distance,
-             "depth",
-             {x, y + valueOf(p, "depth") / 2.0, z},
-             {0, 1, 0},
-             1.0},
-            {"height",
-             HandleKind::distance,
-             "height",
-             {x, y, z + valueOf(p, "height")},
-             {0, 0, 1},
-             1.0},
-        };
+        const double w = valueOf(p, "width");
+        const double d = valueOf(p, "depth");
+        const double h = valueOf(p, "height");
+        std::vector<HandleSpec> out;
+        addBothEnds(out, "width", {x, y, z}, {1, 0, 0}, w / 2.0, w, 0.5);
+        addBothEnds(out, "depth", {x, y, z}, {0, 1, 0}, d / 2.0, d, 0.5);
+        out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
+        return out;
     }
 
 protected:
@@ -418,18 +373,15 @@ public:
         const double x = valueOf(p, "x");
         const double y = valueOf(p, "y");
         const double z = valueOf(p, "z");
+        const double w = valueOf(p, "width");
         const double d = valueOf(p, "depth");
         const double h = valueOf(p, "height");
-        return {
-            {"width",
-             HandleKind::distance,
-             "width",
-             {x + valueOf(p, "width") / 2.0, y, z + h / 4.0},
-             {1, 0, 0},
-             1.0},
-            {"depth", HandleKind::distance, "depth", {x, y - d / 2.0, z}, {0, -1, 0}, 1.0},
-            {"height", HandleKind::distance, "height", {x, y + d / 2.0, z + h}, {0, 0, 1}, 1.0},
-        };
+        std::vector<HandleSpec> out;
+        addBothEnds(out, "width", {x, y, z}, {1, 0, 0}, w / 2.0, w, 0.5);
+        addBothEnds(out, "depth", {x, y, z}, {0, 1, 0}, d / 2.0, d, 0.5);
+        out.push_back(
+            makeHandle("height", HandleKind::distance, {x, y + d / 2.0, z + h}, {0, 0, 1}, h));
+        return out;
     }
 
 protected:

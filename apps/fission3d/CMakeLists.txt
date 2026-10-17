@@ -12,7 +12,7 @@ set(FISSION_QML_FILES
   qml/LibraryCard.qml qml/Logo.qml qml/MenuStrip.qml qml/NativeMenuBar.qml qml/NavButton.qml
   qml/NumberField.qml qml/PanelHeader.qml qml/RightPanel.qml qml/Section.qml qml/Segmented.qml
   qml/StatusBar.qml qml/ToolButton3D.qml qml/TreeRow.qml qml/Txt.qml qml/ViewCube.qml
-  qml/ViewOverlay.qml qml/ShapeCatalog.qml qml/ShapeFlyout.qml qml/Toggle.qml qml/HandleLayer.qml qml/WordField.qml qml/FontField.qml qml/icons.js)
+  qml/ViewOverlay.qml qml/ShapeCatalog.qml qml/ShapeFlyout.qml qml/Toggle.qml qml/HandleLayer.qml qml/StyleButton.qml qml/WordField.qml qml/FontField.qml qml/icons.js)
 
 qt_add_qml_module(fission3d
   URI Fission3D
@@ -30,7 +30,11 @@ qt_add_resources(fission3d "fonts"
     resources/fonts/IBMPlexSans-Regular.ttf resources/fonts/IBMPlexSans-Medium.ttf
     resources/fonts/IBMPlexSans-SemiBold.ttf resources/fonts/IBMPlexSans-Bold.ttf
     resources/fonts/IBMPlexMono-Regular.ttf resources/fonts/IBMPlexMono-Medium.ttf
-    resources/fonts/IBMPlexMono-SemiBold.ttf)
+    resources/fonts/IBMPlexMono-SemiBold.ttf
+    # the styles lettering can use: bold and italic of both families
+    resources/fonts/IBMPlexSans-Italic.ttf resources/fonts/IBMPlexSans-BoldItalic.ttf
+    resources/fonts/IBMPlexMono-Bold.ttf resources/fonts/IBMPlexMono-Italic.ttf
+    resources/fonts/IBMPlexMono-BoldItalic.ttf)
 
 # Texts are English in the source (qsTr); the German translation is a Qt Linguist file.
 # `cmake --build <dir> --target update_translations` refreshes the .ts files from the sources.

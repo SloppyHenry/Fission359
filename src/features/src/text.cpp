@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "fission/features/builtin.h"
+#include "fission/geo/error.h"
 #include "fission/geo/primitives.h"
 
 #include "primitives.h"
@@ -16,9 +17,11 @@ using namespace fission::core;
 
 constexpr const char* kDefaultText = "Text";
 constexpr const char* kDefaultFont = "IBM Plex Sans";
+constexpr const char* kDefaultStyle = "regular";
 
 // Lettering, centred on (x, y), standing on the plane z. `size` is the height of a capital letter,
-// `height` how far the letters stand up. The words (text, font) are typed words, not formulas.
+// `height` how far the letters stand up. The words (text, font, style) are typed words, not
+// formulas.
 // Whether the font has every letter, or exists at all, is for the kernel to say (execute).
 class TextType final : public FeatureType {
 public:
@@ -34,7 +37,7 @@ public:
     }
 
     std::vector<TextFieldSpec> texts() const override {
-        return {{"text", kDefaultText}, {"font", kDefaultFont}};
+        return {{"text", kDefaultText}, {"font", kDefaultFont}, {"style", kDefaultStyle}};
     }
 
     std::optional<FeatureIssue> validate(const ResolvedParams& params) const override {
@@ -42,9 +45,16 @@ public:
     }
 
     FeatureResult execute(const ExecuteInput& input, const ExecuteContext& context) const override {
+        const std::optional<geo::FontStyle> style =
+            geo::parseFontStyle(textOf(input.feature, "style", kDefaultStyle));
+        if (!style) {
+            throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                     "text: unknown style " + textOf(input.feature, "style", ""));
+        }
         const geo::TextSpec spec{textOf(input.feature, "text", kDefaultText),
                                  textOf(input.feature, "font", kDefaultFont),
-                                 valueOf(input.params, "size"), valueOf(input.params, "height")};
+                                 valueOf(input.params, "size"), valueOf(input.params, "height"),
+                                 *style};
         const geo::Point3d base{valueOf(input.params, "x"), valueOf(input.params, "y"),
                                 valueOf(input.params, "z")};
         geo::NamedSolid made = context.kernel.makePrimitive(spec, base);
@@ -63,17 +73,12 @@ public:
         const double y = valueOf(params, "y");
         const double z = valueOf(params, "z");
         const double h = valueOf(params, "height");
-        return {
-            {"height", HandleKind::distance, "height", {x, y, z + h}, {0, 0, 1}, 1.0},
-            // At the top edge of capital letters: dragging towards the back makes the letters
-            // taller.
-            {"size",
-             HandleKind::distance,
-             "size",
-             {x, y + valueOf(params, "size") / 2.0, z + h},
-             {0, 1, 0},
-             1.0},
-        };
+        const double size = valueOf(params, "size");
+        std::vector<HandleSpec> out;
+        out.push_back(makeHandle("height", HandleKind::distance, {x, y, z + h}, {0, 0, 1}, h));
+        // The height of capital letters, taken at the top or at the bottom edge.
+        addBothEnds(out, "size", {x, y, z + h}, {0, 1, 0}, size / 2.0, size, 0.5);
+        return out;
     }
 };
 

@@ -12,12 +12,13 @@ namespace fission::geo {
 /// Why a geometry operation failed. The message catalog turns the code into text for people;
 /// raw kernel messages never leave the geometry layer (master prompt, rule 5).
 enum class GeometryErrorCode {
-    invalidInput,  ///< A parameter is out of range (zero size, not a number, ...).
-    invalidResult, ///< The kernel produced a body that failed validation.
-    kernelFailure, ///< The kernel could not compute the operation.
-    textEmpty,     ///< A text without any visible character.
-    glyphsMissing, ///< The font has no character for some of the text; `subject()` lists them.
-    fontNotFound,  ///< No font of that name on this computer; `subject()` is the name.
+    invalidInput,     ///< A parameter is out of range (zero size, not a number, ...).
+    invalidResult,    ///< The kernel produced a body that failed validation.
+    kernelFailure,    ///< The kernel could not compute the operation.
+    textEmpty,        ///< A text without any visible character.
+    glyphsMissing,    ///< The font has no character for some of the text; `subject()` lists them.
+    fontNotFound,     ///< No font of that name on this computer; `subject()` is the name.
+    fontStyleMissing, ///< The font exists, but not in the wanted style; `subject()` is its name.
 };
 
 class GeometryError : public std::runtime_error {

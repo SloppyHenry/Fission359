@@ -12,6 +12,7 @@
 #include <QFontDatabase>
 #include <QGuiApplication>
 #include <QImage>
+#include <QMouseEvent>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
@@ -141,12 +142,17 @@ CommandLine parseCommandLine(int& argc, char** argv) {
                                           QStringLiteral("Switch animations off."));
     const QCommandLineOption simulate(
         QStringLiteral("simulate"),
-        QStringLiteral("Play pointer actions after the first frame, before the screenshot: "
-                       "hover:x,y  click:x,y  shiftclick:x,y  doubleclick:x,y  frame:x1,y1,x2,y2 "
-                       "(window pixels of the 3D view), drop:shape,x,y  drophole:shape,x,y "
-                       "(drag a shape of the gallery there and let go), put:shape  puthole:shape "
-                       "(click its tile), type:50,tab,20,enter (type sizes), separated by "
-                       "semicolons."),
+        QStringLiteral(
+            "Play pointer actions after the first frame, before the screenshot: "
+            "hover:x,y  click:x,y  shiftclick:x,y  doubleclick:x,y  frame:x1,y1,x2,y2 "
+            "(window pixels of the 3D view), drop:shape,x,y  drophole:shape,x,y "
+            "(drag a shape of the gallery there and let go), put:shape  puthole:shape "
+            "(click its tile), type:50,tab,20,enter (type sizes), set:style,bold (a word "
+            "of the chosen step), grab:width,40,0,8 (press a handle, pull it by view pixels "
+            "in small moves, let go), point:cornerRadius (put the pointer on that handle and leave "
+            "it there), expect:width,40 (fail unless the chosen step has at least "
+            "that value, no drag is left and its handles are still shown), separated by "
+            "semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
@@ -182,8 +188,12 @@ CommandLine parseCommandLine(int& argc, char** argv) {
 // Developer option --simulate: plays pointer actions through the real input path of the 3D view
 // (graphics card, pick pass, selection), one every 350 ms. Calls `done` when the last one had
 // time to show its result.
+// Set by --simulate "expect:..." when what was expected did not happen.
+int g_simulationFailure = 0;
+
 void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
-                 fission::ui::PlacementController* placement, const QString& actions,
+                 fission::ui::PlacementController* placement, fission::ui::DocumentModel* model,
+                 fission::ui::HandleController* handles, const QString& actions,
                  std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
@@ -191,6 +201,103 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         const QString kind = action.left(colon).trimmed();
         QList<double> numbers;
         QString shape; // drop:sphere,x,y and put:sphere start with the name of a shape
+        if (kind == QLatin1String("expect")) {
+            // expect:width,40 - the chosen step has at least this value, and no drag is left
+            // hanging. Otherwise the program ends with an error (for the tests).
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [model, handles, spec] {
+                double value = -1.0;
+                for (const QVariant& entry : model->stepValues()) {
+                    if (entry.toMap()["name"].toString() == spec.value(0)) {
+                        value = entry.toMap()["value"].toDouble();
+                    }
+                }
+                if (value < spec.value(1).toDouble() || handles->editing() ||
+                    handles->handles().isEmpty()) {
+                    qWarning().noquote()
+                        << QStringLiteral(
+                               "expected %1 >= %2, nothing being dragged and the handles "
+                               "still there; found %3 (editing: %4, handles: %5)")
+                               .arg(spec.value(0), spec.value(1))
+                               .arg(value)
+                               .arg(handles->editing())
+                               .arg(handles->handles().size());
+                    g_simulationFailure = 4;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("point")) {
+            // point:cornerRadius - the pointer goes onto the handle of that value and stays there
+            // (a real mouse move through the window): what it shows then can be photographed.
+            const QString parameter = action.mid(colon + 1);
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [window, viewport, handles, parameter] {
+                for (const QVariant& entry : handles->handles()) {
+                    if (entry.toMap()["parameter"].toString() != parameter) {
+                        continue;
+                    }
+                    const QPointF scene = viewport->mapToScene(
+                        QPointF(entry.toMap()["x"].toDouble(), entry.toMap()["y"].toDouble()));
+                    QMouseEvent event(QEvent::MouseMove, scene,
+                                      window->mapToGlobal(scene.toPoint()), Qt::NoButton,
+                                      Qt::NoButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(window, &event);
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("grab")) {
+            // grab:width,40,0,8 - press on the handle of "width", pull it 40 x 0 view pixels in
+            // 8 small moves, let go: real mouse events through the window, as a hand would do.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const int steps = spec.size() >= 4 ? std::max(1, spec[3].toInt()) : 8;
+            const QString parameter = spec.value(0);
+            const QPointF pull(spec.value(1).toDouble(), spec.value(2).toDouble());
+            const auto send = [window, viewport](QEvent::Type type, const QPointF& inView,
+                                                 Qt::MouseButtons buttons) {
+                const QPointF scene = viewport->mapToScene(inView);
+                // A move names no button (it is only held); press and release name the left one.
+                const Qt::MouseButton changed =
+                    type == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton;
+                QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()), changed,
+                                  buttons, Qt::NoModifier);
+                QCoreApplication::sendEvent(window, &event);
+            };
+            auto start = std::make_shared<QPointF>();
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [handles, parameter, start, send] {
+                for (const QVariant& entry : handles->handles()) {
+                    if (entry.toMap()["parameter"].toString() == parameter) {
+                        *start =
+                            QPointF(entry.toMap()["x"].toDouble(), entry.toMap()["y"].toDouble());
+                    }
+                }
+                send(QEvent::MouseButtonPress, *start, Qt::LeftButton);
+            });
+            for (int step = 1; step <= steps; ++step) {
+                delay += 90;
+                QTimer::singleShot(delay, viewport, [start, pull, step, steps, send] {
+                    send(QEvent::MouseMove, *start + pull * step / steps, Qt::LeftButton);
+                });
+            }
+            delay += 90;
+            QTimer::singleShot(delay, viewport, [start, pull, send] {
+                send(QEvent::MouseButtonRelease, *start + pull, Qt::NoButton);
+            });
+            continue;
+        }
+        if (kind == QLatin1String("set")) { // set:style,boldItalic - words of the chosen step
+            const QStringList pair = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 350;
+            if (pair.size() == 2 && model != nullptr) {
+                QTimer::singleShot(delay, viewport, [model, pair] {
+                    model->setStepText(model->currentStep(), pair[0], pair[1]);
+                });
+            }
+            continue;
+        }
         QStringList parts = action.mid(colon + 1).split(QLatin1Char(','));
         if (kind == QLatin1String("type")) { // type:50,tab,20,enter - what the keys would do
             delay += 350;
@@ -370,7 +477,7 @@ void loadFonts() {
     }
 }
 
-// The geometry kernel reads fonts from files, not from the program's resources. The two Plex
+// The geometry kernel reads fonts from files, not from the program's resources. The Plex
 // fonts that lettering offers are copied (once, and again when they change) to the cache folder.
 std::vector<std::string> bundledFontFiles() {
     std::vector<std::string> paths;
@@ -381,7 +488,9 @@ std::vector<std::string> bundledFontFiles() {
                      folder.toStdString());
         return paths;
     }
-    for (const char* file : {"IBMPlexSans-Regular", "IBMPlexMono-Regular"}) {
+    for (const char* file : {"IBMPlexSans-Regular", "IBMPlexSans-Bold", "IBMPlexSans-Italic",
+                             "IBMPlexSans-BoldItalic", "IBMPlexMono-Regular", "IBMPlexMono-Bold",
+                             "IBMPlexMono-Italic", "IBMPlexMono-BoldItalic"}) {
         QFile source(QStringLiteral(":/fission/fonts/%1.ttf").arg(QLatin1String(file)));
         const QString target = QStringLiteral("%1/%2.ttf").arg(folder, QLatin1String(file));
         if (!source.open(QIODevice::ReadOnly)) {
@@ -541,12 +650,16 @@ int main(int argc, char* argv[]) {
     }
 
     fission::ui::PlacementController* const placementController = &placement;
+    fission::ui::HandleController* const handleController = &handles;
     if (!options.smokeTestPath.isEmpty()) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
         const QString simulate = options.simulate;
-        auto grab = [window, viewport, placementController, path, simulate,
-                     started = std::make_shared<bool>(false)] {
+        // True once the pictures are being taken: the fallback below must not end a long
+        // simulation after 4 seconds (and report success for what never ran).
+        const auto started = std::make_shared<bool>(false);
+        auto grab = [window, viewport, placementController, &documentModel, handleController, path,
+                     simulate, started] {
             if (*started) {
                 return; // the first frame can be reported more than once
             }
@@ -555,11 +668,12 @@ int main(int argc, char* argv[]) {
                 QTimer::singleShot(600, window, [window, path] {
                     const QImage frame = window->grabWindow();
                     const bool saved = !frame.isNull() && frame.save(path);
-                    QCoreApplication::exit(saved ? 0 : 3);
+                    QCoreApplication::exit(saved ? g_simulationFailure : 3);
                 });
             };
             if (viewport != nullptr && !simulate.isEmpty()) {
-                playActions(window, viewport, placementController, simulate, shoot);
+                playActions(window, viewport, placementController, &documentModel, handleController,
+                            simulate, shoot);
             } else {
                 shoot();
             }
@@ -567,7 +681,10 @@ int main(int argc, char* argv[]) {
         if (viewport != nullptr) {
             QObject::connect(viewport, &fission::ui::Viewport3D::firstFrameShown, &app, grab);
             // No graphics device (software rendering): the 3D view never reports a frame.
-            QTimer::singleShot(4000, &app, [window, path] {
+            QTimer::singleShot(4000, &app, [window, path, started] {
+                if (*started) {
+                    return;
+                }
                 const QImage frame = window->grabWindow();
                 QCoreApplication::exit(!frame.isNull() && frame.save(path) ? 0 : 3);
             });

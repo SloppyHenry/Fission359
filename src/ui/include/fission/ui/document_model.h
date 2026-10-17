@@ -52,8 +52,9 @@ class DocumentModel : public QObject {
     Q_PROPERTY(QVariantList stepValues READ stepValues NOTIFY stepValuesChanged)
     /// Words of the current step (text, font): [{ name, value, kind }], `kind` is text | font.
     Q_PROPERTY(QVariantList stepTexts READ stepTexts NOTIFY stepValuesChanged)
-    /// The handles of the current step in the world (mm): [{ parameter, kind, x, y, z, dx, dy, dz,
-    /// sign, value }]. `kind` is distance | radius. Empty when the step has none or failed.
+    /// The handles of the current step in the world (mm): [{ parameter, kind, role, x, y, z, dx,
+    /// dy, dz, sign, travel, extent, value }]. `kind` is distance | radius, `role` is size |
+    /// detail | rounding. Empty when the step has none or failed.
     Q_PROPERTY(QVariantList stepHandles READ stepHandles NOTIFY stepValuesChanged)
     /// The fonts lettering can use; filled in the background shortly after the start.
     Q_PROPERTY(QStringList fontFamilies READ fontFamilies NOTIFY fontsChanged)
@@ -161,6 +162,9 @@ public:
     Q_INVOKABLE void setBodyVisible(int index, bool visible);
     /// Marks a body as a hole ("Als Loch") or takes the mark away.
     Q_INVOKABLE void setBodyHole(int index, bool hole);
+    /// The styles a font has, as names ("regular", "bold", "italic", "boldItalic"); empty if the
+    /// font is not on this computer.
+    Q_INVOKABLE QStringList fontStyles(const QString& family) const;
     /// Sets a word of step `index` (the text of a lettering, the name of its font).
     Q_INVOKABLE bool setStepText(int index, const QString& name, const QString& text);
 

@@ -4,11 +4,13 @@
 #include "fission/render/scene_renderer.h"
 
 #include <QFile>
+#include <QPointF>
 
 #include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <numbers>
+#include <utility>
 #include <vector>
 
 namespace fission::render {
@@ -236,12 +238,22 @@ SceneRenderer::SceneRenderer(QRhi* rhi) : m_rhi(rhi) {
     m_shadowPipeline->create();
 }
 
-SceneRenderer::~SceneRenderer() = default;
+SceneRenderer::~SceneRenderer() {
+    // A pick still on its way would be answered into this object after it is gone (the graphics
+    // interface finishes its readbacks when it shuts down). Take the answer now, and nobody is
+    // told.
+    if (m_pickInFlight && m_rhi != nullptr && !m_rhi->isRecordingFrame()) {
+        m_pickDone = nullptr;
+        m_pickResult.completed = nullptr;
+        m_rhi->finish();
+    }
+}
 
 std::unique_ptr<QRhiGraphicsPipeline>
 SceneRenderer::makePipeline(const QShader& vertex, const QShader& fragment, bool colorLayoutOnly,
                             bool lines, bool blend, bool depth, QRhiRenderPassDescriptor* pass,
-                            int samples, QRhiShaderResourceBindings* srb) {
+                            int samples, QRhiShaderResourceBindings* srb,
+                            QRhiGraphicsPipeline::CompareOp depthOp, bool surfaceBias) {
     std::unique_ptr<QRhiGraphicsPipeline> pipeline(m_rhi->newGraphicsPipeline());
     pipeline->setShaderStages(
         {{QRhiShaderStage::Vertex, vertex}, {QRhiShaderStage::Fragment, fragment}});
@@ -260,9 +272,9 @@ SceneRenderer::makePipeline(const QShader& vertex, const QShader& fragment, bool
     pipeline->setTopology(lines ? QRhiGraphicsPipeline::Lines : QRhiGraphicsPipeline::Triangles);
     pipeline->setDepthTest(depth);
     pipeline->setDepthWrite(depth && !blend);
-    pipeline->setDepthOp(QRhiGraphicsPipeline::LessOrEqual);
+    pipeline->setDepthOp(depthOp);
     pipeline->setCullMode(QRhiGraphicsPipeline::None);
-    if (!lines && depth) {
+    if (!lines && depth && surfaceBias) {
         // Surfaces sit a little behind, so that edge lines and the grid win the depth test.
         pipeline->setDepthBias(2);
         pipeline->setSlopeScaledDepthBias(1.0F);
@@ -297,6 +309,13 @@ void SceneRenderer::createPipelines(QRhiRenderPassDescriptor* pass, int sampleCo
         makePipeline(m_flatVertex, m_flatFragment, true, false, true, true, pass, sampleCount);
     m_linePipeline =
         makePipeline(m_flatVertex, m_flatFragment, true, true, true, true, pass, sampleCount);
+    // Handles: tested against the depth of the scene but not written into it; the hidden half
+    // is drawn where something is in front.
+    m_handleHiddenPipeline =
+        makePipeline(m_flatVertex, m_flatFragment, true, false, true, true, pass, sampleCount,
+                     nullptr, QRhiGraphicsPipeline::Greater, false);
+    m_handlePipeline = makePipeline(m_flatVertex, m_flatFragment, true, false, true, true, pass,
+                                    sampleCount, nullptr, QRhiGraphicsPipeline::LessOrEqual, false);
 
     // Highlights of faces: the body's own vertices, one colour, blended over the body.
     m_overlayPipeline.reset(m_rhi->newGraphicsPipeline());
@@ -826,6 +845,7 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
                   m_rhi->clipSpaceCorrMatrix() * frame.projection * frame.view, frame, size,
                   occlusion);
     prepareHighlights(updates, frame, size);
+    prepareHandles(updates, frame, size);
 
     cb->beginPass(target, frame.palette.viewEdge, {1.0F, 0}, updates);
     cb->setViewport({0, 0, float(size.width()), float(size.height())});
@@ -883,6 +903,7 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
         }
     }
     drawHighlights(cb);
+    drawHandles(cb);
     cb->endPass();
 }
 
@@ -1193,6 +1214,7 @@ public:
         m_right = view.row(0).toVector3D();
         m_up = view.row(1).toVector3D();
         m_forward = -view.row(2).toVector3D();
+        m_eye = view.inverted().map(QVector3D(0.0F, 0.0F, 0.0F));
         m_pixelsToWorld = 2.0F / (static_cast<float>(heightInPixels) * projection(1, 1));
     }
 
@@ -1223,6 +1245,55 @@ public:
         push(b - sb, color);
     }
 
+    // A point moved towards the eye by so many pixels' worth, along its line of sight (it stays
+    // where it is on screen): a dot on a face stays in front of it, even where the face is
+    // slanted.
+    QVector3D towardsViewer(const QVector3D& p, float pixels) const {
+        QVector3D toEye = m_eye - p;
+        if (toEye.lengthSquared() < 1e-12F) {
+            return p;
+        }
+        return p + toEye.normalized() * (pixels * pixelSize(p));
+    }
+
+    // A disc facing the viewer, or a ring of it from `inner` to `outer` pixels.
+    void ring(const QVector3D& center, float inner, float outer, const QColor& color) {
+        constexpr int kSegments = 24;
+        const float size = pixelSize(center);
+        for (int i = 0; i < kSegments; ++i) {
+            const float a0 = 6.2831853F * static_cast<float>(i) / kSegments;
+            const float a1 = 6.2831853F * static_cast<float>(i + 1) / kSegments;
+            const QVector3D d0 = (m_right * std::cos(a0) + m_up * std::sin(a0)) * size;
+            const QVector3D d1 = (m_right * std::cos(a1) + m_up * std::sin(a1)) * size;
+            if (inner <= 0.0F) {
+                push(center, color);
+                push(center + d0 * outer, color);
+                push(center + d1 * outer, color);
+                continue;
+            }
+            push(center + d0 * inner, color);
+            push(center + d0 * outer, color);
+            push(center + d1 * outer, color);
+            push(center + d0 * inner, color);
+            push(center + d1 * outer, color);
+            push(center + d1 * inner, color);
+        }
+    }
+
+    // A point so many pixels across and up from `center`, in the plane facing the viewer.
+    QVector3D offset(const QVector3D& center, float across, float up) const {
+        const float size = pixelSize(center);
+        return center + m_right * (across * size) + m_up * (up * size);
+    }
+
+    // The way a world direction runs on screen, as a unit vector (across, up).
+    QPointF screenWay(const QVector3D& direction) const {
+        const QPointF way(QVector3D::dotProduct(direction, m_right),
+                          QVector3D::dotProduct(direction, m_up));
+        const double length = std::hypot(way.x(), way.y());
+        return length > 1e-6 ? way / length : QPointF(0.0, 1.0);
+    }
+
     void square(const QVector3D& center, float sidePixels, const QColor& color) {
         const float h = 0.5F * sidePixels * pixelSize(center);
         const QVector3D r = m_right * h;
@@ -1241,7 +1312,7 @@ private:
     }
 
     QMatrix4x4 m_viewProjection;
-    QVector3D m_right, m_up, m_forward;
+    QVector3D m_right, m_up, m_forward, m_eye;
     float m_pixelsToWorld = 0.0F;
     std::vector<FlatVertex>& m_out;
 };
@@ -1350,6 +1421,101 @@ void SceneRenderer::prepareHighlights(QRhiResourceUpdateBatch* updates, const Fr
     updates->updateDynamicBuffer(m_ribbonBuffer.get(), 0,
                                  static_cast<quint32>(shapes.size() * sizeof(FlatVertex)),
                                  shapes.data());
+}
+
+void SceneRenderer::prepareHandles(QRhiResourceUpdateBatch* updates, const Frame& frame,
+                                   const QSize& targetSize) {
+    m_handleVertexCount = 0;
+    const HandleGraphics& handles = frame.handles;
+    if (handles.empty() || !m_handlePipeline) {
+        return;
+    }
+    std::vector<FlatVertex> shapes;
+    // The builder works in window pixels: the image has `pixelScale` times as many.
+    const float scale = std::max(handles.pixelScale, 0.1F);
+    HighlightShapes builder(
+        frame.view, frame.projection,
+        std::max(1, static_cast<int>(static_cast<float>(targetSize.height()) / scale)), shapes);
+    for (const HandleLine& line : handles.lines) {
+        builder.strip(line.from, line.to, line.width, line.color);
+    }
+    for (const HandleArrow& arrow : handles.arrows) {
+        // A chevron 13 to 19 pixels beyond the dot, a light one beneath a dark one.
+        const QVector3D at = builder.towardsViewer(arrow.at, 10.0F);
+        const QPointF way = builder.screenWay(arrow.direction);
+        const QVector3D left =
+            builder.offset(at, static_cast<float>(13.0 * way.x() - 5.0 * way.y()),
+                           static_cast<float>(13.0 * way.y() + 5.0 * way.x()));
+        const QVector3D tip = builder.offset(at, static_cast<float>(19.0 * way.x()),
+                                             static_cast<float>(19.0 * way.y()));
+        const QVector3D right =
+            builder.offset(at, static_cast<float>(13.0 * way.x() + 5.0 * way.y()),
+                           static_cast<float>(13.0 * way.y() - 5.0 * way.x()));
+        for (const auto& [width, color] :
+             {std::pair{4.5F, arrow.halo}, std::pair{2.0F, arrow.color}}) {
+            builder.strip(left, tip, width, color);
+            builder.strip(tip, right, width, color);
+            builder.ring(tip, 0.0F, width / 2.0F, color); // a round joint
+        }
+    }
+    for (const HandleDot& dot : handles.dots) {
+        const QVector3D centre = builder.towardsViewer(dot.centre, 3.0F * dot.radius);
+        builder.ring(centre, 0.0F, dot.radius, dot.fill);
+        builder.ring(centre, dot.radius - dot.ringWidth, dot.radius, dot.ring);
+        if (dot.rounding) {
+            // A quarter circle round the lower left, bulging to the upper right: a round corner.
+            constexpr int kSteps = 6;
+            const float r = dot.radius * 0.95F;
+            const float cx = -dot.radius * 0.45F;
+            const float cy = -dot.radius * 0.45F;
+            QVector3D last = builder.offset(centre, cx + r, cy);
+            for (int i = 1; i <= kSteps; ++i) {
+                const float a = 1.5707963F * static_cast<float>(i) / kSteps;
+                const QVector3D next =
+                    builder.offset(centre, cx + r * std::cos(a), cy + r * std::sin(a));
+                builder.strip(last, next, 1.5F, dot.ring);
+                last = next;
+            }
+        }
+    }
+    if (shapes.empty()) {
+        return;
+    }
+    // The same triangles twice: faint for where a body is in front, full for the rest.
+    const std::size_t half = shapes.size();
+    shapes.reserve(2 * half);
+    for (std::size_t i = 0; i < half; ++i) {
+        FlatVertex faint = shapes[i];
+        faint.color[3] *= std::clamp(handles.hiddenAlpha, 0.0F, 1.0F);
+        shapes.push_back(faint);
+    }
+    m_handleVertexCount = shapes.size();
+    if (!m_handleBuffer || m_handleCapacity < shapes.size()) {
+        m_handleCapacity = std::max<std::size_t>(shapes.size() * 2, 2048);
+        m_handleBuffer.reset(
+            m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer,
+                             static_cast<quint32>(m_handleCapacity * sizeof(FlatVertex))));
+        m_handleBuffer->create();
+    }
+    updates->updateDynamicBuffer(m_handleBuffer.get(), 0,
+                                 static_cast<quint32>(shapes.size() * sizeof(FlatVertex)),
+                                 shapes.data());
+}
+
+void SceneRenderer::drawHandles(QRhiCommandBuffer* cb) {
+    if (m_handleVertexCount == 0 || !m_handleBuffer) {
+        return;
+    }
+    const auto half = static_cast<quint32>(m_handleVertexCount / 2);
+    const QRhiCommandBuffer::VertexInput input(m_handleBuffer.get(), 0);
+    cb->setGraphicsPipeline(m_handleHiddenPipeline.get());
+    cb->setShaderResources(m_srb.get());
+    cb->setVertexInput(0, 1, &input);
+    cb->draw(half, 1, half, 0); // the faint half
+    cb->setGraphicsPipeline(m_handlePipeline.get());
+    cb->setShaderResources(m_srb.get());
+    cb->setVertexInput(0, 1, &input);
+    cb->draw(half, 1, 0, 0);
 }
 
 void SceneRenderer::drawHighlights(QRhiCommandBuffer* cb) {

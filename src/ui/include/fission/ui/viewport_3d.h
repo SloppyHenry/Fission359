@@ -138,6 +138,14 @@ public:
     };
     std::optional<Landing> landingAt(double x, double y, const QString& ignoreBody,
                                      double planeZ) const;
+    /// Where the eye is in the world (mm): handles are shown on the side that faces it.
+    QVector3D eyePosition() const { return m_camera.eye(); }
+    /// The ray from the eye through a point of the view (item pixels), in the world (mm).
+    struct WorldRay {
+        QVector3D origin;
+        QVector3D direction; ///< unit length
+    };
+    std::optional<WorldRay> rayAt(double x, double y) const;
     /// Position of a world point in item pixels (for labels that float in the 3D view).
     Q_INVOKABLE QPointF project(double x, double y, double z) const;
 
@@ -177,6 +185,9 @@ public:
     core::SelectionFilter selectionFilter() const { return m_filter; }
     /// The chosen elements, drawn highlighted. The hovered one is added by the view itself.
     void setSelectionHighlights(std::vector<render::Highlight> highlights);
+    /// The size handles of the chosen shape, drawn in the scene (`HandleController` makes them).
+    void setHandleGraphics(render::HandleGraphics graphics);
+    const render::HandleGraphics& handleGraphics() const { return m_handleGraphics; }
     /// What is under the pointer now (empty: nothing).
     std::optional<render::Highlight> hovered() const { return m_hover; }
     /// Asks what is at a point (item pixels); the answer comes as `picked`. For tests and the
@@ -200,6 +211,7 @@ public:
         quint64 sceneVersion = 0;
         quint64 paletteVersion = 0;
         std::vector<render::Highlight> highlights;
+        render::HandleGraphics handles;
         QColor accent;
         QSizeF itemSize;
         std::optional<PickRequest> pick; ///< to be answered with this frame
@@ -271,6 +283,7 @@ private:
 
     core::SelectionFilter m_filter;
     std::vector<render::Highlight> m_selectionHighlights;
+    render::HandleGraphics m_handleGraphics;
     std::optional<render::Highlight> m_hover;
     std::deque<PickRequest> m_pickQueue;
     QTimer m_pickTimer;

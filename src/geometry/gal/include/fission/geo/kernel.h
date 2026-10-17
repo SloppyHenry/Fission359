@@ -59,6 +59,13 @@ public:
     /// the first time (the computer's fonts are read): ask from a background thread.
     virtual std::vector<std::string> fontFamilies() const { return {}; }
 
+    /// The styles a font has (always in the order regular, bold, italic, boldItalic); empty if the
+    /// font does not exist.
+    virtual std::vector<FontStyle> fontStyles(const std::string& family) const {
+        (void)family;
+        return {};
+    }
+
     virtual SolidReport measure(const Solid& solid) const = 0;
 
     virtual TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const = 0;

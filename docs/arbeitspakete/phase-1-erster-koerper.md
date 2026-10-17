@@ -495,7 +495,7 @@ Die Teile liegen in einem PR (ein Durchgang, weil der Pick-Durchgang ohne Bedien
 ---
 
 ### AP-1.5 Grundformen
-**Status:** Review (Teile a–d umgesetzt, wartet auf Ausprobieren durch den Product Owner) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
+**Status:** erledigt (2026-10-17, PR #22–#26; vom Product Owner freigegeben, Griffe nach seinem Feedback überarbeitet) · **Größe:** M · **Abhängigkeiten:** AP-1.1, AP-1.4
 
 **Umfang:**
 - Quader (mit optionalem Eckenradius), Zylinder, Kugel, Kegel, Torus, Röhre, Prisma (n-eckig), Pyramide, Halbkugel, Keil, Stern (2D-Stern hochgezogen), Text (flach, System- und mitgelieferte Schriften)
@@ -521,6 +521,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 | **b) Text** | erledigt | Text-Feature, mitgelieferte Schriften (IBM Plex) plus Systemschriften, Meldung „Diese Schrift hat kein Zeichen für …“ |
 | **c) Galerie und Platzieren** | erledigt | Formen-Galerie mit 3D-Vorschau, Drag-and-drop, „Auf Fläche legen“, „Als Loch“-Schalter, Hinweiszeile, Tooltip-Karten, Synonyme (Regel 10), Texte für alle Formen (Deutsch und Englisch) |
 | **d) Griffe** | erledigt | Maß-Griffe in 3D (Griff-Art „Achsen“; „Klassisch“ kommt mit AP-1.11), Wertblase, Tippen ersetzt Ziehen, `Tab` wechselt das Maß, Esc nimmt zurück; Ablauf D Schritt 1 als automatischer Test |
+| **e) Fett und Kursiv** | erledigt | Schnitt als Feld des Text-Schritts (normal, fett, kursiv, fett kursiv), Schnitt-Suche in der Schriftverwaltung, Knöpfe **B** und **I** im rechten Panel, eigene Meldung „… gibt es nicht in fett“ (auf Wunsch des Product Owners nachgezogen) |
 
 **Festlegungen (Product Owner, 2026-10-16)**
 - Griffe: nur „Achsen“ in diesem AP; „Klassisch“ gehört zu den Einstellungen (AP-1.11).
@@ -556,56 +557,85 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
   Uhrzeigersinn von oben; Stern: `side1` folgt der Spitze nach hinten); Eckenradius: `cornerFrontLeft` …
 
 
-#### Abschlussvermerk (2026-10-16)
+#### Abschlussvermerk (2026-10-16, ergänzt 2026-10-17)
 
 **Umgesetzt**
 - **a) Kern:** Kugel, Halbkugel, Kegel (auch Stumpf), Torus, Röhre, Prisma, Pyramide, Keil, Stern; Quader mit Eckenradius; jede Fläche
   hat einen Namen; ein Aufruf `makePrimitive` statt neun neuer (ADR-0008).
-- **b) Text:** Beschriftung mit IBM Plex (mitgeliefert) und allen Schriften des Rechners; fehlende Zeichen oder Schriften sind
+- **b) Text:** Beschriftung mit IBM Plex (mitgeliefert, auch fett und kursiv) und allen Schriften des Rechners; fehlende Zeichen oder Schriften sind
   verständliche Fehler, es gibt keine stille Ersatzschrift; Worte (Text, Schrift) sind eigene Felder im Dokument mit Undo.
 - **c) Galerie:** 12 Kacheln mit Bildern der echten Formen; Ziehen in die Ansicht (die Form folgt dem Zeiger, landet auf Bett oder
   ebener Oberseite, Loslassen = ein Schritt, Esc = zurück) oder Anklicken (freier Platz); „Als Loch“ als Geisterform;
   Textfelder und Schriftliste rechts; Sätze, Hinweise, Tooltips und Suchwörter auf Deutsch und Englisch.
-- **d) Griffe:** Punkte an der gewählten Form (je Maß einer, beim Quader auch für den Eckenradius); Ziehen ändert das Maß (nie
-  skalieren), Wertblase am Griff, Tippen ersetzt Ziehen (auch mitten im Ziehen), `Tab` springt zum nächsten Maß, Enter übernimmt,
-  Esc nimmt alles zurück; das Ziehen hört auf, wo die Form unmöglich würde (z. B. Breite unter 2 × Eckenradius).
+- **d) Griffe (nach der Vorlage „Achsen“ überarbeitet, Darstellung am 2026-10-17 nach Feedback neu geordnet):** Der **Punkt sitzt auf
+  der Fläche, die er bewegt** (Breite auf der Seitenfläche, Tiefe auf der Vorderseite, Höhe oben). Jedes Hauptmaß hat ein **Maßband** wie
+  in einer Zeichnung: es liegt **außerhalb des Körpers** im Raum (Breite und Tiefe auf dem Bett vor dem Körper, Höhe an der linken
+  Außenkante), mit Hilfslinien zu den gemessenen Ecken; die **Beschriftung steht auf dem Band** („Breite 40“) und wird beim Anklicken
+  zum Eingabefeld. Farben: Breite rot, Tiefe grün, Höhe blau; Radius und Neben-Maße neutral (weißer Punkt mit dunklem Rand).
+  **Neben-Maße** (Eckenradius, Wand, Röhrendicke, Innenradius des Sterns) bleiben ruhig: Beschriftung erst beim Überfahren, der
+  Eckenradius hat einen eigenen Griff mit Viertelkreis an der rechten oberen Ecke. **Pfeile** erscheinen beim Überfahren. Ist der
+  Körper im Bild sehr klein, bleiben nur die Punkte der Hauptmaße, Bänder kommen beim Überfahren. Schaut man genau auf ein Maß (Höhe
+  von oben), fällt sein Band weg und die Beschriftung steht neben dem Körper. Der Griff sitzt auf der Seite, die **dir zugewandt** ist
+  (jede Form meldet alle gleichwertigen Stellen: beide Enden der Breite, alle Ecken, rundherum bei runden Formen; ein Radius wird am
+  Umriss genommen, wo man ihn von der Seite sieht). **Griffe mit Tiefe:** Punkte, Bänder und Pfeile zeichnet die 3D-Ansicht selbst, in
+  zwei Durchgängen gegen die Tiefe der Szene: was ein Körper verdeckt, erscheint blass (Röntgenblick), der Rest kräftig. Ein Band hinter
+  einem Nachbarkörper liegt also dahinter statt darüber, und seine Beschriftung tritt ebenfalls zurück. Die Beschriftungen und die
+  Anfassflächen bleiben Bausteine der Oberfläche (gestochen scharfe Schrift, Tippen wie bisher).
+  Ziehen ändert das Maß (nie skalieren), der Punkt bleibt unter dem Zeiger, Tippen ersetzt Ziehen (auch mitten im Ziehen), `Tab`
+  springt zum nächsten Maß, Enter übernimmt, Esc nimmt alles zurück; das Ziehen hört auf, wo die Form unmöglich würde (z. B. Breite
+  unter 2 × Eckenradius). Ein Griff, der fast auf den Betrachter zeigt, wird nicht gezogen, kein Maß geht über 2000 mm.
 
 **Wie getestet**
 - Mac (arm64, Debug): `ctest` alle grün, darunter Golden-Tests (Volumen und Oberfläche jeder Form gleich dem analytischen Wert,
   rel. 1e-6, Gültigkeit, Flächen-Namen gegen die Normalen), Text (Größe, Mitte, Umlaute, Emojis mit der echten Plex-Schrift),
-  Platzieren, Abbrechen, Loch, Kachelbilder, Griffe und **Ablauf D, Schritt 1 automatisch** (Quader 40 × 40 × 10 mit 5-mm-Ecken über
+  Platzieren, Abbrechen, Loch, Kachelbilder, Griffe (auch: Punkt auf der Fläche, Band und Beschriftung nie auf dem Körper aus vier
+  Blickrichtungen, Radius am Umriss, kleine Körper nur mit Punkten, Punkte/Bänder/Pfeile als 3D-Zeichnung, Beschriftung tritt hinter
+  einer Wand zurück, Renderer zeichnet Griffe blass und kräftig) und **Ablauf D, Schritt 1 automatisch** (Quader 40 × 40 × 10 mit 5-mm-Ecken über
   den Griff auf 80 mm gezogen: alle vier Ecken sind weiter Kreisbögen mit R 5 mm, Netzpunkte gemessen, Volumen exakt).
 - Fenster mit offener Galerie, abgelegten Formen und getippten Maßen (`app_shape_gallery`); Bilder:
-  [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png).
-- Linux: nur CI (Ubuntu 24.04, `release` und `debug-asan`); nicht von Hand auf dem Testrechner ausprobiert.
+  [ap-1.5-formen-de.png](../screenshots/ap-1.5-formen-de.png), [ap-1.5-tippen-de.png](../screenshots/ap-1.5-tippen-de.png), [ap-1.5-schnitt-de.png](../screenshots/ap-1.5-schnitt-de.png), [ap-1.5-griffe-de.png](../screenshots/ap-1.5-griffe-de.png), [ap-1.5-griffe-tiefe-de.png](../screenshots/ap-1.5-griffe-tiefe-de.png) (Band hinter dem Nachbarwürfel).
+- Linux: nur CI (Ubuntu 24.04, `release` und `debug-asan`); nicht von Hand auf dem Testrechner ausprobiert. Ein Text-Test war dort rot:
+  eine mitgelieferte Schrift lieh sich einen fehlenden Schnitt (kursiv) von einer gleichnamigen Systemschrift. Jetzt gilt eine
+  mitgelieferte Schrift als vollständig; ein Schnitt, den sie nicht hat, fehlt (Meldung statt stiller Ersatz).
 
 **So probierst du es aus**
 1. `scripts/run`. Links in der Werkzeugleiste auf **Formen** klicken: die Galerie öffnet sich.
 2. Die **Kugel** in die 3D-Ansicht ziehen und loslassen: sie liegt auf dem Bett. Ziehe einen **Zylinder** auf die Oberseite des
    Würfels: er sitzt oben auf. Esc beim Ziehen nimmt die Form wieder weg.
 3. Gleich nach dem Ablegen **`50` ⇥ `20` ⇥ `4` Enter** tippen: die Form bekommt diese Maße (ein Schritt im Verlauf, ⌘Z nimmt alles zurück).
-4. An einer gewählten Form einen **Punkt ziehen**: das Maß ändert sich, die Wertblase zeigt es; während des Ziehens eine Zahl tippen
-   ersetzt den Wert. Beim Quader: rechts „Eckenradius“ auf 5 stellen, dann die Breite am Punkt verdoppeln: die Ecken bleiben rund.
+4. An einer gewählten Form einen **Punkt ziehen**: das Maß ändert sich, die Beschriftung auf dem Band zeigt es; während des Ziehens eine
+   Zahl tippen ersetzt den Wert. Mit dem Zeiger über einen Punkt fahren: der Pfeil zeigt, wohin er geht. Beim Quader: rechts „Eckenradius“ auf 5 stellen, dann die Breite am Punkt verdoppeln: die Ecken bleiben rund.
 5. **Als Loch** in der Galerie einschalten und einen Zylinder ablegen: er ist durchsichtig (Geisterform), in der Körperliste ein leerer
    Umriss. Ausschneiden tut er erst mit AP-1.7.
-6. Kachel **Text** ablegen: das Feld „Worte“ rechts ist markiert, `LENA` tippen. Schrift darunter wählen. Probiere ein Emoji: die
-   Meldung nennt das Zeichen.
+6. Kachel **Text** ablegen: das Feld „Worte“ rechts ist markiert, `LENA` tippen. Schrift darunter wählen, mit **B** und **I** fett
+   und kursiv schalten. Probiere ein Emoji: die Meldung nennt das Zeichen.
 
 **Einschränkungen, Annahmen, Folge-Arbeiten**
 - **Ablegen nur auf waagerechten Flächen:** Auf Wänden und Schrägen bleibt die Form auf der Arbeitsebene (Höhe der zuletzt benutzten
   Fläche). Eine Form an einer senkrechten Fläche auszurichten braucht Drehen (AP-1.6).
-- **Griffe sind ein Zeichenelement über der Ansicht:** Sie sind nicht tiefenrichtig (sie scheinen durch Körper hindurch) und es gibt
-  keine Maßbänder; nur die Griff-Art „Achsen“ (Punkte mit Pfeil). „Klassisch“ kommt mit den Einstellungen (AP-1.11).
+- **Griffe:** Bei kleinen Körpern im Bild können sich Beschriftungen nahekommen (sie weichen einander aus). Ob eine Beschriftung verdeckt
+  ist, prüft das Programm an einem Punkt (Mitte des Bandes bzw. der Punkt selbst), nicht an der ganzen Beschriftung. Ein verdeckter Punkt
+  lässt sich weiter anfassen. Die Lage der Bänder richtet sich nach dem Quader um den Körper; bei runden Formen beginnen die Hilfslinien der
+  Höhe deshalb kurz neben dem Umriss. Nur die Griff-Art „Achsen“. „Klassisch“ kommt mit den Einstellungen (AP-1.11).
 - **Tippen ohne Ziehen:** Ziffern fangen nur direkt nach dem Ablegen an zu tippen (sonst sind 1 bis 6 die Ansichten). Auch `Tab` oder
   Enter beginnen das Tippen. Bei einer schon vorhandenen Form: Punkt anfassen und dann tippen, oder die Felder rechts benutzen.
 - **Seiten und Zacken** (Prisma, Stern) haben keinen Griff; sie stehen als Zahl im Feld rechts.
-- **Text:** nur Schnitt „Regular“; fett und kursiv fehlen. Die Schrift wird nicht in der Datei mitgespeichert (kommt mit AP-1.10); fehlt
-  sie auf einem anderen Rechner, steht dort die Meldung „Die Schrift … gibt es auf diesem Rechner nicht“.
+- **Text (Teil e):** Der Schnitt ist ein eigenes Feld im Text-Schritt. Mitgeliefert sind IBM Plex Sans und Mono jeweils normal, fett,
+  kursiv und fett kursiv (die Dateien stammen aus dem IBM-Plex-Repository, Lizenz OFL, liegen unter `apps/fission3d/resources/fonts`).
+  Bei Systemschriften sind genau die Schnitte wählbar, die die Schrift auf dem Rechner hat. Gibt es einen Schnitt nicht, ist **B**
+  bzw. **I** grau; wechselt man zu einer Schrift ohne den benutzten Schnitt, wird die Schrift wieder normal, mit Hinweis, in
+  demselben Schritt. Ein Schnitt, der in einer geladenen Datei fehlt, ist ein Fehler am Schritt („… gibt es nicht in fett“), nie ein
+  stiller Ersatz. Gesperrt bleibt: Das Dokument speichert die Schrift nicht in der Datei (kommt mit AP-1.10); fehlt sie auf einem anderen
+  Rechner, steht dort die Meldung „Die Schrift … gibt es auf diesem Rechner nicht“. Die Plex-Dateien kommen von der aktuellen Version
+  des IBM-Repositorys, die normale Schrift vom früheren Stand: die Buchstabenformen sind gleich, Feinheiten der Abstände können abweichen.
 - **Raster:** Positionen und gezogene Maße rasten auf ganze Millimeter (feiner bei starkem Zoom); das echte Fangen kommt mit AP-1.6.
 - **Neu im Kern:** `fission_geometry_occt` linkt jetzt `TKService` und `TKV3d` (nur OpenCASCADE, schon im Paket); beim ersten Start
   kopiert das Programm zwei Schriftdateien in den Cache-Ordner.
-- **Vorgeschlagene Folge-Arbeiten:** Ausrichten an schrägen Flächen (AP-1.6), Ausschneiden der Löcher (AP-1.7), Griffe tiefenrichtig
-  im Renderer, Befehlssuche mit den Suchwörtern der Formen (AP-1.12), Schrift in der Datei (AP-1.10).
+- **Nebenbei behoben:** Beim Beenden konnte das Programm abstürzen, wenn gerade noch eine Abfrage „was liegt unter dem Zeiger“
+  unterwegs war (aus AP-1.4; die Antwort kam an einen schon abgebauten Baustein). Die beiden Zieh-Tests im echten Fenster laufen allein
+  (`RUN_SERIAL`): auf dem Mac nahm ihnen sonst ein gleichzeitig startendes Testfenster den Fokus.
+- **Vorgeschlagene Folge-Arbeiten:** Ausrichten an schrägen Flächen (AP-1.6; das Gizmo kann die Griff-Zeichnung im Renderer
+  mitbenutzen), Ausschneiden der Löcher (AP-1.7), Befehlssuche mit den Suchwörtern der Formen (AP-1.12), Schrift in der Datei (AP-1.10).
 
 ---
 

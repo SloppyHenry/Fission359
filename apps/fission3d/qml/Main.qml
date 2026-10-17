@@ -194,6 +194,42 @@ Window {
         }
     }
 
+    readonly property string currentFontName: {
+        const entry = DocumentModel.stepTexts.find(t => t.kind === "font")
+        return entry ? entry.value : ""
+    }
+    readonly property string currentStyleName: {
+        const entry = DocumentModel.stepTexts.find(t => t.kind === "style")
+        return entry ? entry.value : "regular"
+    }
+
+    // A word of the chosen step was changed (text, font or style). A font that lacks the style in
+    // use takes it back to regular in the same step, and says so.
+    function changeWords(name, text) {
+        const step = DocumentModel.currentStep
+        if (name === "font" && currentStyleName !== "regular"
+                && DocumentModel.fontStyles(text).length > 0
+                && DocumentModel.fontStyles(text).indexOf(currentStyleName) < 0) {
+            DocumentModel.beginChange("font")
+            DocumentModel.setStepText(step, "font", text)
+            DocumentModel.setStepText(step, "style", "regular")
+            DocumentModel.commitChange()
+            showHint(qsTr("“%1” has no %2 style, so the lettering is regular again.")
+                     .arg(text).arg(styleLabel(currentStyleName)))
+            return
+        }
+        DocumentModel.setStepText(step, name, text)
+    }
+
+    function styleLabel(style) {
+        switch (style) {
+        case "bold": return qsTr("bold")
+        case "italic": return qsTr("italic")
+        case "boldItalic": return qsTr("bold italic")
+        default: return qsTr("regular")
+        }
+    }
+
     // A shape that was just put down: lettering is typed right away.
     Connections {
         target: DocumentModel
@@ -505,7 +541,8 @@ Window {
             stepValues: root.stepValueList
             stepTexts: DocumentModel.stepTexts
             fonts: DocumentModel.fontFamilies
-            onTextCommitted: (name, text) => DocumentModel.setStepText(DocumentModel.currentStep, name, text)
+            fontStyles: DocumentModel.fontStyles(root.currentFontName)
+            onTextCommitted: (name, text) => root.changeWords(name, text)
             onTabRequested: tab => root.rightTab = tab
             onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)
         }
@@ -550,6 +587,8 @@ Window {
         case "height": return qsTr("Height")
         case "radius": return qsTr("Radius")
         case "cornerRadius": return qsTr("Corner radius")
+        case "font": return qsTr("Font")
+        case "style": return qsTr("Style")
         case "topRadius": return qsTr("Top radius")
         case "tubeRadius": return qsTr("Tube radius")
         case "innerRadius": return qsTr("Inner radius")
@@ -600,7 +639,10 @@ Window {
             return qsTr("Star with %1 points, radius %2 mm, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
         }
         if (step.type === "text" && v.length === 2) {
-            return qsTr("Text “%1”, letters %2 mm, height %3 mm").arg(step.texts.text).arg(n(v[0])).arg(n(v[1]))
+            const style = step.texts.style
+            return style !== undefined && style !== "regular"
+                ? qsTr("Text “%1” (%2), letters %3 mm, height %4 mm").arg(step.texts.text).arg(styleLabel(style)).arg(n(v[0])).arg(n(v[1]))
+                : qsTr("Text “%1”, letters %2 mm, height %3 mm").arg(step.texts.text).arg(n(v[0])).arg(n(v[1]))
         }
         return typeLabel(step.type)
     }
@@ -642,7 +684,7 @@ Window {
     }))
 
     // One short sentence for what went wrong (the full message catalogue comes later).
-    function problemText(problem) {
+    function problemText(problem, step) {
         if (!problem) {
             return ""
         }
@@ -657,6 +699,10 @@ Window {
         }
         if (problem.code === "textGlyphsMissing") {
             return qsTr("This font has no character for %1. Choose another font or remove it.").arg(problem.field)
+        }
+        if (problem.code === "fontStyleMissing") {
+            return qsTr("“%1” has no %2 style. Choose another font or style.")
+                .arg(problem.field).arg(styleLabel(step && step.texts ? step.texts.style : "regular"))
         }
         if (problem.code === "fontNotFound") {
             return qsTr("The font “%1” is not on this computer. Choose another font.").arg(problem.field)
@@ -684,7 +730,7 @@ Window {
     }
 
     readonly property var recipeList: DocumentModel.recipe.map(step => ({
-        text: step.problem ? stepText(step) + " – " + problemText(step.problem) : stepText(step),
+        text: step.problem ? stepText(step) + " – " + problemText(step.problem, step) : stepText(step),
         state: step.state
     }))
 

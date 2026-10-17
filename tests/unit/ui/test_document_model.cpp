@@ -7,6 +7,7 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QEventLoop>
+#include <QThread>
 #include <QVariantMap>
 
 #include <algorithm>
@@ -408,4 +409,22 @@ TEST_CASE("the print bed has the size of the chosen printer", "[ui][document-mod
     CHECK(f.model->printerId() == "prusa-mk4");
     // choosing a printer is a setting, not a change of the model: no step in the history
     CHECK_FALSE(f.model->canUndo());
+}
+
+TEST_CASE("quick changes never take a body out of the view", "[ui][document-model]") {
+    // While a handle is dragged, changes come faster than they are shown: results pile up before
+    // the interface applies them. An older result must not sweep away the meshes of a newer one
+    // (the body left the view and the selection was let go of).
+    Fixture f;
+    for (int width = 21; width <= 80; ++width) {
+        REQUIRE(f.model->setStepValue(0, "width", QString::number(width)));
+        QThread::msleep(6); // the worker finishes some of them while the interface is busy
+    }
+    f.model->waitForCalculation();
+
+    REQUIRE(f.model->scene() != nullptr);
+    CHECK(f.model->scene()->bodies.size() == 1);
+    REQUIRE(f.model->elementNames() != nullptr);
+    CHECK(f.model->elementNames()->size() == 1);
+    CHECK(extentOf(*f.model->scene()).maxX == Approx(40.0));
 }

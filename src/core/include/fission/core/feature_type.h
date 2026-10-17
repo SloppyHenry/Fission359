@@ -32,6 +32,7 @@ enum class FeatureIssueCode {
     cancelled,              ///< A newer change replaced this calculation.
     textGlyphsMissing,      ///< The font has no character for part of a text; `subject` lists them.
     fontNotFound,           ///< The font is not on this computer; `subject` is its name.
+    fontStyleMissing,       ///< The font has no such style (bold, italic); `subject` is its name.
 };
 
 struct FeatureIssue {
@@ -66,15 +67,28 @@ struct Description {
 
 enum class HandleKind { distance, radius };
 
+/// What a handle is for, which decides how loudly it is shown: a main size of the shape (with its
+/// measure band and label), a detail that refines it (a wall, an inner radius: its label shows
+/// when the pointer is on it), or a rounding (a detail with the quarter-circle grip).
+enum class HandleRole { size, detail, rounding };
+
 /// A handle in the 3D view that changes one value of the step (rule 1). The handle changes the
 /// value, never scales the geometry (rule 11).
 struct HandleSpec {
     std::string id;
     HandleKind kind = HandleKind::distance;
+    HandleRole role = HandleRole::size;
     std::string parameter;  ///< The value it changes.
     geo::Point3d origin;    ///< Where it sits (mm).
     geo::Point3d direction; ///< Unit vector along which it is dragged.
     double sign = 1.0;      ///< +1: dragging along `direction` increases the value, -1: decreases.
+    /// How far the handle moves (mm) when the value grows by 1 mm. 1 for a handle on a face that
+    /// grows alone; 0.5 for a face of a shape that grows to both sides around its middle (the
+    /// width of a box): the face then follows the pointer when the value changes twice as much.
+    double travel = 1.0;
+    /// The length (mm) this handle measures, along `direction` and ending at `origin`: the
+    /// interface draws it as a measure band from `origin − direction × extent` to `origin`.
+    double extent = 0.0;
 };
 
 /// One body a step made or changed, with the role of each of its faces.
@@ -136,6 +150,10 @@ public:
 
     virtual Description describe(const ResolvedParams& params) const = 0;
 
+    /// The handles of the step, in the order they are shown. A value that can be changed from
+    /// several equal places (both ends of a box, all around a cylinder) is listed once for
+    /// each place, with the same `parameter`: the interface picks the one facing the viewer, so
+    /// the handle is always where one expects it.
     virtual std::vector<HandleSpec> handles(const ResolvedParams& params) const = 0;
 };
 

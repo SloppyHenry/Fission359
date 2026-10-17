@@ -32,8 +32,10 @@ struct Letters {
     Letters() {
         fission::features::registerBuiltinFeatures(registry);
         fission::geo::occt::KernelOptions options;
-        options.fontFiles = {std::string(FISSION_APP_FONTS_DIR) + "/IBMPlexSans-Regular.ttf",
-                             std::string(FISSION_APP_FONTS_DIR) + "/IBMPlexMono-Regular.ttf"};
+        const std::string dir = FISSION_APP_FONTS_DIR;
+        options.fontFiles = {dir + "/IBMPlexSans-Regular.ttf", dir + "/IBMPlexSans-Bold.ttf",
+                             dir + "/IBMPlexSans-Italic.ttf", dir + "/IBMPlexSans-BoldItalic.ttf",
+                             dir + "/IBMPlexMono-Regular.ttf"};
         kernel = fission::geo::occt::makeKernel(options);
         step = *history.addFeature(defaultDraft(*registry.find("text")));
     }
@@ -57,6 +59,7 @@ TEST_CASE("text step: a new one has words, a font and sizes", "[features][text]"
     CHECK(feature.type == "text");
     CHECK(feature.texts.at("text") == "Text");
     CHECK(feature.texts.at("font") == "IBM Plex Sans");
+    CHECK(feature.texts.at("style") == "regular");
     CHECK(feature.params.at("size").expression == "10");
     CHECK(feature.params.at("height").expression == "2");
 }
@@ -144,4 +147,42 @@ TEST_CASE("text step: typing words is an Undo step of its own", "[features][text
     const auto before = letters.history.steps().size();
     letters.type("text", "Eins");
     CHECK(letters.history.steps().size() == before);
+}
+
+TEST_CASE("text step: bold and italic are words of the step, with Undo", "[features][text]") {
+    Letters letters;
+    letters.type("text", "Hallo");
+    const auto volume = [&] {
+        const RecomputeResult result = letters.calculate();
+        REQUIRE(result.state(letters.step)->status == FeatureStatus::ok);
+        return letters.kernel->measure(result.bodies.begin()->second.solid).volume;
+    };
+    const double regular = volume();
+    letters.type("style", "bold");
+    const double bold = volume();
+    CHECK(bold > regular * 1.1);
+    letters.type("style", "boldItalic");
+    CHECK(volume() > 0.0);
+
+    letters.history.undo();
+    CHECK(letters.history.document().findFeature(letters.step)->texts.at("style") == "bold");
+    CHECK(volume() == bold); // back from the memory, the same body
+}
+
+TEST_CASE("text step: a missing style is an error that names the font", "[features][text]") {
+    Letters letters;
+    letters.type("font", "IBM Plex Mono"); // bundled here with its regular style only
+    letters.type("style", "bold");
+    FeatureState state = *letters.calculate().state(letters.step);
+    REQUIRE(state.issue.has_value());
+    CHECK(state.issue->code == FeatureIssueCode::fontStyleMissing);
+    CHECK(state.issue->subject == "IBM Plex Mono");
+
+    letters.type("style", "regular");
+    CHECK(letters.calculate().state(letters.step)->status == FeatureStatus::ok);
+
+    // A style nobody knows is refused, not guessed.
+    letters.type("style", "heavy");
+    state = *letters.calculate().state(letters.step);
+    CHECK(state.status == FeatureStatus::error);
 }

@@ -24,6 +24,9 @@ public:
         return makeNamedCylinder(radius, height, base);
     }
     std::vector<std::string> fontFamilies() const override { return fonts_.families(); }
+    std::vector<FontStyle> fontStyles(const std::string& family) const override {
+        return fonts_.styles(family);
+    }
     SolidReport measure(const Solid& solid) const override { return occt::measure(solid); }
     TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const override {
         return occt::tessellate(solid, params);

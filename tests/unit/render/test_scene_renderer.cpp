@@ -157,3 +157,45 @@ TEST_CASE("a frame with soft shadows runs through all passes and follows a resiz
     }
     SUCCEED();
 }
+
+TEST_CASE("handles are drawn twice: faint where a body hides them, full where they are seen",
+          "[render][scene-renderer]") {
+    Fixture f;
+    RenderScene scene;
+    scene.bodies = {body("a", 1)};
+    const QSize size(320, 200);
+    std::unique_ptr<QRhiTexture> color(
+        f.rhi->newTexture(QRhiTexture::RGBA8, size, 1, QRhiTexture::RenderTarget));
+    REQUIRE(color->create());
+    std::unique_ptr<QRhiRenderBuffer> depth(
+        f.rhi->newRenderBuffer(QRhiRenderBuffer::DepthStencil, size, 1));
+    REQUIRE(depth->create());
+    QRhiTextureRenderTargetDescription description{QRhiColorAttachment(color.get())};
+    description.setDepthStencilBuffer(depth.get());
+    std::unique_ptr<QRhiTextureRenderTarget> target(f.rhi->newTextureRenderTarget(description));
+    std::unique_ptr<QRhiRenderPassDescriptor> pass(target->newCompatibleRenderPassDescriptor());
+    target->setRenderPassDescriptor(pass.get());
+    REQUIRE(target->create());
+    f.renderer->createPipelines(pass.get(), 1);
+
+    SceneRenderer::Frame frame;
+    frame.projection.perspective(45.0F, 1.6F, 1.0F, 1000.0F);
+    frame.view.lookAt({60, -80, 60}, {0, 0, 5}, {0, 0, 1});
+    const auto drawFrame = [&] {
+        QRhiCommandBuffer* cb = nullptr;
+        REQUIRE(f.rhi->beginOffscreenFrame(&cb) == QRhi::FrameOpSuccess);
+        f.renderer->upload(cb, scene, {});
+        f.renderer->draw(cb, target.get(), frame);
+        f.rhi->endOffscreenFrame();
+    };
+    drawFrame();
+    CHECK(f.renderer->handleVertexCount() == 0); // no handles, nothing drawn for them
+
+    frame.handles.lines.push_back({{0, 0, 0}, {10, 0, 0}, 1.5F, QColor(229, 83, 75)});
+    frame.handles.dots.push_back({{5, 5, 0}, 7.0F, Qt::white, QColor(229, 83, 75), 2.0F, true});
+    frame.handles.arrows.push_back({{5, 5, 0}, {1, 0, 0}, QColor(229, 83, 75), Qt::white});
+    drawFrame();
+    // One strip is two triangles; each half holds every shape once.
+    CHECK(f.renderer->handleVertexCount() > 2 * 6);
+    CHECK(f.renderer->handleVertexCount() % 2 == 0);
+}
