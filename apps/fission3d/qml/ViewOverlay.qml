@@ -33,6 +33,18 @@ Item {
     signal panDragged(real dx, real dy)
     signal zoomRequested(real factor)
 
+    // What floats over the 3D view, as rectangles in its coordinates: labels and value bubbles of
+    // the handles keep out from under them (they once hid behind the tool palette).
+    readonly property var obstacles: [
+        Qt.rect(displayBar.x, displayBar.y, displayBar.width, displayBar.height),
+        Qt.rect(filterBar.x, filterBar.y, filterBar.width, filterBar.height),
+        Qt.rect(palette.x, palette.y, palette.width, palette.height),
+        shapeFlyout.visible ? Qt.rect(shapeFlyout.x, shapeFlyout.y, shapeFlyout.width, shapeFlyout.height)
+                            : Qt.rect(0, 0, 0, 0),
+        Qt.rect(cubeColumn.x, cubeColumn.y, cubeColumn.width, cubeColumn.height),
+        Qt.rect(navBar.x, navBar.y, navBar.width, navBar.height)
+    ]
+
     // How the mouse does it depends on the style chosen in the View menu.
     readonly property string orbitHint: {
         switch (mouseStyle) {
@@ -183,6 +195,8 @@ Item {
     })
 
     Float {
+        id: filterBar
+
         x: displayBar.x + displayBar.width + 8
         y: 12
         width: filterRow.implicitWidth + 26
@@ -352,6 +366,8 @@ Item {
 
     // --- view cube and buttons (top right) -------------------------------------------------
     Column {
+        id: cubeColumn
+
         x: root.width - 112 - 12
         y: 8
         spacing: 6
@@ -387,6 +403,8 @@ Item {
 
     // --- navigation buttons (bottom right): show how the mouse does it, and work by dragging
     Float {
+        id: navBar
+
         x: root.width - width - 12
         y: root.height - height - 14
         width: 42

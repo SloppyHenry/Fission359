@@ -752,6 +752,10 @@ Beschriftungen und Anfassflächen.
     gehaltene Griff im Fenster, damit der Zug ordentlich endet und Rückgängig wieder geht.
   - Tests: `sphere: a big one is drawn quickly …`, `detail: a big body is drawn with a coarser mesh …`, `handles: the radius dot of
     a sphere stays under the pointer …`.
+- *„Steht der Radius-Wert links, verschwindet er hinter der Werkzeugleiste.“* Beschriftungen und Wertblasen der Griffe kannten nur den
+  Rand der 3D-Ansicht. Jetzt meldet die Ansicht, was über ihr schwebt (Werkzeugleiste, Darstellungsleiste, Wählen-Filter,
+  Formen-Galerie, Ansichtswürfel, Navigationsknöpfe), und eine Beschriftung weicht aus (`clearplace.js`): neben einem Punkt zuerst auf
+  dessen andere Seite, sonst auf kürzestem Weg in die freie Fläche. Das gilt auch für die Wertblase des Gizmos.
 
 **Einschränkungen, Annahmen**
 - Das Fangen an Ecken, Kanten und Mitten anderer Körper kommt mit 1.6c; bis dahin rastet die Lage auf das Raster (ganze mm).

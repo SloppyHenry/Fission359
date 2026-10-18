@@ -3,6 +3,7 @@
 
 import QtQuick
 import Fission3D.Ui
+import "clearplace.js" as ClearPlace
 
 // The size handles of the chosen shape (handle style "Axes", AP-1.5): a dot on the face that a
 // size moves, and a measure band beside the body with the label on it, like in a drawing. The
@@ -17,6 +18,8 @@ Item {
     property var labelFor: name => name
     // Unit of a value, shown behind it.
     property string unit: "mm"
+    // What floats over the view (tool palette, view cube …): labels keep out from under it.
+    property var obstacles: []
     readonly property bool typing: bubble.typing
     objectName: "handleLayer"
     readonly property bool busy: Handles.editing
@@ -93,8 +96,15 @@ Item {
             // handle that disappears under the pointer ends the drag (the pointer loses it).
             readonly property real dotX: handle ? (active ? Math.min(Math.max(handle.x, 10), root.width - 10) : handle.x) : 0
             readonly property real dotY: handle ? (active ? Math.min(Math.max(handle.y, 10), root.height - 10) : handle.y) : 0
-            readonly property real chipX: handle ? Math.min(Math.max(handle.chipX, 60), root.width - 60) : 0
-            readonly property real chipY: handle ? Math.min(Math.max(handle.chipY, 16), root.height - 16) : 0
+            // In the view and not under what floats over it; a label beside its dot (no band) may
+            // go to the other side of the dot instead.
+            readonly property point chipAt: handle
+                ? ClearPlace.place(handle.chipX, handle.chipY, chip.width, chip.height, root.obstacles,
+                                   root.width, root.height,
+                                   handle.band ? undefined : { x: handle.x, y: handle.y })
+                : Qt.point(0, 0)
+            readonly property real chipX: chipAt.x
+            readonly property real chipY: chipAt.y
             // Quiet until wanted: a small body shows its dots only, a detail shows its label when
             // the pointer is on it. While another value changes, the rest steps back, and so does
             // a label whose band is behind a body.
@@ -291,8 +301,13 @@ Item {
 
         visible: false
         // Where the label of the value is: the label turns into the field.
-        x: handle ? Math.min(Math.max(handle.chipX - width / 2, 4), root.width - width - 4) : 0
-        y: handle ? Math.min(Math.max(handle.chipY - height / 2, 4), root.height - height - 4) : 0
+        readonly property point at: handle
+            ? ClearPlace.place(handle.chipX, handle.chipY, width, height, root.obstacles,
+                               root.width, root.height,
+                               handle.band ? undefined : { x: handle.x, y: handle.y })
+            : Qt.point(0, 0)
+        x: at.x - width / 2
+        y: at.y - height / 2
         width: bubbleRow.implicitWidth + 20
         height: 30
         radius: Theme.radius

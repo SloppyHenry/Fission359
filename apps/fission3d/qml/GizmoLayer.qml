@@ -3,6 +3,7 @@
 
 import QtQuick
 import Fission3D.Ui
+import "clearplace.js" as ClearPlace
 
 // The gizmo of the tool "Move" (AP-1.6a, docs/02-ux-konzept.md §2.2): arrows along X, Y and Z,
 // squares for a plane, a dot in the middle for moving across the bed. The 3D view draws them
@@ -14,6 +15,8 @@ Item {
 
     objectName: "gizmoLayer"
     readonly property bool typing: bubble.typing
+    // What floats over the view (tool palette, view cube …): the bubble keeps out from under it.
+    property var obstacles: []
 
     Binding {
         target: Gizmo
@@ -203,8 +206,12 @@ Item {
         }
 
         visible: Gizmo.editing && Gizmo.bubbleAt.x !== undefined
-        x: visible ? Math.min(Math.max(Gizmo.bubbleAt.x, 4), root.width - width - 4) : 0
-        y: visible ? Math.min(Math.max(Gizmo.bubbleAt.y, 4), root.height - height - 4) : 0
+        readonly property point at: visible
+            ? ClearPlace.place(Gizmo.bubbleAt.x + width / 2, Gizmo.bubbleAt.y + height / 2, width,
+                               height, root.obstacles, root.width, root.height)
+            : Qt.point(0, 0)
+        x: at.x - width / 2
+        y: at.y - height / 2
         width: bubbleRow.implicitWidth + 20
         height: 30
         radius: Theme.radius
