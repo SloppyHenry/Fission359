@@ -640,7 +640,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
-**Status:** in Arbeit (1.6a erledigt, 1.6b1 in Review) · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Status:** in Arbeit (1.6a und 1.6b1 erledigt, 1.6b2 in Review) · **Größe:** L · **Abhängigkeiten:** AP-1.4
 
 **Umfang:**
 - Gizmo: Verschieben (Achsen und Ebenen), Drehen (Ringe), **proportional** Vergrößern/Verkleinern (Eck-Griff oder Prozentangabe; der Eck-Griff ist immer gleichmäßig)
@@ -664,8 +664,8 @@ Beschriftungen und Anfassflächen.
 |---|---|---|
 | **a) Verschieben** | erledigt (2026-10-18, PR #27) | ADR-0010 (wo eine Verschiebung im Rezept lebt); die Werkzeuge der Palette wirken (Wählen, Verschieben, Größe); Gizmo mit Achsen-Pfeilen und Ebenen-Quadraten; **Körper selbst ziehen verschiebt ihn** auf der Arbeitsebene (Rahmen dann nur noch auf leerem Grund); Wertblase, Tippen mit `Tab` X → Y → Z, Enter, Esc; Raster in ganzen mm wie bisher |
 | **b) Drehen und proportional** | in Arbeit | Zerlegt (2026-10-18) in b1 bis b3, je ein PR: |
-| &nbsp;&nbsp;**b1) Drehen** | Review | Die Lage bekommt eine Drehung (drei Winkel); der Kernel dreht Körper und behält die Flächen-Namen; Werkzeug „Drehen“ mit Ringen, 15°-Schritten, Tippen in Grad |
-| &nbsp;&nbsp;**b2) Gleichmäßig vergrößern** | offen | Eck-Griff (Werkzeug Größe) und Prozentangabe ändern **alle Maße im gleichen Verhältnis** (Parameter, nie Skalieren, Regel 11); Formeln bleiben als `(Formel) × Faktor` erhalten |
+| &nbsp;&nbsp;**b1) Drehen** | erledigt (2026-10-18, PR #29) | Die Lage bekommt eine Drehung (drei Winkel); der Kernel dreht Körper und behält die Flächen-Namen; Werkzeug „Drehen“ mit Ringen, 15°-Schritten, Tippen in Grad |
+| &nbsp;&nbsp;**b2) Gleichmäßig vergrößern** | Review | Eck-Griff (Werkzeug Größe) und Prozentangabe ändern **alle Maße im gleichen Verhältnis** (Parameter, nie Skalieren, Regel 11); Formeln bleiben als `(Formel) × Faktor` erhalten |
 | &nbsp;&nbsp;**b3) Ablegen an Wänden** | offen | Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus (Unterseite auf der Fläche; ⌥ = aufrecht) |
 | **c) Fangen** | offen | Adaptives Raster; Fangen an Ecken, Kantenmitten, Kreismitten, Flächenmitten anderer Körper und am Bett; Ausrichtungslinien; Fang-Marke in der Ansicht; ⇧ während des Ziehens schaltet das Fangen aus; gilt auch für Maß-Griffe und das Ablegen |
 | **d) Abstandsmaße** | offen | Beim Verschieben Abstände zu den nächsten Kanten anderer Körper und zum Bettrand als Maßband in der Ansicht; ein Klick macht die Zahl editierbar („5 mm vom Rand“), Tippen setzt den Körper genau dorthin; Akzeptanzkriterium 1 als automatischer Ablauf |
@@ -778,7 +778,7 @@ Beschriftungen und Anfassflächen.
 - **Nach dem Drehen** bleibt die Mitte des Körpers, wo sie war (er kann in der Luft hängen oder im Bett stecken);
   „Aufs Bett legen“ kommt mit 1.6e.
 
-#### Zwischenstand 1.6b1 Drehen (2026-10-18, Review)
+#### Zwischenstand 1.6b1 Drehen (2026-10-18, erledigt: vom Product Owner ausprobiert, PR #29)
 
 **Umgesetzt**
 - **Kernel:** `GeometryKernel::rotate` dreht einen Körper um einen Punkt (drei Winkel). Es ist eine reine Lagebewegung: Flächen, ihre
@@ -846,6 +846,83 @@ Beschriftungen und Anfassflächen.
 
 **Vorgeschlagene Folge-Arbeiten:** b2 gleichmäßig vergrößern; b3 Ablegen an Wänden (braucht aus Fläche → drei Winkel: `anglesOf`);
 Bänder für gedrehte Maß-Punkte.
+
+#### Festlegungen 1.6b2 (Product Owner, 2026-10-18: „ok“ zu allen Empfehlungen)
+- **Was wächst mit:** alle Längen der Form (Breite, Tiefe, Höhe, Radien, Rundung, Wanddicke, Schriftgröße, Dicke des Texts). Anzahlen
+  (Zacken, Seiten) und die Drehung bleiben. Das Volumen wächst genau mit Faktor³.
+- **Was stehen bleibt:** die gegenüberliegende untere Ecke (wie Tinkercad); der Körper bleibt auf dem Bett, die gezogene Ecke unter
+  dem Zeiger. Die Lage-Werte X und Y werden dabei zu Zahlen.
+- **Wo die Griffe sitzen:** an den vier oberen Ecken eines Kastens in Bett-Richtung um den Körper; bei runden und gedrehten Körpern
+  schweben sie daneben, der Kasten wird gestrichelt gezeichnet.
+- Ergänzung zu [ADR-0010](../adr/0010-lage-im-rezept.md) (Abschnitt „Gleichmäßig vergrößern“).
+
+#### Zwischenstand 1.6b2 Gleichmäßig vergrößern (2026-10-18, Review)
+Auftrag: Sitzung vom 18.10.2026 (Prompt im Stil von [docs/prompts/ap-1.6b-drehen.md](../prompts/ap-1.6b-drehen.md)).
+
+**Umgesetzt**
+- **Eck-Quadrate im Werkzeug „Größe“:** neben den Maß-Punkten ein weißes Quadrat an jeder oberen Ecke des Kastens um den Körper
+  (Kanten in Bett-Richtung), dazu der Kasten gestrichelt. Gezeichnet in der 3D-Ansicht mit Tiefe (neu: `HandleDot::square`); das
+  gehaltene Quadrat ist in der Akzentfarbe, die anderen treten zurück.
+- **Ziehen:** Die Ecke gegenüber unten bleibt stehen, die gezogene folgt dem Zeiger entlang der Diagonale. Der Faktor rastet auf
+  ganze Prozent. Die Wertblase zeigt „150 %“ und die Außenmaße, die herauskommen („30 × 30 × 30 mm“). Wird ein Maß unmöglich (kleiner
+  als 0,01 mm, größer als 2000 mm, eine Form, die nicht mehr geht), hält die Ecke beim nächsten möglichen Wert an.
+- **Tippen ersetzt Ziehen:** Ziffern während des Zugs sind die Prozentzahl („150“ oder „150 %“), Enter übernimmt, Esc setzt alles
+  zurück. Eine Zahl, die die Form nicht haben kann, wird nicht übernommen (roter Rand).
+- **Alle Maße im gleichen Verhältnis** (`FeatureType::sizeParameters`, Regel 11): ein Quader mit 5-mm-Ecken auf 200 % hat runde
+  10-mm-Ecken. Zahlen werden multipliziert, Formeln bleiben als `(Formel) * Faktor` erhalten, mehrere Faktoren werden zu einem
+  (`core::scaledExpression`, Zahlen ohne Komma-Probleme dank `core::numberText`).
+- **Gedrehte und runde Körper:** der Kasten kommt genau aus dem Kernel (neu: `GeometryKernel::exactBounds`), damit die Unterseite
+  auf den Mikrometer auf dem Bett bleibt.
+- **Rezept und Verlauf** (ADR-0010): Ein Zug ist ein Schritt in „Letzte Aktionen“: „Quader auf 150 % vergrößert“ bzw.
+  „… verkleinert“ (Schlüssel `scaleBody`); kein neuer Rezept-Eintrag. Hinweiszeile, Tooltip-Karte und Suchwörter („skalieren“,
+  „vergrößern“, „proportional“, „Prozent“ …) des Werkzeugs „Größe“ sind ergänzt.
+- Nebenbei: Ein schmales Zahlenfeld (die drei der Lage) zeigt jetzt den Anfang eines langen Werts; vorher war bei „-23,17“ das Minus
+  aus dem Bild gerollt. Ein Zug am Eck-Quadrat beendet das „Maße tippen“ direkt nach dem Ablegen.
+
+**Wie getestet** (Mac arm64, Debug: `ctest` 431 von 431 grün; Linux über die CI)
+- Ein Fenster-Test war zuerst wackelig (etwa jeder sechste Lauf rot): Die Prüfungen von `--simulate` (`least:`, `near:`, `expect:`)
+  schauten nach fester Wartezeit nach und sahen nach dem Tippen manchmal noch den Wert vor der Neuberechnung. Sie warten jetzt, bis
+  das Programm fertig gerechnet hat; danach 15 von 15 Läufen grün.
+- `tests/unit/core/test_scaling.cpp`: Zahlen, Einheiten, Formeln, Zusammenfassen von Faktoren, Rückkehr zur getippten Formel,
+  Faktoren, die nur zu einem Teil gehören, Unsinn, Zahlen ohne Exponent und mit Punkt auch auf einem deutschen Rechner.
+  `test_history.cpp`: der Prozentwert landet im Namen des Schritts.
+- Golden-Tests `test_primitives.cpp` (`[scale]`): alle elf Formen bei 200 %, 50 % und 137 %: gültig, Volumen ×f³, Fläche ×f², Hülle
+  ×f um den Fußpunkt, gleiche Zahl an Flächen, Kanten und Ecken, gleiche Namen. Quader mit 5-mm-Ecken auf 200 %: Volumen nach der
+  Formel für runde Ecken, jede Ecke ein Viertelkreis mit genau 10 mm. Gedrehte Formen wachsen wie ein Bild um ihren Fußpunkt.
+  `test_text_feature.cpp`: Text auf 150 %. `test_rotation.cpp`: genauer Kasten eines gekippten Zylinders und einer Kugel.
+- `tests/unit/ui/test_scale.cpp` (Steuerung): vier Quadrate, Ziehen nach außen und innen, Ecke gegenüber bleibt (auch gedreht, auch
+  abseits der Mitte, auch bei der Kugel), Ecke bleibt unter dem Zeiger, 5-mm-Ecken → 10 mm, Tippen, Esc, Anhalten bei 1 %, Formel in
+  einem unberührten Lage-Wert bleibt, ein Schritt, Undo.
+- Fenster mit echten Mausereignissen (`RUN_SERIAL`, vorher `tool:size`): `app_corner_scale` (ziehen, dann 200 tippen),
+  `app_corner_scale_round_turned` (Kugel, gedrehter Quader), `app_corner_scale_front` und `app_corner_scale_top` (die Ecke, deren
+  Diagonale fast auf einen zeigt). Neue Aktion `corner:` für `--simulate`.
+- Bilder: [ap-1.6b2-ecke-de.png](../screenshots/ap-1.6b2-ecke-de.png), [ap-1.6b2-kugel-de.png](../screenshots/ap-1.6b2-kugel-de.png),
+  [ap-1.6b2-tippen-de.png](../screenshots/ap-1.6b2-tippen-de.png).
+
+**So probierst du es aus** (`scripts/run --release` aus dem Ordner `Fission3D-ap16b`)
+1. Würfel doppelt anklicken, links **Größe** wählen: an den vier oberen Ecken erscheinen weiße Quadrate, dazu ein gestrichelter Kasten.
+2. Am **vorderen rechten Quadrat** nach außen ziehen: der Würfel wird in alle Richtungen größer, die hintere linke Ecke unten bleibt
+   stehen. Die Blase zeigt z. B. „124 %“ und die neuen Maße; rechts ändern sich Breite, Tiefe und Höhe zugleich.
+3. Rechts den **Eckenradius** auf 5 stellen, dann wieder an einer Ecke ziehen und dabei `200` tippen, Enter: Breite, Höhe und
+   Eckenradius sind doppelt so groß, die Ecken bleiben rund. ⌘Z nimmt alles zurück („Quader auf 200 % vergrößert“).
+4. Eine **Kugel** ablegen: ihre Quadrate schweben am Kasten neben ihr. Nach innen ziehen macht sie kleiner, sie bleibt auf dem Bett.
+5. Mit **Drehen** einen Körper drehen und wieder **Größe** wählen: der Kasten läuft weiter in Bett-Richtung, und der Körper wächst
+   von der Ecke gegenüber aus.
+
+**Bekannte Einschränkungen, Annahmen**
+- Der Faktor rastet auf ganze Prozent, relativ zur Größe beim Start des Zugs (das echte Fangen und ⇧ = Raster aus kommen mit 1.6c).
+- Kleinstes Maß 0,01 mm, größtes 2000 mm (wie die Maß-Griffe). Eine Wand, die beim Verkleinern zu dünn zum Drucken wird, meldet
+  das Programm noch nicht (das gehört zu „Prüfen“).
+- Eine Zahl mit Einheit oder eine Rechnung ohne Namen (`2,5 cm`, `40/2`) wird nach dem Vergrößern zur Zahl in mm; nur Formeln mit
+  benannten Maßen bleiben Formeln.
+- Ein gezogener Körper, der gerade neu berechnet wird, bekommt seinen Kasten vom letzten Ergebnis; in diesem Moment kann die
+  stehenbleibende Ecke minimal daneben liegen (erst nach dem Loslassen sichtbar, nie im Ergebnis falsch, weil die Maße stimmen).
+- Die Ecke, deren Diagonale fast genau auf den Betrachter zeigt, wird über den Bildschirm gezogen und bleibt dann nicht ganz unter
+  dem Zeiger (wie die Pfeile in 1.6a).
+- In einem schmalen Lage-Feld kann bei langen Werten die letzte Ziffer abgeschnitten sein (das Feld zeigt den Anfang).
+
+**Vorgeschlagene Folge-Arbeiten:** b3 Ablegen an Wänden; eine Prozentangabe auch im Panel (heute nur an der Wertblase); Bänder für
+gedrehte Maß-Punkte.
 
 ---
 

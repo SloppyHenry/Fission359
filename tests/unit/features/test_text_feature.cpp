@@ -212,3 +212,32 @@ TEST_CASE("text step: turns about the middle of its box, names stay", "[features
     CHECK(report.volume == Approx(before.volume).epsilon(1e-6));
     CHECK(after.faces.size() == outcome.faces.size());
 }
+
+TEST_CASE("text step: made larger, the letters grow alike and keep their names",
+          "[features][text][scale]") {
+    // Letters 10 mm, 2 mm high, at 150 %: 15 mm letters 3 mm high, the same letters.
+    Letters letters;
+    letters.type("text", "LENA");
+    const RecomputeResult small = letters.calculate();
+    const Feature& feature = *letters.history.document().findFeature(letters.step);
+    const auto& body = feature.outputs.front();
+    REQUIRE(small.bodies.contains(body));
+    const BodyResult before = small.bodies.at(body);
+    const fission::geo::SolidReport a = letters.kernel->measure(before.solid);
+
+    REQUIRE(letters.history.execute(makeSetFeatureValue(letters.step, "size", "15")));
+    REQUIRE(letters.history.execute(makeSetFeatureValue(letters.step, "height", "3")));
+    const RecomputeResult large = letters.calculate();
+    REQUIRE(large.bodies.contains(body));
+    const BodyResult& after = large.bodies.at(body);
+    const fission::geo::SolidReport b = letters.kernel->measure(after.solid);
+    CHECK(b.valid);
+    CHECK(b.volume == Approx(a.volume * 1.5 * 1.5 * 1.5).epsilon(1e-3));
+    CHECK(b.boxMax.x - b.boxMin.x == Approx((a.boxMax.x - a.boxMin.x) * 1.5).epsilon(1e-3));
+    CHECK(b.boxMax.z - b.boxMin.z == Approx(3.0).epsilon(1e-9));
+    CHECK(b.faces == a.faces);
+    REQUIRE(after.faces.size() == before.faces.size());
+    for (std::size_t i = 0; i < after.faces.size(); ++i) {
+        CHECK(after.faces[i].name == before.faces[i].name);
+    }
+}

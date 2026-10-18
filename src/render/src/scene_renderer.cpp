@@ -1492,6 +1492,26 @@ void SceneRenderer::prepareHandles(QRhiResourceUpdateBatch* updates, const Frame
     }
     for (const HandleDot& dot : handles.dots) {
         const QVector3D centre = builder.towardsViewer(dot.centre, 3.0F * dot.radius);
+        if (dot.square) {
+            // Square on the screen: four bars for the frame round the filled inside, none over
+            // another.
+            const float r = dot.radius;
+            const float w = std::min(dot.ringWidth, r);
+            const auto area = [&](float x0, float y0, float x1, float y1, const QColor& color) {
+                const QVector3D a = builder.offset(centre, x0, y0);
+                const QVector3D b = builder.offset(centre, x1, y0);
+                const QVector3D c = builder.offset(centre, x1, y1);
+                const QVector3D d = builder.offset(centre, x0, y1);
+                builder.triangle(a, b, c, color);
+                builder.triangle(a, c, d, color);
+            };
+            area(-r + w, -r + w, r - w, r - w, dot.fill);
+            area(-r, r - w, r, r, dot.ring);
+            area(-r, -r, r, -r + w, dot.ring);
+            area(-r, -r + w, -r + w, r - w, dot.ring);
+            area(r - w, -r + w, r, r - w, dot.ring);
+            continue;
+        }
         builder.ring(centre, 0.0F, dot.radius, dot.fill);
         builder.ring(centre, dot.radius - dot.ringWidth, dot.radius, dot.ring);
         if (dot.rounding) {

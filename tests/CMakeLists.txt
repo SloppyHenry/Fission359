@@ -168,6 +168,34 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=35,35,200 --simulate "tool:size;put:box;type:20,tab,20,tab,50,enter;tool:rotate;ring:y,45,8;ring:z,30,8;tool:size;grab:height,0,-60,8;least:height,56")
   set_tests_properties(app_turned_body_handles PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # The corner squares of the tool Size (AP-1.6b2) make a body larger in all directions alike:
+  # pulled with a real mouse, then pulled again and 200 typed instead.
+  add_test(NAME app_corner_scale
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-corner-scale.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "tool:size;put:box;corner:1,60,40,10;least:width,22;least:height,22;corner:1,30,20,6,hold;type:200,enter;least:height,44")
+  set_tests_properties(app_corner_scale PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # A sphere (the corner floats beside it), a turned box, and a box seen from the front and from
+  # straight above: the corner nearest the viewer points almost at the eye, it still pulls.
+  add_test(NAME app_corner_scale_round_turned
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-corner-round.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "tool:size;put:sphere;corner:1,50,30,10;least:radius,11;tool:rotate;put:box;ring:z,30,8;tool:size;corner:1,40,25,8;least:width,22;near:rotZ,30")
+  set_tests_properties(app_corner_scale_round_turned PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  add_test(NAME app_corner_scale_front
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-corner-front.png" --language en --size 1280x800
+            --camera=0,5,200 --simulate "tool:size;put:box;corner:1,40,-20,8;least:width,21")
+  set_tests_properties(app_corner_scale_front PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  add_test(NAME app_corner_scale_top
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-corner-top.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "tool:size;put:box;corner:1,40,30,8;least:width,21")
+  set_tests_properties(app_corner_scale_top PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

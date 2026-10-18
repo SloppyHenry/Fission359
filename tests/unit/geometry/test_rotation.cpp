@@ -217,6 +217,26 @@ TEST_CASE("kernel turn: the rest of the kernel understands a turned body", "[sol
     CHECK(box.max.z - box.min.z == Approx(20.0).margin(0.01));
 }
 
+TEST_CASE("kernel turn: the exact box touches a turned body", "[solid]") {
+    // A cylinder r 8, h 30 tipped 90 degrees about X round its middle (0, 0, 15): it lies along Y.
+    const NamedSolid cylinder = occt::makeNamedCylinder(8.0, 30.0, {0, 0, 0});
+    const NamedSolid tipped = occt::rotateNamed(cylinder, {0, 0, 15}, {90.0, 0.0, 0.0});
+    const Bounds box = occt::exactBounds(tipped.solid);
+    CHECK(box.min.x == Approx(-8.0).margin(1e-6));
+    CHECK(box.max.x == Approx(8.0).margin(1e-6));
+    CHECK(box.min.y == Approx(-15.0).margin(1e-6));
+    CHECK(box.max.y == Approx(15.0).margin(1e-6));
+    CHECK(box.min.z == Approx(7.0).margin(1e-6));
+    CHECK(box.max.z == Approx(23.0).margin(1e-6));
+    // Turned at a slant, a sphere still has the box of a sphere.
+    const NamedSolid sphere = occt::makeNamedPrimitive(SphereSpec{10.0}, {0, 0, 0});
+    const Bounds round =
+        occt::exactBounds(occt::rotateNamed(sphere, {0, 0, 10}, {30.0, 40.0, 50.0}).solid);
+    CHECK(round.min.z == Approx(0.0).margin(1e-6));
+    CHECK(round.max.z == Approx(20.0).margin(1e-6));
+    CHECK(round.max.x == Approx(10.0).margin(1e-6));
+}
+
 TEST_CASE("kernel turn: values that are not numbers are refused", "[solid]") {
     const NamedSolid box = occt::makeNamedBox(10, 10, 10, {}, 0.0);
     CHECK_THROWS_AS(occt::rotateNamed(box, {0, 0, 0}, {std::nan(""), 0, 1}), GeometryError);

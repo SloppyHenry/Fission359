@@ -175,6 +175,12 @@ void History::cancelTransaction() {
     depth_ = 0;
 }
 
+void History::setTransactionValue(const std::string& key, std::string value) {
+    if (depth_ > 0) {
+        label_.values[key] = std::move(value);
+    }
+}
+
 void History::reset(Document document) {
     document_ = std::move(document);
     steps_.clear();

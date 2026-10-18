@@ -48,6 +48,17 @@ geo::Point3d FeatureType::bodyCentre(const ResolvedParams& params) const {
     return {value("x"), value("y"), value("z") + value("height") / 2.0};
 }
 
+std::vector<std::string> FeatureType::sizeParameters() const {
+    std::vector<std::string> sizes;
+    for (const ParamSpec& spec : parameters()) {
+        if (spec.kind == QuantityKind::length && spec.name != "x" && spec.name != "y" &&
+            spec.name != "z") {
+            sizes.push_back(spec.name);
+        }
+    }
+    return sizes;
+}
+
 geo::Angles FeatureType::turnOf(const ResolvedParams& params) {
     const auto value = [&params](const char* name) {
         const auto found = params.find(name);

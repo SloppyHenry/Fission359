@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "fission/core/command.h"
@@ -65,6 +66,9 @@ public:
     /// Closes the transaction and takes back everything it did; no step is recorded.
     void cancelTransaction();
     bool inTransaction() const noexcept { return depth_ > 0; }
+    /// Sets a value of the name of the open transaction ("Box made larger to 150 %" learns the
+    /// 150 only as the drag goes on). Nothing when no transaction is open.
+    void setTransactionValue(const std::string& key, std::string value);
 
     // --- saved state ---------------------------------------------------------------------
     /// Remembers the current state as the one on disk.

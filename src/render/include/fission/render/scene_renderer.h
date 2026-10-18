@@ -60,6 +60,7 @@ struct HandleDot {
     QColor ring;
     float ringWidth = 2.0F;
     bool rounding = false; ///< with a quarter circle on it (the grip of a rounding)
+    bool square = false;   ///< a square instead of a disc (a corner that scales evenly)
     bool operator==(const HandleDot&) const = default;
 };
 /// The arrow beyond a dot: which way the handle goes.

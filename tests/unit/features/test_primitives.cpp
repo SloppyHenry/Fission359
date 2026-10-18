@@ -523,3 +523,143 @@ TEST_CASE("turn: no turn at all costs the kernel nothing", "[features][turn]") {
         CHECK(found->defaultExpression == "0");
     }
 }
+
+// --- making shapes larger and smaller in all directions alike (AP-1.6b2) ----------------------
+
+namespace {
+
+/// The values of a shape with every size times `factor` (what the tool "Size" writes).
+std::map<std::string, double> scaledValues(const FeatureType& type,
+                                           std::map<std::string, double> values, double factor) {
+    const ResolvedParams all = resolvedFor(type, values);
+    for (const std::string& name : type.sizeParameters()) {
+        values[name] = all.at(name).value * factor;
+    }
+    return values;
+}
+
+} // namespace
+
+TEST_CASE("scale: the sizes of a shape are its lengths, never its counts, place or turn",
+          "[features][scale]") {
+    Setup setup;
+    const auto sizes = [&](const char* type) {
+        return setup.registry.find(type)->sizeParameters();
+    };
+    using Names = std::vector<std::string>;
+    CHECK(sizes("box") == Names{"width", "depth", "height", "cornerRadius"});
+    CHECK(sizes("cylinder") == Names{"radius", "height"});
+    CHECK(sizes("tube") == Names{"radius", "wall", "height"});
+    CHECK(sizes("star") == Names{"radius", "innerRadius", "height"});
+    CHECK(sizes("prism") == Names{"radius", "height"});
+    CHECK(sizes("cone") == Names{"radius", "topRadius", "height"});
+    CHECK(sizes("text") == Names{"size", "height"});
+}
+
+TEST_CASE("scale: every shape grows alike, volume by the factor cubed, faces and names kept",
+          "[features][scale]") {
+    Setup setup;
+    for (const auto& [name, values] : kTurnCases) {
+        const FeatureType& type = *setup.registry.find(name);
+        std::map<std::string, double> placed = values;
+        placed["x"] = 12;
+        placed["y"] = -7;
+        placed["z"] = 3;
+        const Made before = make(setup, name, placed);
+        for (const double factor : {2.0, 0.5, 1.37}) {
+            INFO(name << " at " << factor);
+            const Made after = make(setup, name, scaledValues(type, placed, factor));
+            CHECK(after.report.valid);
+            CHECK(after.report.volume ==
+                  Approx(before.report.volume * factor * factor * factor).epsilon(1e-6));
+            CHECK(after.report.area == Approx(before.report.area * factor * factor).epsilon(1e-6));
+            CHECK(after.report.faces == before.report.faces);
+            CHECK(after.report.edges == before.report.edges);
+            CHECK(after.report.vertices == before.report.vertices);
+            CHECK_FALSE(checkNamingContract(after.result.outputs[0], after.report).has_value());
+            const auto& a = before.result.outputs[0].faces;
+            const auto& b = after.result.outputs[0].faces;
+            REQUIRE(a.size() == b.size());
+            for (std::size_t i = 0; i < a.size(); ++i) {
+                CHECK(a[i].role == b[i].role);
+            }
+            // It grew about the place of the step (the middle of its underside): the box round it
+            // is the old box, from that point, times the factor.
+            const fission::geo::Point3d foot{12.0, -7.0, 3.0};
+            CHECK(after.report.boxMin.x - foot.x ==
+                  Approx((before.report.boxMin.x - foot.x) * factor).margin(1e-6));
+            CHECK(after.report.boxMax.y - foot.y ==
+                  Approx((before.report.boxMax.y - foot.y) * factor).margin(1e-6));
+            CHECK(after.report.boxMin.z == Approx(3.0).margin(1e-6)); // still on its plane
+            CHECK(after.report.boxMax.z - foot.z ==
+                  Approx((before.report.boxMax.z - foot.z) * factor).margin(1e-6));
+        }
+    }
+}
+
+TEST_CASE("scale: a box with 5 mm corners at 200 % has round 10 mm corners", "[features][scale]") {
+    // Ablauf D, step 1, for the corner handle: a rounded box stays a rounded box, nothing turns
+    // into an ellipse. The volume of a box w x d x h with round corners r is h (w d - (4 - pi) r²):
+    // it only comes out like that when every corner is a quarter circle of radius r.
+    Setup setup;
+    const FeatureType& type = *setup.registry.find("box");
+    const std::map<std::string, double> values{
+        {"width", 40}, {"depth", 40}, {"height", 10}, {"cornerRadius", 5}};
+    const std::map<std::string, double> twice = scaledValues(type, values, 2.0);
+    CHECK(twice.at("cornerRadius") == 10.0);
+    CHECK(twice.at("width") == 80.0);
+    const Made made = make(setup, "box", twice);
+    CHECK(made.report.valid);
+    CHECK(made.report.volume == Approx(20.0 * (80.0 * 80.0 - (4.0 - kPi) * 100.0)).epsilon(1e-9));
+    // The face of each corner is a quarter of a cylinder r 10, h 20.
+    const fission::geo::TriangleMesh& mesh = made.mesh;
+    const FeatureOutput& output = made.result.outputs[0];
+    const std::uint32_t corner = faceOf(output, "cornerFrontLeft");
+    double nearest = 1e9;
+    double farthest = 0.0;
+    // Corner front left: the middle of its quarter circle is at (-30, -30).
+    for (std::size_t t = 0; t < mesh.faceIds.size(); ++t) {
+        if (mesh.faceIds[t] != corner) {
+            continue;
+        }
+        for (int k = 0; k < 3; ++k) {
+            const auto& p = mesh.positions[mesh.indices[t * 3 + static_cast<std::size_t>(k)]];
+            const double r = std::hypot(p.x + 30.0, p.y + 30.0);
+            nearest = std::min(nearest, r);
+            farthest = std::max(farthest, r);
+        }
+    }
+    CHECK(nearest == Approx(10.0).margin(1e-4)); // the mesh is in float
+    CHECK(farthest == Approx(10.0).margin(1e-4));
+}
+
+TEST_CASE("scale: a turned shape grows about the place of its step like a picture",
+          "[features][scale]") {
+    // The tool "Size" relies on this: with the place kept, sizes times a factor are the turned
+    // body made larger about the place of the step (the middle of its underside before the turn),
+    // because the point it turns about grows with it. So it can grow about any point.
+    Setup setup;
+    for (const auto& [name, values] : kTurnCases) {
+        INFO(name);
+        const FeatureType& type = *setup.registry.find(name);
+        std::map<std::string, double> placed = values;
+        placed["x"] = 5;
+        placed["y"] = 6;
+        placed["z"] = 7;
+        placed["rotX"] = 30;
+        placed["rotY"] = 40;
+        placed["rotZ"] = 50;
+        const Made before = make(setup, name, placed);
+        const Made after = make(setup, name, scaledValues(type, placed, 1.5));
+        const auto box = [&](const Made& made) {
+            return setup.kernel->exactBounds(made.result.outputs[0].solid);
+        };
+        const fission::geo::Bounds a = box(before);
+        const fission::geo::Bounds b = box(after);
+        CHECK(b.min.x - 5.0 == Approx((a.min.x - 5.0) * 1.5).margin(1e-5));
+        CHECK(b.max.y - 6.0 == Approx((a.max.y - 6.0) * 1.5).margin(1e-5));
+        CHECK(b.min.z - 7.0 == Approx((a.min.z - 7.0) * 1.5).margin(1e-5));
+        CHECK(b.max.z - 7.0 == Approx((a.max.z - 7.0) * 1.5).margin(1e-5));
+        CHECK(after.report.valid);
+    }
+}

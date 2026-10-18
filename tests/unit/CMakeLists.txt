@@ -9,6 +9,7 @@ add_executable(fission_unit_tests
   core/test_recompute.cpp
   core/test_history.cpp
   core/test_selection.cpp
+  core/test_scaling.cpp
   features/test_primitives.cpp
   features/test_text_feature.cpp
   geometry/test_occt_layer.cpp
@@ -33,6 +34,7 @@ add_executable(fission_unit_tests
   ui/test_printer_catalog.cpp
   ui/test_gizmo.cpp
   ui/test_rotate.cpp
+  ui/test_scale.cpp
   interaction/test_drag.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
