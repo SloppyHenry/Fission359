@@ -634,3 +634,45 @@ TEST_CASE("handles: a label steps back when a body is in front of its band", "[u
     f.refresh();
     CHECK(f.handle("width")["hidden"].toBool());
 }
+
+TEST_CASE("handles: the radius dot of a sphere stays under the pointer as the sphere grows",
+          "[ui][handles]") {
+    // Feedback 2026-10-18: the sphere stands on the bed, so its equator rises as it grows. The
+    // dot was pulled only sideways and slid away from the pointer.
+    Fixture f;
+    f.model->addShape(QStringLiteral("sphere"), false); // radius 10, on a free place of the bed
+    f.model->selectStep(1);
+    f.viewport.setCamera(-30.0, 30.0, 250.0);
+    f.refresh();
+    const QVariantMap start = f.handle("radius");
+    const QPointF from(start["x"].toDouble(), start["y"].toDouble());
+    REQUIRE(f.handles->beginDrag(start["index"].toInt(), from.x(), from.y()));
+    // Where the dot will be at radius 20: 10 mm out and 10 mm up from where it was.
+    const QVector3D origin(
+        static_cast<float>(
+            f.model->stepHandles()[start["candidate"].toInt()].toMap()["x"].toDouble()),
+        static_cast<float>(
+            f.model->stepHandles()[start["candidate"].toInt()].toMap()["y"].toDouble()),
+        static_cast<float>(
+            f.model->stepHandles()[start["candidate"].toInt()].toMap()["z"].toDouble()));
+    const QVariantMap world = f.model->stepHandles()[start["candidate"].toInt()].toMap();
+    const QVector3D out(static_cast<float>(world["dx"].toDouble()),
+                        static_cast<float>(world["dy"].toDouble()), 0.0F);
+    const QVector3D later = origin + out * 10.0F + QVector3D(0.0F, 0.0F, 10.0F);
+    const QPointF pointer = f.viewport.project(later.x(), later.y(), later.z());
+    f.handles->dragTo(pointer.x(), pointer.y());
+    // At once, and once the sphere is calculated again (still holding it): under the pointer.
+    for (int pass = 0; pass < 2; ++pass) {
+        const QVariantMap now = f.handle("radius");
+        CHECK(std::hypot(now["x"].toDouble() - pointer.x(), now["y"].toDouble() - pointer.y()) <
+              6.0);
+        f.refresh();
+    }
+    REQUIRE(f.handles->endDrag());
+    f.refresh();
+    CHECK(f.value("radius") == Approx(20.0).margin(1.0));
+    // Let go, it stays where it is (it once jumped to another place on the ring).
+    const QVariantMap after = f.handle("radius");
+    CHECK(std::hypot(after["x"].toDouble() - pointer.x(), after["y"].toDouble() - pointer.y()) <
+          6.0);
+}

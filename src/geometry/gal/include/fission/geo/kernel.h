@@ -68,6 +68,13 @@ public:
 
     virtual SolidReport measure(const Solid& solid) const = 0;
 
+    /// The box round a body (mm), quickly: no volume, no validity check. For deciding how finely
+    /// a big body is drawn. The default asks `measure`.
+    virtual Bounds bounds(const Solid& solid) const {
+        const SolidReport report = measure(solid);
+        return {report.boxMin, report.boxMax};
+    }
+
     virtual TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const = 0;
 };
 

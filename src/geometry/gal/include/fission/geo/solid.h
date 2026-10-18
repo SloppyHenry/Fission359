@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <memory>
 #include <utility>
 
@@ -44,6 +45,14 @@ struct SolidReport {
     int edges = 0;
     int vertices = 0;
     bool valid = false; ///< Passed the kernel's validity check.
+};
+
+/// A box along the axes, from its smallest to its largest corner (mm).
+struct Bounds {
+    Point3d min;
+    Point3d max;
+    /// The length of its diagonal (0 for an empty box).
+    double diagonal() const { return std::hypot(max.x - min.x, max.y - min.y, max.z - min.z); }
 };
 
 /// How finely a body is tessellated for display or export.

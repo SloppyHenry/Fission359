@@ -39,6 +39,9 @@ NamedSolid makeNamedCylinder(double radius, double height, Point3d base = {});
 /// Volume, area, bounding box, topology counts and validity of a body.
 SolidReport measure(const Solid& solid);
 
+/// The box round a body, from its geometry (no mesh needed).
+Bounds bounds(const Solid& solid);
+
 /// Tessellation for display. Throws GeometryError if the kernel cannot mesh the body.
 TriangleMesh tessellate(const Solid& solid, const TessellationParams& params = {});
 

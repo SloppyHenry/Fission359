@@ -23,6 +23,7 @@ HandleController::HandleController(DocumentModel* model, QObject* parent)
     connect(m_model, &DocumentModel::stepValuesChanged, this, &HandleController::refresh);
     connect(m_model, &DocumentModel::sceneReady, this, [this] { refresh(); });
     connect(m_model, &DocumentModel::currentStepChanged, this, [this] {
+        m_keepChoice = false;
         if (m_armed && m_model->currentStep() != m_armedStep && !m_editing) {
             setArmed(false); // something else was chosen: digits are for the views again
         }
@@ -37,7 +38,10 @@ HandleController::HandleController(DocumentModel* model, QObject* parent)
 void HandleController::attach(Viewport3D* viewport) {
     m_viewport = viewport;
     if (m_viewport != nullptr) {
-        connect(m_viewport, &Viewport3D::cameraChanged, this, &HandleController::refresh);
+        connect(m_viewport, &Viewport3D::cameraChanged, this, [this] {
+            m_keepChoice = false; // turned: the handles may go to the side facing the viewer
+            refresh();
+        });
     }
     refresh();
 }
@@ -246,7 +250,9 @@ void HandleController::refresh() {
                 best[parameter] = choice;
             }
         }
-        if (m_editing) {
+        // While a value is changed, and after that until the view turns, its place stays: a
+        // handle must not jump to another side of the shape under the pointer.
+        if (m_editing || m_keepChoice) {
             for (const QString& parameter : order) {
                 const auto kept = m_chosen.find(parameter);
                 if (kept != m_chosen.end() && kept->second < world.size() &&
@@ -530,7 +536,13 @@ void HandleController::refresh() {
             entry["value"] = raw.value;
             entry["hidden"] = hidden;
             shown.push_back(entry);
-            drawHandle(graphics, raw.atWorld, raw.startWorld, raw.axisWorld, place.band,
+            // The arrow shows where the handle really goes (out and up on a sphere).
+            const QVector3D goes =
+                (raw.axisWorld * static_cast<float>(raw.handle["sign"].toDouble() *
+                                                    raw.handle["travel"].toDouble()) +
+                 QVector3D(0.0F, 0.0F, static_cast<float>(raw.handle["rise"].toDouble())))
+                    .normalized();
+            drawHandle(graphics, raw.atWorld, raw.startWorld, goes, place.band,
                        place.edgeStartWorld, place.edgeEndWorld, place.bandStartWorld,
                        place.bandEndWorld, place.tick, static_cast<int>(i), axis,
                        entry["role"].toString(), compact);
@@ -542,6 +554,12 @@ void HandleController::refresh() {
     if (compact != m_compact) {
         m_compact = compact;
         emit compactChanged();
+    }
+    // A step without handles for a moment while one is held (being calculated, or failed): the
+    // held handle keeps its place in the window. Taking it away under the pointer would leave the
+    // drag, and with it the step in the history, open (undo would not work).
+    if (m_dragging && shown.isEmpty() && !m_handles.isEmpty()) {
+        return;
     }
     if (shown != m_handles) {
         m_handles = shown;
@@ -742,8 +760,15 @@ bool HandleController::beginDrag(int index, double x, double y) {
                      .normalized();
     m_dragStartValue = world["value"].toDouble();
     m_dragValue = m_dragStartValue;
-    m_dragSign = world["sign"].toDouble();
-    m_dragTravel = std::max(world["travel"].toDouble(), 0.05);
+    // The way the handle really goes when the value grows: along its direction, and up as well
+    // where the shape rises with it (a sphere). The pointer follows that way.
+    const QVector3D way =
+        m_dragAxis * static_cast<float>(world["sign"].toDouble() *
+                                        std::max(world["travel"].toDouble(), 0.05)) +
+        QVector3D(0.0F, 0.0F, static_cast<float>(world["rise"].toDouble()));
+    m_dragAxis = way.normalized();
+    m_dragSign = 1.0;
+    m_dragTravel = way.length();
     m_dragParameter = world["parameter"].toString();
     m_dragIndex = index;
 
@@ -809,6 +834,7 @@ bool HandleController::endDrag() {
     if (!m_dragging) {
         return false;
     }
+    m_keepChoice = true;
     m_dragging = false;
     m_model->commitChange();
     setEditing(false);

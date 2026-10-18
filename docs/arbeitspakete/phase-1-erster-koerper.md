@@ -735,6 +735,24 @@ Beschriftungen und Anfassflächen.
   Überfahren erscheint (von leicht oben gesehen heißt das: nach unten ziehen macht tiefer). Gilt für Maß-Griffe und Gizmo-Pfeile. Test im
   Fenster: `app_handle_drag_front`.
 
+**Zweite Nachbesserung: Kugel (Product Owner, 2026-10-18, nach dem Merge von PR #27)**
+- *„Den Radius einer Kugel zu ändern läuft nicht rund; zu weit gezogen, geht ⌘Z nicht mehr; die App hängt.“*
+  - **Hängen:** Die Darstellung rechnete jede runde Fläche mit fester Genauigkeit von 0,01 mm. Eine Kugel mit 800 mm Radius brauchte
+    dafür Hunderttausende Dreiecke und Minuten. Währenddessen hielt der Hintergrund-Rechner ein Schloss, auf das auch die Oberfläche
+    wartet: Das Fenster fror ein, auch ⌘Z ging nicht. Jetzt wächst die Darstellungs-Genauigkeit bei großen Körpern mit ihrer Größe
+    (`render::kRelativeChord`, ein Zehntausendstel der Diagonale, auf dem Bildschirm weiter unter einem Viertel Bildpunkt; Körper bis
+    100 mm bleiben wie bisher; der Export ist davon nicht betroffen). Und das Schloss wird nur noch zum Nachsehen und Ablegen gehalten,
+    nie während der Kernel rechnet. Eine Kugel mit 2000 mm Radius erscheint in Sekunden. Neue Kernel-Abfrage `bounds` (umschließender
+    Quader ohne Volumen und Prüfung).
+  - **Nicht rund:** Die Kugel steht auf dem Bett; wächst sie, hebt sich ihr Äquator mit. Der Radius-Punkt wurde aber nur waagerecht
+    gezogen und rutschte dem Zeiger davon. Griffe kennen jetzt eine Steigung (`HandleSpec::rise`): Der Punkt folgt dem schrägen Weg
+    und bleibt unter dem Zeiger (ebenso die Rohrdicke des Torus). Nach dem Loslassen bleibt der Punkt, wo er ist, bis man die Ansicht
+    dreht (vorher sprang er an eine andere Stelle des Rings).
+  - **Sicherung:** Verschwinden die Griffe eines Schritts mitten im Zug kurz (er wird gerade berechnet oder scheitert), bleibt der
+    gehaltene Griff im Fenster, damit der Zug ordentlich endet und Rückgängig wieder geht.
+  - Tests: `sphere: a big one is drawn quickly …`, `detail: a big body is drawn with a coarser mesh …`, `handles: the radius dot of
+    a sphere stays under the pointer …`.
+
 **Einschränkungen, Annahmen**
 - Das Fangen an Ecken, Kanten und Mitten anderer Körper kommt mit 1.6c; bis dahin rastet die Lage auf das Raster (ganze mm).
 - Die Wertblase zeigt den **Abstand** des Zugs, die Felder rechts die **Lage** (Annahme: so sieht man beim Ziehen, wie weit, und rechts,

@@ -8,6 +8,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <map>
 #include <numbers>
@@ -340,4 +341,30 @@ TEST_CASE("box: the radius may be as large as half the shorter side, no larger",
     const NamedSolid circle = occt::makeNamedBox(20.0, 20.0, 5.0, {}, 10.0);
     CHECK(occt::measure(circle.solid).valid);
     CHECK(occt::measure(circle.solid).volume == exactly(kPi * 100.0 * 5.0));
+}
+
+TEST_CASE("sphere: a big one is drawn quickly with a mesh that fits its size", "[shape]") {
+    // Feedback 2026-10-18: a sphere pulled to a radius of 800 mm made the program hang, its mesh
+    // with a fixed 0.01 mm took minutes. With the chord error that grows with the body it takes
+    // a moment, and the mesh is still finer than the screen can show.
+    const NamedSolid sphere = occt::makeNamedPrimitive(SphereSpec{800.0}, {0.0, 0.0, 0.0});
+    const Bounds box = occt::bounds(sphere.solid);
+    CHECK(box.min.z == Approx(0.0).margin(1e-6));
+    CHECK(box.max.z == Approx(1600.0).margin(1e-6));
+    CHECK(box.diagonal() == Approx(std::sqrt(3.0) * 1600.0).margin(1e-6));
+    TessellationParams params;
+    params.chordTolerance =
+        std::max(0.01, 1e-4 * box.diagonal()); // render::tessellationForDetail(0, …)
+    const auto start = std::chrono::steady_clock::now();
+    const TriangleMesh mesh = occt::tessellate(sphere.solid, params);
+    const double seconds =
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    CHECK(seconds < 5.0); // debug build with address checks on the CI: generous
+    CHECK(mesh.triangleCount() < 200000);
+    // Every vertex lies on the sphere within the chord error.
+    double worst = 0.0;
+    for (const Point3f& p : mesh.positions) {
+        worst = std::max(worst, std::abs(std::hypot(p.x, p.y, p.z - 800.0) - 800.0));
+    }
+    CHECK(worst < 1e-3 * 800.0);
 }
