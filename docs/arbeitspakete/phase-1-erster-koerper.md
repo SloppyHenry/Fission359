@@ -640,7 +640,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
-**Status:** in Arbeit (1.6a im Review) · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Status:** in Arbeit (1.6a erledigt) · **Größe:** L · **Abhängigkeiten:** AP-1.4
 
 **Umfang:**
 - Gizmo: Verschieben (Achsen und Ebenen), Drehen (Ringe), **proportional** Vergrößern/Verkleinern (Eck-Griff oder Prozentangabe; der Eck-Griff ist immer gleichmäßig)
@@ -662,7 +662,7 @@ Beschriftungen und Anfassflächen.
 
 | Teil | Status | Inhalt |
 |---|---|---|
-| **a) Verschieben** | Review | ADR-0010 (wo eine Verschiebung im Rezept lebt); die Werkzeuge der Palette wirken (Wählen, Verschieben, Größe); Gizmo mit Achsen-Pfeilen und Ebenen-Quadraten; **Körper selbst ziehen verschiebt ihn** auf der Arbeitsebene (Rahmen dann nur noch auf leerem Grund); Wertblase, Tippen mit `Tab` X → Y → Z, Enter, Esc; Raster in ganzen mm wie bisher |
+| **a) Verschieben** | erledigt (2026-10-18, PR #27) | ADR-0010 (wo eine Verschiebung im Rezept lebt); die Werkzeuge der Palette wirken (Wählen, Verschieben, Größe); Gizmo mit Achsen-Pfeilen und Ebenen-Quadraten; **Körper selbst ziehen verschiebt ihn** auf der Arbeitsebene (Rahmen dann nur noch auf leerem Grund); Wertblase, Tippen mit `Tab` X → Y → Z, Enter, Esc; Raster in ganzen mm wie bisher |
 | **b) Drehen und proportional** | offen | Die Lage bekommt eine Drehung; Ringe, 15°-Schritte, Tippen in Grad; Drehen um die Körpermitte; Eck-Griff (Werkzeug Größe) und Prozentangabe ändern **alle Maße im gleichen Verhältnis** (Parameter, nie Skalieren, Regel 11); Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus |
 | **c) Fangen** | offen | Adaptives Raster; Fangen an Ecken, Kantenmitten, Kreismitten, Flächenmitten anderer Körper und am Bett; Ausrichtungslinien; Fang-Marke in der Ansicht; ⇧ während des Ziehens schaltet das Fangen aus; gilt auch für Maß-Griffe und das Ablegen |
 | **d) Abstandsmaße** | offen | Beim Verschieben Abstände zu den nächsten Kanten anderer Körper und zum Bettrand als Maßband in der Ansicht; ein Klick macht die Zahl editierbar („5 mm vom Rand“), Tippen setzt den Körper genau dorthin; Akzeptanzkriterium 1 als automatischer Ablauf |
@@ -678,7 +678,7 @@ Beschriftungen und Anfassflächen.
 - Annahmen bestätigt: Abstandsmaß von Kante zu Kante; Eck-Griff immer gleichmäßig (⇧ nur „Fangen aus“, während eines Zugs);
   Gizmo-Achsen immer in Bett-Richtung; Drehen um die Körpermitte; Zoomen mit der Tastatur ist nicht Teil von AP-1.6.
 
-#### Zwischenstand 1.6a Verschieben (2026-10-18, Review)
+#### Zwischenstand 1.6a Verschieben (2026-10-18, erledigt: vom Product Owner ausprobiert, „fühlt sich top an“)
 
 **Umgesetzt**
 - **Werkzeuge der Palette wirken:** „Verschieben“ (Standard) zeigt am gewählten Körper das Gizmo und die Maßbänder (Beschriftung
@@ -711,7 +711,7 @@ Beschriftungen und Anfassflächen.
   [ap-1.6a-tippen-de.png](../screenshots/ap-1.6a-tippen-de.png).
 - Linux: nur CI.
 
-**So probierst du es aus** (aus dem Ordner `Fission3D-ap16`, Branch `ap-1.6a-verschieben`)
+**So probierst du es aus** (`scripts/run --release` aus dem Hauptordner, sobald `main` aktualisiert ist)
 1. `scripts/run --release`. Doppelklick auf den Würfel: oben erscheinen die Pfeile X, Y, Z, die Quadrate und der weiße Punkt.
 2. Am **roten Pfeil** ziehen: der Würfel wandert nur nach rechts/links, die Blase zeigt „X +…“, rechts unter „Lage“ ändert sich X.
 3. Während du ziehst, `25` tippen, dann `Tab` und `-5`, dann Enter: der Würfel steht 25 mm weiter in X und 5 mm zurück in Y.
@@ -740,7 +740,7 @@ Beschriftungen und Anfassflächen.
 - Die Wertblase zeigt den **Abstand** des Zugs, die Felder rechts die **Lage** (Annahme: so sieht man beim Ziehen, wie weit, und rechts,
   wo). Getippt wird ebenfalls der Abstand.
 - Bild↑/Bild↓ fehlen auf Mac-Laptops als Taste (dort Fn+↑/↓).
-- „Drehen“ zeigt noch nichts (1.6b).
+- „Drehen“ zeigt noch nichts (1.6b; Auftrag: [docs/prompts/ap-1.6b-drehen.md](../prompts/ap-1.6b-drehen.md)).
 
 ---
 
