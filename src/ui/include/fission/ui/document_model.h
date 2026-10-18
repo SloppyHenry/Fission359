@@ -9,11 +9,13 @@
 #include <QTimer>
 #include <QVariantList>
 
+#include <array>
 #include <atomic>
 #include <cstdint>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 
 #include "fission/core/document.h"
 #include "fission/core/element_names.h"
@@ -196,6 +198,18 @@ public:
     Q_INVOKABLE void commitChange();
     /// Takes back everything since `beginChange` (the person pressed Esc).
     Q_INVOKABLE void cancelChange();
+
+    // --- moving bodies (AP-1.6, ADR-0010) ---
+    /// Where the chosen step puts its body (its values x, y, z in mm), or nothing when the step
+    /// has no position and cannot be moved.
+    std::optional<std::array<double, 3>> currentPosition() const;
+    /// Starts moving the body of the chosen step: everything until `commitChange` is one step
+    /// in the history ("Box moved"); `cancelChange` takes it back. False when it cannot move.
+    Q_INVOKABLE bool beginMove();
+    /// Puts the body of the chosen step at a new place: the position values that are given
+    /// become these numbers; the others stay as they are (a formula typed there is kept).
+    /// False when the step cannot move.
+    bool moveCurrent(const std::array<std::optional<double>, 3>& position);
 
     /// How finely bodies are tessellated for the screen (0 = basic, see render/detail.h). The
     /// view asks for more when the person zooms in; finer meshes are made in the background and

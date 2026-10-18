@@ -151,6 +151,29 @@
     </message>
 </context>
 <context>
+    <name>GizmoLayer</name>
+    <message>
+        <location filename="../qml/GizmoLayer.qml" line="+136"/>
+        <source>Move across the bed</source>
+        <translation>Über das Bett verschieben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Move in the %1 plane</source>
+        <translation>In der %1-Ebene verschieben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Move along %1</source>
+        <translation>Entlang %1 verschieben</translation>
+    </message>
+    <message>
+        <location line="+142"/>
+        <source>Distance along %1</source>
+        <translation>Abstand entlang %1</translation>
+    </message>
+</context>
+<context>
     <name>HistoryPanel</name>
     <message>
         <location filename="../qml/HistoryPanel.qml" line="+17"/>
@@ -554,12 +577,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+489"/>
+        <location line="+550"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-488"/>
+        <location line="-549"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -615,18 +638,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+244"/>
+        <location line="+276"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-242"/>
-        <location line="+243"/>
+        <location line="-274"/>
+        <location line="+275"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-237"/>
+        <location line="-269"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -636,27 +659,7 @@
         <translation>Mittlere Maustaste ziehen dreht die Ansicht, Umschalt + mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+12"/>
-        <source>Select</source>
-        <translation>Wählen</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Move</source>
-        <translation>Verschieben</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Rotate</source>
-        <translation>Drehen</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Size</source>
-        <translation>Größe</translation>
-    </message>
-    <message>
-        <location line="+7"/>
+        <location line="+29"/>
         <source>Settings arrive in a later version.</source>
         <translation>Die Einstellungen kommen in einer späteren Version.</translation>
     </message>
@@ -667,12 +670,12 @@
     </message>
     <message>
         <location line="+35"/>
-        <location line="+183"/>
+        <location line="+205"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-158"/>
+        <location line="-180"/>
         <source>“%1” has no %2 style, so the lettering is regular again.</source>
         <translation>„%1“ gibt es nicht in %2, deshalb ist die Schrift wieder normal.</translation>
     </message>
@@ -697,7 +700,7 @@
         <translation>normal</translation>
     </message>
     <message>
-        <location line="+145"/>
+        <location line="+167"/>
         <source>The start page arrives in a later version.</source>
         <translation>Die Startseite kommt in einer späteren Version.</translation>
     </message>
@@ -712,17 +715,22 @@
         <translation>Der Export kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+62"/>
+        <location line="+63"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
     <message>
-        <location line="+95"/>
+        <location line="+122"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
         <location line="+25"/>
+        <source>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</source>
+        <translation>Tippe einen Abstand, um genau zu verschieben (Tab für die nächste Richtung), Enter übernimmt, Esc setzt zurück.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Enter accepts, Tab goes to the next size, Esc leaves everything as it was.</source>
         <translation>Enter übernimmt, Tab geht zum nächsten Maß, Esc lässt alles, wie es war.</translation>
     </message>
@@ -903,6 +911,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>%1 moved</source>
+        <translation>%1 verschoben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>%1 made a part again</source>
         <translation>%1 wieder zum Körper gemacht</translation>
     </message>
@@ -1080,9 +1093,19 @@
         </translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
+        <source>%1 – click chooses it, double click the whole body, drag moves the body.</source>
+        <translation>%1 – ein Klick wählt sie, ein Doppelklick den ganzen Körper, Ziehen verschiebt den Körper.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>%1 – click chooses it, double click chooses the whole body.</source>
         <translation>%1 – ein Klick wählt sie, ein Doppelklick den ganzen Körper.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 – click chooses it, drag moves it.</source>
+        <translation>%1 – ein Klick wählt ihn, Ziehen verschiebt ihn.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1091,42 +1114,37 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="+5"/>
-        <source>Shift+click adds or removes. Drag a frame to choose several. Esc chooses nothing.</source>
-        <translation>Umschalt+Klick fügt hinzu oder nimmt weg. Mit einem Rahmen wählst du mehrere. Esc wählt nichts aus.</translation>
-    </message>
-    <message>
-        <location line="-291"/>
+        <location line="-292"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-468"/>
+        <location line="-528"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+503"/>
+        <location line="+563"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-396"/>
+        <location line="-456"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+213"/>
+        <location line="+245"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+206"/>
+        <location line="+234"/>
         <source>Let go to put the shape down here. Esc takes it back.</source>
         <translation>Loslassen, um die Form hier abzulegen. Esc nimmt sie zurück.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.</source>
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
@@ -1413,6 +1431,69 @@
     </message>
 </context>
 <context>
+    <name>ToolCatalog</name>
+    <message>
+        <location filename="../qml/ToolCatalog.qml" line="+12"/>
+        <source>Select</source>
+        <translation>Wählen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose bodies, faces and edges without handles. Dragging draws a frame, also across bodies.</source>
+        <translation>Körper, Flächen und Kanten wählen, ohne Griffe. Ziehen zeichnet einen Rahmen, auch über Körper hinweg.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shift+click adds or removes. Drag a frame to choose several. Esc chooses nothing.</source>
+        <translation>Umschalt+Klick fügt hinzu oder nimmt weg. Mit einem Rahmen wählst du mehrere. Esc wählt nichts aus.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Move</source>
+        <translation>Verschieben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Arrows move the chosen body along one direction, squares in a plane, the dot across the bed. You can also drag the body itself.</source>
+        <translation>Pfeile verschieben den gewählten Körper in eine Richtung, Quadrate in einer Ebene, der Punkt über das Bett. Du kannst auch den Körper selbst ziehen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Drag an arrow, a square or the body itself. Arrow keys move by 1 mm (Shift: 10 mm).</source>
+        <translation>Ziehe einen Pfeil, ein Quadrat oder den Körper selbst. Pfeiltasten verschieben um 1 mm (mit Umschalt 10 mm).</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Rotate</source>
+        <translation>Drehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rings turn the chosen body. Coming soon.</source>
+        <translation>Ringe drehen den gewählten Körper. Kommt in Kürze.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rotating arrives soon. Until then you can move the body or change its size.</source>
+        <translation>Drehen kommt in Kürze. Bis dahin kannst du den Körper verschieben oder seine Größe ändern.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Size</source>
+        <translation>Größe</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dots on the faces change the sizes of the shape. Corners and holes stay round.</source>
+        <translation>Punkte auf den Flächen ändern die Maße der Form. Ecken und Löcher bleiben rund.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Drag a dot to change a size, or click a label and type. You can also drag the body itself.</source>
+        <translation>Ziehe an einem Punkt, um ein Maß zu ändern, oder klicke eine Beschriftung an und tippe. Du kannst auch den Körper selbst ziehen.</translation>
+    </message>
+</context>
+<context>
     <name>ViewCube</name>
     <message>
         <location filename="../qml/ViewCube.qml" line="+40"/>
@@ -1506,35 +1587,7 @@
         <translation>Wählen: %1</translation>
     </message>
     <message>
-        <location line="+58"/>
-        <source>Select</source>
-        <translation>Wählen</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <location line="+2"/>
-        <location line="+2"/>
-        <location line="+2"/>
-        <source>Handles on the selected body. Applies to the “Axes” handle style.</source>
-        <translation>Griffe am ausgewählten Körper. Gilt für den Griff-Stil „Achsen“.</translation>
-    </message>
-    <message>
-        <location line="-5"/>
-        <source>Move</source>
-        <translation>Verschieben</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Rotate</source>
-        <translation>Drehen</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Size</source>
-        <translation>Größe</translation>
-    </message>
-    <message>
-        <location line="+32"/>
+        <location line="+91"/>
         <source>Shapes</source>
         <translation>Formen</translation>
     </message>
@@ -1629,17 +1682,17 @@
         <translation>Drehen</translation>
     </message>
     <message>
-        <location line="-365"/>
+        <location line="-360"/>
         <source>Orbit: drag with the right mouse button – or drag this button</source>
         <translation>Drehen: rechte Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
     <message>
-        <location line="+373"/>
+        <location line="+368"/>
         <source>Pan</source>
         <translation>Verschieben</translation>
     </message>
     <message>
-        <location line="-366"/>
+        <location line="-361"/>
         <source>Pan: drag with the middle mouse button – or drag this button</source>
         <translation>Verschieben: mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
@@ -1659,7 +1712,7 @@
         <translation>Verschieben: Umschalt + mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
     <message>
-        <location line="+375"/>
+        <location line="+370"/>
         <source>Zoom</source>
         <translation>Zoom</translation>
     </message>

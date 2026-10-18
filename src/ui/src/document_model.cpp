@@ -803,6 +803,70 @@ void DocumentModel::cancelChange() {
     documentChanged();
 }
 
+std::optional<std::array<double, 3>> DocumentModel::currentPosition() const {
+    std::array<double, 3> position{0.0, 0.0, 0.0};
+    int found = 0;
+    for (const QVariant& entry : m_stepValues) {
+        const QVariantMap value = entry.toMap();
+        const QString name = value[QStringLiteral("name")].toString();
+        const int axis = name == QLatin1String("x")   ? 0
+                         : name == QLatin1String("y") ? 1
+                         : name == QLatin1String("z") ? 2
+                                                      : -1;
+        if (axis >= 0) {
+            position[static_cast<std::size_t>(axis)] = value[QStringLiteral("value")].toDouble();
+            ++found;
+        }
+    }
+    if (found != 3) {
+        return std::nullopt;
+    }
+    return position;
+}
+
+bool DocumentModel::beginMove() {
+    const auto& features = m_history.document().features();
+    if (!currentPosition() || m_currentStep < 0 ||
+        m_currentStep >= static_cast<int>(features.size())) {
+        return false;
+    }
+    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    core::CommandDescription label{
+        "moveBody", {{"type", feature.type}, {"number", std::to_string(feature.number)}}};
+    if (!feature.outputs.empty()) {
+        if (const core::Body* body = m_history.document().findBody(feature.outputs.front())) {
+            label.values["name"] = body->name;
+        }
+    }
+    m_history.beginTransaction(std::move(label));
+    return true;
+}
+
+bool DocumentModel::moveCurrent(const std::array<std::optional<double>, 3>& position) {
+    const auto& features = m_history.document().features();
+    if (!currentPosition() || m_currentStep < 0 ||
+        m_currentStep >= static_cast<int>(features.size())) {
+        return false;
+    }
+    const core::FeatureId id = features[static_cast<std::size_t>(m_currentStep)].id;
+    const std::uint64_t before = m_history.document().revision();
+    static constexpr const char* kNames[3] = {"x", "y", "z"};
+    bool done = true;
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        if (position[axis]) {
+            // 12 digits: snapped numbers read back as typed ("12.5", not "12.5000000001").
+            done =
+                m_history.execute(core::makeSetFeatureValue(
+                    id, kNames[axis], QString::number(*position[axis], 'g', 12).toStdString())) &&
+                done;
+        }
+    }
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+    return done;
+}
+
 QStringList DocumentModel::fontStyles(const QString& family) const {
     QStringList names;
     for (const geo::FontStyle style : m_kernel->fontStyles(family.toStdString())) {

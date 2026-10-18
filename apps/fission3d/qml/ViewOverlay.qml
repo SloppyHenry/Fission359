@@ -248,6 +248,10 @@ Item {
     }
 
     // --- tool palette (left, 76 px) ------------------------------------------------------
+    ToolCatalog {
+        id: toolCatalog
+    }
+
     Float {
         id: palette
 
@@ -270,22 +274,13 @@ Item {
                 spacing: 2
 
                 Repeater {
-                    model: [
-                        { id: "select", text: qsTr("Select"), icon: "select",
-                          tip: qsTr("Handles on the selected body. Applies to the “Axes” handle style.") },
-                        { id: "move", text: qsTr("Move"), icon: "move",
-                          tip: qsTr("Handles on the selected body. Applies to the “Axes” handle style.") },
-                        { id: "rotate", text: qsTr("Rotate"), icon: "rotate",
-                          tip: qsTr("Handles on the selected body. Applies to the “Axes” handle style.") },
-                        { id: "size", text: qsTr("Size"), icon: "scale",
-                          tip: qsTr("Handles on the selected body. Applies to the “Axes” handle style.") }
-                    ]
+                    model: toolCatalog.tools
 
                     delegate: ToolButton3D {
                         required property var modelData
 
                         width: paletteColumn.width
-                        text: modelData.text
+                        text: modelData.name
                         iconName: modelData.icon
                         active: root.tool === modelData.id
                         tipText: modelData.tip

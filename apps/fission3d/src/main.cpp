@@ -12,6 +12,8 @@
 #include <QFontDatabase>
 #include <QGuiApplication>
 #include <QImage>
+#include <QKeyEvent>
+#include <QKeySequence>
 #include <QMouseEvent>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -26,6 +28,7 @@
 #include <cmath>
 #include <cstdio>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -41,6 +44,7 @@
 #include "fission/ui/app_info.h"
 #include "fission/ui/app_options.h"
 #include "fission/ui/document_model.h"
+#include "fission/ui/gizmo_controller.h"
 #include "fission/ui/handle_controller.h"
 #include "fission/ui/language.h"
 #include "fission/ui/numbers.h"
@@ -151,8 +155,12 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "of the chosen step), grab:width,40,0,8 (press a handle, pull it by view pixels "
             "in small moves, let go), point:cornerRadius (put the pointer on that handle and leave "
             "it there), expect:width,40 (fail unless the chosen step has at least "
-            "that value, no drag is left and its handles are still shown), separated by "
-            "semicolons."),
+            "that value, no drag is left and its handles are still shown), near:x,12 (fail "
+            "unless the chosen step has exactly that value), tool:size (choose a tool of the "
+            "palette), gizmo:x,40,0,8 (press a part of the gizmo: x, y, z, xy, xz, yz or free, "
+            "pull it by view pixels, let go; with a fifth value hold the button stays down), "
+            "drag:x,y,40,0,8 (press at a point of the 3D view, "
+            "pull, let go), key:Right (press a key), separated by semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
@@ -191,10 +199,48 @@ CommandLine parseCommandLine(int& argc, char** argv) {
 // Set by --simulate "expect:..." when what was expected did not happen.
 int g_simulationFailure = 0;
 
+// A mouse event through the window, at a point of the 3D view: as a hand would do it.
+void sendMouse(QQuickWindow* window, fission::ui::Viewport3D* viewport, QEvent::Type type,
+               const QPointF& inView, Qt::MouseButtons buttons) {
+    const QPointF scene = viewport->mapToScene(inView);
+    // A move names no button (it is only held); press and release name the left one.
+    const Qt::MouseButton changed = type == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton;
+    QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()), changed, buttons,
+                      Qt::NoModifier);
+    QCoreApplication::sendEvent(window, &event);
+}
+
+// Press at `start()` (asked when the press happens), pull by `pull` view pixels in `steps`
+// moves, let go. Returns the delay after the last event.
+int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int delay,
+                 std::function<QPointF()> start, QPointF pull, int steps, bool hold = false) {
+    auto from = std::make_shared<QPointF>();
+    delay += 350;
+    QTimer::singleShot(delay, viewport, [window, viewport, from, start] {
+        *from = start();
+        sendMouse(window, viewport, QEvent::MouseButtonPress, *from, Qt::LeftButton);
+    });
+    for (int step = 1; step <= steps; ++step) {
+        delay += 90;
+        QTimer::singleShot(delay, viewport, [window, viewport, from, pull, step, steps] {
+            sendMouse(window, viewport, QEvent::MouseMove, *from + pull * step / steps,
+                      Qt::LeftButton);
+        });
+    }
+    if (hold) {
+        return delay; // the button stays down (a picture in the middle of a drag)
+    }
+    delay += 90;
+    QTimer::singleShot(delay, viewport, [window, viewport, from, pull] {
+        sendMouse(window, viewport, QEvent::MouseButtonRelease, *from + pull, Qt::NoButton);
+    });
+    return delay;
+}
+
 void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                  fission::ui::PlacementController* placement, fission::ui::DocumentModel* model,
-                 fission::ui::HandleController* handles, const QString& actions,
-                 std::function<void()> done) {
+                 fission::ui::HandleController* handles, fission::ui::GizmoController* gizmo,
+                 const QString& actions, std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
@@ -254,37 +300,91 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             const int steps = spec.size() >= 4 ? std::max(1, spec[3].toInt()) : 8;
             const QString parameter = spec.value(0);
-            const QPointF pull(spec.value(1).toDouble(), spec.value(2).toDouble());
-            const auto send = [window, viewport](QEvent::Type type, const QPointF& inView,
-                                                 Qt::MouseButtons buttons) {
-                const QPointF scene = viewport->mapToScene(inView);
-                // A move names no button (it is only held); press and release name the left one.
-                const Qt::MouseButton changed =
-                    type == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton;
-                QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()), changed,
-                                  buttons, Qt::NoModifier);
-                QCoreApplication::sendEvent(window, &event);
-            };
-            auto start = std::make_shared<QPointF>();
-            delay += 350;
-            QTimer::singleShot(delay, viewport, [handles, parameter, start, send] {
-                for (const QVariant& entry : handles->handles()) {
-                    if (entry.toMap()["parameter"].toString() == parameter) {
-                        *start =
-                            QPointF(entry.toMap()["x"].toDouble(), entry.toMap()["y"].toDouble());
+            delay = pressAndPull(
+                window, viewport, delay,
+                [handles, parameter] {
+                    for (const QVariant& entry : handles->handles()) {
+                        if (entry.toMap()["parameter"].toString() == parameter) {
+                            return QPointF(entry.toMap()["x"].toDouble(),
+                                           entry.toMap()["y"].toDouble());
+                        }
                     }
-                }
-                send(QEvent::MouseButtonPress, *start, Qt::LeftButton);
-            });
-            for (int step = 1; step <= steps; ++step) {
-                delay += 90;
-                QTimer::singleShot(delay, viewport, [start, pull, step, steps, send] {
-                    send(QEvent::MouseMove, *start + pull * step / steps, Qt::LeftButton);
+                    return QPointF();
+                },
+                QPointF(spec.value(1).toDouble(), spec.value(2).toDouble()), steps);
+            continue;
+        }
+        if (kind == QLatin1String("gizmo")) {
+            // gizmo:x,40,0,8 - press on a part of the gizmo, pull, let go (as for grab).
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const int steps = spec.size() >= 4 ? std::max(1, spec[3].toInt()) : 8;
+            const QString part = spec.value(0);
+            delay = pressAndPull(
+                window, viewport, delay,
+                [gizmo, part] {
+                    for (const QVariant& entry : gizmo->parts()) {
+                        if (entry.toMap()["part"].toString() == part) {
+                            return QPointF(entry.toMap()["x"].toDouble(),
+                                           entry.toMap()["y"].toDouble());
+                        }
+                    }
+                    return QPointF();
+                },
+                QPointF(spec.value(1).toDouble(), spec.value(2).toDouble()), steps,
+                spec.value(4) == QLatin1String("hold"));
+            continue;
+        }
+        if (kind == QLatin1String("drag")) {
+            // drag:500,300,40,0,8 - press at (500, 300) in the 3D view, pull, let go.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const int steps = spec.size() >= 5 ? std::max(1, spec[4].toInt()) : 8;
+            const QPointF at(spec.value(0).toDouble(), spec.value(1).toDouble());
+            delay = pressAndPull(
+                window, viewport, delay, [at] { return at; },
+                QPointF(spec.value(2).toDouble(), spec.value(3).toDouble()), steps);
+            continue;
+        }
+        if (kind == QLatin1String("tool")) { // tool:size - a tool of the palette
+            const QString tool = action.mid(colon + 1).trimmed();
+            delay += 350;
+            QTimer::singleShot(delay, viewport,
+                               [window, tool] { window->setProperty("tool", tool); });
+            continue;
+        }
+        if (kind == QLatin1String("key")) { // key:Right - a key pressed and let go
+            const QKeySequence sequence = QKeySequence::fromString(action.mid(colon + 1).trimmed());
+            delay += 350;
+            if (!sequence.isEmpty()) {
+                const QKeyCombination key = sequence[0];
+                QTimer::singleShot(delay, viewport, [window, key] {
+                    QKeyEvent press(QEvent::KeyPress, key.key(), key.keyboardModifiers());
+                    QCoreApplication::sendEvent(window, &press);
+                    QKeyEvent release(QEvent::KeyRelease, key.key(), key.keyboardModifiers());
+                    QCoreApplication::sendEvent(window, &release);
                 });
             }
-            delay += 90;
-            QTimer::singleShot(delay, viewport, [start, pull, send] {
-                send(QEvent::MouseButtonRelease, *start + pull, Qt::NoButton);
+            continue;
+        }
+        if (kind == QLatin1String("near")) {
+            // near:x,12 - the chosen step has exactly this value (to a thousandth of a mm).
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [model, gizmo, spec] {
+                double value = std::numeric_limits<double>::quiet_NaN();
+                for (const QVariant& entry : model->stepValues()) {
+                    if (entry.toMap()["name"].toString() == spec.value(0)) {
+                        value = entry.toMap()["value"].toDouble();
+                    }
+                }
+                if (!(std::abs(value - spec.value(1).toDouble()) < 1e-3) || gizmo->editing()) {
+                    qWarning().noquote()
+                        << QStringLiteral("expected %1 = %2 and nothing being moved; found %3 "
+                                          "(moving: %4)")
+                               .arg(spec.value(0), spec.value(1))
+                               .arg(value)
+                               .arg(gizmo->editing());
+                    g_simulationFailure = 4;
+                }
             });
             continue;
         }
@@ -301,8 +401,11 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         QStringList parts = action.mid(colon + 1).split(QLatin1Char(','));
         if (kind == QLatin1String("type")) { // type:50,tab,20,enter - what the keys would do
             delay += 350;
-            QTimer::singleShot(delay, viewport, [window, parts] {
-                if (QObject* layer = window->findChild<QObject*>(QStringLiteral("handleLayer"))) {
+            QTimer::singleShot(delay, viewport, [window, gizmo, parts] {
+                // While a body is moved, the digits are for the distance; else for the sizes.
+                const QString layerName =
+                    gizmo->editing() ? QStringLiteral("gizmoLayer") : QStringLiteral("handleLayer");
+                if (QObject* layer = window->findChild<QObject*>(layerName)) {
                     QMetaObject::invokeMethod(
                         layer, "simulate", Q_ARG(QVariant, QVariant(QVariant::fromValue(parts))));
                 }
@@ -577,6 +680,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Placement", &placement);
     fission::ui::HandleController handles(&documentModel);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Handles", &handles);
+    fission::ui::GizmoController gizmo(&documentModel);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Gizmo", &gizmo);
     // The pictures on the tiles of the shape gallery come from the geometry kernel.
     engine.addImageProvider(QStringLiteral("shapes"), new fission::ui::ShapePreviews(kernel));
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Language", &language);
@@ -601,6 +706,7 @@ int main(int argc, char* argv[]) {
         selection.attach(viewport);
         placement.attach(viewport);
         handles.attach(viewport);
+        gizmo.attach(viewport);
         viewport->setScene(documentModel.scene());
         const QMetaObject::Connection sceneConnection =
             QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
@@ -651,6 +757,7 @@ int main(int argc, char* argv[]) {
 
     fission::ui::PlacementController* const placementController = &placement;
     fission::ui::HandleController* const handleController = &handles;
+    fission::ui::GizmoController* const gizmoController = &gizmo;
     if (!options.smokeTestPath.isEmpty()) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
@@ -658,8 +765,8 @@ int main(int argc, char* argv[]) {
         // True once the pictures are being taken: the fallback below must not end a long
         // simulation after 4 seconds (and report success for what never ran).
         const auto started = std::make_shared<bool>(false);
-        auto grab = [window, viewport, placementController, &documentModel, handleController, path,
-                     simulate, started] {
+        auto grab = [window, viewport, placementController, &documentModel, handleController,
+                     gizmoController, path, simulate, started] {
             if (*started) {
                 return; // the first frame can be reported more than once
             }
@@ -673,7 +780,7 @@ int main(int argc, char* argv[]) {
             };
             if (viewport != nullptr && !simulate.isEmpty()) {
                 playActions(window, viewport, placementController, &documentModel, handleController,
-                            simulate, shoot);
+                            gizmoController, simulate, shoot);
             } else {
                 shoot();
             }

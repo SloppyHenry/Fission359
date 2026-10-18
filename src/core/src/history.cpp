@@ -154,7 +154,9 @@ void History::commitTransaction() {
     if (pending_.empty()) {
         return;
     }
-    if (pending_.size() == 1) { // a drag of one value: the step says what changed
+    if (pending_.size() == 1 && label_.key == "setValue") {
+        // A drag of one value: the step says what changed. A step with a name of its own
+        // ("Box moved") keeps it, even when only one value changed.
         pushStep(std::move(pending_.front()));
     } else {
         pushStep(std::make_unique<GroupCommand>(std::move(label_), std::move(pending_)));

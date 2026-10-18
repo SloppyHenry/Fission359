@@ -14,6 +14,7 @@
 #include <QVariantAnimation>
 #include <QVariantList>
 
+#include <array>
 #include <atomic>
 #include <deque>
 #include <memory>
@@ -62,6 +63,11 @@ class Viewport3D : public QQuickRhiItem {
     Q_PROPERTY(int triangleCount READ triangleCount NOTIFY sceneChanged)
     Q_PROPERTY(double bedSizeX READ bedSizeX NOTIFY sceneChanged)
     Q_PROPERTY(double bedSizeY READ bedSizeY NOTIFY sceneChanged)
+    /// A body can be moved by pressing on it and dragging (AP-1.6; every tool but "Select").
+    /// Then a drag with the left button that starts on a body moves it, and the rectangle for
+    /// choosing several things is only drawn from empty ground.
+    Q_PROPERTY(
+        bool bodiesMovable READ bodiesMovable WRITE setBodiesMovable NOTIFY bodiesMovableChanged)
 
 public:
     explicit Viewport3D(QQuickItem* parent = nullptr);
@@ -97,6 +103,8 @@ public:
     double pixelsPerMillimetre() const { return m_camera.pixelsPerMillimetre(); }
     QString backendName() const { return m_backendName; }
     int triangleCount() const;
+    bool bodiesMovable() const { return m_bodiesMovable; }
+    void setBodiesMovable(bool movable);
     double bedSizeX() const;
     double bedSizeY() const;
 
@@ -146,6 +154,13 @@ public:
         QVector3D direction; ///< unit length
     };
     std::optional<WorldRay> rayAt(double x, double y) const;
+    /// The point of a body under (x, y) in item pixels and the `RenderBody::id` of that body;
+    /// nothing over the bed or empty space.
+    struct BodyPoint {
+        QString body;
+        QVector3D point;
+    };
+    std::optional<BodyPoint> bodyPointAt(double x, double y) const;
     /// Position of a world point in item pixels (for labels that float in the 3D view).
     Q_INVOKABLE QPointF project(double x, double y, double z) const;
 
@@ -185,9 +200,14 @@ public:
     core::SelectionFilter selectionFilter() const { return m_filter; }
     /// The chosen elements, drawn highlighted. The hovered one is added by the view itself.
     void setSelectionHighlights(std::vector<render::Highlight> highlights);
-    /// The size handles of the chosen shape, drawn in the scene (`HandleController` makes them).
-    void setHandleGraphics(render::HandleGraphics graphics);
-    const render::HandleGraphics& handleGraphics() const { return m_handleGraphics; }
+    /// Who draws handles into the scene: the size handles (`HandleController`) and the gizmo
+    /// (`GizmoController`). Each one hands in its own drawing; the view shows them together.
+    enum class HandleSource { size = 0, gizmo = 1 };
+    void setHandleGraphics(render::HandleGraphics graphics,
+                           HandleSource source = HandleSource::size);
+    const render::HandleGraphics& handleGraphics(HandleSource source = HandleSource::size) const {
+        return m_handleGraphics[static_cast<std::size_t>(source)];
+    }
     /// What is under the pointer now (empty: nothing).
     std::optional<render::Highlight> hovered() const { return m_hover; }
     /// Asks what is at a point (item pixels); the answer comes as `picked`. For tests and the
@@ -251,6 +271,14 @@ signals:
     void regionPicked(const QVariantList& elements, bool extend);
     /// The rectangle of a drag in progress (empty when none).
     void rubberBandChanged(const QRectF& area);
+    void bodiesMovableChanged();
+    /// A drag with the left button began on a body (`bodiesMovable`): it is to be moved.
+    /// (x, y) is where the button went down, in item pixels.
+    void bodyDragStarted(const QString& body, double x, double y);
+    /// The pointer moved on while a body is dragged (item pixels).
+    void bodyDragMoved(double x, double y);
+    /// The button was let go: the body stays where it was dragged.
+    void bodyDragFinished();
 
 protected:
     QQuickRhiItemRenderer* createRenderer() override;
@@ -283,7 +311,7 @@ private:
 
     core::SelectionFilter m_filter;
     std::vector<render::Highlight> m_selectionHighlights;
-    render::HandleGraphics m_handleGraphics;
+    std::array<render::HandleGraphics, 2> m_handleGraphics;
     std::optional<render::Highlight> m_hover;
     std::deque<PickRequest> m_pickQueue;
     QTimer m_pickTimer;
@@ -296,6 +324,9 @@ private:
     Qt::KeyboardModifiers m_pressModifiers;
     bool m_dragged = false;       ///< moved too far for a click
     bool m_rubberBanding = false; ///< a drag with the left button is a rubber band
+    bool m_bodiesMovable = false;
+    QString m_pressBody;         ///< the body the left button went down on (to move it)
+    bool m_bodyDragging = false; ///< a drag with the left button moves `m_pressBody`
     QColor m_accent{0x4C, 0x8D, 0xFF};
 
     std::mutex m_statisticsMutex;

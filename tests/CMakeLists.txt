@@ -115,7 +115,7 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
   add_test(NAME app_handle_drag
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-handle-drag.png" --language en --size 1280x800
-            --camera=0,90,260 --simulate "put:box;grab:width,120,0,12;expect:width,45")
+            --camera=0,90,260 --simulate "tool:size;put:box;grab:width,120,0,12;expect:width,45")
   set_tests_properties(app_handle_drag PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # Pulled far beyond the edge of the view the handle must stay with the pointer: it once vanished
@@ -123,8 +123,16 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
   add_test(NAME app_handle_drag_far
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-handle-far.png" --language en --size 1280x800
-            --camera=-30,36,300 --simulate "put:box;grab:width,900,0,30;expect:width,100")
+            --camera=-30,36,300 --simulate "tool:size;put:box;grab:width,900,0,30;expect:width,100")
   set_tests_properties(app_handle_drag_far PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.6a: the gizmo of the tool "Move" is pulled along X and across the bed with the real mouse
+  # path of the window. The new box lands at (-30, -30); both pulls go towards plus.
+  add_test(NAME app_gizmo_move
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-gizmo-move.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "put:box;gizmo:x,100,0,10;expect:x,-20;gizmo:free,0,-60,8;expect:y,-20")
+  set_tests_properties(app_gizmo_move PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}

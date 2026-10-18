@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "fission/interaction/drag.h"
 #include "fission/render/scene.h"
 
 namespace fission::ui {
@@ -48,6 +49,18 @@ void HandleController::setArmed(bool armed) {
     }
 }
 
+void HandleController::setMode(const QString& mode) {
+    if (mode == m_mode) {
+        return;
+    }
+    if (m_dragging) {
+        endDrag(); // a drag in progress keeps what it did
+    }
+    m_mode = mode;
+    emit modeChanged();
+    refresh();
+}
+
 void HandleController::setEditing(bool editing) {
     if (editing != m_editing) {
         m_editing = editing;
@@ -56,19 +69,7 @@ void HandleController::setEditing(bool editing) {
 }
 
 double HandleController::snapStep(double pixelsPerMillimetre) {
-    // Whole millimetres are the everyday step: a corner radius of 0 to 10 mm must not come in
-    // jumps of 5. Finer when zoomed in, coarser only when the handle is hardly longer than a
-    // pixel per millimetre.
-    if (pixelsPerMillimetre >= 20.0) {
-        return 0.1;
-    }
-    if (pixelsPerMillimetre >= 6.0) {
-        return 0.5;
-    }
-    if (pixelsPerMillimetre >= 0.8) {
-        return 1.0;
-    }
-    return pixelsPerMillimetre >= 0.3 ? 5.0 : 10.0;
+    return interaction::snapStep(pixelsPerMillimetre);
 }
 
 namespace {
@@ -178,7 +179,7 @@ void HandleController::refresh() {
     QVariantList shown;
     render::HandleGraphics graphics;
     bool compact = false;
-    if (m_model != nullptr && m_viewport != nullptr) {
+    if (m_model != nullptr && m_viewport != nullptr && m_mode != QLatin1String("off")) {
         const QVariantList world = m_model->stepHandles();
         const QVector3D eye = m_viewport->eyePosition();
         const auto origin = [](const QVariantMap& handle) {
@@ -560,6 +561,8 @@ void HandleController::drawHandle(render::HandleGraphics& graphics, const QVecto
     if (compact && detail && !active) {
         return; // on a small body the details step aside (typing and the panel reach them)
     }
+    // With the tool "Move" only the bands are left; the gizmo moves the body.
+    const bool dots = m_mode == QLatin1String("size");
     // Lines and labels in the colour of the axis; values without an axis plain, with dark dots
     // and arrows that show on a light body.
     const QColor tone = axis == QLatin1String("x")   ? m_colours.x
@@ -581,6 +584,9 @@ void HandleController::drawHandle(render::HandleGraphics& graphics, const QVecto
         graphics.lines.push_back({bandStart, bandEnd, 1.5F, faded(tone)});
         graphics.lines.push_back({bandStart - tick, bandStart + tick, 1.5F, faded(tone)});
         graphics.lines.push_back({bandEnd - tick, bandEnd + tick, 1.5F, faded(tone)});
+    }
+    if (!dots) {
+        return;
     }
     if (!band && (pointed || active)) {
         // A radius, a rounding, a wall: what it measures, on the shape (inside a body it shows
@@ -718,7 +724,7 @@ void HandleController::setColours(const QVariantMap& colours) {
 
 bool HandleController::beginDrag(int index, double x, double y) {
     if (m_model == nullptr || m_viewport == nullptr || m_editing || index < 0 ||
-        index >= m_handles.size()) {
+        index >= m_handles.size() || m_mode != QLatin1String("size")) {
         return false;
     }
     const int candidate = m_handles[index].toMap()["candidate"].toInt();
@@ -741,25 +747,11 @@ bool HandleController::beginDrag(int index, double x, double y) {
     m_dragParameter = world["parameter"].toString();
     m_dragIndex = index;
 
-    // The plane through the axis that faces the viewer most: the part of the line of sight that
-    // does not run along the axis.
-    m_dragUsable = false;
-    m_dragPlane = {};
-    m_dragGrabbed = 0.0;
+    // The pointer is laid on the plane through the axis that faces the viewer most.
+    m_axisDrag.reset();
     if (const auto ray = m_viewport->rayAt(x, y)) {
-        const QVector3D across =
-            ray->direction - QVector3D::dotProduct(ray->direction, m_dragAxis) * m_dragAxis;
-        if (across.length() >= kLeastSight) {
-            m_dragPlane = across.normalized();
-            const float denominator = QVector3D::dotProduct(ray->direction, m_dragPlane);
-            if (std::abs(denominator) > 1e-6F) {
-                const float reach =
-                    QVector3D::dotProduct(m_dragOrigin - ray->origin, m_dragPlane) / denominator;
-                const QVector3D met = ray->origin + ray->direction * reach;
-                m_dragGrabbed = QVector3D::dotProduct(met - m_dragOrigin, m_dragAxis);
-                m_dragUsable = reach > 0.0F;
-            }
-        }
+        m_axisDrag = interaction::AxisDrag::grab({ray->origin, ray->direction}, m_dragOrigin,
+                                                 m_dragAxis, kLeastSight);
     }
     const QPointF here = m_viewport->project(m_dragOrigin.x(), m_dragOrigin.y(), m_dragOrigin.z());
     const QVector3D next = m_dragOrigin + m_dragAxis;
@@ -773,29 +765,22 @@ bool HandleController::beginDrag(int index, double x, double y) {
 }
 
 double HandleController::dragTo(double x, double y) {
-    if (!m_dragging || m_model == nullptr || !m_dragUsable) {
+    if (!m_dragging || m_model == nullptr || !m_axisDrag) {
         return m_dragValue;
     }
     const auto ray = m_viewport->rayAt(x, y);
     if (!ray) {
         return m_dragValue;
     }
-    const float denominator = QVector3D::dotProduct(ray->direction, m_dragPlane);
-    if (std::abs(denominator) < 1e-6F) {
-        return m_dragValue;
-    }
-    const float reach =
-        QVector3D::dotProduct(m_dragOrigin - ray->origin, m_dragPlane) / denominator;
-    if (reach <= 0.0F) {
-        return m_dragValue; // behind the eye
-    }
-    const QVector3D met = ray->origin + ray->direction * reach;
     // How far along the axis the pointer has gone since it grabbed the handle. The face under the
     // pointer follows it one to one; a shape that grows to both sides changes its value by more.
-    const double moved = QVector3D::dotProduct(met - m_dragOrigin, m_dragAxis) - m_dragGrabbed;
+    const auto moved = m_axisDrag->moved({ray->origin, ray->direction});
+    if (!moved) {
+        return m_dragValue; // behind the eye
+    }
     const double step = snapStep(m_dragPixelsPerMillimetre);
     double wanted =
-        std::round((m_dragStartValue + m_dragSign * moved / m_dragTravel) / step) * step;
+        interaction::snapped(m_dragStartValue + m_dragSign * *moved / m_dragTravel, step);
     wanted = std::min(wanted, kLargestMillimetres);
     // Where the shape stops being possible (a corner radius wider than half the box, no wall left),
     // the handle stops, too.
