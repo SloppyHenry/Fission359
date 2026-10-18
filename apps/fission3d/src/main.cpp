@@ -49,6 +49,7 @@
 #include "fission/ui/language.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/placement_controller.h"
+#include "fission/ui/rotate_controller.h"
 #include "fission/ui/selection_controller.h"
 #include "fission/ui/shape_previews.h"
 #include "fission/ui/theme.h"
@@ -159,6 +160,9 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "unless the chosen step has exactly that value), tool:size (choose a tool of the "
             "palette), gizmo:x,40,0,8 (press a part of the gizmo: x, y, z, xy, xz, yz or free, "
             "pull it by view pixels, let go; with a fifth value hold the button stays down), "
+            "ring:z,60,8 (press the ring z, x or y of the tool Rotate where it is easiest to take "
+            "and go 60 degrees round it in 8 small moves, let go; a fourth value hold keeps the "
+            "button down), "
             "drag:x,y,40,0,8 (press at a point of the 3D view, "
             "pull, let go), key:Right (press a key), separated by semicolons."),
         QStringLiteral("actions"));
@@ -240,7 +244,8 @@ int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int de
 void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                  fission::ui::PlacementController* placement, fission::ui::DocumentModel* model,
                  fission::ui::HandleController* handles, fission::ui::GizmoController* gizmo,
-                 const QString& actions, std::function<void()> done) {
+                 fission::ui::RotateController* rotate, const QString& actions,
+                 std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
@@ -334,6 +339,40 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                 spec.value(4) == QLatin1String("hold"));
             continue;
         }
+        if (kind == QLatin1String("ring")) {
+            // ring:z,60,8 - press the ring where it is easiest to take, go 60 degrees round it
+            // in 8 small moves, let go (real mouse events, as for grab).
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const QString part = spec.value(0).trimmed();
+            const double degrees = spec.value(1).toDouble();
+            const int steps = spec.size() >= 3 ? std::max(1, spec[2].toInt()) : 8;
+            const bool hold = spec.value(3).trimmed() == QLatin1String("hold");
+            auto from = std::make_shared<double>(0.0);
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [window, viewport, rotate, part, from] {
+                *from = rotate->grabAngle(part);
+                sendMouse(window, viewport, QEvent::MouseButtonPress,
+                          rotate->ringPoint(part, *from), Qt::LeftButton);
+            });
+            for (int step = 1; step <= steps; ++step) {
+                delay += 90;
+                QTimer::singleShot(
+                    delay, viewport, [window, viewport, rotate, part, from, degrees, step, steps] {
+                        sendMouse(window, viewport, QEvent::MouseMove,
+                                  rotate->ringPoint(part, *from + degrees * step / steps),
+                                  Qt::LeftButton);
+                    });
+            }
+            if (!hold) {
+                delay += 90;
+                QTimer::singleShot(
+                    delay, viewport, [window, viewport, rotate, part, from, degrees] {
+                        sendMouse(window, viewport, QEvent::MouseButtonRelease,
+                                  rotate->ringPoint(part, *from + degrees), Qt::NoButton);
+                    });
+            }
+            continue;
+        }
         if (kind == QLatin1String("drag")) {
             // drag:500,300,40,0,8 - press at (500, 300) in the 3D view, pull, let go.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
@@ -369,20 +408,44 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // near:x,12 - the chosen step has exactly this value (to a thousandth of a mm).
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;
-            QTimer::singleShot(delay, viewport, [model, gizmo, spec] {
+            QTimer::singleShot(delay, viewport, [model, gizmo, rotate, spec] {
                 double value = std::numeric_limits<double>::quiet_NaN();
                 for (const QVariant& entry : model->stepValues()) {
                     if (entry.toMap()["name"].toString() == spec.value(0)) {
                         value = entry.toMap()["value"].toDouble();
                     }
                 }
-                if (!(std::abs(value - spec.value(1).toDouble()) < 1e-3) || gizmo->editing()) {
+                if (!(std::abs(value - spec.value(1).toDouble()) < 1e-3) || gizmo->editing() ||
+                    rotate->editing()) {
                     qWarning().noquote()
                         << QStringLiteral("expected %1 = %2 and nothing being moved; found %3 "
                                           "(moving: %4)")
                                .arg(spec.value(0), spec.value(1))
                                .arg(value)
                                .arg(gizmo->editing());
+                    g_simulationFailure = 4;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("least")) {
+            // least:rotX,15 - the chosen step has at least this much of the value (by size, so a
+            // turn the other way counts too), and nothing is being moved or turned.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [model, gizmo, rotate, spec] {
+                double value = 0.0;
+                for (const QVariant& entry : model->stepValues()) {
+                    if (entry.toMap()["name"].toString() == spec.value(0)) {
+                        value = entry.toMap()["value"].toDouble();
+                    }
+                }
+                if (std::abs(value) < spec.value(1).toDouble() || gizmo->editing() ||
+                    rotate->editing()) {
+                    qWarning().noquote()
+                        << QStringLiteral("expected |%1| >= %2 and nothing being moved; found %3")
+                               .arg(spec.value(0), spec.value(1))
+                               .arg(value);
                     g_simulationFailure = 4;
                 }
             });
@@ -401,10 +464,12 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         QStringList parts = action.mid(colon + 1).split(QLatin1Char(','));
         if (kind == QLatin1String("type")) { // type:50,tab,20,enter - what the keys would do
             delay += 350;
-            QTimer::singleShot(delay, viewport, [window, gizmo, parts] {
-                // While a body is moved, the digits are for the distance; else for the sizes.
-                const QString layerName =
-                    gizmo->editing() ? QStringLiteral("gizmoLayer") : QStringLiteral("handleLayer");
+            QTimer::singleShot(delay, viewport, [window, gizmo, rotate, parts] {
+                // While a body is moved, the digits are for the distance, while it is turned for
+                // the angle; else for the sizes.
+                const QString layerName = gizmo->editing()    ? QStringLiteral("gizmoLayer")
+                                          : rotate->editing() ? QStringLiteral("rotateLayer")
+                                                              : QStringLiteral("handleLayer");
                 if (QObject* layer = window->findChild<QObject*>(layerName)) {
                     QMetaObject::invokeMethod(
                         layer, "simulate", Q_ARG(QVariant, QVariant(QVariant::fromValue(parts))));
@@ -682,6 +747,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Handles", &handles);
     fission::ui::GizmoController gizmo(&documentModel);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Gizmo", &gizmo);
+    fission::ui::RotateController rotate(&documentModel);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Rotate", &rotate);
     // The pictures on the tiles of the shape gallery come from the geometry kernel.
     engine.addImageProvider(QStringLiteral("shapes"), new fission::ui::ShapePreviews(kernel));
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Language", &language);
@@ -707,6 +774,7 @@ int main(int argc, char* argv[]) {
         placement.attach(viewport);
         handles.attach(viewport);
         gizmo.attach(viewport);
+        rotate.attach(viewport);
         viewport->setScene(documentModel.scene());
         const QMetaObject::Connection sceneConnection =
             QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
@@ -758,6 +826,7 @@ int main(int argc, char* argv[]) {
     fission::ui::PlacementController* const placementController = &placement;
     fission::ui::HandleController* const handleController = &handles;
     fission::ui::GizmoController* const gizmoController = &gizmo;
+    fission::ui::RotateController* const rotateController = &rotate;
     if (!options.smokeTestPath.isEmpty()) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
@@ -766,7 +835,7 @@ int main(int argc, char* argv[]) {
         // simulation after 4 seconds (and report success for what never ran).
         const auto started = std::make_shared<bool>(false);
         auto grab = [window, viewport, placementController, &documentModel, handleController,
-                     gizmoController, path, simulate, started] {
+                     gizmoController, rotateController, path, simulate, started] {
             if (*started) {
                 return; // the first frame can be reported more than once
             }
@@ -780,7 +849,7 @@ int main(int argc, char* argv[]) {
             };
             if (viewport != nullptr && !simulate.isEmpty()) {
                 playActions(window, viewport, placementController, &documentModel, handleController,
-                            gizmoController, simulate, shoot);
+                            gizmoController, rotateController, simulate, shoot);
             } else {
                 shoot();
             }

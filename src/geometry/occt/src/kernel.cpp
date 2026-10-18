@@ -23,6 +23,10 @@ public:
     NamedSolid makeCylinder(double radius, double height, Point3d base) const override {
         return makeNamedCylinder(radius, height, base);
     }
+    NamedSolid rotate(const NamedSolid& solid, Point3d centre,
+                      const Angles& angles) const override {
+        return rotateNamed(solid, centre, angles);
+    }
     std::vector<std::string> fontFamilies() const override { return fonts_.families(); }
     std::vector<FontStyle> fontStyles(const std::string& family) const override {
         return fonts_.styles(family);

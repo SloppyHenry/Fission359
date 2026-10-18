@@ -186,3 +186,29 @@ TEST_CASE("text step: a missing style is an error that names the font", "[featur
     state = *letters.calculate().state(letters.step);
     CHECK(state.status == FeatureStatus::error);
 }
+
+TEST_CASE("text step: turns about the middle of its box, names stay", "[features][text][turn]") {
+    Letters letters;
+    letters.type("text", "LENA");
+    const RecomputeResult flat = letters.calculate();
+    const Feature& feature = *letters.history.document().findFeature(letters.step);
+    const auto& type = *letters.registry.find("text");
+    const FeatureState& state = *flat.state(letters.step);
+    const fission::geo::Point3d centre = type.bodyCentre(state.params);
+    const auto& body = feature.outputs.front();
+    REQUIRE(flat.bodies.contains(body));
+    const BodyResult& outcome = flat.bodies.at(body);
+    const fission::geo::SolidReport before = letters.kernel->measure(outcome.solid);
+    CHECK(centre.x == Approx((before.boxMin.x + before.boxMax.x) / 2).margin(1e-3));
+    CHECK(centre.y == Approx((before.boxMin.y + before.boxMax.y) / 2).margin(1e-3));
+    CHECK(centre.z == Approx((before.boxMin.z + before.boxMax.z) / 2).margin(1e-3));
+
+    REQUIRE(letters.history.execute(makeSetFeatureValue(letters.step, "rotX", "90")));
+    const RecomputeResult turned = letters.calculate();
+    REQUIRE(turned.bodies.contains(body));
+    const BodyResult& after = turned.bodies.at(body);
+    const fission::geo::SolidReport report = letters.kernel->measure(after.solid);
+    CHECK(report.valid);
+    CHECK(report.volume == Approx(before.volume).epsilon(1e-6));
+    CHECK(after.faces.size() == outcome.faces.size());
+}

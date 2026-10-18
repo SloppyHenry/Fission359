@@ -211,6 +211,20 @@ public:
     /// False when the step cannot move.
     bool moveCurrent(const std::array<std::optional<double>, 3>& position);
 
+    // --- turning bodies (AP-1.6b, ADR-0010) ---
+    /// How the chosen step turns its body (its values rotX, rotY, rotZ in degrees), or nothing
+    /// when the step has no turn.
+    std::optional<geo::Angles> currentTurn() const;
+    /// The point the body of the chosen step turns about (mm): the middle of its box as the step
+    /// makes it, before the turn. Nothing when the step cannot be turned.
+    std::optional<geo::Point3d> currentTurnCentre() const;
+    /// Starts turning the body of the chosen step: everything until `commitChange` is one step in
+    /// the history ("Box turned"); `cancelChange` takes it back. False when it cannot turn.
+    Q_INVOKABLE bool beginTurn();
+    /// Gives the body of the chosen step a new turn: the values that differ from the present ones
+    /// become these numbers; those that do not stay as they are (a formula typed there is kept).
+    bool turnCurrent(const geo::Angles& angles);
+
     /// How finely bodies are tessellated for the screen (0 = basic, see render/detail.h). The
     /// view asks for more when the person zooms in; finer meshes are made in the background and
     /// replace the coarse ones when they are ready.

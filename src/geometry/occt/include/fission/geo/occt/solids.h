@@ -7,6 +7,7 @@
 #include "fission/geo/mesh.h"
 #include "fission/geo/occt/fonts.h"
 #include "fission/geo/primitives.h"
+#include "fission/geo/rotation.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
 
@@ -35,6 +36,10 @@ NamedSolid makeNamedText(const TextSpec& spec, Point3d base, const FontBook& fon
 
 /// Like `makeCylinder`, with the role of every face (bottom, top, side).
 NamedSolid makeNamedCylinder(double radius, double height, Point3d base = {});
+
+/// The body turned by `angles` around `centre` (see `GeometryKernel::rotate`): same faces in the
+/// same order with the same roles. Throws GeometryError for values that are not numbers.
+NamedSolid rotateNamed(const NamedSolid& solid, Point3d centre, const Angles& angles);
 
 /// Volume, area, bounding box, topology counts and validity of a body.
 SolidReport measure(const Solid& solid);

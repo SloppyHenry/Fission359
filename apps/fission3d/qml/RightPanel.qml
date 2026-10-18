@@ -30,6 +30,7 @@ Rectangle {
     }
     readonly property var sizeValues: stepValues.filter(v => v.group === "size")
     readonly property var positionValues: stepValues.filter(v => v.group === "position")
+    readonly property var rotationValues: stepValues.filter(v => v.group === "rotation")
     property string tab: "object"      // object | printer
     property string printerName: ""
     property string bedText: ""
@@ -255,7 +256,7 @@ Rectangle {
                             required property var modelData
 
                             width: (parent.width - 16) / 3
-                            axis: modelData.name
+                            axis: modelData.axis
                             kind: modelData.kind
                             unit: ""
                             invalid: modelData.error
@@ -271,6 +272,45 @@ Rectangle {
                                 target: positionField
                                 property: "expression"
                                 value: positionField.modelData.expression
+                            }
+                        }
+                    }
+                }
+            }
+
+            Section {
+                visible: root.tab === "object" && root.rotationValues.length > 0
+                heading: qsTr("Rotation")
+
+                Row {
+                    width: parent.width
+                    spacing: 8
+
+                    Repeater {
+                        model: root.rotationValues
+
+                        delegate: NumberField {
+                            id: rotationField
+
+                            required property var modelData
+
+                            width: (parent.width - 16) / 3
+                            axis: modelData.axis
+                            kind: modelData.kind
+                            unit: "°"
+                            invalid: modelData.error
+                            onTextCommitted: text => root.valueCommitted(modelData.name, text)
+
+                            Binding {
+                                target: rotationField
+                                property: "value"
+                                value: rotationField.modelData.value
+                            }
+
+                            Binding {
+                                target: rotationField
+                                property: "expression"
+                                value: rotationField.modelData.expression
                             }
                         }
                     }

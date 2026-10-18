@@ -94,6 +94,49 @@ std::optional<QVector3D> PlaneDrag::moved(const Ray& ray) const {
     return offset - QVector3D::dotProduct(offset, normal_) * normal_;
 }
 
+void RingDrag::basisOf(const QVector3D& axis, QVector3D& u, QVector3D& v) {
+    // X: (Y, Z), Y: (Z, X), Z: (X, Y): u × v is the axis for a right-handed frame.
+    const float ax = std::abs(axis.x());
+    const float ay = std::abs(axis.y());
+    const float az = std::abs(axis.z());
+    QVector3D start = (ax <= ay && ax <= az)   ? QVector3D(1, 0, 0)
+                      : (ay <= ax && ay <= az) ? QVector3D(0, 1, 0)
+                                               : QVector3D(0, 0, 1);
+    if (axis.x() > 0.999F) {
+        start = QVector3D(0, 1, 0);
+    } else if (axis.y() > 0.999F) {
+        start = QVector3D(0, 0, 1);
+    } else if (axis.z() > 0.999F) {
+        start = QVector3D(1, 0, 0);
+    }
+    u = (start - QVector3D::dotProduct(start, axis) * axis).normalized();
+    v = QVector3D::crossProduct(axis, u);
+}
+
+std::optional<double> RingDrag::moved(const Ray& ray, const QPointF& pointer) {
+    constexpr double kPi = 3.14159265358979323846;
+    if (onScreen_) {
+        const QPointF way = pointer - start_;
+        total_ = (way.x() * tangent_.x() + way.y() * tangent_.y()) / pixelsPerRadian_;
+        return total_ * 180.0 / kPi;
+    }
+    const float facing = QVector3D::dotProduct(ray.direction, axis_);
+    if (std::abs(facing) < 1e-6F) {
+        return std::nullopt;
+    }
+    const float reach = QVector3D::dotProduct(centre_ - ray.origin, axis_) / facing;
+    if (reach <= 0.0F) {
+        return std::nullopt; // behind the eye
+    }
+    const QVector3D met = ray.origin + ray.direction * reach - centre_;
+    const double angle = std::atan2(QVector3D::dotProduct(met, v_), QVector3D::dotProduct(met, u_));
+    double step = angle - last_;
+    step -= 2.0 * kPi * std::round(step / (2.0 * kPi)); // the short way round
+    total_ += step;
+    last_ = angle;
+    return total_ * 180.0 / kPi;
+}
+
 double snapStep(double pixelsPerMillimetre) {
     // Whole millimetres are the everyday step: a corner radius of 0 to 10 mm must not come in
     // jumps of 5. Finer when zoomed in, coarser only when the handle is hardly longer than a

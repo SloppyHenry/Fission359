@@ -61,6 +61,9 @@ void HandleController::setMode(const QString& mode) {
         endDrag(); // a drag in progress keeps what it did
     }
     m_mode = mode;
+    if (m_mode == QLatin1String("off")) {
+        setArmed(false); // no handles, nothing to type sizes into (the tools Select and Rotate)
+    }
     emit modeChanged();
     refresh();
 }
@@ -92,6 +95,14 @@ int axisOf(const QVector3D& direction) {
         }
     }
     return -1;
+}
+
+/// How far and which way the handle also moves when its value grows by 1 mm (mm, a vector).
+QVector3D riseOf(const QVariantMap& handle) {
+    return static_cast<float>(handle["rise"].toDouble()) *
+           QVector3D(static_cast<float>(handle["riseDx"].toDouble()),
+                     static_cast<float>(handle["riseDy"].toDouble()),
+                     static_cast<float>(handle["riseDz"].toDouble()));
 }
 
 double lengthOf(const QPointF& v) {
@@ -540,7 +551,7 @@ void HandleController::refresh() {
             const QVector3D goes =
                 (raw.axisWorld * static_cast<float>(raw.handle["sign"].toDouble() *
                                                     raw.handle["travel"].toDouble()) +
-                 QVector3D(0.0F, 0.0F, static_cast<float>(raw.handle["rise"].toDouble())))
+                 riseOf(raw.handle))
                     .normalized();
             drawHandle(graphics, raw.atWorld, raw.startWorld, goes, place.band,
                        place.edgeStartWorld, place.edgeEndWorld, place.bandStartWorld,
@@ -765,7 +776,7 @@ bool HandleController::beginDrag(int index, double x, double y) {
     const QVector3D way =
         m_dragAxis * static_cast<float>(world["sign"].toDouble() *
                                         std::max(world["travel"].toDouble(), 0.05)) +
-        QVector3D(0.0F, 0.0F, static_cast<float>(world["rise"].toDouble()));
+        riseOf(world);
     m_dragAxis = way.normalized();
     m_dragSign = 1.0;
     m_dragTravel = way.length();

@@ -51,20 +51,16 @@ public:
     FeatureResult execute(const ExecuteInput& input, const ExecuteContext& context) const final {
         const geo::Point3d base{valueOf(input.params, "x"), valueOf(input.params, "y"),
                                 valueOf(input.params, "z")};
-        geo::NamedSolid made = context.kernel.makePrimitive(spec(input.params), base);
+        geo::NamedSolid made =
+            turnedBody(input, context, context.kernel.makePrimitive(spec(input.params), base),
+                       bodyCentre(input.params));
         FeatureResult result;
         result.outputs.push_back(
             {input.feature.outputs.at(0), std::move(made.solid), std::move(made.faces)});
         return result;
     }
 
-    std::vector<ParamSpec> parameters() const final {
-        std::vector<ParamSpec> all = sizes();
-        all.push_back(length("x", "0"));
-        all.push_back(length("y", "0"));
-        all.push_back(length("z", "0"));
-        return all;
-    }
+    std::vector<ParamSpec> parameters() const final { return withPlace(sizes()); }
 
     int version() const final { return 1; }
 
@@ -81,6 +77,9 @@ public:
     }
     Description describe(const ResolvedParams& p) const override {
         return {"sphere", {p.at("radius")}};
+    }
+    geo::Point3d bodyCentre(const ResolvedParams& p) const override {
+        return {valueOf(p, "x"), valueOf(p, "y"), valueOf(p, "z") + valueOf(p, "radius")};
     }
     std::vector<HandleSpec> handles(const ResolvedParams& p) const override {
         const double r = valueOf(p, "radius");
@@ -108,6 +107,9 @@ public:
     }
     Description describe(const ResolvedParams& p) const override {
         return {"hemisphere", {p.at("radius")}};
+    }
+    geo::Point3d bodyCentre(const ResolvedParams& p) const override {
+        return {valueOf(p, "x"), valueOf(p, "y"), valueOf(p, "z") + valueOf(p, "radius") / 2.0};
     }
     std::vector<HandleSpec> handles(const ResolvedParams& p) const override {
         const double r = valueOf(p, "radius");
@@ -180,6 +182,9 @@ public:
     }
     Description describe(const ResolvedParams& p) const override {
         return {"torus", {p.at("radius"), p.at("tubeRadius")}};
+    }
+    geo::Point3d bodyCentre(const ResolvedParams& p) const override {
+        return {valueOf(p, "x"), valueOf(p, "y"), valueOf(p, "z") + valueOf(p, "tubeRadius")};
     }
     std::vector<HandleSpec> handles(const ResolvedParams& p) const override {
         const double x = valueOf(p, "x");

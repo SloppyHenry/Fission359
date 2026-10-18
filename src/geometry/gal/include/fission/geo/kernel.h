@@ -7,8 +7,10 @@
 #include <string>
 #include <vector>
 
+#include "fission/geo/error.h"
 #include "fission/geo/mesh.h"
 #include "fission/geo/primitives.h"
+#include "fission/geo/rotation.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
 
@@ -54,6 +56,17 @@ public:
 
     /// One of the other basic shapes (see primitives.h); `base` is the middle of its underside.
     virtual NamedSolid makePrimitive(const PrimitiveSpec& spec, Point3d base) const = 0;
+
+    /// The same body turned by `angles` (degrees, see rotation.h) around `centre`. A pure move:
+    /// the faces stay the faces they were and keep their roles (a "top" stays the top, whichever
+    /// way it faces now), in the same order. Throws `GeometryError` for angles or a centre that
+    /// are not numbers. The default refuses: a kernel that builds bodies must also turn them.
+    virtual NamedSolid rotate(const NamedSolid& solid, Point3d centre, const Angles& angles) const {
+        (void)solid;
+        (void)centre;
+        (void)angles;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot turn bodies");
+    }
 
     /// The names of the fonts lettering can use (bundled and installed), sorted. Takes a moment
     /// the first time (the computer's fonts are read): ask from a background thread.

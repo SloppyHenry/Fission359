@@ -149,11 +149,151 @@ private:
     double reach_ = 0.0; // how far from the eye that was
 };
 
+/// Turning on a ring (AP-1.6b): the pointer goes round an axis through the middle of a body, and
+/// the body follows by the same angle. Counter-clockwise seen from the tip of the axis is
+/// positive.
+/// - Seen from a good angle, the pointer is laid on the plane of the ring and the angle round
+///   the middle is followed (the point grabbed stays under the pointer).
+/// - A ring seen (nearly) edge on has no angle to follow in the plane: the pointer then runs along
+///   the ring as it is seen on the screen, at the rate the ring has there.
+/// The angle adds up: going round more than once goes on counting.
+class RingDrag {
+public:
+    /// A ring seen more edge on than this (sine of the angle between its plane and the line of
+    /// sight) is dragged on the screen.
+    static constexpr double kLeastRingSight = 0.3;
+    /// The fewest pixels the ring is taken to be wide (radius) on the screen; a tiny ring would
+    /// otherwise turn the body wildly.
+    static constexpr double kLeastScreenRadius = 30.0;
+
+    /// Grabs the ring round `axis` (a unit vector along X, Y or Z, say) through `centre`, at the
+    /// point of the pointer. `project` maps a world point to view pixels. `radius` is the size of
+    /// the ring as drawn (millimetres); 0 takes the distance of the pointer from the middle.
+    /// Nothing when the pointer does not meet the scene in front of the eye.
+    template <typename Project>
+    static std::optional<RingDrag> grab(const Ray& ray, const QPointF& pointer,
+                                        const QVector3D& centre, const QVector3D& axis,
+                                        Project project, double radius = 0.0);
+
+    /// How far the body has been turned since the grab (degrees, not limited to one turn).
+    /// Nothing when this move is not followed (behind the eye).
+    std::optional<double> moved(const Ray& ray, const QPointF& pointer);
+
+    const QVector3D& axis() const noexcept { return axis_; }
+    bool onScreen() const noexcept { return onScreen_; }
+    /// Where on the ring (radians from `u`, counter-clockwise) the pointer grabbed; the ring
+    /// round `axis` is drawn from `ringPoint`.
+    double grabbedAt() const noexcept { return first_; }
+    /// The point of the ring of radius `radius` at `angle` (radians): the same frame the angles
+    /// are measured in.
+    QVector3D ringPoint(double angle, double radius) const {
+        return centre_ + radius * (std::cos(angle) * u_ + std::sin(angle) * v_);
+    }
+    /// The frame of the ring round an axis: `u`, `v` with u × v = axis.
+    static void frameOf(const QVector3D& axis, QVector3D& u, QVector3D& v) { basisOf(axis, u, v); }
+
+private:
+    static void basisOf(const QVector3D& axis, QVector3D& u, QVector3D& v);
+
+    QVector3D centre_;
+    QVector3D axis_;
+    QVector3D u_; // the plane of the ring: u × v = axis
+    QVector3D v_;
+    double first_ = 0.0; // the angle at the grab
+    double last_ = 0.0;  // the angle the pointer had last (radians, in -pi … pi)
+    double total_ = 0.0; // what has been turned since the grab (radians)
+    bool onScreen_ = false;
+    QPointF start_;   // where the pointer went down (screen mode)
+    QPointF tangent_; // the way the ring runs on the screen there (unit vector)
+    double pixelsPerRadian_ = 1.0;
+};
+
+/// The turning step: 15 degrees.
+inline constexpr double kTurnStepDegrees = 15.0;
+
 /// The step a dragged length snaps to: whole millimetres, finer when zoomed in, coarser only when
 /// a millimetre is hardly a pixel on screen.
 double snapStep(double pixelsPerMillimetre);
 
 /// `value` on the nearest multiple of `step` (`step` > 0).
 double snapped(double value, double step);
+
+template <typename Project>
+std::optional<RingDrag> RingDrag::grab(const Ray& ray, const QPointF& pointer,
+                                       const QVector3D& centre, const QVector3D& axis,
+                                       Project project, double radius) {
+    if (axis.lengthSquared() < 1e-12F) {
+        return std::nullopt;
+    }
+    RingDrag drag;
+    drag.centre_ = centre;
+    drag.axis_ = axis.normalized();
+    basisOf(drag.axis_, drag.u_, drag.v_);
+    drag.start_ = pointer;
+    const float facing = QVector3D::dotProduct(ray.direction, drag.axis_);
+    if (std::abs(facing) >= kLeastRingSight) {
+        // Seen from a good angle: where the ray meets the plane of the ring.
+        const float reach = QVector3D::dotProduct(centre - ray.origin, drag.axis_) / facing;
+        if (reach <= 0.0F) {
+            return std::nullopt;
+        }
+        const QVector3D met = ray.origin + ray.direction * reach - centre;
+        drag.last_ =
+            std::atan2(QVector3D::dotProduct(met, drag.v_), QVector3D::dotProduct(met, drag.u_));
+        drag.first_ = drag.last_;
+        return drag;
+    }
+    // Edge on, the ring is (almost) a line on the screen and is turned by dragging along that
+    // line, like a wheel seen from the side. The line runs along `across`: the way the ring's
+    // point nearest to the eye moves when it turns. It lies in the ring's plane and square to
+    // the line of sight, so it is always seen in full. (The tangent where the pointer is would
+    // not do: where the line ends on the screen, the ring runs straight into the screen.)
+    drag.onScreen_ = true;
+    const QVector3D sight = ray.direction.normalized();
+    const QVector3D towardEye = QVector3D::dotProduct(sight, drag.axis_) * drag.axis_ - sight;
+    if (towardEye.lengthSquared() < 1e-12F) {
+        return std::nullopt; // cannot be while edge on, but never divide by nothing
+    }
+    const QVector3D nearest = towardEye.normalized();
+    const QVector3D across = QVector3D::crossProduct(drag.axis_, nearest);
+    const float along = QVector3D::dotProduct(centre - ray.origin, sight);
+    if (along <= 0.0F) {
+        return std::nullopt; // the middle is behind the eye
+    }
+    // How far along the line the pointer is: the same for every point of the ray.
+    const float side = QVector3D::dotProduct(ray.origin + sight * along - centre, across);
+    float ring = static_cast<float>(radius);
+    if (ring <= 0.0F) {
+        // No size given: how far from the middle the ray meets the plane of the ring (a shallow
+        // angle is good enough for that); a ray running in the plane, how far along the line.
+        ring = std::abs(side);
+        const float facingNow = QVector3D::dotProduct(sight, drag.axis_);
+        if (std::abs(facingNow) > 1e-4F) {
+            const float meet = QVector3D::dotProduct(centre - ray.origin, drag.axis_) / facingNow;
+            if (meet > 0.0F) {
+                QVector3D met = ray.origin + sight * meet - centre;
+                met -= QVector3D::dotProduct(met, drag.axis_) * drag.axis_;
+                ring = met.length();
+            }
+        }
+    }
+    // The grabbed point lies under the pointer on the near half of the ring.
+    const float reach = std::clamp(side, -ring, ring);
+    const QVector3D grabbed =
+        reach * across + std::sqrt(std::max(ring * ring - reach * reach, 0.0F)) * nearest;
+    if (grabbed.lengthSquared() > 1e-12F) {
+        drag.first_ = std::atan2(QVector3D::dotProduct(grabbed, drag.v_),
+                                 QVector3D::dotProduct(grabbed, drag.u_));
+        drag.last_ = drag.first_;
+    }
+    const QPointF here = project(centre);
+    const QPointF there = project(centre + across);
+    const QPointF way = there - here;
+    const double perMillimetre = std::hypot(way.x(), way.y());
+    drag.tangent_ = perMillimetre > 1e-9 ? way / perMillimetre : QPointF(1.0, 0.0);
+    // One ring radius along the line is one radian, wherever on the line the ring was taken.
+    drag.pixelsPerRadian_ = std::max(static_cast<double>(ring) * perMillimetre, kLeastScreenRadius);
+    return drag;
+}
 
 } // namespace fission::interaction

@@ -20,6 +20,7 @@
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
 #include <BRepLProp_SLProps.hxx>
@@ -45,6 +46,7 @@
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Vertex.hxx>
+#include <gp_Ax1.hxx>
 #include <gp_Ax2.hxx>
 #include <gp_Circ.hxx>
 #include <gp_Dir.hxx>
@@ -264,6 +266,37 @@ NamedSolid makeNamedCylinder(double radius, double height, Point3d base) {
         });
     } catch (const Standard_Failure&) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "cylinder: the kernel failed");
+    }
+}
+
+NamedSolid rotateNamed(const NamedSolid& solid, Point3d centre, const Angles& angles) {
+    if (!isFinite(centre) || !std::isfinite(angles.x) || !std::isfinite(angles.y) ||
+        !std::isfinite(angles.z)) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "rotate: not a number");
+    }
+    if (angles.isZero()) {
+        return solid;
+    }
+    try {
+        // About the three axes of the bed through the centre, X first. The copy carries the
+        // turned geometry itself (no hidden location), and the faces keep their order.
+        const gp_Pnt middle(centre.x, centre.y, centre.z);
+        const auto about = [&](const gp_Dir& axis, double degrees) {
+            gp_Trsf turn;
+            turn.SetRotation(gp_Ax1(middle, axis), degrees / kDegrees);
+            return turn;
+        };
+        gp_Trsf all = about(gp_Dir(0, 0, 1), angles.z);
+        all.Multiply(about(gp_Dir(0, 1, 0), angles.y));
+        all.Multiply(about(gp_Dir(1, 0, 0), angles.x));
+        const TopoDS_Shape turned =
+            BRepBuilderAPI_Transform(shapeOf(solid.solid), all, /*Copy=*/true).Shape();
+        NamedSolid result;
+        result.solid = validated(turned, "rotate");
+        result.faces = solid.faces;
+        return result;
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "rotate: the kernel failed");
     }
 }
 

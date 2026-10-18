@@ -14,6 +14,7 @@
 #include "fission/core/document.h"
 #include "fission/core/expression.h"
 #include "fission/geo/kernel.h"
+#include "fission/geo/rotation.h"
 
 namespace fission::core {
 
@@ -90,6 +91,8 @@ struct HandleSpec {
     /// plane: as it grows, its middle rises, and a handle on its equator moves out and up at once.
     /// Dragging follows that slanted way, so the dot stays under the pointer.
     double rise = 0.0;
+    /// The way it rises (unit vector): up, unless the body is turned.
+    geo::Point3d riseDirection{0.0, 0.0, 1.0};
     /// The length (mm) this handle measures, along `direction` and ending at `origin`: the
     /// interface draws it as a measure band from `origin − direction × extent` to `origin`.
     double extent = 0.0;
@@ -159,7 +162,24 @@ public:
     /// each place, with the same `parameter`: the interface picks the one facing the viewer, so
     /// the handle is always where one expects it.
     virtual std::vector<HandleSpec> handles(const ResolvedParams& params) const = 0;
+
+    /// The middle of the box round the body as the step makes it before it is turned (mm): the
+    /// point it is turned about (ADR-0010). The default fits a body that stands on the plane z,
+    /// centred on (x, y), with a value `height`; a type with another shape says so.
+    virtual geo::Point3d bodyCentre(const ResolvedParams& params) const;
+
+    /// The turn of the body: the values `rotX`, `rotY`, `rotZ` (degrees), none for a type that
+    /// has no such values.
+    static geo::Angles turnOf(const ResolvedParams& params);
+
+    /// The handles where they stand once the body is turned: `handles` turned about
+    /// `bodyCentre` by `turnOf`. This is what the interface shows.
+    std::vector<HandleSpec> placedHandles(const ResolvedParams& params) const;
 };
+
+/// The three values of the turn (degrees, default 0), to be listed by every type that puts a
+/// body in a place.
+std::vector<ParamSpec> turnParameters();
 
 /// The feature types a program knows. One per program (or per test); no global instance.
 class FeatureRegistry {

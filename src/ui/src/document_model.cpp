@@ -553,9 +553,16 @@ QVariantList DocumentModel::buildStepValues() const {
             given != feature.params.end() ? given->second.expression : spec.defaultExpression;
         QVariantMap entry;
         entry[QStringLiteral("name")] = toQString(spec.name);
+        const bool turn = spec.name == "rotX" || spec.name == "rotY" || spec.name == "rotZ";
         entry[QStringLiteral("group")] = (spec.name == "x" || spec.name == "y" || spec.name == "z")
                                              ? QStringLiteral("position")
-                                             : QStringLiteral("size");
+                                         : turn ? QStringLiteral("rotation")
+                                                : QStringLiteral("size");
+        // The coloured letter in front of a place or a turn: x, y, z (empty for sizes).
+        entry[QStringLiteral("axis")] = turn ? toQString(spec.name.substr(3, 1)).toLower()
+                                        : (spec.name == "x" || spec.name == "y" || spec.name == "z")
+                                            ? toQString(spec.name)
+                                            : QString();
         entry[QStringLiteral("expression")] = isPlainNumber(text) ? QString() : toQString(text);
         double number = 0.0;
         bool error = true;
@@ -620,7 +627,7 @@ QVariantList DocumentModel::buildStepHandles() const {
         state->status == core::FeatureStatus::suppressed || !state->description) {
         return handles;
     }
-    for (const core::HandleSpec& spec : type->handles(state->params)) {
+    for (const core::HandleSpec& spec : type->placedHandles(state->params)) {
         const auto value = state->params.find(spec.parameter);
         if (value == state->params.end()) {
             continue;
@@ -643,6 +650,9 @@ QVariantList DocumentModel::buildStepHandles() const {
         entry[QStringLiteral("sign")] = spec.sign;
         entry[QStringLiteral("travel")] = spec.travel;
         entry[QStringLiteral("rise")] = spec.rise;
+        entry[QStringLiteral("riseDx")] = spec.riseDirection.x;
+        entry[QStringLiteral("riseDy")] = spec.riseDirection.y;
+        entry[QStringLiteral("riseDz")] = spec.riseDirection.z;
         entry[QStringLiteral("extent")] = spec.extent;
         entry[QStringLiteral("value")] = value->second.value;
         handles.push_back(entry);
@@ -868,6 +878,89 @@ bool DocumentModel::moveCurrent(const std::array<std::optional<double>, 3>& posi
                 m_history.execute(core::makeSetFeatureValue(
                     id, kNames[axis], QString::number(*position[axis], 'g', 12).toStdString())) &&
                 done;
+        }
+    }
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+    return done;
+}
+
+std::optional<geo::Angles> DocumentModel::currentTurn() const {
+    geo::Angles angles;
+    int found = 0;
+    for (const QVariant& entry : m_stepValues) {
+        const QVariantMap value = entry.toMap();
+        const QString name = value[QStringLiteral("name")].toString();
+        double* target = name == QLatin1String("rotX")   ? &angles.x
+                         : name == QLatin1String("rotY") ? &angles.y
+                         : name == QLatin1String("rotZ") ? &angles.z
+                                                         : nullptr;
+        if (target != nullptr) {
+            *target = value[QStringLiteral("value")].toDouble();
+            ++found;
+        }
+    }
+    if (found != 3) {
+        return std::nullopt;
+    }
+    return angles;
+}
+
+std::optional<geo::Point3d> DocumentModel::currentTurnCentre() const {
+    const auto& features = m_history.document().features();
+    if (!currentTurn() || m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size()) ||
+        !m_result) {
+        return std::nullopt;
+    }
+    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    const core::FeatureType* type = m_registry.find(feature.type);
+    const core::FeatureState* state = m_result->state(feature.id);
+    if (type == nullptr || state == nullptr || !state->description) {
+        return std::nullopt;
+    }
+    return type->bodyCentre(state->params);
+}
+
+bool DocumentModel::beginTurn() {
+    const auto& features = m_history.document().features();
+    if (!currentTurn() || m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size())) {
+        return false;
+    }
+    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    core::CommandDescription label{
+        "rotateBody", {{"type", feature.type}, {"number", std::to_string(feature.number)}}};
+    if (!feature.outputs.empty()) {
+        if (const core::Body* body = m_history.document().findBody(feature.outputs.front())) {
+            label.values["name"] = body->name;
+        }
+    }
+    m_history.beginTransaction(std::move(label));
+    return true;
+}
+
+bool DocumentModel::turnCurrent(const geo::Angles& angles) {
+    const auto& features = m_history.document().features();
+    const auto present = currentTurn();
+    if (!present || m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size())) {
+        return false;
+    }
+    const core::FeatureId id = features[static_cast<std::size_t>(m_currentStep)].id;
+    const std::uint64_t before = m_history.document().revision();
+    const struct {
+        const char* name;
+        double wanted;
+        double now;
+    } values[3] = {{"rotX", angles.x, present->x},
+                   {"rotY", angles.y, present->y},
+                   {"rotZ", angles.z, present->z}};
+    bool done = true;
+    for (const auto& value : values) {
+        if (std::abs(value.wanted - value.now) > 1e-9) {
+            // 12 digits: a snapped 45 reads back as "45", not "45.0000000001".
+            done = m_history.execute(core::makeSetFeatureValue(
+                       id, value.name, QString::number(value.wanted, 'g', 12).toStdString())) &&
+                   done;
         }
     }
     if (m_history.document().revision() != before) {
