@@ -21,6 +21,12 @@ Zerlegung, Festlegungen vom 18.10.2026, Zwischenstand 1.6a mit Nachbesserung), `
 - AP-1.1 bis AP-1.5 sind erledigt. **AP-1.6a „Verschieben“ ist erledigt und in `main`** (PR #27). Der Product
   Owner hat es ausprobiert („fühlt sich top an“). `main` ist geschützt: nur per Pull Request mit allen grünen
   CI-Prüfungen.
+- **PR #28 (Nachbesserung Kugel) muss vor dem Start in `main` sein.** Prüfe das mit `gh pr view 28`. Ist er noch
+  offen, sag es mir, statt auf einem alten Stand zu bauen. Er bringt:
+  - Große Körper werden in der Ansicht passend zu ihrer Größe gröber gezeichnet (`render::kRelativeChord`,
+    Kernel-Abfrage `bounds`); vorher fror eine 800-mm-Kugel das Programm ein.
+  - Griffe mit Steigung (`HandleSpec::rise`).
+  - Beschriftungen weichen den schwebenden Leisten aus (`clearplace.js`).
 - **Festlegungen (Product Owner, 18.10.2026), gelten weiter:**
   - **Lage im Rezept (ADR-0010):** Verschieben und Drehen ändern die Lage-Werte des Schritts, der den Körper
     macht. Ein Zug ist ein Schritt in „Letzte Aktionen“ („Quader verschoben“), kein neuer Rezept-Eintrag. Ein
@@ -118,6 +124,16 @@ Zerlegung, Festlegungen vom 18.10.2026, Zwischenstand 1.6a mit Nachbesserung), `
 - **Gezogene Anfassflächen nie umbauen:** Eine QML-Anfassfläche, die während eines Zugs verschwindet oder neu
   entsteht, beendet den Zug. Das war die „verliert die Haftung“-Rückmeldung in 1.6a. Listen für Griffe behalten
   ihre Länge und Reihenfolge, das gehaltene Teil bleibt sichtbar.
+- **Große Körper:** Drehen und gleichmäßiges Vergrößern können Körper sehr groß machen.
+  - Kernel-Arbeit läuft nie unter dem Schloss, auf das die Oberfläche wartet (`m_meshMutex` nur zum Nachsehen
+    und Ablegen).
+  - Die Feinheit der Darstellung kommt immer aus `render::tessellationForDetail(level, Größe)`.
+  - Mit einer 800-mm-Kugel gegenprüfen: Das Fenster muss bedienbar bleiben.
+- **Griffe, die mitwandern:** Bewegt sich ein Griff beim Ändern seines Werts nicht nur entlang seiner Richtung
+  (eine Kugel steht auf dem Bett, ihr Äquator steigt), gibt die Form das als `HandleSpec::rise` an. Sonst rutscht
+  der Punkt dem Zeiger davon. Bei gedrehten Formen gilt das für die gedrehte Richtung.
+- **Beschriftungen und Blasen** (Ringe, Grad-Blase, Prozent) mit `ClearPlace.place(…, obstacles, …)` setzen:
+  Sonst verschwinden sie hinter der Werkzeugleiste oder dem Ansichtswürfel (`ViewOverlay.obstacles`).
 - **Grenzen der Form:** Ein gezogener Wert, den die Form nicht erlaubt, hält beim nächsten möglichen Wert an
   (Bisektion in `HandleController::dragTo`). Er darf nie stehen bleiben. Das gilt auch für den Eck-Griff: Er
   stoppt, sobald ein Maß unmöglich würde.
