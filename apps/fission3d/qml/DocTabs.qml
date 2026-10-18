@@ -88,10 +88,15 @@ Rectangle {
                     Accessible.name: qsTr("Close")
                     onClicked: root.closeRequested()
 
-                    contentItem: Icon {
-                        name: "close"
-                        size: 12
-                        color: closeButton.hovered ? Theme.fg : Theme.fg4
+                    // Centred in a holder: the control stretches its content item, and the
+                    // icon draws from its top-left corner.
+                    contentItem: Item {
+                        Icon {
+                            anchors.centerIn: parent
+                            name: "close"
+                            size: 12
+                            color: closeButton.hovered ? Theme.fg : Theme.fg4
+                        }
                     }
 
                     background: Rectangle {

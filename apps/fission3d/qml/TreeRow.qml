@@ -46,81 +46,91 @@ Rectangle {
         }
     }
 
-    Row {
-        anchors.fill: parent
+    // The eye is pinned to the right edge, so all eyes line up in one column, whether a row
+    // shows a count (print bed) or not.
+    Item {
+        id: lead
+
+        visible: root.iconName !== "" || root.swatch.a > 0
+        anchors.left: parent.left
         anchors.leftMargin: root.child ? 24 : 6
+        anchors.verticalCenter: parent.verticalCenter
+        width: visible ? 18 : 0
+        height: 18
+
+        Icon {
+            visible: root.iconName !== ""
+            anchors.centerIn: parent
+            name: root.iconName
+            color: root.eyeOn ? Theme.fg2 : Theme.fg4
+        }
+
+        Rectangle {
+            visible: root.iconName === "" && root.swatch.a > 0
+            anchors.centerIn: parent
+            width: 12
+            height: 12
+            radius: 3
+            color: root.hole ? "transparent" : root.swatch
+            border.width: root.hole ? 2 : 1
+            border.color: root.hole ? root.swatch : Theme.edge
+        }
+    }
+
+    Txt {
+        anchors.left: lead.visible ? lead.right : parent.left
+        anchors.leftMargin: lead.visible ? 6 : (root.child ? 24 : 6)
+        anchors.right: countText.visible ? countText.left : eyeButton.visible ? eyeButton.left : parent.right
+        anchors.rightMargin: 6
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.text
+        color: root.group || root.selected ? Theme.fg : root.eyeOn ? Theme.fg2 : Theme.fg4
+        font.weight: root.group || root.selected ? Font.DemiBold : Font.Normal
+        font.strikeout: !root.eyeOn && !root.group
+    }
+
+    Txt {
+        id: countText
+
+        visible: root.count !== ""
+        anchors.right: eyeButton.visible ? eyeButton.left : parent.right
+        anchors.rightMargin: eyeButton.visible ? 4 : 8
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.count
+        color: Theme.fg4
+        mono: root.count.indexOf("×") >= 0
+        font.pixelSize: Theme.fontSizeSmall
+        elide: Text.ElideNone
+    }
+
+    AbstractButton {
+        id: eyeButton
+
+        visible: root.hasEye
+        anchors.right: parent.right
         anchors.rightMargin: 4
-        spacing: 6
+        anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: 24
+        implicitHeight: 24
+        hoverEnabled: true
+        Accessible.name: root.eyeLabel
+        Accessible.checkable: true
+        Accessible.checked: root.eyeOn
+        onClicked: root.eyeToggled()
 
-        Item {
-            visible: root.iconName !== "" || root.swatch.a > 0
-            anchors.verticalCenter: parent.verticalCenter
-            width: 18
-            height: 18
-
+        // The control stretches its content item to 24 x 24; the icon draws from its
+        // top-left corner, so it sits centred in a holder instead of being the content item.
+        contentItem: Item {
             Icon {
-                visible: root.iconName !== ""
                 anchors.centerIn: parent
-                name: root.iconName
-                color: root.eyeOn ? Theme.fg2 : Theme.fg4
-            }
-
-            Rectangle {
-                visible: root.iconName === "" && root.swatch.a > 0
-                anchors.centerIn: parent
-                width: 12
-                height: 12
-                radius: 3
-                color: root.hole ? "transparent" : root.swatch
-                border.width: root.hole ? 2 : 1
-                border.color: root.hole ? root.swatch : Theme.edge
-            }
-        }
-
-        Txt {
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - (root.iconName !== "" || root.swatch.a > 0 ? 24 : 0)
-                   - countText.width - (root.hasEye ? 30 : 0) - 12
-            text: root.text
-            color: root.group || root.selected ? Theme.fg : root.eyeOn ? Theme.fg2 : Theme.fg4
-            font.weight: root.group || root.selected ? Font.DemiBold : Font.Normal
-            font.strikeout: !root.eyeOn && !root.group
-        }
-
-        Txt {
-            id: countText
-
-            visible: root.count !== ""
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.count
-            color: Theme.fg4
-            mono: root.count.indexOf("×") >= 0
-            font.pixelSize: Theme.fontSizeSmall
-            elide: Text.ElideNone
-        }
-
-        AbstractButton {
-            id: eyeButton
-
-            visible: root.hasEye
-            anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: 24
-            implicitHeight: 24
-            hoverEnabled: true
-            Accessible.name: root.eyeLabel
-            Accessible.checkable: true
-            Accessible.checked: root.eyeOn
-            onClicked: root.eyeToggled()
-
-            contentItem: Icon {
                 name: root.eyeOn ? "eye" : "eyeoff"
-                color: parent.hovered ? Theme.fg : Theme.fg4
+                color: eyeButton.hovered ? Theme.fg : Theme.fg4
             }
+        }
 
-            background: Rectangle {
-                radius: 4
-                color: "transparent"
-            }
+        background: Rectangle {
+            radius: 4
+            color: "transparent"
         }
     }
 }

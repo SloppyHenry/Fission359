@@ -16,8 +16,13 @@ AbstractButton {
     property string tipTitle: ""
     property string tipText: ""
 
+    // Paddings as in the mockup (.palette .pt: 7 px top, 6 px bottom, 2 px sides), so the
+    // highlight sits evenly around icon and label.
     implicitWidth: 64
-    implicitHeight: 52
+    implicitHeight: implicitContentHeight + topPadding + bottomPadding
+    topPadding: 7
+    bottomPadding: 6
+    horizontalPadding: 2
     hoverEnabled: true
     Accessible.name: text
     Accessible.checkable: true
