@@ -28,6 +28,7 @@ public:
         return fonts_.styles(family);
     }
     SolidReport measure(const Solid& solid) const override { return occt::measure(solid); }
+    Bounds bounds(const Solid& solid) const override { return occt::bounds(solid); }
     TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const override {
         return occt::tessellate(solid, params);
     }

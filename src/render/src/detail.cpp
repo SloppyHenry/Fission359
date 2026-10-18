@@ -27,10 +27,12 @@ int levelForScale(double pixelsPerMillimetre) {
 
 } // namespace
 
-geo::TessellationParams tessellationForDetail(int level) {
+geo::TessellationParams tessellationForDetail(int level, double size) {
     const int clamped = std::clamp(level, 0, kMaxDetailLevel);
     geo::TessellationParams params;
-    params.chordTolerance = kBaseChord / std::exp2(clamped);
+    const double base =
+        std::isfinite(size) ? std::max(kBaseChord, kRelativeChord * size) : kBaseChord;
+    params.chordTolerance = base / std::exp2(clamped);
     // The angle shrinks more slowly: it decides how many segments a whole circle gets.
     params.angleTolerance = kBaseAngle / std::exp2(0.5 * clamped);
     return params;

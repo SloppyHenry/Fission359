@@ -154,6 +154,7 @@ private:
     QPointer<Viewport3D> m_viewport;
     QVariantList m_handles;
     std::map<QString, int> m_chosen; ///< the place of each value while it is being changed
+    bool m_keepChoice = false;       ///< after a drag: the places stay until the view turns
     QString m_mode{QStringLiteral("size")};
     bool m_editing = false;
     bool m_armed = false;

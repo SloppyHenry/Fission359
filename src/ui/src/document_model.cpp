@@ -251,12 +251,14 @@ void DocumentModel::startDetailJob() {
     const auto current = m_detailCurrent;
     m_detailPool.start([this, kernel, current, generation, level, work = std::move(work)] {
         std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> meshes;
-        const geo::TessellationParams params = render::tessellationForDetail(level);
         for (const Work& item : work) {
             if (current->load() != generation) {
                 return; // somebody asked for something else meanwhile
             }
             try {
+                // Finer with the zoom, coarser for a big body (render::kRelativeChord).
+                const geo::TessellationParams params =
+                    render::tessellationForDetail(level, kernel->bounds(item.solid).diagonal());
                 auto mesh = std::make_shared<const geo::TriangleMesh>(
                     kernel->tessellate(item.solid, params));
                 // A body that would need too many triangles keeps its basic mesh.
@@ -330,20 +332,26 @@ void DocumentModel::onEngineEvent(const core::RecomputeEvent& event) {
         return;
     }
     // Tessellate here, not on the interface thread (rule 9). Bodies that did not change keep
-    // their mesh from the last time.
-    {
-        const std::lock_guard lock(m_meshMutex);
-        for (const auto& [id, body] : event.result->bodies) {
-            const std::uint64_t key = meshKey(body);
+    // their mesh from the last time. The lock is held only to look and to store, never while the
+    // kernel works: the interface thread reads the meshes and must not wait for a long mesh.
+    for (const auto& [id, body] : event.result->bodies) {
+        const std::uint64_t key = meshKey(body);
+        {
+            const std::lock_guard lock(m_meshMutex);
             if (m_meshes.contains(key)) {
                 continue;
             }
-            try {
-                m_meshes.emplace(key, std::make_shared<const geo::TriangleMesh>(
-                                          m_kernel->tessellate(body.solid, {})));
-            } catch (const geo::GeometryError& error) {
-                qWarning() << "a body could not be tessellated:" << error.what();
-            }
+        }
+        try {
+            // The basic mesh; a big body gets a coarser one (render::kRelativeChord).
+            const geo::TessellationParams params =
+                render::tessellationForDetail(0, m_kernel->bounds(body.solid).diagonal());
+            auto mesh =
+                std::make_shared<const geo::TriangleMesh>(m_kernel->tessellate(body.solid, params));
+            const std::lock_guard lock(m_meshMutex);
+            m_meshes.emplace(key, std::move(mesh));
+        } catch (const geo::GeometryError& error) {
+            qWarning() << "a body could not be tessellated:" << error.what();
         }
     }
     QMetaObject::invokeMethod(
@@ -634,6 +642,7 @@ QVariantList DocumentModel::buildStepHandles() const {
         entry[QStringLiteral("dz")] = spec.direction.z;
         entry[QStringLiteral("sign")] = spec.sign;
         entry[QStringLiteral("travel")] = spec.travel;
+        entry[QStringLiteral("rise")] = spec.rise;
         entry[QStringLiteral("extent")] = spec.extent;
         entry[QStringLiteral("value")] = value->second.value;
         handles.push_back(entry);

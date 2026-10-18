@@ -275,6 +275,16 @@ Solid makeCylinder(double radius, double height, Point3d base) {
     return makeNamedCylinder(radius, height, base).solid;
 }
 
+Bounds bounds(const Solid& solid) {
+    Bounds result;
+    Bnd_Box box;
+    BRepBndLib::Add(shapeOf(solid), box, /*useTriangulation=*/false);
+    if (!box.IsVoid()) {
+        box.Get(result.min.x, result.min.y, result.min.z, result.max.x, result.max.y, result.max.z);
+    }
+    return result;
+}
+
 SolidReport measure(const Solid& solid) {
     const TopoDS_Shape& shape = shapeOf(solid);
     SolidReport report;

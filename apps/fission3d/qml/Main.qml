@@ -522,12 +522,14 @@ Window {
 
                 anchors.fill: parent
                 labelFor: root.valueLabel
+                obstacles: viewOverlay.obstacles
             }
 
             GizmoLayer {
                 id: gizmoLayer
 
                 anchors.fill: parent
+                obstacles: viewOverlay.obstacles
             }
 
             BedLabels {
@@ -537,6 +539,8 @@ Window {
             }
 
             ViewOverlay {
+                id: viewOverlay
+
                 anchors.fill: parent
                 orthographic: root.orthographic
                 display: root.display

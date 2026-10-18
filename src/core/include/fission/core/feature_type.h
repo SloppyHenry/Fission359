@@ -86,6 +86,10 @@ struct HandleSpec {
     /// grows alone; 0.5 for a face of a shape that grows to both sides around its middle (the
     /// width of a box): the face then follows the pointer when the value changes twice as much.
     double travel = 1.0;
+    /// How far (mm) the handle also rises when the value grows by 1 mm. A sphere stands on its
+    /// plane: as it grows, its middle rises, and a handle on its equator moves out and up at once.
+    /// Dragging follows that slanted way, so the dot stays under the pointer.
+    double rise = 0.0;
     /// The length (mm) this handle measures, along `direction` and ending at `origin`: the
     /// interface draws it as a measure band from `origin − direction × extent` to `origin`.
     double extent = 0.0;

@@ -55,7 +55,7 @@ class DocumentModel : public QObject {
     /// Words of the current step (text, font): [{ name, value, kind }], `kind` is text | font.
     Q_PROPERTY(QVariantList stepTexts READ stepTexts NOTIFY stepValuesChanged)
     /// The handles of the current step in the world (mm): [{ parameter, kind, role, x, y, z, dx,
-    /// dy, dz, sign, travel, extent, value }]. `kind` is distance | radius, `role` is size |
+    /// dy, dz, sign, travel, rise, extent, value }]. `kind` is distance | radius, `role` is size |
     /// detail | rounding. Empty when the step has none or failed.
     Q_PROPERTY(QVariantList stepHandles READ stepHandles NOTIFY stepValuesChanged)
     /// The fonts lettering can use; filled in the background shortly after the start.

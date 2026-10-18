@@ -76,6 +76,9 @@ public:
     fission::geo::SolidReport measure(const fission::geo::Solid& solid) const override {
         return inner_->measure(solid);
     }
+    fission::geo::Bounds bounds(const fission::geo::Solid& solid) const override {
+        return inner_->bounds(solid);
+    }
     fission::geo::TriangleMesh
     tessellate(const fission::geo::Solid& solid,
                const fission::geo::TessellationParams& p) const override {

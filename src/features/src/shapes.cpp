@@ -87,6 +87,9 @@ public:
         std::vector<HandleSpec> out;
         addRing(out, "radius", HandleKind::radius, valueOf(p, "x"), valueOf(p, "y"),
                 valueOf(p, "z") + r, r, r);
+        for (HandleSpec& handle : out) {
+            handle.rise = 1.0; // the sphere stands on its plane: its equator rises as it grows
+        }
         return out;
     }
 
@@ -189,6 +192,9 @@ public:
         const std::size_t tube = out.size();
         addRing(out, "tubeRadius", HandleKind::distance, x, y, z + t, big + t, t);
         markRole(out, tube, HandleRole::detail);
+        for (std::size_t i = tube; i < out.size(); ++i) {
+            out[i].rise = 1.0; // a thicker tube lifts the ring off its plane
+        }
         return out;
     }
 

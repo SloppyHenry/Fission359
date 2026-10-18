@@ -109,3 +109,16 @@ TEST_CASE("acceptance: a hole of 3 mm at full-screen zoom has no visible facets"
     INFO("basic " << basicError << " px, fine " << fineError << " px at level " << level);
     CHECK(fine.triangleCount() > basic.triangleCount());
 }
+
+TEST_CASE("detail: a big body is drawn with a coarser mesh, a small one as before",
+          "[render][detail]") {
+    using fission::render::tessellationForDetail;
+    // Up to 100 mm the basic chord error stays 0.01 mm.
+    CHECK(tessellationForDetail(0, 0.0).chordTolerance == Approx(0.01));
+    CHECK(tessellationForDetail(0, 80.0).chordTolerance == Approx(0.01));
+    // A sphere of 800 mm radius (box diagonal about 2770 mm): about 0.28 mm, still finer than a
+    // quarter of a pixel when the whole sphere fits on the screen.
+    CHECK(tessellationForDetail(0, 2771.0).chordTolerance == Approx(0.2771));
+    // Zooming in still makes it finer.
+    CHECK(tessellationForDetail(2, 2771.0).chordTolerance == Approx(0.2771 / 4.0));
+}
