@@ -39,11 +39,12 @@ class GizmoController : public QObject {
     /// Shown at all: the tool "Move" is on. (Moving a body by dragging it does not need this.)
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     /// The parts on screen (view pixels), empty when nothing is shown:
-    /// [{ part, axis, x, y, midX, midY, labelX, labelY }]. `part` is x | y | z (arrows: (x, y)
-    /// is the head, (midX, midY) the middle of the shaft, (labelX, labelY) the place of the
+    /// [{ part, shown, axis, x, y, midX, midY, labelX, labelY }], always all seven parts in the
+    /// same order (the window keeps one place to grab for each). `part` is x | y | z (arrows: (x,
+    /// y) is the head, (midX, midY) the middle of the shaft, (labelX, labelY) the place of the
     /// letter), xy | xz | yz (squares: (x, y) is the middle) or free (the dot). `axis` is the
     /// colour: x | y | z, or none for the dot. A part seen end on (an arrow pointing at the
-    /// viewer, a square seen edge on) is left out: it could not be dragged.
+    /// viewer, a square seen edge on) is not `shown`, unless it is the one being dragged.
     Q_PROPERTY(QVariantList parts READ parts NOTIFY partsChanged)
     /// A drag or typing is going on.
     Q_PROPERTY(bool editing READ editing NOTIFY editingChanged)
@@ -112,6 +113,9 @@ public:
     static constexpr double kSmallBodyPixels = 120.0;
     /// A square seen more edge on than this (sine of the angle) is left out.
     static constexpr double kLeastSquareSight = 0.25;
+    /// An arrow closer than this to the line of sight (sine of the angle) is left out: on the
+    /// screen it is hardly more than a dot. (A held arrow stays; it can still be dragged.)
+    static constexpr double kLeastArrowSight = 0.2;
 
 signals:
     void enabledChanged();
@@ -166,6 +170,7 @@ private:
     QVector3D m_startAnchor;                 ///< where the gizmo sat when it began
     std::array<double, 3> m_offset{};        ///< how far it has moved (mm)
     double m_pixelsPerMillimetre = 1.0;
+    double m_axisPixelsPerMillimetre = 1.0; ///< the rate of the arrow that was grabbed
     std::optional<interaction::AxisDrag> m_axisDrag;
     std::optional<interaction::PlaneDrag> m_planeDrag;
 };

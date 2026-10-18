@@ -92,7 +92,7 @@ struct Fixture {
 
     QVariantMap part(const QString& name) const {
         for (const QVariant& entry : gizmo->parts()) {
-            if (entry.toMap()["part"].toString() == name) {
+            if (entry.toMap()["part"].toString() == name && entry.toMap()["shown"].toBool()) {
                 return entry.toMap();
             }
         }
@@ -326,4 +326,26 @@ TEST_CASE("handles: with the tool Move only the bands are left, with Select noth
     handles.setMode(QStringLiteral("off"));
     CHECK(handles.handles().isEmpty());
     CHECK(f.viewport.handleGraphics().empty());
+}
+
+TEST_CASE("gizmo: the arrow that is held stays while the body moves far, the list keeps its places",
+          "[ui][gizmo]") {
+    // Looking low along Y, the Y arrow is short; pulled far back, it turns ever more towards the
+    // viewer. It used to be taken out of the list then, and the window let go of the drag.
+    Fixture f(0.0, 25.0, 160.0);
+    const QVariantMap y = f.part(QStringLiteral("y"));
+    REQUIRE_FALSE(y.isEmpty());
+    const QPointF from(y["x"].toDouble(), y["y"].toDouble());
+    REQUIRE(f.gizmo->beginDrag(QStringLiteral("y"), from.x(), from.y()));
+    const auto count = f.gizmo->parts().size();
+    CHECK(count == 7);
+    for (int step = 1; step <= 30; ++step) {
+        f.gizmo->dragTo(from.x(), from.y() - 6.0 * step); // up the screen: away from the viewer
+        CHECK(f.gizmo->parts().size() == count);
+        CHECK_FALSE(f.part(QStringLiteral("y")).isEmpty());
+    }
+    CHECK(f.gizmo->editing());
+    REQUIRE(f.gizmo->endDrag());
+    f.refresh();
+    CHECK(f.value(QStringLiteral("y")) > 10.0);
 }

@@ -58,8 +58,10 @@ Item {
         }
     }
 
-    // The places to grab, one item for each part. The list is made anew while dragging; the
-    // delegates stay (a part rebuilt under the pointer would end the drag).
+    // The places to grab, one item for each of the seven parts. The list is made anew while
+    // dragging but always holds all seven in the same order, so the delegates stay: a place to
+    // grab that went away under the pointer would end the drag. (It did: an arrow that turned
+    // towards the viewer while the body moved was taken out of the list, and the drag let go.)
     Repeater {
         model: Gizmo.parts.length
 
@@ -68,7 +70,8 @@ Item {
 
             required property int index
             readonly property var info: index < Gizmo.parts.length ? Gizmo.parts[index] : null
-            readonly property bool arrow: info !== null && info.midX !== undefined
+            readonly property bool shown: info !== null && info.shown
+            readonly property bool arrow: shown && info.midX !== undefined
             readonly property bool pointed: head.containsMouse || shaft.containsMouse
 
             onPointedChanged: if (info) Gizmo.setPointed(info.part, pointed)
@@ -91,10 +94,12 @@ Item {
             GizmoGrab {
                 id: head
 
+                enabled: part.shown
+                visible: part.shown
                 partName: part.info ? part.info.part : ""
                 centreX: part.info ? part.info.x : 0
                 centreY: part.info ? part.info.y : 0
-                size: part.arrow ? 26 : (part.info && part.info.part === "free" ? 22 : 20)
+                size: part.arrow ? 32 : (part.info && part.info.part === "free" ? 26 : 24)
             }
 
             // The shaft of an arrow can be grabbed, too.
@@ -106,7 +111,7 @@ Item {
                 partName: part.info ? part.info.part : ""
                 centreX: part.arrow ? part.info.midX : 0
                 centreY: part.arrow ? part.info.midY : 0
-                size: 20
+                size: 26
             }
         }
     }

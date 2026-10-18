@@ -134,6 +134,16 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=0,90,260 --simulate "put:box;gizmo:x,100,0,10;expect:x,-20;gizmo:free,0,-60,8;expect:y,-20")
   set_tests_properties(app_gizmo_move PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # Feedback 2026-10-18: the depth could not be dragged when looking at the front, and a size
+  # pulled smaller than possible stayed big. Seen nearly from the front, the depth handle points
+  # at the viewer and is dragged on the screen; pulled far below zero, the width stops at the
+  # smallest it can be.
+  add_test(NAME app_handle_drag_front
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-handle-front.png" --language en --size 1280x800
+            --camera=0,8,220 --simulate "tool:size;put:box;grab:depth,0,60,10;expect:depth,30;grab:width,-400,0,10;near:width,1")
+  set_tests_properties(app_handle_drag_front PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

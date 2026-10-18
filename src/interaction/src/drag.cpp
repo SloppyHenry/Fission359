@@ -25,19 +25,22 @@ std::optional<QVector3D> meet(const Ray& ray, const QVector3D& point, const QVec
 } // namespace
 
 std::optional<AxisDrag> AxisDrag::grab(const Ray& ray, const QVector3D& origin,
-                                       const QVector3D& axis, double leastSight) {
+                                       const QVector3D& axis, const Screen& screen,
+                                       double leastSight) {
     if (axis.lengthSquared() < 1e-12F) {
         return std::nullopt;
     }
     AxisDrag drag;
     drag.origin_ = origin;
     drag.axis_ = axis.normalized();
+    drag.screen_ = screen;
     // The plane through the axis that faces the viewer most: the part of the line of sight that
     // does not run along the axis.
     const QVector3D across =
         ray.direction - QVector3D::dotProduct(ray.direction, drag.axis_) * drag.axis_;
     if (across.length() < leastSight) {
-        return std::nullopt;
+        drag.onScreen_ = true; // points at the viewer: dragged on the screen
+        return drag;
     }
     drag.plane_ = across.normalized();
     const auto met = meet(ray, origin, drag.plane_);
@@ -45,12 +48,18 @@ std::optional<AxisDrag> AxisDrag::grab(const Ray& ray, const QVector3D& origin,
         return std::nullopt;
     }
     drag.grabbed_ = QVector3D::dotProduct(*met - origin, drag.axis_);
+    drag.reach_ = (*met - ray.origin).length();
     return drag;
 }
 
-std::optional<double> AxisDrag::moved(const Ray& ray) const {
+std::optional<double> AxisDrag::moved(const Ray& ray, const QPointF& pointer) const {
+    if (onScreen_) {
+        const QPointF way = pointer - screen_.pointer;
+        return (way.x() * screen_.way.x() + way.y() * screen_.way.y()) /
+               screen_.pixelsPerMillimetre;
+    }
     const auto met = meet(ray, origin_, plane_);
-    if (!met) {
+    if (!met || (*met - ray.origin).length() > kFarthestReach * reach_) {
         return std::nullopt;
     }
     return QVector3D::dotProduct(*met - origin_, axis_) - grabbed_;
@@ -71,12 +80,13 @@ std::optional<PlaneDrag> PlaneDrag::grab(const Ray& ray, const QVector3D& origin
         return std::nullopt;
     }
     drag.grabbed_ = *met;
+    drag.reach_ = (*met - ray.origin).length();
     return drag;
 }
 
 std::optional<QVector3D> PlaneDrag::moved(const Ray& ray) const {
     const auto met = meet(ray, grabbed_, normal_);
-    if (!met) {
+    if (!met || (*met - ray.origin).length() > kFarthestReach * reach_) {
         return std::nullopt;
     }
     QVector3D offset = *met - grabbed_;

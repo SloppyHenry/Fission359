@@ -700,7 +700,7 @@ Beschriftungen und Anfassflächen.
   keinen neuen Eintrag.
 
 **Wie getestet**
-- Mac (arm64, Debug): `ctest` 356 von 356 grün.
+- Mac (arm64, Debug): `ctest` 361 von 361 grün (nach der Nachbesserung).
 - Neu: `tests/unit/interaction/test_drag.cpp` (Achse, Ebene, Rasten), `tests/unit/ui/test_gizmo.cpp` (Teile sichtbar/ausgelassen, X-Pfeil
   ändert nur x in ganzen mm, Formel in y bleibt, ein Schritt, Undo; Esc; Ebene und Punkt nie nach oben; Tippen mit Tab; Körper ziehen durch
   die echten Mausfunktionen der Ansicht, Punkt bleibt unter dem Zeiger; in „Wählen“ wird es ein Rahmen; Pfeiltasten; Maß-Griffe je Modus),
@@ -719,6 +719,21 @@ Beschriftungen und Anfassflächen.
 4. Den **Würfel selbst** anfassen und ziehen: er rutscht über das Bett. Esc während des Ziehens stellt ihn zurück.
 5. Pfeiltasten (mit und ohne Umschalt) und Bild↑/Bild↓ probieren. Links auf **Größe** wechseln: jetzt sind die Maß-Punkte da, das Gizmo
    ist weg; auf **Wählen**: keine Griffe, Ziehen zeichnet einen Rahmen.
+
+**Nachbesserung nach dem ersten Ausprobieren (Product Owner, 2026-10-18)**
+- *„Pfeil anklicken und bewegen: verliert je nach Weg die Haftung.“* Ursache: Drehte die Perspektive einen Pfeil beim Ziehen fast auf
+  den Betrachter zu, nahm das Programm ihn aus der Liste der Gizmo-Teile, und das Fenster ließ den Zug los. Jetzt hat jedes der sieben
+  Teile einen festen Platz, das gehaltene bleibt immer. Pfeile verschwinden erst, wenn sie wirklich fast auf einen zeigen, und die
+  Anfassflächen sind größer. Test: `the arrow that is held stays while the body moves far`.
+- *„Beim Größe-Ändern verschwand der Quader nach fröhlichem Größer- und Kleinerziehen.“* Ursache: Zog man ein Maß kleiner, als die Form
+  erlaubt (unter null), blieb der Wert stehen, statt beim kleinsten möglichen anzuhalten. Kleinerziehen ging dann nicht mehr, Größerziehen
+  schon; nach ein paar Runden füllte der Körper das Bild. Jetzt hält das Maß beim kleinsten möglichen Wert an (z. B. 1 mm). Und nahe am
+  Fluchtpunkt einer Achse rast der Wert nicht mehr davon. Tests: `pulled smaller than possible …`, `near the vanishing point …`.
+- *„Tiefe lässt sich nicht ziehen, von vorn schon gar nicht (extra?)“* Ja, das war eine Schutzregel aus AP-1.5: Eine Achse, die weniger als
+  30° neben der Blickrichtung liegt, wurde gesperrt, weil sie sonst davonrannte. Das traf die Tiefe in jeder etwas frontalen Ansicht.
+  Jetzt wird so eine Achse **über den Bildschirm** gezogen, gleichmäßig wie ein Maß quer zum Blick: Der Wert folgt dem Pfeil, der beim
+  Überfahren erscheint (von leicht oben gesehen heißt das: nach unten ziehen macht tiefer). Gilt für Maß-Griffe und Gizmo-Pfeile. Test im
+  Fenster: `app_handle_drag_front`.
 
 **Einschränkungen, Annahmen**
 - Das Fangen an Ecken, Kanten und Mitten anderer Körper kommt mit 1.6c; bis dahin rastet die Lage auf das Raster (ganze mm).

@@ -201,11 +201,16 @@ void GizmoController::refresh() {
             int v;
             int normal;
         } squares[3] = {{"xy", 0, 1, 2}, {"xz", 0, 2, 1}, {"yz", 1, 2, 0}};
+        // Every part has its place in the list, shown or not: the window keeps one place to grab
+        // for each, and a part that is held must never go away under the pointer (perspective
+        // turns an arrow towards the viewer while the body moves).
+        const auto held = [this](const QString& part) { return m_editing && m_moving == part; };
         for (const auto& square : squares) {
             const QString part = QLatin1String(square.part);
-            if (std::abs(QVector3D::dotProduct(kAxes[square.normal], sight)) < kLeastSquareSight) {
-                continue; // seen edge on: it could not be dragged
-            }
+            // Seen edge on, a square is left out (it could not be dragged).
+            const bool shown =
+                held(part) ||
+                std::abs(QVector3D::dotProduct(kAxes[square.normal], sight)) >= kLeastSquareSight;
             const bool pointed = m_pointed == part || (m_editing && m_moving == part);
             const QVector3D u = kAxes[square.u];
             const QVector3D v = kAxes[square.v];
@@ -218,10 +223,13 @@ void GizmoController::refresh() {
             quad.fill = faded(tone, (pointed ? 0.6F : 0.3F) * strength(part));
             quad.line = faded(tone, strength(part));
             quad.lineWidth = pointed ? 2.0F : 1.5F;
-            graphics.quads.push_back(quad);
+            if (shown) {
+                graphics.quads.push_back(quad);
+            }
             const QPointF middle = onScreen((quad.corners[0] + quad.corners[2]) / 2.0F);
             QVariantMap entry;
             entry[QStringLiteral("part")] = part;
+            entry[QStringLiteral("shown")] = shown;
             entry[QStringLiteral("axis")] = kAxisNames[square.normal];
             entry[QStringLiteral("x")] = middle.x();
             entry[QStringLiteral("y")] = middle.y();
@@ -230,18 +238,21 @@ void GizmoController::refresh() {
 
         for (int axis = 0; axis < 3; ++axis) {
             const QVector3D way = kAxes[axis];
-            if (QVector3D::crossProduct(way, sight).length() < interaction::kLeastSight) {
-                continue; // points (nearly) at the viewer: it could not be dragged
-            }
             const QString& part = kAxisNames[axis];
+            // An arrow that points (nearly) at the viewer is a dot on the screen: left out.
+            const bool shown =
+                held(part) || QVector3D::crossProduct(way, sight).length() >= kLeastArrowSight;
             const bool pointed = m_pointed == part || (m_editing && m_moving == part);
             const QColor tone = faded(tones[axis], strength(part));
             const QVector3D start = *at + way * world(kDotGap);
             const QVector3D tip = *at + way * world(arrowPixels * kArrowShare[axis]);
             const QVector3D shaftEnd = tip - way * world(kHeadLength - 3.0);
-            graphics.lines.push_back({start, shaftEnd, pointed ? 4.5F : 3.2F, tone});
             const float grow = pointed ? 1.25F : 1.0F;
-            graphics.heads.push_back({tip, way, kHeadLength * grow, kHeadHalfWidth * grow, tone});
+            if (shown) {
+                graphics.lines.push_back({start, shaftEnd, pointed ? 4.5F : 3.2F, tone});
+                graphics.heads.push_back(
+                    {tip, way, kHeadLength * grow, kHeadHalfWidth * grow, tone});
+            }
             if (m_editing && m_moving == part) {
                 // A thin line along the axis: the way the body can go.
                 graphics.lines.push_back({*at - way * world(kGuidePixels),
@@ -256,6 +267,7 @@ void GizmoController::refresh() {
             out = outLength > 1e-6 ? out / outLength : QPointF(0.0, -1.0);
             QVariantMap entry;
             entry[QStringLiteral("part")] = part;
+            entry[QStringLiteral("shown")] = shown;
             entry[QStringLiteral("axis")] = part;
             entry[QStringLiteral("x")] = head.x();
             entry[QStringLiteral("y")] = head.y();
@@ -279,10 +291,13 @@ void GizmoController::refresh() {
         dot.ring = faded(m_colours.ink, dotStrength);
         dot.ringWidth = 1.5F;
         graphics.dots.push_back(dot);
-        if (std::abs(sight.z()) >= interaction::kLeastPlaneSight) {
+        {
+            // The dot moves across the bed: seen from the side (the bed edge on) it is not grabbed.
             const QPointF middle = onScreen(*at);
             QVariantMap entry;
             entry[QStringLiteral("part")] = free;
+            entry[QStringLiteral("shown")] =
+                held(free) || std::abs(sight.z()) >= interaction::kLeastPlaneSight;
             entry[QStringLiteral("axis")] = QStringLiteral("none");
             entry[QStringLiteral("x")] = middle.x();
             entry[QStringLiteral("y")] = middle.y();
@@ -344,7 +359,11 @@ bool GizmoController::beginDrag(const QString& part, double x, double y) {
     m_planeDrag.reset();
     for (int axis = 0; axis < 3; ++axis) {
         if (part == kAxisNames[axis]) {
-            m_axisDrag = interaction::AxisDrag::grab(pointer, *at, kAxes[axis]);
+            const auto screen = interaction::AxisDrag::screenOf(
+                QPointF(x, y), *at, kAxes[axis], m_viewport->eyePosition(),
+                [this](const QVector3D& p) { return m_viewport->project(p.x(), p.y(), p.z()); });
+            m_axisDrag = interaction::AxisDrag::grab(pointer, *at, kAxes[axis], screen);
+            m_axisPixelsPerMillimetre = screen.pixelsPerMillimetre;
         }
     }
     if (part == QLatin1String("xy") || part == QLatin1String("free")) {
@@ -357,7 +376,13 @@ bool GizmoController::beginDrag(const QString& part, double x, double y) {
     if (!m_axisDrag && !m_planeDrag) {
         return false; // seen end on, or not a part
     }
-    return startMove(part, *at);
+    if (!startMove(part, *at)) {
+        return false;
+    }
+    if (m_axisDrag) {
+        m_pixelsPerMillimetre = m_axisPixelsPerMillimetre; // the grid of the arrow as seen
+    }
+    return true;
 }
 
 bool GizmoController::beginBodyDrag(double x, double y) {
@@ -429,7 +454,7 @@ bool GizmoController::dragTo(double x, double y) {
     const interaction::Ray pointer{ray->origin, ray->direction};
     QVector3D moved;
     if (m_axisDrag) {
-        const auto along = m_axisDrag->moved(pointer);
+        const auto along = m_axisDrag->moved(pointer, QPointF(x, y));
         if (!along) {
             return false; // behind the eye
         }

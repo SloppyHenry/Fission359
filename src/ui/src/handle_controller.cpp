@@ -747,16 +747,17 @@ bool HandleController::beginDrag(int index, double x, double y) {
     m_dragParameter = world["parameter"].toString();
     m_dragIndex = index;
 
-    // The pointer is laid on the plane through the axis that faces the viewer most.
+    // The pointer is laid on the plane through the axis that faces the viewer most; an axis
+    // that points at the viewer is dragged on the screen (AxisDrag).
+    const auto screen = interaction::AxisDrag::screenOf(
+        QPointF(x, y), m_dragOrigin, m_dragAxis, m_viewport->eyePosition(),
+        [this](const QVector3D& p) { return m_viewport->project(p.x(), p.y(), p.z()); });
     m_axisDrag.reset();
     if (const auto ray = m_viewport->rayAt(x, y)) {
         m_axisDrag = interaction::AxisDrag::grab({ray->origin, ray->direction}, m_dragOrigin,
-                                                 m_dragAxis, kLeastSight);
+                                                 m_dragAxis, screen);
     }
-    const QPointF here = m_viewport->project(m_dragOrigin.x(), m_dragOrigin.y(), m_dragOrigin.z());
-    const QVector3D next = m_dragOrigin + m_dragAxis;
-    const QPointF step = m_viewport->project(next.x(), next.y(), next.z()) - here;
-    m_dragPixelsPerMillimetre = std::hypot(step.x(), step.y());
+    m_dragPixelsPerMillimetre = screen.pixelsPerMillimetre;
 
     m_dragging = true;
     m_model->beginChange(m_dragParameter);
@@ -774,19 +775,30 @@ double HandleController::dragTo(double x, double y) {
     }
     // How far along the axis the pointer has gone since it grabbed the handle. The face under the
     // pointer follows it one to one; a shape that grows to both sides changes its value by more.
-    const auto moved = m_axisDrag->moved({ray->origin, ray->direction});
+    const auto moved = m_axisDrag->moved({ray->origin, ray->direction}, QPointF(x, y));
     if (!moved) {
-        return m_dragValue; // behind the eye
+        return m_dragValue; // behind the eye, or beyond the vanishing point of the axis
     }
     const double step = snapStep(m_dragPixelsPerMillimetre);
     double wanted =
         interaction::snapped(m_dragStartValue + m_dragSign * *moved / m_dragTravel, step);
     wanted = std::min(wanted, kLargestMillimetres);
-    // Where the shape stops being possible (a corner radius wider than half the box, no wall left),
-    // the handle stops, too.
-    if (wanted != m_dragValue && m_model->acceptsValue(m_dragParameter, wanted) &&
-        m_model->setStepValue(m_model->currentStep(), m_dragParameter,
-                              QString::number(wanted, 'g', 12))) {
+    // Where the shape stops being possible (a corner radius wider than half the box, no wall left,
+    // a size of zero), the handle stops there, too: as close as the shape allows, on the grid.
+    // (It once stayed where it was, so that pulling a box smaller than possible did nothing.)
+    if (wanted != m_dragValue && !m_model->acceptsValue(m_dragParameter, wanted)) {
+        double possible = m_dragValue;
+        double impossible = wanted;
+        for (int i = 0; i < 48; ++i) {
+            const double middle = (possible + impossible) / 2.0;
+            (m_model->acceptsValue(m_dragParameter, middle) ? possible : impossible) = middle;
+        }
+        const double onGrid = wanted < m_dragValue ? std::ceil(possible / step) * step
+                                                   : std::floor(possible / step) * step;
+        wanted = m_model->acceptsValue(m_dragParameter, onGrid) ? onGrid : m_dragValue;
+    }
+    if (wanted != m_dragValue && m_model->setStepValue(m_model->currentStep(), m_dragParameter,
+                                                       QString::number(wanted, 'g', 12))) {
         m_dragValue = wanted;
         refresh(); // the dot goes with the pointer at once
     }
