@@ -416,15 +416,16 @@ bool RotateController::beginDrag(const QString& part, double x, double y) {
     }
     const QVector3D centre(static_cast<float>(turnCentre->x), static_cast<float>(turnCentre->y),
                            static_cast<float>(turnCentre->z));
+    const double radius = ringRadius(centre);
     m_drag = interaction::RingDrag::grab(
         {ray->origin, ray->direction}, QPointF(x, y), centre, kAxes[ring],
-        [this](const QVector3D& p) { return m_viewport->project(p.x(), p.y(), p.z()); });
+        [this](const QVector3D& p) { return m_viewport->project(p.x(), p.y(), p.z()); }, radius);
     if (!m_drag || !m_model->beginTurn()) {
         m_drag.reset();
         return false;
     }
     m_centre = centre;
-    m_radius = ringRadius(centre);
+    m_radius = radius;
     m_startAngles = *angles;
     m_lastAngles = *angles;
     m_delta = {0.0, 0.0, 0.0};

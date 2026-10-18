@@ -181,6 +181,35 @@ TEST_CASE("ring: seen edge on it is dragged along the ring on the screen",
     CHECK(*drag->moved(ray, start + QPointF(0, 30)) == Approx(0.0).margin(1.0));
 }
 
+TEST_CASE("ring: seen exactly edge on it still turns, wherever on the line it is taken",
+          "[interaction][drag][ring]") {
+    // The ring round X seen straight from above: the eye is in the plane of the ring, which is a
+    // line up the screen. Screen "up" is +Y, 2 pixels to the millimetre; the ring is 20 mm wide.
+    const QVector3D eye(0, 0, 200);
+    const auto project = [](const QVector3D& p) { return QPointF(2.0 * p.x(), -2.0 * p.y()); };
+    for (const float taken : {20.0F, 15.0F, -8.0F}) {
+        CAPTURE(taken);
+        const QVector3D point(0, taken, 0);
+        const QPointF start = project(point);
+        auto drag = RingDrag::grab(through(point, eye), start, {0, 0, 0}, {1, 0, 0}, project, 20.0);
+        REQUIRE(drag);
+        CHECK(drag->onScreen());
+        const Ray ray = through(point, eye);
+        // The top of the ring moves towards -Y (down the screen) when it turns round +X. One ring
+        // radius along the line (40 pixels) is one radian, also at the end of the line, where
+        // the ring runs into the screen.
+        CHECK(*drag->moved(ray, start + QPointF(0, 40)) == Approx(57.29578).margin(0.5));
+        CHECK(*drag->moved(ray, start + QPointF(0, -20)) == Approx(-28.64789).margin(0.5));
+        // Across the line turns nothing.
+        CHECK(*drag->moved(ray, start + QPointF(30, 0)) == Approx(0.0).margin(1.0));
+        // The wedge starts where the ring was taken: on the half towards the eye, under the
+        // pointer.
+        const QVector3D grabbed = drag->ringPoint(drag->grabbedAt(), 20.0);
+        CHECK(grabbed.z() >= 0.0F);
+        CHECK(grabbed.y() == Approx(taken).margin(1.5));
+    }
+}
+
 TEST_CASE("ring: the turning step is 15 degrees", "[interaction][drag][ring]") {
     CHECK(snapped(7.0, fission::interaction::kTurnStepDegrees) == Approx(0.0));
     CHECK(snapped(8.0, fission::interaction::kTurnStepDegrees) == Approx(15.0));

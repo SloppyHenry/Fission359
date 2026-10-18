@@ -824,6 +824,17 @@ Beschriftungen und Anfassflächen.
 5. Rechts bei „Drehung“ einen Winkel eintippen (auch eine Formel wie `45*2`). Links **Größe** wählen: die Punkte sitzen auf dem
    gedrehten Körper und lassen sich ziehen.
 
+**Nachbesserung: Ring von der Kante (2026-10-18, nach der ersten CI)**
+- Die Linux-CI scheiterte an „ein Ring, den man von der Kante sieht, dreht noch“: Von genau oben auf den X-Ring geschaut, drehte Ziehen
+  nichts. Ursache: Das Programm nahm die Laufrichtung des Rings an der Stelle unter dem Zeiger. Am Ende der Linie läuft der Ring aber
+  geradewegs in den Bildschirm hinein, dort bewegt sich auf dem Bildschirm nichts. Auf dem Mac ging es nur, weil die Rundung zufällig
+  einen Hauch Bewegung übrig ließ.
+- Jetzt dreht ein Ring von der Kante immer **entlang seiner Linie auf dem Bildschirm**, wie ein Rad von der Seite: Zieht man den Zeiger
+  um den Radius des Rings, dreht der Körper um etwa 57°, egal wo auf der Linie man ihn anfasst. Der Keil beginnt
+  dort, wo man angefasst hat (vorher immer an derselben Stelle des Rings).
+- Test: `ring: seen exactly edge on it still turns, wherever on the line it is taken` (Auge genau in der Ring-Ebene, angefasst am Ende,
+  nahe und jenseits der Mitte).
+
 **Bekannte Einschränkungen, Annahmen**
 - Beschriftungen und Bänder der Maß-Punkte: Bei einem gedrehten Körper laufen die Bänder nicht in Bett-Richtung und werden nicht
   gezeichnet; die Beschriftungen stehen dann etwas lose in der Nähe (Folgearbeit: Bänder entlang der gedrehten Achsen).
