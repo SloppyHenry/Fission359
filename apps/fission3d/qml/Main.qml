@@ -154,10 +154,12 @@ Window {
     }
 
     // What the tool of the palette shows on the chosen body (AP-1.6, docs/08-gestaltung.md §5):
-    // "Move" the gizmo and the measure bands, "Size" the dots for the sizes, "Select" nothing.
+    // "Move" the gizmo and the measure bands, "Rotate" the rings, "Size" the dots for the sizes,
+    // "Select" nothing.
     // A body can be dragged to move it in every tool but "Select".
     Binding { target: Handles; property: "mode"; value: root.tool === "size" ? "size" : root.tool === "move" ? "labels" : "off" }
     Binding { target: Gizmo; property: "enabled"; value: root.tool === "move" }
+    Binding { target: Rotate; property: "enabled"; value: root.tool === "rotate" }
 
     function run(id) {
         switch (id) {
@@ -312,16 +314,17 @@ Window {
     Shortcut {
         sequence: "Escape"
         enabled: Selection.count > 0 && !root.typing && !Handles.editing && !Gizmo.editing
+                 && !Rotate.editing
         onActivated: root.run("selectnone")
     }
     Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
     Shortcut { sequence: "Home"; onActivated: root.run("view.home") }
-    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.front") }
-    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.back") }
-    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.left") }
-    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.right") }
-    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.top") }
-    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.bottom") }
+    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.front") }
+    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.back") }
+    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.left") }
+    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.right") }
+    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.top") }
+    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.bottom") }
     // A shape that was just put down waits for its sizes: digits type them (they are the views
     // again as soon as something else is chosen). Tab or Enter start typing, too.
     Repeater {
@@ -334,10 +337,12 @@ Window {
 
             Shortcut {
                 sequence: digit.modelData
-                enabled: (Handles.armed || Handles.editing || Gizmo.editing) && !handleLayer.typing
-                         && !gizmoLayer.typing && !root.typing
+                enabled: (Handles.armed || Handles.editing || Gizmo.editing || Rotate.editing)
+                         && !handleLayer.typing && !gizmoLayer.typing && !rotateLayer.typing
+                         && !root.typing
                 onActivated: Gizmo.editing ? gizmoLayer.startTyping(digit.modelData)
-                                           : handleLayer.startTyping(digit.modelData)
+                             : Rotate.editing ? rotateLayer.startTyping(digit.modelData)
+                                              : handleLayer.startTyping(digit.modelData)
             }
         }
     }
@@ -349,7 +354,7 @@ Window {
     // Arrow keys move the chosen body by 1 mm (with Shift 10 mm) along the axis of the bed that
     // is closest to the way on screen; Page up and Page down lift and lower it (like Tinkercad).
     readonly property bool nudgeKeys: Selection.count > 0 && root.tool !== "select" && !root.typing
-                                      && !Gizmo.editing && !Handles.editing
+                                      && !Gizmo.editing && !Handles.editing && !Rotate.editing
     Shortcut { sequence: "Left"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(-1, 0, 0, false) }
     Shortcut { sequence: "Right"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(1, 0, 0, false) }
     Shortcut { sequence: "Up"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(0, 1, 0, false) }
@@ -532,6 +537,13 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            RotateLayer {
+                id: rotateLayer
+
+                anchors.fill: parent
+                obstacles: viewOverlay.obstacles
+            }
+
             BedLabels {
                 anchors.fill: parent
                 viewport: viewport
@@ -621,6 +633,7 @@ Window {
         toolName: root.toolName(root.tool)
         hint: Placement.active ? qsTr("Let go to put the shape down here. Esc takes it back.")
             : Gizmo.editing ? qsTr("Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.")
+            : Rotate.editing ? qsTr("Type an angle to turn exactly (Tab for the next ring), Enter accepts, Esc puts it back.")
             : Handles.editing ? qsTr("Enter accepts, Tab goes to the next size, Esc leaves everything as it was.")
             : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
@@ -728,6 +741,7 @@ Window {
         case "setText": return qsTr("Text of %1 changed").arg(body)
         case "holeBody": return qsTr("%1 made a hole").arg(body)
         case "moveBody": return qsTr("%1 moved").arg(body)
+        case "rotateBody": return qsTr("%1 turned").arg(body)
         case "solidBody": return qsTr("%1 made a part again").arg(body)
         case "setLabel": return qsTr("Step renamed")
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
@@ -867,6 +881,7 @@ Window {
         name: value.name,
         label: valueLabel(value.name),
         group: value.group,
+        axis: value.axis,
         expression: value.expression,
         value: value.value,
         kind: value.kind,

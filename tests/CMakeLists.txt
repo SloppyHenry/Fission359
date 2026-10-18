@@ -144,6 +144,30 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=0,8,220 --simulate "tool:size;put:box;grab:depth,0,60,10;expect:depth,30;grab:width,-400,0,10;near:width,1")
   set_tests_properties(app_handle_drag_front PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.6b: a ring of the tool "Rotate" is taken and turned with the real mouse path of the
+  # window, in steps of 15 degrees: once round Z and then round X seen from the side (a body that
+  # was spun 90 degrees round Z and is then tipped about the X axis of the bed ends with the tip
+  # in its Y value), once round X seen from straight above, where the ring is edge on and goes by
+  # the pointer along it on screen.
+  add_test(NAME app_ring_turn
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-ring-turn.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "tool:rotate;put:box;ring:z,90,12;near:rotZ,90;ring:x,-45,12;least:rotY,45")
+  set_tests_properties(app_ring_turn PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  add_test(NAME app_ring_turn_edge_on
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-ring-edge.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "tool:rotate;put:box;ring:x,60,10;least:rotX,15")
+  set_tests_properties(app_ring_turn_edge_on PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # The size handles of a turned body go with it and still change their value.
+  add_test(NAME app_turned_body_handles
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-turned-handles.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "tool:size;put:box;type:20,tab,20,tab,50,enter;tool:rotate;ring:y,45,8;ring:z,30,8;tool:size;grab:height,0,-60,8;least:height,56")
+  set_tests_properties(app_turned_body_handles PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

@@ -17,6 +17,7 @@ using Catch::Approx;
 using fission::interaction::AxisDrag;
 using fission::interaction::PlaneDrag;
 using fission::interaction::Ray;
+using fission::interaction::RingDrag;
 using fission::interaction::snapped;
 using fission::interaction::snapStep;
 
@@ -112,4 +113,76 @@ TEST_CASE("drag: positions snap to the step of the zoom", "[interaction][drag]")
     CHECK(snapped(12.26, 0.1) == Approx(12.3));
     CHECK(snapped(-0.2, 1.0) == 0.0);
     CHECK_FALSE(std::signbit(snapped(-0.2, 1.0))); // no "-0" in a field
+}
+
+TEST_CASE("ring: going round the axis turns by the same angle", "[interaction][drag][ring]") {
+    // Looking down onto a ring round Z, 3 pixels per millimetre.
+    const QVector3D eye(0, 0, 200);
+    const auto project = [](const QVector3D& p) { return QPointF(3.0 * p.x(), -3.0 * p.y()); };
+    auto drag =
+        RingDrag::grab(through({10, 0, 0}, eye), QPointF(30, 0), {0, 0, 0}, {0, 0, 1}, project);
+    REQUIRE(drag);
+    CHECK_FALSE(drag->onScreen());
+    CHECK(*drag->moved(through({10, 0, 0}, eye), {}) == Approx(0.0).margin(1e-4));
+    // A quarter of the way round counter-clockwise (seen from above) is +90 degrees.
+    CHECK(*drag->moved(through({0, 10, 0}, eye), {}) == Approx(90.0).margin(1e-3));
+    CHECK(*drag->moved(through({-10, 0, 0}, eye), {}) == Approx(180.0).margin(1e-3));
+    // On round the same way: it goes on counting past 180 …
+    CHECK(*drag->moved(through({0, -10, 0}, eye), {}) == Approx(270.0).margin(1e-3));
+    CHECK(*drag->moved(through({10, 0, 0}, eye), {}) == Approx(360.0).margin(1e-3));
+    // … and back again.
+    CHECK(*drag->moved(through({0, -10, 0}, eye), {}) == Approx(270.0).margin(1e-3));
+    // How far from the middle the pointer is does not matter.
+    CHECK(*drag->moved(through({-40, 0, 0}, eye), {}) == Approx(180.0).margin(1e-3));
+}
+
+TEST_CASE("ring: each ring turns the right way round its own axis", "[interaction][drag][ring]") {
+    const QVector3D eye(100, 100, 100);
+    const auto project = [](const QVector3D& p) { return QPointF(p.x(), p.y()); };
+    // A point on the ring, then the point a quarter of a turn on (right-hand rule).
+    const struct {
+        QVector3D axis;
+        QVector3D from;
+        QVector3D to;
+    } rings[3] = {{{1, 0, 0}, {0, 10, 0}, {0, 0, 10}},
+                  {{0, 1, 0}, {0, 0, 10}, {10, 0, 0}},
+                  {{0, 0, 1}, {10, 0, 0}, {0, 10, 0}}};
+    for (const auto& ring : rings) {
+        auto drag = RingDrag::grab(through(ring.from, eye), {}, {0, 0, 0}, ring.axis, project);
+        REQUIRE(drag);
+        CHECK(*drag->moved(through(ring.to, eye), {}) == Approx(90.0).margin(1e-2));
+    }
+}
+
+TEST_CASE("ring: seen edge on it is dragged along the ring on the screen",
+          "[interaction][drag][ring]") {
+    // A ring round Z seen from 10 degrees above its plane: a thin ellipse. The camera looks along
+    // (0, cos, -sin); the screen's "up" is (0, sin, cos).
+    constexpr double kAbove = 10.0 * 3.14159265358979323846 / 180.0;
+    const float c = static_cast<float>(std::cos(kAbove));
+    const float s = static_cast<float>(std::sin(kAbove));
+    const QVector3D eye(0, -200 * c, 200 * s);
+    const QVector3D up(0, s, c);
+    const auto project = [up](const QVector3D& p) {
+        return QPointF(2.0 * p.x(), -2.0 * QVector3D::dotProduct(p, up));
+    };
+    // Grabbed on the near side of the ring, where it runs across the screen.
+    const QPointF start = project({0, -20, 0});
+    auto drag = RingDrag::grab(through({0, -20, 0}, eye), start, {0, 0, 0}, {0, 0, 1}, project);
+    REQUIRE(drag);
+    CHECK(drag->onScreen());
+    const Ray ray = through({0, -20, 0}, eye);
+    CHECK(*drag->moved(ray, start) == Approx(0.0).margin(1e-6));
+    // Counter-clockwise seen from above runs to the right there. The ring is 20 mm wide at
+    // 2 pixels per millimetre: 40 pixels to the radian.
+    CHECK(*drag->moved(ray, start + QPointF(40, 0)) == Approx(57.29578).margin(0.5));
+    CHECK(*drag->moved(ray, start + QPointF(-20, 0)) == Approx(-28.64789).margin(0.5));
+    // Up and down the screen turns nothing there.
+    CHECK(*drag->moved(ray, start + QPointF(0, 30)) == Approx(0.0).margin(1.0));
+}
+
+TEST_CASE("ring: the turning step is 15 degrees", "[interaction][drag][ring]") {
+    CHECK(snapped(7.0, fission::interaction::kTurnStepDegrees) == Approx(0.0));
+    CHECK(snapped(8.0, fission::interaction::kTurnStepDegrees) == Approx(15.0));
+    CHECK(snapped(-100.0, fission::interaction::kTurnStepDegrees) == Approx(-105.0));
 }

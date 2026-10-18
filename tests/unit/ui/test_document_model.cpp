@@ -169,12 +169,18 @@ TEST_CASE("values of the chosen step, formulas stay visible", "[ui][document-mod
     f.model->selectStep(0);
     CHECK(f.model->currentStep() == 0);
     QVariantList values = f.model->stepValues();
-    REQUIRE(values.size() == 7); // width depth height cornerRadius x y z
+    REQUIRE(values.size() == 10); // width depth height cornerRadius x y z rotX rotY rotZ
     CHECK(values[0].toMap()["name"].toString() == "width");
     CHECK(values[0].toMap()["group"].toString() == "size");
     CHECK(values[0].toMap()["expression"].toString().isEmpty()); // typed as a plain number
     CHECK(values[3].toMap()["name"].toString() == "cornerRadius");
     CHECK(values[4].toMap()["group"].toString() == "position");
+    CHECK(values[4].toMap()["axis"].toString() == "x");
+    CHECK(values[7].toMap()["name"].toString() == "rotX");
+    CHECK(values[7].toMap()["group"].toString() == "rotation");
+    CHECK(values[7].toMap()["axis"].toString() == "x");
+    CHECK(values[7].toMap()["kind"].toString() == "angle");
+    CHECK(values[9].toMap()["axis"].toString() == "z");
 
     f.model->setStepValue(0, "depth", "10 + 5");
     f.model->waitForCalculation();

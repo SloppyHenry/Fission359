@@ -61,3 +61,20 @@ Wir wählen **Option A**:
 ## Belege
 - Zerlegung und Abschlussvermerk von AP-1.6 in `docs/arbeitspakete/phase-1-erster-koerper.md`.
 - Tests: `tests/unit/ui/test_gizmo.cpp` (ein Zug = ein Schritt, Lage-Werte geändert, Esc nimmt zurück).
+
+## Ergänzung 2026-10-18 (AP-1.6b): Die Drehung
+Entschieden vom Product Owner („ok zu allen Empfehlungen“).
+
+1. **Drei Winkel am erzeugenden Schritt.** `rotX`, `rotY`, `rotZ` (Grad, Standard 0) sind gewöhnliche Werte jedes Schritts, der einen
+   Körper an einen Ort setzt, neben `x`, `y`, `z`. Sie stehen im Panel unter „Drehung“ und dürfen Formeln sein.
+2. **Feste Reihenfolge:** zuerst um die X-Achse des Betts, dann um Y, dann um Z (Matrix Rz·Ry·Rx), alle Achsen fest im Raum und durch die
+   **Mitte der Hülle** der ungedrehten Form (`FeatureType::bodyCentre`). Die Lage `x, y, z` bleibt der Fußpunkt der ungedrehten Form. Eine
+   Drehung flach auf dem Bett (Z) ist so immer genau ein Wert. Der Kernel dreht den fertigen Körper (`GeometryKernel::rotate`) und behält
+   Flächen, Reihenfolge und Namen: „oben“ bleibt „oben“, auch wenn es nach der Seite zeigt.
+3. **Ringe in Bett-Richtung.** Das Werkzeug „Drehen“ dreht um die festen Achsen des Betts (wie das Gizmo des Verschiebens); das Programm
+   rechnet die drei Winkel nach jedem Zug aus der entstandenen Drehung neu (`geo::anglesOf`, die dem alten Wert nächste Darstellung, damit
+   nichts springt). Nur Winkel, die sich wirklich ändern, werden zu Zahlen (Punkt 5 oben gilt weiter). Verworfen: Kardanringe, bei denen
+   jeder Ring genau einen Wert ändert, aber schräg steht, sobald der Körper gedreht ist.
+4. **Verweise** (Punkt 4 oben) vergleichen Elemente in Körper-Koordinaten, die Drehung ist starr und fällt damit heraus.
+5. **Nach dem Drehen bleibt die Mitte stehen.** Der Körper kann schweben oder im Bett stecken; „Aufs Bett legen“ (AP-1.6e) holt ihn zurück.
+   Verworfen: selbsttätiges Absetzen, weil es `z` auch dort überschriebe, wo eine Formel steht.

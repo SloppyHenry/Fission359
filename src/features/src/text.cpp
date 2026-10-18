@@ -29,11 +29,8 @@ public:
     int version() const override { return 1; }
 
     std::vector<ParamSpec> parameters() const override {
-        return {{"size", QuantityKind::length, "10"},
-                {"height", QuantityKind::length, "2"},
-                {"x", QuantityKind::length, "0"},
-                {"y", QuantityKind::length, "0"},
-                {"z", QuantityKind::length, "0"}};
+        return withPlace(
+            {{"size", QuantityKind::length, "10"}, {"height", QuantityKind::length, "2"}});
     }
 
     std::vector<TextFieldSpec> texts() const override {
@@ -57,7 +54,8 @@ public:
                                  *style};
         const geo::Point3d base{valueOf(input.params, "x"), valueOf(input.params, "y"),
                                 valueOf(input.params, "z")};
-        geo::NamedSolid made = context.kernel.makePrimitive(spec, base);
+        geo::NamedSolid made = turnedBody(input, context, context.kernel.makePrimitive(spec, base),
+                                          bodyCentre(input.params));
         FeatureResult result;
         result.outputs.push_back(
             {input.feature.outputs.at(0), std::move(made.solid), std::move(made.faces)});

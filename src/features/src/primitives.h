@@ -91,6 +91,26 @@ inline void markRole(std::vector<core::HandleSpec>& out, std::size_t first, core
     }
 }
 
+/// The values a type lists: its own, then the place (x, y, z) and the turn.
+inline std::vector<core::ParamSpec> withPlace(std::vector<core::ParamSpec> own) {
+    for (const char* name : {"x", "y", "z"}) {
+        own.push_back({name, core::QuantityKind::length, "0"});
+    }
+    for (core::ParamSpec& spec : core::turnParameters()) {
+        own.push_back(std::move(spec));
+    }
+    return own;
+}
+
+/// The body as the step made it, turned by the step's `rotX/rotY/rotZ` about `centre` (nothing
+/// done when the body is not turned). The faces keep their names (`GeometryKernel::rotate`).
+inline geo::NamedSolid turnedBody(const core::ExecuteInput& input,
+                                  const core::ExecuteContext& context, geo::NamedSolid made,
+                                  const geo::Point3d& centre) {
+    const geo::Angles angles = core::FeatureType::turnOf(input.params);
+    return angles.isZero() ? std::move(made) : context.kernel.rotate(made, centre, angles);
+}
+
 inline double valueOf(const core::ResolvedParams& params, const char* name) {
     return params.at(name).value;
 }

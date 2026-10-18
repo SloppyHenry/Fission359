@@ -34,6 +34,43 @@ std::vector<std::string> FeatureRegistry::ids() const {
     return result;
 }
 
+std::vector<ParamSpec> turnParameters() {
+    return {{"rotX", QuantityKind::angle, "0"},
+            {"rotY", QuantityKind::angle, "0"},
+            {"rotZ", QuantityKind::angle, "0"}};
+}
+
+geo::Point3d FeatureType::bodyCentre(const ResolvedParams& params) const {
+    const auto value = [&params](const char* name) {
+        const auto found = params.find(name);
+        return found != params.end() ? found->second.value : 0.0;
+    };
+    return {value("x"), value("y"), value("z") + value("height") / 2.0};
+}
+
+geo::Angles FeatureType::turnOf(const ResolvedParams& params) {
+    const auto value = [&params](const char* name) {
+        const auto found = params.find(name);
+        return found != params.end() ? found->second.value : 0.0;
+    };
+    return {value("rotX"), value("rotY"), value("rotZ")};
+}
+
+std::vector<HandleSpec> FeatureType::placedHandles(const ResolvedParams& params) const {
+    std::vector<HandleSpec> out = handles(params);
+    const geo::Angles angles = turnOf(params);
+    if (angles.isZero()) {
+        return out;
+    }
+    const geo::Point3d centre = bodyCentre(params);
+    for (HandleSpec& handle : out) {
+        handle.origin = geo::rotatedAbout(handle.origin, centre, angles);
+        handle.direction = geo::rotatedDirection(handle.direction, angles);
+        handle.riseDirection = geo::rotatedDirection(handle.riseDirection, angles);
+    }
+    return out;
+}
+
 FeatureDraft defaultDraft(const FeatureType& type) {
     FeatureDraft draft;
     draft.type = std::string(type.id());

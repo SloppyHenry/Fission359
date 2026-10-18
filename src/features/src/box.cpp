@@ -23,10 +23,10 @@ public:
     int version() const override { return 1; }
 
     std::vector<ParamSpec> parameters() const override {
-        return {{"width", QuantityKind::length, "20"},  {"depth", QuantityKind::length, "20"},
-                {"height", QuantityKind::length, "20"}, {"cornerRadius", QuantityKind::length, "0"},
-                {"x", QuantityKind::length, "0"},       {"y", QuantityKind::length, "0"},
-                {"z", QuantityKind::length, "0"}};
+        return withPlace({{"width", QuantityKind::length, "20"},
+                          {"depth", QuantityKind::length, "20"},
+                          {"height", QuantityKind::length, "20"},
+                          {"cornerRadius", QuantityKind::length, "0"}});
     }
 
     std::optional<FeatureIssue> validate(const ResolvedParams& params) const override {
@@ -52,7 +52,9 @@ public:
         const geo::Point3d corner{valueOf(input.params, "x") - width / 2.0,
                                   valueOf(input.params, "y") - depth / 2.0,
                                   valueOf(input.params, "z")};
-        geo::NamedSolid made = context.kernel.makeBox(width, depth, height, corner, cornerRadius);
+        geo::NamedSolid made = turnedBody(
+            input, context, context.kernel.makeBox(width, depth, height, corner, cornerRadius),
+            bodyCentre(input.params));
         FeatureResult result;
         result.outputs.push_back(
             {input.feature.outputs.at(0), std::move(made.solid), std::move(made.faces)});

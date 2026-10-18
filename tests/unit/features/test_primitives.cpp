@@ -256,7 +256,7 @@ TEST_CASE("a default draft has every value and its body", "[features]") {
     const FeatureDraft draft = defaultDraft(*setup.registry.find("box"));
     CHECK(draft.type == "box");
     CHECK(draft.newBodies == 1);
-    CHECK(draft.params.size() == 7);
+    CHECK(draft.params.size() == 10); // four sizes, the place and the turn
     CHECK(draft.params.at("width").expression == "20");
     CHECK(draft.params.at("x").kind == QuantityKind::length);
 }
@@ -383,4 +383,143 @@ TEST_CASE("shapes with impossible values are stopped before the kernel", "[featu
     stopped("star", {{"points", 2}}, "points");
     stopped("pyramid", {{"depth", 0}}, "depth");
     stopped("wedge", {{"height", -4}}, "height");
+}
+
+namespace {
+
+ResolvedParams resolvedFor(const FeatureType& type, const std::map<std::string, double>& values) {
+    ResolvedParams all;
+    for (const ParamSpec& spec : type.parameters()) {
+        all[spec.name] = Quantity{std::stod(spec.defaultExpression), {1, 0}};
+    }
+    for (const auto& [name, value] : values) {
+        all[name].value = value;
+    }
+    return all;
+}
+
+// One of every kind of shape, with a place that is not the origin.
+const std::vector<std::pair<const char*, std::map<std::string, double>>> kTurnCases{
+    {"box", {{"width", 20}, {"depth", 30}, {"height", 40}, {"cornerRadius", 4}}},
+    {"cylinder", {{"radius", 8}, {"height", 25}}},
+    {"sphere", {{"radius", 10}}},
+    {"hemisphere", {{"radius", 10}}},
+    {"cone", {{"radius", 10}, {"topRadius", 4}, {"height", 24}}},
+    {"torus", {{"radius", 15}, {"tubeRadius", 5}}},
+    {"tube", {{"radius", 10}, {"wall", 2}, {"height", 30}}},
+    {"prism", {{"sides", 5}, {"radius", 10}, {"height", 7}}},
+    {"pyramid", {{"width", 30}, {"depth", 20}, {"height", 12}}},
+    {"wedge", {{"width", 20}, {"depth", 30}, {"height", 10}}},
+    {"star", {{"points", 5}, {"radius", 20}, {"innerRadius", 8}, {"height", 5}}},
+};
+
+} // namespace
+
+TEST_CASE("turn: every shape turns about the middle of the box round it", "[features][turn]") {
+    Setup setup;
+    for (const auto& [name, values] : kTurnCases) {
+        INFO(name);
+        std::map<std::string, double> placed = values;
+        placed["x"] = 12;
+        placed["y"] = -7;
+        placed["z"] = 3;
+        const FeatureType& type = *setup.registry.find(name);
+        const Made made = make(setup, name, placed);
+        const fission::geo::Point3d centre = type.bodyCentre(resolvedFor(type, placed));
+        // A star or a prism with an odd number of corners turns about its axis, which is not the
+        // middle of its box in Y; there the point must still lie inside the box.
+        const bool onAxis = std::string(name) == "prism" || std::string(name) == "star";
+        CHECK(centre.x == Approx((made.report.boxMin.x + made.report.boxMax.x) / 2).margin(1e-6));
+        if (onAxis) {
+            CHECK(centre.y == Approx(-7.0).margin(1e-9));
+            CHECK(centre.y > made.report.boxMin.y);
+            CHECK(centre.y < made.report.boxMax.y);
+        } else {
+            CHECK(centre.y ==
+                  Approx((made.report.boxMin.y + made.report.boxMax.y) / 2).margin(1e-6));
+        }
+        CHECK(centre.z == Approx((made.report.boxMin.z + made.report.boxMax.z) / 2).margin(1e-6));
+    }
+}
+
+TEST_CASE("turn: a turned shape is the same body, valid, with the same faces and names",
+          "[features][turn]") {
+    Setup setup;
+    for (const auto& [name, values] : kTurnCases) {
+        INFO(name);
+        const Made flat = make(setup, name, values);
+        std::map<std::string, double> turnedValues = values;
+        turnedValues["rotX"] = 30;
+        turnedValues["rotY"] = 20;
+        turnedValues["rotZ"] = 50;
+        const Made turned = make(setup, name, turnedValues);
+        CHECK(turned.report.valid);
+        CHECK(turned.report.volume == Approx(flat.report.volume).epsilon(1e-6));
+        CHECK(turned.report.area == Approx(flat.report.area).epsilon(1e-6));
+        CHECK(turned.report.faces == flat.report.faces);
+        CHECK_FALSE(checkNamingContract(turned.result.outputs[0], turned.report).has_value());
+        const auto& a = flat.result.outputs[0].faces;
+        const auto& b = turned.result.outputs[0].faces;
+        REQUIRE(a.size() == b.size());
+        for (std::size_t i = 0; i < a.size(); ++i) {
+            CHECK(a[i].role == b[i].role);
+        }
+    }
+}
+
+TEST_CASE("turn: the top of a box that lies on its side faces sideways", "[features][turn]") {
+    Setup setup;
+    const Made lying =
+        make(setup, "box", {{"width", 20}, {"depth", 20}, {"height", 40}, {"rotX", 90}});
+    const FeatureOutput& output = lying.result.outputs[0];
+    const auto normal = faceNormal(lying.mesh, faceOf(output, "top"));
+    REQUIRE(normal.has_value());
+    // Tipped 90 degrees about X, up becomes -Y.
+    CHECK((*normal)[0] == Approx(0.0).margin(1e-4));
+    CHECK((*normal)[1] == Approx(-1.0).margin(1e-4));
+    CHECK((*normal)[2] == Approx(0.0).margin(1e-4));
+    // Its middle stays where it was, 20 above the plane.
+    CHECK((lying.report.boxMin.z + lying.report.boxMax.z) / 2 == Approx(20.0).margin(1e-6));
+}
+
+TEST_CASE("turn: the handles turn with the body", "[features][turn]") {
+    Setup setup;
+    const FeatureType& box = *setup.registry.find("box");
+    ResolvedParams p = resolvedFor(box, {{"width", 20}, {"depth", 20}, {"height", 40}});
+    const auto upright = box.placedHandles(p);
+    CHECK(upright.size() == box.handles(p).size());
+
+    p["rotX"].value = 90;
+    const auto lying = box.placedHandles(p);
+    for (const HandleSpec& handle : lying) {
+        if (handle.parameter != "height") {
+            continue;
+        }
+        // Was on the top (z = 40) pointing up; now at the end that points to -Y.
+        CHECK(handle.origin.x == Approx(0.0).margin(1e-9));
+        CHECK(handle.origin.y == Approx(-20.0).margin(1e-9));
+        CHECK(handle.origin.z == Approx(20.0).margin(1e-9));
+        CHECK(handle.direction.y == Approx(-1.0).margin(1e-9));
+        CHECK(handle.direction.z == Approx(0.0).margin(1e-9));
+    }
+    // The rise of a sphere's handle turns too (up becomes -Y).
+    const FeatureType& sphere = *setup.registry.find("sphere");
+    ResolvedParams s = resolvedFor(sphere, {{"radius", 10}});
+    s["rotX"].value = 90;
+    for (const HandleSpec& handle : sphere.placedHandles(s)) {
+        CHECK(handle.riseDirection.y == Approx(-1.0).margin(1e-9));
+    }
+}
+
+TEST_CASE("turn: no turn at all costs the kernel nothing", "[features][turn]") {
+    Setup setup;
+    const FeatureType& box = *setup.registry.find("box");
+    for (const char* name : {"rotX", "rotY", "rotZ"}) {
+        const auto specs = box.parameters();
+        const auto found = std::find_if(specs.begin(), specs.end(),
+                                        [&](const ParamSpec& s) { return s.name == name; });
+        REQUIRE(found != specs.end());
+        CHECK(found->kind == QuantityKind::angle);
+        CHECK(found->defaultExpression == "0");
+    }
 }

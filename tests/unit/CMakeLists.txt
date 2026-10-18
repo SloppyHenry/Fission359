@@ -14,6 +14,7 @@ add_executable(fission_unit_tests
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp
+  geometry/test_rotation.cpp
   geometry/test_text.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
@@ -31,6 +32,7 @@ add_executable(fission_unit_tests
   ui/test_viewport_navigation.cpp
   ui/test_printer_catalog.cpp
   ui/test_gizmo.cpp
+  ui/test_rotate.cpp
   interaction/test_drag.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE

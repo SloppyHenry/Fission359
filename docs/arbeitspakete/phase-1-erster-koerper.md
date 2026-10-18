@@ -640,7 +640,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
-**Status:** in Arbeit (1.6a erledigt) · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Status:** in Arbeit (1.6a erledigt, 1.6b1 in Review) · **Größe:** L · **Abhängigkeiten:** AP-1.4
 
 **Umfang:**
 - Gizmo: Verschieben (Achsen und Ebenen), Drehen (Ringe), **proportional** Vergrößern/Verkleinern (Eck-Griff oder Prozentangabe; der Eck-Griff ist immer gleichmäßig)
@@ -663,7 +663,10 @@ Beschriftungen und Anfassflächen.
 | Teil | Status | Inhalt |
 |---|---|---|
 | **a) Verschieben** | erledigt (2026-10-18, PR #27) | ADR-0010 (wo eine Verschiebung im Rezept lebt); die Werkzeuge der Palette wirken (Wählen, Verschieben, Größe); Gizmo mit Achsen-Pfeilen und Ebenen-Quadraten; **Körper selbst ziehen verschiebt ihn** auf der Arbeitsebene (Rahmen dann nur noch auf leerem Grund); Wertblase, Tippen mit `Tab` X → Y → Z, Enter, Esc; Raster in ganzen mm wie bisher |
-| **b) Drehen und proportional** | offen | Die Lage bekommt eine Drehung; Ringe, 15°-Schritte, Tippen in Grad; Drehen um die Körpermitte; Eck-Griff (Werkzeug Größe) und Prozentangabe ändern **alle Maße im gleichen Verhältnis** (Parameter, nie Skalieren, Regel 11); Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus |
+| **b) Drehen und proportional** | in Arbeit | Zerlegt (2026-10-18) in b1 bis b3, je ein PR: |
+| &nbsp;&nbsp;**b1) Drehen** | Review | Die Lage bekommt eine Drehung (drei Winkel); der Kernel dreht Körper und behält die Flächen-Namen; Werkzeug „Drehen“ mit Ringen, 15°-Schritten, Tippen in Grad |
+| &nbsp;&nbsp;**b2) Gleichmäßig vergrößern** | offen | Eck-Griff (Werkzeug Größe) und Prozentangabe ändern **alle Maße im gleichen Verhältnis** (Parameter, nie Skalieren, Regel 11); Formeln bleiben als `(Formel) × Faktor` erhalten |
+| &nbsp;&nbsp;**b3) Ablegen an Wänden** | offen | Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus (Unterseite auf der Fläche; ⌥ = aufrecht) |
 | **c) Fangen** | offen | Adaptives Raster; Fangen an Ecken, Kantenmitten, Kreismitten, Flächenmitten anderer Körper und am Bett; Ausrichtungslinien; Fang-Marke in der Ansicht; ⇧ während des Ziehens schaltet das Fangen aus; gilt auch für Maß-Griffe und das Ablegen |
 | **d) Abstandsmaße** | offen | Beim Verschieben Abstände zu den nächsten Kanten anderer Körper und zum Bettrand als Maßband in der Ansicht; ein Klick macht die Zahl editierbar („5 mm vom Rand“), Tippen setzt den Körper genau dorthin; Akzeptanzkriterium 1 als automatischer Ablauf |
 | **e) Rest** | offen | Ausrichten mehrerer Körper (bündig, mittig); „Aufs Bett legen“; „Auf Fläche legen“ (auch an Wänden); Kopieren, Einfügen, Duplizieren (⌘D) mit Versatz |
@@ -762,7 +765,76 @@ Beschriftungen und Anfassflächen.
 - Die Wertblase zeigt den **Abstand** des Zugs, die Felder rechts die **Lage** (Annahme: so sieht man beim Ziehen, wie weit, und rechts,
   wo). Getippt wird ebenfalls der Abstand.
 - Bild↑/Bild↓ fehlen auf Mac-Laptops als Taste (dort Fn+↑/↓).
-- „Drehen“ zeigt noch nichts (1.6b; Auftrag: [docs/prompts/ap-1.6b-drehen.md](../prompts/ap-1.6b-drehen.md)).
+- „Drehen“ kam mit 1.6b1 (siehe unten; Auftrag: [docs/prompts/ap-1.6b-drehen.md](../prompts/ap-1.6b-drehen.md)).
+
+#### Festlegungen 1.6b (Product Owner, 2026-10-18: „leg los“ zu allen Empfehlungen)
+- **Drehung = drei Winkel** (`rotX`, `rotY`, `rotZ`, Grad) als gewöhnliche Werte jeder Form, in fester Reihenfolge: erst um X, dann um Y,
+  dann um Z, alle um die **festen** Achsen des Betts ([ADR-0010](../adr/0010-lage-im-rezept.md), Ergänzung). Ringe stehen immer in
+  Bett-Richtung; das Programm rechnet die Winkel nach jeder Ring-Drehung neu. Eine Drehung flach auf dem Bett (Z) ist so immer genau
+  ein Wert.
+- **Gleichmäßig vergrößern:** Zahlen werden mit dem Faktor multipliziert, Formeln bleiben als `(Formel) × Faktor` erhalten und
+  mehrere Faktoren werden zusammengefasst; die Prozentangabe wird an der Wertblase des Eck-Griffs getippt (b2).
+- **Ablegen an Wänden:** automatisch an jeder Fläche, ⌥ = aufrecht; die Arbeitsebene bleibt ein Höhenwert (b3).
+- **Nach dem Drehen** bleibt die Mitte des Körpers, wo sie war (er kann in der Luft hängen oder im Bett stecken);
+  „Aufs Bett legen“ kommt mit 1.6e.
+
+#### Zwischenstand 1.6b1 Drehen (2026-10-18, Review)
+
+**Umgesetzt**
+- **Kernel:** `GeometryKernel::rotate` dreht einen Körper um einen Punkt (drei Winkel). Es ist eine reine Lagebewegung: Flächen, ihre
+  Reihenfolge und Namen bleiben (ein „oben“ bleibt „oben“, egal wohin es jetzt zeigt, ADR-0008 Punkt 2). Gerundete Ecken, Zylinder
+  und Kugeln bleiben exakt rund. Die Mathematik der drei Winkel steht für alle Schichten gleich in `geo/rotation.h`.
+- **Alle Formen drehen:** Quader, Zylinder, alle Grundformen und Text haben `rotX`, `rotY`, `rotZ` (Standard 0). Gedreht wird um die
+  **Mitte der Hülle** der ungedrehten Form (`FeatureType::bodyCentre`; bei Prisma und Stern um die Achse). Die Maß-Griffe drehen mit
+  (`placedHandles`, auch die Steigung `rise` einer Kugel).
+- **Werkzeug „Drehen“:** drei Ringe um die Mitte des Körpers (X rot, Y grün, Z blau) in der 3D-Ansicht mit Tiefe, ein Ring lässt sich
+  nur auf seiner Linie anfassen (der Körper in der Mitte bleibt frei zum Verschieben). Ziehen dreht um 15° pro Schritt; ein Keil zeigt,
+  wie weit; die Wertblase sagt „Z +60°“. Ein Ring, den man von der Kante sieht, geht nach dem Zeiger entlang der Linie auf dem Bildschirm.
+  **Tippen ersetzt Ziehen:** Ziffern sind Grad, `Tab` geht X → Y → Z (mehrere Ringe wirken in der Reihenfolge X, Y, Z), Enter
+  übernimmt, Esc setzt zurück. Die Griffstelle jedes Rings liegt auf der dem Betrachter nahen Hälfte, möglichst weit von den anderen
+  Ringen (wo sich Ringe kreuzen, würde der falsche gegriffen).
+- **Rezept und Verlauf** (ADR-0010): Ein Zug ist **ein** Schritt in „Letzte Aktionen“ („Quader gedreht“, Schlüssel `rotateBody`); die
+  Drehung steht rechts unter „Drehung“ (drei Felder mit Achsen-Buchstaben, auch Formeln). Nur Winkel, die sich wirklich ändern, werden
+  zu Zahlen; eine Formel in einem unberührten Feld bleibt.
+- Nebenbei: Beim Wechsel zu „Wählen“ oder „Drehen“ verfällt das „Maße tippen“ direkt nach dem Ablegen (es gäbe keine Griffe, in die man
+  tippt; die Hinweiszeile sagte sonst noch „Tippe ein Maß“).
+
+**Wie getestet** (Mac arm64, Debug: `ctest` 402 von 402 grün; Linux nur über die CI)
+- Golden-Tests `tests/unit/geometry/test_rotation.cpp`: Volumen, Fläche, Hülle, Topologie-Zählung und Gültigkeit eines gedrehten
+  Quaders; Namen und Reihenfolge der Flächen bleiben, jede benannte Fläche zeigt dahin, wohin die gedrehte Fläche zeigt; Quader mit
+  5-mm-Ecken und Zylinder behalten Fläche und Volumen; Zahlen, die keine sind, werden abgelehnt. Dazu die Winkel-Mathematik (Hin- und
+  Rückrechnung, Ring-Drehung um Z ändert nur Z, Gimbal-Lock bei Y = ±90°, stetig über 180°).
+- `test_primitives.cpp` (`[turn]`): jede der elf Formen dreht um die Mitte ihrer Hülle (gegen den Kernel gemessen), bleibt gültig und
+  behält Rollen, die Griffe drehen mit. `test_text_feature.cpp`: gedrehter Text.
+- `test_drag.cpp` (`RingDrag`): Winkel von oben, rechtshändig um jede Achse, über 360° weiterzählen, Kantenansicht, 15°-Raster.
+- `test_rotate.cpp` (Controller): Ringe, ein Schritt in „Letzte Aktionen“ ohne neuen Rezept-Eintrag, Formel bleibt, Undo, Esc,
+  Tippen mit Tab, Körper dreht wirklich (Hülle), Ring von der Kante.
+- Fenster mit echten Mausereignissen: `app_ring_turn`, `app_ring_turn_edge_on`, `app_turned_body_handles` (Maß-Punkt am gedrehten Körper
+  zieht noch).
+- Bilder: [ap-1.6b-ringe-de.png](../screenshots/ap-1.6b-ringe-de.png), [ap-1.6b-tippen-de.png](../screenshots/ap-1.6b-tippen-de.png),
+  [ap-1.6b-gekippt-de.png](../screenshots/ap-1.6b-gekippt-de.png).
+
+**So probierst du es aus** (`scripts/run --release` aus dem Ordner `Fission3D-ap16b`)
+1. Würfel doppelt anklicken, links **Drehen** wählen: drei farbige Ringe erscheinen um den Würfel.
+2. Am **blauen Ring** ziehen: der Würfel dreht sich flach auf dem Bett, in Schritten von 15°; die Blase zeigt „Z +45°“, rechts steht
+   unter „Drehung“ der Winkel bei Z.
+3. Am **roten Ring** ziehen: der Würfel kippt. Rechts ändern sich dabei womöglich mehrere Winkel, weil die Ringe immer um die festen
+   Achsen des Betts drehen.
+4. Während du ziehst, `90` tippen, dann `Tab` und `45`, Enter: erst 90° um X, dann 45° um Y. ⌘Z nimmt alles zurück („Quader gedreht“).
+5. Rechts bei „Drehung“ einen Winkel eintippen (auch eine Formel wie `45*2`). Links **Größe** wählen: die Punkte sitzen auf dem
+   gedrehten Körper und lassen sich ziehen.
+
+**Bekannte Einschränkungen, Annahmen**
+- Beschriftungen und Bänder der Maß-Punkte: Bei einem gedrehten Körper laufen die Bänder nicht in Bett-Richtung und werden nicht
+  gezeichnet; die Beschriftungen stehen dann etwas lose in der Nähe (Folgearbeit: Bänder entlang der gedrehten Achsen).
+- Beim Kippen kann der Körper im Bett stecken oder schweben (Festlegung 4A); „Aufs Bett legen“ folgt mit 1.6e.
+- Der Drehpunkt liegt in der Mitte der ungedrehten Form; die Lage (x, y, z) bleibt der Fußpunkt der ungedrehten Form.
+- Die 15°-Schritte rasten relativ zum Startwert des Zugs; ein Körper, der bei 7° steht, trifft beim Ziehen 22°, 37° … (genau auf 90°
+  kommt man mit Tippen). ⇧ = Raster aus kommt mit 1.6c.
+- Die Griff-Art bleibt „Achsen“.
+
+**Vorgeschlagene Folge-Arbeiten:** b2 gleichmäßig vergrößern; b3 Ablegen an Wänden (braucht aus Fläche → drei Winkel: `anglesOf`);
+Bänder für gedrehte Maß-Punkte.
 
 ---
 
