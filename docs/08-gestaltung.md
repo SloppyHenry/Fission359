@@ -122,7 +122,7 @@ Hinweis; gesperrt wird sie nicht. Die Referenz-Umsetzung steht im Mockup (`accen
 
 ## 5. 3D-Ansicht
 
-- **Werkzeugpalette** links (76 px breit, schwebend): oben Wählen, Verschieben, Drehen, Größe; darunter die
+- **Werkzeugpalette** links (84 px breit, schwebend; das Mockup hat 76 px, das reicht für „Verschieben“ und „Kombinieren“ nicht): oben Wählen, Verschieben, Drehen, Größe; darunter die
   Werkzeuggruppen Formen, Skizze, Ändern, Kombinieren, Muster, Deko, Prüfen. Eine Gruppe öffnet eine bebilderte
   Auswahl direkt neben der Palette. Jede Schaltfläche hat Symbol **und** Beschriftung.
 - **Darstellungsleiste** oben links: Perspektive/Orthografisch, Drahtgitter | Volumen | Farben.

@@ -80,7 +80,8 @@ Item {
                 x: 3
                 y: 4
                 implicitHeight: 30
-                implicitWidth: perspectiveRow.implicitWidth + 20
+                implicitWidth: perspectiveRow.implicitWidth + leftPadding + rightPadding
+                horizontalPadding: 10
                 hoverEnabled: true
                 Accessible.name: root.orthographic ? qsTr("Orthographic") : qsTr("Perspective")
                 onClicked: root.orthographicToggled()
@@ -142,7 +143,8 @@ Item {
                         readonly property bool selected: root.display === modelData.value
 
                         implicitHeight: 30
-                        implicitWidth: displayContent.implicitWidth + 20
+                        implicitWidth: displayContent.implicitWidth + leftPadding + rightPadding
+                        horizontalPadding: 10
                         hoverEnabled: true
                         Accessible.name: modelData.text
                         Accessible.checkable: true
@@ -208,7 +210,8 @@ Item {
             x: 3
             y: 4
             implicitHeight: 30
-            implicitWidth: filterRow.implicitWidth + 20
+            implicitWidth: filterRow.implicitWidth + leftPadding + rightPadding
+            horizontalPadding: 10
             hoverEnabled: true
             Accessible.name: qsTr("Choose: %1").arg(root.filterNames[root.filter])
             onClicked: filterMenu.visible ? filterMenu.close() : filterMenu.popup(0, filterButton.height + 8)
@@ -261,7 +264,7 @@ Item {
         }
     }
 
-    // --- tool palette (left, 76 px) ------------------------------------------------------
+    // --- tool palette (left, 84 px) ------------------------------------------------------
     ToolCatalog {
         id: toolCatalog
     }
@@ -271,12 +274,12 @@ Item {
 
         x: 12
         y: 60
-        width: 76
+        width: 84 // room for long German labels such as “Kombinieren”
         height: Math.min(paletteColumn.implicitHeight + 12, root.height - 72)
 
         Flickable {
             anchors.fill: parent
-            anchors.margins: 4
+            anchors.margins: 6
             contentHeight: paletteColumn.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
@@ -354,13 +357,13 @@ Item {
         id: shapeFlyout
 
         visible: root.flyout === "shapes"
-        x: 98
+        x: palette.x + palette.width + 10
         y: {
             const button = groupRepeater.itemAt(0)
             const wanted = button ? button.mapToItem(root, 0, 0).y - 6 : 60
             return Math.max(60, Math.min(wanted, root.height - height - 12))
         }
-        width: Math.min(460, root.width - 98 - 130)
+        width: Math.min(460, root.width - x - 130)
         onCloseRequested: root.flyoutCloseRequested()
     }
 
