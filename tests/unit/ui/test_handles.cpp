@@ -218,15 +218,25 @@ TEST_CASE("handles: a drag stops where the shape stops being possible", "[ui][ha
     CHECK(f.recipeState() == "ok");
 }
 
-TEST_CASE("handles: looking along a handle, the pointer cannot change its value", "[ui][handles]") {
+TEST_CASE("handles: looking along a handle, it is dragged up and down the screen",
+          "[ui][handles]") {
     Fixture f;
     roundedPlate(f);
     // From straight above, the height handle points at the eye: its whole length is a point.
+    // It used to be locked; now the pointer going up the screen makes the box taller, at the rate
+    // of a millimetre across the screen (steady, never racing away).
     const QVariantMap height = f.handle("height");
     CHECK(height["pixelsPerMillimetre"].toDouble() < 0.5);
-    f.pull("height", 30.0);
-    CHECK(f.value("height") == Approx(10.0));
-    CHECK_FALSE(f.handles->editing());
+    const QPointF dot(height["x"].toDouble(), height["y"].toDouble());
+    const QPointF across = f.viewport.project(1.0, 0.0, 10.0) - f.viewport.project(0.0, 0.0, 10.0);
+    const double perMillimetre = 0.75 * std::hypot(across.x(), across.y());
+    REQUIRE(f.handles->beginDrag(height["index"].toInt(), dot.x(), dot.y()));
+    f.handles->dragTo(dot.x(), dot.y() - 15.0 * perMillimetre);
+    CHECK(f.value("height") == Approx(10.0)); // not calculated yet: the drag is still on
+    f.handles->dragTo(dot.x(), dot.y() - 15.0 * perMillimetre);
+    REQUIRE(f.handles->endDrag());
+    f.refresh();
+    CHECK(f.value("height") == Approx(25.0).margin(1.0));
 }
 
 TEST_CASE("handles: typing replaces dragging, Tab goes on, one step for it all", "[ui][handles]") {
@@ -315,23 +325,56 @@ TEST_CASE("handles: the dot stays under the pointer while the shape follows", "[
     CHECK(f.value("width") == Approx(70.0).margin(HandleController::snapStep(perMillimetre)));
 }
 
-TEST_CASE("handles: a handle that points at the viewer is not dragged, and sizes stay sane",
+TEST_CASE("handles: a handle that points almost at the viewer moves steadily, sizes stay sane",
           "[ui][handles]") {
     Fixture f;
     roundedPlate(f);
     // Looking steeply from above, the height handle points almost at the eye: 60 pixels of
-    // movement used to make the box 70 mm taller. Now it stays as it is.
+    // movement once made the box 70 mm taller (then it was locked). Now 60 pixels are what they
+    // are across the screen.
     f.viewport.setCamera(0.0, 70.0, 300.0);
     f.refresh();
     const double before = f.value("height");
-    f.pull("height", 40.0);
-    CHECK(f.value("height") == Approx(before));
+    const QPointF across = f.viewport.project(1.0, 0.0, 10.0) - f.viewport.project(0.0, 0.0, 10.0);
+    const double perMillimetre = 0.75 * std::hypot(across.x(), across.y());
+    const QVariantMap height = f.handle("height");
+    const QPointF dot(height["x"].toDouble(), height["y"].toDouble());
+    REQUIRE(f.handles->beginDrag(height["index"].toInt(), dot.x(), dot.y()));
+    f.handles->dragTo(dot.x() + 60.0 * height["dirX"].toDouble(),
+                      dot.y() + 60.0 * height["dirY"].toDouble());
+    REQUIRE(f.handles->endDrag());
+    f.refresh();
+    CHECK(f.value("height") > before);
+    CHECK(f.value("height") <= before + 60.0 / perMillimetre + 1.0);
 
     // From the side the same handle is dragged normally, and never beyond a sane size.
     f.viewport.setCamera(0.0, 10.0, 300.0);
     f.refresh();
     f.pull("height", 5000.0);
     CHECK(f.value("height") <= HandleController::kLargestMillimetres);
+    CHECK(f.recipeState() == "ok");
+}
+
+TEST_CASE("handles: pulled smaller than possible, a size stops at the smallest it can be",
+          "[ui][handles]") {
+    // Before, the size stayed where it was: a box pulled far smaller could not be made smaller at
+    // all, and after a few rounds of bigger and smaller it filled the view.
+    Fixture f;
+    f.model->selectStep(0);
+    f.viewport.setCamera(0.0, 90.0, 300.0);
+    f.refresh();
+    f.pull("width", 30.0, false); // 20 -> 80 (a box grows to both sides)
+    CHECK(f.handles->editing());
+    const QVariantMap width = f.handle("width");
+    const QPointF dot(width["x"].toDouble(), width["y"].toDouble());
+    const double perMillimetre = width["pixelsPerMillimetre"].toDouble();
+    // Far back across the middle of the box: the width would be below zero.
+    f.handles->dragTo(dot.x() - 200.0 * perMillimetre * width["dirX"].toDouble(),
+                      dot.y() - 200.0 * perMillimetre * width["dirY"].toDouble());
+    REQUIRE(f.handles->endDrag());
+    f.refresh();
+    CHECK(f.value("width") > 0.0);
+    CHECK(f.value("width") <= 1.0);
     CHECK(f.recipeState() == "ok");
 }
 

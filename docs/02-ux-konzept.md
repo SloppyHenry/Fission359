@@ -61,6 +61,13 @@ Dieses Dokument beschreibt, **wie sich Fission3D anfühlt**. Es ist verbindlich 
 
 Während des Ziehens zeigt eine **Wertblase** am Zeiger den aktuellen Wert.
 
+**Welche Griffe zu sehen sind, bestimmt das Werkzeug der Palette (AP-1.6, wie im Mockup):** „Verschieben“ (Standard) zeigt das
+Gizmo (Pfeile X/Y/Z, Ebenen-Quadrate, Punkt in der Mitte) und die Maßbänder, deren Beschriftung man anklicken und tippen kann;
+„Größe“ zeigt die Punkte auf den Flächen; „Drehen“ die Ringe; „Wählen“ keine Griffe. In jedem Werkzeug außer „Wählen“ verschiebt man
+einen Körper auch, indem man ihn selbst anfasst und zieht (wie in Tinkercad); die Pfeiltasten verschieben ihn um 1 mm (⇧: 10 mm),
+Bild↑/Bild↓ heben und senken ihn. Eine Verschiebung ändert die Lage der Form im Rezept, sie ist kein eigener Rezept-Schritt
+([ADR-0010](adr/0010-lage-im-rezept.md)).
+
 **Griff-Art (Einstellung, R19):** Wie die Griffe aussehen, stellt man unter Einstellungen ▸ Griffe ein.
 - **Achsen:** farbige Pfeile X/Y/Z zum Verschieben, Maßbänder entlang der Kanten (Klick oder Tippen ändert das Maß), Punkte auf den Flächen zum Strecken.
 - **Klassisch:** weiße Eck-Quadrate, Hebe-Pfeil und Maßkästchen, vertraut für Tinkercad-Umsteiger.
@@ -195,7 +202,7 @@ Diese Punkte sind **verbindlich**. Ablauf D (Abschnitt 15) prüft sie als Regres
 - **Griffe ändern Maße, nicht die Skalierung.** Ein Quader mit 3-mm-Ecken wird breiter, die Ecken bleiben 3-mm-Viertelkreise. Löcher bleiben rund und behalten ihren Durchmesser.
 - **Das gilt auch für fertige, kombinierte Körper.** Zieht man an einer Seitenfläche, wird der Körper **gestreckt** (Fläche verschoben bzw. „Intelligentes Strecken“: Körper an einer Ebene teilen, Mittelstück verlängern), nicht skaliert. Rundungen, Löcher und Text bleiben unverändert.
 - **Echtes Verzerren gibt es nur auf ausdrücklichen Wunsch** (Ändern ▸ Mehr ▸ „Verzerren“), mit Hinweis: „Rundungen und Löcher werden dabei oval. Möchtest du stattdessen strecken?“
-- **Proportionales Vergrößern** (alles gleichmäßig) bleibt einfach erreichbar: Eck-Griff mit ⇧ oder Prozentangabe.
+- **Proportionales Vergrößern** (alles gleichmäßig) bleibt einfach erreichbar: Eck-Griff (Werkzeug „Größe“) oder Prozentangabe. Der Eck-Griff ist immer gleichmäßig, es gibt keinen verzerrenden; ⇧ während eines Zugs schaltet deshalb nur das Fangen aus (Festlegung AP-1.6, 2026-10-18).
 
 #### 7.3 Niedrige Auflösung
 **Tinkercad:** Rundungen bestehen aus wenigen Segmenten, und runde Löcher werden im Druck eckig.

@@ -517,6 +517,14 @@ void Viewport3D::mousePressEvent(QMouseEvent* event) {
     forceActiveFocus(); // a click in the view takes the keyboard from a number field
     m_dragged = false;
     m_rubberBanding = false;
+    m_bodyDragging = false;
+    m_pressBody.clear();
+    if (m_bodiesMovable && event->button() == Qt::LeftButton &&
+        event->modifiers() == Qt::NoModifier) {
+        if (const auto hit = bodyPointAt(event->position().x(), event->position().y())) {
+            m_pressBody = hit->body; // dragged, it moves; clicked, it is chosen as before
+        }
+    }
     setHover(std::nullopt); // while the view is being moved, nothing lights up
     event->accept();
 }
@@ -532,11 +540,20 @@ void Viewport3D::mouseMoveEvent(QMouseEvent* event) {
         if (!m_dragged && std::hypot(moved.x(), moved.y()) > kClickReach) {
             m_dragged = true;
         }
-        // A drag with the left button that does not move the view draws a rectangle.
+        // A drag with the left button that does not move the view moves the body it started
+        // on, or else draws a rectangle.
         if (m_dragged && m_pressButton == Qt::LeftButton && event->buttons() == Qt::LeftButton &&
             action == render::NavigationAction::none) {
-            m_rubberBanding = true;
-            emit rubberBandChanged(QRectF(m_pressPosition, event->position()).normalized());
+            if (!m_pressBody.isEmpty() && !m_rubberBanding) {
+                if (!m_bodyDragging) {
+                    m_bodyDragging = true;
+                    emit bodyDragStarted(m_pressBody, m_pressPosition.x(), m_pressPosition.y());
+                }
+                emit bodyDragMoved(event->position().x(), event->position().y());
+            } else {
+                m_rubberBanding = true;
+                emit rubberBandChanged(QRectF(m_pressPosition, event->position()).normalized());
+            }
         }
     }
     event->accept();
@@ -550,6 +567,8 @@ void Viewport3D::mouseReleaseEvent(QMouseEvent* event) {
     const bool extend = (event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier)) != 0;
     if (m_pressButton == Qt::LeftButton && !m_dragged) {
         requestPick(PickIntent::click, event->position(), extend);
+    } else if (m_bodyDragging) {
+        emit bodyDragFinished();
     } else if (m_rubberBanding) {
         emit rubberBandChanged(QRectF());
         emit rubberBandFinished(QRectF(m_pressPosition, event->position()).normalized(),
@@ -557,6 +576,8 @@ void Viewport3D::mouseReleaseEvent(QMouseEvent* event) {
     }
     m_pressButton = Qt::NoButton;
     m_rubberBanding = false;
+    m_bodyDragging = false;
+    m_pressBody.clear();
     m_hoverPosition = event->position();
     hoverAgain();
     event->accept();
@@ -612,12 +633,20 @@ void Viewport3D::setSelectionHighlights(std::vector<render::Highlight> highlight
     update();
 }
 
-void Viewport3D::setHandleGraphics(render::HandleGraphics graphics) {
-    if (graphics == m_handleGraphics) {
+void Viewport3D::setHandleGraphics(render::HandleGraphics graphics, HandleSource source) {
+    auto& slot = m_handleGraphics[static_cast<std::size_t>(source)];
+    if (graphics == slot) {
         return;
     }
-    m_handleGraphics = std::move(graphics);
+    slot = std::move(graphics);
     update();
+}
+
+void Viewport3D::setBodiesMovable(bool movable) {
+    if (movable != m_bodiesMovable) {
+        m_bodiesMovable = movable;
+        emit bodiesMovableChanged();
+    }
 }
 
 void Viewport3D::requestPick(PickIntent intent, const QPointF& position, bool extend) {
@@ -811,6 +840,16 @@ std::optional<render::SurfaceHit> Viewport3D::surfaceAt(double x, double y) cons
     return render::pickSurface(*m_shown, *ray);
 }
 
+std::optional<Viewport3D::BodyPoint> Viewport3D::bodyPointAt(double x, double y) const {
+    const std::optional<render::SurfaceHit> hit = surfaceAt(x, y);
+    if (!hit || hit->bodyIndex < 0 || hit->bodyIndex >= static_cast<int>(m_shown->bodies.size())) {
+        return std::nullopt;
+    }
+    return BodyPoint{
+        QString::fromStdString(m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].id),
+        hit->point};
+}
+
 std::optional<Viewport3D::WorldRay> Viewport3D::rayAt(double x, double y) const {
     const std::optional<render::Ray> ray = m_camera.rayThrough(QPointF(x, y));
     if (!ray) {
@@ -941,7 +980,10 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect, bool pickIdle) {
             snapshot.highlights.push_back(*m_hover);
         }
     }
-    snapshot.handles = m_handleGraphics;
+    snapshot.handles = m_handleGraphics[0];
+    for (std::size_t source = 1; source < m_handleGraphics.size(); ++source) {
+        snapshot.handles.append(m_handleGraphics[source]);
+    }
     snapshot.handles.pixelScale =
         window() != nullptr ? static_cast<float>(window()->effectiveDevicePixelRatio()) : 1.0F;
     snapshot.accent = m_accent;

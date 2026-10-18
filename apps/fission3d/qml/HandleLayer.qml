@@ -177,6 +177,8 @@ Item {
                     id: area
 
                     anchors.fill: parent
+                    // Only the tool "Size" has dots; with "Move" the body is grabbed here.
+                    enabled: Handles.mode === "size"
                     hoverEnabled: true
                     preventStealing: true
                     cursorShape: Qt.SizeAllCursor

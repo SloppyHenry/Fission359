@@ -146,8 +146,18 @@ Window {
     }
 
     function toolName(id) {
-        return { select: qsTr("Select"), move: qsTr("Move"), rotate: qsTr("Rotate"), size: qsTr("Size") }[id]
+        return toolCatalog.nameOf(id)
     }
+
+    ToolCatalog {
+        id: toolCatalog
+    }
+
+    // What the tool of the palette shows on the chosen body (AP-1.6, docs/08-gestaltung.md §5):
+    // "Move" the gizmo and the measure bands, "Size" the dots for the sizes, "Select" nothing.
+    // A body can be dragged to move it in every tool but "Select".
+    Binding { target: Handles; property: "mode"; value: root.tool === "size" ? "size" : root.tool === "move" ? "labels" : "off" }
+    Binding { target: Gizmo; property: "enabled"; value: root.tool === "move" }
 
     function run(id) {
         switch (id) {
@@ -299,15 +309,19 @@ Window {
     Shortcut { sequence: "F"; onActivated: root.run("view.frame") }
     Shortcut { sequence: "L"; enabled: Selection.singleFaceChosen; onActivated: root.run("view.lookat") }
     Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
-    Shortcut { sequence: "Escape"; enabled: Selection.count > 0 && !root.typing; onActivated: root.run("selectnone") }
+    Shortcut {
+        sequence: "Escape"
+        enabled: Selection.count > 0 && !root.typing && !Handles.editing && !Gizmo.editing
+        onActivated: root.run("selectnone")
+    }
     Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
     Shortcut { sequence: "Home"; onActivated: root.run("view.home") }
-    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.front") }
-    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.back") }
-    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.left") }
-    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.right") }
-    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.top") }
-    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing; onActivated: root.run("view.bottom") }
+    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.front") }
+    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.back") }
+    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.left") }
+    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.right") }
+    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.top") }
+    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing; onActivated: root.run("view.bottom") }
     // A shape that was just put down waits for its sizes: digits type them (they are the views
     // again as soon as something else is chosen). Tab or Enter start typing, too.
     Repeater {
@@ -320,8 +334,10 @@ Window {
 
             Shortcut {
                 sequence: digit.modelData
-                enabled: (Handles.armed || Handles.editing) && !handleLayer.typing && !root.typing
-                onActivated: handleLayer.startTyping(digit.modelData)
+                enabled: (Handles.armed || Handles.editing || Gizmo.editing) && !handleLayer.typing
+                         && !gizmoLayer.typing && !root.typing
+                onActivated: Gizmo.editing ? gizmoLayer.startTyping(digit.modelData)
+                                           : handleLayer.startTyping(digit.modelData)
             }
         }
     }
@@ -330,6 +346,22 @@ Window {
         enabled: Handles.armed && !Handles.editing && !root.typing
         onActivated: handleLayer.startTyping("")
     }
+    // Arrow keys move the chosen body by 1 mm (with Shift 10 mm) along the axis of the bed that
+    // is closest to the way on screen; Page up and Page down lift and lower it (like Tinkercad).
+    readonly property bool nudgeKeys: Selection.count > 0 && root.tool !== "select" && !root.typing
+                                      && !Gizmo.editing && !Handles.editing
+    Shortcut { sequence: "Left"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(-1, 0, 0, false) }
+    Shortcut { sequence: "Right"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(1, 0, 0, false) }
+    Shortcut { sequence: "Up"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(0, 1, 0, false) }
+    Shortcut { sequence: "Down"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(0, -1, 0, false) }
+    Shortcut { sequence: "PgUp"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(0, 0, 1, false) }
+    Shortcut { sequence: "PgDown"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(0, 0, -1, false) }
+    Shortcut { sequence: "Shift+Left"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(-1, 0, 0, true) }
+    Shortcut { sequence: "Shift+Right"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(1, 0, 0, true) }
+    Shortcut { sequence: "Shift+Up"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(0, 1, 0, true) }
+    Shortcut { sequence: "Shift+Down"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(0, -1, 0, true) }
+    Shortcut { sequence: "Shift+PgUp"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(0, 0, 1, true) }
+    Shortcut { sequence: "Shift+PgDown"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(0, 0, -1, true) }
     Shortcut { sequence: "Ctrl+K"; onActivated: root.run("search") }
     Shortcut { sequence: "Ctrl+,"; onActivated: root.run("settings") }
     Shortcut { sequence: "Ctrl+Q"; enabled: !root.isMac; onActivated: root.run("quit") }
@@ -435,6 +467,7 @@ Window {
                 accentColor: Theme.accentLine
                 animated: !AppOptions.reduceMotion
                 mouseStyle: root.mouseStyle
+                bodiesMovable: root.tool !== "select"
                 onAmbientOcclusionTurnedOff: root.showHint(
                     qsTr("Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu."))
             }
@@ -461,6 +494,27 @@ Window {
                 function onRubberBandChanged(area) {
                     rubberBand.area = area
                 }
+
+                // A body pressed and dragged moves (every tool but "Select"). It is chosen first,
+                // unless something of it is chosen already.
+                function onBodyDragStarted(body, x, y) {
+                    if (DocumentModel.bodyOfStep(DocumentModel.currentStep) !== body) {
+                        Selection.chooseBody(DocumentModel.bodyIndexOf(body), false)
+                    }
+                    Gizmo.beginBodyDrag(x, y)
+                }
+
+                function onBodyDragMoved(x, y) {
+                    if (Gizmo.editing && !gizmoLayer.typing) {
+                        Gizmo.dragTo(x, y)
+                    }
+                }
+
+                function onBodyDragFinished() {
+                    if (Gizmo.editing && !gizmoLayer.typing) {
+                        Gizmo.endDrag()
+                    }
+                }
             }
 
             HandleLayer {
@@ -468,6 +522,12 @@ Window {
 
                 anchors.fill: parent
                 labelFor: root.valueLabel
+            }
+
+            GizmoLayer {
+                id: gizmoLayer
+
+                anchors.fill: parent
             }
 
             BedLabels {
@@ -556,12 +616,13 @@ Window {
         selection: root.selectionText
         toolName: root.toolName(root.tool)
         hint: Placement.active ? qsTr("Let go to put the shape down here. Esc takes it back.")
+            : Gizmo.editing ? qsTr("Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.")
             : Handles.editing ? qsTr("Enter accepts, Tab goes to the next size, Esc leaves everything as it was.")
             : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
             : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.")
             : root.hoverText !== "" ? root.hoverText
-            : Selection.count > 0 ? root.selectionHint
+            : Selection.count > 0 ? toolCatalog.find(root.tool).hint
             : root.navigationText
         unitText: qsTr("Unit: mm · Grid 1 mm")
     }
@@ -662,6 +723,7 @@ Window {
                 : qsTr("%1 changed").arg(valueLabel(step.field))
         case "setText": return qsTr("Text of %1 changed").arg(body)
         case "holeBody": return qsTr("%1 made a hole").arg(body)
+        case "moveBody": return qsTr("%1 moved").arg(body)
         case "solidBody": return qsTr("%1 made a part again").arg(body)
         case "setLabel": return qsTr("Step renamed")
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
@@ -781,14 +843,15 @@ Window {
         }
         const what = partName(hover.kind, hover.bodyIndex)
         switch (hover.kind) {
-        case "face": return qsTr("%1 – click chooses it, double click chooses the whole body.").arg(what)
-        case "body": return qsTr("%1 – click chooses it.").arg(what)
+        case "face": return root.tool !== "select"
+            ? qsTr("%1 – click chooses it, double click the whole body, drag moves the body.").arg(what)
+            : qsTr("%1 – click chooses it, double click chooses the whole body.").arg(what)
+        case "body": return root.tool !== "select"
+            ? qsTr("%1 – click chooses it, drag moves it.").arg(what)
+            : qsTr("%1 – click chooses it.").arg(what)
         default: return qsTr("%1 – click chooses it.").arg(what)
         }
     }
-
-    readonly property string selectionHint:
-        qsTr("Shift+click adds or removes. Drag a frame to choose several. Esc chooses nothing.")
 
     readonly property string currentStepTitle: {
         const index = DocumentModel.currentStep

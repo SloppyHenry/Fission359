@@ -1294,6 +1294,12 @@ public:
         return length > 1e-6 ? way / length : QPointF(0.0, 1.0);
     }
 
+    void triangle(const QVector3D& a, const QVector3D& b, const QVector3D& c, const QColor& color) {
+        push(a, color);
+        push(b, color);
+        push(c, color);
+    }
+
     void square(const QVector3D& center, float sidePixels, const QColor& color) {
         const float h = 0.5F * sidePixels * pixelSize(center);
         const QVector3D r = m_right * h;
@@ -1423,6 +1429,14 @@ void SceneRenderer::prepareHighlights(QRhiResourceUpdateBatch* updates, const Fr
                                  shapes.data());
 }
 
+void HandleGraphics::append(const HandleGraphics& other) {
+    lines.insert(lines.end(), other.lines.begin(), other.lines.end());
+    dots.insert(dots.end(), other.dots.begin(), other.dots.end());
+    arrows.insert(arrows.end(), other.arrows.begin(), other.arrows.end());
+    heads.insert(heads.end(), other.heads.begin(), other.heads.end());
+    quads.insert(quads.end(), other.quads.begin(), other.quads.end());
+}
+
 void SceneRenderer::prepareHandles(QRhiResourceUpdateBatch* updates, const Frame& frame,
                                    const QSize& targetSize) {
     m_handleVertexCount = 0;
@@ -1436,8 +1450,26 @@ void SceneRenderer::prepareHandles(QRhiResourceUpdateBatch* updates, const Frame
     HighlightShapes builder(
         frame.view, frame.projection,
         std::max(1, static_cast<int>(static_cast<float>(targetSize.height()) / scale)), shapes);
+    for (const HandleQuad& quad : handles.quads) {
+        builder.triangle(quad.corners[0], quad.corners[1], quad.corners[2], quad.fill);
+        builder.triangle(quad.corners[0], quad.corners[2], quad.corners[3], quad.fill);
+        for (int i = 0; i < 4; ++i) {
+            builder.strip(quad.corners[i], quad.corners[(i + 1) % 4], quad.lineWidth, quad.line);
+        }
+    }
     for (const HandleLine& line : handles.lines) {
         builder.strip(line.from, line.to, line.width, line.color);
+    }
+    for (const HandleHead& head : handles.heads) {
+        // A triangle facing the viewer, from the tip back along the way it points on screen.
+        const QPointF way = builder.screenWay(head.direction);
+        const QVector3D back = builder.offset(head.tip, static_cast<float>(-head.length * way.x()),
+                                              static_cast<float>(-head.length * way.y()));
+        const QVector3D left = builder.offset(back, static_cast<float>(-head.halfWidth * way.y()),
+                                              static_cast<float>(head.halfWidth * way.x()));
+        const QVector3D right = builder.offset(back, static_cast<float>(head.halfWidth * way.y()),
+                                               static_cast<float>(-head.halfWidth * way.x()));
+        builder.triangle(head.tip, left, right, head.color);
     }
     for (const HandleArrow& arrow : handles.arrows) {
         // A chevron 13 to 19 pixels beyond the dot, a light one beneath a dark one.

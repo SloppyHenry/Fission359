@@ -13,8 +13,10 @@
 
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <string>
 
+#include "fission/interaction/drag.h"
 #include "fission/ui/document_model.h"
 #include "fission/ui/viewport_3d.h"
 
@@ -58,6 +60,10 @@ class HandleController : public QObject {
     /// The colours of the handles, from the theme: { x, y, z (axes), plain (lines without an
     /// axis), ink (dots and arrows without an axis), fill (inside of a dot, light line beneath) }.
     Q_PROPERTY(QVariantMap colours READ colours WRITE setColours NOTIFY coloursChanged)
+    /// What is shown, after the tool of the palette (AP-1.6): `size` (tool "Size": dots to drag,
+    /// bands and labels), `labels` (tool "Move": the bands and their labels only, which can still
+    /// be clicked to type a size; the dots would sit where the arrows of the gizmo are) or `off`.
+    Q_PROPERTY(QString mode READ mode WRITE setMode NOTIFY modeChanged)
 
 public:
     explicit HandleController(DocumentModel* model, QObject* parent = nullptr);
@@ -70,6 +76,8 @@ public:
     bool compact() const noexcept { return m_compact; }
     QVariantMap colours() const { return m_colourMap; }
     void setColours(const QVariantMap& colours);
+    QString mode() const { return m_mode; }
+    void setMode(const QString& mode);
 
     /// The pointer is on handle `index` (`on`), or left it: its band, arrow and label show.
     Q_INVOKABLE void setPointed(int index, bool on);
@@ -107,7 +115,7 @@ public:
     /// A handle whose axis is closer than this (sine of the angle, 0.5 = 30 degrees) to the line
     /// of sight cannot be dragged: the pointer would have to go ever so far for a little change.
     /// (Typing and turning the view still work.)
-    static constexpr double kLeastSight = 0.5;
+    static constexpr double kLeastSight = interaction::kLeastSight;
     /// Below this size on screen (diagonal of the body, pixels) the handles are `compact`.
     static constexpr double kCompactPixels = 120.0;
 
@@ -117,6 +125,7 @@ signals:
     void armedChanged();
     void compactChanged();
     void coloursChanged();
+    void modeChanged();
 
 private:
     void setEditing(bool editing);
@@ -145,6 +154,7 @@ private:
     QPointer<Viewport3D> m_viewport;
     QVariantList m_handles;
     std::map<QString, int> m_chosen; ///< the place of each value while it is being changed
+    QString m_mode{QStringLiteral("size")};
     bool m_editing = false;
     bool m_armed = false;
     bool m_compact = false;
@@ -176,13 +186,12 @@ private:
     // The drag in progress. The pointer is a ray into the scene; it is laid on a plane that holds
     // the axis of the handle and faces the viewer, and the handle follows where the ray meets it.
     bool m_dragging = false;
-    int m_dragIndex = -1;       ///< the handle as shown (position in `handles`)
-    double m_dragExtent = 0.0;  ///< the length it measured when grabbed
-    QVector3D m_dragOrigin;     ///< where the handle sat when it was grabbed (mm)
-    QVector3D m_dragAxis;       ///< unit vector along which it moves
-    QVector3D m_dragPlane;      ///< normal of the plane the pointer is laid on
-    bool m_dragUsable = false;  ///< the axis is not (nearly) along the line of sight
-    double m_dragGrabbed = 0.0; ///< where along the axis the pointer was when it grabbed
+    int m_dragIndex = -1;      ///< the handle as shown (position in `handles`)
+    double m_dragExtent = 0.0; ///< the length it measured when grabbed
+    QVector3D m_dragOrigin;    ///< where the handle sat when it was grabbed (mm)
+    QVector3D m_dragAxis;      ///< unit vector along which it moves
+    /// The pointer laid on the axis; empty while the axis is (nearly) along the line of sight.
+    std::optional<interaction::AxisDrag> m_axisDrag;
     double m_dragPixelsPerMillimetre = 1.0;
     double m_dragStartValue = 0.0;
     double m_dragSign = 1.0;

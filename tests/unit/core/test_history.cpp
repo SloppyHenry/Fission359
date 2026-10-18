@@ -227,6 +227,20 @@ TEST_CASE("a drag makes exactly one undo step", "[history]") {
     CHECK(history.document().findFeature(*id)->params.at("width").expression == "220");
 }
 
+TEST_CASE("a step with a name of its own keeps it, even for a single change", "[history]") {
+    History history{Document(7)};
+    const auto id = history.addFeature(boxDraft("20"));
+    history.beginTransaction({"moveBody", {{"type", "box"}}});
+    REQUIRE(history.execute(makeSetFeatureValue(*id, "width", "5")));
+    REQUIRE(history.execute(makeSetFeatureValue(*id, "width", "12")));
+    history.commitTransaction();
+    REQUIRE(history.nextUndo());
+    CHECK(history.nextUndo()->key == "moveBody");
+    REQUIRE(history.undo());
+    REQUIRE(history.document().findFeature(*id) != nullptr);
+    CHECK(history.document().findFeature(*id)->params.at("width").expression == "20");
+}
+
 TEST_CASE("a drag of several values still is one step and undoes in the right order", "[history]") {
     History history{Document(2)};
     const auto id = history.addFeature(boxDraft("20"));

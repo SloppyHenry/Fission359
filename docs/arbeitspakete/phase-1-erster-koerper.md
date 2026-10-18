@@ -640,10 +640,10 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
-**Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Status:** in Arbeit (1.6a erledigt) · **Größe:** L · **Abhängigkeiten:** AP-1.4
 
 **Umfang:**
-- Gizmo: Verschieben (Achsen und Ebenen), Drehen (Ringe), **proportional** Vergrößern/Verkleinern (Eck-Griff mit ⇧ oder Prozentangabe)
+- Gizmo: Verschieben (Achsen und Ebenen), Drehen (Ringe), **proportional** Vergrößern/Verkleinern (Eck-Griff oder Prozentangabe; der Eck-Griff ist immer gleichmäßig)
 - **Kein ungleichmäßiges Skalieren über das Gizmo.** Breiter/höher machen geht über die Maß-Griffe der Grundform (AP-1.5) bzw. ab Phase 2 über Strecken (AP-2.4). Echtes Verzerren nur über Ändern ▸ Mehr ▸ „Verzerren“, mit Warnhinweis ([UX §7.2](../02-ux-konzept.md#72-rundungen-verziehen-sich-beim-größe-ändern))
 - Fangen: adaptives Raster, Ecken, Kantenmitten, Kreismittelpunkte, Flächenmitten, 15°-Winkel; ⇧ = aus
 - **Intelligente Abstandsmaße** zu den nächsten Kanten anderer Körper und zum Bett, anklickbar und editierbar
@@ -654,6 +654,93 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 **Akzeptanzkriterien:**
 - [ ] Eine Form lässt sich per Abstandsmaß exakt „5 mm vom Rand“ platzieren
 - [ ] Jede Transformation steht als Rezept-Eintrag im Verlauf und ist editierbar
+
+#### Zerlegung (2026-10-18, vom Product Owner bestätigt)
+Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten geplant. Gizmo, Ringe, Fang-Marken und Abstandsmaße
+zeichnet die 3D-Ansicht tiefenrichtig (`render::HandleGraphics`, erweitert um Ringe und gefüllte Flächen); in QML liegen nur
+Beschriftungen und Anfassflächen.
+
+| Teil | Status | Inhalt |
+|---|---|---|
+| **a) Verschieben** | erledigt (2026-10-18, PR #27) | ADR-0010 (wo eine Verschiebung im Rezept lebt); die Werkzeuge der Palette wirken (Wählen, Verschieben, Größe); Gizmo mit Achsen-Pfeilen und Ebenen-Quadraten; **Körper selbst ziehen verschiebt ihn** auf der Arbeitsebene (Rahmen dann nur noch auf leerem Grund); Wertblase, Tippen mit `Tab` X → Y → Z, Enter, Esc; Raster in ganzen mm wie bisher |
+| **b) Drehen und proportional** | offen | Die Lage bekommt eine Drehung; Ringe, 15°-Schritte, Tippen in Grad; Drehen um die Körpermitte; Eck-Griff (Werkzeug Größe) und Prozentangabe ändern **alle Maße im gleichen Verhältnis** (Parameter, nie Skalieren, Regel 11); Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus |
+| **c) Fangen** | offen | Adaptives Raster; Fangen an Ecken, Kantenmitten, Kreismitten, Flächenmitten anderer Körper und am Bett; Ausrichtungslinien; Fang-Marke in der Ansicht; ⇧ während des Ziehens schaltet das Fangen aus; gilt auch für Maß-Griffe und das Ablegen |
+| **d) Abstandsmaße** | offen | Beim Verschieben Abstände zu den nächsten Kanten anderer Körper und zum Bettrand als Maßband in der Ansicht; ein Klick macht die Zahl editierbar („5 mm vom Rand“), Tippen setzt den Körper genau dorthin; Akzeptanzkriterium 1 als automatischer Ablauf |
+| **e) Rest** | offen | Ausrichten mehrerer Körper (bündig, mittig); „Aufs Bett legen“; „Auf Fläche legen“ (auch an Wänden); Kopieren, Einfügen, Duplizieren (⌘D) mit Versatz |
+
+**Festlegungen (Product Owner, 2026-10-18: „ok“ zu allen Empfehlungen)**
+- **Lage im Rezept:** Verschieben und Drehen ändern die Lage-Werte des Schritts, der den Körper macht; ein eigener Schritt
+  „Verschoben“ nur, wo ein Schritt mehrere Körper speist ([ADR-0010](../adr/0010-lage-im-rezept.md)). Kriterium 2 heißt damit: Die
+  Bewegung steht im Rezept-Eintrag des Körpers (Klick → Lage rechts) und ist dort editierbar.
+- **Griffe nach Werkzeug** wie im Mockup: Verschieben (Standard) = Gizmo und Maßbänder ohne Punkte, Größe = Punkte und Eck-Griff,
+  Drehen = Ringe, Wählen = keine. Den Körper selbst ziehen verschiebt ihn in jedem Werkzeug außer Wählen.
+- **Kopieren/Einfügen** nur innerhalb des Programms (System-Zwischenablage mit dem Dateiformat, AP-1.10).
+- Annahmen bestätigt: Abstandsmaß von Kante zu Kante; Eck-Griff immer gleichmäßig (⇧ nur „Fangen aus“, während eines Zugs);
+  Gizmo-Achsen immer in Bett-Richtung; Drehen um die Körpermitte; Zoomen mit der Tastatur ist nicht Teil von AP-1.6.
+
+#### Zwischenstand 1.6a Verschieben (2026-10-18, erledigt: vom Product Owner ausprobiert, „fühlt sich top an“)
+
+**Umgesetzt**
+- **Werkzeuge der Palette wirken:** „Verschieben“ (Standard) zeigt am gewählten Körper das Gizmo und die Maßbänder (Beschriftung
+  anklicken und tippen geht weiter); „Größe“ zeigt die Maß-Punkte wie bisher; „Wählen“ zeigt keine Griffe; „Drehen“ sagt in der
+  Hinweiszeile, dass es bald kommt. Jedes Werkzeug hat Tooltip-Karte, Hinweiszeile und Suchwörter (ein Katalog, `ToolCatalog.qml`).
+- **Gizmo** nach dem Mockup: Pfeile X (rot), Y (grün), Z (blau) mit Buchstaben, kleine Quadrate für die Ebenen XY, XZ, YZ und ein weißer
+  Punkt in der Mitte (über das Bett). Es sitzt über der Mitte der Oberseite und behält auf dem Bildschirm seine Größe (bei kleinen
+  Körpern kürzer). Was man genau von vorn sieht (ein Pfeil, der auf einen zeigt, ein Quadrat von der Kante), fällt weg. Gezeichnet in der
+  3D-Ansicht mit Tiefe (verdeckt blass), wie die Maß-Griffe; neue Bausteine der Zeichnung: gefüllte Pfeilspitzen und Flächen.
+- **Ziehen:** Pfeil = nur diese Richtung, Quadrat = in der Ebene, Punkt = über das Bett. Während des Zugs treten die anderen Teile zurück,
+  eine dünne Linie zeigt die Richtung, die **Wertblase** sagt, wie weit („X +20 mm“). Die Lage rastet auf ganze Millimeter (feiner beim
+  Zoomen). **Tippen ersetzt Ziehen:** eine Zahl ist der Abstand in dieser Richtung, `Tab` geht X → Y → Z, Enter übernimmt, Esc setzt zurück.
+- **Körper selbst anfassen und ziehen** verschiebt ihn über das Bett (der angefasste Punkt bleibt unter dem Zeiger), in jedem Werkzeug
+  außer „Wählen“. Der Rahmen zum Auswählen entsteht dann nur noch auf leerem Grund (in „Wählen“ überall).
+- **Pfeiltasten** verschieben den gewählten Körper um 1 mm, mit ⇧ um 10 mm, in die Bett-Richtung, die auf dem Bildschirm am besten
+  passt; Bild↑/Bild↓ heben und senken ihn.
+- **Rezept und Verlauf** (ADR-0010): Ein Zug (auch mit Tippen) ist **ein** Schritt in „Letzte Aktionen“: „Quader verschoben“. Er ändert die
+  Lage-Werte x, y, z der Form; ein Wert, der sich nicht bewegt, bleibt unberührt (eine Formel darin bleibt erhalten). Das Rezept bekommt
+  keinen neuen Eintrag.
+
+**Wie getestet**
+- Mac (arm64, Debug): `ctest` 361 von 361 grün (nach der Nachbesserung).
+- Neu: `tests/unit/interaction/test_drag.cpp` (Achse, Ebene, Rasten), `tests/unit/ui/test_gizmo.cpp` (Teile sichtbar/ausgelassen, X-Pfeil
+  ändert nur x in ganzen mm, Formel in y bleibt, ein Schritt, Undo; Esc; Ebene und Punkt nie nach oben; Tippen mit Tab; Körper ziehen durch
+  die echten Mausfunktionen der Ansicht, Punkt bleibt unter dem Zeiger; in „Wählen“ wird es ein Rahmen; Pfeiltasten; Maß-Griffe je Modus),
+  `test_history.cpp` (ein Schritt mit eigenem Namen behält ihn).
+- Fenster mit echten Mausereignissen: `app_gizmo_move` (Pfeil und Punkt gezogen); die beiden Zieh-Tests der Maß-Griffe wählen jetzt
+  vorher das Werkzeug „Größe“.
+- Bilder: [ap-1.6a-gizmo-de.png](../screenshots/ap-1.6a-gizmo-de.png), [ap-1.6a-ziehen-de.png](../screenshots/ap-1.6a-ziehen-de.png),
+  [ap-1.6a-tippen-de.png](../screenshots/ap-1.6a-tippen-de.png).
+- Linux: nur CI.
+
+**So probierst du es aus** (`scripts/run --release` aus dem Hauptordner, sobald `main` aktualisiert ist)
+1. `scripts/run --release`. Doppelklick auf den Würfel: oben erscheinen die Pfeile X, Y, Z, die Quadrate und der weiße Punkt.
+2. Am **roten Pfeil** ziehen: der Würfel wandert nur nach rechts/links, die Blase zeigt „X +…“, rechts unter „Lage“ ändert sich X.
+3. Während du ziehst, `25` tippen, dann `Tab` und `-5`, dann Enter: der Würfel steht 25 mm weiter in X und 5 mm zurück in Y.
+   ⌘Z nimmt den ganzen Zug zurück („Quader verschoben“).
+4. Den **Würfel selbst** anfassen und ziehen: er rutscht über das Bett. Esc während des Ziehens stellt ihn zurück.
+5. Pfeiltasten (mit und ohne Umschalt) und Bild↑/Bild↓ probieren. Links auf **Größe** wechseln: jetzt sind die Maß-Punkte da, das Gizmo
+   ist weg; auf **Wählen**: keine Griffe, Ziehen zeichnet einen Rahmen.
+
+**Nachbesserung nach dem ersten Ausprobieren (Product Owner, 2026-10-18)**
+- *„Pfeil anklicken und bewegen: verliert je nach Weg die Haftung.“* Ursache: Drehte die Perspektive einen Pfeil beim Ziehen fast auf
+  den Betrachter zu, nahm das Programm ihn aus der Liste der Gizmo-Teile, und das Fenster ließ den Zug los. Jetzt hat jedes der sieben
+  Teile einen festen Platz, das gehaltene bleibt immer. Pfeile verschwinden erst, wenn sie wirklich fast auf einen zeigen, und die
+  Anfassflächen sind größer. Test: `the arrow that is held stays while the body moves far`.
+- *„Beim Größe-Ändern verschwand der Quader nach fröhlichem Größer- und Kleinerziehen.“* Ursache: Zog man ein Maß kleiner, als die Form
+  erlaubt (unter null), blieb der Wert stehen, statt beim kleinsten möglichen anzuhalten. Kleinerziehen ging dann nicht mehr, Größerziehen
+  schon; nach ein paar Runden füllte der Körper das Bild. Jetzt hält das Maß beim kleinsten möglichen Wert an (z. B. 1 mm). Und nahe am
+  Fluchtpunkt einer Achse rast der Wert nicht mehr davon. Tests: `pulled smaller than possible …`, `near the vanishing point …`.
+- *„Tiefe lässt sich nicht ziehen, von vorn schon gar nicht (extra?)“* Ja, das war eine Schutzregel aus AP-1.5: Eine Achse, die weniger als
+  30° neben der Blickrichtung liegt, wurde gesperrt, weil sie sonst davonrannte. Das traf die Tiefe in jeder etwas frontalen Ansicht.
+  Jetzt wird so eine Achse **über den Bildschirm** gezogen, gleichmäßig wie ein Maß quer zum Blick: Der Wert folgt dem Pfeil, der beim
+  Überfahren erscheint (von leicht oben gesehen heißt das: nach unten ziehen macht tiefer). Gilt für Maß-Griffe und Gizmo-Pfeile. Test im
+  Fenster: `app_handle_drag_front`.
+
+**Einschränkungen, Annahmen**
+- Das Fangen an Ecken, Kanten und Mitten anderer Körper kommt mit 1.6c; bis dahin rastet die Lage auf das Raster (ganze mm).
+- Die Wertblase zeigt den **Abstand** des Zugs, die Felder rechts die **Lage** (Annahme: so sieht man beim Ziehen, wie weit, und rechts,
+  wo). Getippt wird ebenfalls der Abstand.
+- Bild↑/Bild↓ fehlen auf Mac-Laptops als Taste (dort Fn+↑/↓).
+- „Drehen“ zeigt noch nichts (1.6b; Auftrag: [docs/prompts/ap-1.6b-drehen.md](../prompts/ap-1.6b-drehen.md)).
 
 ---
 

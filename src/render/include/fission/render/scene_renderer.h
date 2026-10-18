@@ -70,16 +70,41 @@ struct HandleArrow {
     QColor halo; ///< drawn wider beneath, so that the arrow shows on a body and beside it
     bool operator==(const HandleArrow&) const = default;
 };
+/// A filled arrow head with its tip at `tip`, pointing along `direction` (the arrows of the
+/// gizmo, AP-1.6). Lengths in window pixels.
+struct HandleHead {
+    QVector3D tip;
+    QVector3D direction;
+    float length = 13.0F;
+    float halfWidth = 6.0F;
+    QColor color;
+    bool operator==(const HandleHead&) const = default;
+};
+/// A flat filled four-corner area in the scene, with a line round it (the plane squares of the
+/// gizmo). The corners are in mm and go round the area.
+struct HandleQuad {
+    QVector3D corners[4];
+    QColor fill;
+    QColor line;
+    float lineWidth = 1.5F;
+    bool operator==(const HandleQuad&) const = default;
+};
 struct HandleGraphics {
     std::vector<HandleLine> lines;
     std::vector<HandleDot> dots;
     std::vector<HandleArrow> arrows;
+    std::vector<HandleHead> heads;
+    std::vector<HandleQuad> quads;
     /// How strong what is hidden behind a body is drawn (0 to 1).
     float hiddenAlpha = 0.3F;
     /// Pixels of the image per pixel of the window (2 on a Retina screen): the sizes above are
     /// window pixels.
     float pixelScale = 1.0F;
-    bool empty() const { return lines.empty() && dots.empty() && arrows.empty(); }
+    bool empty() const {
+        return lines.empty() && dots.empty() && arrows.empty() && heads.empty() && quads.empty();
+    }
+    /// Adds what `other` draws (one picture of the handles of several controllers).
+    void append(const HandleGraphics& other);
     bool operator==(const HandleGraphics&) const = default;
 };
 

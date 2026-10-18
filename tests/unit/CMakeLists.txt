@@ -29,10 +29,12 @@ add_executable(fission_unit_tests
   ui/test_handles.cpp
   ui/test_shape_previews.cpp
   ui/test_viewport_navigation.cpp
-  ui/test_printer_catalog.cpp)
+  ui/test_printer_catalog.cpp
+  ui/test_gizmo.cpp
+  interaction/test_drag.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
-  fission_core fission_features fission_geometry_occt fission_render fission_ui Catch2::Catch2WithMain)
+  fission_core fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
 fission_apply_compiler_options(fission_unit_tests)
 
 target_compile_definitions(fission_unit_tests PRIVATE
