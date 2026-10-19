@@ -640,7 +640,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
-**Status:** in Arbeit (1.6a, 1.6b1 und 1.6b2 erledigt, 1.6b3 in Review) · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Status:** in Arbeit (1.6a und 1.6b erledigt) · **Größe:** L · **Abhängigkeiten:** AP-1.4
 
 **Umfang:**
 - Gizmo: Verschieben (Achsen und Ebenen), Drehen (Ringe), **proportional** Vergrößern/Verkleinern (Eck-Griff oder Prozentangabe; der Eck-Griff ist immer gleichmäßig)
@@ -663,10 +663,10 @@ Beschriftungen und Anfassflächen.
 | Teil | Status | Inhalt |
 |---|---|---|
 | **a) Verschieben** | erledigt (2026-10-18, PR #27) | ADR-0010 (wo eine Verschiebung im Rezept lebt); die Werkzeuge der Palette wirken (Wählen, Verschieben, Größe); Gizmo mit Achsen-Pfeilen und Ebenen-Quadraten; **Körper selbst ziehen verschiebt ihn** auf der Arbeitsebene (Rahmen dann nur noch auf leerem Grund); Wertblase, Tippen mit `Tab` X → Y → Z, Enter, Esc; Raster in ganzen mm wie bisher |
-| **b) Drehen und proportional** | Review | Zerlegt (2026-10-18) in b1 bis b3, je ein PR: |
+| **b) Drehen und proportional** | erledigt (2026-10-19) | Zerlegt (2026-10-18) in b1 bis b3, je ein PR: |
 | &nbsp;&nbsp;**b1) Drehen** | erledigt (2026-10-18, PR #29) | Die Lage bekommt eine Drehung (drei Winkel); der Kernel dreht Körper und behält die Flächen-Namen; Werkzeug „Drehen“ mit Ringen, 15°-Schritten, Tippen in Grad |
 | &nbsp;&nbsp;**b2) Gleichmäßig vergrößern** | erledigt (2026-10-19, PR #31) | Eck-Griff (Werkzeug Größe) und Prozentangabe ändern **alle Maße im gleichen Verhältnis** (Parameter, nie Skalieren, Regel 11); Formeln bleiben als `(Formel) × Faktor` erhalten |
-| &nbsp;&nbsp;**b3) Ablegen an Wänden** | Review (2026-10-19) | Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus (Unterseite auf der Fläche; ⌥ = aufrecht) |
+| &nbsp;&nbsp;**b3) Ablegen an Wänden** | erledigt (2026-10-19, PR #33) | Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus (Unterseite auf der Fläche; ⌥ = aufrecht) |
 | **c) Fangen** | offen | Adaptives Raster; Fangen an Ecken, Kantenmitten, Kreismitten, Flächenmitten anderer Körper und am Bett; Ausrichtungslinien; Fang-Marke in der Ansicht; ⇧ während des Ziehens schaltet das Fangen aus; gilt auch für Maß-Griffe und das Ablegen |
 | **d) Abstandsmaße** | offen | Beim Verschieben Abstände zu den nächsten Kanten anderer Körper und zum Bettrand als Maßband in der Ansicht; ein Klick macht die Zahl editierbar („5 mm vom Rand“), Tippen setzt den Körper genau dorthin; Akzeptanzkriterium 1 als automatischer Ablauf |
 | **e) Rest** | offen | Ausrichten mehrerer Körper (bündig, mittig); „Aufs Bett legen“; „Auf Fläche legen“ (auch an Wänden); Kopieren, Einfügen, Duplizieren (⌘D) mit Versatz |
@@ -924,7 +924,7 @@ Auftrag: Sitzung vom 18.10.2026 (Prompt im Stil von [docs/prompts/ap-1.6b-drehen
 **Vorgeschlagene Folge-Arbeiten:** b3 Ablegen an Wänden; eine Prozentangabe auch im Panel (heute nur an der Wertblase); Bänder für
 gedrehte Maß-Punkte.
 
-#### Zwischenstand 1.6b3 Ablegen an Wänden (2026-10-19, Review)
+#### Zwischenstand 1.6b3 Ablegen an Wänden (2026-10-19, erledigt: vom Product Owner ausprobiert, „passt“)
 Festlegungen (Product Owner, 2026-10-19: „ok lege los“ zu Plan, Annahmen und Empfehlungen): Fragen 1 = A (Maße tippen nach dem
 Ablegen schiebt die Form von der Wand, siehe Einschränkungen) und 2 = ⌥ bauen, unter Linux prüfen.
 
