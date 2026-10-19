@@ -47,6 +47,9 @@ class Viewport3D : public QQuickRhiItem {
     /// The colour of hover and selection highlights.
     Q_PROPERTY(QColor accentColor MEMBER m_accent NOTIFY highlightsChanged)
     Q_PROPERTY(bool bedVisible READ bedVisible WRITE setBedVisible NOTIFY bedVisibleChanged)
+    /// While a body is dragged, fine lines on the bed show the grid it snaps to (a view setting).
+    Q_PROPERTY(
+        bool snapGridShown READ snapGridShown WRITE setSnapGridShown NOTIFY snapGridShownChanged)
     Q_PROPERTY(bool orthographic READ orthographic WRITE setOrthographic NOTIFY orthographicChanged)
     Q_PROPERTY(QString displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged)
     Q_PROPERTY(bool animated MEMBER m_animated)
@@ -59,6 +62,8 @@ class Viewport3D : public QQuickRhiItem {
     Q_PROPERTY(double cameraYaw READ cameraYaw NOTIFY cameraChanged)
     Q_PROPERTY(double cameraPitch READ cameraPitch NOTIFY cameraChanged)
     Q_PROPERTY(double pixelsPerMillimetre READ pixelsPerMillimetre NOTIFY cameraChanged)
+    /// The step (mm) a dragged length snaps to at this zoom (shown in the status bar).
+    Q_PROPERTY(double snapStep READ snapStep NOTIFY cameraChanged)
     Q_PROPERTY(QString backendName READ backendName NOTIFY backendNameChanged)
     Q_PROPERTY(int triangleCount READ triangleCount NOTIFY sceneChanged)
     Q_PROPERTY(double bedSizeX READ bedSizeX NOTIFY sceneChanged)
@@ -76,6 +81,12 @@ public:
     void setScene(std::shared_ptr<const render::RenderScene> scene);
 
     bool bedVisible() const { return m_bedVisible; }
+    bool snapGridShown() const { return m_snapGridShown; }
+    void setSnapGridShown(bool shown);
+    /// The step (mm) of the grid a drag in progress snaps to; 0 when none. Shown on the bed when
+    /// `snapGridShown` is on.
+    void setSnapGridStep(double millimetres);
+    double snapGridStep() const { return m_snapGridStep; }
     void setBedVisible(bool visible);
     bool orthographic() const { return m_camera.orthographic(); }
     void setOrthographic(bool orthographic);
@@ -101,6 +112,7 @@ public:
     double cameraYaw() const { return m_camera.pose().yaw; }
     double cameraPitch() const { return m_camera.pose().pitch; }
     double pixelsPerMillimetre() const { return m_camera.pixelsPerMillimetre(); }
+    double snapStep() const;
     QString backendName() const { return m_backendName; }
     int triangleCount() const;
     bool bodiesMovable() const { return m_bodiesMovable; }
@@ -234,6 +246,7 @@ public:
         QMatrix4x4 projection;
         float pixelsPerMillimetre = 2.0F;
         bool bedVisible = true;
+        float snapGridStep = 0.0F; ///< 0: not shown
         render::DisplayMode displayMode = render::DisplayMode::colors;
         bool ambientOcclusion = true;
         quint64 sceneVersion = 0;
@@ -253,6 +266,7 @@ public:
 signals:
     void paletteChanged();
     void bedVisibleChanged();
+    void snapGridShownChanged();
     void orthographicChanged();
     void mouseStyleChanged();
     void ambientOcclusionChanged();
@@ -350,6 +364,8 @@ private:
     render::OrbitCamera m_camera;
     QPointF m_lastMouse;
     bool m_bedVisible = true;
+    bool m_snapGridShown = true;
+    double m_snapGridStep = 0.0;
     bool m_animated = true;
     bool m_firstFrameReported = false;
     QString m_backendName;

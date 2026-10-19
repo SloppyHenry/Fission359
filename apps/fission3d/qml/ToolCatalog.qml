@@ -16,7 +16,7 @@ QtObject {
                       en: ["select", "choose", "pick", "frame", "mark"] } },
         { id: "move", name: qsTr("Move"), icon: "move",
           tip: qsTr("Arrows move the chosen body along one direction, squares in a plane, the dot across the bed. You can also drag the body itself."),
-          hint: qsTr("Drag an arrow, a square or the body itself. Arrow keys move by 1 mm (Shift: 10 mm)."),
+          hint: qsTr("Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm)."),
           synonyms: { de: ["verschieben", "bewegen", "schieben", "versetzen", "position", "lage"],
                       en: ["move", "shift", "drag", "position", "place", "translate"] } },
         { id: "rotate", name: qsTr("Rotate"), icon: "rotate",

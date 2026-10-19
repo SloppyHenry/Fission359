@@ -406,7 +406,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+71"/>
+        <location line="+72"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -416,7 +416,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-71"/>
+        <location line="-72"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -489,6 +489,11 @@
         <location line="+1"/>
         <source>Soft shadows</source>
         <translation>Soft shadows</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Grid while dragging</source>
+        <translation>Grid while dragging</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -577,12 +582,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+591"/>
+        <location line="+593"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-590"/>
+        <location line="-592"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -638,18 +643,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+297"/>
+        <location line="+298"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-295"/>
-        <location line="+296"/>
+        <location line="-296"/>
+        <location line="+297"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-290"/>
+        <location line="-291"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -669,7 +674,7 @@
         <translation>Command search arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+36"/>
         <location line="+211"/>
         <source>This arrives in a later version.</source>
         <translation>This arrives in a later version.</translation>
@@ -750,7 +755,12 @@
         <translation>Type a size (Tab for the next one, Enter to finish) or drag the dots.</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+6"/>
+        <source>Unit: mm · Grid %1 mm</source>
+        <translation>Unit: mm · Grid %1 mm</translation>
+    </message>
+    <message>
+        <location line="+20"/>
         <source>Width</source>
         <translation>Width</translation>
     </message>
@@ -1139,27 +1149,27 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-299"/>
+        <location line="-300"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-567"/>
+        <location line="-569"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+602"/>
+        <location line="+604"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-495"/>
+        <location line="-496"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+266"/>
+        <location line="+267"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
@@ -1172,11 +1182,6 @@
         <location line="+7"/>
         <source>Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.</source>
         <translation>Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Unit: mm · Grid 1 mm</source>
-        <translation>Unit: mm · Grid 1 mm</translation>
     </message>
 </context>
 <context>
@@ -1525,8 +1530,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Drag an arrow, a square or the body itself. Arrow keys move by 1 mm (Shift: 10 mm).</source>
-        <translation>Drag an arrow, a square or the body itself. Arrow keys move by 1 mm (Shift: 10 mm).</translation>
+        <source>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm).</source>
+        <translation>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm).</translation>
     </message>
     <message>
         <location line="+3"/>

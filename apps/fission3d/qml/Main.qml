@@ -70,6 +70,7 @@ Window {
             { id: "orthographic", text: qsTr("Orthographic"), shortcut: "P", checked: root.orthographic },
             { id: "bed", text: qsTr("Print bed"), checked: root.bedVisible },
             { id: "softshadows", text: qsTr("Soft shadows"), checked: viewport.ambientOcclusion },
+            { id: "snapgrid", text: qsTr("Grid while dragging"), checked: viewport.snapGridShown },
             { id: "focus", text: qsTr("Focus"), shortcut: isMac ? "⇧F" : qsTr("Shift+F"), checked: root.focusMode },
             { separator: true },
             { id: "view.frame", text: qsTr("Show everything"), shortcut: "F" },
@@ -186,6 +187,7 @@ Window {
         case "orthographic": orthographic = !orthographic; break
         case "bed": bedVisible = !bedVisible; break
         case "softshadows": viewport.ambientOcclusion = !viewport.ambientOcclusion; break
+        case "snapgrid": viewport.snapGridShown = !viewport.snapGridShown; break
         case "focus": focusMode = !focusMode; break
         case "minimize": root.showMinimized(); break
         case "fullscreen":
@@ -665,7 +667,8 @@ Window {
             : root.hoverText !== "" ? root.hoverText
             : Selection.count > 0 ? toolCatalog.find(root.tool).hint
             : root.navigationText
-        unitText: qsTr("Unit: mm · Grid 1 mm")
+        unitText: qsTr("Unit: mm · Grid %1 mm").arg(
+                      Number(viewport.snapStep).toLocaleString(Qt.locale(), "f", viewport.snapStep < 1 ? 1 : 0))
     }
 
     AboutWindow {

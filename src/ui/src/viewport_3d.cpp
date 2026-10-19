@@ -14,6 +14,7 @@
 #include <chrono>
 #include <cmath>
 
+#include "fission/interaction/drag.h"
 #include "fission/render/detail.h"
 #include "fission/render/scene_renderer.h"
 
@@ -75,6 +76,7 @@ public:
         frame.projection = m_snapshot.projection;
         frame.pixelsPerMillimetre = m_snapshot.pixelsPerMillimetre;
         frame.bedVisible = m_snapshot.bedVisible;
+        frame.snapGridStep = m_snapshot.snapGridStep;
         frame.displayMode = m_snapshot.displayMode;
         frame.palette = m_snapshot.palette;
         frame.ambientOcclusion = m_snapshot.ambientOcclusion;
@@ -346,6 +348,25 @@ void Viewport3D::setBedVisible(bool visible) {
     if (m_bedVisible != visible) {
         m_bedVisible = visible;
         emit bedVisibleChanged();
+        update();
+    }
+}
+
+double Viewport3D::snapStep() const {
+    return interaction::snapStep(m_camera.pixelsPerMillimetre());
+}
+
+void Viewport3D::setSnapGridShown(bool shown) {
+    if (m_snapGridShown != shown) {
+        m_snapGridShown = shown;
+        emit snapGridShownChanged();
+        update();
+    }
+}
+
+void Viewport3D::setSnapGridStep(double millimetres) {
+    if (millimetres != m_snapGridStep) {
+        m_snapGridStep = millimetres;
         update();
     }
 }
@@ -988,6 +1009,7 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect, bool pickIdle) {
     snapshot.projection = m_camera.projection(aspect);
     snapshot.pixelsPerMillimetre = m_camera.pixelsPerMillimetre();
     snapshot.bedVisible = m_bedVisible;
+    snapshot.snapGridStep = m_snapGridShown ? static_cast<float>(m_snapGridStep) : 0.0F;
     snapshot.ambientOcclusion = m_ambientOcclusion;
     snapshot.sceneVersion = m_sceneVersion;
     snapshot.paletteVersion = m_paletteVersion;

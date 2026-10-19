@@ -667,7 +667,9 @@ Beschriftungen und Anfassflächen.
 | &nbsp;&nbsp;**b1) Drehen** | erledigt (2026-10-18, PR #29) | Die Lage bekommt eine Drehung (drei Winkel); der Kernel dreht Körper und behält die Flächen-Namen; Werkzeug „Drehen“ mit Ringen, 15°-Schritten, Tippen in Grad |
 | &nbsp;&nbsp;**b2) Gleichmäßig vergrößern** | erledigt (2026-10-19, PR #31) | Eck-Griff (Werkzeug Größe) und Prozentangabe ändern **alle Maße im gleichen Verhältnis** (Parameter, nie Skalieren, Regel 11); Formeln bleiben als `(Formel) × Faktor` erhalten |
 | &nbsp;&nbsp;**b3) Ablegen an Wänden** | erledigt (2026-10-19, PR #33) | Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus (Unterseite auf der Fläche; ⌥ = aufrecht) |
-| **c) Fangen** | offen | Adaptives Raster; Fangen an Ecken, Kantenmitten, Kreismitten, Flächenmitten anderer Körper und am Bett; Ausrichtungslinien; Fang-Marke in der Ansicht; ⇧ während des Ziehens schaltet das Fangen aus; gilt auch für Maß-Griffe und das Ablegen |
+| **c) Fangen** | in Arbeit (2026-10-19) | Zerlegt in c1 und c2, je ein PR: |
+| &nbsp;&nbsp;**c1) Fangen beim Verschieben** | Review (2026-10-19) | Fangregeln (Ecken, Kantenmitten, Kreismitten, Flächenmitten anderer Körper und des Betts; der gezogene Körper fängt mit den Ecken, Kantenmitten und Flächenmitten seines umschließenden Quaders, Achse für Achse); Fang-Marke und Ausrichtungslinie in der Ansicht; ⇧ schaltet aus; Fangraster auf dem Bett beim Ziehen (ein- und ausschaltbar) |
+| &nbsp;&nbsp;**c2) Fangen bei Maß-Griffen und Ablegen** | offen | dieselben Punkte und Linien für die Maß-Griffe, den Eck-Griff und das Ablegen auf Flächen, Wänden und dem Bett; ⇧ dort ebenfalls |
 | **d) Abstandsmaße** | offen | Beim Verschieben Abstände zu den nächsten Kanten anderer Körper und zum Bettrand als Maßband in der Ansicht; ein Klick macht die Zahl editierbar („5 mm vom Rand“), Tippen setzt den Körper genau dorthin; Akzeptanzkriterium 1 als automatischer Ablauf |
 | **e) Rest** | offen | Ausrichten mehrerer Körper (bündig, mittig); „Aufs Bett legen“; „Auf Fläche legen“ (auch an Wänden); Kopieren, Einfügen, Duplizieren (⌘D) mit Versatz |
 
@@ -979,6 +981,63 @@ Ablegen schiebt die Form von der Wand, siehe Einschränkungen) und 2 = ⌥ bauen
 
 **Vorgeschlagene Folge-Arbeiten:** „Auf Fläche legen“ für vorhandene Körper (1.6e, nutzt dieselbe Rechnung `seatOnFace`);
 Mitführen der Lage beim Tippen von Maßen; Bänder für gedrehte Maß-Punkte.
+
+#### Zwischenstand 1.6c1 Fangen beim Verschieben (2026-10-19, Review)
+Festlegungen (Product Owner, 2026-10-19): Frage 1 = A (der gezogene Körper fängt mit den Ecken, Kantenmitten und Flächenmitten seines
+umschließenden Quaders), Frage 2 = A, **aber das Raster lässt sich ein- und ausschalten** (Menü Ansicht ▸ „Raster beim Ziehen“).
+Fangreichweite 10 Pixel am Bildschirm (Annahme).
+
+**Umgesetzt**
+- **Fangen an Punkten:** Beim Ziehen eines Pfeils, eines Quadrats, des Mittelpunkts oder des Körpers selbst rastet der Körper an
+  Ecken, Kantenmitten, Kreismitten und Flächenmitten **anderer Körper** und an Ecken, Kantenmitten und Mitte des **Betts** ein. Es wird
+  Achse für Achse gerechnet: Wer entlang eines Pfeils zieht, richtet sich an einer Kante neben sich aus und rutscht trotzdem nur
+  entlang des Pfeils. Treffen in allen freien Achsen zugleich ein Punkt des Körpers und ein Punkt der anderen zusammen, ist es ein
+  **Punkt-Fang** (hat Vorrang). Wo nichts fängt, gilt wie bisher das Raster des Zooms (0,1 / 0,5 / 1 / 5 / 10 mm).
+- **Fang-Marke in der Ansicht** (tiefenrichtig wie die Griffe): Quadrat = Ecke, Kreis = Kantenmitte, Kreis mit Punkt = Kreismitte
+  oder Flächenmitte. Treffen sich zwei Punkte nur in einer Linie (Ausrichtung), steht ein Punkt am Körper, eine **gestrichelte
+  Ausrichtungslinie** verbindet beide.
+- **⇧ schaltet das Fangen aus** (auch das Raster, der Körper folgt dem Zeiger frei); wieder loslassen schaltet es beim nächsten
+  Zug wieder ein. Getippte Zahlen werden nie gefangen.
+- **Raster auf dem Bett:** Während des Ziehens zeigen feine Linien auf dem Bett das Raster, an dem gerastet wird (nie dichter als 8
+  Pixel, aus der Reihe 1-2-5). Ein-/Ausschalten im Menü Ansicht. Die Statuszeile zeigt jetzt das Raster des Zooms („Raster 0,5 mm“).
+- Hinweiszeile des Werkzeugs Verschieben nennt das Fangen und ⇧; de und en.
+- Neu ohne Qt: `interaction/snap.h` (Punkte eines Körpers aus dem Netz, Fangregel). In der Oberfläche: `ui::SnapSession` (merkt sich die
+  Punkte je Körper, solange sein Netz gleich bleibt), eingehängt im `GizmoController`. Entwickler-Option `--simulate "snap:off"`.
+
+**Getestet**
+- Unit-Tests `[snap]` (19 Fälle): Punkte eines Quaders, des Betts, eines Netzes (Quader: 8/12/6; Zylinder: zwei Kreismitten), Fang
+  in Reichweite und außerhalb, Achse für Achse, nächstes Paar bei gleichen Ausrichtungen, Reichweite je Achse, Bett, Rauschen der
+  Einzelgenauigkeit, Rasterlinien-Abstand; am Gizmo: Pfeil fängt, Körper ziehen fängt (Höhe bleibt), außer Reichweite Raster, ⇧ aus,
+  Tippen wird nicht gefangen, Raster ausblendbar.
+- Ablauftests im echten Fenster: `app_snap_catch` (Seite des 23,3 mm breiten Quaders liegt exakt an: x = -21,65, wo kein Raster
+  hinfällt) und `app_snap_off_does_not_catch` (dieselbe Prüfung muss mit ⇧ scheitern).
+- Alle Tests grün auf dem Mac (arm64, Release). Linux: CI.
+- Bild: [ap-1.6c1-fangen-de.png](../screenshots/ap-1.6c1-fangen-de.png) (Pfeil gehalten, Quadrat auf der Ecke, gestrichelte Linie).
+
+**So probierst du es aus** (`scripts/run --release` aus dem Ordner `Fission3D-ap16b`)
+1. Zwei Quader aufs Bett legen (Formen ▸ Quader, zweimal). Einen davon im Werkzeug **Verschieben** am roten Pfeil in Richtung des
+   anderen ziehen: kurz vor der Berührung springt er an und die Seiten liegen exakt an. Eine Marke zeigt, woran er hängt.
+2. Den Körper selbst anfassen und über das Bett ziehen: er richtet sich an Kanten und Mitten des anderen aus (gestrichelte Linie).
+3. **⇧ halten** und wieder ziehen: kein Einrasten, der Körper folgt dem Zeiger.
+4. Ansicht ▸ **Raster beim Ziehen** aus- und einschalten: feine Linien auf dem Bett während des Ziehens, nie dichter als nötig.
+5. Einen Zylinder neben den Quader legen und mit der Mitte seiner Oberseite an die Mitte der Quader-Oberseite ziehen.
+6. Eine Zahl tippen statt zu ziehen: sie gilt, wie getippt.
+
+**Einschränkungen, Annahmen**
+- **Nur Verschieben** (1.6c1). Maß-Griffe, der Eck-Griff und das Ablegen fangen noch nicht an Punkten (1.6c2); dort gilt wie
+  bisher das Raster.
+- **Punkte aus dem Anzeige-Netz:** Ecken stimmen, Kantenmitten gebogener Kanten und Kreismitten sind aus den Netzpunkten gerechnet
+  (auf 0,0001 mm gerundet, wenn das Rauschen der Einzelgenauigkeit es erklärt). Glatte Zahlen wie 12,3 bleiben glatt; krumme Lagen
+  haben ein Rauschen von etwa 0,00001 mm. Exakte Werte aus dem Kernel wären eine Folge-Arbeit.
+- Runde Flächen (Zylindermantel, Kugel) haben keinen Fangpunkt (ihre Mitte liegt nicht auf ihnen); eine Kugel fängt mit ihrem
+  Umriss-Quader nur als Bewegliches, nicht als Ziel.
+- Der gezogene Körper fängt mit dem **achsparallelen Quader** um ihn, auch wenn er gedreht ist.
+- Das Raster wird nur auf dem **Bett** gezeigt (nicht auf Oberseiten anderer Körper).
+- ⇧ wird beim Ziehen gelesen; drückt man es, ohne die Maus zu bewegen, gilt es ab der nächsten Bewegung.
+- Die Einstellung „Raster beim Ziehen“ wird noch nicht gemerkt (kommt mit AP-1.11, wie die Mausart).
+- Bei vielen Körpern kann das Fangen an Ausrichtungen häufig anspringen; dafür ist ⇧ da. Rückmeldung erwünscht, ob 10 Pixel passen.
+
+**Vorgeschlagene Folge-Arbeiten:** 1.6c2 (Maß-Griffe, Eck-Griff, Ablegen), danach 1.6d Abstandsmaße.
 
 ---
 

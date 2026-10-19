@@ -349,3 +349,173 @@ TEST_CASE("gizmo: the arrow that is held stays while the body moves far, the lis
     f.refresh();
     CHECK(f.value(QStringLiteral("y")) > 10.0);
 }
+
+// --- snapping (AP-1.6c) ---
+
+namespace {
+
+// The box round a body of the scene, by its place in the list of bodies.
+struct Extent {
+    double low[3] = {1e30, 1e30, 1e30};
+    double high[3] = {-1e30, -1e30, -1e30};
+};
+
+Extent extentOf(const DocumentModel& model, int body) {
+    Extent extent;
+    const std::string id = model.bodyIdAt(body).toStdString();
+    for (const auto& candidate : model.scene()->bodies) {
+        if (candidate.id != id) {
+            continue;
+        }
+        for (const auto& p : candidate.mesh->positions) {
+            const double v[3] = {p.x, p.y, p.z};
+            for (int a = 0; a < 3; ++a) {
+                extent.low[a] = std::min(extent.low[a], v[a]);
+                extent.high[a] = std::max(extent.high[a], v[a]);
+            }
+        }
+    }
+    return extent;
+}
+
+// A second box beside the first, at a place that is not a whole millimetre.
+struct Neighbour : Fixture {
+    Neighbour() {
+        const int second = model->addShape(QStringLiteral("box"), false);
+        REQUIRE(second >= 0);
+        REQUIRE(model->setStepValue(second, QStringLiteral("x"), QStringLiteral("75.3")));
+        REQUIRE(model->setStepValue(second, QStringLiteral("y"), QStringLiteral("0")));
+        REQUIRE(model->setStepValue(second, QStringLiteral("z"), QStringLiteral("0")));
+        model->selectStep(0);
+        refresh();
+        gap = extentOf(*model, 1).low[0] - extentOf(*model, 0).high[0];
+    }
+
+    // Pulls the X arrow of the first body until it has moved `millimetres` along X (found by
+    // trying: the pointer is moved on until the body is there, with snapping off), then lets
+    // snapping have its say with the pointer where it is. Stays holding the arrow.
+    // `shift`: snapping stays off.
+    void pullX(double millimetres, bool shift = false) {
+        const QVariantMap head = part(QStringLiteral("x"));
+        REQUIRE_FALSE(head.isEmpty());
+        QPointF pointer(head["x"].toDouble(), head["y"].toDouble());
+        REQUIRE(gizmo->beginDrag(QStringLiteral("x"), pointer.x(), pointer.y()));
+        gizmo->setSnapSuppressed(true);
+        const Extent mine = extentOf(*model, 0);
+        const double midX = (mine.low[0] + mine.high[0]) / 2.0;
+        const double midY = (mine.low[1] + mine.high[1]) / 2.0;
+        const QPointF a = viewport.project(midX, midY, mine.high[2]);
+        const QPointF b = viewport.project(midX + 1.0, midY, mine.high[2]);
+        const QPointF perMillimetre = b - a;
+        for (int i = 0; i < 30; ++i) {
+            const double error = millimetres - gizmo->offset()[0].toDouble();
+            if (std::abs(error) < 0.01) {
+                break;
+            }
+            pointer += perMillimetre * error;
+            gizmo->dragTo(pointer.x(), pointer.y());
+        }
+        REQUIRE(gizmo->offset()[0].toDouble() == Approx(millimetres).margin(0.05));
+        gizmo->setSnapSuppressed(shift);
+        gizmo->dragTo(pointer.x(), pointer.y());
+    }
+
+    double gap = 0.0; ///< free space between the two boxes along X
+};
+
+} // namespace
+
+TEST_CASE("snap: dragging an arrow catches the side of a body on the side of another",
+          "[ui][gizmo][snap]") {
+    Neighbour f;
+    REQUIRE(f.gap > 10.0);
+    f.pullX(f.gap - 0.8); // 0.8 mm short of touching
+
+    // While held: a mark on the point caught, the grid on the bed.
+    CHECK(f.gizmo->editing());
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::gizmo).dots.size() > 1);
+    CHECK(f.viewport.snapGridStep() > 0.0);
+
+    REQUIRE(f.gizmo->endDrag());
+    f.refresh();
+    // The sides touch, exactly: not 0.8 mm short, and not on a whole millimetre either.
+    CHECK(extentOf(*f.model, 0).high[0] == Approx(extentOf(*f.model, 1).low[0]).margin(1e-5));
+    CHECK(f.value(QStringLiteral("x")) == Approx(f.gap).margin(1e-5));
+    // Gone with the drag.
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::gizmo).dots.size() == 1);
+    CHECK(f.viewport.snapGridStep() == 0.0);
+}
+
+TEST_CASE("snap: out of reach the body goes to the grid", "[ui][gizmo][snap]") {
+    Neighbour f;
+    f.pullX(f.gap - 12.7); // far from the other body
+    REQUIRE(f.gizmo->endDrag());
+    f.refresh();
+    const double x = f.value(QStringLiteral("x"));
+    CHECK(x == Approx(std::round(x)));
+    CHECK(extentOf(*f.model, 0).high[0] < extentOf(*f.model, 1).low[0] - 5.0);
+}
+
+TEST_CASE("snap: Shift switches the catching and the grid off", "[ui][gizmo][snap]") {
+    Neighbour f;
+    f.pullX(f.gap - 0.8, true);
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::gizmo).dots.size() == 1); // no mark
+    CHECK(f.viewport.snapGridStep() == 0.0);
+    REQUIRE(f.gizmo->endDrag());
+    f.refresh();
+    // It stops where the pointer put it: short of the other body, by about the 0.8 mm.
+    const double left = extentOf(*f.model, 1).low[0] - extentOf(*f.model, 0).high[0];
+    CHECK(left > 0.3);
+    CHECK(left < 1.3);
+}
+
+TEST_CASE("snap: typing a number is not caught on anything", "[ui][gizmo][snap]") {
+    Neighbour f;
+    f.pullX(f.gap - 0.8);
+    REQUIRE(f.gizmo->typeInsteadOfDrag());
+    CHECK(f.viewport.snapGridStep() == 0.0);
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::gizmo).dots.size() == 1);
+    CHECK(f.gizmo->setOffset(0, 12.34));
+    REQUIRE(f.gizmo->commitEdit());
+    f.refresh();
+    CHECK(f.value(QStringLiteral("x")) == Approx(12.34));
+}
+
+TEST_CASE("snap: the grid on the bed can be switched off in the view", "[ui][gizmo][snap]") {
+    Neighbour f;
+    f.viewport.setSnapGridShown(false);
+    f.pullX(f.gap - 0.8);
+    CHECK(f.viewport.snapGridStep() > 0.0); // the step is known, the view does not show it
+    CHECK_FALSE(f.viewport.snapGridShown());
+    REQUIRE(f.gizmo->endDrag());
+}
+
+TEST_CASE("snap: dragging the body itself catches across the bed, the height stays",
+          "[ui][gizmo][snap]") {
+    Neighbour f;
+    const Extent before = extentOf(*f.model, 0);
+    const double midY = (before.low[1] + before.high[1]) / 2.0;
+    // Grab the middle of the front face and go along X until the sides are 0.8 mm apart.
+    QPointF pointer = f.viewport.project(0.0, before.low[1], 10.0);
+    REQUIRE(f.gizmo->beginBodyDrag(pointer.x(), pointer.y()));
+    f.gizmo->setSnapSuppressed(true);
+    const QPointF a = f.viewport.project(0.0, before.low[1], 10.0);
+    const QPointF b = f.viewport.project(1.0, before.low[1], 10.0);
+    for (int i = 0; i < 30; ++i) {
+        const double error = (f.gap - 0.8) - f.gizmo->offset()[0].toDouble();
+        if (std::abs(error) < 0.01) {
+            break;
+        }
+        pointer += (b - a) * error;
+        f.gizmo->dragTo(pointer.x(), pointer.y());
+    }
+    f.gizmo->setSnapSuppressed(false);
+    f.gizmo->dragTo(pointer.x(), pointer.y());
+    REQUIRE(f.gizmo->endDrag());
+    f.refresh();
+    CHECK(extentOf(*f.model, 0).high[0] == Approx(extentOf(*f.model, 1).low[0]).margin(1e-5));
+    CHECK(f.value(QStringLiteral("z")) == Approx(0.0));
+    CHECK(midY ==
+          Approx((extentOf(*f.model, 0).low[1] + extentOf(*f.model, 0).high[1]) / 2.0)
+              .margin(1.5)); // across the bed it only went along X (and may have lined up in Y)
+}
