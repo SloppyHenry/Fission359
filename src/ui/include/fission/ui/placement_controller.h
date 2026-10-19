@@ -33,7 +33,7 @@ public:
     void attach(Viewport3D* viewport) { m_viewport = viewport; }
     bool active() const { return m_model != nullptr && m_model->placing(); }
 
-    /// Lengths snap to whole millimetres on the surface (the finer fitting comes with AP-1.6).
+    /// Lengths snap to whole millimetres on the surface, or to the step the user chose.
     static constexpr double kSnapMillimetres = 1.0;
 
     /// Starts putting a shape of `type` down at the pointer (view pixels). False if the pointer
@@ -54,6 +54,8 @@ signals:
 
 private:
     bool landAt(double x, double y, bool upright);
+    /// The step of the grid a shape is put down on (mm).
+    double snapStep() const;
 
     QPointer<DocumentModel> m_model;
     QPointer<Viewport3D> m_viewport;

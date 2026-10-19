@@ -62,8 +62,13 @@ class Viewport3D : public QQuickRhiItem {
     Q_PROPERTY(double cameraYaw READ cameraYaw NOTIFY cameraChanged)
     Q_PROPERTY(double cameraPitch READ cameraPitch NOTIFY cameraChanged)
     Q_PROPERTY(double pixelsPerMillimetre READ pixelsPerMillimetre NOTIFY cameraChanged)
-    /// The step (mm) a dragged length snaps to at this zoom (shown in the status bar).
-    Q_PROPERTY(double snapStep READ snapStep NOTIFY cameraChanged)
+    /// The step (mm) a dragged length snaps to now: the one chosen in `fixedSnapStep`, or the one
+    /// of the zoom (shown in the status bar).
+    Q_PROPERTY(double snapStep READ snapStep NOTIFY snapStepChanged)
+    /// The step (mm) chosen by the user, from 10 mm down to 0.01 mm; 0 = automatic: whole
+    /// millimetres, finer when zoomed in (`interaction::snapStep`).
+    Q_PROPERTY(
+        double fixedSnapStep READ fixedSnapStep WRITE setFixedSnapStep NOTIFY snapStepChanged)
     Q_PROPERTY(QString backendName READ backendName NOTIFY backendNameChanged)
     Q_PROPERTY(int triangleCount READ triangleCount NOTIFY sceneChanged)
     Q_PROPERTY(double bedSizeX READ bedSizeX NOTIFY sceneChanged)
@@ -113,6 +118,10 @@ public:
     double cameraPitch() const { return m_camera.pose().pitch; }
     double pixelsPerMillimetre() const { return m_camera.pixelsPerMillimetre(); }
     double snapStep() const;
+    double fixedSnapStep() const { return m_fixedSnapStep; }
+    void setFixedSnapStep(double millimetres);
+    /// The step for a length seen at `pixelsPerMillimetre`: the chosen one, or that of the zoom.
+    double snapStepFor(double pixelsPerMillimetre) const;
     QString backendName() const { return m_backendName; }
     int triangleCount() const;
     bool bodiesMovable() const { return m_bodiesMovable; }
@@ -267,6 +276,8 @@ signals:
     void paletteChanged();
     void bedVisibleChanged();
     void snapGridShownChanged();
+    /// The step of the snapping changed: the user chose another, or the zoom changed it.
+    void snapStepChanged();
     void orthographicChanged();
     void mouseStyleChanged();
     void ambientOcclusionChanged();
@@ -366,6 +377,7 @@ private:
     bool m_bedVisible = true;
     bool m_snapGridShown = true;
     double m_snapGridStep = 0.0;
+    double m_fixedSnapStep = 0.0;
     bool m_animated = true;
     bool m_firstFrameReported = false;
     QString m_backendName;

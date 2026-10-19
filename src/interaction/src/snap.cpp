@@ -54,8 +54,7 @@ double cleanedCoordinate(double value) {
     return std::abs(value - rounded) <= noise ? (rounded == 0.0 ? 0.0 : rounded) : value;
 }
 
-double snapGridDisplayStep(double pixelsPerMillimetre) {
-    double step = snapStep(pixelsPerMillimetre);
+double snapGridDisplayStep(double step, double pixelsPerMillimetre) {
     // 1, 2, 5, 10, 20, 50 ...: 0.1 mm becomes 0.2, 0.5, 1 as the picture gets smaller.
     while (step * pixelsPerMillimetre < 8.0 && step < 1e6) {
         const double mantissa = step / std::pow(10.0, std::floor(std::log10(step)));

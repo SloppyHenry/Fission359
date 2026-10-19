@@ -540,8 +540,8 @@ bool GizmoController::dragTo(double x, double y) {
     }
     // The position catches on the points of the others; where it catches on none it snaps to the
     // grid of the moment (whole millimetres, finer when zoomed in).
-    const double step = interaction::snapStep(m_pixelsPerMillimetre);
-    m_viewport->setSnapGridStep(interaction::snapGridDisplayStep(m_pixelsPerMillimetre));
+    const double step = m_viewport->snapStepFor(m_pixelsPerMillimetre);
+    m_viewport->setSnapGridStep(interaction::snapGridDisplayStep(step, m_pixelsPerMillimetre));
     const QVector3D around = m_startAnchor + moved;
     const interaction::SnapResult caught = m_snap.snap(
         {moved.x(), moved.y(), moved.z()}, {moves(0), moves(1), moves(2)}, snapReach(around));

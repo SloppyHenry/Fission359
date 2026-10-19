@@ -10,22 +10,21 @@
 namespace fission::ui {
 
 namespace {
-double snapped(double value) {
-    return std::round(value / PlacementController::kSnapMillimetres) *
-           PlacementController::kSnapMillimetres;
+double snapped(double value, double step) {
+    return std::round(value / step) * step;
 }
 
 // The point on a face, moved along the face onto whole millimetres of the shape's own X and Y
 // (on a wall that runs along an axis these are millimetres of the world as well). The distance
 // from the face stays what it is.
-geo::Point3d snappedOnFace(const Viewport3D::Landing& landing) {
+geo::Point3d snappedOnFace(const Viewport3D::Landing& landing, double step) {
     const geo::Point3d normal{landing.nx, landing.ny, landing.nz};
     const geo::Matrix3 turn = geo::turnOntoFace(normal);
     geo::Point3d point{landing.x, landing.y, landing.z};
     for (int column = 0; column < 2; ++column) {
         const geo::Point3d axis{turn.m[0][column], turn.m[1][column], turn.m[2][column]};
         const double along = point.x * axis.x + point.y * axis.y + point.z * axis.z;
-        const double off = along - snapped(along);
+        const double off = along - snapped(along, step);
         point = {point.x - off * axis.x, point.y - off * axis.y, point.z - off * axis.z};
     }
     return point;
@@ -40,6 +39,11 @@ PlacementController::PlacementController(DocumentModel* model, QObject* parent)
     }
 }
 
+double PlacementController::snapStep() const {
+    const double chosen = m_viewport != nullptr ? m_viewport->fixedSnapStep() : 0.0;
+    return chosen > 0.0 ? chosen : kSnapMillimetres;
+}
+
 bool PlacementController::begin(const QString& type, bool asHole, double x, double y,
                                 bool upright) {
     if (m_model == nullptr || m_viewport == nullptr) {
@@ -49,12 +53,13 @@ bool PlacementController::begin(const QString& type, bool asHole, double x, doub
     if (!landing) {
         return false;
     }
-    if (m_model->startPlacing(type, asHole, snapped(landing->x), snapped(landing->y), landing->z) <
-        0) {
+    if (m_model->startPlacing(type, asHole, snapped(landing->x, snapStep()),
+                              snapped(landing->y, snapStep()), landing->z) < 0) {
         return false;
     }
     if (landing->tilted) {
-        m_model->placeOnFace(snappedOnFace(*landing), {landing->nx, landing->ny, landing->nz});
+        m_model->placeOnFace(snappedOnFace(*landing, snapStep()),
+                             {landing->nx, landing->ny, landing->nz});
     }
     return true;
 }
@@ -67,9 +72,11 @@ bool PlacementController::landAt(double x, double y, bool upright) {
         return false; // the ray misses everything: the shape stays where it was
     }
     if (landing->tilted) {
-        m_model->placeOnFace(snappedOnFace(*landing), {landing->nx, landing->ny, landing->nz});
+        m_model->placeOnFace(snappedOnFace(*landing, snapStep()),
+                             {landing->nx, landing->ny, landing->nz});
     } else {
-        m_model->placeAt(snapped(landing->x), snapped(landing->y), landing->z, landing->surface);
+        m_model->placeAt(snapped(landing->x, snapStep()), snapped(landing->y, snapStep()),
+                         landing->z, landing->surface);
     }
     return true;
 }

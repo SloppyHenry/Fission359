@@ -166,11 +166,15 @@ TEST_CASE("snap: floating point noise of the mesh is cleaned away", "[snap]") {
 
 TEST_CASE("snap grid on the bed: the lines are never closer than 8 pixels", "[snap]") {
     for (const double zoom : {0.2, 0.5, 1.0, 3.0, 6.0, 12.0, 25.0, 60.0}) {
-        const double step = snapGridDisplayStep(zoom);
-        CHECK(step * zoom >= 8.0 - 1e-9);
-        // The lines lie on the grid a drag snaps to: the display step is a multiple of it.
-        const double snap = fission::interaction::snapStep(zoom);
-        CHECK(std::fmod(step / snap, 1.0) == Approx(0.0).margin(1e-9));
+        // Every grid the user can choose, and the one of the zoom.
+        for (const double snap : {fission::interaction::snapStep(zoom), 10.0, 1.0, 0.1, 0.01}) {
+            const double step = snapGridDisplayStep(snap, zoom);
+            CHECK(step * zoom >= 8.0 - 1e-9);
+            // The lines lie on the grid a drag snaps to: the display step is a multiple of it.
+            const double times = step / snap;
+            CHECK(std::abs(times - std::round(times)) < 1e-6);
+        }
     }
-    CHECK(snapGridDisplayStep(10.0) == Approx(1.0));
+    CHECK(snapGridDisplayStep(0.5, 10.0) == Approx(1.0));
+    CHECK(snapGridDisplayStep(10.0, 10.0) == Approx(10.0));
 }

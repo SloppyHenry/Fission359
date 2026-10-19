@@ -353,7 +353,20 @@ void Viewport3D::setBedVisible(bool visible) {
 }
 
 double Viewport3D::snapStep() const {
-    return interaction::snapStep(m_camera.pixelsPerMillimetre());
+    return snapStepFor(m_camera.pixelsPerMillimetre());
+}
+
+double Viewport3D::snapStepFor(double pixelsPerMillimetre) const {
+    return m_fixedSnapStep > 0.0 ? m_fixedSnapStep : interaction::snapStep(pixelsPerMillimetre);
+}
+
+void Viewport3D::setFixedSnapStep(double millimetres) {
+    // Anything that is not a step from 0.001 mm up is "automatic".
+    const double step = std::isfinite(millimetres) && millimetres >= 0.001 ? millimetres : 0.0;
+    if (step != m_fixedSnapStep) {
+        m_fixedSnapStep = step;
+        emit snapStepChanged();
+    }
 }
 
 void Viewport3D::setSnapGridShown(bool shown) {
@@ -448,6 +461,9 @@ void Viewport3D::cameraMoved() {
         emit detailLevelWanted(level);
     }
     emit cameraChanged();
+    if (m_fixedSnapStep <= 0.0) {
+        emit snapStepChanged(); // the step follows the zoom
+    }
     update();
     hoverAgain();
 }

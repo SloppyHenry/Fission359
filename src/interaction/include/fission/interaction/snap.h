@@ -40,10 +40,10 @@ inline constexpr double kSnapReachPixels = 10.0;
 /// 12.3 again. Values that are not a multiple of 0.0001 mm within that noise stay as they are.
 double cleanedCoordinate(double value);
 
-/// The distance (mm) of the fine lines that show the snap grid: the grid step of the zoom
-/// (`snapStep`), or a coarser one from the 1-2-5 series where the lines would be closer than
-/// 8 pixels on the screen.
-double snapGridDisplayStep(double pixelsPerMillimetre);
+/// The distance (mm) of the fine lines that show the snap grid of step `step`: the step itself,
+/// or a coarser one from the 1-2-5 series where the lines would be closer than 8 pixels on the
+/// screen (every line then lies on the grid, there are only fewer of them).
+double snapGridDisplayStep(double step, double pixelsPerMillimetre);
 
 /// The points of a body a moving body can catch on: its corners, the middles of its open edges,
 /// the centres of its circles and the middles of its flat faces. (Round faces have none: their

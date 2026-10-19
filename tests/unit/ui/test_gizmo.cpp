@@ -519,3 +519,32 @@ TEST_CASE("snap: dragging the body itself catches across the bed, the height sta
           Approx((extentOf(*f.model, 0).low[1] + extentOf(*f.model, 0).high[1]) / 2.0)
               .margin(1.5)); // across the bed it only went along X (and may have lined up in Y)
 }
+
+TEST_CASE("snap: the step of the grid can be chosen from 10 mm down to 0.01 mm",
+          "[ui][gizmo][snap]") {
+    // Far from the other body, so that only the grid decides.
+    for (const double step : {10.0, 5.0, 0.1, 0.05, 0.01}) {
+        Neighbour f;
+        f.viewport.setFixedSnapStep(step);
+        CHECK(f.viewport.snapStep() == Approx(step));
+        f.pullX(f.gap - 23.7);
+        REQUIRE(f.gizmo->endDrag());
+        f.refresh();
+        const double x = f.value(QStringLiteral("x"));
+        const double times = x / step;
+        INFO("step " << step << " x " << x);
+        CHECK(std::abs(times - std::round(times)) < 1e-6);
+        // The pointer wanted 23.7 mm less than the gap: the grid is as near as it can be.
+        CHECK(std::abs(x - (f.gap - 23.7)) <= step / 2.0 + 0.1);
+    }
+}
+
+TEST_CASE("snap: the chosen step is kept until automatic is chosen again", "[ui][gizmo][snap]") {
+    Neighbour f;
+    CHECK(f.viewport.fixedSnapStep() == 0.0);
+    f.viewport.setFixedSnapStep(0.01);
+    CHECK(f.viewport.fixedSnapStep() == Approx(0.01));
+    f.viewport.setFixedSnapStep(-3.0); // not a step: automatic
+    CHECK(f.viewport.fixedSnapStep() == 0.0);
+    CHECK(f.viewport.snapStep() == f.viewport.snapStepFor(f.viewport.pixelsPerMillimetre()));
+}

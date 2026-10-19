@@ -346,7 +346,7 @@
         <translation>Untitled</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+19"/>
         <source>%1 × %2</source>
         <translation>%1 × %2</translation>
     </message>
@@ -582,12 +582,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+593"/>
+        <location line="+605"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-592"/>
+        <location line="-604"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -643,18 +643,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+298"/>
+        <location line="+309"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-296"/>
-        <location line="+297"/>
+        <location line="-307"/>
+        <location line="+308"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-291"/>
+        <location line="-302"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -664,7 +664,12 @@
         <translation>Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+44"/>
+        <location line="+47"/>
+        <source>Automatic (by zoom)</source>
+        <translation>Automatic (by zoom)</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Settings arrive in a later version.</source>
         <translation>Settings arrive in a later version.</translation>
     </message>
@@ -760,7 +765,7 @@
         <translation>Unit: mm · Grid %1 mm</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+21"/>
         <source>Width</source>
         <translation>Width</translation>
     </message>
@@ -1149,27 +1154,28 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-300"/>
+        <location line="-301"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-569"/>
+        <location line="-580"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+604"/>
+        <location line="+153"/>
+        <location line="+462"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-496"/>
+        <location line="-507"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+267"/>
+        <location line="+278"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
@@ -1496,9 +1502,14 @@
 <context>
     <name>StatusBar</name>
     <message>
-        <location filename="../qml/StatusBar.qml" line="+45"/>
+        <location filename="../qml/StatusBar.qml" line="+54"/>
         <source>Tool: %1</source>
         <translation>Tool: %1</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Grid: change the precision of snapping</source>
+        <translation>Grid: change the precision of snapping</translation>
     </message>
 </context>
 <context>

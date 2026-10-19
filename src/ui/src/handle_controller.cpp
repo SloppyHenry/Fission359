@@ -815,7 +815,7 @@ double HandleController::dragTo(double x, double y) {
     if (!moved) {
         return m_dragValue; // behind the eye, or beyond the vanishing point of the axis
     }
-    const double step = snapStep(m_dragPixelsPerMillimetre);
+    const double step = m_viewport->snapStepFor(m_dragPixelsPerMillimetre);
     double wanted =
         interaction::snapped(m_dragStartValue + m_dragSign * *moved / m_dragTravel, step);
     wanted = std::min(wanted, kLargestMillimetres);
