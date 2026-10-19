@@ -261,10 +261,12 @@ Float {
             Placement.cancel() // back over the gallery or a side bar: take the shape back
             return
         }
+        // Alt keeps the shape upright on the work plane instead of lying on a wall or slope.
+        const upright = (Qt.application.keyboardModifiers & Qt.AltModifier) !== 0
         if (Placement.active) {
-            Placement.moveTo(point.x, point.y)
+            Placement.moveTo(point.x, point.y, upright)
         } else {
-            Placement.begin(dragState.type, root.asHole, point.x, point.y)
+            Placement.begin(dragState.type, root.asHole, point.x, point.y, upright)
         }
     }
 

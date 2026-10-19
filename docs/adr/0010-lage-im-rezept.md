@@ -97,3 +97,13 @@ Entschieden vom Product Owner („ok“ zu allen Empfehlungen).
    getippt wurde.
 4. **Ein Zug = ein Schritt** in „Letzte Aktionen“: „Quader auf 150 % vergrößert“ bzw. „… verkleinert“ (Schlüssel `scaleBody`, die
    Prozentzahl als Wert); kein neuer Rezept-Eintrag.
+
+## Ergänzung 2026-10-19 (AP-1.6b3): Ablegen an Flächen
+Entschieden vom Product Owner („ok lege los“).
+
+1. **Wände sind Zahlen.** Legt man eine Form an eine Wand, Schräge oder Rundung, schreibt das Programm Lage und die drei Winkel in den
+   Schritt der Form (`geo::seatOnFace`): die Unterseite liegt auf der Fläche, die Oberkante zeigt so weit nach oben wie möglich.
+   Es entsteht keine Verbindung zur Fläche (ein Verweis nach ADR-0003 wäre hier falsch, die Wand kann sich ändern, die Zahl bleibt).
+2. **Winkel in 0,1°, Lage aus den gerundeten Winkeln.** So bleiben die Zahlen lesbar, und die Form berührt die Fläche exakt.
+3. **Arbeitsebene bleibt ein Höhenwert.** Das Ablegen an einer Wand setzt sie nicht um.
+4. **⌥ = aufrecht** wie vor 1.6b3.

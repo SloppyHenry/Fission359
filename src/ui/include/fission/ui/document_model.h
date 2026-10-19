@@ -181,6 +181,13 @@ public:
     /// Moves the shape being put down. `surfaceBody` is the body whose top it stands on (empty:
     /// the print bed).
     Q_INVOKABLE void placeAt(double x, double y, double z, const QString& surfaceBody);
+    /// Moves the shape being put down onto a face that is not a flat top (AP-1.6b3): its
+    /// underside lies on the face at `point`, whose outward direction is `normal`. The step gets
+    /// the place and the three angles of the turn as plain values; the work plane stays as it
+    /// was. A shape without a turn (or none being put down) is left alone.
+    void placeOnFace(const geo::Point3d& point, const geo::Point3d& normal);
+    /// Whether the shape being put down lies on a tilted face just now.
+    bool placingOnFace() const noexcept { return m_placingOnFace; }
     /// Puts the shape down for good: one step in the history. The surface it stands on becomes
     /// the work plane. False if nothing was being put down.
     Q_INVOKABLE bool finishPlacing();
@@ -318,6 +325,8 @@ private:
     core::FeatureId m_placingFeature;
     double m_placingZ = 0.0;
     QString m_placingSurface;
+    geo::Point3d m_placingCentre; ///< middle of the shape's box minus its foot (before a turn)
+    bool m_placingOnFace = false; ///< the shape lies on a tilted face (it has a turn)
     double m_workplaneZ = 0.0;
     QString m_workplaneBody;
     int m_currentStep = -1;

@@ -654,7 +654,7 @@ Window {
         width: parent.width
         selection: root.selectionText
         toolName: root.toolName(root.tool)
-        hint: Placement.active ? qsTr("Let go to put the shape down here. Esc takes it back.")
+        hint: Placement.active ? qsTr("Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt")
             : Gizmo.editing ? qsTr("Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.")
             : Rotate.editing ? qsTr("Type an angle to turn exactly (Tab for the next ring), Enter accepts, Esc puts it back.")
             : Scale.editing ? qsTr("All sizes change alike; the corner across stays. Type a percentage, Enter accepts, Esc puts it back.")

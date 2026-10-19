@@ -1165,8 +1165,8 @@
     </message>
     <message>
         <location line="+252"/>
-        <source>Let go to put the shape down here. Esc takes it back.</source>
-        <translation>Loslassen, um die Form hier abzulegen. Esc nimmt sie zurück.</translation>
+        <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
+        <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -1401,8 +1401,8 @@
     <name>ShapeCatalog</name>
     <message>
         <location filename="../qml/ShapeCatalog.qml" line="+10"/>
-        <source>Drag onto the bed. Lands on the face under the pointer.</source>
-        <translation>Aufs Druckbett ziehen. Landet auf der Fläche unter dem Zeiger.</translation>
+        <source>Drag onto the bed. Lands on the face under the pointer, also on a wall.</source>
+        <translation>Aufs Druckbett ziehen. Landet auf der Fläche unter dem Zeiger, auch an einer Wand.</translation>
     </message>
     <message>
         <location line="+1"/>

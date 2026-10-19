@@ -858,8 +858,9 @@ std::optional<Viewport3D::WorldRay> Viewport3D::rayAt(double x, double y) const 
     return WorldRay{ray->origin, ray->direction};
 }
 
-std::optional<Viewport3D::Landing>
-Viewport3D::landingAt(double x, double y, const QString& ignoreBody, double planeZ) const {
+std::optional<Viewport3D::Landing> Viewport3D::landingAt(double x, double y,
+                                                         const QString& ignoreBody, double planeZ,
+                                                         bool onFaces) const {
     const std::optional<render::Ray> ray = m_camera.rayThrough(QPointF(x, y));
     if (!ray) {
         return std::nullopt;
@@ -875,6 +876,29 @@ Viewport3D::landingAt(double x, double y, const QString& ignoreBody, double plan
             return Landing{hit->point.x(), hit->point.y(), hit->point.z(),
                            QString::fromStdString(
                                m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].id)};
+        }
+        if (hit && onFaces && hit->bodyIndex >= 0) {
+            // Any other face: the shape lies on it. Rounding noise of the single-precision normal
+            // goes (a wall is exactly a wall), or the angles would read 89.99999.
+            const auto clean = [](float v) {
+                return std::round(static_cast<double>(v) * 1e4) / 1e4;
+            };
+            double nx = clean(hit->normal.x());
+            double ny = clean(hit->normal.y());
+            double nz = clean(hit->normal.z());
+            const double length = std::sqrt(nx * nx + ny * ny + nz * nz);
+            if (length > 0.0) {
+                Landing landing{hit->point.x(),
+                                hit->point.y(),
+                                hit->point.z(),
+                                QString::fromStdString(
+                                    m_shown->bodies[static_cast<std::size_t>(hit->bodyIndex)].id),
+                                nx / length,
+                                ny / length,
+                                nz / length,
+                                true};
+                return landing;
+            }
         }
     }
     const std::optional<QVector3D> onPlane =
