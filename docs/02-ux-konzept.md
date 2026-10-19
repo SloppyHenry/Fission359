@@ -55,7 +55,7 @@ Dieses Dokument beschreibt, **wie sich Fission3D anfühlt**. Es ist verbindlich 
 | eine **ebene Fläche** | ein Pfeil in Normalenrichtung | Fläche herausziehen oder hineindrücken (Push/Pull) |
 | eine **Skizzenfläche** | ein Pfeil | Körper hochziehen (Extrudieren); Neu, Vereinen oder Ausschneiden erkennt das Programm automatisch |
 | eine **Kante** | ein kleiner Viertelkreis-Griff | Abrunden. Mit gedrückter ⌥/Alt-Taste: Abschrägen |
-| einen **Körper** (ausgewählt) | Verschiebe-Pfeile, Drehringe, Skalier-Würfel | Verschieben, Drehen, Skalieren |
+| einen **Körper** (ausgewählt) | Verschiebe-Pfeile, Drehringe, Eck-Quadrate | Verschieben, Drehen, gleichmäßig vergrößern |
 | eine **Grundform** | Maß-Griffe an Ecken und oben (wie Tinkercad) | Maße ändern |
 | eine **Bohrung** | Durchmesser- und Tiefen-Griff | Bohrung anpassen |
 
@@ -63,7 +63,10 @@ Während des Ziehens zeigt eine **Wertblase** am Zeiger den aktuellen Wert.
 
 **Welche Griffe zu sehen sind, bestimmt das Werkzeug der Palette (AP-1.6, wie im Mockup):** „Verschieben“ (Standard) zeigt das
 Gizmo (Pfeile X/Y/Z, Ebenen-Quadrate, Punkt in der Mitte) und die Maßbänder, deren Beschriftung man anklicken und tippen kann;
-„Größe“ zeigt die Punkte auf den Flächen; „Drehen“ die Ringe; „Wählen“ keine Griffe. In jedem Werkzeug außer „Wählen“ verschiebt man
+„Größe“ zeigt die Punkte auf den Flächen und Quadrate an den vier oberen Ecken eines gestrichelten Kastens um den Körper (Kanten in
+Bett-Richtung; bei runden und gedrehten Körpern schweben sie daneben): Zieht man an einem Eck-Quadrat, ändern sich alle Maße im
+gleichen Verhältnis, die Ecke gegenüber unten bleibt stehen, der Körper bleibt auf dem Bett; Tippen gibt die Prozentzahl ein
+(AP-1.6b2); „Drehen“ die Ringe; „Wählen“ keine Griffe. In jedem Werkzeug außer „Wählen“ verschiebt man
 einen Körper auch, indem man ihn selbst anfasst und zieht (wie in Tinkercad); die Pfeiltasten verschieben ihn um 1 mm (⇧: 10 mm),
 Bild↑/Bild↓ heben und senken ihn. Eine Verschiebung ändert die Lage der Form im Rezept, sie ist kein eigener Rezept-Schritt
 ([ADR-0010](adr/0010-lage-im-rezept.md)).

@@ -50,6 +50,7 @@
 #include "fission/ui/numbers.h"
 #include "fission/ui/placement_controller.h"
 #include "fission/ui/rotate_controller.h"
+#include "fission/ui/scale_controller.h"
 #include "fission/ui/selection_controller.h"
 #include "fission/ui/shape_previews.h"
 #include "fission/ui/theme.h"
@@ -163,6 +164,9 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "ring:z,60,8 (press the ring z, x or y of the tool Rotate where it is easiest to take "
             "and go 60 degrees round it in 8 small moves, let go; a fourth value hold keeps the "
             "button down), "
+            "corner:1,40,-20,8 (press the corner 0 to 3 of the tool Size - front left, front "
+            "right, back right, back left - pull it by view pixels, let go; a fifth value hold "
+            "keeps the button down), "
             "drag:x,y,40,0,8 (press at a point of the 3D view, "
             "pull, let go), key:Right (press a key), separated by semicolons."),
         QStringLiteral("actions"));
@@ -216,6 +220,31 @@ void sendMouse(QQuickWindow* window, fission::ui::Viewport3D* viewport, QEvent::
 
 // Press at `start()` (asked when the press happens), pull by `pull` view pixels in `steps`
 // moves, let go. Returns the delay after the last event.
+// Runs `check` once the model has worked out the last change, so that a check sees the values of
+// the document and not those of the change before (what `stepValues` shows until the result is
+// there). A window that was busy for a moment fires the timers of an action and of the check
+// after it at once; without this the check came too early now and then. Gives up waiting after
+// `patience` milliseconds and checks anyway.
+void whenCalculated(QObject* context, fission::ui::DocumentModel* model,
+                    std::function<void()> check, int patience = 5000) {
+    const bool done = !model->calculating() && model->result() &&
+                      model->result()->revision == model->document().revision();
+    if (done || patience <= 0) {
+        check();
+        return;
+    }
+    QTimer::singleShot(50, context, [context, model, check = std::move(check), patience]() mutable {
+        whenCalculated(context, model, std::move(check), patience - 50);
+    });
+}
+
+void checkAfter(int delay, QObject* context, fission::ui::DocumentModel* model,
+                std::function<void()> check) {
+    QTimer::singleShot(delay, context, [context, model, check = std::move(check)]() mutable {
+        whenCalculated(context, model, std::move(check));
+    });
+}
+
 int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int delay,
                  std::function<QPointF()> start, QPointF pull, int steps, bool hold = false) {
     auto from = std::make_shared<QPointF>();
@@ -244,8 +273,8 @@ int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int de
 void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                  fission::ui::PlacementController* placement, fission::ui::DocumentModel* model,
                  fission::ui::HandleController* handles, fission::ui::GizmoController* gizmo,
-                 fission::ui::RotateController* rotate, const QString& actions,
-                 std::function<void()> done) {
+                 fission::ui::RotateController* rotate, fission::ui::ScaleController* scale,
+                 const QString& actions, std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
@@ -257,7 +286,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // hanging. Otherwise the program ends with an error (for the tests).
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;
-            QTimer::singleShot(delay, viewport, [model, handles, spec] {
+            checkAfter(delay, viewport, model, [model, handles, spec] {
                 double value = -1.0;
                 for (const QVariant& entry : model->stepValues()) {
                     if (entry.toMap()["name"].toString() == spec.value(0)) {
@@ -373,6 +402,21 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             }
             continue;
         }
+        if (kind == QLatin1String("corner")) {
+            // corner:1,40,-20,8 - press a corner square of the tool Size, pull, let go.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const int steps = spec.size() >= 4 ? std::max(1, spec[3].toInt()) : 8;
+            const int corner = spec.value(0).toInt();
+            delay = pressAndPull(
+                window, viewport, delay,
+                [scale, corner] {
+                    const QVariantMap entry = scale->corners().value(corner).toMap();
+                    return QPointF(entry["x"].toDouble(), entry["y"].toDouble());
+                },
+                QPointF(spec.value(1).toDouble(), spec.value(2).toDouble()), steps,
+                spec.value(4).trimmed() == QLatin1String("hold"));
+            continue;
+        }
         if (kind == QLatin1String("drag")) {
             // drag:500,300,40,0,8 - press at (500, 300) in the 3D view, pull, let go.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
@@ -408,7 +452,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // near:x,12 - the chosen step has exactly this value (to a thousandth of a mm).
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;
-            QTimer::singleShot(delay, viewport, [model, gizmo, rotate, spec] {
+            checkAfter(delay, viewport, model, [model, gizmo, rotate, scale, spec] {
                 double value = std::numeric_limits<double>::quiet_NaN();
                 for (const QVariant& entry : model->stepValues()) {
                     if (entry.toMap()["name"].toString() == spec.value(0)) {
@@ -416,7 +460,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     }
                 }
                 if (!(std::abs(value - spec.value(1).toDouble()) < 1e-3) || gizmo->editing() ||
-                    rotate->editing()) {
+                    rotate->editing() || scale->editing()) {
                     qWarning().noquote()
                         << QStringLiteral("expected %1 = %2 and nothing being moved; found %3 "
                                           "(moving: %4)")
@@ -433,7 +477,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // turn the other way counts too), and nothing is being moved or turned.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;
-            QTimer::singleShot(delay, viewport, [model, gizmo, rotate, spec] {
+            checkAfter(delay, viewport, model, [model, gizmo, rotate, scale, spec] {
                 double value = 0.0;
                 for (const QVariant& entry : model->stepValues()) {
                     if (entry.toMap()["name"].toString() == spec.value(0)) {
@@ -441,7 +485,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     }
                 }
                 if (std::abs(value) < spec.value(1).toDouble() || gizmo->editing() ||
-                    rotate->editing()) {
+                    rotate->editing() || scale->editing()) {
                     qWarning().noquote()
                         << QStringLiteral("expected |%1| >= %2 and nothing being moved; found %3")
                                .arg(spec.value(0), spec.value(1))
@@ -464,11 +508,12 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         QStringList parts = action.mid(colon + 1).split(QLatin1Char(','));
         if (kind == QLatin1String("type")) { // type:50,tab,20,enter - what the keys would do
             delay += 350;
-            QTimer::singleShot(delay, viewport, [window, gizmo, rotate, parts] {
+            QTimer::singleShot(delay, viewport, [window, gizmo, rotate, scale, parts] {
                 // While a body is moved, the digits are for the distance, while it is turned for
                 // the angle; else for the sizes.
                 const QString layerName = gizmo->editing()    ? QStringLiteral("gizmoLayer")
                                           : rotate->editing() ? QStringLiteral("rotateLayer")
+                                          : scale->editing()  ? QStringLiteral("scaleLayer")
                                                               : QStringLiteral("handleLayer");
                 if (QObject* layer = window->findChild<QObject*>(layerName)) {
                     QMetaObject::invokeMethod(
@@ -749,6 +794,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Gizmo", &gizmo);
     fission::ui::RotateController rotate(&documentModel);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Rotate", &rotate);
+    fission::ui::ScaleController scale(&documentModel);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Scale", &scale);
     // The pictures on the tiles of the shape gallery come from the geometry kernel.
     engine.addImageProvider(QStringLiteral("shapes"), new fission::ui::ShapePreviews(kernel));
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Language", &language);
@@ -775,6 +822,7 @@ int main(int argc, char* argv[]) {
         handles.attach(viewport);
         gizmo.attach(viewport);
         rotate.attach(viewport);
+        scale.attach(viewport);
         viewport->setScene(documentModel.scene());
         const QMetaObject::Connection sceneConnection =
             QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
@@ -827,6 +875,7 @@ int main(int argc, char* argv[]) {
     fission::ui::HandleController* const handleController = &handles;
     fission::ui::GizmoController* const gizmoController = &gizmo;
     fission::ui::RotateController* const rotateController = &rotate;
+    fission::ui::ScaleController* const scaleController = &scale;
     if (!options.smokeTestPath.isEmpty()) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
@@ -835,7 +884,7 @@ int main(int argc, char* argv[]) {
         // simulation after 4 seconds (and report success for what never ran).
         const auto started = std::make_shared<bool>(false);
         auto grab = [window, viewport, placementController, &documentModel, handleController,
-                     gizmoController, rotateController, path, simulate, started] {
+                     gizmoController, rotateController, scaleController, path, simulate, started] {
             if (*started) {
                 return; // the first frame can be reported more than once
             }
@@ -849,7 +898,7 @@ int main(int argc, char* argv[]) {
             };
             if (viewport != nullptr && !simulate.isEmpty()) {
                 playActions(window, viewport, placementController, &documentModel, handleController,
-                            gizmoController, rotateController, simulate, shoot);
+                            gizmoController, rotateController, scaleController, simulate, shoot);
             } else {
                 shoot();
             }

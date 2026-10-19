@@ -88,6 +88,14 @@ public:
         return {report.boxMin, report.boxMax};
     }
 
+    /// The box round a body (mm), exactly: it touches the body (a turned cylinder, a sphere).
+    /// What a body is made larger or smaller about (AP-1.6b2). Slower than `bounds`, faster than
+    /// `measure`. The default asks `measure`.
+    virtual Bounds exactBounds(const Solid& solid) const {
+        const SolidReport report = measure(solid);
+        return {report.boxMin, report.boxMax};
+    }
+
     virtual TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const = 0;
 };
 

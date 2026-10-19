@@ -25,10 +25,10 @@ QtObject {
           synonyms: { de: ["drehen", "rotieren", "kippen", "winkel", "ausrichten"],
                       en: ["rotate", "turn", "spin", "tilt", "angle"] } },
         { id: "size", name: qsTr("Size"), icon: "scale",
-          tip: qsTr("Dots on the faces change the sizes of the shape. Corners and holes stay round."),
-          hint: qsTr("Drag a dot to change a size, or click a label and type. You can also drag the body itself."),
-          synonyms: { de: ["größe", "maße", "breite", "höhe", "tiefe", "strecken", "länger"],
-                      en: ["size", "dimensions", "width", "height", "depth", "stretch", "resize"] } }
+          tip: qsTr("Dots on the faces change one size of the shape, the squares on the corners all of them alike (larger, smaller). Corners and holes stay round."),
+          hint: qsTr("Drag a dot to change a size, or a corner square to scale everything evenly. You can also drag the body itself."),
+          synonyms: { de: ["größe", "maße", "breite", "höhe", "tiefe", "strecken", "länger", "skalieren", "vergrößern", "verkleinern", "proportional", "prozent", "gleichmäßig"],
+                      en: ["size", "dimensions", "width", "height", "depth", "stretch", "resize", "scale", "enlarge", "shrink", "proportional", "percent", "uniform"] } }
     ]
 
     function find(id) {

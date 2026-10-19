@@ -154,12 +154,25 @@ Window {
     }
 
     // What the tool of the palette shows on the chosen body (AP-1.6, docs/08-gestaltung.md §5):
-    // "Move" the gizmo and the measure bands, "Rotate" the rings, "Size" the dots for the sizes,
+    // "Move" the gizmo and the measure bands, "Rotate" the rings, "Size" the dots for the sizes
+    // and the corners that scale evenly,
     // "Select" nothing.
     // A body can be dragged to move it in every tool but "Select".
     Binding { target: Handles; property: "mode"; value: root.tool === "size" ? "size" : root.tool === "move" ? "labels" : "off" }
     Binding { target: Gizmo; property: "enabled"; value: root.tool === "move" }
     Binding { target: Rotate; property: "enabled"; value: root.tool === "rotate" }
+    Binding { target: Scale; property: "enabled"; value: root.tool === "size" }
+    // Pulling a corner ends "type the sizes" right after putting a shape down: the digits are
+    // the percentage now, and afterwards there is nothing waiting to be typed.
+    Connections {
+        target: Scale
+
+        function onEditingChanged() {
+            if (Scale.editing) {
+                Handles.armed = false
+            }
+        }
+    }
 
     function run(id) {
         switch (id) {
@@ -314,17 +327,17 @@ Window {
     Shortcut {
         sequence: "Escape"
         enabled: Selection.count > 0 && !root.typing && !Handles.editing && !Gizmo.editing
-                 && !Rotate.editing
+                 && !Rotate.editing && !Scale.editing
         onActivated: root.run("selectnone")
     }
     Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
     Shortcut { sequence: "Home"; onActivated: root.run("view.home") }
-    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.front") }
-    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.back") }
-    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.left") }
-    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.right") }
-    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.top") }
-    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing; onActivated: root.run("view.bottom") }
+    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.front") }
+    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.back") }
+    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.left") }
+    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.right") }
+    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.top") }
+    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.bottom") }
     // A shape that was just put down waits for its sizes: digits type them (they are the views
     // again as soon as something else is chosen). Tab or Enter start typing, too.
     Repeater {
@@ -337,12 +350,14 @@ Window {
 
             Shortcut {
                 sequence: digit.modelData
-                enabled: (Handles.armed || Handles.editing || Gizmo.editing || Rotate.editing)
+                enabled: (Handles.armed || Handles.editing || Gizmo.editing || Rotate.editing
+                          || Scale.editing)
                          && !handleLayer.typing && !gizmoLayer.typing && !rotateLayer.typing
-                         && !root.typing
+                         && !scaleLayer.typing && !root.typing
                 onActivated: Gizmo.editing ? gizmoLayer.startTyping(digit.modelData)
                              : Rotate.editing ? rotateLayer.startTyping(digit.modelData)
-                                              : handleLayer.startTyping(digit.modelData)
+                             : Scale.editing ? scaleLayer.startTyping(digit.modelData)
+                                             : handleLayer.startTyping(digit.modelData)
             }
         }
     }
@@ -355,6 +370,7 @@ Window {
     // is closest to the way on screen; Page up and Page down lift and lower it (like Tinkercad).
     readonly property bool nudgeKeys: Selection.count > 0 && root.tool !== "select" && !root.typing
                                       && !Gizmo.editing && !Handles.editing && !Rotate.editing
+                                      && !Scale.editing
     Shortcut { sequence: "Left"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(-1, 0, 0, false) }
     Shortcut { sequence: "Right"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(1, 0, 0, false) }
     Shortcut { sequence: "Up"; enabled: root.nudgeKeys; onActivated: Gizmo.nudge(0, 1, 0, false) }
@@ -544,6 +560,13 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            ScaleLayer {
+                id: scaleLayer
+
+                anchors.fill: parent
+                obstacles: viewOverlay.obstacles
+            }
+
             BedLabels {
                 anchors.fill: parent
                 viewport: viewport
@@ -634,6 +657,7 @@ Window {
         hint: Placement.active ? qsTr("Let go to put the shape down here. Esc takes it back.")
             : Gizmo.editing ? qsTr("Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.")
             : Rotate.editing ? qsTr("Type an angle to turn exactly (Tab for the next ring), Enter accepts, Esc puts it back.")
+            : Scale.editing ? qsTr("All sizes change alike; the corner across stays. Type a percentage, Enter accepts, Esc puts it back.")
             : Handles.editing ? qsTr("Enter accepts, Tab goes to the next size, Esc leaves everything as it was.")
             : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
@@ -742,6 +766,10 @@ Window {
         case "holeBody": return qsTr("%1 made a hole").arg(body)
         case "moveBody": return qsTr("%1 moved").arg(body)
         case "rotateBody": return qsTr("%1 turned").arg(body)
+        case "scaleBody":
+            return Number(step.value) < 100
+                ? qsTr("%1 made smaller to %2 %").arg(body).arg(Numbers.format(Number(step.value), 1))
+                : qsTr("%1 made larger to %2 %").arg(body).arg(Numbers.format(Number(step.value), 1))
         case "solidBody": return qsTr("%1 made a part again").arg(body)
         case "setLabel": return qsTr("Step renamed")
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))

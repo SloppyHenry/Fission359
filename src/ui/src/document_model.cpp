@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "fission/core/commands.h"
+#include "fission/core/scaling.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
 #include "fission/render/detail.h"
@@ -963,6 +964,129 @@ bool DocumentModel::turnCurrent(const geo::Angles& angles) {
                    done;
         }
     }
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+    return done;
+}
+
+std::optional<geo::Bounds> DocumentModel::currentBodyBounds() const {
+    const auto& features = m_history.document().features();
+    if (m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size()) || !m_result) {
+        return std::nullopt;
+    }
+    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    if (feature.outputs.empty()) {
+        return std::nullopt;
+    }
+    const auto found = m_result->bodies.find(feature.outputs.front());
+    if (found == m_result->bodies.end() || found->second.stale) {
+        return std::nullopt; // the last result of a step that fails now
+    }
+    try {
+        return m_kernel->exactBounds(found->second.solid);
+    } catch (const geo::GeometryError&) {
+        return std::nullopt;
+    }
+}
+
+bool DocumentModel::beginScale() {
+    const auto& features = m_history.document().features();
+    if (!currentPosition() || m_currentStep < 0 ||
+        m_currentStep >= static_cast<int>(features.size()) || !m_result) {
+        return false;
+    }
+    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    const core::FeatureType* type = m_registry.find(feature.type);
+    const core::FeatureState* state = m_result->state(feature.id);
+    if (type == nullptr || state == nullptr || !state->description) {
+        return false;
+    }
+    ScaleStart start;
+    start.id = feature.id;
+    for (const std::string& name : type->sizeParameters()) {
+        const auto value = feature.params.find(name);
+        if (value != feature.params.end() && state->params.contains(name)) {
+            start.sizes.emplace_back(name, value->second);
+        }
+    }
+    static constexpr const char* kNames[3] = {"x", "y", "z"};
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        const auto value = feature.params.find(kNames[axis]);
+        const auto worked = state->params.find(kNames[axis]);
+        if (value == feature.params.end() || worked == state->params.end()) {
+            return false;
+        }
+        start.place[axis] = value->second;
+        start.placeValue[axis] = worked->second.value;
+    }
+    if (start.sizes.empty()) {
+        return false;
+    }
+    start.params = state->params;
+    m_scale = std::move(start);
+    core::CommandDescription label{
+        "scaleBody",
+        {{"type", feature.type}, {"number", std::to_string(feature.number)}, {"value", "100"}}};
+    if (!feature.outputs.empty()) {
+        if (const core::Body* body = m_history.document().findBody(feature.outputs.front())) {
+            label.values["name"] = body->name;
+        }
+    }
+    m_history.beginTransaction(std::move(label));
+    return true;
+}
+
+bool DocumentModel::acceptsScale(double factor) const {
+    if (!m_scale || !std::isfinite(factor) || !(factor > 0.0)) {
+        return false;
+    }
+    const core::Feature* feature = m_history.document().findFeature(m_scale->id);
+    const core::FeatureType* type = feature != nullptr ? m_registry.find(feature->type) : nullptr;
+    if (type == nullptr) {
+        return false;
+    }
+    core::ResolvedParams params = m_scale->params;
+    for (const auto& [name, value] : m_scale->sizes) {
+        core::Quantity& quantity = params.at(name);
+        const double scaled = quantity.value * factor;
+        if ((quantity.value > 0.0 && scaled < kSmallestSize) || scaled > kLargestSize) {
+            return false;
+        }
+        quantity.value = scaled;
+    }
+    return !type->validate(params).has_value();
+}
+
+bool DocumentModel::scaleCurrent(double factor, const geo::Point3d& anchor) {
+    if (!m_scale || !m_history.inTransaction() || !std::isfinite(factor) || !(factor > 0.0) ||
+        m_history.document().findFeature(m_scale->id) == nullptr) {
+        return false;
+    }
+    const core::FeatureId id = m_scale->id;
+    const bool unchanged = std::abs(factor - 1.0) < 1e-12; // back to the start: as typed
+    const std::uint64_t before = m_history.document().revision();
+    bool done = true;
+    for (const auto& [name, value] : m_scale->sizes) {
+        const std::optional<std::string> text =
+            unchanged ? value.expression
+                      : core::scaledExpression(value.expression, value.kind, factor);
+        done = text && m_history.execute(core::makeSetFeatureValue(id, name, *text)) && done;
+    }
+    static constexpr const char* kNames[3] = {"x", "y", "z"};
+    const double from[3] = {anchor.x, anchor.y, anchor.z};
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        const double place = m_scale->placeValue[axis];
+        // Grown about its own place on this axis (the bed under a body): the value stays as it
+        // was typed, a formula included.
+        const double fixed = std::abs(from[axis] - place) < 1e-6 ? place : from[axis];
+        const double wanted = fixed + factor * (place - fixed);
+        const std::string text = unchanged || std::abs(wanted - place) < 1e-9
+                                     ? m_scale->place[axis].expression
+                                     : core::numberText(wanted);
+        done = m_history.execute(core::makeSetFeatureValue(id, kNames[axis], text)) && done;
+    }
+    m_history.setTransactionValue("value", core::numberText(factor * 100.0));
     if (m_history.document().revision() != before) {
         documentChanged();
     }

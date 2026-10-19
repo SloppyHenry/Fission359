@@ -318,6 +318,22 @@ Bounds bounds(const Solid& solid) {
     return result;
 }
 
+Bounds exactBounds(const Solid& solid) {
+    Bounds result;
+    try {
+        Bnd_Box box;
+        BRepBndLib::AddOptimal(shapeOf(solid), box, /*useTriangulation=*/false,
+                               /*useShapeTolerance=*/false);
+        if (!box.IsVoid()) {
+            box.Get(result.min.x, result.min.y, result.min.z, result.max.x, result.max.y,
+                    result.max.z);
+        }
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "exactBounds: the kernel failed");
+    }
+    return result;
+}
+
 SolidReport measure(const Solid& solid) {
     const TopoDS_Shape& shape = shapeOf(solid);
     SolidReport report;

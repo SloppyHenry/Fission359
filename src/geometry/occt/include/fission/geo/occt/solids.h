@@ -46,6 +46,8 @@ SolidReport measure(const Solid& solid);
 
 /// The box round a body, from its geometry (no mesh needed).
 Bounds bounds(const Solid& solid);
+/// The box that touches the body (see `GeometryKernel::exactBounds`).
+Bounds exactBounds(const Solid& solid);
 
 /// Tessellation for display. Throws GeometryError if the kernel cannot mesh the body.
 TriangleMesh tessellate(const Solid& solid, const TessellationParams& params = {});

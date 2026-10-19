@@ -203,7 +203,7 @@ public:
     /// Who draws handles into the scene: the size handles (`HandleController`) and the gizmo
     /// (`GizmoController`) and the rings of the tool "Rotate" (`RotateController`). Each one hands
     /// in its own drawing; the view shows them together.
-    enum class HandleSource { size = 0, gizmo = 1, rings = 2 };
+    enum class HandleSource { size = 0, gizmo = 1, rings = 2, corners = 3 };
     void setHandleGraphics(render::HandleGraphics graphics,
                            HandleSource source = HandleSource::size);
     const render::HandleGraphics& handleGraphics(HandleSource source = HandleSource::size) const {
@@ -312,7 +312,7 @@ private:
 
     core::SelectionFilter m_filter;
     std::vector<render::Highlight> m_selectionHighlights;
-    std::array<render::HandleGraphics, 3> m_handleGraphics;
+    std::array<render::HandleGraphics, 4> m_handleGraphics;
     std::optional<render::Highlight> m_hover;
     std::deque<PickRequest> m_pickQueue;
     QTimer m_pickTimer;

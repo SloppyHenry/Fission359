@@ -81,7 +81,7 @@
         <translation>Schließen</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+25"/>
         <source>New project</source>
         <translation>Neues Projekt</translation>
     </message>
@@ -577,12 +577,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+567"/>
+        <location line="+591"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-566"/>
+        <location line="-590"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -638,18 +638,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+281"/>
+        <location line="+297"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-279"/>
-        <location line="+280"/>
+        <location line="-295"/>
+        <location line="+296"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-274"/>
+        <location line="-290"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -659,7 +659,7 @@
         <translation>Mittlere Maustaste ziehen dreht die Ansicht, Umschalt + mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="+44"/>
         <source>Settings arrive in a later version.</source>
         <translation>Die Einstellungen kommen in einer späteren Version.</translation>
     </message>
@@ -670,12 +670,12 @@
     </message>
     <message>
         <location line="+35"/>
-        <location line="+208"/>
+        <location line="+211"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-183"/>
+        <location line="-186"/>
         <source>“%1” has no %2 style, so the lettering is regular again.</source>
         <translation>„%1“ gibt es nicht in %2, deshalb ist die Schrift wieder normal.</translation>
     </message>
@@ -700,7 +700,7 @@
         <translation>normal</translation>
     </message>
     <message>
-        <location line="+170"/>
+        <location line="+173"/>
         <source>The start page arrives in a later version.</source>
         <translation>Die Startseite kommt in einer späteren Version.</translation>
     </message>
@@ -720,7 +720,7 @@
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+140"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
@@ -733,6 +733,11 @@
         <location line="+1"/>
         <source>Type an angle to turn exactly (Tab for the next ring), Enter accepts, Esc puts it back.</source>
         <translation>Tippe einen Winkel, um genau zu drehen (Tab für den nächsten Ring), Enter übernimmt, Esc setzt zurück.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>All sizes change alike; the corner across stays. Type a percentage, Enter accepts, Esc puts it back.</source>
+        <translation>Alle Maße ändern sich gleich; die Ecke gegenüber bleibt stehen. Tippe eine Prozentzahl, Enter übernimmt, Esc setzt zurück.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -923,6 +928,16 @@
         <location line="+1"/>
         <source>%1 turned</source>
         <translation>%1 gedreht</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 made smaller to %2 %</source>
+        <translation>%1 auf %2 % verkleinert</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 made larger to %2 %</source>
+        <translation>%1 auf %2 % vergrößert</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1124,37 +1139,37 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-294"/>
+        <location line="-299"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-544"/>
+        <location line="-567"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+579"/>
+        <location line="+602"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-472"/>
+        <location line="-495"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+250"/>
+        <location line="+266"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+245"/>
+        <location line="+252"/>
         <source>Let go to put the shape down here. Esc takes it back.</source>
         <translation>Loslassen, um die Form hier abzulegen. Esc nimmt sie zurück.</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.</source>
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
@@ -1195,7 +1210,7 @@
 <context>
     <name>NumberField</name>
     <message>
-        <location filename="../qml/NumberField.qml" line="+159"/>
+        <location filename="../qml/NumberField.qml" line="+164"/>
         <source>That is not a number or formula.</source>
         <translation>Das ist keine Zahl und keine Formel.</translation>
     </message>
@@ -1360,6 +1375,29 @@
     </message>
 </context>
 <context>
+    <name>ScaleLayer</name>
+    <message>
+        <location filename="../qml/ScaleLayer.qml" line="+78"/>
+        <source>Scale evenly</source>
+        <translation>Gleichmäßig vergrößern</translation>
+    </message>
+    <message>
+        <location line="+86"/>
+        <source>%1 %</source>
+        <translation>%1 %</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Size in percent</source>
+        <translation>Größe in Prozent</translation>
+    </message>
+    <message>
+        <location line="+47"/>
+        <source>%1 × %2 × %3 mm</source>
+        <translation>%1 × %2 × %3 mm</translation>
+    </message>
+</context>
+<context>
     <name>ShapeCatalog</name>
     <message>
         <location filename="../qml/ShapeCatalog.qml" line="+10"/>
@@ -1512,13 +1550,13 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Dots on the faces change the sizes of the shape. Corners and holes stay round.</source>
-        <translation>Punkte auf den Flächen ändern die Maße der Form. Ecken und Löcher bleiben rund.</translation>
+        <source>Dots on the faces change one size of the shape, the squares on the corners all of them alike (larger, smaller). Corners and holes stay round.</source>
+        <translation>Punkte auf den Flächen ändern ein Maß der Form, die Quadrate an den Ecken alle zugleich (größer, kleiner). Rundungen und Löcher bleiben rund.</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Drag a dot to change a size, or click a label and type. You can also drag the body itself.</source>
-        <translation>Ziehe an einem Punkt, um ein Maß zu ändern, oder klicke eine Beschriftung an und tippe. Du kannst auch den Körper selbst ziehen.</translation>
+        <source>Drag a dot to change a size, or a corner square to scale everything evenly. You can also drag the body itself.</source>
+        <translation>Ziehe an einem Punkt, um ein Maß zu ändern, oder an einem Eck-Quadrat, um alles gleichmäßig zu vergrößern. Du kannst auch den Körper selbst ziehen.</translation>
     </message>
 </context>
 <context>
@@ -1557,7 +1595,7 @@
 <context>
     <name>ViewOverlay</name>
     <message>
-        <location filename="../qml/ViewOverlay.qml" line="+85"/>
+        <location filename="../qml/ViewOverlay.qml" line="+86"/>
         <location line="+10"/>
         <source>Orthographic</source>
         <translation>Orthografisch</translation>
@@ -1584,7 +1622,7 @@
         <translation>Farben</translation>
     </message>
     <message>
-        <location line="+55"/>
+        <location line="+56"/>
         <source>Everything</source>
         <translation>Alles</translation>
     </message>
@@ -1609,7 +1647,7 @@
         <translation>Ecken</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+20"/>
         <location line="+17"/>
         <source>Choose: %1</source>
         <translation>Wählen: %1</translation>
@@ -1710,17 +1748,17 @@
         <translation>Drehen</translation>
     </message>
     <message>
-        <location line="-366"/>
+        <location line="-369"/>
         <source>Orbit: drag with the right mouse button – or drag this button</source>
         <translation>Drehen: rechte Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
     <message>
-        <location line="+374"/>
+        <location line="+377"/>
         <source>Pan</source>
         <translation>Verschieben</translation>
     </message>
     <message>
-        <location line="-367"/>
+        <location line="-370"/>
         <source>Pan: drag with the middle mouse button – or drag this button</source>
         <translation>Verschieben: mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
@@ -1740,7 +1778,7 @@
         <translation>Verschieben: Umschalt + mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
     <message>
-        <location line="+376"/>
+        <location line="+379"/>
         <source>Zoom</source>
         <translation>Zoom</translation>
     </message>

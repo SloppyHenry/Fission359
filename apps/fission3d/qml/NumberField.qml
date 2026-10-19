@@ -33,6 +33,11 @@ Item {
     function refresh() {
         input.text = shownText()
         input.pendingEdit = false
+        // A narrow field (the three of the position) shows the start of a long value: the sign
+        // of "-23,17" must not scroll out of sight, so that it reads as 23,17.
+        if (!input.activeFocus) {
+            input.cursorPosition = 0
+        }
     }
 
     // A value that changes from outside (undo, a formula) shows at once, unless the person is

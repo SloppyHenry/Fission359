@@ -16,6 +16,9 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "fission/core/document.h"
 #include "fission/core/element_names.h"
@@ -225,6 +228,25 @@ public:
     /// become these numbers; those that do not stay as they are (a formula typed there is kept).
     bool turnCurrent(const geo::Angles& angles);
 
+    // --- making bodies larger or smaller in all directions alike (AP-1.6b2) ---
+    /// The box that touches the body of the chosen step (mm, exactly: a turned cylinder or a
+    /// sphere touches it). Nothing when the step has no body, or its body is from an older result.
+    std::optional<geo::Bounds> currentBodyBounds() const;
+    /// Starts making the body of the chosen step larger or smaller: everything until
+    /// `commitChange` is one step in the history ("Box made larger to 150 %"); `cancelChange`
+    /// takes it back. False when the step has no sizes or no place.
+    Q_INVOKABLE bool beginScale();
+    /// Would the shape still be possible with every size times `factor` (from where `beginScale`
+    /// started; checked without geometry)? Sizes stay between `kSmallestSize` and `kLargestSize`.
+    bool acceptsScale(double factor) const;
+    /// Every size of the step times `factor` (from where `beginScale` started; a formula is kept
+    /// as `(formula) * factor`), and the place moved so that the body grows about `anchor` (mm):
+    /// that point stays where it is. A place value that does not move keeps what was typed.
+    bool scaleCurrent(double factor, const geo::Point3d& anchor);
+
+    static constexpr double kSmallestSize = 0.01;
+    static constexpr double kLargestSize = 2000.0;
+
     /// How finely bodies are tessellated for the screen (0 = basic, see render/detail.h). The
     /// view asks for more when the person zooms in; finer meshes are made in the background and
     /// replace the coarse ones when they are ready.
@@ -271,6 +293,15 @@ private:
 
     std::shared_ptr<const geo::GeometryKernel> m_kernel;
     core::FeatureRegistry m_registry;
+    // The values of the step when making it larger or smaller began (`beginScale`).
+    struct ScaleStart {
+        core::FeatureId id;
+        std::vector<std::pair<std::string, core::Value>> sizes; ///< as typed
+        std::array<core::Value, 3> place;                       ///< x, y, z as typed
+        std::array<double, 3> placeValue{};
+        core::ResolvedParams params;
+    };
+    std::optional<ScaleStart> m_scale;
     core::History m_history;
     std::shared_ptr<const core::RecomputeResult> m_result;
     std::shared_ptr<const render::RenderScene> m_scene;

@@ -78,3 +78,22 @@ Entschieden vom Product Owner („ok zu allen Empfehlungen“).
 4. **Verweise** (Punkt 4 oben) vergleichen Elemente in Körper-Koordinaten, die Drehung ist starr und fällt damit heraus.
 5. **Nach dem Drehen bleibt die Mitte stehen.** Der Körper kann schweben oder im Bett stecken; „Aufs Bett legen“ (AP-1.6e) holt ihn zurück.
    Verworfen: selbsttätiges Absetzen, weil es `z` auch dort überschriebe, wo eine Formel steht.
+
+## Ergänzung 2026-10-18 (AP-1.6b2): Gleichmäßig vergrößern
+Entschieden vom Product Owner („ok“ zu allen Empfehlungen).
+
+1. **Ein Faktor für alle Maße, keine eigene Größe im Dokument.** Vergrößern ändert die Werte des erzeugenden Schritts: jedes Maß
+   (`FeatureType::sizeParameters`: jede Länge außer der Lage, also auch Rundung, Wanddicke, Schriftgröße) wird mit dem Faktor
+   multipliziert. Anzahlen (Zacken, Seiten) und die Drehung bleiben. Es gibt keinen Wert „Maßstab“ und kein Skalieren der Geometrie
+   (Regel 11): Ein Quader mit 5-mm-Ecken auf 200 % hat runde 10-mm-Ecken.
+2. **Formeln bleiben.** Eine Zahl wird zur neuen Zahl (eine Einheit wird dabei zu mm). Eine Formel wird zu `(Formel) * Faktor`, ein
+   einzelner Name zu `Name * Faktor`; steht schon ein solcher Faktor am Ende, wird er zusammengefasst, und beim Faktor 1 steht wieder
+   die Formel wie getippt (`core::scaledExpression`).
+3. **Die Ecke gegenüber bleibt stehen.** Die Eck-Griffe sitzen an den oberen Ecken des Kastens um den Körper, dessen Kanten in
+   Bett-Richtung laufen; beim Ziehen bleibt die gegenüberliegende untere Ecke dieses Kastens, wo sie ist. Dafür wird die Lage `x, y, z`
+   mit verschoben. Das geht ohne Sonderfall auch für gedrehte Körper: Werden alle Maße mit `f` multipliziert und bleibt die Lage gleich,
+   ist das Ergebnis der Körper, um den Fußpunkt der Lage mit `f` vergrößert (der Drehpunkt wächst mit); jeder andere feste Punkt ist
+   dann nur eine Verschiebung dazu. Ein Lage-Wert, der sich dabei nicht ändert (die Höhe eines Körpers auf dem Bett), behält, was
+   getippt wurde.
+4. **Ein Zug = ein Schritt** in „Letzte Aktionen“: „Quader auf 150 % vergrößert“ bzw. „… verkleinert“ (Schlüssel `scaleBody`, die
+   Prozentzahl als Wert); kein neuer Rezept-Eintrag.

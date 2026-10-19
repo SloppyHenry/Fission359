@@ -175,6 +175,12 @@ public:
     /// The handles where they stand once the body is turned: `handles` turned about
     /// `bodyCentre` by `turnOf`. This is what the interface shows.
     std::vector<HandleSpec> placedHandles(const ResolvedParams& params) const;
+
+    /// The values that are sizes of the shape (AP-1.6b2): they all grow by the same factor when
+    /// the body is made larger or smaller in all directions alike, so that it keeps its form (a
+    /// box with 5 mm corners at 200 % has 10 mm corners). The default is every length but the
+    /// place (`x`, `y`, `z`); counts (the points of a star) and angles are no sizes.
+    virtual std::vector<std::string> sizeParameters() const;
 };
 
 /// The three values of the turn (degrees, default 0), to be listed by every type that puts a

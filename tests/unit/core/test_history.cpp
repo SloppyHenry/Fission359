@@ -241,6 +241,22 @@ TEST_CASE("a step with a name of its own keeps it, even for a single change", "[
     CHECK(history.document().findFeature(*id)->params.at("width").expression == "20");
 }
 
+TEST_CASE("a value learnt during the drag goes into the name of the step", "[history]") {
+    History history{Document(7)};
+    const auto id = history.addFeature(boxDraft("20"));
+    history.setTransactionValue("value", "999"); // no transaction: nothing happens
+    history.beginTransaction({"scaleBody", {{"type", "box"}}});
+    REQUIRE(history.execute(makeSetFeatureValue(*id, "width", "30")));
+    history.setTransactionValue("value", "150");
+    REQUIRE(history.execute(makeSetFeatureValue(*id, "width", "40")));
+    history.setTransactionValue("value", "200");
+    history.commitTransaction();
+    REQUIRE(history.nextUndo());
+    CHECK(history.nextUndo()->key == "scaleBody");
+    CHECK(history.nextUndo()->values.at("value") == "200");
+    CHECK(history.nextUndo()->values.at("type") == "box");
+}
+
 TEST_CASE("a drag of several values still is one step and undoes in the right order", "[history]") {
     History history{Document(2)};
     const auto id = history.addFeature(boxDraft("20"));
