@@ -17,6 +17,10 @@ Item {
     property real cameraPitch: 0
     property bool focusMode: false
     property string mouseStyle: "fission"  // fission | fusion | tinkercad | blender | sketchup
+    /// Opens the menu of what can be chosen (the developer option --simulate "filtermenu").
+    function openFilterMenu() {
+        filterButton.clicked()
+    }
     property string filter: "all"          // what can be chosen: all | body | face | edge | vertex
     property string flyout: ""             // the open tool group: "" or "shapes"
     signal flyoutCloseRequested

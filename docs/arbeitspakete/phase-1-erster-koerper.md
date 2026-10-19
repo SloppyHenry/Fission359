@@ -668,7 +668,7 @@ Beschriftungen und Anfassflächen.
 | &nbsp;&nbsp;**b2) Gleichmäßig vergrößern** | erledigt (2026-10-19, PR #31) | Eck-Griff (Werkzeug Größe) und Prozentangabe ändern **alle Maße im gleichen Verhältnis** (Parameter, nie Skalieren, Regel 11); Formeln bleiben als `(Formel) × Faktor` erhalten |
 | &nbsp;&nbsp;**b3) Ablegen an Wänden** | erledigt (2026-10-19, PR #33) | Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus (Unterseite auf der Fläche; ⌥ = aufrecht) |
 | **c) Fangen** | in Arbeit (2026-10-19) | Zerlegt in c1 und c2, je ein PR: |
-| &nbsp;&nbsp;**c1) Fangen beim Verschieben** | Review (2026-10-19) | Fangregeln (Ecken, Kantenmitten, Kreismitten, Flächenmitten anderer Körper und des Betts; der gezogene Körper fängt mit den Ecken, Kantenmitten und Flächenmitten seines umschließenden Quaders, Achse für Achse); Fang-Marke und Ausrichtungslinie in der Ansicht; ⇧ schaltet aus; Fangraster auf dem Bett beim Ziehen (ein- und ausschaltbar) |
+| &nbsp;&nbsp;**c1) Fangen beim Verschieben** | erledigt (2026-10-19, PR #34) | Fangregeln (Ecken, Kantenmitten, Kreismitten, Flächenmitten anderer Körper und des Betts; der gezogene Körper fängt mit den Ecken, Kantenmitten und Flächenmitten seines umschließenden Quaders, Achse für Achse); Fang-Marke und Ausrichtungslinie in der Ansicht; ⇧ schaltet aus; Fangraster auf dem Bett beim Ziehen (ein- und ausschaltbar) |
 | &nbsp;&nbsp;**c2) Fangen bei Maß-Griffen und Ablegen** | offen | dieselben Punkte und Linien für die Maß-Griffe, den Eck-Griff und das Ablegen auf Flächen, Wänden und dem Bett; ⇧ dort ebenfalls |
 | **d) Abstandsmaße** | offen | Beim Verschieben Abstände zu den nächsten Kanten anderer Körper und zum Bettrand als Maßband in der Ansicht; ein Klick macht die Zahl editierbar („5 mm vom Rand“), Tippen setzt den Körper genau dorthin; Akzeptanzkriterium 1 als automatischer Ablauf |
 | **e) Rest** | offen | Ausrichten mehrerer Körper (bündig, mittig); „Aufs Bett legen“; „Auf Fläche legen“ (auch an Wänden); Kopieren, Einfügen, Duplizieren (⌘D) mit Versatz |
@@ -982,7 +982,7 @@ Ablegen schiebt die Form von der Wand, siehe Einschränkungen) und 2 = ⌥ bauen
 **Vorgeschlagene Folge-Arbeiten:** „Auf Fläche legen“ für vorhandene Körper (1.6e, nutzt dieselbe Rechnung `seatOnFace`);
 Mitführen der Lage beim Tippen von Maßen; Bänder für gedrehte Maß-Punkte.
 
-#### Zwischenstand 1.6c1 Fangen beim Verschieben (2026-10-19, Review)
+#### Zwischenstand 1.6c1 Fangen beim Verschieben (2026-10-19, erledigt: vom Product Owner ausprobiert, „das ist super“)
 Festlegungen (Product Owner, 2026-10-19): Frage 1 = A (der gezogene Körper fängt mit den Ecken, Kantenmitten und Flächenmitten seines
 umschließenden Quaders), Frage 2 = A, **aber das Raster lässt sich ein- und ausschalten** (Menü Ansicht ▸ „Raster beim Ziehen“).
 Fangreichweite 10 Pixel am Bildschirm (Annahme).
