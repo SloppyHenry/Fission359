@@ -14,6 +14,7 @@
 #include <chrono>
 #include <cmath>
 
+#include "fission/interaction/drag.h"
 #include "fission/render/detail.h"
 #include "fission/render/scene_renderer.h"
 
@@ -75,6 +76,7 @@ public:
         frame.projection = m_snapshot.projection;
         frame.pixelsPerMillimetre = m_snapshot.pixelsPerMillimetre;
         frame.bedVisible = m_snapshot.bedVisible;
+        frame.snapGridStep = m_snapshot.snapGridStep;
         frame.displayMode = m_snapshot.displayMode;
         frame.palette = m_snapshot.palette;
         frame.ambientOcclusion = m_snapshot.ambientOcclusion;
@@ -350,6 +352,38 @@ void Viewport3D::setBedVisible(bool visible) {
     }
 }
 
+double Viewport3D::snapStep() const {
+    return snapStepFor(m_camera.pixelsPerMillimetre());
+}
+
+double Viewport3D::snapStepFor(double pixelsPerMillimetre) const {
+    return m_fixedSnapStep > 0.0 ? m_fixedSnapStep : interaction::snapStep(pixelsPerMillimetre);
+}
+
+void Viewport3D::setFixedSnapStep(double millimetres) {
+    // Anything that is not a step from 0.001 mm up is "automatic".
+    const double step = std::isfinite(millimetres) && millimetres >= 0.001 ? millimetres : 0.0;
+    if (step != m_fixedSnapStep) {
+        m_fixedSnapStep = step;
+        emit snapStepChanged();
+    }
+}
+
+void Viewport3D::setSnapGridShown(bool shown) {
+    if (m_snapGridShown != shown) {
+        m_snapGridShown = shown;
+        emit snapGridShownChanged();
+        update();
+    }
+}
+
+void Viewport3D::setSnapGridStep(double millimetres) {
+    if (millimetres != m_snapGridStep) {
+        m_snapGridStep = millimetres;
+        update();
+    }
+}
+
 void Viewport3D::setOrthographic(bool orthographic) {
     if (m_camera.orthographic() != orthographic) {
         m_camera.setOrthographic(orthographic);
@@ -427,6 +461,9 @@ void Viewport3D::cameraMoved() {
         emit detailLevelWanted(level);
     }
     emit cameraChanged();
+    if (m_fixedSnapStep <= 0.0) {
+        emit snapStepChanged(); // the step follows the zoom
+    }
     update();
     hoverAgain();
 }
@@ -988,6 +1025,7 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect, bool pickIdle) {
     snapshot.projection = m_camera.projection(aspect);
     snapshot.pixelsPerMillimetre = m_camera.pixelsPerMillimetre();
     snapshot.bedVisible = m_bedVisible;
+    snapshot.snapGridStep = m_snapGridShown ? static_cast<float>(m_snapGridStep) : 0.0F;
     snapshot.ambientOcclusion = m_ambientOcclusion;
     snapshot.sceneVersion = m_sceneVersion;
     snapshot.paletteVersion = m_paletteVersion;

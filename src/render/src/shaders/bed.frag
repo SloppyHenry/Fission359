@@ -24,7 +24,7 @@ layout(std140, binding = 0) uniform Params {
     vec4 params;
     vec4 bedSize;
     vec4 bodyOverride; // rgb, a = 1: draw every body in this colour
-    vec4 view;       // x, y: size of the image in pixels, z: 1 if ambient occlusion is on
+    vec4 view;       // x, y: size of the image in pixels, z: 1 if ambient occlusion is on, w: snap grid mm
 } u;
 
 layout(binding = 1) uniform sampler2D shadowMap;
@@ -86,6 +86,11 @@ void main() {
         float major = gridLine(vWorld.xy, u.params.w);
         color = mix(color, u.gridColor.rgb, minor);
         color = mix(color, u.gridMajor.rgb, major);
+        if (u.view.w > 0.0) {
+            // the grid a dragged body snaps to, a little stronger than the minor lines
+            float snap = gridLine(vWorld.xy, u.view.w);
+            color = mix(color, min(u.gridMajor.rgb * 1.7, vec3(1.0)), 0.8 * snap);
+        }
         color = mix(color, u.shadowColor.rgb, u.shadowColor.a * shadowAmount());
         color *= mix(1.0, openness(), 0.9); // contact shadow where a body meets the plate
     } else {

@@ -152,7 +152,10 @@ int main(int argc, char** argv) {
                                   {"document bar", 0, 40, w, viewTop, false},
                                   {"left side bar", 0, viewTop, 248, panelBottom, false},
                                   {"right side bar", w - 300, viewTop, w, panelBottom, false},
-                                  {"status line", 0, statusTop, w, h, true}};
+                                  // The right end of the status line holds the control for the
+                                  // precision of snapping (AP-1.6c), which the mockup does not
+                                  // have: only the rest of the line is compared.
+                                  {"status line", 0, statusTop, w - w * 3 / 10, h, true}};
         const int heightDifference = reference.height() - h;
         constexpr int kBlock = 8;
         for (const Region& region : regions) {

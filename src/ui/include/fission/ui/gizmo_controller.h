@@ -17,7 +17,9 @@
 #include <string>
 
 #include "fission/interaction/drag.h"
+#include "fission/render/scene_renderer.h"
 #include "fission/ui/document_model.h"
+#include "fission/ui/snap_session.h"
 #include "fission/ui/viewport_3d.h"
 
 namespace fission::ui {
@@ -29,7 +31,9 @@ namespace fission::ui {
 ///
 /// Moving changes the position values of the step that made the body (ADR-0010): one drag (or
 /// typing, or both) is one step in the history, Esc takes it back. While dragging, the position
-/// snaps to whole millimetres (finer when zoomed in). Typing replaces dragging: the number is how
+/// snaps to the corners, edge middles, circle centres and face middles of the other bodies and
+/// of the bed, and otherwise to the grid of the moment (whole millimetres, finer when zoomed in);
+/// Shift switches the snapping off (AP-1.6c). Typing replaces dragging: the number is how
 /// far to move along an axis, Tab goes on from X to Y to Z.
 ///
 /// Like the size handles, the gizmo is drawn in the scene (`Viewport3D::setHandleGraphics`):
@@ -87,6 +91,9 @@ public:
     Q_INVOKABLE bool dragTo(double x, double y);
     Q_INVOKABLE bool endDrag();
     Q_INVOKABLE void cancelDrag();
+    /// Snapping is off for the drag in progress (as with Shift held). For tests and the
+    /// developer option `--simulate`: the real key is read from the keyboard.
+    Q_INVOKABLE void setSnapSuppressed(bool suppressed) { m_snapSuppressed = suppressed; }
 
     // --- typing ---
     /// A digit was typed while dragging: the drag turns into typing, still the same step.
@@ -141,6 +148,15 @@ private:
     /// Puts the body at `target` (only the axes the move changes are written).
     bool moveTo(std::array<double, 3> target);
     void setEditing(bool editing, const QString& moving);
+    /// Shift is held, or snapping was switched off for tests.
+    bool snappingOff() const;
+    /// How far (mm) a point may be from another on each axis and still catch: a fixed number of
+    /// pixels on the screen, so it depends on how the axis is seen at `around`.
+    interaction::Vec3 snapReach(const QVector3D& around) const;
+    /// Takes the catch away: marks and grid of the drag are gone.
+    void clearSnap();
+    /// Gets the points to catch on for the drag that begins.
+    void beginSnap();
 
     QPointer<DocumentModel> m_model;
     QPointer<Viewport3D> m_viewport;
@@ -173,6 +189,11 @@ private:
     double m_axisPixelsPerMillimetre = 1.0; ///< the rate of the arrow that was grabbed
     std::optional<interaction::AxisDrag> m_axisDrag;
     std::optional<interaction::PlaneDrag> m_planeDrag;
+
+    // Snapping (AP-1.6c)
+    SnapSession m_snap;
+    render::HandleGraphics m_snapMarks;
+    bool m_snapSuppressed = false;
 };
 
 } // namespace fission::ui

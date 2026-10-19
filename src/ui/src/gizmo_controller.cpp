@@ -3,6 +3,8 @@
 
 #include "fission/ui/gizmo_controller.h"
 
+#include <QCoreApplication>
+#include <QGuiApplication>
 #include <QPointF>
 
 #include <algorithm>
@@ -92,6 +94,9 @@ void GizmoController::setEditing(bool editing, const QString& moving) {
     const bool changed = editing != m_editing || moving != m_moving;
     m_editing = editing;
     m_moving = moving;
+    if (!editing) {
+        clearSnap();
+    }
     if (changed) {
         emit editingChanged();
     }
@@ -157,6 +162,41 @@ std::optional<QVector3D> GizmoController::anchor() {
                   box->high.z());
     top.setZ(top.z() + static_cast<float>(kLift * millimetresPerPixel(top)));
     return top;
+}
+
+bool GizmoController::snappingOff() const {
+    // (The tests run without a window system: there is no keyboard to ask.)
+    return m_snapSuppressed ||
+           (qobject_cast<QGuiApplication*>(QCoreApplication::instance()) != nullptr &&
+            (QGuiApplication::queryKeyboardModifiers() & Qt::ShiftModifier) != 0);
+}
+
+interaction::Vec3 GizmoController::snapReach(const QVector3D& around) const {
+    const QPointF here = m_viewport->project(around.x(), around.y(), around.z());
+    // Pixels across the line of sight for a millimetre: an axis that runs towards the viewer
+    // shows hardly any of it, which must not make the reach huge.
+    const double across = 1.0 / millimetresPerPixel(around);
+    interaction::Vec3 reach{};
+    for (int axis = 0; axis < 3; ++axis) {
+        const QVector3D next = around + kAxes[axis];
+        const QPointF there = m_viewport->project(next.x(), next.y(), next.z());
+        const double pixels = std::hypot(there.x() - here.x(), there.y() - here.y());
+        reach[static_cast<std::size_t>(axis)] =
+            interaction::kSnapReachPixels / std::max(pixels, 0.35 * across);
+    }
+    return reach;
+}
+
+void GizmoController::clearSnap() {
+    m_snap.end();
+    const bool had = !m_snapMarks.empty();
+    m_snapMarks = {};
+    if (m_viewport != nullptr) {
+        m_viewport->setSnapGridStep(0.0);
+    }
+    if (had) {
+        refresh();
+    }
 }
 
 void GizmoController::refresh() {
@@ -304,6 +344,7 @@ void GizmoController::refresh() {
             parts.push_back(entry);
         }
     }
+    graphics.append(m_snapMarks);
     if (m_viewport != nullptr) {
         m_viewport->setHandleGraphics(std::move(graphics), Viewport3D::HandleSource::gizmo);
     }
@@ -329,6 +370,21 @@ bool GizmoController::moves(int axis) const {
     return m_moving.contains(kAxisNames[axis]);
 }
 
+void GizmoController::beginSnap() {
+    m_snapMarks = {};
+    const auto box = bodyBox();
+    const auto scene = m_model->scene();
+    if (!box || !scene) {
+        return;
+    }
+    const std::string body = m_model->bodyOfStep(m_model->currentStep()).toStdString();
+    m_snap.begin(*scene, body,
+                 {static_cast<double>(box->low.x()), static_cast<double>(box->low.y()),
+                  static_cast<double>(box->low.z())},
+                 {static_cast<double>(box->high.x()), static_cast<double>(box->high.y()),
+                  static_cast<double>(box->high.z())});
+}
+
 bool GizmoController::startMove(const QString& moving, const QVector3D& anchorPoint) {
     const auto position = m_model->currentPosition();
     if (!position || !m_model->beginMove()) {
@@ -338,6 +394,7 @@ bool GizmoController::startMove(const QString& moving, const QVector3D& anchorPo
     m_startAnchor = anchorPoint;
     m_offset = {0.0, 0.0, 0.0};
     m_pixelsPerMillimetre = 1.0 / millimetresPerPixel(anchorPoint);
+    beginSnap();
     m_dragging = true;
     setEditing(true, moving);
     emit offsetChanged();
@@ -468,12 +525,40 @@ bool GizmoController::dragTo(double x, double y) {
     } else {
         return false;
     }
-    // The position snaps to the grid of the moment (whole millimetres, finer when zoomed in).
-    const double step = interaction::snapStep(m_pixelsPerMillimetre);
     std::array<double, 3> target{};
+    if (snappingOff()) {
+        // Shift: free, no grid and no catching.
+        for (std::size_t axis = 0; axis < 3; ++axis) {
+            target[axis] = m_startPosition[axis] + moved[static_cast<int>(axis)];
+        }
+        m_viewport->setSnapGridStep(0.0);
+        if (!m_snapMarks.empty()) {
+            m_snapMarks = {};
+            refresh();
+        }
+        return moveTo(target);
+    }
+    // The position catches on the points of the others; where it catches on none it snaps to the
+    // grid of the moment (whole millimetres, finer when zoomed in).
+    const double step = m_viewport->snapStepFor(m_pixelsPerMillimetre);
+    m_viewport->setSnapGridStep(interaction::snapGridDisplayStep(step, m_pixelsPerMillimetre));
+    const QVector3D around = m_startAnchor + moved;
+    const interaction::SnapResult caught = m_snap.snap(
+        {moved.x(), moved.y(), moved.z()}, {moves(0), moves(1), moves(2)}, snapReach(around));
     for (std::size_t axis = 0; axis < 3; ++axis) {
         target[axis] =
-            interaction::snapped(m_startPosition[axis] + moved[static_cast<int>(axis)], step);
+            caught.axes[axis]
+                ? m_startPosition[axis] + caught.offset[axis]
+                : interaction::snapped(m_startPosition[axis] + moved[static_cast<int>(axis)], step);
+    }
+    render::HandleGraphics marks;
+    if (caught.caught()) {
+        marks = SnapSession::marksOf(caught, m_viewport->property("accentColor").value<QColor>(),
+                                     millimetresPerPixel(around));
+    }
+    if (!(marks == m_snapMarks)) {
+        m_snapMarks = std::move(marks);
+        refresh();
     }
     return moveTo(target);
 }
@@ -508,6 +593,7 @@ bool GizmoController::typeInsteadOfDrag() {
         return false;
     }
     m_dragging = false; // still editing: the same step goes on
+    clearSnap();        // typed numbers are not caught on anything
     return true;
 }
 

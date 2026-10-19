@@ -45,7 +45,7 @@ Die Strings, Szenen und Daten im Mockup sind Beispiele, kein Produktionscode.
 | Linke Leiste | 248 px (216 px unter 1100 px Fensterbreite) | Reiter „Körper“ und „Bibliothek“; darunter das Rezept mit Zeitmarker „jetzt“ |
 | 3D-Ansicht | Rest | Schwebende Bedienelemente, siehe §5 |
 | Rechte Leiste | 300 px (264 px unter 1100 px) | Reiter „Objekt“ und „Drucker“; Eigenschaften des Ausgewählten, Seltenes hinter „Alle Einstellungen zeigen“ |
-| Statuszeile | 28 px hoch | Auswahl, Werkzeug, Hinweiszeile, Einheit und Raster, Speicherstatus |
+| Statuszeile | 28 px hoch | Auswahl, Werkzeug, Hinweiszeile, Einheit und **Raster-Steuerung** (Auto-Knopf, Schieberegler, Zahlenfeld; Wunsch des Product Owners 2026-10-19, nicht im Mockup), Speicherstatus |
 
 - **Fokus-Modus** (Knopf unter dem Ansichtswürfel, `⇧F`): Beide Seitenleisten verschwinden. Damit erreicht
   die 3D-Ansicht das Ziel von mindestens 65 % (gemessen: 84 % bei 1280 × 800). Mit beiden Leisten sind es

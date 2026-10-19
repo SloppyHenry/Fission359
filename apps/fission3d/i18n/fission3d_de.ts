@@ -406,7 +406,7 @@
         <translation>Bearbeiten</translation>
     </message>
     <message>
-        <location line="+71"/>
+        <location line="+72"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -416,7 +416,7 @@
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-71"/>
+        <location line="-72"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Strg+Umschalt+Z</translation>
     </message>
@@ -489,6 +489,11 @@
         <location line="+1"/>
         <source>Soft shadows</source>
         <translation>Weiche Schatten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Grid while dragging</source>
+        <translation>Raster beim Ziehen</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -577,12 +582,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+591"/>
+        <location line="+596"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-590"/>
+        <location line="-595"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -638,18 +643,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+297"/>
+        <location line="+298"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-295"/>
-        <location line="+296"/>
+        <location line="-296"/>
+        <location line="+297"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-290"/>
+        <location line="-291"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -669,7 +674,7 @@
         <translation>Die Befehlssuche kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+36"/>
         <location line="+211"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
@@ -750,7 +755,12 @@
         <translation>Tippe ein Maß (Tab für das nächste, Enter zum Beenden) oder ziehe an den Punkten.</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+6"/>
+        <source>Unit: mm</source>
+        <translation>Einheit: mm</translation>
+    </message>
+    <message>
+        <location line="+23"/>
         <source>Width</source>
         <translation>Breite</translation>
     </message>
@@ -1139,27 +1149,27 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-299"/>
+        <location line="-303"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-567"/>
+        <location line="-569"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+602"/>
+        <location line="+604"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-495"/>
+        <location line="-496"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+266"/>
+        <location line="+267"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
@@ -1172,11 +1182,6 @@
         <location line="+7"/>
         <source>Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.</source>
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an. Mit „Als Loch“ wird sie zum Loch.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Unit: mm · Grid 1 mm</source>
-        <translation>Einheit: mm · Raster 1 mm</translation>
     </message>
 </context>
 <context>
@@ -1489,9 +1494,37 @@
     </message>
 </context>
 <context>
+    <name>SnapControl</name>
+    <message>
+        <location filename="../qml/SnapControl.qml" line="+45"/>
+        <source>Grid</source>
+        <translation>Raster</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Grid follows the zoom</source>
+        <translation>Raster richtet sich nach dem Zoom</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>Precision of snapping</source>
+        <translation>Genauigkeit des Fangens</translation>
+    </message>
+    <message>
+        <location line="+96"/>
+        <source>Grid step in millimetres</source>
+        <translation>Rasterschritt in Millimetern</translation>
+    </message>
+</context>
+<context>
     <name>StatusBar</name>
     <message>
-        <location filename="../qml/StatusBar.qml" line="+45"/>
+        <location filename="../qml/StatusBar.qml" line="+50"/>
         <source>Tool: %1</source>
         <translation>Werkzeug: %1</translation>
     </message>
@@ -1525,8 +1558,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Drag an arrow, a square or the body itself. Arrow keys move by 1 mm (Shift: 10 mm).</source>
-        <translation>Ziehe einen Pfeil, ein Quadrat oder den Körper selbst. Pfeiltasten verschieben um 1 mm (mit Umschalt 10 mm).</translation>
+        <source>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm).</source>
+        <translation>Ziehe einen Pfeil, ein Quadrat oder den Körper selbst; er fängt an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Pfeiltasten verschieben um 1 mm (mit Umschalt 10 mm).</translation>
     </message>
     <message>
         <location line="+3"/>

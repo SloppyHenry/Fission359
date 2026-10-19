@@ -12,6 +12,11 @@ Rectangle {
     property string toolName: ""
     property string hint: ""
     property string unitText: ""
+    /// The step of snapping in use (mm), and whether it follows the zoom.
+    property real gridStep: 1
+    property bool gridAutomatic: true
+    signal gridStepChosen(real step)
+    signal gridAutomaticChosen()
 
     height: Theme.statusHeight
     color: Theme.chrome
@@ -67,10 +72,22 @@ Rectangle {
         spacing: 14
 
         Txt {
+            anchors.verticalCenter: parent.verticalCenter
             text: root.unitText
             color: Theme.fg3
             font.pixelSize: Theme.fontSizeSmall
             elide: Text.ElideNone
+        }
+
+        // The precision of snapping.
+        SnapControl {
+            id: snapControl
+
+            anchors.verticalCenter: parent.verticalCenter
+            step: root.gridStep
+            automatic: root.gridAutomatic
+            onStepChosen: value => root.gridStepChosen(value)
+            onAutomaticChosen: root.gridAutomaticChosen()
         }
     }
 }

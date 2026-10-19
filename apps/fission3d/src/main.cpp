@@ -160,7 +160,10 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "it there), expect:width,40 (fail unless the chosen step has at least "
             "that value, no drag is left and its handles are still shown), near:x,12 (fail "
             "unless the chosen step has exactly that value), tool:size (choose a tool of the "
-            "palette), gizmo:x,40,0,8 (press a part of the gizmo: x, y, z, xy, xz, yz or free, "
+            "palette), snap:off (snapping off as with Shift held; snap:on), grid:0.1 (the step of "
+            "snapping in mm, 0 = automatic), "
+            "gizmo:x,40,0,8 (press "
+            "a part of the gizmo: x, y, z, xy, xz, yz or free, "
             "pull it by view pixels, let go; with a fifth value hold the button stays down), "
             "ring:z,60,8 (press the ring z, x or y of the tool Rotate where it is easiest to take "
             "and go 60 degrees round it in 8 small moves, let go; a fourth value hold keeps the "
@@ -426,6 +429,19 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             delay = pressAndPull(
                 window, viewport, delay, [at] { return at; },
                 QPointF(spec.value(2).toDouble(), spec.value(3).toDouble()), steps);
+            continue;
+        }
+        if (kind == QLatin1String("grid")) { // grid:0.1 - the step of snapping (0: automatic)
+            const double step = action.mid(colon + 1).trimmed().toDouble();
+            delay += 350;
+            QTimer::singleShot(delay, viewport,
+                               [viewport, step] { viewport->setProperty("fixedSnapStep", step); });
+            continue;
+        }
+        if (kind == QLatin1String("snap")) { // snap:off / snap:on - Shift held, or not
+            const bool off = action.mid(colon + 1).trimmed() == QLatin1String("off");
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [gizmo, off] { gizmo->setSnapSuppressed(off); });
             continue;
         }
         if (kind == QLatin1String("tool")) { // tool:size - a tool of the palette

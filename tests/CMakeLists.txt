@@ -209,6 +209,22 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=20,25,160 --simulate "drop:cylinder,382,274,1;near:rotX,0")
   set_tests_properties(app_wall_drop_upright PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.6c: the arrow pulled up to 1.6 mm short of another body goes all the way: the side of
+  # the 23.3 mm wide box (-18.35 + 8.35) touches the other, at a place no grid has (x = -21.65).
+  # With snapping off (as with Shift held) it stays where the pointer put it, so the same check
+  # must fail.
+  add_test(NAME app_snap_catch
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-snap-catch.png" --language en --size 1280x800
+            --camera=0,30,160 --simulate "put:box;type:23.3,enter;gizmo:x,48,0,8;near:x,-21.65")
+  set_tests_properties(app_snap_catch PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  add_test(NAME app_snap_off_does_not_catch
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-snap-off.png" --language en --size 1280x800
+            --camera=0,30,160 --simulate "put:box;type:23.3,enter;snap:off;gizmo:x,48,0,8;near:x,-21.65")
+  set_tests_properties(app_snap_off_does_not_catch PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE WILL_FAIL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

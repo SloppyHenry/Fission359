@@ -126,6 +126,8 @@ public:
         QColor accent{0x4C, 0x8D, 0xFF};
         /// The size handles, drawn last.
         HandleGraphics handles;
+        /// Fine lines on the bed at this distance (mm): the grid a dragged body snaps to. 0: none.
+        float snapGridStep = 0.0F;
     };
 
     /// Creates buffers and loads the shaders. Needs a current RHI.

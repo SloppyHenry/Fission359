@@ -81,7 +81,7 @@ Beide Arten lösen dieselben Commands aus und folgen denselben Regeln: Tippen er
 - **Tippen ersetzt Ziehen.** Wer während eines Griffs eine Zahl tippt, ersetzt damit den Wert. `Enter` bestätigt, `Esc` bricht ab, `Tab` springt zum nächsten Maß (Breite → Tiefe → Höhe).
 - **Formeln und Einheiten überall:** `25+3`, `40/2`, `1 in`, `2,5 cm`, `Breite/2`. **Komma und Punkt** gelten beide als Dezimaltrenner.
 - **Intelligente Abstandsmaße:** Beim Verschieben zeigt das Programm automatisch die Abstände zu den nächsten Kanten an. Ein Klick auf ein Maß macht es editierbar („5 mm vom Rand“). Das ist die Verbesserung des Tinkercad-Lineals.
-- **Fangen (Snapping):** Raster (fein, mit dem Zoom angepasst), Ecken, Kantenmitten, Kreismittelpunkte, Flächenmitten, Winkel in 15°-Schritten, Ausrichtungslinien. Gedrückte ⇧/Shift-Taste schaltet das Fangen vorübergehend aus.
+- **Fangen (Snapping):** Raster (fein, mit dem Zoom angepasst), Ecken, Kantenmitten, Kreismittelpunkte, Flächenmitten, Winkel in 15°-Schritten, Ausrichtungslinien. Gedrückte ⇧/Shift-Taste schaltet das Fangen vorübergehend aus. Die **Genauigkeit des Rasters** stellt man unten in der Statuszeile ein: **Auto** (nach Zoom), ein kleiner Schieberegler durch 10 / 5 / 2 / 1 / 0,5 / 0,2 / 0,1 / 0,05 / 0,02 / 0,01 mm und daneben ein Zahlenfeld für jeden anderen Wert (AP-1.6c).
 - **Auf Fläche legen:** Neue Formen landen automatisch auf der Fläche unter dem Mauszeiger, die dabei zur Arbeitsebene wird (das macht Tinkercad gut).
 - **Ausrichten:** mehrere Körper auswählen und mit Griffen bündig oder mittig ausrichten.
 

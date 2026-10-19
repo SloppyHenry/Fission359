@@ -616,6 +616,7 @@ void SceneRenderer::writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* 
     p.view[0] = static_cast<float>(targetSize.width());
     p.view[1] = static_cast<float>(targetSize.height());
     p.view[2] = occlusion ? 1.0F : 0.0F;
+    p.view[3] = frame.snapGridStep;
     copyMatrix(p.mvp, mvp);
     copyMatrix(p.lightVp, m_lightViewProjection);
     copyMatrix(p.corr, m_rhi->clipSpaceCorrMatrix());
