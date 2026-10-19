@@ -9,7 +9,9 @@
 #     system : require the system Qt
 #     vcpkg  : always build Qt with vcpkg (what CI uses; reproducible)
 #
-#   vcpkg itself: $VCPKG_ROOT if set, otherwise <repo>/.vcpkg (created by scripts/setup).
+#   vcpkg itself: $VCPKG_ROOT if set, otherwise <repo>/.vcpkg (created by scripts/setup). A
+#   second working tree of the repository (git worktree) has no .vcpkg of its own: it uses the
+#   one of the main working tree, so that the libraries are not built twice.
 
 set(FISSION_QT_MIN_VERSION 6.8)
 # The environment variable of the same name sets the default (used by CI: FISSION_QT_SOURCE=vcpkg).
@@ -27,6 +29,26 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(_fission_vcpkg_root "$ENV{VCPKG_ROOT}")
   else()
     set(_fission_vcpkg_root "${CMAKE_SOURCE_DIR}/.vcpkg")
+    if(NOT EXISTS "${_fission_vcpkg_root}/scripts/buildsystems/vcpkg.cmake")
+      # A git worktree: the main working tree is the folder that holds the common .git.
+      find_package(Git QUIET)
+      if(GIT_FOUND)
+        execute_process(
+          COMMAND "${GIT_EXECUTABLE}" rev-parse --path-format=absolute --git-common-dir
+          WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+          OUTPUT_VARIABLE _fission_git_common
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+          RESULT_VARIABLE _fission_git_result
+          ERROR_QUIET)
+        if(_fission_git_result EQUAL 0 AND NOT _fission_git_common STREQUAL "")
+          get_filename_component(_fission_main_tree "${_fission_git_common}" DIRECTORY)
+          if(EXISTS "${_fission_main_tree}/.vcpkg/scripts/buildsystems/vcpkg.cmake")
+            set(_fission_vcpkg_root "${_fission_main_tree}/.vcpkg")
+            message(STATUS "vcpkg aus dem Hauptordner: ${_fission_vcpkg_root}")
+          endif()
+        endif()
+      endif()
+    endif()
   endif()
   set(_fission_toolchain "${_fission_vcpkg_root}/scripts/buildsystems/vcpkg.cmake")
   if(NOT EXISTS "${_fission_toolchain}")
