@@ -612,7 +612,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 
 **Einschränkungen, Annahmen, Folge-Arbeiten**
 - **Ablegen nur auf waagerechten Flächen:** Auf Wänden und Schrägen bleibt die Form auf der Arbeitsebene (Höhe der zuletzt benutzten
-  Fläche). Eine Form an einer senkrechten Fläche auszurichten braucht Drehen (AP-1.6).
+  Fläche). Eine Form an einer senkrechten Fläche auszurichten braucht Drehen (AP-1.6). *(Erledigt mit 1.6b3, siehe dort.)*
 - **Griffe:** Bei kleinen Körpern im Bild können sich Beschriftungen nahekommen (sie weichen einander aus). Ob eine Beschriftung verdeckt
   ist, prüft das Programm an einem Punkt (Mitte des Bandes bzw. der Punkt selbst), nicht an der ganzen Beschriftung. Ein verdeckter Punkt
   lässt sich weiter anfassen. Die Lage der Bänder richtet sich nach dem Quader um den Körper; bei runden Formen beginnen die Hilfslinien der
@@ -640,7 +640,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten (`vcpk
 ---
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
-**Status:** in Arbeit (1.6a, 1.6b1 und 1.6b2 erledigt) · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Status:** in Arbeit (1.6a, 1.6b1 und 1.6b2 erledigt, 1.6b3 in Review) · **Größe:** L · **Abhängigkeiten:** AP-1.4
 
 **Umfang:**
 - Gizmo: Verschieben (Achsen und Ebenen), Drehen (Ringe), **proportional** Vergrößern/Verkleinern (Eck-Griff oder Prozentangabe; der Eck-Griff ist immer gleichmäßig)
@@ -663,10 +663,10 @@ Beschriftungen und Anfassflächen.
 | Teil | Status | Inhalt |
 |---|---|---|
 | **a) Verschieben** | erledigt (2026-10-18, PR #27) | ADR-0010 (wo eine Verschiebung im Rezept lebt); die Werkzeuge der Palette wirken (Wählen, Verschieben, Größe); Gizmo mit Achsen-Pfeilen und Ebenen-Quadraten; **Körper selbst ziehen verschiebt ihn** auf der Arbeitsebene (Rahmen dann nur noch auf leerem Grund); Wertblase, Tippen mit `Tab` X → Y → Z, Enter, Esc; Raster in ganzen mm wie bisher |
-| **b) Drehen und proportional** | in Arbeit | Zerlegt (2026-10-18) in b1 bis b3, je ein PR: |
+| **b) Drehen und proportional** | Review | Zerlegt (2026-10-18) in b1 bis b3, je ein PR: |
 | &nbsp;&nbsp;**b1) Drehen** | erledigt (2026-10-18, PR #29) | Die Lage bekommt eine Drehung (drei Winkel); der Kernel dreht Körper und behält die Flächen-Namen; Werkzeug „Drehen“ mit Ringen, 15°-Schritten, Tippen in Grad |
 | &nbsp;&nbsp;**b2) Gleichmäßig vergrößern** | erledigt (2026-10-19, PR #31) | Eck-Griff (Werkzeug Größe) und Prozentangabe ändern **alle Maße im gleichen Verhältnis** (Parameter, nie Skalieren, Regel 11); Formeln bleiben als `(Formel) × Faktor` erhalten |
-| &nbsp;&nbsp;**b3) Ablegen an Wänden** | offen | Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus (Unterseite auf der Fläche; ⌥ = aufrecht) |
+| &nbsp;&nbsp;**b3) Ablegen an Wänden** | Review (2026-10-19) | Ablegen an Wänden und Schrägen richtet die Form zur Fläche aus (Unterseite auf der Fläche; ⌥ = aufrecht) |
 | **c) Fangen** | offen | Adaptives Raster; Fangen an Ecken, Kantenmitten, Kreismitten, Flächenmitten anderer Körper und am Bett; Ausrichtungslinien; Fang-Marke in der Ansicht; ⇧ während des Ziehens schaltet das Fangen aus; gilt auch für Maß-Griffe und das Ablegen |
 | **d) Abstandsmaße** | offen | Beim Verschieben Abstände zu den nächsten Kanten anderer Körper und zum Bettrand als Maßband in der Ansicht; ein Klick macht die Zahl editierbar („5 mm vom Rand“), Tippen setzt den Körper genau dorthin; Akzeptanzkriterium 1 als automatischer Ablauf |
 | **e) Rest** | offen | Ausrichten mehrerer Körper (bündig, mittig); „Aufs Bett legen“; „Auf Fläche legen“ (auch an Wänden); Kopieren, Einfügen, Duplizieren (⌘D) mit Versatz |
@@ -923,6 +923,62 @@ Auftrag: Sitzung vom 18.10.2026 (Prompt im Stil von [docs/prompts/ap-1.6b-drehen
 
 **Vorgeschlagene Folge-Arbeiten:** b3 Ablegen an Wänden; eine Prozentangabe auch im Panel (heute nur an der Wertblase); Bänder für
 gedrehte Maß-Punkte.
+
+#### Zwischenstand 1.6b3 Ablegen an Wänden (2026-10-19, Review)
+Festlegungen (Product Owner, 2026-10-19: „ok lege los“ zu Plan, Annahmen und Empfehlungen): Fragen 1 = A (Maße tippen nach dem
+Ablegen schiebt die Form von der Wand, siehe Einschränkungen) und 2 = ⌥ bauen, unter Linux prüfen.
+
+**Umgesetzt**
+- **Ablegen an jeder Fläche:** Beim Ziehen aus der Galerie liegt die Form mit der Unterseite auf der Fläche unter dem Zeiger und steht
+  senkrecht daraus: an Wänden, Schrägen, Unterseiten und gewölbten Flächen (Kegelflanke, Zylindermantel, Kugel: sie legt sich an die
+  Berührungsebene im Zeigerpunkt). Waagerechte Flächen (Bett, Oberseiten) verhalten sich wie vorher.
+- **Oben bleibt oben:** Die Oberkante der Form zeigt so weit nach oben, wie die Fläche es zulässt; Text liest sich an einer
+  Wand von links nach rechts. An einer Unterseite dreht sich die Form um X um (X der Welt bleibt X).
+- **Ergebnis sind gewöhnliche Zahlen im Schritt:** Lage `x, y, z` und die drei Drehwinkel (Regel 3: im Panel änderbar, auch mit
+  Formeln). Es gibt keine Bindung an die Fläche. Winkel in 0,1°-Schritten (Wände ergeben ganze Zahlen wie 90), die Lage wird aus den
+  gerundeten Winkeln gerechnet, die Form berührt die Fläche also exakt (auf Mikrometer). Der Berührpunkt rastet auf ganze mm entlang
+  der Fläche (an einer Wand in Achsrichtung sind das ganze mm der Welt).
+- **⌥ (Alt) hält die Form aufrecht** auf der Arbeitsebene wie vor 1.6b3, auch mitten im Ziehen; zurück auf einen waagerechten Ort
+  stellt sich die Form wieder auf.
+- **Die Arbeitsebene bleibt ein Höhenwert:** Ablegen an einer Wand ändert sie nicht (Festlegung vom 18.10.).
+- Ein Zug bleibt **ein Schritt** („Zylinder hinzugefügt“), Esc nimmt alles weg.
+- Hinweiszeile und Tooltip der Galerie nennen die Wand und ⌥; de und en. Neue Rechnung ohne Qt:
+  `geo/seat.h` (`turnOntoFace`, `seatOnFace`); Entwickler-Option `--simulate "drop:form,x,y,1"` (dritte Zahl ≠ 0 = ⌥).
+
+**Getestet**
+- Unit-Tests `[seat]`: Boden, vier Wände (Unterseite berührt, Form steht heraus, Oberkante nach oben, Leserichtung), Schräge 30°,
+  Decke, ganze Winkel bei geraden Flächen, lesbare Zahlen bei einer beliebigen Flanke.
+- `[placement]`: Fläche und Richtung unter dem Zeiger, Quader/Zylinder/Kugel/Text/Kegel berühren die Wand, ⌥ = aufrecht, zurück
+  aufs Bett stellt auf, Arbeitsebene unverändert, ein Schritt und Undo.
+- Ablauftests `app_wall_drop` und `app_wall_drop_upright` (echtes Fenster, gleiche Eingabe-Strecke wie die Maus).
+- Alle 445 Tests grün auf dem Mac (arm64, Release). Linux: CI, ⌥ auf maintux noch nicht von Hand geprüft.
+- Bilder: [ap-1.6b3-wand-de.png](../screenshots/ap-1.6b3-wand-de.png), [ap-1.6b3-schraege-de.png](../screenshots/ap-1.6b3-schraege-de.png),
+  [ap-1.6b3-aufrecht-de.png](../screenshots/ap-1.6b3-aufrecht-de.png).
+
+**So probierst du es aus** (`scripts/run --release` aus dem Ordner `Fission3D-ap16b`)
+1. Links **Formen** öffnen, den **Zylinder** auf die **Seitenwand des Würfels** ziehen (nicht auf die Oberseite): er liegt mit dem
+   Boden an der Wand und ragt heraus. Rechts steht unter „Drehung“ X 90°.
+2. Loslassen. ⌘Z nimmt ihn weg, ⇧⌘Z bringt ihn zurück: ein Schritt.
+3. Noch einmal ziehen und beim Ziehen **⌥ (Alt)** halten: er bleibt aufrecht auf dem Bett, Drehung 0.
+4. Eine **Kugel** oder den **Text** auf die Wand legen (Text liest sich von links nach rechts). Einen **Kegel** aufs Bett und einen
+   Zylinder auf seine **Schräge**: er legt sich an die Flanke.
+5. Mit dem Zeiger während des Ziehens von der Wand aufs Bett fahren: die Form steht wieder auf.
+6. Rechts die Drehung oder die Lage ändern: alles bleibt Zahl und änderbar.
+
+**Einschränkungen, Annahmen**
+- **Maße tippen direkt nach dem Ablegen** (`50 ⇥ 20 ⇥ 4`) ändert die Höhe um die Körpermitte (ADR-0010): die Form rutscht dabei von
+  der Wand weg. Wer sie zurückhaben will, zieht sie mit Verschieben an die Wand oder setzt die Lage. Ein Mitführen der Lage wäre ein
+  eigener Mechanismus (Vorschlag: 1.6c oder 1.6e).
+- **Maß-Punkte und Bänder gedrehter Körper** sind noch nicht gedreht gezeichnet (Folge-Arbeit seit 1.6b1). Im Werkzeug „Größe“
+  sitzen sie bei einer Form an der Wand daher noch nicht passend.
+- **Gewölbte Flächen:** Die Fläche ist aus Dreiecken; die Richtung ist die des Dreiecks unter dem Zeiger (auf 0,1° gerundet).
+  Beim Bewegen über eine Rundung kann sich die Form deshalb leicht ruckartig drehen.
+- **Unter Linux** nehmen manche Fenstermanager ⌥ + Maus für sich. Das Ziehen aus der Galerie läuft schon, die Taste wird beim Ziehen
+  gelesen; auf maintux noch nicht von Hand geprüft, bei Problemen schlage ich eine Ersatztaste vor.
+- Das Fangen an Kanten, Ecken und Mitten der Fläche kommt mit 1.6c (heute nur ganze mm entlang der Fläche).
+
+**Vorgeschlagene Folge-Arbeiten:** „Auf Fläche legen“ für vorhandene Körper (1.6e, nutzt dieselbe Rechnung `seatOnFace`);
+Mitführen der Lage beim Tippen von Maßen; Bänder für gedrehte Maß-Punkte.
 
 ---
 

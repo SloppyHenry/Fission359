@@ -19,6 +19,7 @@
 #include "fission/core/scaling.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
+#include "fission/geo/seat.h"
 #include "fission/render/detail.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/printer_catalog.h"
@@ -1138,6 +1139,28 @@ bool DocumentModel::setValueQuietly(const core::FeatureId& id, const char* name,
         core::makeSetFeatureValue(id, name, QString::number(value, 'g', 15).toStdString()));
 }
 
+namespace {
+
+// The middle of the box round a freshly made shape minus its foot, worked out from the values a
+// new step starts with (all of them plain numbers). Where the shape turns about.
+geo::Point3d centreOffsetOfDefaults(const core::FeatureType& type) {
+    core::ResolvedParams params;
+    for (const core::ParamSpec& spec : type.parameters()) {
+        const double value =
+            core::evaluateExpression(spec.defaultExpression, spec.kind).value_or(0.0);
+        params[spec.name] = core::Quantity{value, core::dimensionOf(spec.kind)};
+    }
+    for (const char* place : {"x", "y", "z"}) {
+        const auto found = params.find(place);
+        if (found != params.end()) {
+            found->second.value = 0.0; // measured from the foot
+        }
+    }
+    return type.bodyCentre(params);
+}
+
+} // namespace
+
 int DocumentModel::startPlacing(const QString& type, bool asHole, double x, double y, double z) {
     const core::FeatureType* featureType = m_registry.find(type.toStdString());
     if (featureType == nullptr) {
@@ -1166,6 +1189,8 @@ int DocumentModel::startPlacing(const QString& type, bool asHole, double x, doub
     m_placingFeature = *id;
     m_placingZ = z;
     m_placingSurface.clear();
+    m_placingOnFace = false;
+    m_placingCentre = centreOffsetOfDefaults(*featureType);
     const int step = stepIndexOf(*id);
     m_currentFeature = *id;
     documentChanged();
@@ -1181,12 +1206,49 @@ void DocumentModel::placeAt(double x, double y, double z, const QString& surface
     if (feature == nullptr) {
         return;
     }
+    const bool turns = feature->params.contains("rotX") && feature->params.contains("rotY") &&
+                       feature->params.contains("rotZ");
     const std::uint64_t before = m_history.document().revision();
     setValueQuietly(m_placingFeature, "x", x);
     setValueQuietly(m_placingFeature, "y", y);
     setValueQuietly(m_placingFeature, "z", z);
+    if (m_placingOnFace) {
+        // Back from a wall onto a flat place: the shape stands up again.
+        if (turns) {
+            for (const char* angle : {"rotX", "rotY", "rotZ"}) {
+                setValueQuietly(m_placingFeature, angle, 0.0);
+            }
+        }
+        m_placingOnFace = false;
+    }
     m_placingZ = z;
     m_placingSurface = surfaceBody;
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+}
+
+void DocumentModel::placeOnFace(const geo::Point3d& point, const geo::Point3d& normal) {
+    if (!m_placing) {
+        return;
+    }
+    const core::Feature* feature = m_history.document().findFeature(m_placingFeature);
+    if (feature == nullptr || !feature->params.contains("rotX") ||
+        !feature->params.contains("rotY") || !feature->params.contains("rotZ")) {
+        return;
+    }
+    const std::uint64_t before = m_history.document().revision();
+    const geo::Seat seat = geo::seatOnFace(point, normal, m_placingCentre);
+    setValueQuietly(m_placingFeature, "x", seat.foot.x);
+    setValueQuietly(m_placingFeature, "y", seat.foot.y);
+    setValueQuietly(m_placingFeature, "z", seat.foot.z);
+    setValueQuietly(m_placingFeature, "rotX", seat.turn.x);
+    setValueQuietly(m_placingFeature, "rotY", seat.turn.y);
+    setValueQuietly(m_placingFeature, "rotZ", seat.turn.z);
+    m_placingOnFace = true;
+    // The work plane is a height; a wall does not move it.
+    m_placingZ = m_workplaneZ;
+    m_placingSurface = m_workplaneBody;
     if (m_history.document().revision() != before) {
         documentChanged();
     }

@@ -57,10 +57,15 @@ Box3 extentOf(const fission::render::RenderScene& scene, const std::string& id) 
 }
 
 struct Fixture {
-    Fixture() {
+    // `withFont`: the kernel can make lettering (the font that ships with the program).
+    explicit Fixture(bool withFont = false) {
         application();
+        fission::geo::occt::KernelOptions options;
+        if (withFont) {
+            options.fontFiles = {std::string(FISSION_APP_FONTS_DIR) + "/IBMPlexSans-Regular.ttf"};
+        }
         std::shared_ptr<const fission::geo::GeometryKernel> kernel =
-            fission::geo::occt::makeKernel();
+            fission::geo::occt::makeKernel(options);
         model = std::make_unique<DocumentModel>(kernel);
         model->addDemoBox();
         model->waitForCalculation();
@@ -319,4 +324,137 @@ TEST_CASE("placing: the styles of a font are offered, bold changes the lettering
     CHECK(f.model->nextUndo()["field"].toString() == "style");
     f.model->undo();
     CHECK(f.model->stepTexts()[2].toMap()["value"].toString() == "regular");
+}
+
+namespace {
+
+// The value `name` of the chosen step as a number.
+double stepNumber(const DocumentModel& model, const QString& name) {
+    for (const QVariant& entry : model.stepValues()) {
+        if (entry.toMap()["name"].toString() == name) {
+            return entry.toMap()["value"].toDouble();
+        }
+    }
+    return -1e300;
+}
+
+// A camera that looks at the cube of the start from the side, and the wall of the cube that
+// faces the viewer: its pixel at height 10 and its outward direction (0, side, 0).
+struct WallView {
+    explicit WallView(Fixture& f) {
+        f.viewport.setCamera(0.0, 25.0, 400.0);
+        side = f.viewport.eyePosition().y() < 0.0 ? -1.0 : 1.0;
+        wall = f.pixel(0.0, side * 10.0, 10.0);
+    }
+    double side = -1.0;
+    QPointF wall;
+};
+
+} // namespace
+
+TEST_CASE("landing: a wall gives its direction, Alt-style upright ignores it", "[ui][placement]") {
+    Fixture f;
+    WallView view(f);
+    const auto onWall = f.viewport.landingAt(view.wall.x(), view.wall.y(), {}, 0.0, true);
+    REQUIRE(onWall.has_value());
+    CHECK(onWall->tilted);
+    CHECK(onWall->nx == Approx(0.0).margin(1e-9));
+    CHECK(onWall->ny == Approx(view.side).margin(1e-9));
+    CHECK(onWall->nz == Approx(0.0).margin(1e-9));
+    CHECK(onWall->y == Approx(view.side * 10.0).margin(0.05));
+    CHECK(onWall->z == Approx(10.0).margin(0.1));
+    CHECK_FALSE(onWall->surface.isEmpty());
+
+    // Without faces the wall is not a landing place: the work plane takes the shape.
+    const auto upright = f.viewport.landingAt(view.wall.x(), view.wall.y(), {}, 0.0, false);
+    REQUIRE(upright.has_value());
+    CHECK_FALSE(upright->tilted);
+    CHECK(upright->z == Approx(0.0).margin(1e-9));
+}
+
+TEST_CASE("placing: on a wall the shape lies on it, as plain numbers in one step",
+          "[ui][placement]") {
+    Fixture f;
+    WallView view(f);
+    REQUIRE(f.placement->begin("box", false, view.wall.x(), view.wall.y()));
+    CHECK(f.model->placingOnFace());
+    REQUIRE(f.placement->finish());
+    f.refresh();
+
+    // The box stands out of the wall: its underside is on the wall, it reaches away from it.
+    const Box3 box = extentOf(*f.model->scene(), f.lastBodyId());
+    const double wallY = view.side * 10.0;
+    const double nearWall = view.side < 0.0 ? box.maxY : box.minY;
+    const double farWall = view.side < 0.0 ? box.minY : box.maxY;
+    CHECK(nearWall == Approx(wallY).margin(1e-3));
+    CHECK(std::abs(farWall - wallY) > 1.0);
+    CHECK(box.minZ > -1e-3); // not in the bed
+
+    // The turn is three ordinary values of the step, a quarter turn about X.
+    f.model->selectStep(static_cast<int>(f.model->recipe().size()) - 1);
+    CHECK(std::abs(stepNumber(*f.model, "rotX")) == Approx(90.0).margin(1e-6));
+    CHECK(stepNumber(*f.model, "rotY") == Approx(0.0).margin(1e-6));
+    CHECK(stepNumber(*f.model, "rotZ") == Approx(0.0).margin(1e-6));
+
+    // The work plane is a height and stays the bed; one step, undo takes it all away.
+    CHECK(f.model->workplaneZ() == Approx(0.0).margin(1e-9));
+    CHECK(f.model->workplaneBodyId().isEmpty());
+    CHECK(f.stepsDone() == 1);
+    REQUIRE(f.model->undo());
+    f.refresh();
+    CHECK(f.model->bodies().size() == 1);
+}
+
+TEST_CASE("placing: Alt keeps the shape upright on the work plane", "[ui][placement]") {
+    Fixture f;
+    WallView view(f);
+    REQUIRE(f.placement->begin("box", false, view.wall.x(), view.wall.y(), true));
+    CHECK_FALSE(f.model->placingOnFace());
+    REQUIRE(f.placement->finish());
+    f.refresh();
+    const Box3 box = extentOf(*f.model->scene(), f.lastBodyId());
+    CHECK(box.minZ == Approx(0.0).margin(1e-3));
+    f.model->selectStep(static_cast<int>(f.model->recipe().size()) - 1);
+    CHECK(stepNumber(*f.model, "rotX") == Approx(0.0).margin(1e-9));
+}
+
+TEST_CASE("placing: dragging from a wall back onto the bed stands the shape up",
+          "[ui][placement]") {
+    Fixture f;
+    WallView view(f);
+    REQUIRE(f.placement->begin("cylinder", false, view.wall.x(), view.wall.y()));
+    CHECK(f.model->placingOnFace());
+
+    const QPointF bed = f.pixel(60, 40, 0);
+    f.placement->moveTo(bed.x(), bed.y());
+    CHECK_FALSE(f.model->placingOnFace());
+    f.refresh();
+    {
+        const Box3 box = extentOf(*f.model->scene(), f.lastBodyId());
+        CHECK(box.minZ == Approx(0.0).margin(1e-3));
+    }
+    // And onto the wall again; Alt in the middle of the drag takes the turn away.
+    f.placement->moveTo(view.wall.x(), view.wall.y());
+    CHECK(f.model->placingOnFace());
+    f.placement->moveTo(view.wall.x(), view.wall.y(), true);
+    CHECK_FALSE(f.model->placingOnFace());
+    REQUIRE(f.placement->finish());
+    f.model->selectStep(static_cast<int>(f.model->recipe().size()) - 1);
+    CHECK(stepNumber(*f.model, "rotX") == Approx(0.0).margin(1e-9));
+}
+
+TEST_CASE("placing: a sphere and lettering touch the wall too", "[ui][placement]") {
+    for (const char* type : {"sphere", "text", "cone"}) {
+        INFO(type);
+        Fixture f(true); // a fresh scene: the first shape would be in the way of the second
+        WallView view(f);
+        const double wallY = view.side * 10.0;
+        REQUIRE(f.placement->begin(type, false, view.wall.x(), view.wall.y()));
+        REQUIRE(f.placement->finish());
+        f.refresh();
+        const Box3 box = extentOf(*f.model->scene(), f.lastBodyId());
+        const double nearWall = view.side < 0.0 ? box.maxY : box.minY;
+        CHECK(nearWall == Approx(wallY).margin(0.05));
+        CHECK(std::abs((view.side < 0.0 ? box.minY : box.maxY) - wallY) > 0.5);
+    }
 }

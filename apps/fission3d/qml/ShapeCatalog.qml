@@ -7,7 +7,7 @@ import QtQuick
 // sentence for the tooltip and the words the command search finds it by (German and English at
 // once, as in the mockup: whoever types "ball" finds the sphere in either language).
 QtObject {
-    readonly property string dragTip: qsTr("Drag onto the bed. Lands on the face under the pointer.")
+    readonly property string dragTip: qsTr("Drag onto the bed. Lands on the face under the pointer, also on a wall.")
     readonly property string clickTip: qsTr("A click puts it on a free place of the bed.")
 
     readonly property var shapes: [

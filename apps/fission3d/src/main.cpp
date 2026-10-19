@@ -152,7 +152,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "Play pointer actions after the first frame, before the screenshot: "
             "hover:x,y  click:x,y  shiftclick:x,y  doubleclick:x,y  frame:x1,y1,x2,y2 "
             "(window pixels of the 3D view), drop:shape,x,y  drophole:shape,x,y "
-            "(drag a shape of the gallery there and let go), put:shape  puthole:shape "
+            "(drag a shape of the gallery there and let go; a third value other than 0 holds Alt: "
+            "upright instead of lying on a wall), put:shape  puthole:shape "
             "(click its tile), type:50,tab,20,enter (type sizes), set:style,bold (a word "
             "of the chosen step), grab:width,40,0,8 (press a handle, pull it by view pixels "
             "in small moves, let go), point:cornerRadius (put the pointer on that handle and leave "
@@ -533,9 +534,11 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             using fission::ui::Viewport3D;
             // The same calls the gallery makes when a tile is dragged or clicked.
             if (kind == QLatin1String("drop") || kind == QLatin1String("drophole")) {
+                // A third number other than 0 holds the Alt key: the shape stays upright.
+                const bool upright = numbers.size() >= 3 && numbers[2] != 0.0;
                 if (numbers.size() >= 2 &&
                     placement->begin(shape, kind == QLatin1String("drophole"), numbers[0],
-                                     numbers[1])) {
+                                     numbers[1], upright)) {
                     placement->finish();
                 }
                 return;

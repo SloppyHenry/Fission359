@@ -135,17 +135,24 @@ public:
     /// Orbit by pixels, like the rotate button.
     Q_INVOKABLE void orbitBy(double dx, double dy);
     /// Where a shape put down at the point (x, y) in item pixels would land: on the print bed,
-    /// on the flat top of a body, or - over anything else (a wall, nothing) - on the plane
-    /// `planeZ`. `ignoreBody` (a `RenderBody::id`) is looked through. Nothing if the ray misses
-    /// every plane.
+    /// on the flat top of a body, on any other face of a body (`onFaces`: a wall, a slope, a
+    /// curve) or - over anything else, and over a tilted face when `onFaces` is off - on the
+    /// plane `planeZ`. `ignoreBody` (a `RenderBody::id`) is looked through. Nothing if the ray
+    /// misses every plane.
     struct Landing {
         double x = 0.0;
         double y = 0.0;
         double z = 0.0;
-        QString surface; ///< id of the body whose top it is; empty: the bed or the plane
+        QString surface; ///< id of the body whose face it is; empty: the bed or the plane
+        /// Outward direction of the face (unit length). Straight up for the bed, the plane and a
+        /// flat top; `tilted` says it is any other face of a body.
+        double nx = 0.0;
+        double ny = 0.0;
+        double nz = 1.0;
+        bool tilted = false;
     };
-    std::optional<Landing> landingAt(double x, double y, const QString& ignoreBody,
-                                     double planeZ) const;
+    std::optional<Landing> landingAt(double x, double y, const QString& ignoreBody, double planeZ,
+                                     bool onFaces = false) const;
     /// Where the eye is in the world (mm): handles are shown on the side that faces it.
     QVector3D eyePosition() const { return m_camera.eye(); }
     /// The ray from the eye through a point of the view (item pixels), in the world (mm).
