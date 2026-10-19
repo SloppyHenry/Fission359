@@ -225,8 +225,13 @@ setup_vcpkg() {
     root="$(vcpkg_root)"
     baseline="$(vcpkg_baseline)" || die "vcpkg.json konnte nicht gelesen werden."
 
-    if [ -n "${VCPKG_ROOT:-}" ]; then
-        ok "Verwende vcpkg aus VCPKG_ROOT: $root"
+    # vcpkg of someone else (VCPKG_ROOT) or of the main working tree: used, never changed here.
+    if [ -n "${VCPKG_ROOT:-}" ] || [ "$root" != "$REPO_ROOT/.vcpkg" ]; then
+        if [ -n "${VCPKG_ROOT:-}" ]; then
+            ok "Verwende vcpkg aus VCPKG_ROOT: $root"
+        else
+            ok "Verwende vcpkg aus dem Hauptordner: $root"
+        fi
         if [ ! -x "$root/vcpkg" ]; then
             fail "In $root fehlt das Programm 'vcpkg' (bootstrap-vcpkg.sh ausführen)."
             exit 1

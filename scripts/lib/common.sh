@@ -68,12 +68,34 @@ vcpkg_baseline() {
         "$REPO_ROOT/vcpkg.json"
 }
 
-# Prints the vcpkg directory in use: $VCPKG_ROOT if set, otherwise <repo>/.vcpkg.
+# Prints the vcpkg directory in use: $VCPKG_ROOT if set, otherwise <repo>/.vcpkg. A second
+# working tree (git worktree) without a .vcpkg of its own uses the one of the main working tree
+# (the same rule as cmake/FissionVcpkg.cmake).
 vcpkg_root() {
     if [ -n "${VCPKG_ROOT:-}" ]; then
         echo "$VCPKG_ROOT"
-    else
-        echo "$REPO_ROOT/.vcpkg"
+        return
+    fi
+    if [ ! -e "$REPO_ROOT/.vcpkg" ]; then
+        local main
+        main="$(main_tree_vcpkg)"
+        if [ -n "$main" ]; then
+            echo "$main"
+            return
+        fi
+    fi
+    echo "$REPO_ROOT/.vcpkg"
+}
+
+# Prints the .vcpkg of the main working tree when this is another one (git worktree) and it has
+# one; nothing otherwise.
+main_tree_vcpkg() {
+    local common main
+    common="$(git -C "$REPO_ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" \
+        || return 0
+    main="$(dirname "$common")"
+    if [ "$main" != "$REPO_ROOT" ] && [ -x "$main/.vcpkg/vcpkg" ]; then
+        echo "$main/.vcpkg"
     fi
 }
 
