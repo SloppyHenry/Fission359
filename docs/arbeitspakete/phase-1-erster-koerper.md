@@ -1000,10 +1000,12 @@ Fangreichweite 10 Pixel am Bildschirm (Annahme).
   Zug wieder ein. Getippte Zahlen werden nie gefangen.
 - **Raster auf dem Bett:** Während des Ziehens zeigen feine Linien auf dem Bett das Raster, an dem gerastet wird (nie dichter als 8
   Pixel, aus der Reihe 1-2-5). Ein-/Ausschalten im Menü Ansicht. Die Statuszeile zeigt jetzt das Raster des Zooms („Raster 0,5 mm“).
-- **Genauigkeit einstellbar** (Wunsch des Product Owners, 2026-10-19): Klick auf „Einheit: mm · Raster …“ in der Statuszeile öffnet die
-  Auswahl **Automatisch (nach Zoom)**, 10, 5, 1, 0,5, 0,1, 0,05 oder **0,01 mm**. Sie gilt für das Verschieben, die Maß-Griffe
-  (Ziehen) und das Ablegen; Drehen bleibt bei 15°, der Eck-Griff bei ganzen Prozent. Gilt, bis man sie ändert; wird noch nicht
-  gespeichert (AP-1.11). Entwickler-Option `--simulate "grid:0.05"` und `gridmenu`.
+- **Genauigkeit einstellbar** (Wunsch des Product Owners, 2026-10-19): rechts in der Statuszeile „Raster“ mit **Auto** (nach Zoom), einem
+  kleinen **Schieberegler** (10, 5, 2, 1, 0,5, 0,2, 0,1, 0,05, 0,02, **0,01 mm**) und einem **Zahlenfeld** daneben (jeder Wert von
+  0,01 bis 100 mm, Formeln, Einheiten, Komma und Punkt; Enter übernimmt, Esc verwirft). Schieberegler oder Zahl schalten Auto aus,
+  ein Klick auf Auto schaltet es wieder ein. Die Einstellung gilt für das Verschieben, die Maß-Griffe (Ziehen) und das Ablegen;
+  Drehen bleibt bei 15°, der Eck-Griff bei ganzen Prozent. Sie wird noch nicht gespeichert (AP-1.11). Entwickler-Option
+  `--simulate "grid:0.05"` (0 = Auto).
 - Hinweiszeile des Werkzeugs Verschieben nennt das Fangen und ⇧; de und en.
 - Neu ohne Qt: `interaction/snap.h` (Punkte eines Körpers aus dem Netz, Fangregel). In der Oberfläche: `ui::SnapSession` (merkt sich die
   Punkte je Körper, solange sein Netz gleich bleibt), eingehängt im `GizmoController`. Entwickler-Option `--simulate "snap:off"`.
@@ -1016,15 +1018,15 @@ Fangreichweite 10 Pixel am Bildschirm (Annahme).
 - Ablauftests im echten Fenster: `app_snap_catch` (Seite des 23,3 mm breiten Quaders liegt exakt an: x = -21,65, wo kein Raster
   hinfällt) und `app_snap_off_does_not_catch` (dieselbe Prüfung muss mit ⇧ scheitern).
 - Alle Tests grün auf dem Mac (arm64, Release). Linux: CI.
-- Bilder: [ap-1.6c1-fangen-de.png](../screenshots/ap-1.6c1-fangen-de.png) (Pfeil gehalten, Quadrat auf der Ecke, gestrichelte Linie), [ap-1.6c1-raster-de.png](../screenshots/ap-1.6c1-raster-de.png) (Auswahl der Genauigkeit).
+- Bilder: [ap-1.6c1-fangen-de.png](../screenshots/ap-1.6c1-fangen-de.png) (Pfeil gehalten, Quadrat auf der Ecke, gestrichelte Linie), [ap-1.6c1-raster-de.png](../screenshots/ap-1.6c1-raster-de.png) (Schieberegler und Zahlenfeld in der Statuszeile).
 
 **So probierst du es aus** (`scripts/run --release` aus dem Ordner `Fission3D-ap16b`)
 1. Zwei Quader aufs Bett legen (Formen ▸ Quader, zweimal). Einen davon im Werkzeug **Verschieben** am roten Pfeil in Richtung des
    anderen ziehen: kurz vor der Berührung springt er an und die Seiten liegen exakt an. Eine Marke zeigt, woran er hängt.
 2. Den Körper selbst anfassen und über das Bett ziehen: er richtet sich an Kanten und Mitten des anderen aus (gestrichelte Linie).
 3. **⇧ halten** und wieder ziehen: kein Einrasten, der Körper folgt dem Zeiger.
-4. Unten rechts auf **„Raster …“** klicken und **0,01 mm** (oder 10 mm) wählen: Verschieben, Maß-Griffe und Ablegen rasten in diesen
-   Schritten. Ansicht ▸ **Raster beim Ziehen** aus- und einschalten: feine Linien auf dem Bett während des Ziehens, nie dichter als nötig.
+4. Unten rechts den **Schieberegler** bis **0,01 mm** ziehen oder in das Feld daneben eine Zahl tippen (zum Beispiel `2,5`):
+   Verschieben, Maß-Griffe und Ablegen rasten in diesen Schritten. **Auto** schaltet zurück auf „nach Zoom“. Ansicht ▸ **Raster beim Ziehen** aus- und einschalten: feine Linien auf dem Bett während des Ziehens, nie dichter als nötig.
 5. Einen Zylinder neben den Quader legen und mit der Mitte seiner Oberseite an die Mitte der Quader-Oberseite ziehen.
 6. Eine Zahl tippen statt zu ziehen: sie gilt, wie getippt.
 
@@ -1041,6 +1043,8 @@ Fangreichweite 10 Pixel am Bildschirm (Annahme).
 - ⇧ wird beim Ziehen gelesen; drückt man es, ohne die Maus zu bewegen, gilt es ab der nächsten Bewegung.
 - Die Einstellungen „Raster beim Ziehen“ und die Fang-Genauigkeit werden noch nicht gemerkt (kommt mit AP-1.11, wie die Mausart).
 - Bei sehr feinem Raster ist der Zeiger gröber als das Raster: 0,01 mm erreicht man genau durch Zoomen oder durch Tippen.
+- Schieberegler und Zahlenfeld sind im echten Fenster angeschaut (Bild), aber **nicht** mit automatischen Mausklicks geprüft; geprüft sind
+  die Rechnung dahinter (Unit-Tests) und das Raster über `--simulate "grid:…"`.
 - Bei vielen Körpern kann das Fangen an Ausrichtungen häufig anspringen; dafür ist ⇧ da. Rückmeldung erwünscht, ob 10 Pixel passen.
 
 **Vorgeschlagene Folge-Arbeiten:** 1.6c2 (Maß-Griffe, Eck-Griff, Ablegen), danach 1.6d Abstandsmaße.

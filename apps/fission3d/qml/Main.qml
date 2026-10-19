@@ -13,9 +13,6 @@ Window {
     readonly property string primaryKey: isMac ? "⌘" : qsTr("Ctrl+")
     property string documentName: qsTr("Untitled")
     property string tool: "move"
-    // Developer option --simulate "gridmenu": opens the grid choice in the status bar.
-    property bool gridMenuOpen: false
-    onGridMenuOpenChanged: if (gridMenuOpen) statusBar.openGridChoice()
     property string display: "color"
     property string leftTab: "bodies"
     property string rightTab: "object"
@@ -177,17 +174,6 @@ Window {
             }
         }
     }
-
-    // The precision of snapping (the grid): from automatic (follows the zoom) down to 0.01 mm.
-    readonly property var gridSteps: [0, 10, 5, 1, 0.5, 0.1, 0.05, 0.01]
-    function gridText(step) {
-        return Number(step).toLocaleString(Qt.locale(), "f", step < 0.1 ? 2 : (step < 1 ? 1 : 0))
-    }
-    readonly property var gridChoices: gridSteps.map(step => ({
-        id: String(step),
-        text: step === 0 ? qsTr("Automatic (by zoom)") : qsTr("%1 mm").arg(gridText(step)),
-        checked: viewport.fixedSnapStep === step
-    }))
 
     function run(id) {
         switch (id) {
@@ -681,9 +667,11 @@ Window {
             : root.hoverText !== "" ? root.hoverText
             : Selection.count > 0 ? toolCatalog.find(root.tool).hint
             : root.navigationText
-        unitText: qsTr("Unit: mm · Grid %1 mm").arg(root.gridText(viewport.snapStep))
-        gridChoices: root.gridChoices
-        onGridChoiceRequested: id => viewport.fixedSnapStep = Number(id)
+        unitText: qsTr("Unit: mm")
+        gridStep: viewport.snapStep
+        gridAutomatic: viewport.fixedSnapStep === 0
+        onGridStepChosen: step => viewport.fixedSnapStep = step
+        onGridAutomaticChosen: viewport.fixedSnapStep = 0
     }
 
     AboutWindow {

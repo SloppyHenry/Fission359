@@ -346,7 +346,7 @@
         <translation>Untitled</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+16"/>
         <source>%1 × %2</source>
         <translation>%1 × %2</translation>
     </message>
@@ -582,12 +582,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+605"/>
+        <location line="+596"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-604"/>
+        <location line="-595"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -643,18 +643,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+309"/>
+        <location line="+298"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-307"/>
-        <location line="+308"/>
+        <location line="-296"/>
+        <location line="+297"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-302"/>
+        <location line="-291"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -664,12 +664,7 @@
         <translation>Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+47"/>
-        <source>Automatic (by zoom)</source>
-        <translation>Automatic (by zoom)</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="+44"/>
         <source>Settings arrive in a later version.</source>
         <translation>Settings arrive in a later version.</translation>
     </message>
@@ -761,11 +756,11 @@
     </message>
     <message>
         <location line="+6"/>
-        <source>Unit: mm · Grid %1 mm</source>
-        <translation>Unit: mm · Grid %1 mm</translation>
+        <source>Unit: mm</source>
+        <translation>Unit: mm</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+23"/>
         <source>Width</source>
         <translation>Width</translation>
     </message>
@@ -1154,28 +1149,27 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-301"/>
+        <location line="-303"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-580"/>
+        <location line="-569"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+153"/>
-        <location line="+462"/>
+        <location line="+604"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-507"/>
+        <location line="-496"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+278"/>
+        <location line="+267"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
@@ -1500,16 +1494,39 @@
     </message>
 </context>
 <context>
-    <name>StatusBar</name>
+    <name>SnapControl</name>
     <message>
-        <location filename="../qml/StatusBar.qml" line="+54"/>
-        <source>Tool: %1</source>
-        <translation>Tool: %1</translation>
+        <location filename="../qml/SnapControl.qml" line="+45"/>
+        <source>Grid</source>
+        <translation>Grid</translation>
     </message>
     <message>
-        <location line="+34"/>
-        <source>Grid: change the precision of snapping</source>
-        <translation>Grid: change the precision of snapping</translation>
+        <location line="+16"/>
+        <source>Grid follows the zoom</source>
+        <translation>Grid follows the zoom</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>Precision of snapping</source>
+        <translation>Precision of snapping</translation>
+    </message>
+    <message>
+        <location line="+96"/>
+        <source>Grid step in millimetres</source>
+        <translation>Grid step in millimetres</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBar</name>
+    <message>
+        <location filename="../qml/StatusBar.qml" line="+50"/>
+        <source>Tool: %1</source>
+        <translation>Tool: %1</translation>
     </message>
 </context>
 <context>
