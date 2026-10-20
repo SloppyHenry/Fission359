@@ -1,6 +1,6 @@
 # Architektur
 
-> Status: **Vorschlag**. Die mit (Spike) markierten Punkte werden in Phase 0 durch Prototypen bestätigt und per ADR festgehalten.
+> Status: **gilt**. Die Phase-0-Spikes sind abgeschlossen; Entscheidungen stehen in den ADRs (docs/adr/).
 
 ## 1. Leitentscheidungen
 
@@ -12,10 +12,10 @@
 | Geometrie-Kern (präzise) | **OpenCASCADE Technology (OCCT) ≥ 7.9** | Einziger reifer, freier B-Rep-Kern: Booleans, Abrunden, Aushöhlen, Offset, STEP. Grundlage von FreeCAD, KiCad 3D, CadQuery |
 | Geometrie (Netz/Freiform) | **Manifold ≥ 3.x** | Extrem robuste, schnelle Netz-Booleans; Level-Set/SDF-Unterstützung; auch in OpenSCAD genutzt |
 | Skizzen-Solver | **PlaneGCS** (aus FreeCAD) | Bewährter 2D-Constraint-Solver, LGPL; liefert Freiheitsgrade und Konfliktdiagnose |
-| Rendering | **Eigener Renderer auf Qt RHI** (Metal auf macOS, Vulkan/OpenGL auf Linux) (Spike) | Volle Kontrolle über Optik, die für Einsteigerfreundlichkeit zentral ist; zukunftssicher auf macOS (Metal). Fallback: OCCT AIS/V3d |
+| Rendering | **Eigener Renderer auf Qt RHI** (Metal auf macOS, Vulkan/OpenGL auf Linux, ADR-0002) | Volle Kontrolle über Optik, die für Einsteigerfreundlichkeit zentral ist; zukunftssicher auf macOS (Metal). Fallback: OCCT AIS/V3d |
 | Build | **CMake + Ninja + vcpkg (Manifest-Modus)**, CMakePresets | Reproduzierbare Abhängigkeiten auf beiden Plattformen |
 | Plattformen | macOS 14+ (Apple Silicon), Linux x86_64 (Ubuntu 22.04+, Fedora 40+, Wayland und X11) | Intel-Macs werden von Apple nicht mehr unterstützt; Linux-arm64 optional später |
-| Projektlizenz | **Open Source, GPL-3.0-or-later** (Vorschlag) | Schützt davor, dass jemand das Projekt geschlossen weiterverkauft; kompatibel mit allen geplanten Abhängigkeiten (LGPL, Apache-2.0, MIT, BSD) |
+| Projektlizenz | **Open Source, GPL-3.0-or-later** | Schützt davor, dass jemand das Projekt geschlossen weiterverkauft; kompatibel mit allen geplanten Abhängigkeiten (LGPL, Apache-2.0, MIT, BSD) |
 
 ### Verworfene Alternativen
 - **Electron/Tauri + Three.js:** Widerspricht dem Wunsch „keine Browser-App“. WebKitGTK unter Linux hat schwache WebGL-Performance. Der B-Rep-Kern läge trotzdem nativ daneben, was doppelte Komplexität bedeutet.
@@ -222,7 +222,7 @@ projekt.fission
 ```
 fission3d/
 ├─ CMakeLists.txt · CMakePresets.json · vcpkg.json · .clang-format · .clang-tidy
-├─ CLAUDE.md                     ← Master-Prompt (Kopie/Verweis auf docs/05)
+├─ CLAUDE.md                     ← Projektanweisung für den Coding-Agenten
 ├─ apps/fission3d/               main.cpp, QML-Einstieg, App-Icon
 ├─ src/
 │  ├─ core/                      Dokument, Features, Recompute, Ausdrücke, Commands, Serialisierung

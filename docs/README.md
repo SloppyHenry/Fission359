@@ -1,29 +1,19 @@
 # Fission3D – Projektdokumentation
 
-> **Arbeitstitel:** Fission3D
-> **Kurz:** Ein installierbares 3D-Konstruktionsprogramm für macOS und Linux. Es soll sich so leicht anfühlen wie Knete und so genau sein wie ein Messschieber.
+Ein installierbares 3D-Konstruktionsprogramm für macOS und Linux: so leicht wie Knete, so genau wie ein Messschieber.
 
-## Dokumente
-
-| Datei | Inhalt | Für wen |
-|---|---|---|
-| [01-vision.md](01-vision.md) | Warum, für wen, was es kann (und was bewusst nicht), Design-Prinzipien, Erfolgskriterien | alle |
-| [02-ux-konzept.md](02-ux-konzept.md) | Bedienkonzept: Bildschirmaufbau, Interaktion, Rezept, Fehler, Lernen, Glossar, Beispielabläufe | Produkt, UI-Entwicklung |
-| [03-architektur.md](03-architektur.md) | Tech-Stack, Schichten, Datenmodell, Präzision, Dateiformat, Projektstruktur | Entwicklung |
-| [04-roadmap.md](04-roadmap.md) | Phasen, Meilensteine, Abhängigkeiten, Definition of Done | alle |
-| [arbeitspakete/](arbeitspakete/) | Alle Arbeitspakete (AP) je Phase mit Akzeptanzkriterien | Entwicklung |
-| [05-master-prompt.md](05-master-prompt.md) | **Der Prompt** für den KI-Coding-Agenten (z. B. Claude Code), mit Kurz-Prompts je Arbeitspaket | Agent |
-| [07-baukaesten.md](07-baukaesten.md) | Baukästen: geführtes Gestalten von Karten, Vasen, Figuren u. v. m. (statt starrer Vorlagen), Motiv-Bibliothek | Produkt, Entwicklung |
-| [paketierung.md](paketierung.md) | Installieren (macOS, AppImage, Flatpak), Pakete bauen, Signieren und Secrets | alle |
-| [08-gestaltung.md](08-gestaltung.md) | **Design-System:** Farben, Schrift, Bildschirmaufbau, Bausteine (verbindlich, nach dem Mockup) | Produkt, UI-Entwicklung |
-| [06-rueckfragen.md](06-rueckfragen.md) | Offene Entscheidungen, jeweils mit der aktuell angenommenen Antwort | du |
-| [adr/](adr/) | Architecture Decision Records (Entscheidungsprotokolle) | Entwicklung |
-| [spikes/](spikes/) | Berichte der Untersuchungs-Arbeitspakete (Messwerte, Empfehlungen) | Entwicklung |
-| [mockups/](mockups/) | Klickbares Oberflächen-Mockup, verbindliche Gestaltungsvorlage (R17) | du, UI-Entwicklung |
-| [prompts/](prompts/) | Fertige Auftragstexte für einzelne Sitzungen (z. B. Oberflächen-Mockup) | du, Agent |
-
-## So geht's los
-
-1. [06-rueckfragen.md](06-rueckfragen.md) durchgehen und die Annahmen bestätigen oder korrigieren.
-2. Den Master-Prompt aus [05-master-prompt.md](05-master-prompt.md) als Projektanweisung für den Agenten verwenden, z. B. als `CLAUDE.md` im Repo-Root oder als ersten Prompt.
-3. Die Arbeitspakete in der Reihenfolge der [Roadmap](04-roadmap.md) abarbeiten, beginnend mit **AP-0.1**.
+| Datei | Inhalt |
+|---|---|
+| [01-vision.md](01-vision.md) | Warum, für wen, Design-Prinzipien, Erfolgskriterien |
+| [02-ux-konzept.md](02-ux-konzept.md) | Bedienkonzept, Glossar, Beispielabläufe |
+| [03-architektur.md](03-architektur.md) | Tech-Stack, Schichten, Datenmodell, Präzision, Dateiformat, Budgets |
+| [04-roadmap.md](04-roadmap.md) | Phasen, Abhängigkeiten, Definition of Done |
+| [05-kurz-prompts.md](05-kurz-prompts.md) | Vorlagen zum Starten einer Agenten-Sitzung (die Projektanweisung selbst ist [CLAUDE.md](../CLAUDE.md)) |
+| [06-rueckfragen.md](06-rueckfragen.md) | Entscheidungen und Annahmen |
+| [07-baukaesten.md](07-baukaesten.md) | Baukästen (Karten, Vasen, Figuren) und Motiv-Bibliothek |
+| [08-gestaltung.md](08-gestaltung.md) | Design-System (verbindlich); Vorlage: [mockups/oberflaeche.html](mockups/oberflaeche.html) |
+| [arbeitspakete/](arbeitspakete/) | Arbeitspakete je Phase mit Status und Akzeptanzkriterien |
+| [adr/](adr/) | Architekturentscheidungen |
+| [spikes/](spikes/) | Berichte, die für AP-2.10 (Referenzen) und AP-2.14 (Meldungskatalog) gebraucht werden |
+| [paketierung.md](paketierung.md) | Installieren, Pakete bauen, Signieren |
+| [testumgebung.md](testumgebung.md) | Testrechner und Plattformen (ohne Zugangsdaten) |

@@ -10,7 +10,7 @@ Es soll sich so leicht anfühlen wie Tinkercad und so genau sein wie Fusion. Dam
 funktionale Teile (Halterungen, Ersatzteile, Boxen mit passenden Deckeln) genauso wie
 verspielte Deko, vor allem für den FDM-3D-Druck. Keine Browser-App, kein Konto, keine Cloud-Pflicht.
 
-**Stand:** Phase 0 (Fundament). Das Programm öffnet bisher nur ein leeres Fenster.
+**Stand:** Phase 1 (Der erste Körper): Grundformen platzieren, bemaßen, verschieben, drehen, mit Fangen. Kombinieren, Speichern und Export folgen.
 Den Fahrplan findest du in [docs/04-roadmap.md](docs/04-roadmap.md).
 
 ## Ausprobieren (ohne Programmierkenntnisse)
