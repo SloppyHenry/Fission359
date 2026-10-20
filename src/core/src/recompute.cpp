@@ -197,6 +197,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
 
     // Puts the bodies of a calculated or remembered entry into the result.
     const auto publish = [&](const Feature& feature, const Entry& entry, bool stale) {
+        const FeatureType* made = registry.find(feature.type);
+        const bool passesOnNames = made != nullptr && made->passesOnNames();
         for (std::size_t i = 0; i < entry.outputs.size() && i < feature.outputs.size(); ++i) {
             BodyResult body;
             body.id = feature.outputs[i];
@@ -206,7 +208,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             body.token = entry.token;
             body.outputIndex = i;
             for (const geo::NamedFace& role : entry.outputs[i].roles) {
-                body.faces.push_back({role.faceId, elementName(feature, role.role)});
+                body.faces.push_back(
+                    {role.faceId, passesOnNames ? role.role : elementName(feature, role.role)});
             }
             result.bodies[body.id] = std::move(body);
         }
@@ -248,7 +251,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             fail(std::move(*issue));
             continue;
         }
-        state.description = type->describe(state.params);
+        state.description = type->describeStep(feature, state.params);
 
         // Bodies it works on.
         std::vector<const BodyResult*> inputBodies;

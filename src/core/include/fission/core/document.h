@@ -179,6 +179,13 @@ public:
     /// Sets a text of a step; false when the step has no text of that name.
     bool setFeatureText(const FeatureId& id, std::string_view name, std::string text);
     bool setFeatureLabel(const FeatureId& id, std::string label);
+    /// Replaces the bodies a step works on. Refused (false) when one does not exist or is made by
+    /// this step or a later one.
+    bool setFeatureInputs(const FeatureId& id, std::vector<BodyId> inputs);
+    /// The step that uses the body as an input, which is then "consumed": it is part of that
+    /// step's result and not a body of its own any more (ADR-0011). Steps that are switched off
+    /// consume nothing. nullopt when no step uses it.
+    std::optional<FeatureId> consumerOf(const BodyId& id) const;
     bool setFeatureSuppressed(const FeatureId& id, bool suppressed);
     bool setFeatureRefs(const FeatureId& id, std::string_view name,
                         std::vector<PersistentRef> refs);

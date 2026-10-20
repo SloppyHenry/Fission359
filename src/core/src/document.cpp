@@ -317,6 +317,33 @@ bool Document::setFeatureRefs(const FeatureId& id, std::string_view name,
 
 // --- bodies -------------------------------------------------------------------------------
 
+bool Document::setFeatureInputs(const FeatureId& id, std::vector<BodyId> inputs) {
+    const auto self = indexOf(id);
+    if (!self) {
+        return false;
+    }
+    for (const BodyId& input : inputs) {
+        const Body* body = findBody(input);
+        const auto maker = body != nullptr ? indexOf(body->createdBy) : std::nullopt;
+        if (!maker || *maker >= *self) {
+            return false;
+        }
+    }
+    features_[*self].inputs = std::move(inputs);
+    touch();
+    return true;
+}
+
+std::optional<FeatureId> Document::consumerOf(const BodyId& id) const {
+    for (const Feature& feature : features_) {
+        if (!feature.suppressed &&
+            std::find(feature.inputs.begin(), feature.inputs.end(), id) != feature.inputs.end()) {
+            return feature.id;
+        }
+    }
+    return std::nullopt;
+}
+
 const Body* Document::findBody(const BodyId& id) const {
     const auto found =
         std::find_if(bodies_.begin(), bodies_.end(), [&](const Body& b) { return b.id == id; });

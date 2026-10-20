@@ -72,7 +72,8 @@ TEST_CASE("boolean: a hole through a plate", "[boolean][golden]") {
     CHECK(report.solids == 1);
     CHECK(report.faces == 7);
     CHECK(report.volume == exactly(16000.0 - kPi * 9.0 * 10.0));
-    CHECK(report.area == exactly(2.0 * 1600.0 - 2.0 * kPi * 9.0 + 4.0 * 400.0 + 2.0 * kPi * 3.0 * 10.0));
+    CHECK(report.area ==
+          exactly(2.0 * 1600.0 - 2.0 * kPi * 9.0 + 4.0 * 400.0 + 2.0 * kPi * 3.0 * 10.0));
     CHECK(report.boxMin.x == Approx(-20.0));
     CHECK(report.boxMax.z == Approx(10.0));
     checkNamed(cut);
@@ -141,8 +142,8 @@ TEST_CASE("boolean: a tool that misses the target", "[boolean][golden]") {
 }
 
 TEST_CASE("boolean: cutting everything away is an empty result", "[boolean]") {
-    const NamedSolid big = called(occt::makeNamedBox(100.0, 100.0, 100.0, {-50.0, -50.0, -50.0}),
-                                  "F2/box");
+    const NamedSolid big =
+        called(occt::makeNamedBox(100.0, 100.0, 100.0, {-50.0, -50.0, -50.0}), "F2/box");
     try {
         occt::booleanNamed(BooleanOp::subtract, plate(), {big});
         FAIL("nothing is left");

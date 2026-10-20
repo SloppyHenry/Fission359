@@ -158,6 +158,17 @@ public:
 
     virtual Description describe(const ResolvedParams& params) const = 0;
 
+    /// Like `describe`, for a step whose sentence depends on its words or inputs (a combine says
+    /// how many tools it has). The default asks `describe`.
+    virtual Description describeStep(const Feature& feature, const ResolvedParams& params) const {
+        (void)feature;
+        return describe(params);
+    }
+
+    /// True for a type whose result keeps the full names of its input faces ("F1/box/top"): the
+    /// roles it reports are final and not prefixed with this step's number and type.
+    virtual bool passesOnNames() const { return false; }
+
     /// The handles of the step, in the order they are shown. A value that can be changed from
     /// several equal places (both ends of a box, all around a cylinder) is listed once for
     /// each place, with the same `parameter`: the interface picks the one facing the viewer, so
