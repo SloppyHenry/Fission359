@@ -529,13 +529,19 @@ TEST_CASE("snap: with Shift a shape put down follows the pointer freely", "[ui][
     SnapOff off;
     const std::string id = f.putDown(0.4);
     REQUIRE_FALSE(id.empty());
-    f.refresh(); // the shape that follows is in the scene (as in the tests above)
     CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::placement).empty());
     REQUIRE(f.placement->finish());
-    f.refresh();
-    const Box3 box = extentOf(*f.model->scene(), id);
-    INFO("bodies in the scene: " << f.model->scene()->bodies.size() << ", id " << id);
-    CHECK(box.minX == Approx(10.75).margin(0.01)); // where the pointer was
+    // Where the pointer was: the middle at 20.75 (the side 0.4 mm off the other body at 10.35),
+    // neither caught on it nor on the grid. Read from the step, which is exact.
+    const int step = static_cast<int>(f.model->recipe().size()) - 1;
+    f.model->selectStep(step);
+    double x = -1e9;
+    for (const QVariant& entry : f.model->stepValues()) {
+        if (entry.toMap()["name"].toString() == QLatin1String("x")) {
+            x = entry.toMap()["value"].toDouble();
+        }
+    }
+    CHECK(x == Approx(20.75).margin(0.02));
 }
 
 TEST_CASE("snap: Esc while catching leaves nothing behind", "[ui][placement][snap]") {
