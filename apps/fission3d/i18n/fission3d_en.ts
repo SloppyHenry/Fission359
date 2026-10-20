@@ -60,6 +60,44 @@
     </message>
 </context>
 <context>
+    <name>AlignLayer</name>
+    <message>
+        <location filename="../qml/AlignLayer.qml" line="+27"/>
+        <source>Align in the middle</source>
+        <translation>Align in the middle</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Align left</source>
+        <translation>Align left</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Align right</source>
+        <translation>Align right</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Align front</source>
+        <translation>Align front</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Align back</source>
+        <translation>Align back</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Align bottom</source>
+        <translation>Align bottom</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Align top</source>
+        <translation>Align top</translation>
+    </message>
+</context>
+<context>
     <name>BedLabels</name>
     <message>
         <location filename="../qml/BedLabels.qml" line="+34"/>
@@ -355,12 +393,12 @@
         <translation>Untitled</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+21"/>
         <source>%1 × %2</source>
         <translation>%1 × %2</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+20"/>
         <source>Fission3D</source>
         <translation>Fission3D</translation>
     </message>
@@ -415,7 +453,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+72"/>
+        <location line="+76"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -425,7 +463,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-72"/>
+        <location line="-76"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -448,6 +486,11 @@
         <location line="+1"/>
         <source>Paste</source>
         <translation>Paste</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Duplicate</source>
+        <translation>Duplicate</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -591,14 +634,24 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+604"/>
+        <location line="+661"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-603"/>
+        <location line="-660"/>
         <source>As hole</source>
         <translation>As hole</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Drop to bed</source>
+        <translation>Drop to bed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lay on face</source>
+        <translation>Lay on face</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -652,18 +705,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+299"/>
+        <location line="+330"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-297"/>
-        <location line="+298"/>
+        <location line="-328"/>
+        <location line="+329"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-292"/>
+        <location line="-323"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -673,7 +726,7 @@
         <translation>Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+46"/>
         <source>Settings arrive in a later version.</source>
         <translation>Settings arrive in a later version.</translation>
     </message>
@@ -683,13 +736,24 @@
         <translation>Command search arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+36"/>
-        <location line="+211"/>
+        <location line="+25"/>
+        <location line="+9"/>
+        <source>This body cannot be copied yet.</source>
+        <translation>This body cannot be copied yet.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Nothing to drop: the bodies already stand on the bed.</source>
+        <translation>Nothing to drop: the bodies already stand on the bed.</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <location line="+220"/>
         <source>This arrives in a later version.</source>
         <translation>This arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-186"/>
+        <location line="-195"/>
         <source>“%1” has no %2 style, so the lettering is regular again.</source>
         <translation>“%1” has no %2 style, so the lettering is regular again.</translation>
     </message>
@@ -714,7 +778,7 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+173"/>
+        <location line="+182"/>
         <source>The start page arrives in a later version.</source>
         <translation>The start page arrives in a later version.</translation>
     </message>
@@ -734,12 +798,22 @@
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
     <message>
-        <location line="+147"/>
+        <location line="+87"/>
+        <source>Click a face of the print bed or of another body.</source>
+        <translation>Click a face of the print bed or of another body.</translation>
+    </message>
+    <message>
+        <location line="+82"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+24"/>
+        <source>Click the face the body should lie on. Esc cancels.</source>
+        <translation>Click the face the body should lie on. Esc cancels.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</source>
         <translation>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</translation>
     </message>
@@ -954,6 +1028,36 @@
         <translation>%1 turned</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>%1 dropped to the bed</source>
+        <translation>%1 dropped to the bed</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Bodies dropped to the bed</source>
+        <translation>Bodies dropped to the bed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bodies aligned</source>
+        <translation>Bodies aligned</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 laid on a face</source>
+        <translation>%1 laid on a face</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 pasted</source>
+        <translation>%1 pasted</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Bodies pasted</source>
+        <translation>Bodies pasted</translation>
+    </message>
+    <message>
         <location line="+3"/>
         <source>%1 made smaller to %2 %</source>
         <translation>%1 made smaller to %2%</translation>
@@ -1114,7 +1218,7 @@
         <translation>This shape could not be built.</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+32"/>
         <source>Face of %1</source>
         <translation>Face of %1</translation>
     </message>
@@ -1163,32 +1267,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-303"/>
+        <location line="-310"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-577"/>
+        <location line="-644"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+612"/>
+        <location line="+679"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-504"/>
+        <location line="-557"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+268"/>
+        <location line="+299"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+259"/>
+        <location line="+282"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -1562,13 +1666,13 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Arrows move the chosen body along one direction, squares in a plane, the dot across the bed. The numbers on the bands are the distances to the next body or the edge of the bed. You can also drag the body itself.</source>
-        <translation>Arrows move the chosen body along one direction, squares in a plane, the dot across the bed. The numbers on the bands are the distances to the next body or the edge of the bed. You can also drag the body itself.</translation>
+        <source>Arrows move the chosen body along one direction, squares in a plane, the dot across the bed. The numbers on the bands are the distances to the next body or the edge of the bed. With several bodies chosen, the points on their box line them up. You can also drag the body itself.</source>
+        <translation>Arrows move the chosen body along one direction, squares in a plane, the dot across the bed. The numbers on the bands are the distances to the next body or the edge of the bed. With several bodies chosen, the points on their box line them up. You can also drag the body itself.</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm). Click a distance to type it.</source>
-        <translation>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm). Click a distance to type it.</translation>
+        <source>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm). Click a distance to type it; with several bodies chosen, click a point on their box to line them up.</source>
+        <translation>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm). Click a distance to type it; with several bodies chosen, click a point on their box to line them up.</translation>
     </message>
     <message>
         <location line="+3"/>

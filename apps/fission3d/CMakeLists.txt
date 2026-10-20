@@ -12,7 +12,7 @@ set(FISSION_QML_FILES
   qml/LibraryCard.qml qml/Logo.qml qml/MenuStrip.qml qml/NativeMenuBar.qml qml/NavButton.qml
   qml/NumberField.qml qml/PanelHeader.qml qml/RightPanel.qml qml/Section.qml qml/Segmented.qml
   qml/StatusBar.qml qml/SnapControl.qml qml/ToolButton3D.qml qml/TreeRow.qml qml/Txt.qml qml/ViewCube.qml
-  qml/ViewOverlay.qml qml/ShapeCatalog.qml qml/ShapeFlyout.qml qml/Toggle.qml qml/HandleLayer.qml qml/GizmoLayer.qml qml/RotateLayer.qml qml/ScaleLayer.qml qml/DistanceLayer.qml qml/ToolCatalog.qml qml/StyleButton.qml qml/WordField.qml qml/FontField.qml qml/icons.js qml/clearplace.js)
+  qml/ViewOverlay.qml qml/ShapeCatalog.qml qml/ShapeFlyout.qml qml/Toggle.qml qml/HandleLayer.qml qml/GizmoLayer.qml qml/RotateLayer.qml qml/ScaleLayer.qml qml/DistanceLayer.qml qml/AlignLayer.qml qml/ToolCatalog.qml qml/StyleButton.qml qml/WordField.qml qml/FontField.qml qml/icons.js qml/clearplace.js)
 
 qt_add_qml_module(fission3d
   URI Fission3D

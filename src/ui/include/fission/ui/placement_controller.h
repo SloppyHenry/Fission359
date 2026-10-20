@@ -56,6 +56,11 @@ public:
     Q_INVOKABLE void cancel();
     /// A click on a tile: the shape goes to a free place on the bed.
     Q_INVOKABLE int add(const QString& type, bool asHole);
+    /// "Lay on face" (AP-1.6e): the chosen body, which is already there, lies with its underside
+    /// on the face under the pointer at (x, y) (view pixels): the bed, a flat top, a wall or a
+    /// slope. One step in the history. False (nothing changes) if the pointer is not over a
+    /// face, or the body cannot be moved.
+    Q_INVOKABLE bool seatChosen(double x, double y);
 
 signals:
     void activeChanged();

@@ -59,6 +59,8 @@ public:
     Q_INVOKABLE void chooseBody(int bodyIndex, bool extend);
     /// Chooses every body that is shown (Select all).
     Q_INVOKABLE void chooseAllBodies();
+    /// Chooses exactly these bodies (the ones that were just pasted).
+    Q_INVOKABLE void chooseBodies(const QStringList& bodyIds);
     /// Turns the 3D view to look squarely at the chosen face.
     Q_INVOKABLE bool lookAtChosenFace();
 

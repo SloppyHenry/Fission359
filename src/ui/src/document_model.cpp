@@ -20,6 +20,7 @@
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
 #include "fission/geo/seat.h"
+#include "fission/interaction/align.h"
 #include "fission/render/detail.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/printer_catalog.h"
@@ -1249,13 +1250,7 @@ void DocumentModel::placeOnFace(const geo::Point3d& point, const geo::Point3d& n
         return;
     }
     const std::uint64_t before = m_history.document().revision();
-    const geo::Seat seat = geo::seatOnFace(point, normal, m_placingCentre);
-    setValueQuietly(m_placingFeature, "x", seat.foot.x);
-    setValueQuietly(m_placingFeature, "y", seat.foot.y);
-    setValueQuietly(m_placingFeature, "z", seat.foot.z);
-    setValueQuietly(m_placingFeature, "rotX", seat.turn.x);
-    setValueQuietly(m_placingFeature, "rotY", seat.turn.y);
-    setValueQuietly(m_placingFeature, "rotZ", seat.turn.z);
+    writeSeat(m_placingFeature, geo::seatOnFace(point, normal, m_placingCentre));
     m_placingOnFace = true;
     // The work plane is a height; a wall does not move it.
     m_placingZ = m_workplaneZ;
@@ -1291,6 +1286,304 @@ void DocumentModel::cancelPlacing() {
     m_placing = false;
     documentChanged();
     emit placingChanged();
+}
+
+// --- changing bodies that are already there (AP-1.6e) ---
+
+namespace {
+
+// The text of a value moved by `by` mm: a plain number is a plain number again, a formula stays a
+// formula that is moved ("(Width / 2) + 10").
+std::string movedExpression(const std::string& expression, double by) {
+    if (isPlainNumber(expression)) {
+        const double now =
+            core::evaluateExpression(expression, core::QuantityKind::length).value_or(0.0);
+        return QString::number(now + by, 'g', 12).toStdString();
+    }
+    return "(" + expression + ") + (" + QString::number(by, 'g', 12).toStdString() + ")";
+}
+
+} // namespace
+
+const core::Body* DocumentModel::findBody(const QString& bodyId) const {
+    for (const core::Body& body : m_history.document().bodies()) {
+        if (toQString(body.id.value) == bodyId) {
+            return &body;
+        }
+    }
+    return nullptr;
+}
+
+std::optional<geo::Bounds> DocumentModel::bodyBounds(const QString& bodyId) const {
+    const core::Body* body = findBody(bodyId);
+    const core::Feature* feature =
+        body != nullptr ? m_history.document().findFeature(body->createdBy) : nullptr;
+    return feature != nullptr ? boundsOfFeature(*feature) : std::nullopt;
+}
+
+std::optional<std::array<double, 3>>
+DocumentModel::positionOfFeature(const core::Feature& feature) const {
+    const core::FeatureState* state = m_result ? m_result->state(feature.id) : nullptr;
+    std::array<double, 3> position{};
+    static constexpr const char* kNames[3] = {"x", "y", "z"};
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        const auto given = feature.params.find(kNames[axis]);
+        if (given == feature.params.end()) {
+            return std::nullopt; // this step has no place
+        }
+        if (state != nullptr) {
+            const auto found = state->params.find(kNames[axis]);
+            if (found != state->params.end()) {
+                position[axis] = found->second.value;
+                continue;
+            }
+        }
+        const auto value = core::evaluateExpression(given->second.expression, given->second.kind);
+        if (!value) {
+            return std::nullopt;
+        }
+        position[axis] = *value;
+    }
+    return position;
+}
+
+bool DocumentModel::moveBodiesBy(
+    const std::vector<std::pair<QString, std::array<double, 3>>>& moves, const char* key) {
+    struct Mover {
+        core::FeatureId id;
+        std::array<double, 3> from;
+        std::array<double, 3> delta;
+        std::string type;
+        std::string name;
+    };
+    std::vector<Mover> movers;
+    std::set<std::string> done;
+    for (const auto& [bodyId, delta] : moves) {
+        const core::Body* body = findBody(bodyId);
+        const core::Feature* feature =
+            body != nullptr ? m_history.document().findFeature(body->createdBy) : nullptr;
+        // A step that makes several bodies would move them all: left alone (until combining).
+        if (feature == nullptr || feature->outputs.size() != 1 ||
+            !done.insert(feature->id.value).second) {
+            continue;
+        }
+        const auto from = positionOfFeature(*feature);
+        if (!from || (delta[0] == 0.0 && delta[1] == 0.0 && delta[2] == 0.0)) {
+            continue;
+        }
+        movers.push_back({feature->id, *from, delta, feature->type, body->name});
+    }
+    if (movers.empty()) {
+        return false;
+    }
+    core::CommandDescription label{
+        key, {{"count", std::to_string(movers.size())}, {"type", movers.front().type}}};
+    if (movers.size() == 1 && !movers.front().name.empty()) {
+        label.values["name"] = movers.front().name;
+    }
+    const std::uint64_t before = m_history.document().revision();
+    m_history.beginTransaction(std::move(label));
+    static constexpr const char* kNames[3] = {"x", "y", "z"};
+    bool ok = true;
+    for (const Mover& mover : movers) {
+        for (std::size_t axis = 0; axis < 3; ++axis) {
+            if (mover.delta[axis] != 0.0) {
+                ok = m_history.execute(core::makeSetFeatureValue(
+                         mover.id, kNames[axis],
+                         QString::number(mover.from[axis] + mover.delta[axis], 'g', 12)
+                             .toStdString())) &&
+                     ok;
+            }
+        }
+    }
+    m_history.commitTransaction();
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+    emit historyChanged();
+    return ok;
+}
+
+bool DocumentModel::dropToBed(const QStringList& bodyIds) {
+    std::vector<std::pair<QString, std::array<double, 3>>> moves;
+    for (const QString& id : bodyIds) {
+        const auto bounds = bodyBounds(id);
+        if (bounds && std::abs(bounds->min.z) >= 1e-6) {
+            moves.push_back({id, {0.0, 0.0, -bounds->min.z}});
+        }
+    }
+    return moveBodiesBy(moves, "dropBody");
+}
+
+bool DocumentModel::alignBodies(const QStringList& bodyIds, int axis, const QString& to) {
+    interaction::AlignTo where = interaction::AlignTo::centre;
+    if (to == QLatin1String("min")) {
+        where = interaction::AlignTo::min;
+    } else if (to == QLatin1String("max")) {
+        where = interaction::AlignTo::max;
+    } else if (to != QLatin1String("centre")) {
+        return false;
+    }
+    std::vector<QString> ids;
+    std::vector<interaction::Box3> boxes;
+    for (const QString& id : bodyIds) {
+        const auto bounds = bodyBounds(id);
+        const core::Body* body = findBody(id);
+        const core::Feature* feature =
+            body != nullptr ? m_history.document().findFeature(body->createdBy) : nullptr;
+        // Only bodies that can be moved and are calculated take part.
+        if (bounds && feature != nullptr && positionOfFeature(*feature)) {
+            ids.push_back(id);
+            boxes.push_back({{bounds->min.x, bounds->min.y, bounds->min.z},
+                             {bounds->max.x, bounds->max.y, bounds->max.z}});
+        }
+    }
+    const auto offsets = interaction::alignOffsets(boxes, axis, where);
+    std::vector<std::pair<QString, std::array<double, 3>>> moves;
+    for (std::size_t i = 0; i < ids.size(); ++i) {
+        moves.push_back({ids[i], offsets[i]});
+    }
+    return moveBodiesBy(moves, "alignBodies");
+}
+
+void DocumentModel::writeSeat(const core::FeatureId& id, const geo::Seat& seat) {
+    setValueQuietly(id, "x", seat.foot.x);
+    setValueQuietly(id, "y", seat.foot.y);
+    setValueQuietly(id, "z", seat.foot.z);
+    setValueQuietly(id, "rotX", seat.turn.x);
+    setValueQuietly(id, "rotY", seat.turn.y);
+    setValueQuietly(id, "rotZ", seat.turn.z);
+}
+
+bool DocumentModel::seatBodyOnFace(const QString& bodyId, const geo::Point3d& point,
+                                   const geo::Point3d& normal) {
+    const core::Body* body = findBody(bodyId);
+    const core::Feature* feature =
+        body != nullptr ? m_history.document().findFeature(body->createdBy) : nullptr;
+    const core::FeatureType* type = feature != nullptr ? m_registry.find(feature->type) : nullptr;
+    const core::FeatureState* state =
+        feature != nullptr && m_result ? m_result->state(feature->id) : nullptr;
+    if (type == nullptr || state == nullptr || feature->outputs.size() != 1 ||
+        !positionOfFeature(*feature) || !feature->params.contains("rotX") ||
+        !feature->params.contains("rotY") || !feature->params.contains("rotZ")) {
+        return false;
+    }
+    // The shape turns about the middle of its box: measured from its foot, before the turn.
+    core::ResolvedParams params = state->params;
+    for (const char* place : {"x", "y", "z"}) {
+        const auto found = params.find(place);
+        if (found != params.end()) {
+            found->second.value = 0.0;
+        }
+    }
+    const geo::Point3d centre = type->bodyCentre(params);
+    geo::Angles hint;
+    for (const auto& [name, angle] :
+         {std::pair{"rotX", &hint.x}, std::pair{"rotY", &hint.y}, std::pair{"rotZ", &hint.z}}) {
+        const auto found = state->params.find(name);
+        if (found != state->params.end()) {
+            *angle = found->second.value;
+        }
+    }
+    const geo::Seat seat = geo::seatOnFace(point, normal, centre, hint);
+    core::CommandDescription label{"seatBody", {{"type", feature->type}}};
+    if (!body->name.empty()) {
+        label.values["name"] = body->name;
+    }
+    const std::uint64_t before = m_history.document().revision();
+    const core::FeatureId id = feature->id;
+    m_history.beginTransaction(std::move(label));
+    writeSeat(id, seat);
+    m_history.commitTransaction();
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+    emit historyChanged();
+    return true;
+}
+
+bool DocumentModel::copyBodies(const QStringList& bodyIds) {
+    std::vector<ClipboardEntry> entries;
+    std::set<std::string> taken;
+    for (const QString& id : bodyIds) {
+        const core::Body* body = findBody(id);
+        const core::Feature* feature =
+            body != nullptr ? m_history.document().findFeature(body->createdBy) : nullptr;
+        if (feature == nullptr) {
+            continue;
+        }
+        // Steps that work on other bodies need those: not before combining exists (AP-1.7).
+        if (!feature->inputs.empty() || feature->outputs.size() != 1) {
+            return false;
+        }
+        if (!taken.insert(feature->id.value).second) {
+            continue;
+        }
+        ClipboardEntry entry;
+        entry.draft.type = feature->type;
+        entry.draft.typeVersion = feature->typeVersion;
+        entry.draft.label = feature->label;
+        entry.draft.params = feature->params;
+        entry.draft.texts = feature->texts;
+        entry.draft.newBodies = 1;
+        entry.name = body->name;
+        entry.color = body->color;
+        entry.hole = body->hole;
+        entries.push_back(std::move(entry));
+    }
+    if (entries.empty()) {
+        return false;
+    }
+    m_clipboard = std::move(entries);
+    m_pasted = 0;
+    emit clipboardChanged();
+    return true;
+}
+
+QStringList DocumentModel::pasteBodies() {
+    QStringList created;
+    if (m_clipboard.empty()) {
+        return created;
+    }
+    ++m_pasted;
+    const double by = kPasteOffset * m_pasted;
+    const std::uint64_t before = m_history.document().revision();
+    m_history.beginTransaction({"pasteBodies",
+                                {{"count", std::to_string(m_clipboard.size())},
+                                 {"type", m_clipboard.front().draft.type}}});
+    for (const ClipboardEntry& entry : m_clipboard) {
+        core::FeatureDraft draft = entry.draft;
+        for (const char* place : {"x", "y"}) {
+            const auto found = draft.params.find(place);
+            if (found != draft.params.end()) {
+                found->second.expression = movedExpression(found->second.expression, by);
+            }
+        }
+        const auto id = m_history.addFeature(std::move(draft));
+        const core::Feature* feature = id ? m_history.document().findFeature(*id) : nullptr;
+        if (feature == nullptr || feature->outputs.empty()) {
+            continue;
+        }
+        const core::BodyId body = feature->outputs.front();
+        if (!entry.name.empty()) {
+            m_history.execute(core::makeSetBodyName(body, entry.name));
+        }
+        m_history.execute(core::makeSetBodyColor(body, entry.color));
+        if (entry.hole) {
+            m_history.execute(core::makeSetBodyHole(body, true));
+        }
+        created.push_back(toQString(body.value));
+    }
+    m_history.commitTransaction();
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+    emit historyChanged();
+    return created;
+}
+
+QStringList DocumentModel::duplicateBodies(const QStringList& bodyIds) {
+    return copyBodies(bodyIds) ? pasteBodies() : QStringList();
 }
 
 // The first place near the middle of the bed where a shape of about 30 mm does not stand on

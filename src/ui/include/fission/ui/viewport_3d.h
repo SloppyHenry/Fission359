@@ -231,7 +231,9 @@ public:
     /// Who draws handles into the scene: the size handles (`HandleController`) and the gizmo
     /// (`GizmoController`), the rings of the tool "Rotate" (`RotateController`), the corners of the
     /// tool "Size" (`ScaleController`), the marks of a shape being put down
-    /// (`PlacementController`) and the distance measures (`DistanceController`). Each one hands in
+    /// (`PlacementController`) the distance measures (`DistanceController`) and the points that
+    /// align several bodies
+    /// (`AlignController`). Each one hands in
     /// its own drawing; the view shows them together.
     enum class HandleSource {
         size = 0,
@@ -239,7 +241,8 @@ public:
         rings = 2,
         corners = 3,
         placement = 4,
-        distances = 5
+        distances = 5,
+        align = 6
     };
     void setHandleGraphics(render::HandleGraphics graphics,
                            HandleSource source = HandleSource::size);
@@ -353,7 +356,7 @@ private:
 
     core::SelectionFilter m_filter;
     std::vector<render::Highlight> m_selectionHighlights;
-    std::array<render::HandleGraphics, 6> m_handleGraphics;
+    std::array<render::HandleGraphics, 7> m_handleGraphics;
     std::optional<render::Highlight> m_hover;
     std::deque<PickRequest> m_pickQueue;
     QTimer m_pickTimer;

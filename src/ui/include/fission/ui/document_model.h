@@ -26,6 +26,7 @@
 #include "fission/core/history.h"
 #include "fission/core/recompute.h"
 #include "fission/geo/kernel.h"
+#include "fission/geo/seat.h"
 #include "fission/render/scene.h"
 
 namespace fission::ui {
@@ -67,6 +68,8 @@ class DocumentModel : public QObject {
     Q_PROPERTY(bool placing READ placing NOTIFY placingChanged)
     /// The body of the shape being put down (empty when none).
     Q_PROPERTY(QString placingBodyId READ placingBodyId NOTIFY placingChanged)
+    /// Something was copied and can be pasted.
+    Q_PROPERTY(bool canPaste READ canPaste NOTIFY clipboardChanged)
     /// The height of the surface the last shape was put down on (0 = the print bed) and the
     /// body whose top it is (empty = the bed): the work plane (Arbeitsebene).
     Q_PROPERTY(double workplaneZ READ workplaneZ NOTIFY workplaneChanged)
@@ -197,6 +200,37 @@ public:
     /// its tile), as one undo step. Returns its step number, or -1.
     Q_INVOKABLE int addShape(const QString& type, bool asHole);
 
+    // --- changing bodies that are already there (AP-1.6e) ---
+    // Each of these is one step in the history and writes only the values that change (a formula
+    // in a value that stays is kept, ADR-0010). A body whose step has no place (later: results of
+    // combining) is left out.
+    /// The box that touches the body `bodyId` exactly (mm); nothing when it is not calculated.
+    std::optional<geo::Bounds> bodyBounds(const QString& bodyId) const;
+    /// Moves each body by its `delta` (mm). `key` names the step ("moveBody", "dropBody" ...).
+    /// False when nothing moved.
+    bool moveBodiesBy(const std::vector<std::pair<QString, std::array<double, 3>>>& moves,
+                      const char* key);
+    /// Lets the bodies fall on the print bed (or lifts them out of it): the lowest point of each
+    /// ends at z = 0, its x and y stay. False when all of them stand there already.
+    Q_INVOKABLE bool dropToBed(const QStringList& bodyIds);
+    /// Lines the bodies up along `axis` (0 = x, 1 = y, 2 = z): `to` is min | centre | max.
+    Q_INVOKABLE bool alignBodies(const QStringList& bodyIds, int axis, const QString& to);
+    /// Lays the underside of an existing body on a face (AP-1.6b3 for a body that is already
+    /// there): the same turn and foot as when it is put down there.
+    bool seatBodyOnFace(const QString& bodyId, const geo::Point3d& point,
+                        const geo::Point3d& normal);
+    /// Copies the bodies for pasting. Only bodies of steps that work on nothing (shapes and
+    /// lettering) can be copied; false (the clipboard stays as it was) if one cannot.
+    Q_INVOKABLE bool copyBodies(const QStringList& bodyIds);
+    /// Makes new bodies from the clipboard, 10 mm further to the side and to the back each time
+    /// it is pasted, as one step. Returns the ids of the new bodies (empty: nothing to paste).
+    Q_INVOKABLE QStringList pasteBodies();
+    /// Copies and pastes in one go: the copy lies 10 mm to the side and to the back.
+    Q_INVOKABLE QStringList duplicateBodies(const QStringList& bodyIds);
+    bool canPaste() const noexcept { return !m_clipboard.empty(); }
+    /// How far (mm) a copy lies from the original, in x and in y.
+    static constexpr double kPasteOffset = 10.0;
+
     Q_INVOKABLE bool undo();
     Q_INVOKABLE bool redo();
     /// Goes to the state after `position` actions (0 = the beginning of this session).
@@ -276,6 +310,7 @@ signals:
     /// A shape was put down for good (dragged in or clicked): its step number and type.
     void shapePlaced(int step, const QString& type);
     void workplaneChanged();
+    void clipboardChanged();
     void historyChanged();
     void printerChanged();
     /// A new result arrived: the names of the elements may be different now.
@@ -315,6 +350,21 @@ private:
     core::History m_history;
     std::shared_ptr<const core::RecomputeResult> m_result;
     std::optional<geo::Bounds> boundsOfFeature(const core::Feature& feature) const;
+    /// The numbers x, y and z of a step, if it has a place.
+    std::optional<std::array<double, 3>> positionOfFeature(const core::Feature& feature) const;
+    /// Writes the turn and the foot of a seat into the step (one value after the other).
+    void writeSeat(const core::FeatureId& id, const geo::Seat& seat);
+    const core::Body* findBody(const QString& bodyId) const;
+
+    // What was copied: the step that makes a body and what the person did to the body itself.
+    struct ClipboardEntry {
+        core::FeatureDraft draft;
+        std::string name;
+        core::Color color;
+        bool hole = false;
+    };
+    std::vector<ClipboardEntry> m_clipboard;
+    int m_pasted = 0; ///< how often this clipboard was pasted: the next copy lies further off
     std::shared_ptr<const render::RenderScene> m_scene;
     std::shared_ptr<const ElementNameMap> m_elementNames = std::make_shared<ElementNameMap>();
     Numbers* m_numbers = nullptr;

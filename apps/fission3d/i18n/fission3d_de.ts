@@ -60,6 +60,44 @@
     </message>
 </context>
 <context>
+    <name>AlignLayer</name>
+    <message>
+        <location filename="../qml/AlignLayer.qml" line="+27"/>
+        <source>Align in the middle</source>
+        <translation>In der Mitte ausrichten</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Align left</source>
+        <translation>Links ausrichten</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Align right</source>
+        <translation>Rechts ausrichten</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Align front</source>
+        <translation>Vorne ausrichten</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Align back</source>
+        <translation>Hinten ausrichten</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Align bottom</source>
+        <translation>Unten ausrichten</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Align top</source>
+        <translation>Oben ausrichten</translation>
+    </message>
+</context>
+<context>
     <name>BedLabels</name>
     <message>
         <location filename="../qml/BedLabels.qml" line="+34"/>
@@ -355,12 +393,12 @@
         <translation>Unbenannt</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+21"/>
         <source>%1 × %2</source>
         <translation>%1 × %2</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+20"/>
         <source>Fission3D</source>
         <translation>Fission3D</translation>
     </message>
@@ -415,7 +453,7 @@
         <translation>Bearbeiten</translation>
     </message>
     <message>
-        <location line="+72"/>
+        <location line="+76"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -425,7 +463,7 @@
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-72"/>
+        <location line="-76"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Strg+Umschalt+Z</translation>
     </message>
@@ -448,6 +486,11 @@
         <location line="+1"/>
         <source>Paste</source>
         <translation>Einfügen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Duplicate</source>
+        <translation>Duplizieren</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -591,14 +634,24 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+604"/>
+        <location line="+661"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-603"/>
+        <location line="-660"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Drop to bed</source>
+        <translation>Aufs Bett legen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lay on face</source>
+        <translation>Auf Fläche legen</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -652,18 +705,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+299"/>
+        <location line="+330"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-297"/>
-        <location line="+298"/>
+        <location line="-328"/>
+        <location line="+329"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-292"/>
+        <location line="-323"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -673,7 +726,7 @@
         <translation>Mittlere Maustaste ziehen dreht die Ansicht, Umschalt + mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+46"/>
         <source>Settings arrive in a later version.</source>
         <translation>Die Einstellungen kommen in einer späteren Version.</translation>
     </message>
@@ -683,13 +736,24 @@
         <translation>Die Befehlssuche kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+36"/>
-        <location line="+211"/>
+        <location line="+25"/>
+        <location line="+9"/>
+        <source>This body cannot be copied yet.</source>
+        <translation>Diesen Körper kann man noch nicht kopieren.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Nothing to drop: the bodies already stand on the bed.</source>
+        <translation>Nichts zu tun: Die Körper stehen schon auf dem Bett.</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <location line="+220"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-186"/>
+        <location line="-195"/>
         <source>“%1” has no %2 style, so the lettering is regular again.</source>
         <translation>„%1“ gibt es nicht in %2, deshalb ist die Schrift wieder normal.</translation>
     </message>
@@ -714,7 +778,7 @@
         <translation>normal</translation>
     </message>
     <message>
-        <location line="+173"/>
+        <location line="+182"/>
         <source>The start page arrives in a later version.</source>
         <translation>Die Startseite kommt in einer späteren Version.</translation>
     </message>
@@ -734,12 +798,22 @@
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
     <message>
-        <location line="+147"/>
+        <location line="+87"/>
+        <source>Click a face of the print bed or of another body.</source>
+        <translation>Klicke auf eine Fläche des Druckbetts oder eines anderen Körpers.</translation>
+    </message>
+    <message>
+        <location line="+82"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+24"/>
+        <source>Click the face the body should lie on. Esc cancels.</source>
+        <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</source>
         <translation>Tippe einen Abstand, um genau zu verschieben (Tab für die nächste Richtung), Enter übernimmt, Esc setzt zurück.</translation>
     </message>
@@ -954,6 +1028,36 @@
         <translation>%1 gedreht</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>%1 dropped to the bed</source>
+        <translation>%1 aufs Bett gelegt</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Bodies dropped to the bed</source>
+        <translation>Körper aufs Bett gelegt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bodies aligned</source>
+        <translation>Körper ausgerichtet</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 laid on a face</source>
+        <translation>%1 auf eine Fläche gelegt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 pasted</source>
+        <translation>%1 eingefügt</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Bodies pasted</source>
+        <translation>Körper eingefügt</translation>
+    </message>
+    <message>
         <location line="+3"/>
         <source>%1 made smaller to %2 %</source>
         <translation>%1 auf %2 % verkleinert</translation>
@@ -1114,7 +1218,7 @@
         <translation>Diese Form ließ sich nicht bauen.</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+32"/>
         <source>Face of %1</source>
         <translation>Fläche von %1</translation>
     </message>
@@ -1163,32 +1267,32 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-303"/>
+        <location line="-310"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-577"/>
+        <location line="-644"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+612"/>
+        <location line="+679"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-504"/>
+        <location line="-557"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+268"/>
+        <location line="+299"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+259"/>
+        <location line="+282"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -1562,13 +1666,13 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Arrows move the chosen body along one direction, squares in a plane, the dot across the bed. The numbers on the bands are the distances to the next body or the edge of the bed. You can also drag the body itself.</source>
-        <translation>Pfeile schieben den gewählten Körper in eine Richtung, Quadrate in einer Ebene, der Punkt über das Bett. Die Zahlen an den Bändern sind die Abstände zum nächsten Körper oder zum Bettrand. Du kannst auch den Körper selbst ziehen.</translation>
+        <source>Arrows move the chosen body along one direction, squares in a plane, the dot across the bed. The numbers on the bands are the distances to the next body or the edge of the bed. With several bodies chosen, the points on their box line them up. You can also drag the body itself.</source>
+        <translation>Pfeile schieben den gewählten Körper in eine Richtung, Quadrate in einer Ebene, der Punkt über das Bett. Die Zahlen an den Bändern sind die Abstände zum nächsten Körper oder zum Bettrand. Sind mehrere Körper gewählt, richten die Punkte an ihrem Rahmen sie aus. Du kannst auch den Körper selbst ziehen.</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm). Click a distance to type it.</source>
-        <translation>Ziehe einen Pfeil, ein Quadrat oder den Körper selbst; er fängt an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Pfeiltasten verschieben um 1 mm (mit Umschalt 10 mm). Klicke auf einen Abstand, um ihn einzutippen.</translation>
+        <source>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm). Click a distance to type it; with several bodies chosen, click a point on their box to line them up.</source>
+        <translation>Ziehe einen Pfeil, ein Quadrat oder den Körper selbst; er fängt an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Pfeiltasten verschieben um 1 mm (mit Umschalt 10 mm). Klicke auf einen Abstand, um ihn einzutippen; sind mehrere Körper gewählt, richtet ein Punkt an ihrem Rahmen sie aus.</translation>
     </message>
     <message>
         <location line="+3"/>

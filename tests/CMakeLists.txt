@@ -284,6 +284,29 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=20,35,170 --simulate "put:box;tool:move;distance:right,5;near:x,113")
   set_tests_properties(app_distance_other_side PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.6e: three boxes lined up on the left along X. The demo box is at x = 0, the first box put
+  # down at x = -30 (its left side at -40), the second at x = 0: all three end at x = -30.
+  add_test(NAME app_align_left
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-align.png" --language en --size 1280x800
+            --camera=20,35,200 --simulate "put:box;put:box;selectall;align:x,min;step:0;near:x,-30;step:2;near:x,-30")
+  set_tests_properties(app_align_left PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # A box lifted with the Z arrow falls back on the bed with "Drop to bed" (the key D).
+  add_test(NAME app_drop_to_bed
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-drop.png" --language en --size 1280x800
+            --camera=20,35,200 --simulate "put:box;gizmo:z,0,-60,8;least:z,5;menu:dropToBed;near:z,0")
+  set_tests_properties(app_drop_to_bed PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # Duplicate: the copy lies 10 mm to the side and to the back of the box put down at (-30, -30),
+  # and is the chosen one.
+  add_test(NAME app_duplicate
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-duplicate.png" --language en --size 1280x800
+            --camera=20,35,200 --simulate "put:box;menu:duplicate;near:x,-20;near:y,-20")
+  set_tests_properties(app_duplicate PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)
