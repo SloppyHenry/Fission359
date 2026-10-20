@@ -8,6 +8,7 @@
 
 ### AP-6.1 Automatische Updates
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-0.7
+**Bauanleitung:** [anleitungen/AP-6.1.md](anleitungen/AP-6.1.md)
 
 **Umfang:**
 - macOS: Sparkle 2 (EdDSA-signierter Appcast), Kanäle Stabil/Beta
@@ -21,6 +22,7 @@
 
 ### AP-6.2 Absturzberichte und Diagnose (opt-in)
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-0.3
+**Bauanleitung:** [anleitungen/AP-6.2.md](anleitungen/AP-6.2.md)
 
 **Umfang:**
 - Crashpad (oder vergleichbar) **nur mit ausdrücklicher Zustimmung**; Empfang über einen selbst gehosteten Open-Source-Dienst (z. B. GlitchTip) oder ein Open-Source-Förderprogramm eines Anbieters
@@ -31,6 +33,7 @@
 
 ### AP-6.3 Performance- und Stabilitätshärtung
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** Phasen 1–5
+**Bauanleitung:** [anleitungen/AP-6.3.md](anleitungen/AP-6.3.md)
 
 **Umfang:**
 - Benchmark-Suite mit großen Modellen (500 Features, 5 Mio. Dreiecke, 200 Körper)
@@ -45,6 +48,7 @@
 
 ### AP-6.4 Dokumentation, Website, Beispiele
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-5.4
+**Bauanleitung:** [anleitungen/AP-6.4.md](anleitungen/AP-6.4.md)
 
 **Umfang:**
 - Kurzes Online-Handbuch (DE/EN), aufgebaut nach Aufgaben („Wie mache ich ein Loch für eine Schraube?“), nicht nach Menüs
@@ -55,6 +59,7 @@
 
 ### AP-6.5 Beta-Programm und Feedback
 **Status:** offen · **Größe:** S · **Abhängigkeiten:** AP-6.1
+**Bauanleitung:** [anleitungen/AP-6.5.md](anleitungen/AP-6.5.md)
 
 **Umfang:**
 - Geschlossene Beta (30–100 Personen, gemischt: Neulinge, Tinkercad- und Fusion-Nutzer, Linux und macOS)
@@ -68,6 +73,7 @@
 
 ### AP-6.6 Rechtliches
 **Status:** offen · **Größe:** S · **Abhängigkeiten:** –
+**Bauanleitung:** [anleitungen/AP-6.6.md](anleitungen/AP-6.6.md)
 
 **Umfang:**
 - Projektlizenz GPL-3.0-or-later final bestätigen; Third-Party-Notices im Über-Dialog

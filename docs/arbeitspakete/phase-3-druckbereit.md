@@ -8,6 +8,7 @@
 
 ### AP-3.1 Druckerprofile
 **Status:** offen · **Größe:** S · **Abhängigkeiten:** AP-1.11
+**Bauanleitung:** [anleitungen/AP-3.1.md](anleitungen/AP-3.1.md)
 
 **Umfang:**
 - Profilformat (JSON): Bauraum, Düse, Schichthöhe-Standard, Mindestwand, Lochkorrektur, Standard-Spiel, Mehrfarb-Fähigkeit (Anzahl Farben), bevorzugter Slicer
@@ -21,6 +22,7 @@
 
 ### AP-3.2 Druckcheck
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-3.1, AP-2.11
+**Bauanleitung:** [anleitungen/AP-3.2.md](anleitungen/AP-3.2.md)
 
 **Umfang:**
 - Prüfungen: geschlossen/wasserdicht (manifold), sich selbst schneidende Netze, **Mindestwandstärke** (Strahl-basiert, Heatmap), **Überhänge** (> 45°/Profilwert, farbig), **zu kleine Details** (< Düsendurchmesser), **passt aufs Bett**, schwebende Teile, sehr dünne Spitzen
@@ -36,6 +38,7 @@
 
 ### AP-3.3 Passungs-Assistent
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-2.4
+**Bauanleitung:** [anleitungen/AP-3.3.md](anleitungen/AP-3.3.md)
 
 **Umfang:**
 - Zwei Flächen bzw. Körper wählen → Passungsart: **locker** (Schiebedeckel), **Steckpassung** (hält, lässt sich lösen), **Presspassung**, **Drehpassung** (Achse); Spiel-Werte aus dem Druckerprofil
@@ -49,6 +52,7 @@
 
 ### AP-3.4 Farben und Mehrfarbdruck
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.10
+**Bauanleitung:** [anleitungen/AP-3.4.md](anleitungen/AP-3.4.md)
 
 **Umfang:**
 - Farbe je Körper (Phase 1) **und je Fläche** (Flächen einfärben, z. B. Gravur farbig)
@@ -63,6 +67,7 @@
 
 ### AP-3.5 „Im Slicer öffnen“
 **Status:** offen · **Größe:** S · **Abhängigkeiten:** AP-3.4
+**Bauanleitung:** [anleitungen/AP-3.5.md](anleitungen/AP-3.5.md)
 
 **Umfang:**
 - Installierte Slicer erkennen (macOS: `/Applications`, Bundle-IDs; Linux: Flatpak-IDs, AppImages in Standardorten, PATH)
@@ -76,6 +81,7 @@
 
 ### AP-3.6 Druckausrichtung vorschlagen
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-3.2
+**Bauanleitung:** [anleitungen/AP-3.6.md](anleitungen/AP-3.6.md)
 
 **Umfang:**
 - Kandidaten-Ausrichtungen (große ebene Flächen nach unten, Hauptachsen) bewerten nach Überhang-Fläche, Kontaktfläche, Höhe und optional **Festigkeit** (Lastrichtung vs. Schichtrichtung, einfache Heuristik mit Erklärung)
@@ -88,6 +94,7 @@
 
 ### AP-3.7 Große Modelle teilen
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.7, AP-3.3
+**Bauanleitung:** [anleitungen/AP-3.7.md](anleitungen/AP-3.7.md)
 
 **Umfang:**
 - Körper an Ebene(n) teilen, damit er aufs Bett passt; automatischer Vorschlag bei „passt nicht aufs Bett“
@@ -100,6 +107,7 @@
 
 ### AP-3.8 Exportqualität und Vorschau
 **Status:** offen · **Größe:** S · **Abhängigkeiten:** AP-1.10
+**Bauanleitung:** [anleitungen/AP-3.8.md](anleitungen/AP-3.8.md)
 
 **Umfang:**
 - Export-Dialog: Qualität (Grob/Normal/Fein/Benutzerdefiniert mit Sehnenfehler und Winkel), Anzeige von Dreiecksanzahl und Dateigröße, Vorschau-Modus mit Netz-Overlay
