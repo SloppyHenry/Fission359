@@ -971,13 +971,8 @@ bool DocumentModel::turnCurrent(const geo::Angles& angles) {
     return done;
 }
 
-std::optional<geo::Bounds> DocumentModel::currentBodyBounds() const {
-    const auto& features = m_history.document().features();
-    if (m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size()) || !m_result) {
-        return std::nullopt;
-    }
-    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
-    if (feature.outputs.empty()) {
+std::optional<geo::Bounds> DocumentModel::boundsOfFeature(const core::Feature& feature) const {
+    if (feature.outputs.empty() || !m_result) {
         return std::nullopt;
     }
     const auto found = m_result->bodies.find(feature.outputs.front());
@@ -989,6 +984,22 @@ std::optional<geo::Bounds> DocumentModel::currentBodyBounds() const {
     } catch (const geo::GeometryError&) {
         return std::nullopt;
     }
+}
+
+std::optional<geo::Bounds> DocumentModel::currentBodyBounds() const {
+    const auto& features = m_history.document().features();
+    if (m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size())) {
+        return std::nullopt;
+    }
+    return boundsOfFeature(features[static_cast<std::size_t>(m_currentStep)]);
+}
+
+std::optional<geo::Bounds> DocumentModel::placingBodyBounds() const {
+    if (!m_placing) {
+        return std::nullopt;
+    }
+    const core::Feature* feature = m_history.document().findFeature(m_placingFeature);
+    return feature != nullptr ? boundsOfFeature(*feature) : std::nullopt;
 }
 
 bool DocumentModel::beginScale() {

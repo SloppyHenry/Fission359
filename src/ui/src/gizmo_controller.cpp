@@ -3,8 +3,6 @@
 
 #include "fission/ui/gizmo_controller.h"
 
-#include <QCoreApplication>
-#include <QGuiApplication>
 #include <QPointF>
 
 #include <algorithm>
@@ -130,18 +128,7 @@ std::optional<GizmoController::Box> GizmoController::bodyBox() {
 }
 
 double GizmoController::millimetresPerPixel(const QVector3D& point) const {
-    QVector3D sight = point - m_viewport->eyePosition();
-    sight = sight.lengthSquared() > 1e-12F ? sight.normalized() : QVector3D(0, 0, -1);
-    QVector3D across = QVector3D::crossProduct(sight, QVector3D(0, 0, 1));
-    if (across.lengthSquared() < 1e-6F) {
-        across = QVector3D::crossProduct(sight, QVector3D(1, 0, 0));
-    }
-    across.normalize();
-    const QPointF here = m_viewport->project(point.x(), point.y(), point.z());
-    const QVector3D next = point + across;
-    const QPointF there = m_viewport->project(next.x(), next.y(), next.z());
-    const double pixels = std::hypot(there.x() - here.x(), there.y() - here.y());
-    return pixels > 1e-9 ? 1.0 / pixels : 1.0;
+    return millimetresPerPixelAt(*m_viewport, point);
 }
 
 std::optional<QVector3D> GizmoController::anchor() {
@@ -165,26 +152,11 @@ std::optional<QVector3D> GizmoController::anchor() {
 }
 
 bool GizmoController::snappingOff() const {
-    // (The tests run without a window system: there is no keyboard to ask.)
-    return m_snapSuppressed ||
-           (qobject_cast<QGuiApplication*>(QCoreApplication::instance()) != nullptr &&
-            (QGuiApplication::queryKeyboardModifiers() & Qt::ShiftModifier) != 0);
+    return m_snapSuppressed || snappingSuppressed();
 }
 
 interaction::Vec3 GizmoController::snapReach(const QVector3D& around) const {
-    const QPointF here = m_viewport->project(around.x(), around.y(), around.z());
-    // Pixels across the line of sight for a millimetre: an axis that runs towards the viewer
-    // shows hardly any of it, which must not make the reach huge.
-    const double across = 1.0 / millimetresPerPixel(around);
-    interaction::Vec3 reach{};
-    for (int axis = 0; axis < 3; ++axis) {
-        const QVector3D next = around + kAxes[axis];
-        const QPointF there = m_viewport->project(next.x(), next.y(), next.z());
-        const double pixels = std::hypot(there.x() - here.x(), there.y() - here.y());
-        reach[static_cast<std::size_t>(axis)] =
-            interaction::kSnapReachPixels / std::max(pixels, 0.35 * across);
-    }
-    return reach;
+    return snapReachAround(*m_viewport, around);
 }
 
 void GizmoController::clearSnap() {

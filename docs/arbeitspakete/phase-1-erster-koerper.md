@@ -91,7 +91,7 @@ Wertblase, Tippen ersetzt Ziehen, `Tab`, Esc. Ablauf D Schritt 1 automatisch gr�
 ---
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
-**Status:** in Arbeit (1.6a, 1.6b, 1.6c1 erledigt) · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Status:** in Arbeit (1.6a, 1.6b, 1.6c1 erledigt, 1.6c2 im Review) · **Größe:** L · **Abhängigkeiten:** AP-1.4
 
 **Umfang:**
 - Gizmo: Verschieben (Achsen und Ebenen), Drehen (Ringe), **proportional** Vergrößern/Verkleinern (Eck-Griff oder Prozentangabe; der Eck-Griff ist immer gleichmäßig)
@@ -117,7 +117,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 | **b2) Gleichmäßig vergrößern** | erledigt (PR #31) | Eck-Quadrate im Werkzeug „Größe“, Prozent an der Wertblase, alle Längen im gleichen Verhältnis (`core::scaledExpression`), `GeometryKernel::exactBounds` |
 | **b3) Ablegen an Wänden** | erledigt (PR #33) | Unterseite auf jede Fläche (`geo/seat.h`), ⌥ = aufrecht |
 | **c1) Fangen beim Verschieben** | erledigt (PR #34) | `interaction/snap.h`, `ui::SnapSession` im `GizmoController`; Fang-Marken und Ausrichtungslinie; ⇧ aus; Raster auf dem Bett (Ansicht ▸ „Raster beim Ziehen“); Genauigkeit in der Statuszeile (Auto, Schieberegler 0,01–10 mm, Zahlenfeld) |
-| **c2) Fangen bei Maß-Griffen und Ablegen** | offen | dieselben Punkte und Linien für die Maß-Griffe (`HandleController`), den Eck-Griff (`ScaleController`) und das Ablegen (`PlacementController`): `ui::SnapSession` und `Viewport3D::snapStepFor` wiederverwenden; ⇧ dort ebenfalls |
+| **c2) Fangen bei Maß-Griffen und Ablegen** | Review (2026-10-20) | dieselben Punkte und Marken für die Maß-Griffe (`HandleController`), den Eck-Griff (`ScaleController`) und das Ablegen (`PlacementController`); gemeinsamer ⇧-Schalter `ui::snappingSuppressed()`; Marken des Ablegens in `HandleSource::placement` |
 | **d) Abstandsmaße** | offen | Beim Verschieben Abstände zu den nächsten Kanten anderer Körper und zum Bettrand als Maßband; Klick macht die Zahl editierbar („5 mm vom Rand“); Akzeptanzkriterium 1 als automatischer Ablauf |
 | **e) Rest** | offen | Ausrichten mehrerer Körper; „Aufs Bett legen“; „Auf Fläche legen“ für vorhandene Körper (nutzt `seatOnFace`); Kopieren, Einfügen, Duplizieren (⌘D) mit Versatz |
 
@@ -135,6 +135,12 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
   (Lage, Winkel in 0,1°), keine Bindung an die Fläche.
 - **Fangen:** Der gezogene Körper fängt mit Ecken, Kantenmitten und Flächenmitten seines achsparallelen Hüllquaders an Punkten anderer
   Körper und des Betts, Achse für Achse; Punkt-Fang hat Vorrang. Reichweite 10 px. Getippte Zahlen werden nie gefangen.
+  - *Maß-Griffe (c2):* Die bewegte Seite des Hüllquaders (9 Punkte) fängt entlang einer Bett-Achse; nur bei achsparalleler Griffrichtung
+    ohne Steigung (Kugel-Radius, gedrehte Körper, Details wie Eckenradius haben nur das Raster). ⇧ = Fangen und Raster aus.
+  - *Eck-Griff (c2):* Fang vor ganzen Prozent; der Faktor ist dann krumm (137,4 %, Blase mit einer Nachkommastelle). ⇧ = nur Fangen aus,
+    der Körper bleibt gleichmäßig und der Faktor rastet auf ganze Prozent (Regel 11).
+  - *Ablegen (c2):* Die Unterseite (9 Punkte) fängt auf Bett und waagerechten Oberseiten; an Wänden und Schrägen nur das Raster entlang
+    der Fläche. Beim ersten Platz kennt die Form ihre Größe noch nicht (nur Raster), ab der zweiten Bewegung fängt sie. ⇧ = frei.
 - **Kopieren/Einfügen** nur innerhalb des Programms (System-Zwischenablage mit dem Dateiformat, AP-1.10).
 - Abstandsmaß von Kante zu Kante; Gizmo-Achsen immer in Bett-Richtung; Zoomen per Tastatur gehört nicht zu AP-1.6.
 

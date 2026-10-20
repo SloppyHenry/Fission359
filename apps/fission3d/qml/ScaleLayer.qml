@@ -161,7 +161,9 @@ Item {
             Txt {
                 visible: !bubble.typing
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("%1 %").arg(Numbers.format(Scale.factor * 100, 0))
+                // Whole percent, or one decimal where the corner caught on another body (137.4 %).
+                readonly property real percent: Scale.factor * 100
+                text: qsTr("%1 %").arg(Numbers.format(percent, Math.abs(percent - Math.round(percent)) < 0.05 ? 0 : 1))
                 mono: true
                 color: Theme.fg
                 font.weight: Font.Medium

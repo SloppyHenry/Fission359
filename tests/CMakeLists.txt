@@ -225,6 +225,48 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=0,30,160 --simulate "put:box;type:23.3,enter;snap:off;gizmo:x,48,0,8;near:x,-21.65")
   set_tests_properties(app_snap_off_does_not_catch PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE WILL_FAIL TRUE)
+  # AP-1.6c2: the same for the size handle of a box that is pulled towards another one: with a grid
+  # of 3 mm the width would be 39 or 42, the sides touch at 40. The pull ends 0.4 mm short of it.
+  add_test(NAME app_snap_size_handle
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-snap-size-handle.png" --language en --size 1280x800
+            --camera=0,30,160 --simulate "put:box;tool:size;grid:3;grab:width,57,0,8;near:width,40")
+  set_tests_properties(app_snap_size_handle PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  add_test(NAME app_snap_size_handle_off
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-snap-size-handle-off.png" --language en --size 1280x800
+            --camera=0,30,160 --simulate "put:box;tool:size;grid:3;snap:off;grab:width,57,0,8;near:width,40")
+  set_tests_properties(app_snap_size_handle_off PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE WILL_FAIL TRUE)
+  # The corner of a 7 mm cube pulled until its top is level with the 20 mm box: 285.7 %, no whole
+  # percent (the pull alone ends at about 276 %).
+  add_test(NAME app_snap_corner_handle
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-snap-corner.png" --language en --size 1280x800
+            --camera=0,30,160 --simulate "put:box;type:20,tab,20,tab,7,enter;tool:size;corner:1,220,220,8;near:height,20")
+  set_tests_properties(app_snap_corner_handle PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  add_test(NAME app_snap_corner_handle_off
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-snap-corner-off.png" --language en --size 1280x800
+            --camera=0,30,160 --simulate "put:box;type:20,tab,20,tab,7,enter;tool:size;snap:off;corner:1,220,220,8;near:height,20")
+  set_tests_properties(app_snap_corner_handle_off PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE WILL_FAIL TRUE)
+  # A box dropped from the gallery 0.4 mm beside the first one: with a grid of 3 mm its middle would
+  # be at 21, the sides touch at 20.
+  add_test(NAME app_snap_drop
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-snap-drop.png" --language en --size 1280x800
+            --camera=0,30,160 --simulate "grid:3;drop:box,462,312;near:x,20;near:y,0")
+  set_tests_properties(app_snap_drop PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  add_test(NAME app_snap_drop_off
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-snap-drop-off.png" --language en --size 1280x800
+            --camera=0,30,160 --simulate "grid:3;snap:off;drop:box,462,312;near:x,20")
+  set_tests_properties(app_snap_drop_off PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE WILL_FAIL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

@@ -20,6 +20,7 @@
 #include "fission/geo/occt/kernel.h"
 #include "fission/ui/document_model.h"
 #include "fission/ui/scale_controller.h"
+#include "fission/ui/snap_session.h"
 #include "fission/ui/viewport_3d.h"
 
 using Catch::Approx;
@@ -369,4 +370,161 @@ TEST_CASE("scale: a turned body away from the middle grows about its own corner"
     CHECK(after->min.z == Approx(0.0).margin(1e-6));
     CHECK(f.value("x") < -20.0);
     CHECK(f.value("y") < -30.0);
+}
+
+// --- catching (AP-1.6c2) ---
+
+namespace {
+
+// Snapping is off as if Shift were held, until the end of the scope.
+struct SnapOff {
+    SnapOff() { fission::ui::setSnappingSuppressedForTests(true); }
+    ~SnapOff() { fission::ui::setSnappingSuppressedForTests(false); }
+    SnapOff(const SnapOff&) = delete;
+    SnapOff& operator=(const SnapOff&) = delete;
+};
+
+// The demo box (20 mm) with a taller box beside it: 37.3 mm, so that the top of the first meets
+// it at 186.5 %, which is not a whole percent.
+struct Tall : Fixture {
+    Tall() {
+        const int step = model->addShape(QStringLiteral("box"), false);
+        REQUIRE(step >= 0);
+        REQUIRE(model->setStepValue(step, QStringLiteral("x"), QStringLiteral("80")));
+        REQUIRE(model->setStepValue(step, QStringLiteral("y"), QStringLiteral("0")));
+        REQUIRE(model->setStepValue(step, QStringLiteral("z"), QStringLiteral("0")));
+        REQUIRE(model->setStepValue(step, QStringLiteral("height"), QStringLiteral("37.3")));
+        model->selectStep(0);
+        refresh();
+    }
+
+    // Takes the front right corner and pulls with the pointer, snapping off, until the factor is
+    // `target` (whole percent). Stays holding it; returns where the pointer is.
+    QPointF steer(double target) {
+        const QPointF from = corner(1);
+        QPointF way = from - corner(3);
+        way /= std::hypot(way.x(), way.y());
+        REQUIRE(corners->beginDrag(1, from.x(), from.y()));
+        double pixels = 0.0;
+        double slope = 0.01; // factor per pixel, better after the first move
+        corners->dragTo(from.x(), from.y());
+        double factor = corners->factor();
+        for (int i = 0; i < 20 && std::abs(factor - target) > 1e-9; ++i) {
+            const double next = pixels + (target - factor) / slope;
+            corners->dragTo(from.x() + way.x() * next, from.y() + way.y() * next);
+            const double nextFactor = corners->factor();
+            if (std::abs(next - pixels) > 1e-9 && std::abs(nextFactor - factor) > 1e-9) {
+                slope = (nextFactor - factor) / (next - pixels);
+            }
+            pixels = next;
+            factor = nextFactor;
+        }
+        REQUIRE(factor == Approx(target).margin(1e-9));
+        return {from.x() + way.x() * pixels, from.y() + way.y() * pixels};
+    }
+};
+
+} // namespace
+
+TEST_CASE("snap: a corner catches the top of a taller body beside it", "[ui][scale][snap]") {
+    Tall f;
+    const QPointF pointer = [&] {
+        SnapOff off;
+        return f.steer(1.87);
+    }();
+    const std::size_t squares =
+        f.viewport.handleGraphics(Viewport3D::HandleSource::corners).dots.size();
+    f.corners->dragTo(pointer.x(), pointer.y()); // snapping is on again
+
+    // The factor is whatever puts the top level with the other body, not a whole percent.
+    CHECK(f.corners->factor() == Approx(37.3 / 20.0).margin(1e-9));
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::corners).dots.size() > squares);
+    REQUIRE(f.corners->endDrag());
+    f.refresh();
+    CHECK(f.value("height") == Approx(37.3).margin(1e-6));
+    CHECK(f.extent().maxZ >= 37.29); // (the other body is as tall; the scene has both)
+    // The body stays even (rule 11): width and depth grew by the same factor.
+    CHECK(f.value("width") == Approx(20.0 * 37.3 / 20.0).margin(1e-6));
+    CHECK(f.value("depth") == Approx(f.value("width")).margin(1e-6));
+    // Gone with the drag.
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::corners).dots.size() == 4);
+}
+
+TEST_CASE("snap: with Shift a corner stays on whole percent and stays even", "[ui][scale][snap]") {
+    Tall f;
+    SnapOff off;
+    const QPointF pointer = f.steer(1.87);
+    f.corners->dragTo(pointer.x(), pointer.y());
+    CHECK(f.corners->factor() == Approx(1.87).margin(1e-9));
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::corners).dots.size() == 4);
+    REQUIRE(f.corners->endDrag());
+    f.refresh();
+    CHECK(f.value("height") == Approx(37.4).margin(1e-6));
+    CHECK(f.value("width") == Approx(f.value("depth")).margin(1e-6));
+}
+
+TEST_CASE("snap: out of reach the corner rests on whole percent", "[ui][scale][snap]") {
+    Tall f;
+    const QPointF pointer = [&] {
+        SnapOff off;
+        return f.steer(1.5);
+    }();
+    f.corners->dragTo(pointer.x(), pointer.y());
+    CHECK(f.corners->factor() == Approx(1.5).margin(1e-9));
+    REQUIRE(f.corners->endDrag());
+}
+
+TEST_CASE("snap: a caught size the shape cannot have is not taken", "[ui][scale][snap]") {
+    // A tube whose wall is as thick as it can be: shrinking it further is impossible. The point
+    // is only that a catch which the shape does not accept falls back to whole percent.
+    Tall f;
+    REQUIRE(f.model->setStepValue(0, QStringLiteral("height"), QStringLiteral("20")));
+    f.refresh();
+    const QPointF pointer = [&] {
+        SnapOff off;
+        return f.steer(1.87);
+    }();
+    f.corners->dragTo(pointer.x(), pointer.y());
+    CHECK(f.model->acceptsScale(f.corners->factor()));
+    REQUIRE(f.corners->endDrag());
+}
+
+TEST_CASE("snap: typing a percentage is not caught on anything", "[ui][scale][snap]") {
+    Tall f;
+    const QPointF pointer = [&] {
+        SnapOff off;
+        return f.steer(1.87);
+    }();
+    f.corners->dragTo(pointer.x(), pointer.y());
+    REQUIRE(f.corners->typeInsteadOfDrag());
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::corners).dots.size() == 4);
+    CHECK(f.corners->setPercent(186.0));
+    REQUIRE(f.corners->commitEdit());
+    f.refresh();
+    CHECK(f.value("height") == Approx(37.2).margin(1e-6));
+}
+
+TEST_CASE("snap: one catching drag is one step in the history and Esc takes it back",
+          "[ui][scale][snap]") {
+    Tall f;
+    const int before = f.stepsDone();
+    const QPointF pointer = [&] {
+        SnapOff off;
+        return f.steer(1.87);
+    }();
+    f.corners->dragTo(pointer.x(), pointer.y());
+    f.corners->cancelDrag();
+    f.refresh();
+    CHECK(f.value("height") == Approx(20.0));
+    CHECK(f.stepsDone() == before);
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::corners).dots.size() == 4);
+
+    const QPointF again = [&] {
+        SnapOff off;
+        return f.steer(1.87);
+    }();
+    f.corners->dragTo(again.x(), again.y());
+    REQUIRE(f.corners->endDrag());
+    f.refresh();
+    CHECK(f.stepsDone() == before + 1);
 }

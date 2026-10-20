@@ -6,11 +6,14 @@
 #include <QVector3D>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "fission/interaction/drag.h"
+#include "fission/interaction/snap.h"
 #include "fission/render/scene.h"
 
 namespace fission::ui {
@@ -559,6 +562,7 @@ void HandleController::refresh() {
                        entry["role"].toString(), compact);
         }
     }
+    graphics.append(m_snapMarks);
     if (m_viewport != nullptr) {
         m_viewport->setHandleGraphics(std::move(graphics));
     }
@@ -798,7 +802,96 @@ bool HandleController::beginDrag(int index, double x, double y) {
     m_dragging = true;
     m_model->beginChange(m_dragParameter);
     setEditing(true);
+    beginSnap(world);
     return true;
+}
+
+void HandleController::beginSnap(const QVariantMap& world) {
+    clearSnap();
+    m_snapAxis = -1;
+    // Only the size of a shape along a bed axis catches, and only a face that stands still in the
+    // other directions: not a turned body, not a sphere (its radius also lifts the handle), not
+    // the details (a corner radius, a wall).
+    const QString role = world["role"].toString();
+    if ((!role.isEmpty() && role != QLatin1String("size")) || riseOf(world).length() > 1e-6F) {
+        return;
+    }
+    const int axis = axisOf(m_dragAxis);
+    QVector3D low;
+    QVector3D high;
+    const auto scene = m_model->scene();
+    if (axis < 0 || !scene || !bodyBounds(low, high)) {
+        return;
+    }
+    // The face has to be a side of the box round the body (the display mesh of a round body lies
+    // a hair inside the exact shape).
+    constexpr float kOnSide = 0.05F;
+    const float at = m_dragOrigin[axis];
+    const bool onLow = std::abs(at - low[axis]) <= kOnSide;
+    const bool onHigh = std::abs(at - high[axis]) <= kOnSide;
+    if (!onLow && !onHigh) {
+        return;
+    }
+    interaction::Vec3 lo{low.x(), low.y(), low.z()};
+    interaction::Vec3 hi{high.x(), high.y(), high.z()};
+    const auto side = static_cast<std::size_t>(axis);
+    lo[side] = hi[side] = at;
+    for (std::size_t a = 0; a < 3; ++a) {
+        lo[a] = interaction::cleanedCoordinate(lo[a]);
+        hi[a] = interaction::cleanedCoordinate(hi[a]);
+    }
+    const std::string body = m_model->bodyOfStep(m_model->currentStep()).toStdString();
+    m_snap.beginWithMovers(*scene, body, interaction::snapPointsOfBoxSide(lo, hi, axis, onHigh));
+    m_snapAxis = axis;
+}
+
+void HandleController::clearSnap() {
+    m_snap.end();
+    m_snapAxis = -1;
+    const bool had = !m_snapMarks.empty();
+    m_snapMarks = {};
+    if (m_viewport != nullptr) {
+        m_viewport->setSnapGridStep(0.0);
+    }
+    if (had) {
+        refresh();
+    }
+}
+
+std::optional<double> HandleController::snappedValue(double wanted) {
+    if (m_snapAxis < 0 || !m_snap.active() || snappingSuppressed()) {
+        return std::nullopt;
+    }
+    // The face moves by this much along its axis (the handle moves `m_dragTravel` mm for each mm
+    // of the value, on the way `m_dragAxis` points).
+    const auto axis = static_cast<std::size_t>(m_snapAxis);
+    const double perValue = m_dragTravel * m_dragAxis[m_snapAxis];
+    if (std::abs(perValue) < 1e-9) {
+        return std::nullopt;
+    }
+    interaction::Vec3 offset{};
+    offset[axis] = (wanted - m_dragStartValue) * perValue;
+    std::array<bool, 3> free{};
+    free[axis] = true;
+    const QVector3D around =
+        m_dragOrigin + m_dragAxis * static_cast<float>(m_dragTravel * (wanted - m_dragStartValue));
+    const interaction::SnapResult caught =
+        m_snap.snap(offset, free, snapReachAround(*m_viewport, around));
+    if (!caught.axes[axis]) {
+        return std::nullopt;
+    }
+    const double value = m_dragStartValue + caught.offset[axis] / perValue;
+    if (value > kLargestMillimetres || !m_model->acceptsValue(m_dragParameter, value)) {
+        return std::nullopt; // a shape that could not be: back to the grid
+    }
+    const QColor accent = m_viewport->property("accentColor").value<QColor>();
+    render::HandleGraphics marks =
+        SnapSession::marksOf(caught, accent, millimetresPerPixelAt(*m_viewport, around));
+    if (!(marks == m_snapMarks)) {
+        m_snapMarks = std::move(marks);
+        refresh();
+    }
+    return value;
 }
 
 double HandleController::dragTo(double x, double y) {
@@ -815,9 +908,19 @@ double HandleController::dragTo(double x, double y) {
     if (!moved) {
         return m_dragValue; // behind the eye, or beyond the vanishing point of the axis
     }
-    const double step = m_viewport->snapStepFor(m_dragPixelsPerMillimetre);
-    double wanted =
-        interaction::snapped(m_dragStartValue + m_dragSign * *moved / m_dragTravel, step);
+    // The value the pointer asks for: it catches on the points of the others; where it catches on
+    // none it rests on the grid of the moment. Shift: free, no catching and no grid.
+    const bool free = snappingSuppressed();
+    const double step = free ? 0.0 : m_viewport->snapStepFor(m_dragPixelsPerMillimetre);
+    m_viewport->setSnapGridStep(
+        free ? 0.0 : interaction::snapGridDisplayStep(step, m_dragPixelsPerMillimetre));
+    const double asked = m_dragStartValue + m_dragSign * *moved / m_dragTravel;
+    const std::optional<double> caught = snappedValue(asked);
+    if (!caught && !m_snapMarks.empty()) {
+        m_snapMarks = {};
+        refresh();
+    }
+    double wanted = caught ? *caught : (free ? asked : interaction::snapped(asked, step));
     wanted = std::min(wanted, kLargestMillimetres);
     // Where the shape stops being possible (a corner radius wider than half the box, no wall left,
     // a size of zero), the handle stops there, too: as close as the shape allows, on the grid.
@@ -829,8 +932,9 @@ double HandleController::dragTo(double x, double y) {
             const double middle = (possible + impossible) / 2.0;
             (m_model->acceptsValue(m_dragParameter, middle) ? possible : impossible) = middle;
         }
-        const double onGrid = wanted < m_dragValue ? std::ceil(possible / step) * step
-                                                   : std::floor(possible / step) * step;
+        const double onGrid = step <= 0.0            ? possible
+                              : wanted < m_dragValue ? std::ceil(possible / step) * step
+                                                     : std::floor(possible / step) * step;
         wanted = m_model->acceptsValue(m_dragParameter, onGrid) ? onGrid : m_dragValue;
     }
     if (wanted != m_dragValue && m_model->setStepValue(m_model->currentStep(), m_dragParameter,
@@ -849,6 +953,7 @@ bool HandleController::endDrag() {
     m_dragging = false;
     m_model->commitChange();
     setEditing(false);
+    clearSnap();
     refresh();
     return true;
 }
@@ -860,6 +965,7 @@ void HandleController::cancelDrag() {
     m_dragging = false;
     m_model->cancelChange();
     setEditing(false);
+    clearSnap();
 }
 
 bool HandleController::typeInsteadOfDrag() {
@@ -867,6 +973,7 @@ bool HandleController::typeInsteadOfDrag() {
         return false;
     }
     m_dragging = false; // still editing: the same transaction goes on
+    clearSnap();        // typed numbers are not caught on anything
     return true;
 }
 

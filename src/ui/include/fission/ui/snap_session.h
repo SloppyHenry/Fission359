@@ -4,6 +4,7 @@
 #pragma once
 
 #include <QColor>
+#include <QVector3D>
 
 #include <array>
 #include <cstdint>
@@ -17,6 +18,22 @@
 #include "fission/render/scene_renderer.h"
 
 namespace fission::ui {
+
+class Viewport3D;
+
+/// Snapping is off: Shift is held, or it was switched off for a test (`--simulate "snap:off"`).
+/// Every drag that snaps asks this one place; a typed number is never snapped anyway.
+bool snappingSuppressed();
+/// Switches snapping off (or on again) as if Shift were held. For the tests and the developer
+/// option `--simulate`; a test puts it back when it is done.
+void setSnappingSuppressedForTests(bool suppressed);
+
+/// How many millimetres a pixel is across the line of sight at `point`.
+double millimetresPerPixelAt(const Viewport3D& viewport, const QVector3D& point);
+/// How far (mm) a point near `around` may be off on each world axis and still catch: 10 pixels
+/// on the screen (`interaction::kSnapReachPixels`). An axis that runs towards the viewer shows
+/// hardly any of its millimetres, which must not make the reach huge.
+interaction::Vec3 snapReachAround(const Viewport3D& viewport, const QVector3D& around);
 
 /// Snapping for one drag (AP-1.6c): knows the points to catch on (the corners, edge middles,
 /// circle centres and face middles of the other bodies, and the print bed) and the points of the
@@ -32,8 +49,18 @@ public:
     /// it where it stands. The points of the other bodies come from `scene`.
     void begin(const render::RenderScene& scene, const std::string& movingBody,
                const interaction::Vec3& low, const interaction::Vec3& high);
+    /// The same for a drag that moves something else than the whole body: `movers` are the points
+    /// that catch (the points of one side of the box for a size handle, the underside of a shape
+    /// put down), where they stand when the drag begins.
+    void beginWithMovers(const render::RenderScene& scene, const std::string& movingBody,
+                         std::vector<interaction::SnapPoint> movers);
+    /// Replaces the points that catch while the drag goes on (the size of a shape put down is
+    /// known a moment after it appeared).
+    void setMovers(std::vector<interaction::SnapPoint> movers) { m_movers = std::move(movers); }
     void end();
     bool active() const noexcept { return m_active; }
+    const std::vector<interaction::SnapPoint>& targets() const noexcept { return m_targets; }
+    bool hasMovers() const noexcept { return !m_movers.empty(); }
 
     /// Moves `offset` (mm, from where the drag began) onto the nearest catch.
     interaction::SnapResult snap(const interaction::Vec3& offset, const std::array<bool, 3>& free,
@@ -46,6 +73,8 @@ public:
     std::size_t targetCount() const noexcept { return m_targets.size(); }
 
 private:
+    void collectTargets(const render::RenderScene& scene, const std::string& movingBody);
+
     struct Points {
         std::uint64_t version = 0;
         std::vector<interaction::SnapPoint> points;

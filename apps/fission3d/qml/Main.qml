@@ -666,7 +666,7 @@ Window {
             : Handles.editing ? qsTr("Enter accepts, Tab goes to the next size, Esc leaves everything as it was.")
             : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
-            : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.")
+            : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.")
             : root.hoverText !== "" ? root.hoverText
             : Selection.count > 0 ? toolCatalog.find(root.tool).hint
             : root.navigationText

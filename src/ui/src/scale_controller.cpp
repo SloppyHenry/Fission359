@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "fission/interaction/snap.h"
 #include "fission/render/scene.h"
 
 namespace fission::ui {
@@ -204,6 +205,7 @@ void ScaleController::refresh() {
             bubble[QStringLiteral("cornerY")] = screen.y();
         }
     }
+    graphics.append(m_snapMarks);
     if (m_viewport != nullptr) {
         m_viewport->setHandleGraphics(std::move(graphics), Viewport3D::HandleSource::corners);
     }
@@ -268,8 +270,16 @@ bool ScaleController::beginDrag(int corner, double x, double y) {
     m_corner = corner;
     m_startBox = {toVector(bounds->min), toVector(bounds->max)};
     m_anchor = anchor;
+    m_held = held;
     m_diagonal = diagonal;
     m_factor = 1.0;
+    clearSnap();
+    if (const auto scene = m_model->scene()) {
+        // The body itself is not a target; its own points are not needed (only the corner held).
+        m_snap.begin(*scene, m_model->bodyOfStep(m_model->currentStep()).toStdString(),
+                     {bounds->min.x, bounds->min.y, bounds->min.z},
+                     {bounds->max.x, bounds->max.y, bounds->max.z});
+    }
     m_dragging = true;
     setEditing(true);
     emit factorChanged();
@@ -299,10 +309,14 @@ bool ScaleController::dragTo(double x, double y) {
     if (!moved) {
         return false; // behind the eye, or beyond the vanishing point of the diagonal
     }
-    double wanted = interaction::snapped(1.0 + *moved / m_diagonal, kFactorStep);
+    const double asked = 1.0 + *moved / m_diagonal;
+    // The corner catches on the points of the others; where it catches on none, the factor rests
+    // on whole percent.
+    const std::optional<double> caught = snappedFactor(asked);
+    double wanted = caught ? *caught : interaction::snapped(asked, kFactorStep);
     // Where a size would become impossible (too small, a wall thicker than the tube), the corner
     // stops there: as close as the shape allows, on whole percent. It never stays behind.
-    if (wanted != m_factor && !m_model->acceptsScale(wanted)) {
+    if (!caught && wanted != m_factor && !m_model->acceptsScale(wanted)) {
         double possible = m_factor;
         double impossible = wanted;
         for (int i = 0; i < 48; ++i) {
@@ -319,7 +333,41 @@ bool ScaleController::dragTo(double x, double y) {
     return true;
 }
 
+std::optional<double> ScaleController::snappedFactor(double asked) {
+    if (!m_snap.active() || snappingSuppressed()) {
+        clearSnap();
+        return std::nullopt;
+    }
+    const QVector3D around =
+        toVector(m_anchor) + static_cast<float>(asked) * (toVector(m_held) - toVector(m_anchor));
+    const auto caught = interaction::snapScaleFactor(
+        {m_anchor.x, m_anchor.y, m_anchor.z}, {m_held.x, m_held.y, m_held.z}, asked,
+        m_snap.targets(), snapReachAround(*m_viewport, around));
+    if (!caught || !m_model->acceptsScale(caught->factor)) {
+        clearSnap(); // a size the shape cannot have: the grid of whole percent
+        return std::nullopt;
+    }
+    const QColor accent = m_viewport->property("accentColor").value<QColor>();
+    render::HandleGraphics marks =
+        SnapSession::marksOf(caught->result, accent, millimetresPerPixelAt(*m_viewport, around));
+    if (!(marks == m_snapMarks)) {
+        m_snapMarks = std::move(marks);
+        refresh();
+    }
+    return caught->factor;
+}
+
+void ScaleController::clearSnap() {
+    const bool had = !m_snapMarks.empty();
+    m_snapMarks = {};
+    if (had) {
+        refresh();
+    }
+}
+
 void ScaleController::finish() {
+    m_snap.end();
+    m_snapMarks = {};
     m_dragging = false;
     m_drag.reset();
     m_corner = -1;
@@ -352,6 +400,8 @@ bool ScaleController::typeInsteadOfDrag() {
     }
     m_dragging = false; // still editing: the same step goes on
     m_drag.reset();
+    m_snap.end(); // typed numbers are not caught on anything
+    clearSnap();
     return true;
 }
 

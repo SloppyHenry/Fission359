@@ -7,7 +7,10 @@
 #include <QPointer>
 #include <QString>
 
+#include <utility>
+
 #include "fission/ui/document_model.h"
+#include "fission/ui/snap_session.h"
 #include "fission/ui/viewport_3d.h"
 
 namespace fission::ui {
@@ -18,6 +21,11 @@ namespace fission::ui {
 /// stands out of it; the turn is written into the step as plain angles. With `upright` (the Alt
 /// key) it ignores such faces and stays upright on the work plane, as it did before. Beside the
 /// bed it stays on the work plane.
+///
+/// Over the bed and over a flat top the footprint of the shape (AP-1.6c2) catches on the corners,
+/// edge middles and middles of other bodies and of the bed, before it falls back on the grid; a
+/// mark shows what it hangs on. Shift switches catching and grid off. On a wall or a slope there
+/// is only the grid along the face.
 ///
 /// The pointer position (view pixels) is turned into millimetres here, the document is changed
 /// through `DocumentModel`. Everything between `begin` and `finish` is one step in the history;
@@ -54,11 +62,18 @@ signals:
 
 private:
     bool landAt(double x, double y, bool upright);
+    /// Where a shape lands flat: where the pointer is, caught on the points of the others, or on
+    /// the grid, or free (Shift).
+    std::pair<double, double> flatSpot(const Viewport3D::Landing& landing);
+    /// Ends catching: the marks go.
+    void clearSnap();
     /// The step of the grid a shape is put down on (mm).
     double snapStep() const;
 
     QPointer<DocumentModel> m_model;
     QPointer<Viewport3D> m_viewport;
+    SnapSession m_snap;
+    bool m_marked = false; ///< the marks of a catch are in the view
 };
 
 } // namespace fission::ui

@@ -3,11 +3,16 @@
 
 #include "fission/ui/snap_session.h"
 
+#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QPointF>
 #include <QVector3D>
 
 #include <algorithm>
 #include <cmath>
 #include <set>
+
+#include "fission/ui/viewport_3d.h"
 
 namespace fission::ui {
 
@@ -20,6 +25,8 @@ constexpr double kDash = 6.0;
 constexpr double kGap = 4.0;
 constexpr float kLineWidth = 1.5F;
 constexpr int kMostDashes = 120;
+
+bool g_suppressedForTests = false;
 
 QVector3D toVector(const interaction::Vec3& p) {
     return {static_cast<float>(p[0]), static_cast<float>(p[1]), static_cast<float>(p[2])};
@@ -54,8 +61,48 @@ void addMark(render::HandleGraphics& graphics, const interaction::SnapPoint& poi
 
 } // namespace
 
-void SnapSession::begin(const render::RenderScene& scene, const std::string& movingBody,
-                        const interaction::Vec3& low, const interaction::Vec3& high) {
+bool snappingSuppressed() {
+    // (The tests run without a window system: there is no keyboard to ask.)
+    return g_suppressedForTests ||
+           (qobject_cast<QGuiApplication*>(QCoreApplication::instance()) != nullptr &&
+            (QGuiApplication::queryKeyboardModifiers() & Qt::ShiftModifier) != 0);
+}
+
+void setSnappingSuppressedForTests(bool suppressed) {
+    g_suppressedForTests = suppressed;
+}
+
+double millimetresPerPixelAt(const Viewport3D& viewport, const QVector3D& point) {
+    QVector3D sight = point - viewport.eyePosition();
+    sight = sight.lengthSquared() > 1e-12F ? sight.normalized() : QVector3D(0, 0, -1);
+    QVector3D across = QVector3D::crossProduct(sight, QVector3D(0, 0, 1));
+    if (across.lengthSquared() < 1e-6F) {
+        across = QVector3D::crossProduct(sight, QVector3D(1, 0, 0));
+    }
+    across.normalize();
+    const QPointF here = viewport.project(point.x(), point.y(), point.z());
+    const QVector3D next = point + across;
+    const QPointF there = viewport.project(next.x(), next.y(), next.z());
+    const double pixels = std::hypot(there.x() - here.x(), there.y() - here.y());
+    return pixels > 1e-9 ? 1.0 / pixels : 1.0;
+}
+
+interaction::Vec3 snapReachAround(const Viewport3D& viewport, const QVector3D& around) {
+    const QPointF here = viewport.project(around.x(), around.y(), around.z());
+    const double across = 1.0 / millimetresPerPixelAt(viewport, around);
+    interaction::Vec3 reach{};
+    for (int axis = 0; axis < 3; ++axis) {
+        QVector3D next = around;
+        next[axis] += 1.0F;
+        const QPointF there = viewport.project(next.x(), next.y(), next.z());
+        const double pixels = std::hypot(there.x() - here.x(), there.y() - here.y());
+        reach[static_cast<std::size_t>(axis)] =
+            interaction::kSnapReachPixels / std::max(pixels, 0.35 * across);
+    }
+    return reach;
+}
+
+void SnapSession::collectTargets(const render::RenderScene& scene, const std::string& movingBody) {
     m_targets.clear();
     std::set<std::string> present;
     for (const render::RenderBody& body : scene.bodies) {
@@ -76,12 +123,23 @@ void SnapSession::begin(const render::RenderScene& scene, const std::string& mov
     }
     const auto bed = interaction::snapPointsOfBed(scene.bed.sizeX, scene.bed.sizeY);
     m_targets.insert(m_targets.end(), bed.begin(), bed.end());
+}
 
+void SnapSession::begin(const render::RenderScene& scene, const std::string& movingBody,
+                        const interaction::Vec3& low, const interaction::Vec3& high) {
+    collectTargets(scene, movingBody);
     m_movers = interaction::snapPointsOfBox(
         {interaction::cleanedCoordinate(low[0]), interaction::cleanedCoordinate(low[1]),
          interaction::cleanedCoordinate(low[2])},
         {interaction::cleanedCoordinate(high[0]), interaction::cleanedCoordinate(high[1]),
          interaction::cleanedCoordinate(high[2])});
+    m_active = true;
+}
+
+void SnapSession::beginWithMovers(const render::RenderScene& scene, const std::string& movingBody,
+                                  std::vector<interaction::SnapPoint> movers) {
+    collectTargets(scene, movingBody);
+    m_movers = std::move(movers);
     m_active = true;
 }
 
