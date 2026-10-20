@@ -8,6 +8,7 @@
 
 ### AP-4.1 Freie Körper als vollwertige Körper
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-1.7, AP-1.10
+**Bauanleitung:** [anleitungen/AP-4.1.md](anleitungen/AP-4.1.md)
 
 **Umfang:**
 - Netz-Körper (Manifold) im Feature-Graph: Import (STL/3MF/OBJ), Transformieren, Booleans mit präzisen Körpern (automatische Tessellierung), Farbe, Export
@@ -23,6 +24,7 @@
 
 ### AP-4.2 Weich verschmelzen („Knete“)
 **Status:** offen · **Größe:** XL · **Abhängigkeiten:** AP-4.1
+**Bauanleitung:** [anleitungen/AP-4.2.md](anleitungen/AP-4.2.md)
 
 > Beginnt mit einem Spike: SDF aus Netzen per eigenem BVH + Winding Number **vs.** OpenVDB. Entscheidung per ADR.
 
@@ -40,6 +42,7 @@
 
 ### AP-4.3 Verformen
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-4.1
+**Bauanleitung:** [anleitungen/AP-4.3.md](anleitungen/AP-4.3.md)
 
 **Umfang:**
 - Verdrehen (Twist), Biegen (Bend), Verjüngen (Taper), Wellen/Rauschen (Noise), Kugelig (Spherize)
@@ -54,6 +57,7 @@
 
 ### AP-4.4 Text und Logos: Prägen und Gravieren
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-1.5, AP-4.1
+**Bauanleitung:** [anleitungen/AP-4.4.md](anleitungen/AP-4.4.md)
 
 **Umfang:**
 - Text auf Pfad und Kreisbogen (Skizze), Zeilen, Ausrichtung, Laufweite, Fett/Kursiv (je nach Schrift)
@@ -68,6 +72,7 @@
 
 ### AP-4.5 SVG-, DXF- und Bild-Import für Konturen (Ausstechformen)
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-2.1
+**Bauanleitung:** [anleitungen/AP-4.5.md](anleitungen/AP-4.5.md)
 
 **Umfang:**
 - SVG/DXF → Skizze (Kurven bleiben Kurven), Skalierung auf Zielmaß beim Import
@@ -81,6 +86,7 @@
 
 ### AP-4.6 Relief und Lithophanie
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-4.1
+**Bauanleitung:** [anleitungen/AP-4.6.md](anleitungen/AP-4.6.md)
 
 **Umfang:**
 - Bild → Höhenkarte → Relief (eben); Lithophanie (eben, gebogen, Zylinder/Lampenschirm, Kugel) mit Min-/Max-Dicke, Rahmen, Vorschau „gegen Licht“
@@ -93,6 +99,7 @@
 
 ### AP-4.7 Muster und Oberflächenstrukturen
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-4.1, AP-2.8
+**Bauanleitung:** [anleitungen/AP-4.7.md](anleitungen/AP-4.7.md)
 
 **Umfang:**
 - Durchbruch-Muster in Flächen: **Voronoi**, **Waben**, Kreise, Rauten; Randabstand, Stegbreite (≥ Mindestwand)
@@ -106,6 +113,7 @@
 
 ### AP-4.8 Generatoren („Zauberformen“)
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-2.9
+**Bauanleitung:** [anleitungen/AP-4.8.md](anleitungen/AP-4.8.md)
 
 **Umfang:**
 - Generator = parametrisches Feature mit Konfigurator-Panel und Live-Vorschau-Galerie
@@ -119,6 +127,7 @@
 
 ### AP-4.9 Kaleidoskop-Modus
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-2.8, AP-2.1
+**Bauanleitung:** [anleitungen/AP-4.9.md](anleitungen/AP-4.9.md)
 
 **Umfang:**
 - Radiale Symmetrie (n-fach, optional gespiegelt) als **Live-Modus**: Man zeichnet oder modelliert in einem Segment, alle anderen Segmente aktualisieren sich in Echtzeit
