@@ -8,6 +8,7 @@
 
 ### AP-2.1 Skizzen-Modus: Zeichnen
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-1.6
+**Bauanleitung:** [anleitungen/AP-2.1.md](anleitungen/AP-2.1.md)
 
 **Umfang:**
 - Skizze starten: Fläche, Grundebene oder Hilfsebene anklicken → animierte Draufsicht, Skizzenraster
@@ -24,6 +25,7 @@
 
 ### AP-2.2 Skizzen-Regeln und Maße (Constraint-Solver)
 **Status:** offen · **Größe:** XL · **Abhängigkeiten:** AP-2.1
+**Bauanleitung:** [anleitungen/AP-2.2.md](anleitungen/AP-2.2.md)
 
 > Vor dem Start in Teilpakete zerlegen (Solver-Anbindung, Auto-Regeln, Maße, Diagnose-UI).
 
@@ -44,6 +46,7 @@
 
 ### AP-2.3 Aus Skizzen werden Körper
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-2.2
+**Bauanleitung:** [anleitungen/AP-2.3.md](anleitungen/AP-2.3.md)
 
 **Umfang:**
 - **Ziehen** (Extrude): Distanz, bis Fläche, symmetrisch, durch alles; Verjüngungswinkel; Modus Neu/Vereinen/Ausschneiden/Überlappung **automatisch vorgeschlagen** (Richtung in den Körper = Ausschneiden), manuell änderbar
@@ -60,6 +63,7 @@
 
 ### AP-2.4 Direktes Bearbeiten von Flächen
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-2.10 (Basis)
+**Bauanleitung:** [anleitungen/AP-2.4.md](anleitungen/AP-2.4.md)
 
 **Umfang:**
 - **Fläche ziehen** (Push/Pull) an beliebigen ebenen und zylindrischen Flächen von Körpern (OCCT `BRepOffset` mit Flächen-Offset bzw. `BRepFeat`)
@@ -78,6 +82,7 @@
 
 ### AP-2.5 Abrunden und Abschrägen
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-2.10 (Basis)
+**Bauanleitung:** [anleitungen/AP-2.5.md](anleitungen/AP-2.5.md)
 
 **Umfang:**
 - Abrunden (konstanter Radius; variabler Radius als „▸ Mehr“), Abschrägen (Abstand, Abstand+Winkel, zwei Abstände)
@@ -93,6 +98,7 @@
 
 ### AP-2.6 Aushöhlen und Schräge
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-2.4
+**Bauanleitung:** [anleitungen/AP-2.6.md](anleitungen/AP-2.6.md)
 
 **Umfang:**
 - Aushöhlen: Wandstärke innen/außen, offene Flächen wählen (z. B. Deckel weg), unterschiedliche Stärken je Fläche (▸ Mehr)
@@ -105,6 +111,7 @@
 
 ### AP-2.7 Bohrungen, Gewinde und Schraubverbindungen
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-2.3
+**Bauanleitung:** [anleitungen/AP-2.7.md](anleitungen/AP-2.7.md)
 
 **Umfang:**
 - **Bohrungs-Assistent** mit Alltagsauswahl: „Für Schraube M3 … M10“, „Holzschraube 3–6 mm“, Durchgangsloch, Senkkopf, Zylinderkopf (Senkung), Kernloch für Gewinde, **Einschmelzmutter** (heat-set insert, gängige Größen), **Mutternfalle** (Sechskant-Tasche, auch seitlich einschiebbar)
@@ -121,6 +128,7 @@
 
 ### AP-2.8 Muster und Spiegeln
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-2.3
+**Bauanleitung:** [anleitungen/AP-2.8.md](anleitungen/AP-2.8.md)
 
 **Umfang:**
 - Reihe (1D/2D, Anzahl + Abstand oder Gesamtlänge), Kreis (Anzahl, Winkel, Achse), entlang Pfad, Spiegeln (Ebene, Fläche)
@@ -135,6 +143,7 @@
 
 ### AP-2.9 Benannte Maße und Konfigurator
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.8
+**Bauanleitung:** [anleitungen/AP-2.9.md](anleitungen/AP-2.9.md)
 
 **Umfang:**
 - Maße-Tabelle (Name, Ausdruck, Ergebnis, Einheit, Kommentar, „verwendet in“)
@@ -150,6 +159,7 @@
 
 ### AP-2.10 Persistente Referenzen (produktiv) und Reparatur-UI
 **Status:** offen · **Größe:** XL · **Abhängigkeiten:** AP-0.6, AP-1.1
+**Bauanleitung:** [anleitungen/AP-2.10.md](anleitungen/AP-2.10.md)
 
 > Vor dem Start in Teilpakete zerlegen (Naming für jede Feature-Art, Signatur-Matching, Reparatur-UI).
 
@@ -166,6 +176,7 @@
 
 ### AP-2.11 Messen und Analysieren
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.4
+**Bauanleitung:** [anleitungen/AP-2.11.md](anleitungen/AP-2.11.md)
 
 **Umfang:**
 - Messen: Abstand (Punkt/Kante/Fläche, min. Abstand), Winkel, Radius/Durchmesser, Länge, Fläche; Ergebnis kopierbar
@@ -179,6 +190,7 @@
 
 ### AP-2.12 Hilfsgeometrie
 **Status:** offen · **Größe:** S · **Abhängigkeiten:** AP-2.1
+**Bauanleitung:** [anleitungen/AP-2.12.md](anleitungen/AP-2.12.md)
 
 **Umfang:**
 - Hilfsebenen (versetzt, gewinkelt, durch 3 Punkte, tangential, Mittelebene), Hilfsachsen, Hilfspunkte
@@ -188,6 +200,7 @@
 
 ### AP-2.13 STEP und weitere Formate
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.10
+**Bauanleitung:** [anleitungen/AP-2.13.md](anleitungen/AP-2.13.md)
 
 **Umfang:**
 - STEP AP214/AP242 Import und Export inkl. Farben und Namen (OCCT XCAF); IGES Import
@@ -201,6 +214,7 @@
 
 ### AP-2.14 Meldungskatalog und Fehler-UX
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.12, AP-0.5
+**Bauanleitung:** [anleitungen/AP-2.14.md](anleitungen/AP-2.14.md)
 
 **Umfang:**
 - Katalog: strukturierter Diagnose-Code → Titel, Erklärung (mit Platzhaltern für Zahlen), Lösungsaktionen
@@ -216,6 +230,7 @@
 
 ### AP-2.15 Nutzertest 2
 **Status:** offen · **Größe:** S · **Abhängigkeiten:** alle APs der Phase 2
+**Bauanleitung:** [anleitungen/AP-2.15.md](anleitungen/AP-2.15.md)
 
 **Umfang:**
 - 5 Personen (2 Neulinge nach Mission/Anleitung, 2 Tinkercad-Umsteiger, 1 Fusion-Nutzer): Ablauf B und eine freie Aufgabe „Ersatzteil nach Foto mit Maßen“
