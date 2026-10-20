@@ -43,5 +43,5 @@ Wir wählen **Option A (Qt RHI)**, weil
   nahe am Limit (Vereinfachung für die Auswahl einplanen).
 
 ## Belege
-- [Bericht mit Messwerten und Bildern](../spikes/viewport-technologie.md)
+- Bericht mit Messwerten und Bildern: `docs/spikes/viewport-technologie.md` im Git-Verlauf (vor 2026-10-20)
 - Code: `spikes/viewport/`, Messen: `scripts/spike messen`

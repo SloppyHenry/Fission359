@@ -1,171 +1,37 @@
 # Testumgebung
 
-Stand: 2026-10-13 (AP-0.4). Zugangsdaten, Hostnamen und Schlüssel stehen bewusst **nicht** hier.
-Es gibt drei Linux-Testrechner. **Testrechner C** (Ubuntu 26.04 mit RTX 3060) ist seit AP-0.4 der
-Standard-Testrechner, vor allem wegen der echten GPU für die Viewport-Messungen. B bleibt für die
-Ubuntu-24.04-Container-Prüfung. A war zuletzt nicht erreichbar.
+Zugangsdaten, Hostnamen und Schlüssel stehen bewusst **nicht** hier.
 
-## macOS (Entwicklungsrechner)
+## Rechner
 
-| | |
-|---|---|
-| System | macOS 27.0, Apple Silicon (arm64) |
-| Compiler | AppleClang 21 (Xcode 27) |
-| Qt | 6.11.2 (Homebrew: `qtbase`, `qtdeclarative`, `qtshadertools`, `qtsvg`, `qttools`) |
-| Build-Werkzeuge | CMake 4.4, Ninja 1.13, pkg-config (Homebrew); Bibliotheken über vcpkg |
-| Signierung | nur kostenloses Apple-Developer-Konto: ad hoc bzw. lokal, keine Notarisierung (siehe AP-0.7) |
+| | System | Hardware / Grafik | Hinweise |
+|---|---|---|---|
+| **Mac** (Entwicklung) | macOS 27, arm64, AppleClang 21, Qt aus Homebrew | Apple M1, Metal | nur kostenloses Apple-Konto: ad hoc signieren |
+| **Linux A** | Ubuntu 26.04, GCC 15.2, Qt 6.10 (apt) | 32 Kerne, 31 GB, RTX 3080; KDE (Wayland + X11) | kein vcpkg-Stand: Linux-Builds mit allen Bibliotheken laufen über die CI |
+| **Linux B** | Debian 13, GCC 14.2, Qt 6.8 (apt), Docker | 4 Kerne, 7,6 GB, Intel HD 620 | **geteilt:** `FISSION_JOBS=2 nice -n 19`; kein `rsync` (tar über SSH) |
+| **Linux C** | Ubuntu 26.04, Docker, Flatpak | 24 Threads, ~5 GB RAM frei, RTX 3060 (nur ~2,4 GB frei) | **geteilt** (Sprachmodell, Container): `FISSION_JOBS=4 nice -n 19` |
 
-## Linux-Testrechner A (per SSH, schnell)
+Auf allen geteilten Rechnern: fremde Container und Prozesse nicht anfassen; eigene Container, Volumes und Kopien tragen den
+Präfix `fission3d-`. Treiber, Kernel, Dienste, Firewall und Benutzer bleiben unverändert (Ausnahme mit Freigabe: Benutzer auf B
+in der Gruppe `render` für GPU-Zugriff).
 
-| | |
-|---|---|
-| Distribution | Ubuntu 26.04.1 LTS, Kernel 7.0, x86_64 |
-| Hardware | 32 Kerne, 31 GB RAM |
-| Grafik | NVIDIA GeForce RTX 3080 (10 GB), proprietärer Treiber 595.91; zusätzlich Mesa 26.0 (llvmpipe) |
-| Vulkan | 1.4 (NVIDIA-GPU und llvmpipe sichtbar) |
-| Sitzungen | KDE Plasma, Wayland **und** X11 installiert |
-| Compiler | GCC 15.2 |
-| Build-Werkzeuge | CMake 4.2.3, Ninja 1.13, clang-format 21, clang-tidy 21, ccache 4.12 (apt) |
-| Qt | 6.10.2 (apt: `qt6-base-dev`, `qt6-declarative-dev`, `qt6-shadertools-dev`, `qt6-svg-dev`, `qt6-tools-dev`, `qt6-tools-dev-tools`, `qt6-l10n-tools`, QML-Module) |
-| Catch2 | 3.7.1 (apt) |
-| Rechte | SSH-Zugang per Schlüssel, `sudo` ohne Passwort |
+## Headless prüfen
 
-Zusätzlich liegt dort eine **CMake 3.28.6** (offizielles Binärpaket, nur im Heimatverzeichnis unter
-`tools/`), um die Mindestversion des Projekts zu prüfen.
+- **Bauen und Tests:** Projekt per `rsync` (ohne `build/`, `.git/`) in ein eigenes Verzeichnis kopieren, `scripts/setup --yes`,
+  `scripts/test`. Fenster-Tests mit `QT_QPA_PLATFORM=offscreen`.
+- **Vulkan ohne Bildschirm:** `xvfb-run -a` mit `QT_QPA_PLATFORM=xcb` und `QT_XCB_GL_INTEGRATION=none` (`offscreen` kann keine
+  Vulkan-Instanz anlegen). Steht im Ergebnis `llvmpipe`, ist die Messung wertlos.
+- **OpenGL unter Xvfb** ist nur Software-Mesa; Zeiten sind dort nicht aussagekräftig.
+- **Virtuelles Wayland:** `kwin_wayland --virtual --socket <name> --no-lockscreen`, dann `WAYLAND_DISPLAY=<name> QT_QPA_PLATFORM=wayland`.
+- **Bedienung mit echtem Zeiger (B):** `Xvfb :97 -screen 0 1600x1000x24 &`, dann `DISPLAY=:97 QT_QPA_PLATFORM=xcb
+  QSG_RHI_BACKEND=opengl ./squashfs-root/AppRun --smoke-test bild.png --simulate "…"` und dazu `xdotool mousemove x y`.
+- **Ubuntu 24.04:** `scripts/tools/docker-ubuntu-check` (Container, vcpkg baut Qt; Cache im Volume `fission3d-ubuntu-vcpkg`).
+- **Pakete:** Auf Ubuntu 26.04 gebaute AppImages/Flatpaks laufen nur auf gleich neuen Systemen. Verteilbare Pakete immer aus der CI
+  testen, z. B. in `ubuntu:24.04`- und `fedora:44`-Containern.
+- **Mac:** Messungen mit `QT_QPA_PLATFORM=offscreen` (Metal) laufen auch bei gesperrtem Bildschirm; echte Fenster nicht.
 
-### Wie getestet wird
+## Virtueller Mac für Installationstests
 
-- Bauen und Tests laufen headless per SSH: `QT_QPA_PLATFORM=offscreen`, `QT_QUICK_BACKEND=software`.
-  Der Fenstertest (`app_opens_window`) speichert einen Screenshot des ersten Frames als
-  `build/<preset>/smoke-test.png`.
-- Dieser Test prüft **nicht** die GPU. Tests mit echter Grafik (Vulkan/OpenGL, Wayland/X11) macht der
-  Product Owner am Bildschirm oder sie folgen mit AP-0.4.
-- Vorgehen zum Übertragen: Projekt per `rsync` (ohne `build/` und `.git/`) in ein eigenes Verzeichnis
-  im Heimatverzeichnis kopieren, dort `scripts/setup --yes` und `scripts/test` ausführen.
-
-### Was dort verändert wurde
-
-- Per `scripts/setup` installierte apt-Pakete (Qt 6 Entwicklungspakete, Ninja, Catch2, clang-format,
-  clang-tidy, ccache, Xvfb sowie deren Abhängigkeiten).
-- Projektkopie unter `~/fission3d-ap01`, Build-Verzeichnisse darin.
-- CMake 3.28.6 unter `~/tools/cmake-3.28.6`.
-
-Nicht verändert: Treiber, Kernel, Systemdienste, Firewall, Benutzer.
-
-### Offene Punkte
-
-- Die Plasma-Version wurde nicht ermittelt (`plasmashell --version` benötigt eine grafische Sitzung).
-- Ubuntu 24.04 (Zielplattform laut AP-0.2/AP-0.7) und Fedora stehen noch nicht als Testrechner zur
-  Verfügung. Ubuntu 24.04 liefert über apt nur Qt 6.4; dort braucht es andere Qt-Quellen (vcpkg, AP-0.2).
-
-## Linux-Testrechner B: kleiner Server (per SSH, Docker)
-
-| | |
-|---|---|
-| Distribution | Debian 13 (trixie), Kernel 6.12, x86_64 |
-| Hardware | 4 Kerne, 7,6 GB RAM, 8 GB Swap, Intel HD Graphics 620 |
-| Sitzungen | Xfce (Wayland und X11 installiert); es läuft keine Desktop-Sitzung |
-| Compiler | GCC 14.2 |
-| Build-Werkzeuge | CMake 3.31, Ninja, clang-format/-tidy, ccache (apt, über `scripts/setup`) |
-| Qt | 6.8.2 (apt; System-Qt reicht, vcpkg baut kein Qt) |
-| Docker | 29.5, Benutzer ist in der Gruppe `docker`; `sudo` ohne Passwort |
-
-**Der Rechner betreibt dauerhaft andere Dienste** (Docker-Container). Deshalb gilt dort:
-
-- Builds mit `FISSION_JOBS=2` und `nice -n 19` starten (höchstens 2 parallele Aufgaben).
-- Container für Tests mit Limits starten (`--cpus`, `--memory`), siehe
-  `scripts/tools/docker-ubuntu-check`.
-- Eigene Container und Volumes tragen den Präfix `fission3d-`; fremde Container werden nicht angefasst.
-
-### Zugriff auf die Intel-Grafik (13.10.2026)
-
-Der Benutzer war nicht in der Gruppe `render`, Vulkan sah deshalb nur den Software-Renderer. Mit Freigabe des
-Product Owners wurde er in die Gruppe `render` aufgenommen (`usermod -aG render`; wirkt ab der nächsten
-SSH-Verbindung, laufende Dienste sind nicht betroffen). Vulkan-Messung ohne Bildschirm:
-`QT_QPA_PLATFORM=xcb xvfb-run -a -s "-screen 0 1920x1080x24" viewport_a_bench --backend vulkan …`
-(mit `offscreen` lässt sich unter Qt keine Vulkan-Instanz anlegen). Das Gerät steht im Messergebnis
-(`"device"`); bei `llvmpipe` wäre die Messung wertlos.
-
-### Ubuntu 24.04 (Zielplattform) per Container
-
-`scripts/tools/docker-ubuntu-check` baut und testet einen frischen Stand in einem `ubuntu:24.04`-Container.
-Dort liefert apt nur Qt 6.4, also baut vcpkg Qt selbst. Der Zwischenspeicher liegt im Docker-Volume
-`fission3d-ubuntu-vcpkg`, damit spätere Läufe schnell sind.
-
-### Bauzeiten (erster Lauf, ohne Zwischenspeicher)
-
-| Plattform | Umfang | Dauer |
-|---|---|---|
-| Mac (Apple Silicon, alle Kerne) | alle Bibliotheken ohne Qt (System-Qt) | rund 15 Minuten |
-
-## Linux-Testrechner C: Ubuntu 26.04 mit RTX 3060 (per SSH, geteilt)
-
-| | |
-|---|---|
-| Distribution | Ubuntu 26.04.1 LTS, Kernel 7.0, x86_64 |
-| Hardware | 24 Threads, 15 GB RAM (davon meist nur ca. 5 GB frei), 16 GB Swap |
-| Grafik | NVIDIA GeForce RTX 3060 (12 GB), proprietärer Treiber 595.91, Vulkan 1.4 |
-| Sitzungen | KDE Plasma (Wayland); beim Anmeldebildschirm, keine Desktop-Sitzung aktiv |
-| Compiler | GCC (Ubuntu 26.04), CMake, Ninja, Git, Python 3 vorhanden |
-| Werkzeuge | `vulkaninfo`, `glxinfo`, `eglinfo`, `Xvfb`; `sudo` ohne Passwort |
-
-**Der Rechner betreibt dauerhaft andere Dienste** (Docker-Container und ein lokaler Sprachmodell-Server, der
-rund 9,7 GB der 12 GB Grafikspeicher belegt). Deshalb gilt:
-
-- Builds mit `FISSION_JOBS=4` und `nice -n 19` starten, auf den Arbeitsspeicher achten (nur ca. 5 GB frei).
-- **Grafikspeicher:** nur etwa 2,4 GB sind frei. Die Viewport-Prototypen müssen mit dieser Grenze
-  auskommen; Messwerte können schwanken, wenn der Sprachmodell-Server gerade rechnet.
-- Fremde Container und Prozesse werden nicht angefasst; eigene Container und Volumes tragen den Präfix `fission3d-`.
-- Messungen ohne Bildschirm per SSH (Offscreen); ein Fenstertest am Bildschirm macht der Product Owner.
-
-### Grafik-Messungen ohne Bildschirm (Spike AP-0.4)
-
-- **Vulkan ohne Fenster:** `QT_QPA_PLATFORM=xcb`, `DISPLAY` auf ein virtuelles Display (`Xvfb`), dazu
-  `QT_XCB_GL_INTEGRATION=none`. Die GPU rechnet über Vulkan, das virtuelle Display wird nur für die
-  Qt-Plattform gebraucht. Die Plattform `offscreen` kann keine Vulkan-Instanz erzeugen.
-- **OpenGL (OpenCASCADE-Anzeige):** `Xvfb` hat kein NVIDIA-GLX; dort läuft nur Software-OpenGL (Mesa). Echte
-  GPU-Werte für OpenGL brauchen eine Desktop-Sitzung oder einen X-Server mit NVIDIA-Treiber (eine
-  Systemänderung, die vorher abzustimmen ist).
-- **Mac:** Messungen ohne Fenster mit `QT_QPA_PLATFORM=offscreen` (Metal) laufen auch bei gesperrtem Bildschirm;
-  Fenster werden bei ausgeschaltetem Display von macOS nicht gezeichnet.
-
-### Paketierung (AP-0.7, 13.10.2026)
-
-Mit Freigabe des Product Owners ("fühl dich komplett frei") wurde auf Testrechner C Folgendes eingerichtet:
-
-- apt-Pakete `patchelf` und `flatpak-builder` (`flatpak` war schon da).
-- Flatpak **nur für den Benutzer**: Remote `flathub` und die Laufzeit `org.freedesktop.Platform//25.08` samt SDK
-  (rund 1,5 GB, bleibt für AP-6.1 liegen); die gebaute App `io.github.sloppyhenry.Fission3D` ist nur zum Testen
-  installiert und kann mit `flatpak uninstall --user io.github.sloppyhenry.Fission3D` entfernt werden.
-- Zum Testen der Pakete: eigene Container mit Präfix `fission3d-` aus `ubuntu:24.04` und `fedora:44` (Images bleiben nicht
-  liegen, außer `ubuntu:24.04`).
-- Virtuelles Wayland ohne Bildschirm: `kwin_wayland --virtual --socket <name> --no-lockscreen`, dann
-  `WAYLAND_DISPLAY=<name> QT_QPA_PLATFORM=wayland`. Unter X11: `xvfb-run -a` mit `QT_QPA_PLATFORM=xcb`.
-
-**Wichtig:** Ein AppImage oder Flatpak, das auf diesem Rechner (Ubuntu 26.04, glibc 2.43) gebaut wurde, läuft nur auf
-gleich neuen Systemen. Zum Prüfen verteilbarer Pakete die Artefakte der CI (Ubuntu 24.04) verwenden.
-
-## Virtueller Mac für Installationstests (14.10.2026)
-
-Für einen "sauberen Mac" (ohne Xcode, Homebrew, Qt) gibt es auf dem Entwicklungs-Mac eine virtuelle Maschine:
-
-| | |
-|---|---|
-| Werkzeug | [tart](https://github.com/cirruslabs/tart) 2.41.0 (Binärpaket in `~/tools/tart-2.41.0`, Prüfsumme geprüft; die Homebrew-Formel ist mit dem aktuellen Homebrew kaputt) |
-| Image | `ghcr.io/cirruslabs/macos-sonoma-vanilla` → lokale Maschine `fission3d-mac14` |
-| System | macOS 14.8.7 (Sonoma), arm64, nur die Kommandozeilen-Werkzeuge; Benutzer und Passwort sind die öffentlichen Vorgaben des Images |
-| Platz | rund 27 GB |
-
-Starten mit Fenster: `~/tools/tart-2.41.0/tart.app/Contents/MacOS/tart run fission3d-mac14`; ohne Fenster
-(für SSH-Tests) mit `--no-graphics` und `tart ip fission3d-mac14`.
-
-Was damit geprüft wurde (AP-0.7): Die App aus dem CI-`.dmg` startet dort und meldet ihre Version; die Quarantäne wird von
-Gatekeeper erkannt (App-Translocation), der Start wartet dann auf die Entscheidung im Dialog. Der Dialog selbst und das
-Fenster ließen sich ohne Bildschirm nicht prüfen, das macht der Product Owner im VM-Fenster.
-
-## Bedienung ohne Bildschirm prüfen (AP-1.4, Testrechner B)
-
-Das CI-gebaute AppImage lässt sich auf Testrechner B unter einem virtuellen Bildschirm (Xvfb) mit echtem Mauszeiger prüfen:
-`Xvfb :97 -screen 0 1600x1000x24 &`, dann `DISPLAY=:97 QT_QPA_PLATFORM=xcb QSG_RHI_BACKEND=opengl ./squashfs-root/AppRun --smoke-test bild.png
---simulate "…"`, und währenddessen `xdotool mousemove x y` (dafür ist das Paket `xdotool` dort installiert). Es läuft der Software-Renderer
-(OpenGL über Mesa); Vulkan startet unter Xvfb nicht, und Zeiten sind damit nicht aussagekräftig. Danach `Xvfb` beenden und das Kopierte löschen.
+[tart](https://github.com/cirruslabs/tart) 2.41.0 in `~/tools/tart-2.41.0` (die Homebrew-Formel ist kaputt), Maschine
+`fission3d-mac14` (macOS 14.8.7, nur Kommandozeilen-Werkzeuge, rund 27 GB). Start mit Fenster:
+`~/tools/tart-2.41.0/tart.app/Contents/MacOS/tart run fission3d-mac14`; ohne Fenster `--no-graphics` und `tart ip fission3d-mac14`.

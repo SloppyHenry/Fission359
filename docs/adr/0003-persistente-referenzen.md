@@ -60,7 +60,7 @@ Wir wählen **Option A**, mit diesen festen Bestandteilen:
   Zufallsprobe mit den echten Features als feste CI-Suite, samt „Baustein abschalten → Suite wird rot“.
 - **Meldungskatalog (AP-2.14):** Die Gründe für „braucht Hilfe“ (geteilt, verbraucht, gedreht, Plätze
   getauscht, nicht gefunden) bekommen Hilfetexte mit Ein-Klick-Lösung.
-- **Schwerer:** Jedes neue Feature braucht Namensregeln und Tests (Naming-Szenarien, laut Master-Prompt);
+- **Schwerer:** Jedes neue Feature braucht Namensregeln und Tests (Naming-Szenarien, laut CLAUDE.md);
   Namen sind Teil des Dateiformats (ändern sie sich, braucht es eine Migration).
 - **Noch nicht geprüft:** Fasen, Aushöhlen, Muster, Spiegeln, Text, Booleans mehrerer Körper, Verschmelzen
   gleicher Flächen, Laufzeit bei großen Körpern.

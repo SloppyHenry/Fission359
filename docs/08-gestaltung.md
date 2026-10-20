@@ -150,7 +150,7 @@ Hinweis; gesperrt wird sie nicht. Die Referenz-Umsetzung steht im Mockup (`accen
 | Hauptknopf | Fläche `accent`, Schrift weiß; höchstens einer je Bereich |
 | Knopf | transparent mit Rahmen `line-2` |
 | Hinweisknopf | Fläche `amber` (Lotse „Zeig mir wie“, Ein-Klick-Lösungen im Druckcheck) |
-| Zahlenfeld | eine Komponente für alle Zahlen (Regel 2 im Master-Prompt): Mono-Schrift, Einheit rechts, Achsen-Kennung links farbig |
+| Zahlenfeld | eine Komponente für alle Zahlen (Produktregel 2 in CLAUDE.md): Mono-Schrift, Einheit rechts, Achsen-Kennung links farbig |
 | Segmentschalter | Gruppe auf `chrome`, gewähltes Segment `field-2` und fett |
 | Schalter | 32 × 18 px, an = `accent` |
 | Auswahlkarte | `raise` mit Rahmen; gewählt: Rahmen `accent-line`, Fläche `accent-soft` |

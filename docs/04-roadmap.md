@@ -44,7 +44,7 @@ Die Größenangaben an den Arbeitspaketen sind relativ, nicht in Tagen:
 
 Jedes Arbeitspaket hat eine Zeile `**Status:**` mit einem dieser Werte:
 `offen` · `in Arbeit` · `Review` · `erledigt` · `zurückgestellt`.
-Wer an einem AP arbeitet (Mensch oder Agent), aktualisiert den Status in der Phasendatei und ergänzt am Ende des APs einen kurzen **Abschlussvermerk** (Datum, was umgesetzt ist, bekannte Einschränkungen, Folge-APs).
+Wer an einem AP arbeitet (Mensch oder Agent), aktualisiert den Status in der Phasendatei und ergänzt am Ende des APs einen knappen **Abschlussvermerk** (Datum, Ergebnis, weiter geltende Festlegungen, offene Reste). Testnachweise und die Ausprobier-Anleitung stehen in der PR-Beschreibung.
 
 ## Definition of Done (gilt für jedes Arbeitspaket)
 
@@ -59,4 +59,4 @@ Ein AP ist erst **erledigt**, wenn alle Punkte erfüllt sind:
 - [ ] Fehlerfälle erzeugen **verständliche Meldungen** aus dem Meldungskatalog (keine rohen Kernel-Fehler).
 - [ ] Keine Verletzung der Performance-Budgets (Architektur, Abschnitt 12).
 - [ ] Doku aktualisiert: AP-Status und Abschlussvermerk; bei Architekturentscheidungen ein ADR.
-- [ ] Eine **„So probierst du es aus“-Anleitung** (3–6 Schritte) steht im Abschlussvermerk.
+- [ ] Eine **„So probierst du es aus“-Anleitung** (3–6 Schritte) steht in der PR-Beschreibung.

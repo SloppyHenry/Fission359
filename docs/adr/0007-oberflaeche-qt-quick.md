@@ -15,7 +15,7 @@ eine echte Menüleiste auf dem Mac und einen automatischen Kontrasttest über al
    (`tests/unit/ui/test_theme_tokens.cpp`), ohne Oberfläche.
 2. **Texte: `qsTr` mit englischen Quelltexten**, Übersetzungen als Qt-Linguist-Dateien (`apps/fission3d/i18n/*.ts`,
    Deutsch und Englisch). Englisch als Quelltext (statt Deutsch) ist Annahme des Agenten: Quelltext und Kommentare sind
-   ohnehin englisch (Master-Prompt), und neue Mitwirkende finden den Text so im Code wieder. Der Test
+   ohnehin englisch (CLAUDE.md), und neue Mitwirkende finden den Text so im Code wieder. Der Test
    `translations_complete` verlangt, dass jede Übersetzung fertig ist und kein Text fest eingebaut steht.
    Die Sprache lässt sich zur Laufzeit wechseln (`Language`, `engine.retranslate()`).
 3. **Menüs:** ein Datenmodell in `Main.qml`. Auf macOS erzeugt `Qt.labs.platform` daraus die System-Menüleiste (mit den
