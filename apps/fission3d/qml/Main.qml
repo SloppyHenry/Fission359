@@ -13,6 +13,9 @@ Window {
     readonly property string primaryKey: isMac ? "⌘" : qsTr("Ctrl+")
     property string documentName: qsTr("Untitled")
     property string tool: "move"
+    // Developer option --simulate "filtermenu": opens the menu "Choose: ..." of the 3D view.
+    property bool filterMenuOpen: false
+    onFilterMenuOpenChanged: if (filterMenuOpen) viewOverlay.openFilterMenu()
     property string display: "color"
     property string leftTab: "bodies"
     property string rightTab: "object"

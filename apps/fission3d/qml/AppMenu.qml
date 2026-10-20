@@ -60,8 +60,13 @@ Menu {
 
             text: entry.text
             enabled: entry.enabled !== false
-            checkable: entry.checked !== undefined
-            checked: entry.checked === true
+            // Not `checkable`: a checkable item turns its own tick over when clicked (and so
+            // stops following `entry.checked`), and the style draws a tick of its own on top of
+            // the one below. The tick is drawn from `entry.checked` alone.
+            readonly property bool ticked: entry.checked === true
+            Accessible.role: entry.checked !== undefined ? Accessible.CheckBox : Accessible.MenuItem
+            Accessible.checked: ticked
+            indicator: null
             implicitHeight: 30
             implicitWidth: 228
             onTriggered: {
@@ -77,7 +82,7 @@ Menu {
                     height: parent.height
 
                     Icon {
-                        visible: entryItem.checked
+                        visible: entryItem.ticked
                         anchors.centerIn: parent
                         name: "ok"
                         size: 14
