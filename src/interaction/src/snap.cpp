@@ -213,6 +213,27 @@ std::vector<SnapPoint> snapPointsOfBox(const Vec3& low, const Vec3& high) {
     return points;
 }
 
+std::vector<SnapPoint> snapPointsOfBoxSide(const Vec3& low, const Vec3& high, int axis,
+                                           bool upper) {
+    std::vector<SnapPoint> points;
+    const auto side = static_cast<std::size_t>(axis);
+    const std::size_t u = (side + 1) % 3;
+    const std::size_t v = (side + 2) % 3;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            Vec3 p{};
+            p[side] = upper ? high[side] : low[side];
+            p[u] = i == 0 ? low[u] : (i == 1 ? (low[u] + high[u]) / 2.0 : high[u]);
+            p[v] = j == 0 ? low[v] : (j == 1 ? (low[v] + high[v]) / 2.0 : high[v]);
+            const int middles = (i == 1) + (j == 1);
+            points.push_back({p, middles == 0   ? SnapKind::corner
+                                 : middles == 1 ? SnapKind::edgeMiddle
+                                                : SnapKind::faceMiddle});
+        }
+    }
+    return points;
+}
+
 std::vector<SnapPoint> snapPointsOfBed(double sizeX, double sizeY) {
     const double hx = sizeX / 2.0;
     const double hy = sizeY / 2.0;
@@ -359,6 +380,69 @@ SnapResult snapOffset(const std::vector<SnapPoint>& movers, const std::vector<Sn
         }
     }
     return finish();
+}
+
+std::optional<ScaleCatch> snapScaleFactor(const Vec3& anchor, const Vec3& corner0, double wanted,
+                                          const std::vector<SnapPoint>& targets,
+                                          const Vec3& reach) {
+    // The corner held runs along the diagonal: corner(f) = anchor + (corner0 - anchor) * f. A
+    // target is caught on one axis when the corner reaches its coordinate there, and on a point
+    // when it reaches all three at once.
+    constexpr double kOnPoint = 1e-3; // mm
+    const Vec3 way = sub(corner0, anchor);
+    struct Candidate {
+        double factor = 1.0;
+        double miss = 1e30;
+        std::size_t axis = 0;
+        const SnapPoint* target = nullptr;
+        bool onPoint = false;
+    };
+    Candidate best;
+    for (std::size_t a = 0; a < 3; ++a) {
+        if (std::abs(way[a]) <= 1e-6 || reach[a] <= 0.0) {
+            continue;
+        }
+        for (const SnapPoint& target : targets) {
+            const double factor = (target.position[a] - anchor[a]) / way[a];
+            if (!(factor > 0.0)) {
+                continue;
+            }
+            const double miss = std::abs(factor - wanted) * std::abs(way[a]) / reach[a];
+            if (miss > 1.0) {
+                continue;
+            }
+            const Vec3 corner = add(anchor, scaled(way, factor));
+            const bool onPoint = std::abs(corner[0] - target.position[0]) <= kOnPoint &&
+                                 std::abs(corner[1] - target.position[1]) <= kOnPoint &&
+                                 std::abs(corner[2] - target.position[2]) <= kOnPoint;
+            // A point beats a line-up; then the nearest; of equal ones the better kind of point.
+            bool better = best.target == nullptr || (onPoint && !best.onPoint);
+            if (!better && onPoint == best.onPoint) {
+                better = miss < best.miss - 1e-9 ||
+                         (std::abs(miss - best.miss) <= 1e-9 && target.kind < best.target->kind);
+            }
+            if (better) {
+                best = {factor, miss, a, &target, onPoint};
+            }
+        }
+    }
+    if (best.target == nullptr) {
+        return std::nullopt;
+    }
+    ScaleCatch caught;
+    caught.factor = best.factor;
+    caught.result.offset = scaled(way, best.factor - 1.0);
+    SnapMatch match;
+    match.mover = {add(anchor, scaled(way, best.factor)), SnapKind::corner};
+    match.target = *best.target;
+    if (best.onPoint) {
+        for (auto& axis : caught.result.axes) {
+            axis = match;
+        }
+    } else {
+        caught.result.axes[best.axis] = match;
+    }
+    return caught;
 }
 
 } // namespace fission::interaction

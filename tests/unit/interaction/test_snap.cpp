@@ -178,3 +178,77 @@ TEST_CASE("snap grid on the bed: the lines are never closer than 8 pixels", "[sn
     CHECK(snapGridDisplayStep(0.5, 10.0) == Approx(1.0));
     CHECK(snapGridDisplayStep(10.0, 10.0) == Approx(10.0));
 }
+
+TEST_CASE("snap points of one side of a box: 4 corners, 4 edge middles, the middle", "[snap]") {
+    const auto points = snapPointsOfBoxSide({0, 0, 0}, {10, 20, 30}, 0, true);
+    REQUIRE(points.size() == 9);
+    for (const SnapPoint& p : points) {
+        CHECK(p.position[0] == Approx(10.0)); // all on the side across X, the one at x = 10
+    }
+    CHECK(countOf(points, SnapKind::corner) == 4);
+    CHECK(countOf(points, SnapKind::edgeMiddle) == 4);
+    CHECK(countOf(points, SnapKind::faceMiddle) == 1);
+    CHECK(has(points, SnapKind::faceMiddle, {10, 10, 15}));
+    CHECK(has(points, SnapKind::corner, {10, 20, 0}));
+    CHECK(has(points, SnapKind::edgeMiddle, {10, 0, 15}));
+
+    // The lower side across Z: the underside of a shape.
+    const auto under = snapPointsOfBoxSide({-5, -5, 0}, {5, 5, 8}, 2, false);
+    REQUIRE(under.size() == 9);
+    CHECK(has(under, SnapKind::faceMiddle, {0, 0, 0}));
+    CHECK(has(under, SnapKind::corner, {-5, 5, 0}));
+}
+
+TEST_CASE("snap scale: the corner catches on a corner of another box", "[snap]") {
+    // The corner held (10, 10, 10) grows from the anchor (0, 0, 0); another box has a corner at
+    // (20, 20, 20), twice as far out.
+    const auto targets = snapPointsOfBox({20, 20, 20}, {40, 40, 40});
+    const auto caught = snapScaleFactor({0, 0, 0}, {10, 10, 10}, 1.97, targets, {1.0, 1.0, 1.0});
+    REQUIRE(caught.has_value());
+    CHECK(caught->factor == 2.0); // exactly, not 1.97 and not a whole percent
+    for (const auto& axis : caught->result.axes) {
+        REQUIRE(axis.has_value());
+        CHECK(axis->onPoint());
+        CHECK(axis->target.position == Vec3{20, 20, 20});
+        CHECK(axis->mover.position == Vec3{20, 20, 20});
+    }
+}
+
+TEST_CASE("snap scale: out of reach the factor stays as wished", "[snap]") {
+    const auto targets = snapPointsOfBox({20, 20, 20}, {40, 40, 40});
+    CHECK_FALSE(snapScaleFactor({0, 0, 0}, {10, 10, 10}, 1.5, targets, {1.0, 1.0, 1.0}));
+    // A wish just outside the reach (1 mm = 0.1 of the factor here) does not catch either.
+    CHECK_FALSE(snapScaleFactor({0, 0, 0}, {10, 10, 10}, 1.85, targets, {1.0, 1.0, 1.0}));
+}
+
+TEST_CASE("snap scale: a catch on one axis only", "[snap]") {
+    // The other box stands at x = 20 only: the corner lines up with it in X, and not on a point.
+    const auto targets = snapPointsOfBox({20, 50, 50}, {40, 70, 70});
+    const auto caught = snapScaleFactor({0, 0, 0}, {10, 10, 10}, 1.96, targets, {1.0, 1.0, 1.0});
+    REQUIRE(caught.has_value());
+    CHECK(caught->factor == Approx(2.0));
+    REQUIRE(caught->result.axes[0].has_value());
+    CHECK_FALSE(caught->result.axes[1].has_value());
+    CHECK_FALSE(caught->result.axes[2].has_value());
+    CHECK_FALSE(caught->result.axes[0]->onPoint());
+    CHECK(caught->result.axes[0]->mover.position[0] == Approx(20.0));
+}
+
+TEST_CASE("snap scale: a point wins over a line-up that is nearer", "[snap]") {
+    // x = 19.8 lines up (factor 1.98), a corner at (20, 20, 20) is a point at factor 2.
+    std::vector<SnapPoint> targets = snapPointsOfBox({19.8, 90, 90}, {30, 100, 100});
+    const auto onPoint = snapPointsOfBox({20, 20, 20}, {40, 40, 40});
+    targets.insert(targets.end(), onPoint.begin(), onPoint.end());
+    const auto caught = snapScaleFactor({0, 0, 0}, {10, 10, 10}, 1.98, targets, {1.0, 1.0, 1.0});
+    REQUIRE(caught.has_value());
+    CHECK(caught->factor == 2.0);
+    CHECK(caught->result.axes[1].has_value());
+}
+
+TEST_CASE("snap scale: a flat body catches on the axes it has", "[snap]") {
+    // A plate with no height: only X and Y have a diagonal; Z has none to catch on.
+    const auto targets = snapPointsOfBox({20, 20, 0}, {40, 40, 10});
+    const auto caught = snapScaleFactor({0, 0, 0}, {10, 10, 0}, 2.04, targets, {1.0, 1.0, 1.0});
+    REQUIRE(caught.has_value());
+    CHECK(caught->factor == 2.0);
+}
