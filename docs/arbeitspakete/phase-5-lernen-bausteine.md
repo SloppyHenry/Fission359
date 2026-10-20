@@ -8,6 +8,7 @@
 
 ### AP-5.1 Missions-Engine und erste Missionen
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-1.12
+**Bauanleitung:** [anleitungen/AP-5.1.md](anleitungen/AP-5.1.md)
 
 **Umfang:**
 - Missionen als Datendateien (JSON/YAML): Schritte mit Text, Hervorhebung (UI-Element oder 3D-Element), **Bedingung auf dem echten Dokumentzustand** (z. B. `body.count == 1 && box.width ≈ 50`), Hilfe-Animation, Belohnung
@@ -23,6 +24,7 @@
 
 ### AP-5.2 Tooltip-Animationen und „Zeig mir wie“
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.12
+**Bauanleitung:** [anleitungen/AP-5.2.md](anleitungen/AP-5.2.md)
 
 **Umfang:**
 - Kurze Loop-Animationen (3–5 s) je Werkzeug, erzeugt per Skript direkt aus der App (Aufnahme-Modus), damit sie bei UI-Änderungen neu generiert werden können
@@ -35,6 +37,7 @@
 
 ### AP-5.3 Bausteine-Bibliothek
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-2.9, AP-2.10
+**Bauanleitung:** [anleitungen/AP-5.3.md](anleitungen/AP-5.3.md)
 
 **Umfang:**
 - Baustein = gespeichertes Teil-Rezept mit freigegebenen Maßen und **Andockpunkten** (z. B. „auf Fläche, Mitte“, „an Kante“)
@@ -49,6 +52,7 @@
 
 ### AP-5.4 Startbildschirm „Was möchtest du bauen?“
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-5.3, AP-5.8
+**Bauanleitung:** [anleitungen/AP-5.4.md](anleitungen/AP-5.4.md)
 
 **Umfang:**
 - Kacheln: Karte, Vase/Gefäß, Figur, Christbaumschmuck, Schild, Halterung, Box, Ersatzteil, Leer
@@ -64,6 +68,7 @@
 
 ### AP-5.5 Materialien, Darstellung und Teilen
 **Status:** offen · **Größe:** S · **Abhängigkeiten:** AP-1.3
+**Bauanleitung:** [anleitungen/AP-5.5.md](anleitungen/AP-5.5.md)
 
 **Umfang:**
 - Darstellungsmaterialien passend zu Filamenten (PLA matt, Silk, PETG glänzend, transparent, Marmor, Holz-PLA)
@@ -73,6 +78,7 @@
 
 ### AP-5.6 Barrierefreiheit und Tastatur
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.11
+**Bauanleitung:** [anleitungen/AP-5.6.md](anleitungen/AP-5.6.md)
 
 **Umfang:**
 - Umsetzung von [UX §14](../02-ux-konzept.md#14-barrierefreiheit); Tastenkürzel-Übersicht (`?`) und frei belegbare Kürzel
@@ -85,6 +91,7 @@
 
 ### AP-5.7 Versionsverlauf („Zeitreise“) und Varianten
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.10
+**Bauanleitung:** [anleitungen/AP-5.7.md](anleitungen/AP-5.7.md)
 
 **Umfang:**
 - Automatische Versionen beim Speichern (in der Datei oder daneben, Größe begrenzt), Liste mit Vorschaubildern, „Diese Version wiederherstellen“ / „Als Kopie öffnen“
@@ -101,6 +108,7 @@ Gestaltungsregeln, Schritte und Optionen stehen im Konzept [07-baukaesten.md](..
 
 ### AP-5.8 Baukasten-Engine
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-2.9, AP-5.3
+**Bauanleitung:** [anleitungen/AP-5.8.md](anleitungen/AP-5.8.md)
 
 **Umfang:**
 - Baukasten-Definition als Datendatei: Schritte → Optionsgruppen → Optionen → Abbildung auf Features, Parameter, Bausteine und Motive; Schema mit Validierung
@@ -121,6 +129,7 @@ Gestaltungsregeln, Schritte und Optionen stehen im Konzept [07-baukaesten.md](..
 
 ### AP-5.9 Motiv-Bibliothek
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-4.4, AP-4.5
+**Bauanleitung:** [anleitungen/AP-5.9.md](anleitungen/AP-5.9.md)
 
 **Umfang:**
 - Motivformat: SVG mit benannten Ebenen + Metadaten (Kategorie, Schlagwörter DE/EN, Autor, Quelle, Lizenz, Mindestgröße)
@@ -138,6 +147,7 @@ Gestaltungsregeln, Schritte und Optionen stehen im Konzept [07-baukaesten.md](..
 
 ### AP-5.10 Baukasten „Karten“
 **Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-5.8, AP-5.9, AP-3.4, AP-4.7
+**Bauanleitung:** [anleitungen/AP-5.10.md](anleitungen/AP-5.10.md)
 
 **Umfang:**
 - Schritte ① Format · ② Hintergrund · ③ Motive · ④ Text · ⑤ Feinschliff · ⑥ Drucken gemäß [07-baukaesten.md](../07-baukaesten.md#baukasten-1-karten)
@@ -155,6 +165,7 @@ Gestaltungsregeln, Schritte und Optionen stehen im Konzept [07-baukaesten.md](..
 
 ### AP-5.11 Baukasten „Vasen und Gefäße“
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-5.8, AP-4.8, AP-4.3, AP-4.7
+**Bauanleitung:** [anleitungen/AP-5.11.md](anleitungen/AP-5.11.md)
 
 **Umfang:**
 - Schritte ① Zweck und Größe · ② Silhouette · ③ Querschnitt · ④ Struktur · ⑤ Rand und Boden · ⑥ Drucken gemäß [07-baukaesten.md](../07-baukaesten.md#baukasten-2-vasen-und-gefäße)
@@ -171,6 +182,7 @@ Gestaltungsregeln, Schritte und Optionen stehen im Konzept [07-baukaesten.md](..
 
 ### AP-5.12 Baukasten „Figuren“
 **Status:** offen · **Größe:** XL · **Abhängigkeiten:** AP-5.8, AP-4.2, AP-5.3, AP-3.6, AP-3.7
+**Bauanleitung:** [anleitungen/AP-5.12.md](anleitungen/AP-5.12.md)
 
 > Vor dem Start zerlegen (Figuren-Gerüst-Format, Proportions-Regler, Gesichter/Zubehör, Sockel und Standfestigkeit, automatisches Zerlegen).
 
@@ -191,6 +203,7 @@ Gestaltungsregeln, Schritte und Optionen stehen im Konzept [07-baukaesten.md](..
 
 ### AP-5.13 Weitere Baukästen
 **Status:** offen · **Größe:** M je Baukasten · **Abhängigkeiten:** AP-5.8, AP-5.9
+**Bauanleitung:** [anleitungen/AP-5.13.md](anleitungen/AP-5.13.md)
 
 **Umfang:**
 - Reihenfolge nach Nutzerfeedback aus den Baukästen 1–3: Christbaumschmuck und Anhänger, Windlicht und Lampenschirm, Namens- und Türschilder, Ausstechformen und Stempel, Schmuck, Untersetzer und Schalen, Boxen (siehe [07-baukaesten.md](../07-baukaesten.md#weitere-baukästen-nach-den-ersten-drei))

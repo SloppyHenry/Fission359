@@ -92,6 +92,7 @@ Wertblase, Tippen ersetzt Ziehen, `Tab`, Esc. Ablauf D Schritt 1 automatisch gr�
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
 **Status:** Review (1.6a, 1.6b, 1.6c1 erledigt; 1.6c2, 1.6d, 1.6e warten auf Test durch den Product Owner) · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Bauanleitungen:** [1.6c2](anleitungen/AP-1.6c2.md) · [1.6d](anleitungen/AP-1.6d.md) · [1.6e](anleitungen/AP-1.6e.md) · Pflege und Folgearbeiten: [pflege.md](anleitungen/pflege.md)
 
 **Umfang:**
 - Gizmo: Verschieben (Achsen und Ebenen), Drehen (Ringe), **proportional** Vergrößern/Verkleinern (Eck-Griff oder Prozentangabe; der Eck-Griff ist immer gleichmäßig)
@@ -165,6 +166,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 
 ### AP-1.7 Kombinieren
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.5
+**Bauanleitung:** [anleitungen/AP-1.7.md](anleitungen/AP-1.7.md)
 
 **Umfang:**
 - Vereinen, Ausschneiden, Überlappung behalten, Teilen (an Ebene oder Fläche)
@@ -185,6 +187,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 
 ### AP-1.8 Eigenschaften-Panel und Werteingabe
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.1
+**Bauanleitung:** [anleitungen/AP-1.8.md](anleitungen/AP-1.8.md)
 
 **Umfang:**
 - Kontextabhängiges Panel: Was ist ausgewählt, welche Werte sind änderbar; „▸ Mehr“ für Seltenes
@@ -200,6 +203,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 
 ### AP-1.9 Rezept-Panel (Version 1)
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.2, AP-1.8
+**Bauanleitung:** [anleitungen/AP-1.9.md](anleitungen/AP-1.9.md)
 
 **Umfang:**
 - Liste der Features als Sätze (aus `describe()`), Symbol, Status-Badge
@@ -216,6 +220,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 
 ### AP-1.10 Dateien: Speichern, Laden, Autosave, Import und Export
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.1
+**Bauanleitung:** [anleitungen/AP-1.10.md](anleitungen/AP-1.10.md)
 
 **Umfang:**
 - `.fission`-Format gemäß [Architektur §7](../03-architektur.md#7-dateiformat-fission) inkl. Vorschaubild
@@ -233,6 +238,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 
 ### AP-1.11 App-Shell, Einstellungen, Sprachen
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-0.8
+**Bauanleitung:** [anleitungen/AP-1.11.md](anleitungen/AP-1.11.md)
 
 **Umfang:**
 - Native Menüs (macOS-Menüleiste, Linux-Fenstermenü), Tastenkürzel-Konzept (plattformgerecht)
@@ -253,6 +259,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 
 ### AP-1.12 Hinweis-System und Befehlssuche
 **Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.11
+**Bauanleitung:** [anleitungen/AP-1.12.md](anleitungen/AP-1.12.md)
 
 **Umfang:**
 - Hinweiszeile: Jedes Werkzeug und jeder Zustand liefert einen Satz („Klicke auf eine Fläche …“)
@@ -268,6 +275,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 
 ### AP-1.13 Nutzertest 1
 **Status:** offen · **Größe:** S · **Abhängigkeiten:** alle APs der Phase 1
+**Bauanleitung:** [anleitungen/AP-1.13.md](anleitungen/AP-1.13.md)
 
 **Umfang:**
 - 5 Personen ohne CAD-Erfahrung (davon 2 Tinkercad-Nutzer): Aufgabe „Schlüsselanhänger mit deinem Namen“, Think-Aloud, Bildschirmaufnahme, SUS-Fragebogen
