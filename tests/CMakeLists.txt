@@ -258,7 +258,7 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
   add_test(NAME app_snap_drop
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-snap-drop.png" --language en --size 1280x800
-            --camera=0,30,160 --simulate "grid:3;drop:box,462,312;near:x,20;near:y,0")
+            --camera=0,30,160 --simulate "grid:3;drop:box,462,312;near:x,20")
   set_tests_properties(app_snap_drop PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_snap_drop_off
