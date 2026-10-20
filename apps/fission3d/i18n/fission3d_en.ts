@@ -275,7 +275,7 @@
         </translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+21"/>
         <source>Visibility: %1</source>
         <translation>Visibility: %1</translation>
     </message>
@@ -987,8 +987,33 @@
         <source>Text “%1”, letters %2 mm, height %3 mm</source>
         <translation>Text “%1”, letters %2 mm, height %3 mm</translation>
     </message>
+    <message numerus="yes">
+        <location line="+4"/>
+        <location line="+30"/>
+        <source>Cut out %n body(ies)</source>
+        <translation>
+            <numerusform>Cut out %n body</numerusform>
+            <numerusform>Cut out %n bodies</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="-29"/>
+        <source>Overlap kept with %n body(ies)</source>
+        <translation>
+            <numerusform>Overlap kept with %n body</numerusform>
+            <numerusform>Overlap kept with %n bodies</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>Merged with %n body(ies)</source>
+        <translation>
+            <numerusform>Merged with %n body</numerusform>
+            <numerusform>Merged with %n bodies</numerusform>
+        </translation>
+    </message>
     <message>
-        <location line="+12"/>
+        <location line="+13"/>
         <source>%1 added</source>
         <translation>%1 added</translation>
     </message>
@@ -1047,8 +1072,24 @@
         <source>%1 laid on a face</source>
         <translation>%1 laid on a face</translation>
     </message>
-    <message>
+    <message numerus="yes">
+        <location line="+4"/>
+        <source>Overlap of %n body(ies) kept</source>
+        <translation>
+            <numerusform>Overlap of %n body kept</numerusform>
+            <numerusform>Overlap of %n bodies kept</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <location line="+1"/>
+        <source>%n body(ies) merged</source>
+        <translation>
+            <numerusform>%n body merged</numerusform>
+            <numerusform>%n bodies merged</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>%1 pasted</source>
         <translation>%1 pasted</translation>
     </message>
@@ -1218,7 +1259,7 @@
         <translation>This shape could not be built.</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+34"/>
         <source>Face of %1</source>
         <translation>Face of %1</translation>
     </message>
@@ -1267,7 +1308,7 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-310"/>
+        <location line="-325"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>

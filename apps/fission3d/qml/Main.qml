@@ -833,6 +833,13 @@ Window {
                 ? qsTr("Text “%1” (%2), letters %3 mm, height %4 mm").arg(step.texts.text).arg(styleLabel(style)).arg(n(v[0])).arg(n(v[1]))
                 : qsTr("Text “%1”, letters %2 mm, height %3 mm").arg(step.texts.text).arg(n(v[0])).arg(n(v[1]))
         }
+        if (step.type === "combine" && v.length === 1) {
+            switch (step.texts.mode) {
+            case "subtract": return qsTr("Cut out %n body(ies)", "", v[0])
+            case "intersect": return qsTr("Overlap kept with %n body(ies)", "", v[0])
+            default: return qsTr("Merged with %n body(ies)", "", v[0])
+            }
+        }
         return typeLabel(step.type)
     }
 
@@ -856,6 +863,12 @@ Window {
         case "dropBody": return step.count === "1" ? qsTr("%1 dropped to the bed").arg(body) : qsTr("Bodies dropped to the bed")
         case "alignBodies": return qsTr("Bodies aligned")
         case "seatBody": return qsTr("%1 laid on a face").arg(body)
+        case "combineBodies":
+            switch (step.mode) {
+            case "subtract": return qsTr("Cut out %n body(ies)", "", Number(step.count) - 1)
+            case "intersect": return qsTr("Overlap of %n body(ies) kept", "", Number(step.count))
+            default: return qsTr("%n body(ies) merged", "", Number(step.count))
+            }
         case "pasteBodies": return step.count === "1" ? qsTr("%1 pasted").arg(typeLabel(step.type)) : qsTr("Bodies pasted")
         case "scaleBody":
             return Number(step.value) < 100
@@ -945,6 +958,8 @@ Window {
         color: body.color,
         visible: body.visible,
         hole: body.hole,
+        consumed: body.consumed,
+        cut: body.cut,
         chosen: chosenBodyIndexes.indexOf(body.index) >= 0
     }))
 

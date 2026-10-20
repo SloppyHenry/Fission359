@@ -227,6 +227,11 @@ public:
     Q_INVOKABLE QStringList pasteBodies();
     /// Copies and pastes in one go: the copy lies 10 mm to the side and to the back.
     Q_INVOKABLE QStringList duplicateBodies(const QStringList& bodyIds);
+    /// Combines bodies in one step (ADR-0011): `mode` is merge | subtract | intersect, the first
+    /// body is the target, the others are the tools. The result has the target's name and colour.
+    /// Returns the id of the result; empty when it cannot be done (fewer than two bodies, a body
+    /// that does not exist or is part of another result already).
+    Q_INVOKABLE QString combineBodies(const QStringList& bodyIds, const QString& mode);
     bool canPaste() const noexcept { return !m_clipboard.empty(); }
     /// How far (mm) a copy lies from the original, in x and in y.
     static constexpr double kPasteOffset = 10.0;

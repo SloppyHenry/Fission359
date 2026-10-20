@@ -73,6 +73,11 @@ public:
         ++builds;
         return inner_->makeCylinder(radius, height, base);
     }
+    fission::geo::NamedSolid
+    boolean(fission::geo::BooleanOp op, const fission::geo::NamedSolid& target,
+            const std::vector<fission::geo::NamedSolid>& tools) const override {
+        return inner_->boolean(op, target, tools);
+    }
     fission::geo::SolidReport measure(const fission::geo::Solid& solid) const override {
         return inner_->measure(solid);
     }
@@ -436,4 +441,68 @@ TEST_CASE("quick changes never take a body out of the view", "[ui][document-mode
     REQUIRE(f.model->elementNames() != nullptr);
     CHECK(f.model->elementNames()->size() == 1);
     CHECK(extentOf(*f.model->scene()).maxX == Approx(40.0));
+}
+
+TEST_CASE("combining: parts of a result leave the list, tools of a cut stay as ghosts",
+          "[ui][document-model][combine]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->waitForCalculation();
+    REQUIRE(f.model->scene()->bodies.size() == 2);
+
+    const QString box = f.model->bodyIdAt(0);
+    const QString pin = f.model->bodyIdAt(1);
+    const QString cut = f.model->combineBodies({box, pin}, "subtract");
+    REQUIRE_FALSE(cut.isEmpty());
+    f.model->waitForCalculation();
+
+    // The box is part of the result now; the cylinder stays, as a ghost.
+    const QVariantList bodies = f.model->bodies();
+    REQUIRE(bodies.size() == 3);
+    CHECK(bodies.at(0).toMap()["consumed"].toBool());
+    CHECK_FALSE(bodies.at(1).toMap()["consumed"].toBool());
+    CHECK_FALSE(bodies.at(2).toMap()["consumed"].toBool());
+    CHECK(bodies.at(2).toMap()["cut"].toBool());
+    CHECK_FALSE(bodies.at(0).toMap()["cut"].toBool());
+
+    REQUIRE(f.model->scene()->bodies.size() == 2);
+    CHECK(f.model->scene()->bodies[0].id == pin.toStdString());
+    CHECK(f.model->scene()->bodies[0].color.alpha() < 255);
+    CHECK(f.model->scene()->bodies[1].id == cut.toStdString());
+    CHECK(f.model->scene()->bodies[1].color.alpha() == 255);
+
+    // The recipe says what happened, and the step is one entry in "last actions".
+    CHECK(f.model->recipe().size() == 3);
+    CHECK(f.step(2)["type"].toString() == "combine");
+    CHECK(f.step(2)["state"].toString() == "ok");
+    CHECK(f.step(2)["values"].toList().at(0).toDouble() == Approx(1.0));
+    CHECK(f.model->nextUndo()["key"].toString() == "combineBodies");
+
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->scene()->bodies.size() == 2);
+    CHECK_FALSE(f.model->bodies().at(0).toMap()["consumed"].toBool());
+    CHECK(f.model->recipe().size() == 2);
+}
+
+TEST_CASE("combining: merged bodies all leave the list, bad requests do nothing",
+          "[ui][document-model][combine]") {
+    Fixture f;
+    f.model->addShape("cylinder", false);
+    f.model->waitForCalculation();
+    const QString box = f.model->bodyIdAt(0);
+    const QString pin = f.model->bodyIdAt(1);
+
+    CHECK(f.model->combineBodies({box}, "merge").isEmpty());
+    CHECK(f.model->combineBodies({box, pin}, "glue").isEmpty());
+    CHECK(f.model->combineBodies({box, "nobody"}, "merge").isEmpty());
+    CHECK(f.model->recipe().size() == 2);
+
+    const QString merged = f.model->combineBodies({box, pin}, "merge");
+    REQUIRE_FALSE(merged.isEmpty());
+    f.model->waitForCalculation();
+    REQUIRE(f.model->scene()->bodies.size() == 1);
+    CHECK(f.model->scene()->bodies[0].id == merged.toStdString());
+    // A body that is part of a result cannot be combined again.
+    CHECK(f.model->combineBodies({box, pin}, "merge").isEmpty());
 }

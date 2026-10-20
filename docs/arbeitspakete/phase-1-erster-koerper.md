@@ -164,7 +164,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.7 Kombinieren
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.5
+**Status:** in Arbeit (1.7a in Review, 2026-10-20; ADR-0011 angenommen) · **Größe:** M · **Abhängigkeiten:** AP-1.5
 
 **Umfang:**
 - Vereinen, Ausschneiden, Überlappung behalten, Teilen (an Ebene oder Fläche)

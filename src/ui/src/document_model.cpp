@@ -174,6 +174,37 @@ constexpr int kHoleAlpha = 110;
 const PrinterProfile& generic() {
     return printerCatalog().front();
 }
+
+// How a body takes part in the recipe once steps combine bodies (ADR-0011).
+struct BodyPart {
+    bool consumed = false;  ///< Part of another body's result: not shown as a body of its own.
+    bool toolGhost = false; ///< A tool of a subtract: stays a ghost, still within reach.
+    bool cut = false; ///< Its result had something cut out of it (the symbol behind its name).
+};
+
+// The word "mode" of a combine step, empty for any other step.
+std::string combineMode(const core::Feature* step) {
+    if (step == nullptr || step->type != "combine") {
+        return {};
+    }
+    const auto mode = step->texts.find("mode");
+    return mode != step->texts.end() ? mode->second : std::string();
+}
+
+BodyPart partOf(const core::Document& document, const core::Body& body) {
+    BodyPart part;
+    if (const auto consumer = document.consumerOf(body.id)) {
+        const core::Feature* step = document.findFeature(*consumer);
+        const bool isTool = !step->inputs.empty() && step->inputs.front() != body.id;
+        if (isTool && combineMode(step) == "subtract") {
+            part.toolGhost = true;
+        } else {
+            part.consumed = true;
+        }
+    }
+    part.cut = combineMode(document.findFeature(body.createdBy)) == "subtract";
+    return part;
+}
 } // namespace
 
 QString DocumentModel::printerName() const {
@@ -430,7 +461,8 @@ void DocumentModel::rebuildScene() {
         const std::lock_guard lock(m_meshMutex);
         for (const core::Body& body : m_history.document().bodies()) {
             const auto made = m_result->bodies.find(body.id);
-            if (!body.visible || made == m_result->bodies.end()) {
+            const BodyPart part = partOf(m_history.document(), body);
+            if (!body.visible || made == m_result->bodies.end() || part.consumed) {
                 continue;
             }
             const std::uint64_t key = meshKey(made->second);
@@ -450,7 +482,7 @@ void DocumentModel::rebuildScene() {
                 drawn.meshVersion = key * 16;
             }
             drawn.color = QColor(body.color.red, body.color.green, body.color.blue);
-            if (body.hole) {
+            if (body.hole || part.toolGhost) {
                 drawn.color.setAlpha(kHoleAlpha); // a ghost: it is a tool, not a part
             }
             scene->bodies.push_back(std::move(drawn));
@@ -518,6 +550,9 @@ void DocumentModel::rebuildLists() {
             QColor(body.color.red, body.color.green, body.color.blue).name();
         entry[QStringLiteral("visible")] = body.visible;
         entry[QStringLiteral("hole")] = body.hole;
+        const BodyPart part = partOf(m_history.document(), body);
+        entry[QStringLiteral("consumed")] = part.consumed; // part of a result: not listed
+        entry[QStringLiteral("cut")] = part.cut;
         bodies.push_back(entry);
     }
     m_bodies = bodies;
@@ -1582,6 +1617,50 @@ QStringList DocumentModel::pasteBodies() {
     }
     emit historyChanged();
     return created;
+}
+
+QString DocumentModel::combineBodies(const QStringList& bodyIds, const QString& mode) {
+    if (bodyIds.size() < 2 ||
+        (mode != QLatin1String("merge") && mode != QLatin1String("subtract") &&
+         mode != QLatin1String("intersect"))) {
+        return {};
+    }
+    std::vector<core::BodyId> inputs;
+    for (const QString& id : bodyIds) {
+        const core::Body* body = findBody(id);
+        if (body == nullptr || std::find(inputs.begin(), inputs.end(), body->id) != inputs.end() ||
+            m_history.document().consumerOf(body->id)) {
+            return {};
+        }
+        inputs.push_back(body->id);
+    }
+    const core::Body target = *findBody(bodyIds.front());
+
+    core::FeatureDraft draft;
+    draft.type = "combine";
+    draft.typeVersion = 1;
+    draft.texts["mode"] = mode.toStdString();
+    draft.inputs = std::move(inputs);
+    draft.newBodies = 1;
+
+    m_history.beginTransaction(
+        {"combineBodies",
+         {{"mode", mode.toStdString()}, {"count", std::to_string(bodyIds.size())}}});
+    const auto id = m_history.addFeature(std::move(draft));
+    const core::Feature* feature = id ? m_history.document().findFeature(*id) : nullptr;
+    if (feature == nullptr || feature->outputs.empty()) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    const core::BodyId result = feature->outputs.front();
+    if (!target.name.empty()) {
+        m_history.execute(core::makeSetBodyName(result, target.name));
+    }
+    m_history.execute(core::makeSetBodyColor(result, target.color));
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return toQString(result.value);
 }
 
 QStringList DocumentModel::duplicateBodies(const QStringList& bodyIds) {

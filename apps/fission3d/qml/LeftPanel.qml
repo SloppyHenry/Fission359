@@ -179,11 +179,11 @@ Rectangle {
                 spacing: 1
 
                 TreeRow {
-                    visible: root.bodies.length > 0
+                    visible: root.bodies.filter(body => !body.consumed).length > 0
                     group: true
                     iconName: "folder"
                     text: root.documentName
-                    count: qsTr("%n body(ies)", "", root.bodies.length)
+                    count: qsTr("%n body(ies)", "", root.bodies.filter(body => !body.consumed).length)
                     hasEye: false
                 }
 
@@ -194,7 +194,11 @@ Rectangle {
                         required property var modelData
                         required property int index
 
+                        // A body that is part of a result is not a body of its own (hidden, its
+                        // position in the list stays the position in the document).
+                        visible: !modelData.consumed
                         child: true
+                        cut: modelData.cut === true
                         selected: modelData.chosen
                         swatch: modelData.color
                         hole: modelData.hole === true
@@ -207,7 +211,7 @@ Rectangle {
                 }
 
                 Txt {
-                    visible: root.bodies.length === 0
+                    visible: root.bodies.filter(body => !body.consumed).length === 0
                     width: parent.width
                     leftPadding: 8
                     rightPadding: 8
