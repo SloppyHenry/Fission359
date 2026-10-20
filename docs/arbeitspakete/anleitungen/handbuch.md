@@ -24,11 +24,13 @@ Auf kleinen oder geteilten Rechnern: `FISSION_JOBS=2 nice -n 19 scripts/test`.
 
 ## §2 Arbeitskopie, Branch, Commits, PR
 
-1. Nie im Hauptordner arbeiten (dort laufen evtl. andere Sitzungen). Eigene Arbeitskopie:
+1. Ablage: `~/Projekte/Fission3D/` ist der Projektordner. Darin liegt der Hauptordner `Fission3D/` (das Repo) und daneben je Arbeitspaket eine
+   Arbeitskopie `Fission3D-<ap>/`. Nie im Hauptordner arbeiten (dort laufen evtl. andere Sitzungen). Eigene Arbeitskopie:
    ```sh
-   git -C ~/Fission3D fetch
-   git -C ~/Fission3D worktree add ../Fission3D-<ap> -b <branch> origin/main
-   git -C ../Fission3D-<ap> branch --show-current   # muss <branch> sein
+   cd ~/Projekte/Fission3D
+   git -C Fission3D fetch
+   git -C Fission3D worktree add ../Fission3D-<ap> -b <branch> origin/main   # landet in ~/Projekte/Fission3D/Fission3D-<ap>
+   git -C Fission3D-<ap> branch --show-current                               # muss <branch> sein
    ```
    Branch-Namen: `ap-1.6c2-fangen-griffe`, `ap-1.7a-ausschneiden` usw. Die Arbeitskopie nutzt die Bibliotheken des Hauptordners
    automatisch (`.vcpkg`), das erste Konfigurieren dauert trotzdem einige Minuten.
@@ -37,7 +39,7 @@ Auf kleinen oder geteilten Rechnern: `FISSION_JOBS=2 nice -n 19 scripts/test`.
 3. Je Teilpaket **ein PR** gegen `main`. PR-Beschreibung (Deutsch, Alltagssprache): Was kann man jetzt? · So probierst du es aus
    (3–6 Schritte, beginnend mit `scripts/run --release` **aus welchem Ordner**) · Wie getestet · Annahmen · Bekannte Einschränkungen.
 4. Gemergt wird erst, wenn die CI grün ist **und** der Product Owner es ausprobiert und freigegeben hat. Danach Arbeitskopie
-   entfernen: `git -C ~/Fission3D worktree remove ../Fission3D-<ap>` und `git branch -d <branch>`.
+   entfernen: `git -C ~/Projekte/Fission3D/Fission3D worktree remove ../Fission3D-<ap>` und `git -C ~/Projekte/Fission3D/Fission3D branch -d <branch>`.
 
 ## §3 Wo was hingehört (Schichten)
 
