@@ -20,7 +20,7 @@ Ausführliche Abschlussvermerke dieser Phase stehen im Git-Verlauf (vor 2026-10-
 ---
 
 ### AP-0.2 Abhängigkeiten
-**Status:** Review · **Größe:** M · **Abhängigkeiten:** AP-0.1
+**Status:** erledigt (2026-10-20, vom Product Owner bestätigt) · **Größe:** M · **Abhängigkeiten:** AP-0.1
 
 **Ergebnis:** `vcpkg.json` mit fester Baseline (OCCT 8.0.1, Manifold, Eigen 5, lib3mf, nlohmann-json, spdlog, minizip-ng, stb, nanosvg,
 Boost.Graph, Catch2, Feature `qt`). Qt hybrid (`FISSION_QT_SOURCE=auto|system|vcpkg`), Host- = Ziel-Triplet (sonst baut vcpkg Qt
@@ -33,7 +33,7 @@ doppelt). PlaneGCS aus FreeCAD 1.1.4 in `third_party/planegcs`. Lizenzprüfung `
 ---
 
 ### AP-0.3 CI-Pipeline
-**Status:** Review · **Größe:** M · **Abhängigkeiten:** AP-0.2
+**Status:** erledigt (2026-10-20, vom Product Owner bestätigt) · **Größe:** M · **Abhängigkeiten:** AP-0.2
 
 **Ergebnis:** `.github/workflows/ci.yml`: Checks (clang-format 21, SPDX, Schichten, Lizenzen) → Libraries (Cache füllen) → Build (macOS
 arm64 + Ubuntu 24.04, `debug-asan` + `release`). Cache nur auf `main`, wöchentlicher Lauf hält ihn warm. Kalt ca. 2 h, warm ca. 3½ min.
@@ -51,7 +51,7 @@ OpenGL-unabhängig, headless testbar und gibt volle Kontrolle über die Optik. P
 ---
 
 ### AP-0.5 Spike: Kernel-Robustheit
-**Status:** Review · **Größe:** M · **Abhängigkeiten:** AP-0.2
+**Status:** erledigt (2026-10-20, vom Product Owner bestätigt) · **Größe:** M · **Abhängigkeiten:** AP-0.2
 
 **Ergebnis:** 42 Konstruktionsfälle als Golden-Tests in `tests/geometry/`, gleiche Ergebnisse auf Mac und Linux. Befunde:
 (1) Aushöhlen gerundeter Quader liefert still falsche Körper; Gültigkeit allein reicht als Prüfung nicht. (2) Fast bündige Flächen
@@ -63,7 +63,7 @@ Plausibilitätsprüfung (Volumen, Flächen-/Körperzahl) einplanen.
 ---
 
 ### AP-0.6 Spike: Persistente Referenzen (Topological Naming)
-**Status:** Review · **Größe:** L · **Abhängigkeiten:** AP-0.5
+**Status:** erledigt (2026-10-20, vom Product Owner bestätigt) · **Größe:** L · **Abhängigkeiten:** AP-0.5
 
 **Ergebnis:** Prototyp in `tests/naming/`; ADR-0003 angenommen (nur strikter Modus, eigene Namensschicht auf der Kernel-Historie, kein
 OCAF). 0 stille Fehlzuordnungen bei 1 494 Zufallsverweisen. Das Gedächtnis für verbrauchte Elemente ist nötig (ohne es 8 stille Fehler);
@@ -86,7 +86,7 @@ Flathub-tauglich). `scripts/package`, CI-Job „Package“. Ubuntu 22.04 entfäl
 ---
 
 ### AP-0.8 App-Gerüst mit Würfel
-**Status:** Review · **Größe:** S · **Abhängigkeiten:** AP-0.4, AP-0.7
+**Status:** erledigt (2026-10-20, vom Product Owner bestätigt) · **Größe:** S · **Abhängigkeiten:** AP-0.4, AP-0.7
 
 **Ergebnis:** Fenster nach Mockup und [08-gestaltung.md](../08-gestaltung.md); Menüs auf dem Mac in der System-Menüleiste, unter Linux im
 Fenster. RHI-Renderer (Bett, Schatten, Kanten, Kamera, Ansichtswürfel), Theme-Tokens in C++, `NumberField.qml`, `qsTr` mit
