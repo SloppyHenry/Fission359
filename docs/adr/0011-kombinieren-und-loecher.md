@@ -1,6 +1,6 @@
 # ADR-0011: Kombinieren und Löcher ohne Gruppieren
 
-- **Status:** vorgeschlagen (wartet auf Freigabe durch den Product Owner)
+- **Status:** angenommen (Product Owner, 2026-10-20)
 - **Datum:** 2026-10-20
 - **Arbeitspaket:** AP-1.7
 
@@ -34,7 +34,8 @@ Rahmen:
 Wir wählen **Option A**:
 
 1. **Ein Typ `combine`** mit dem Wort `mode` (`merge` | `subtract` | `intersect`). `inputs[0]` = Ziel, `inputs[1..]` = Werkzeuge. Ausgang:
-   **ein** neuer Körper (das Ergebnis). Name, Farbe und Sichtbarkeit übernimmt er vom Ziel; im Rezept steht
+   **ein** neuer Körper (das Ergebnis). Name, Farbe und Sichtbarkeit übernimmt er vom Ziel. **Der Name ändert sich nicht**;
+   ein kleines Symbol hinter dem Namen (Körperliste, Rezept) zeigt, dass der Körper ausgeschnitten wurde. Im Rezept steht
    „Quader 1: 2 Löcher ausgeschnitten“.
 2. **„Verbraucht“ wird abgeleitet, nicht gespeichert:** `Document::consumerOf(BodyId) → optional<FeatureId>`. Verbrauchte Körper
    erscheinen nicht mehr als eigene Körper (Liste, Ansicht, Auswahl). **Ausnahme:** Werkzeuge eines `subtract` bleiben als Geist
