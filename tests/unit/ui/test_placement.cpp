@@ -528,10 +528,13 @@ TEST_CASE("snap: with Shift a shape put down follows the pointer freely", "[ui][
     Beside f;
     SnapOff off;
     const std::string id = f.putDown(0.4);
+    REQUIRE_FALSE(id.empty());
+    f.refresh(); // the shape that follows is in the scene (as in the tests above)
     CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::placement).empty());
     REQUIRE(f.placement->finish());
     f.refresh();
     const Box3 box = extentOf(*f.model->scene(), id);
+    INFO("bodies in the scene: " << f.model->scene()->bodies.size() << ", id " << id);
     CHECK(box.minX == Approx(10.75).margin(0.01)); // where the pointer was
 }
 
