@@ -34,6 +34,7 @@ enum class FeatureIssueCode {
     textGlyphsMissing,      ///< The font has no character for part of a text; `subject` lists them.
     fontNotFound,           ///< The font is not on this computer; `subject` is its name.
     fontStyleMissing,       ///< The font has no such style (bold, italic); `subject` is its name.
+    combineEmpty,           ///< Combining left nothing (an overlap of bodies that do not overlap).
 };
 
 struct FeatureIssue {

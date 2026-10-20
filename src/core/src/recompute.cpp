@@ -114,6 +114,8 @@ FeatureIssue issueFromKernel(const geo::GeometryError& error) {
         return issueOf(FeatureIssueCode::fontNotFound, error.subject(), error.what());
     case geo::GeometryErrorCode::fontStyleMissing:
         return issueOf(FeatureIssueCode::fontStyleMissing, error.subject(), error.what());
+    case geo::GeometryErrorCode::emptyResult:
+        return issueOf(FeatureIssueCode::combineEmpty, {}, error.what());
     case geo::GeometryErrorCode::kernelFailure:
         break;
     }

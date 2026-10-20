@@ -27,6 +27,10 @@ public:
                       const Angles& angles) const override {
         return rotateNamed(solid, centre, angles);
     }
+    NamedSolid boolean(BooleanOp op, const NamedSolid& target,
+                       const std::vector<NamedSolid>& tools) const override {
+        return booleanNamed(op, target, tools);
+    }
     std::vector<std::string> fontFamilies() const override { return fonts_.families(); }
     std::vector<FontStyle> fontStyles(const std::string& family) const override {
         return fonts_.styles(family);

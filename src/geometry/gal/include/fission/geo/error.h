@@ -15,6 +15,7 @@ enum class GeometryErrorCode {
     invalidInput,     ///< A parameter is out of range (zero size, not a number, ...).
     invalidResult,    ///< The kernel produced a body that failed validation.
     kernelFailure,    ///< The kernel could not compute the operation.
+    emptyResult,      ///< The operation left nothing (an overlap of bodies that do not overlap).
     textEmpty,        ///< A text without any visible character.
     glyphsMissing,    ///< The font has no character for some of the text; `subject()` lists them.
     fontNotFound,     ///< No font of that name on this computer; `subject()` is the name.

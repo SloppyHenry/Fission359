@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "fission/geo/kernel.h"
 #include "fission/geo/mesh.h"
 #include "fission/geo/occt/fonts.h"
@@ -40,6 +42,10 @@ NamedSolid makeNamedCylinder(double radius, double height, Point3d base = {});
 /// The body turned by `angles` around `centre` (see `GeometryKernel::rotate`): same faces in the
 /// same order with the same roles. Throws GeometryError for values that are not numbers.
 NamedSolid rotateNamed(const NamedSolid& solid, Point3d centre, const Angles& angles);
+
+/// Combines bodies (see `GeometryKernel::boolean`). Throws GeometryError.
+NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,
+                        const std::vector<NamedSolid>& tools);
 
 /// Volume, area, bounding box, topology counts and validity of a body.
 SolidReport measure(const Solid& solid);

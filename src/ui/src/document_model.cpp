@@ -84,6 +84,8 @@ const char* issueCodeName(core::FeatureIssueCode code) {
         return "fontNotFound";
     case core::FeatureIssueCode::fontStyleMissing:
         return "fontStyleMissing";
+    case core::FeatureIssueCode::combineEmpty:
+        return "combineEmpty";
     }
     return "kernelFailed";
 }
