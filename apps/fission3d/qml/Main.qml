@@ -164,6 +164,7 @@ Window {
     // A body can be dragged to move it in every tool but "Select".
     Binding { target: Handles; property: "mode"; value: root.tool === "size" ? "size" : root.tool === "move" ? "labels" : "off" }
     Binding { target: Gizmo; property: "enabled"; value: root.tool === "move" }
+    Binding { target: Distances; property: "enabled"; value: root.tool === "move" }
     Binding { target: Rotate; property: "enabled"; value: root.tool === "rotate" }
     Binding { target: Scale; property: "enabled"; value: root.tool === "size" }
     // Pulling a corner ends "type the sizes" right after putting a shape down: the digits are
@@ -358,7 +359,7 @@ Window {
                 enabled: (Handles.armed || Handles.editing || Gizmo.editing || Rotate.editing
                           || Scale.editing)
                          && !handleLayer.typing && !gizmoLayer.typing && !rotateLayer.typing
-                         && !scaleLayer.typing && !root.typing
+                         && !scaleLayer.typing && !distanceLayer.typing && !root.typing
                 onActivated: Gizmo.editing ? gizmoLayer.startTyping(digit.modelData)
                              : Rotate.editing ? rotateLayer.startTyping(digit.modelData)
                              : Scale.editing ? scaleLayer.startTyping(digit.modelData)
@@ -553,6 +554,13 @@ Window {
 
             GizmoLayer {
                 id: gizmoLayer
+
+                anchors.fill: parent
+                obstacles: viewOverlay.obstacles
+            }
+
+            DistanceLayer {
+                id: distanceLayer
 
                 anchors.fill: parent
                 obstacles: viewOverlay.obstacles

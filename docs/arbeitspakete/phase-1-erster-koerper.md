@@ -91,7 +91,7 @@ Wertblase, Tippen ersetzt Ziehen, `Tab`, Esc. Ablauf D Schritt 1 automatisch gr�
 ---
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
-**Status:** in Arbeit (1.6a, 1.6b, 1.6c1 erledigt, 1.6c2 im Review) · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Status:** in Arbeit (1.6a, 1.6b, 1.6c1 erledigt, 1.6c2 und 1.6d im Review) · **Größe:** L · **Abhängigkeiten:** AP-1.4
 
 **Umfang:**
 - Gizmo: Verschieben (Achsen und Ebenen), Drehen (Ringe), **proportional** Vergrößern/Verkleinern (Eck-Griff oder Prozentangabe; der Eck-Griff ist immer gleichmäßig)
@@ -103,7 +103,7 @@ Wertblase, Tippen ersetzt Ziehen, `Tab`, Esc. Ablauf D Schritt 1 automatisch gr�
 - Kopieren/Einfügen/Duplizieren (⌘D) mit Versatz
 
 **Akzeptanzkriterien:**
-- [ ] Eine Form lässt sich per Abstandsmaß exakt „5 mm vom Rand“ platzieren
+- [x] Eine Form lässt sich per Abstandsmaß exakt „5 mm vom Rand“ platzieren (Test `app_distance_five_from_edge`, Review 2026-10-20)
 - [ ] Jede Transformation steht als Rezept-Eintrag im Verlauf und ist editierbar
 
 #### Zerlegung (2026-10-18, vom Product Owner bestätigt)
@@ -118,7 +118,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 | **b3) Ablegen an Wänden** | erledigt (PR #33) | Unterseite auf jede Fläche (`geo/seat.h`), ⌥ = aufrecht |
 | **c1) Fangen beim Verschieben** | erledigt (PR #34) | `interaction/snap.h`, `ui::SnapSession` im `GizmoController`; Fang-Marken und Ausrichtungslinie; ⇧ aus; Raster auf dem Bett (Ansicht ▸ „Raster beim Ziehen“); Genauigkeit in der Statuszeile (Auto, Schieberegler 0,01–10 mm, Zahlenfeld) |
 | **c2) Fangen bei Maß-Griffen und Ablegen** | Review (2026-10-20) | dieselben Punkte und Marken für die Maß-Griffe (`HandleController`), den Eck-Griff (`ScaleController`) und das Ablegen (`PlacementController`); gemeinsamer ⇧-Schalter `ui::snappingSuppressed()`; Marken des Ablegens in `HandleSource::placement` |
-| **d) Abstandsmaße** | offen | Beim Verschieben Abstände zu den nächsten Kanten anderer Körper und zum Bettrand als Maßband; Klick macht die Zahl editierbar („5 mm vom Rand“); Akzeptanzkriterium 1 als automatischer Ablauf |
+| **d) Abstandsmaße** | Review (2026-10-20) | `interaction/distances.h` (Rechnung: nächstes Hindernis je Richtung, Bettrand, „Abstand setzen“); `ui::DistanceController` + `DistanceLayer.qml`: Bänder im Werkzeug „Verschieben“ bei gewähltem Körper, Zahl anklicken und tippen = ein Verschieben (Undo-Schritt „Körper verschoben“); `--simulate "distance:left,5"`; Akzeptanzkriterium 1 als Test `app_distance_five_from_edge` |
 | **e) Rest** | offen | Ausrichten mehrerer Körper; „Aufs Bett legen“; „Auf Fläche legen“ für vorhandene Körper (nutzt `seatOnFace`); Kopieren, Einfügen, Duplizieren (⌘D) mit Versatz |
 
 #### Festlegungen (Product Owner)
@@ -133,6 +133,9 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
   Formeln bleiben als `(Formel) * Faktor`. Die gegenüberliegende untere Ecke des Kastens in Bett-Richtung bleibt stehen (wie Tinkercad).
 - **Ablegen an Wänden:** automatisch an jeder Fläche, ⌥ = aufrecht, Arbeitsebene bleibt ein Höhenwert. Ergebnis sind gewöhnliche Zahlen
   (Lage, Winkel in 0,1°), keine Bindung an die Fläche.
+- **Abstandsmaße (d):** Kante zu Kante (Hüllquader, gedrehte Körper zählen mit ihrem Hüllquader), nur in Bett-Richtung (±X, ±Y), je Richtung das nächste
+  Hindernis mit überlappendem Grundriss, sonst der Bettrand (steht der Körper über dem Rand, kein Band); Löcher zählen nicht. Sichtbar im Werkzeug
+  „Verschieben“ bei gewähltem Körper, auch ohne Ziehen. Ein Maß verschiebt nur und hält den Abstand nicht fest (kein Bezug).
 - **Fangen:** Der gezogene Körper fängt mit Ecken, Kantenmitten und Flächenmitten seines achsparallelen Hüllquaders an Punkten anderer
   Körper und des Betts, Achse für Achse; Punkt-Fang hat Vorrang. Reichweite 10 px. Getippte Zahlen werden nie gefangen.
   - *Maß-Griffe (c2):* Die bewegte Seite des Hüllquaders (9 Punkte) fängt entlang einer Bett-Achse; nur bei achsparalleler Griffrichtung

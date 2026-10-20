@@ -230,9 +230,17 @@ public:
     void setSelectionHighlights(std::vector<render::Highlight> highlights);
     /// Who draws handles into the scene: the size handles (`HandleController`) and the gizmo
     /// (`GizmoController`), the rings of the tool "Rotate" (`RotateController`), the corners of the
-    /// tool "Size" (`ScaleController`) and the marks of a shape being put down
-    /// (`PlacementController`). Each one hands in its own drawing; the view shows them together.
-    enum class HandleSource { size = 0, gizmo = 1, rings = 2, corners = 3, placement = 4 };
+    /// tool "Size" (`ScaleController`), the marks of a shape being put down
+    /// (`PlacementController`) and the distance measures (`DistanceController`). Each one hands in
+    /// its own drawing; the view shows them together.
+    enum class HandleSource {
+        size = 0,
+        gizmo = 1,
+        rings = 2,
+        corners = 3,
+        placement = 4,
+        distances = 5
+    };
     void setHandleGraphics(render::HandleGraphics graphics,
                            HandleSource source = HandleSource::size);
     const render::HandleGraphics& handleGraphics(HandleSource source = HandleSource::size) const {
@@ -345,7 +353,7 @@ private:
 
     core::SelectionFilter m_filter;
     std::vector<render::Highlight> m_selectionHighlights;
-    std::array<render::HandleGraphics, 5> m_handleGraphics;
+    std::array<render::HandleGraphics, 6> m_handleGraphics;
     std::optional<render::Highlight> m_hover;
     std::deque<PickRequest> m_pickQueue;
     QTimer m_pickTimer;

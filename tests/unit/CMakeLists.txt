@@ -36,8 +36,10 @@ add_executable(fission_unit_tests
   ui/test_gizmo.cpp
   ui/test_rotate.cpp
   ui/test_scale.cpp
+  ui/test_distances.cpp
   interaction/test_drag.cpp
-  interaction/test_snap.cpp)
+  interaction/test_snap.cpp
+  interaction/test_distances.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
   fission_core fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
