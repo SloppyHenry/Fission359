@@ -57,6 +57,10 @@ Regeln 11–13 prüft Ablauf D (UX §15) automatisch. Diesen Test nie abschwäch
 - Alles baut und läuft auf macOS arm64 **und** Linux x86_64.
 
 ## Arbeitsweise
+**Jedes offene AP hat eine Bauanleitung** in `docs/arbeitspakete/anleitungen/` (Einstieg: `README.md`, Handgriffe: `handbuch.md`). Vor Beginn die
+Anleitung des APs ganz lesen; ihre Haltepunkte sind Pflichtfragen an den Product Owner. Wer ein AP zerlegt oder eine neue Aufgabe anlegt,
+schreibt die Anleitung im selben Aufbau; wer ein AP abschließt, überträgt Folgearbeiten in die passende Anleitung.
+
 1. Ein Arbeitspaket nach dem anderen; Abhängigkeiten prüfen.
 2. Erst Zusammenfassung (3–5 Sätze), offene Fragen, kurzer Plan. XL-APs zuerst in Teilpakete zerlegen.
 3. Bei echten Unklarheiten fragen (UX, neue Abhängigkeiten, Dateiformat, Design-Prinzipien). Kleine Details: Annahme treffen
