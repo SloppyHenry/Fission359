@@ -736,12 +736,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+715"/>
+        <location line="+717"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-714"/>
+        <location line="-716"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -772,12 +772,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+703"/>
+        <location line="+705"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-701"/>
+        <location line="-703"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -921,7 +921,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+28"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -1486,7 +1486,7 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-376"/>
+        <location line="-378"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
@@ -1511,7 +1511,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+304"/>
+        <location line="+306"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -1547,7 +1547,97 @@
 <context>
     <name>NumberField</name>
     <message>
-        <location filename="../qml/NumberField.qml" line="+164"/>
+        <location filename="../qml/NumberField.qml" line="+312"/>
+        <source>I don&apos;t know “%1”. Did you mean “%2”?</source>
+        <translation>„%1“ kenne ich nicht. Meintest du „%2“?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I don&apos;t know “%1”.</source>
+        <translation>„%1“ kenne ich nicht.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>I don&apos;t know the function “%1”. Did you mean “%2”?</source>
+        <translation>Die Funktion „%1“ kenne ich nicht. Meintest du „%2“?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I don&apos;t know the function “%1”.</source>
+        <translation>Die Funktion „%1“ kenne ich nicht.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>I don&apos;t know the unit “%1”. Did you mean “%2”?</source>
+        <translation>Die Einheit „%1“ kenne ich nicht. Meintest du „%2“?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I don&apos;t know the unit “%1”.</source>
+        <translation>Die Einheit „%1“ kenne ich nicht.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>A closing bracket is missing.</source>
+        <translation>Eine schließende Klammer fehlt.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The formula ends too early.</source>
+        <translation>Die Formel hört zu früh auf.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This character does not belong here.</source>
+        <translation>Dieses Zeichen gehört hier nicht hin.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Dividing by zero is not possible.</source>
+        <translation>Durch null teilen geht nicht.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lengths and angles cannot be added.</source>
+        <translation>Längen und Winkel lassen sich nicht zusammenrechnen.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>An angle belongs here, not a length.</source>
+        <translation>Hier gehört ein Winkel hin, keine Länge.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A plain number belongs here.</source>
+        <translation>Hier gehört eine einfache Zahl hin.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A length belongs here, not an angle.</source>
+        <translation>Hier gehört eine Länge hin, kein Winkel.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This number already has a unit.</source>
+        <translation>Diese Zahl hat schon eine Einheit.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This function has the wrong number of values.</source>
+        <translation>Diese Funktion bekommt die falsche Anzahl Werte.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This cannot be calculated (for example the root of a negative number).</source>
+        <translation>Das lässt sich nicht berechnen (zum Beispiel die Wurzel aus einer negativen Zahl).</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The result is too large.</source>
+        <translation>Das Ergebnis ist zu groß.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>That is not a number or formula.</source>
         <translation>Das ist keine Zahl und keine Formel.</translation>
     </message>
@@ -1555,7 +1645,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+78"/>
+        <location filename="../qml/RightPanel.qml" line="+96"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -1590,7 +1680,7 @@
         <translation>Quer schneiden</translation>
     </message>
     <message>
-        <location line="+38"/>
+        <location line="+43"/>
         <source>Hole</source>
         <translation>Loch</translation>
     </message>
@@ -1645,17 +1735,17 @@
         <translation>Größe</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+39"/>
         <source>Position</source>
         <translation>Lage</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+44"/>
         <source>Rotation</source>
         <translation>Drehung</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+47"/>
         <source>Get new shapes from “Shapes” in the tool bar on the left – or press %1 and describe what you want to build.</source>
         <translation>Neue Formen holst du dir links über „Formen“ in der Werkzeugleiste – oder du drückst %1 und beschreibst, was du bauen willst.</translation>
     </message>

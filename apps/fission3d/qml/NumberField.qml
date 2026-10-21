@@ -19,12 +19,23 @@ Item {
     property string expression: ""  // the formula the value came from ("" = typed as a plain number)
     property bool invalid: false
     property bool readOnly: false
+    // Dragging the label changes the value (1 px = 0,1; Shift ×10, Alt ×0,1). A drag is one
+    // change: the owner opens a transaction on `dragStarted` and closes it on `dragFinished`.
+    property bool draggable: false
     readonly property bool editing: input.activeFocus
+    property var errorInfo: ({}) // why the typed text is wrong, from Numbers.explain
     signal edited(real newValue)
     signal textCommitted(string text) // what was typed, when it differs from what was shown
+    signal dragStarted()
+    signal dragFinished(bool accepted)
 
     implicitWidth: 96
     implicitHeight: column.implicitHeight
+
+    // The simulation of the window tests uses this to put the cursor in a field.
+    function takeFocus() {
+        input.forceActiveFocus()
+    }
 
     function shownText() {
         return root.expression !== "" ? root.expression : Numbers.format(root.value, root.decimals)
@@ -53,11 +64,24 @@ Item {
         spacing: 5
 
         Txt {
+            id: labelText
+
             visible: root.label !== ""
             width: parent.width
             text: root.label
             color: Theme.fg4
             font.pixelSize: Theme.fontSizeSmall
+
+            MouseArea {
+                anchors.fill: parent
+                enabled: root.draggable && !root.readOnly && !input.pendingEdit
+                cursorShape: enabled ? Qt.SizeHorCursor : Qt.ArrowCursor
+                onPressed: mouse => { forceActiveFocus(); root.beginDrag(mouse.x) }
+                onPositionChanged: mouse => root.dragTo(mouse.x, mouse.modifiers)
+                onReleased: root.endDrag(true)
+                onCanceled: root.endDrag(false)
+                Keys.onEscapePressed: root.endDrag(false)
+            }
         }
 
         Rectangle {
@@ -104,6 +128,18 @@ Item {
                         font.pixelSize: 12
                         font.weight: Font.DemiBold
                     }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: root.draggable && !root.readOnly && !input.pendingEdit
+                        cursorShape: enabled ? Qt.SizeHorCursor : Qt.ArrowCursor
+                        onPressed: mouse => { forceActiveFocus(); root.beginDrag(mapToItem(root, mouse.x, 0).x) }
+                        onPositionChanged: mouse =>
+                            root.dragTo(mapToItem(root, mouse.x, 0).x, mouse.modifiers)
+                        onReleased: root.endDrag(true)
+                        onCanceled: root.endDrag(false)
+                        Keys.onEscapePressed: root.endDrag(false)
+                    }
                 }
 
                 TextInput {
@@ -137,13 +173,17 @@ Item {
                     onAccepted: root.commit()
                     Keys.onEscapePressed: {
                         root.invalid = false
+                        root.errorInfo = ({})
                         root.refresh()
                         focus = false
                     }
                     onTextEdited: {
                         root.invalid = false
+                        root.errorInfo = ({})
                         pendingEdit = true
                     }
+                    Keys.onUpPressed: event => root.step(1, event.modifiers)
+                    Keys.onDownPressed: event => root.step(-1, event.modifiers)
                 }
 
                 Txt {
@@ -161,11 +201,146 @@ Item {
         Txt {
             visible: root.note !== "" || root.invalid
             width: parent.width
-            text: root.invalid ? qsTr("That is not a number or formula.") : root.note
+            text: root.invalid ? root.explanation() : root.note
             color: root.invalid ? Theme.bad : Theme.fg4
             font.pixelSize: Theme.fontSizeSmall
             wrapMode: Text.WordWrap
             elide: Text.ElideNone
+
+            // "Did you mean ...?" is a button: a click puts the known name in place.
+            MouseArea {
+                anchors.fill: parent
+                enabled: root.invalid && root.suggestion() !== ""
+                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: root.applySuggestion()
+            }
+        }
+    }
+
+    // The wrong part of the text gets a red line under it.
+    Rectangle {
+        visible: root.invalid && root.errorInfo.code !== undefined && underlineEnd > underlineStart
+        readonly property real underlineStart: root.errorInfo.code === undefined ? 0
+            : input.positionToRectangle(root.errorInfo.start).x
+        readonly property real underlineEnd: root.errorInfo.code === undefined ? 0
+            : input.positionToRectangle(Math.max(root.errorInfo.end, root.errorInfo.start + 1)).x
+        x: input.mapToItem(root, underlineStart, 0).x
+        y: input.mapToItem(root, 0, input.height).y - 3
+        width: Math.max(underlineEnd - underlineStart, 4)
+        height: 2
+        radius: 1
+        color: Theme.bad
+    }
+
+    // --- arrow keys -----------------------------------------------------------------------
+
+    // One step with an arrow key: 1, with Shift 10, with Alt 0,1 (mm or degrees). A formula
+    // stays a formula (`Breite/2` becomes `(Breite/2) + 1`).
+    function step(direction, modifiers) {
+        if (root.readOnly) {
+            return
+        }
+        const size = (modifiers & Qt.ShiftModifier) ? 10 : (modifiers & Qt.AltModifier) ? 0.1 : 1
+        const moved = Numbers.adjusted(input.text, root.kind, direction * size)
+        if (moved === "") {
+            return // the text is not a formula (yet): the line below the field says why
+        }
+        input.text = moved
+        input.pendingEdit = true
+        commit()
+        input.selectAll()
+    }
+
+    // --- dragging the label ---------------------------------------------------------------
+
+    property real dragOrigin: 0
+    property string dragText: ""
+    property bool dragging: false
+
+    function beginDrag(x) {
+        root.dragOrigin = x
+        root.dragText = shownText()
+        root.dragging = true
+        root.dragStarted()
+    }
+
+    function dragTo(x, modifiers) {
+        if (!root.dragging) {
+            return
+        }
+        const per = (modifiers & Qt.ShiftModifier) ? 1 : (modifiers & Qt.AltModifier) ? 0.01 : 0.1
+        const delta = Math.round((x - root.dragOrigin) * per * 100) / 100
+        const moved = Numbers.adjusted(root.dragText, root.kind, delta)
+        if (moved !== "") {
+            input.text = moved
+            input.pendingEdit = true
+            commit()
+        }
+    }
+
+    function endDrag(accepted) {
+        if (!root.dragging) {
+            return
+        }
+        root.dragging = false
+        root.dragFinished(accepted)
+    }
+
+    // --- what is wrong --------------------------------------------------------------------
+
+    function suggestion() {
+        return root.errorInfo.suggestion === undefined ? "" : root.errorInfo.suggestion
+    }
+
+    function applySuggestion() {
+        const info = root.errorInfo
+        if (info.suggestion === undefined || info.suggestion === "") {
+            return
+        }
+        input.text = input.text.substring(0, info.start) + info.suggestion
+                   + input.text.substring(info.end)
+        input.pendingEdit = true
+        commit()
+    }
+
+    function explanation() {
+        const info = root.errorInfo
+        const word = info.subject === undefined ? "" : info.subject
+        const guess = suggestion()
+        switch (info.code) {
+        case "unknownName":
+            return guess !== "" ? qsTr("I don't know “%1”. Did you mean “%2”?").arg(word).arg(guess)
+                                : qsTr("I don't know “%1”.").arg(word)
+        case "unknownFunction":
+            return guess !== "" ? qsTr("I don't know the function “%1”. Did you mean “%2”?").arg(word).arg(guess)
+                                : qsTr("I don't know the function “%1”.").arg(word)
+        case "unknownUnit":
+            return guess !== "" ? qsTr("I don't know the unit “%1”. Did you mean “%2”?").arg(word).arg(guess)
+                                : qsTr("I don't know the unit “%1”.").arg(word)
+        case "missingClosingBracket":
+            return qsTr("A closing bracket is missing.")
+        case "unexpectedEnd":
+            return qsTr("The formula ends too early.")
+        case "unexpectedCharacter":
+            return qsTr("This character does not belong here.")
+        case "divisionByZero":
+            return qsTr("Dividing by zero is not possible.")
+        case "incompatibleQuantities":
+            return qsTr("Lengths and angles cannot be added.")
+        case "wrongKind":
+            return root.kind === "angle" ? qsTr("An angle belongs here, not a length.")
+                 : root.kind === "plain" ? qsTr("A plain number belongs here.")
+                 : qsTr("A length belongs here, not an angle.")
+        case "unitNotAllowed":
+            return qsTr("This number already has a unit.")
+        case "wrongArgumentCount":
+            return qsTr("This function has the wrong number of values.")
+        case "outOfRange":
+            return qsTr("This cannot be calculated (for example the root of a negative number).")
+        case "notFinite":
+            return qsTr("The result is too large.")
+        default:
+            return qsTr("That is not a number or formula.")
         }
     }
 
@@ -180,6 +355,7 @@ Item {
                 refresh()
             } else {
                 root.invalid = true
+                root.errorInfo = Numbers.explain(input.text, root.kind)
             }
             return
         }

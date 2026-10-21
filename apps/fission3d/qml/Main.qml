@@ -776,6 +776,8 @@ Window {
             onTabRequested: tab => root.rightTab = tab
             onAxisChosen: axis => DocumentModel.setSplitAxis(DocumentModel.currentStep, axis)
             onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)
+            onDragStarted: name => DocumentModel.beginChange(name)
+            onDragFinished: accepted => accepted ? DocumentModel.commitChange() : DocumentModel.cancelChange()
         }
     }
 

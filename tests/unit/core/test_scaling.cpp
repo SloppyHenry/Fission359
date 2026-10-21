@@ -5,6 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <clocale>
+#include <cmath>
 #include <optional>
 #include <string>
 
@@ -111,4 +112,37 @@ TEST_CASE("number text: short, with a dot, in every language", "[scaling]") {
         CHECK(numberText(12.5) == "12.5");
         std::setlocale(LC_NUMERIC, before.c_str());
     }
+}
+
+namespace {
+
+std::string adjusted(const char* expression, double delta) {
+    const auto result = fission::core::adjustedExpression(expression, QuantityKind::length, delta);
+    REQUIRE(result.has_value());
+    return *result;
+}
+
+} // namespace
+
+TEST_CASE("an arrow key moves a number and keeps a formula a formula", "[scaling][arrows]") {
+    CHECK(adjusted("20", 1.0) == "21");
+    CHECK(adjusted("20", -0.1) == "19.9");
+    CHECK(adjusted("2,5 cm", 10.0) == "35");
+    CHECK(adjusted("Breite/2", 1.0) == "(Breite/2) + 1");
+    CHECK(adjusted("Breite", 1.0) == "Breite + 1");
+    // The step is added to the step, not stacked.
+    CHECK(adjusted("(Breite/2) + 1", 1.0) == "(Breite/2) + 2");
+    CHECK(adjusted("Breite + 2", -2.0) == "Breite");
+    CHECK(adjusted("(Breite/2) + 2", -2.0) == "Breite/2");
+    CHECK(adjusted("Breite - 3", 1.0) == "Breite - 2");
+    CHECK(adjusted("Breite - 3", -1.0) == "Breite - 4");
+    CHECK(adjusted("Breite + 1", -3.0) == "Breite - 2");
+    // 0.1 steps do not drift.
+    CHECK(adjusted(adjusted("Breite", 0.1).c_str(), 0.1) == "Breite + 0.2");
+    // A formula with a unit inside is wrapped whole.
+    CHECK(adjusted("Breite + 2 cm", 1.0) == "(Breite + 2 cm) + 1");
+    // Not a formula, or not a number to move by.
+    CHECK_FALSE(fission::core::adjustedExpression("5+", QuantityKind::length, 1.0).has_value());
+    CHECK_FALSE(
+        fission::core::adjustedExpression("5", QuantityKind::length, std::nan("")).has_value());
 }
