@@ -35,7 +35,8 @@ Float {
             delegate: ToolButton3D {
                 required property var modelData
 
-                text: modelData.name
+                text: modelData.label
+                width: 96
                 iconName: modelData.icon
                 enabled: modelData.needs === 1 ? root.chosen === 1 : root.chosen >= 2
                 opacity: enabled ? 1.0 : 0.45

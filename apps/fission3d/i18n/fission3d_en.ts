@@ -109,7 +109,8 @@
 <context>
     <name>CombineCatalog</name>
     <message>
-        <location filename="../qml/CombineCatalog.qml" line="+12"/>
+        <location filename="../qml/CombineCatalog.qml" line="+13"/>
+        <location line="+0"/>
         <source>Merge</source>
         <translation>Merge</translation>
     </message>
@@ -125,6 +126,7 @@
     </message>
     <message>
         <location line="+3"/>
+        <location line="+0"/>
         <source>Subtract</source>
         <translation>Subtract</translation>
     </message>
@@ -144,6 +146,11 @@
         <translation>Keep overlap</translation>
     </message>
     <message>
+        <location line="+0"/>
+        <source>Overlap</source>
+        <translation>Overlap</translation>
+    </message>
+    <message>
         <location line="+1"/>
         <source>Keeps only the part that all chosen bodies have in common.</source>
         <translation>Keeps only the part that all chosen bodies have in common.</translation>
@@ -155,6 +162,7 @@
     </message>
     <message>
         <location line="+3"/>
+        <location line="+0"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
@@ -172,7 +180,7 @@
 <context>
     <name>CombineFlyout</name>
     <message>
-        <location filename="../qml/CombineFlyout.qml" line="+43"/>
+        <location filename="../qml/CombineFlyout.qml" line="+44"/>
         <source>Choose one body first.</source>
         <translation>Choose one body first.</translation>
     </message>
@@ -203,7 +211,7 @@
 <context>
     <name>DistanceLayer</name>
     <message>
-        <location filename="../qml/DistanceLayer.qml" line="+133"/>
+        <location filename="../qml/DistanceLayer.qml" line="+142"/>
         <location line="+64"/>
         <source>Distance</source>
         <translation>Distance</translation>

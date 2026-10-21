@@ -165,7 +165,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "expect:width,40 (fail unless the chosen step has at least "
             "that value, no drag is left and its handles are still shown), near:x,12 (fail "
             "unless the chosen step has exactly that value), tool:size (choose a tool of the "
-            "palette), filtermenu (open the choice menu of the 3D view), snap:off (snapping off as "
+            "palette), flyout:combine (open that group of the palette), filtermenu (open the "
+            "choice menu of the 3D view), snap:off (snapping off as "
             "with Shift held; snap:on), grid:0.1 (the step of "
             "snapping in mm, 0 = automatic), "
             "distance:left,5 (type 5 into the distance measure on that side of the chosen "
@@ -468,6 +469,13 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             delay += 350;
             QTimer::singleShot(delay, viewport,
                                [window] { window->setProperty("filterMenuOpen", true); });
+            continue;
+        }
+        if (kind == QLatin1String("flyout")) { // flyout:combine - opens that group of the palette
+            const QString group = action.mid(colon + 1).trimmed();
+            delay += 350;
+            QTimer::singleShot(delay, viewport,
+                               [window, group] { window->setProperty("flyout", group); });
             continue;
         }
         if (kind == QLatin1String("grid")) { // grid:0.1 - the step of snapping (0: automatic)
