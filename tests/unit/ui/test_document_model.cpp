@@ -174,7 +174,7 @@ TEST_CASE("values of the chosen step, formulas stay visible", "[ui][document-mod
     f.model->selectStep(0);
     CHECK(f.model->currentStep() == 0);
     QVariantList values = f.model->stepValues();
-    REQUIRE(values.size() == 10); // width depth height cornerRadius x y z rotX rotY rotZ
+    REQUIRE(values.size() == 11); // width depth height cornerRadius x y z rotX rotY rotZ through
     CHECK(values[0].toMap()["name"].toString() == "width");
     CHECK(values[0].toMap()["group"].toString() == "size");
     CHECK(values[0].toMap()["expression"].toString().isEmpty()); // typed as a plain number

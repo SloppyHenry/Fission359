@@ -729,6 +729,7 @@ Window {
             }
             stepTitle: root.currentStepTitle
             stepValues: root.stepValueList
+            isHole: root.currentStepIsHole
             stepTexts: DocumentModel.stepTexts
             fonts: DocumentModel.fontFamilies
             fontStyles: DocumentModel.fontStyles(root.currentFontName)
@@ -962,6 +963,13 @@ Window {
     // Every chosen body is a hole: "As hole" in the menu is ticked and a click turns it off.
     readonly property bool chosenAreHoles: chosenBodyIndexes.length > 0
         && chosenBodyIndexes.every(index => index >= 0 && index < DocumentModel.bodies.length && DocumentModel.bodies[index].hole)
+
+    // The body of the chosen step is a hole (its panel offers "goes all the way through").
+    readonly property bool currentStepIsHole: {
+        const index = DocumentModel.bodies && DocumentModel.currentStep >= 0
+            ? DocumentModel.bodyIndexOf(DocumentModel.bodyOfStep(DocumentModel.currentStep)) : -1
+        return index >= 0 && DocumentModel.bodies[index].hole
+    }
 
     // The one chosen body, if it is a hole: the label "Cuts out: …" hangs on it.
     readonly property int chosenHoleIndex: {

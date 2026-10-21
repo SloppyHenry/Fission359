@@ -652,12 +652,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+670"/>
+        <location line="+671"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-669"/>
+        <location line="-670"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -826,7 +826,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+25"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -1282,7 +1282,7 @@
         <translation>Diese Form ließ sich nicht bauen.</translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+53"/>
         <source>Face of %1</source>
         <translation>Fläche von %1</translation>
     </message>
@@ -1331,7 +1331,7 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-338"/>
+        <location line="-346"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
@@ -1356,7 +1356,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+291"/>
+        <location line="+292"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -1400,7 +1400,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+67"/>
+        <location filename="../qml/RightPanel.qml" line="+70"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -1426,6 +1426,16 @@
     </message>
     <message>
         <location line="+5"/>
+        <source>Hole</source>
+        <translation>Loch</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Goes all the way through</source>
+        <translation>Geht ganz durch</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Text</source>
         <translation>Text</translation>
     </message>

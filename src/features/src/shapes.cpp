@@ -60,12 +60,19 @@ public:
         return result;
     }
 
-    std::vector<ParamSpec> parameters() const final { return withPlace(sizes()); }
+    std::vector<ParamSpec> parameters() const final { return withPlace(sizes(), prismatic()); }
+
+    std::optional<ResolvedParams> throughParams(const ResolvedParams& params,
+                                                double reach) const final {
+        return prismatic() ? prismaticThrough(params, reach) : std::nullopt;
+    }
 
     int version() const final { return 1; }
 
 protected:
     virtual std::vector<ParamSpec> sizes() const = 0;
+    /// Runs straight along its axis, so a hole of this shape can go all the way through.
+    virtual bool prismatic() const { return false; }
     virtual geo::PrimitiveSpec spec(const ResolvedParams& params) const = 0;
 };
 
@@ -216,6 +223,7 @@ protected:
 class TubeType final : public ShapeType {
 public:
     std::string_view id() const override { return "tube"; }
+    bool prismatic() const override { return true; }
     std::optional<FeatureIssue> validate(const ResolvedParams& p) const override {
         if (auto issue = requirePositive(p, {"radius", "wall", "height"})) {
             return issue;
@@ -254,6 +262,7 @@ protected:
 class PrismType final : public ShapeType {
 public:
     std::string_view id() const override { return "prism"; }
+    bool prismatic() const override { return true; }
     std::optional<FeatureIssue> validate(const ResolvedParams& p) const override {
         if (auto issue = requireCorners(p, "sides")) {
             return issue;
@@ -293,6 +302,7 @@ protected:
 class StarType final : public ShapeType {
 public:
     std::string_view id() const override { return "star"; }
+    bool prismatic() const override { return true; }
     std::optional<FeatureIssue> validate(const ResolvedParams& p) const override {
         if (auto issue = requireCorners(p, "points")) {
             return issue;

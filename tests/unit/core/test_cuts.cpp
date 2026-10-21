@@ -270,3 +270,52 @@ TEST_CASE("cuts: a body that is no hole has no targets", "[cuts]") {
     const BodyId pin = world.pin("0");
     CHECK(cutTargetsOf(world.history.document(), world.run(), *world.kernel, pin).empty());
 }
+
+TEST_CASE("cuts: a hole goes all the way through, also when the body grows", "[cuts][through]") {
+    World world;
+    const BodyId plate = world.plate();
+    // A pin much shorter than the plate, standing inside it.
+    const BodyId pin = world.add("cylinder", {{"radius", "3"}, {"height", "4"}, {"z", "3"}});
+    world.asHole(pin);
+    world.reconcile();
+    const Feature& plateStep =
+        *world.history.document().findFeature(world.history.document().findBody(plate)->createdBy);
+    const Feature& pinStep =
+        *world.history.document().findFeature(world.history.document().findBody(pin)->createdBy);
+
+    // Through is the default: the hole leaves the plate on both sides.
+    CHECK(world.volumeOfShown() == Approx(kPlate - hole(3, 10)).epsilon(1e-6));
+
+    // Quader height 10 -> 20: the hole still goes all the way through (Ablauf D, step 4).
+    world.history.execute(makeSetFeatureValue(plateStep.id, "height", "20"));
+    CHECK(world.volumeOfShown() == Approx(40.0 * 40.0 * 20.0 - hole(3, 20)).epsilon(1e-6));
+
+    // Switched off, the hole is as long as it is.
+    world.history.execute(makeSetFeatureValue(pinStep.id, "through", "0"));
+    CHECK(world.volumeOfShown() == Approx(40.0 * 40.0 * 20.0 - hole(3, 4)).epsilon(1e-6));
+}
+
+TEST_CASE("cuts: through follows a turned hole along its own axis", "[cuts][through]") {
+    World world;
+    world.plate(); // 40 x 40 x 10
+    // A pin lying along x, 4 mm long, in the middle of the plate.
+    const BodyId pin = world.add(
+        "cylinder", {{"radius", "2"}, {"height", "4"}, {"x", "0"}, {"z", "3"}, {"rotY", "90"}});
+    world.asHole(pin);
+    world.reconcile();
+    // It goes through the whole length of the plate in x: 40 mm of a bore of radius 2 (it only
+    // reaches half the height of the plate: the bore lies at z = 5 ± 2).
+    CHECK(world.volumeOfShown() == Approx(kPlate - hole(2, 40)).epsilon(1e-6));
+}
+
+TEST_CASE("cuts: a sphere as a hole is as big as it is", "[cuts][through]") {
+    World world;
+    world.plate();
+    const BodyId ball = world.add("sphere", {{"radius", "4"}, {"x", "0"}, {"z", "3"}});
+    world.asHole(ball);
+    world.reconcile();
+    CHECK(world.cutSteps() == 1);
+    const double volume = world.volumeOfShown();
+    CHECK(volume < kPlate);
+    CHECK(volume > kPlate - 4.0 / 3.0 * std::numbers::pi * 64.0 - 1e-6);
+}

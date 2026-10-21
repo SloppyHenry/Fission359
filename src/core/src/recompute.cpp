@@ -256,6 +256,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         // Bodies it works on.
         std::vector<const BodyResult*> inputBodies;
         std::vector<FeatureOutput> inputs;
+        std::vector<InputStep> producers;
         bool inputIssue = false;
         bool staleInput = false;
         for (const BodyId& id : feature.inputs) {
@@ -276,6 +277,16 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                 input.faces.push_back({face.faceId, face.name});
             }
             inputs.push_back(std::move(input));
+
+            InputStep producer;
+            producer.feature = document.findFeature(found->second.producer);
+            if (producer.feature != nullptr) {
+                producer.type = registry.find(producer.feature->type);
+                if (const FeatureState* made = result.state(producer.feature->id)) {
+                    producer.params = made->params;
+                }
+            }
+            producers.push_back(std::move(producer));
         }
         if (inputIssue) {
             continue;
@@ -295,7 +306,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             std::vector<Output> outputs;
             try {
                 const ExecuteContext context{kernel, cancel};
-                FeatureResult made = type->execute({feature, state.params, inputs}, context);
+                FeatureResult made =
+                    type->execute({feature, state.params, inputs, std::move(producers)}, context);
                 if (cancel.stop_requested()) {
                     return std::nullopt; // a step that gave up because it was asked to
                 }

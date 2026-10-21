@@ -256,7 +256,7 @@ TEST_CASE("a default draft has every value and its body", "[features]") {
     const FeatureDraft draft = defaultDraft(*setup.registry.find("box"));
     CHECK(draft.type == "box");
     CHECK(draft.newBodies == 1);
-    CHECK(draft.params.size() == 10); // four sizes, the place and the turn
+    CHECK(draft.params.size() == 11); // four sizes, the place, the turn and "through"
     CHECK(draft.params.at("width").expression == "20");
     CHECK(draft.params.at("x").kind == QuantityKind::length);
 }

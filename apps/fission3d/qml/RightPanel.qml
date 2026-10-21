@@ -31,6 +31,9 @@ Rectangle {
     readonly property var sizeValues: stepValues.filter(v => v.group === "size")
     readonly property var positionValues: stepValues.filter(v => v.group === "position")
     readonly property var rotationValues: stepValues.filter(v => v.group === "rotation")
+    // "Go all the way through": a switch for a hole whose shape runs straight (a value 0 or 1).
+    readonly property var throughValue: stepValues.find(v => v.group === "through")
+    property bool isHole: false
     property string tab: "object"      // object | printer
     property string printerName: ""
     property string bedText: ""
@@ -144,6 +147,17 @@ Rectangle {
                 iconName: "cube"
                 title: root.stepTitle
                 subtitle: qsTr("Change a value or type a formula.")
+            }
+
+            Section {
+                visible: root.tab === "object" && root.isHole && root.throughValue !== undefined
+                heading: qsTr("Hole")
+
+                Toggle {
+                    text: qsTr("Goes all the way through")
+                    checked: root.throughValue !== undefined && root.throughValue.value >= 0.5
+                    onToggled: root.valueCommitted("through", checked ? "1" : "0")
+                }
             }
 
             Section {

@@ -29,6 +29,36 @@ std::optional<geo::BooleanOp> modeOf(const std::string& word) {
     return std::nullopt;
 }
 
+// The tool `input.inputs[index]` made again by its own step with the values for "through": long
+// enough to pass the target on both sides. Its faces are named as the faces of the short tool
+// are, so the walls of the hole keep their names. nullopt when it cannot be longer.
+std::optional<geo::NamedSolid> longerTool(const ExecuteInput& input, std::size_t index,
+                                          double targetSize, const ExecuteContext& context) {
+    if (index >= input.producers.size()) {
+        return std::nullopt;
+    }
+    const InputStep& step = input.producers[index];
+    if (step.feature == nullptr || step.type == nullptr) {
+        return std::nullopt;
+    }
+    const double toolSize = context.kernel.bounds(input.inputs[index].solid).diagonal();
+    const auto longer = step.type->throughParams(step.params, targetSize + toolSize);
+    if (!longer) {
+        return std::nullopt;
+    }
+    const std::vector<FeatureOutput> none;
+    FeatureResult made = step.type->execute({*step.feature, *longer, none}, context);
+    if (made.outputs.empty()) {
+        return std::nullopt;
+    }
+    geo::NamedSolid result;
+    result.solid = std::move(made.outputs.front().solid);
+    for (const geo::NamedFace& face : made.outputs.front().faces) {
+        result.faces.push_back({face.faceId, elementName(*step.feature, face.role)});
+    }
+    return result;
+}
+
 class CombineType final : public FeatureType {
 public:
     std::string_view id() const override { return "combine"; }
@@ -55,7 +85,16 @@ public:
             return geo::NamedSolid{body.solid, body.faces};
         };
         std::vector<geo::NamedSolid> tools;
+        const bool forHoles = textOf(input.feature, "auto", "no") == "yes";
+        const double targetSize = context.kernel.bounds(input.inputs.front().solid).diagonal();
         for (std::size_t i = 1; i < input.inputs.size(); ++i) {
+            // A hole goes all the way through (rule 13): its step makes the shape again, longer.
+            if (forHoles && *mode == geo::BooleanOp::subtract) {
+                if (auto longer = longerTool(input, i, targetSize, context)) {
+                    tools.push_back(std::move(*longer));
+                    continue;
+                }
+            }
             tools.push_back(named(input.inputs[i]));
         }
         geo::NamedSolid made = context.kernel.boolean(*mode, named(input.inputs.front()), tools);

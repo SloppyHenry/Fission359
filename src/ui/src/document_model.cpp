@@ -597,8 +597,9 @@ QVariantList DocumentModel::buildStepValues() const {
         const bool turn = spec.name == "rotX" || spec.name == "rotY" || spec.name == "rotZ";
         entry[QStringLiteral("group")] = (spec.name == "x" || spec.name == "y" || spec.name == "z")
                                              ? QStringLiteral("position")
-                                         : turn ? QStringLiteral("rotation")
-                                                : QStringLiteral("size");
+                                         : turn                   ? QStringLiteral("rotation")
+                                         : spec.name == "through" ? QStringLiteral("through")
+                                                                  : QStringLiteral("size");
         // The coloured letter in front of a place or a turn: x, y, z (empty for sizes).
         entry[QStringLiteral("axis")] = turn ? toQString(spec.name.substr(3, 1)).toLower()
                                         : (spec.name == "x" || spec.name == "y" || spec.name == "z")

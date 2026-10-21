@@ -110,12 +110,24 @@ struct FeatureResult {
     std::vector<FeatureOutput> outputs;
 };
 
+class FeatureType;
+
+/// The step that made an input body, for a step that has to rebuild its input differently
+/// (a hole made longer, see `FeatureType::throughParams`).
+struct InputStep {
+    const Feature* feature = nullptr;
+    const FeatureType* type = nullptr;
+    ResolvedParams params; ///< As worked out.
+};
+
 struct ExecuteInput {
     const Feature& feature;
     const ResolvedParams& params;
     /// Results for `feature.inputs`, in the same order. Their face roles are full names
     /// ("F1/box/top"), so a step can pass them on.
     const std::vector<FeatureOutput>& inputs;
+    /// The steps that made `inputs`, in the same order (empty where the recompute had none).
+    std::vector<InputStep> producers = {};
 };
 
 struct ExecuteContext {
@@ -157,6 +169,17 @@ public:
                                   const ExecuteContext& context) const = 0;
 
     virtual Description describe(const ResolvedParams& params) const = 0;
+
+    /// For a hole that goes all the way through (ADR-0011): the values of the step with the body
+    /// made `reach` mm longer at both ends along its own axis, so that it leaves whatever it cuts
+    /// on both sides. nullopt for a shape that does not run straight (a sphere) or when the person
+    /// switched "through" off. The default is nullopt.
+    virtual std::optional<ResolvedParams> throughParams(const ResolvedParams& params,
+                                                        double reach) const {
+        (void)params;
+        (void)reach;
+        return std::nullopt;
+    }
 
     /// Like `describe`, for a step whose sentence depends on its words or inputs (a combine says
     /// how many tools it has). The default asks `describe`.
