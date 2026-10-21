@@ -234,13 +234,13 @@ Item {
 
     // --- arrow keys -----------------------------------------------------------------------
 
-    // One step with an arrow key: 1, with Shift 10, with Alt 0,1 (mm or degrees). A formula
+    // One step with an arrow key: 1, with Shift 10, with Alt (or Cmd) 0,1 (mm or degrees). A formula
     // stays a formula (`Breite/2` becomes `(Breite/2) + 1`).
     function step(direction, modifiers) {
         if (root.readOnly) {
             return
         }
-        const size = (modifiers & Qt.ShiftModifier) ? 10 : (modifiers & Qt.AltModifier) ? 0.1 : 1
+        const size = (modifiers & Qt.ShiftModifier) ? 10 : (modifiers & (Qt.AltModifier | Qt.ControlModifier)) ? 0.1 : 1
         const moved = Numbers.adjusted(input.text, root.kind, direction * size)
         if (moved === "") {
             return // the text is not a formula (yet): the line below the field says why
