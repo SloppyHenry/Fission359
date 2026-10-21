@@ -36,7 +36,10 @@ public:
 
     std::vector<ParamSpec> parameters() const override { return {}; }
 
-    std::vector<TextFieldSpec> texts() const override { return {{"mode", "merge"}}; }
+    std::vector<TextFieldSpec> texts() const override {
+        // `auto`: "yes" for a step the program keeps up to date for a hole (ADR-0011).
+        return {{"mode", "merge"}, {"auto", "no"}};
+    }
 
     std::optional<FeatureIssue> validate(const ResolvedParams&) const override {
         return std::nullopt;

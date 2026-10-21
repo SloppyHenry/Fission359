@@ -282,6 +282,22 @@ std::unique_ptr<Command> makeSetFeatureText(FeatureId id, std::string name, std:
         });
 }
 
+std::unique_ptr<Command> makeSetFeatureInputs(FeatureId id, std::vector<BodyId> inputs) {
+    std::string key = "inputs/" + id.value;
+    return std::make_unique<SetCommand<std::vector<BodyId>>>(
+        std::move(key), std::move(inputs),
+        [id](const Document& document) -> std::optional<std::vector<BodyId>> {
+            const Feature* feature = document.findFeature(id);
+            return feature != nullptr ? std::optional(feature->inputs) : std::nullopt;
+        },
+        [id](Document& document, const std::vector<BodyId>& value) {
+            return document.setFeatureInputs(id, value);
+        },
+        [id](const Document& document, const std::vector<BodyId>&) {
+            return featureLabel(document, id, "setInputs");
+        });
+}
+
 std::unique_ptr<Command> makeSetFeatureLabel(FeatureId id, std::string label) {
     std::string key = "label/" + id.value;
     return std::make_unique<SetCommand<std::string>>(

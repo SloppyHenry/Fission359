@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "fission/core/command.h"
 #include "fission/core/document.h"
@@ -47,6 +48,8 @@ std::unique_ptr<Command> makeSetFeatureValue(FeatureId id, std::string name,
                                              std::string expression);
 /// Sets a word-valued field of a step (the text of a lettering, the name of its font).
 std::unique_ptr<Command> makeSetFeatureText(FeatureId id, std::string name, std::string text);
+/// Replaces the bodies a step works on (a combine step gets another tool).
+std::unique_ptr<Command> makeSetFeatureInputs(FeatureId id, std::vector<BodyId> inputs);
 std::unique_ptr<Command> makeSetFeatureLabel(FeatureId id, std::string label);
 /// Switches a step off or on ("ausblenden").
 std::unique_ptr<Command> makeSetFeatureSuppressed(FeatureId id, bool suppressed);
