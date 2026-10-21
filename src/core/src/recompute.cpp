@@ -116,6 +116,8 @@ FeatureIssue issueFromKernel(const geo::GeometryError& error) {
         return issueOf(FeatureIssueCode::fontStyleMissing, error.subject(), error.what());
     case geo::GeometryErrorCode::emptyResult:
         return issueOf(FeatureIssueCode::combineEmpty, {}, error.what());
+    case geo::GeometryErrorCode::noOverlap:
+        return issueOf(FeatureIssueCode::combineNoOverlap, {}, error.what());
     case geo::GeometryErrorCode::kernelFailure:
         break;
     }

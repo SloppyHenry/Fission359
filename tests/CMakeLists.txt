@@ -204,12 +204,27 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=0,90,260 --simulate "drophole:cylinder,366,341;recipe:box,cylinder,combine")
   set_tests_properties(app_flow_d_hole PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.7b, Ablauf D step 3: the ghost of the hole is pulled along X with the real mouse path;
+  # the cut stays (the hole is still in the box), and it is no new step "group".
+  add_test(NAME app_flow_d_hole_move
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-flow-d-hole-move.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "drophole:cylinder,366,341;step:1;gizmo:x,12,0,8;recipe:box,cylinder,combine")
+  set_tests_properties(app_flow_d_hole_move PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-1.7d: two chosen bodies are merged through the menu Body; the recipe gets one step.
   add_test(NAME app_combine_menu
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-combine-menu.png" --language en --size 1280x800
             --camera=0,90,260 --simulate "put:cylinder;selectall;menu:merge;recipe:box,cylinder,combine")
   set_tests_properties(app_combine_menu PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.7e: one body is split through the menu Body: the cut, and one placing step per part.
+  add_test(NAME app_split_menu
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-split-menu.png" --language en --size 1280x800
+            --camera=20,35,160 --simulate "selectall;menu:split;recipe:box,split,place,place")
+  set_tests_properties(app_split_menu PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-1.6b3: a shape dropped on a wall lies on it (a quarter turn about X); with Alt it stays up.
   add_test(NAME app_wall_drop

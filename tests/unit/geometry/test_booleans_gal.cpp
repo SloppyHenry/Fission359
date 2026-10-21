@@ -186,3 +186,141 @@ TEST_CASE("translate: a moved body keeps its faces and their names", "[solid][go
     checkNamed(moved);
     CHECK_THROWS_AS(occt::translateNamed(plate(), {std::nan(""), 0.0, 0.0}), GeometryError);
 }
+
+// ---------------------------------------------------------------------------------------------
+// The combinations of the kernel spike (AP-0.5, tests/geometry/test_booleans.cpp, A1 - A10) through
+// the geometry layer: each gives a valid body with the expected numbers, or a GeometryError that
+// the program can explain. A body that is invalid or has a wrong number of names never comes out.
+
+namespace {
+
+NamedSolid box(double sx, double sy, double sz, Point3d corner, const char* name) {
+    return called(occt::makeNamedBox(sx, sy, sz, corner), name);
+}
+
+NamedSolid cylinder(double radius, double height, Point3d base, const char* name) {
+    return called(occt::makeNamedCylinder(radius, height, base), name);
+}
+
+// Runs `combine`; true when it gave a body (checked: valid, named), false when it refused with a
+// GeometryError.
+template <typename F> bool givesValidOrRefuses(F&& combine, SolidReport* out = nullptr) {
+    try {
+        const NamedSolid result = combine();
+        checkNamed(result);
+        if (out != nullptr) {
+            *out = occt::measure(result.solid);
+        }
+        return true;
+    } catch (const GeometryError& error) {
+        CHECK(!std::string(error.what()).empty());
+        return false;
+    }
+}
+
+} // namespace
+
+TEST_CASE("spike A1: two boxes that share a whole face merge into one box", "[boolean][spike]") {
+    const NamedSolid a = box(20, 20, 20, {0, 0, 0}, "F1/box");
+    const NamedSolid b = box(20, 20, 20, {20, 0, 0}, "F2/box");
+    const NamedSolid merged = occt::booleanNamed(BooleanOp::merge, a, {b});
+    const SolidReport report = occt::measure(merged.solid);
+    CHECK(report.valid);
+    CHECK(report.solids == 1);
+    CHECK(report.faces == 6);
+    CHECK(report.volume == exactly(16000.0));
+    checkNamed(merged);
+}
+
+TEST_CASE("spike A3: a hole that only touches the outer wall", "[boolean][spike]") {
+    SolidReport report;
+    if (givesValidOrRefuses(
+            [&] {
+                return occt::booleanNamed(BooleanOp::subtract, plate(),
+                                          {cylinder(3.0, 20.0, {17.0, 0.0, -5.0}, "F2/cyl")});
+            },
+            &report)) {
+        CHECK(report.valid);
+        CHECK(report.volume == exactly(16000.0 - kPi * 9.0 * 10.0));
+    }
+}
+
+TEST_CASE("spike A4/A5: coaxial cylinders of the same radius", "[boolean][spike]") {
+    const NamedSolid lower = cylinder(10.0, 10.0, {0, 0, 0}, "F1/cyl");
+    const NamedSolid upper = cylinder(10.0, 10.0, {0, 0, 10.0}, "F2/cyl");
+    const NamedSolid merged = occt::booleanNamed(BooleanOp::merge, lower, {upper});
+    const SolidReport united = occt::measure(merged.solid);
+    CHECK(united.valid);
+    CHECK(united.solids == 1);
+    CHECK(united.faces == 3); // the walls of the two were joined
+    CHECK(united.volume == exactly(kPi * 100.0 * 20.0));
+    checkNamed(merged);
+
+    const NamedSolid tall = cylinder(10.0, 20.0, {0, 0, 0}, "F1/cyl");
+    const NamedSolid inner = cylinder(10.0, 10.0, {0, 0, 5.0}, "F2/cyl");
+    SolidReport cut;
+    if (givesValidOrRefuses([&] { return occt::booleanNamed(BooleanOp::subtract, tall, {inner}); },
+                            &cut)) {
+        CHECK(cut.valid);
+        CHECK(cut.volume == exactly(kPi * 100.0 * 10.0));
+    }
+}
+
+TEST_CASE("spike A6: a grid of 100 holes in one cut", "[boolean][spike]") {
+    const NamedSolid slab = called(occt::makeNamedBox(120.0, 120.0, 5.0, {0, 0, 0}), "F1/box");
+    std::vector<NamedSolid> holes;
+    for (int row = 0; row < 10; ++row) {
+        for (int column = 0; column < 10; ++column) {
+            holes.push_back(called(
+                occt::makeNamedCylinder(2.0, 20.0, {10.0 + 11.0 * column, 10.0 + 11.0 * row, -5.0}),
+                ("F" + std::to_string(2 + row * 10 + column) + "/cylinder").c_str()));
+        }
+    }
+    const NamedSolid cut = occt::booleanNamed(BooleanOp::subtract, slab, holes);
+    const SolidReport report = occt::measure(cut.solid);
+    CHECK(report.valid);
+    CHECK(report.solids == 1);
+    CHECK(report.faces == 6 + 100);
+    CHECK(report.volume == exactly(120.0 * 120.0 * 5.0 - 100.0 * kPi * 4.0 * 5.0));
+    checkNamed(cut);
+}
+
+TEST_CASE("spike A7: two boxes that touch only along an edge", "[boolean][spike]") {
+    const NamedSolid a = box(10, 10, 10, {0, 0, 0}, "F1/box");
+    const NamedSolid b = box(10, 10, 10, {10, 10, 0}, "F2/box");
+    SolidReport report;
+    if (givesValidOrRefuses([&] { return occt::booleanNamed(BooleanOp::merge, a, {b}); },
+                            &report)) {
+        CHECK(report.valid);
+        CHECK(report.volume == exactly(2000.0));
+    }
+}
+
+TEST_CASE("spike A8: a tiny hole in a large plate", "[boolean][spike]") {
+    const NamedSolid big = called(occt::makeNamedBox(200.0, 200.0, 5.0, {0, 0, 0}), "F1/box");
+    const NamedSolid tiny = cylinder(0.025, 20.0, {100.0, 100.0, -5.0}, "F2/cyl");
+    SolidReport report;
+    if (givesValidOrRefuses([&] { return occt::booleanNamed(BooleanOp::subtract, big, {tiny}); },
+                            &report)) {
+        CHECK(report.valid);
+        CHECK(report.faces == 7);
+        CHECK(report.volume == exactly(200.0 * 200.0 * 5.0 - kPi * 0.025 * 0.025 * 5.0));
+    }
+}
+
+TEST_CASE("spike A9/A10: boxes that overlap or part by a hair", "[boolean][spike]") {
+    const NamedSolid a = box(10, 10, 10, {0, 0, 0}, "F1/box");
+
+    // Overlapping by 0.00001 mm: a valid body or a message, never an invalid body.
+    const NamedSolid hairOverlap = box(10, 10, 10, {9.99999, 0, 0}, "F2/box");
+    givesValidOrRefuses([&] { return occt::booleanNamed(BooleanOp::merge, a, {hairOverlap}); });
+
+    // Parted by 0.001 mm: not joined, two bodies in one result.
+    const NamedSolid apart = box(10, 10, 10, {10.001, 0, 0}, "F3/box");
+    SolidReport report;
+    if (givesValidOrRefuses([&] { return occt::booleanNamed(BooleanOp::merge, a, {apart}); },
+                            &report)) {
+        CHECK(report.solids == 2);
+        CHECK(report.volume == exactly(2000.0));
+    }
+}

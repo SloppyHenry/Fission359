@@ -34,6 +34,10 @@ Rectangle {
     // "Go all the way through": a switch for a hole whose shape runs straight (a value 0 or 1).
     readonly property var throughValue: stepValues.find(v => v.group === "through")
     property bool isHole: false
+    // A split: the axis it cuts across (0 = x, 1 = y, 2 = z) and where.
+    readonly property var axisValue: stepValues.find(v => v.group === "axis")
+    readonly property var cutValues: stepValues.filter(v => v.group === "cut")
+    signal axisChosen(int axis)
     // The switch "keep the tools" of a combine step.
     readonly property var keepToolsText: stepTexts.find(t => t.kind === "flag")
     property string tab: "object"      // object | printer
@@ -149,6 +153,47 @@ Rectangle {
                 iconName: "cube"
                 title: root.stepTitle
                 subtitle: qsTr("Change a value or type a formula.")
+            }
+
+            Section {
+                visible: root.tab === "object" && root.axisValue !== undefined
+                heading: qsTr("Cut")
+
+                Segmented {
+                    accessibleName: qsTr("Cut across")
+                    current: root.axisValue !== undefined ? Math.round(root.axisValue.value) : 2
+                    model: [{ value: 0, text: "X" }, { value: 1, text: "Y" }, { value: 2, text: "Z" }]
+                    onActivated: value => root.axisChosen(value)
+                }
+
+                Repeater {
+                    model: root.cutValues
+
+                    delegate: NumberField {
+                        id: cutField
+
+                        required property var modelData
+
+                        width: parent.width
+                        label: modelData.label
+                        kind: modelData.kind
+                        unit: "mm"
+                        invalid: modelData.error
+                        onTextCommitted: text => root.valueCommitted(modelData.name, text)
+
+                        Binding {
+                            target: cutField
+                            property: "value"
+                            value: cutField.modelData.value
+                        }
+
+                        Binding {
+                            target: cutField
+                            property: "expression"
+                            value: cutField.modelData.expression
+                        }
+                    }
+                }
             }
 
             Section {

@@ -25,7 +25,7 @@ Item {
     property string flyout: ""             // the open tool group: "" or "shapes"
     signal flyoutCloseRequested
     /// More than one body is chosen: the ways to combine can be used.
-    property bool combineReady: false
+    property int chosenCount: 0
     signal combineRequested(string way)
     signal filterRequested(string filter)
     signal orthographicToggled
@@ -379,7 +379,7 @@ Item {
         id: combineFlyout
 
         visible: root.flyout === "combine"
-        ready: root.combineReady
+        chosen: root.chosenCount
         x: palette.x + palette.width + 10
         y: {
             const button = groupRepeater.itemAt(3)

@@ -239,6 +239,13 @@ public:
     /// Lets the hole `holeIndex` cut the body `rootIndex` (or not), as one step. False when the
     /// body is no hole or the index is wrong.
     Q_INVOKABLE bool setCutTarget(int holeIndex, int rootIndex, bool cut);
+    /// Splits a body in two across its longest side, in the middle (AP-1.7e): a step for the cut
+    /// and one step per part to move it. One step to undo. Returns the index of the cut's step
+    /// (chosen, so that its arrow shows) or -1 when it cannot be done.
+    /// Lets the cut of a split step run across another axis (0 = x, 1 = y, 2 = z): the plane goes
+    /// to the middle of the body on that axis. One step.
+    Q_INVOKABLE bool setSplitAxis(int stepIndex, int axis);
+    Q_INVOKABLE int splitBody(const QString& bodyId);
     Q_INVOKABLE QString combineBodies(const QStringList& bodyIds, const QString& mode);
     bool canPaste() const noexcept { return !m_clipboard.empty(); }
     /// How far (mm) a copy lies from the original, in x and in y.

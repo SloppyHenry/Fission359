@@ -87,6 +87,8 @@ const char* issueCodeName(core::FeatureIssueCode code) {
         return "fontStyleMissing";
     case core::FeatureIssueCode::combineEmpty:
         return "combineEmpty";
+    case core::FeatureIssueCode::combineNoOverlap:
+        return "combineNoOverlap";
     }
     return "kernelFailed";
 }
@@ -546,18 +548,31 @@ void DocumentModel::rebuildLists() {
     std::map<std::string, int> counted;
     // A result of combining keeps the name of the body it started as ("Box 1"), also its type
     // and number: a small symbol behind the name says it was cut (ADR-0011).
-    std::map<std::string, std::pair<std::string, int>> origin; // body id -> type and number
+    struct Origin {
+        std::string type;
+        int number = 0;
+        int part = 0; ///< 1, 2 ...: which part of a split it is (0 = not a part)
+    };
+    std::map<std::string, Origin> origin; // body id -> what it started as
     int index = 0;
     for (const core::Body& body : m_history.document().bodies()) {
         const core::Feature* maker = m_history.document().findFeature(body.createdBy);
         std::string type = maker != nullptr ? maker->type : std::string();
         int number = 0;
+        int partNumber = 0;
         std::string name = body.name;
-        if (type == "combine" && !maker->inputs.empty() &&
-            origin.contains(maker->inputs.front().value)) {
-            const auto& started = origin.at(maker->inputs.front().value);
-            type = started.first;
-            number = started.second;
+        const bool continues =
+            maker != nullptr && (type == "combine" || type == "place" || type == "split") &&
+            !maker->inputs.empty() && origin.contains(maker->inputs.front().value);
+        if (continues) {
+            const Origin& started = origin.at(maker->inputs.front().value);
+            type = started.type;
+            number = started.number;
+            partNumber = started.part;
+            if (maker->type == "split") {
+                const auto at = std::find(maker->outputs.begin(), maker->outputs.end(), body.id);
+                partNumber = static_cast<int>(at - maker->outputs.begin()) + 1;
+            }
             const core::Body* first = m_history.document().findBody(maker->inputs.front());
             if (name.empty() && first != nullptr) {
                 name = first->name;
@@ -565,11 +580,12 @@ void DocumentModel::rebuildLists() {
         } else {
             number = ++counted[type];
         }
-        origin[body.id.value] = {type, number};
+        origin[body.id.value] = {type, number, partNumber};
         QVariantMap entry;
         entry[QStringLiteral("index")] = index++;
         entry[QStringLiteral("type")] = toQString(type);
         entry[QStringLiteral("number")] = number;
+        entry[QStringLiteral("part")] = partNumber; // "Box 1, part 2" after a split
         entry[QStringLiteral("name")] = toQString(name);
         entry[QStringLiteral("color")] =
             QColor(body.color.red, body.color.green, body.color.blue).name();
@@ -619,11 +635,14 @@ QVariantList DocumentModel::buildStepValues() const {
         QVariantMap entry;
         entry[QStringLiteral("name")] = toQString(spec.name);
         const bool turn = spec.name == "rotX" || spec.name == "rotY" || spec.name == "rotZ";
-        entry[QStringLiteral("group")] = (spec.name == "x" || spec.name == "y" || spec.name == "z")
-                                             ? QStringLiteral("position")
-                                         : turn                   ? QStringLiteral("rotation")
-                                         : spec.name == "through" ? QStringLiteral("through")
-                                                                  : QStringLiteral("size");
+        entry[QStringLiteral("group")] =
+            (spec.name == "x" || spec.name == "y" || spec.name == "z") ? QStringLiteral("position")
+            : turn                                                     ? QStringLiteral("rotation")
+            : spec.name == "through"                                   ? QStringLiteral("through")
+            : spec.name == "axis"                                      ? QStringLiteral("axis")
+            : spec.name == "position"                                  ? QStringLiteral("cut")
+            : spec.name == "anchorU" || spec.name == "anchorV"         ? QStringLiteral("hidden")
+                                                                       : QStringLiteral("size");
         // The coloured letter in front of a place or a turn: x, y, z (empty for sizes).
         entry[QStringLiteral("axis")] = turn ? toQString(spec.name.substr(3, 1)).toLower()
                                         : (spec.name == "x" || spec.name == "y" || spec.name == "z")
@@ -1842,6 +1861,104 @@ bool DocumentModel::setCutTarget(int holeIndex, int rootIndex, bool cut) {
         documentChanged();
     }
     return true;
+}
+
+bool DocumentModel::setSplitAxis(int stepIndex, int axis) {
+    const auto& features = m_history.document().features();
+    if (stepIndex < 0 || stepIndex >= static_cast<int>(features.size()) || axis < 0 || axis > 2 ||
+        !m_result) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(stepIndex)];
+    const auto input =
+        step.inputs.empty() ? m_result->bodies.end() : m_result->bodies.find(step.inputs.front());
+    if (step.type != "split" || input == m_result->bodies.end()) {
+        return false;
+    }
+    geo::Bounds box;
+    try {
+        box = m_kernel->exactBounds(input->second.solid);
+    } catch (const geo::GeometryError&) {
+        return false;
+    }
+    const double size[3] = {box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z};
+    const double low[3] = {box.min.x, box.min.y, box.min.z};
+    const int u = axis == 0 ? 1 : 0;
+    const int v = axis == 2 ? 1 : 2;
+    const auto text = [](double value) { return QString::number(value, 'g', 12).toStdString(); };
+    const core::FeatureId id = step.id;
+    // The plane goes to the middle of the body on the new axis (where it surely cuts).
+    m_history.beginTransaction({"setValue", {{"field", "axis"}}});
+    bool done = m_history.execute(core::makeSetFeatureValue(id, "axis", std::to_string(axis)));
+    done = m_history.execute(
+               core::makeSetFeatureValue(id, "position", text(low[axis] + size[axis] / 2.0))) &&
+           done;
+    done =
+        m_history.execute(core::makeSetFeatureValue(id, "anchorU", text(low[u] + size[u] / 2.0))) &&
+        done;
+    done =
+        m_history.execute(core::makeSetFeatureValue(id, "anchorV", text(low[v] + size[v] / 2.0))) &&
+        done;
+    finishTransaction();
+    documentChanged();
+    return done;
+}
+
+int DocumentModel::splitBody(const QString& bodyId) {
+    const core::Body* body = findBody(bodyId);
+    const auto box = bodyBounds(bodyId);
+    if (body == nullptr || !box || m_history.document().consumerOf(body->id)) {
+        return -1;
+    }
+    // Across the longest side, in the middle: halving is what most people want first.
+    const double size[3] = {box->max.x - box->min.x, box->max.y - box->min.y,
+                            box->max.z - box->min.z};
+    const double low[3] = {box->min.x, box->min.y, box->min.z};
+    int axis = 0;
+    for (int i = 1; i < 3; ++i) {
+        axis = size[i] > size[axis] + 1e-9 ? i : axis;
+    }
+    const int u = axis == 0 ? 1 : 0;
+    const int v = axis == 2 ? 1 : 2;
+    const auto number = [](double value) {
+        return core::Value{QString::number(value, 'g', 12).toStdString(),
+                           core::QuantityKind::length};
+    };
+
+    core::FeatureDraft draft = core::defaultDraft(*m_registry.find("split"));
+    draft.inputs = {body->id};
+    draft.params["axis"] = {std::to_string(axis), core::QuantityKind::plain};
+    draft.params["position"] = number(low[axis] + size[axis] / 2.0);
+    draft.params["anchorU"] = number(low[u] + size[u] / 2.0);
+    draft.params["anchorV"] = number(low[v] + size[v] / 2.0);
+
+    core::CommandDescription label{"splitBody", {{"name", body->name}}};
+    if (const core::Feature* maker = m_history.document().findFeature(body->createdBy)) {
+        label.values["type"] = maker->type;
+        label.values["number"] = std::to_string(maker->number);
+    }
+    m_history.beginTransaction(std::move(label));
+    const auto split = m_history.addFeature(std::move(draft));
+    const core::Feature* step = split ? m_history.document().findFeature(*split) : nullptr;
+    if (step == nullptr || step->outputs.size() != 2) {
+        m_history.cancelTransaction();
+        return -1;
+    }
+    // Each part gets a step of its own that puts it where it is wanted: a part cannot be moved
+    // through the split, which makes two bodies (ADR-0010 point 3).
+    const std::vector<core::BodyId> parts = step->outputs;
+    for (const core::BodyId& part : parts) {
+        core::FeatureDraft place = core::defaultDraft(*m_registry.find("place"));
+        place.inputs = {part};
+        if (!m_history.addFeature(std::move(place))) {
+            m_history.cancelTransaction();
+            return -1;
+        }
+    }
+    finishTransaction();
+    m_currentFeature = *split;
+    documentChanged();
+    return stepIndexOf(*split);
 }
 
 QString DocumentModel::combineBodies(const QStringList& bodyIds, const QString& mode) {

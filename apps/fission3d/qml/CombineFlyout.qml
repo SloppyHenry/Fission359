@@ -10,8 +10,8 @@ Float {
     id: root
 
     readonly property alias catalog: combineCatalog
-    /// At least two bodies are chosen.
-    property bool ready: false
+    /// How many bodies are chosen.
+    property int chosen: 0
     signal wayChosen(string way)
 
     width: row.implicitWidth + 16
@@ -37,9 +37,11 @@ Float {
 
                 text: modelData.name
                 iconName: modelData.icon
-                enabled: root.ready
+                enabled: modelData.needs === 1 ? root.chosen === 1 : root.chosen >= 2
                 opacity: enabled ? 1.0 : 0.45
-                tipText: root.ready ? modelData.tip : qsTr("Choose two or more bodies first (Shift+click).")
+                tipText: enabled ? modelData.tip
+                                 : modelData.needs === 1 ? qsTr("Choose one body first.")
+                                                         : qsTr("Choose two or more bodies first (Shift+click).")
                 tipTitle: modelData.name
                 onClicked: root.wayChosen(modelData.id)
             }

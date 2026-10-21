@@ -73,6 +73,10 @@ public:
         ++builds;
         return inner_->makeCylinder(radius, height, base);
     }
+    fission::geo::NamedSolid translate(const fission::geo::NamedSolid& solid,
+                                       fission::geo::Point3d delta) const override {
+        return inner_->translate(solid, delta);
+    }
     fission::geo::NamedSolid
     boolean(fission::geo::BooleanOp op, const fission::geo::NamedSolid& target,
             const std::vector<fission::geo::NamedSolid>& tools) const override {
@@ -447,6 +451,10 @@ TEST_CASE("combining: parts of a result leave the list, tools of a cut stay as g
           "[ui][document-model][combine]") {
     Fixture f;
     REQUIRE(f.model->addShape("cylinder", false) == 1);
+    // In the box, where it is a cutter that touches it.
+    f.model->setStepValue(1, "radius", "4");
+    f.model->setStepValue(1, "x", "0");
+    f.model->setStepValue(1, "y", "0");
     f.model->waitForCalculation();
     REQUIRE(f.model->scene()->bodies.size() == 2);
 
@@ -708,4 +716,58 @@ TEST_CASE("combining: cutters can be kept as bodies", "[ui][document-model][comb
         flag = flag || text.toMap()["kind"].toString() == "flag";
     }
     CHECK(flag);
+}
+
+TEST_CASE("splitting: a body becomes two parts that can be moved one by one",
+          "[ui][document-model][split]") {
+    Fixture f; // a box 20 x 20 x 20
+    const int step = f.model->splitBody(f.model->bodyIdAt(0));
+    REQUIRE(step == 1);
+    f.model->waitForCalculation();
+
+    // The cut and one placing step for each part; the whole is one step to undo.
+    REQUIRE(f.model->recipe().size() == 4);
+    CHECK(f.step(1)["type"].toString() == "split");
+    CHECK(f.step(2)["type"].toString() == "place");
+    CHECK(f.step(1)["state"].toString() == "ok");
+    CHECK(f.model->historyPosition() == 1);
+    CHECK(f.model->currentStep() == 1); // chosen: its arrow is shown
+    REQUIRE(f.model->scene()->bodies.size() == 2);
+
+    // The longest side was cut in the middle (all sides are equal here: x), parts named.
+    const QVariantList bodies = f.model->bodies();
+    REQUIRE(bodies.size() == 5);
+    CHECK(f.step(2)["state"].toString() == "ok");
+    CHECK(f.step(3)["state"].toString() == "ok");
+    CHECK(bodies.at(0).toMap()["consumed"].toBool());
+    CHECK(bodies.at(1).toMap()["consumed"].toBool());
+    CHECK(bodies.at(3).toMap()["part"].toInt() == 1);
+    CHECK(bodies.at(4).toMap()["part"].toInt() == 2);
+    CHECK(bodies.at(3).toMap()["type"].toString() == "box");
+
+    // A part moves through its own step, the other one stays.
+    REQUIRE(f.model->moveBodiesBy({{f.model->bodyIdAt(3), {-30.0, 0.0, 0.0}}}, "moveBody"));
+    f.model->waitForCalculation();
+    CHECK(f.model->document().features().at(2).params.at("x").expression == "-30");
+    CHECK(f.model->document().features().at(3).params.at("x").expression == "0");
+
+    // Moving the arrow of the cut changes where it is cut.
+    REQUIRE(f.model->setStepValue(1, "position", "4"));
+    f.model->waitForCalculation();
+    CHECK(f.step(1)["state"].toString() == "ok");
+
+    REQUIRE(f.model->undo());
+    REQUIRE(f.model->undo());
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 1);
+}
+
+TEST_CASE("splitting: what cannot be split", "[ui][document-model][split]") {
+    Fixture f;
+    CHECK(f.model->splitBody("nobody") == -1);
+    const QString box = f.model->bodyIdAt(0);
+    REQUIRE(f.model->splitBody(box) >= 0);
+    f.model->waitForCalculation();
+    CHECK(f.model->splitBody(box) == -1); // it is part of the split now
 }

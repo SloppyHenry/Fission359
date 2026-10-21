@@ -109,7 +109,7 @@
 <context>
     <name>CombineCatalog</name>
     <message>
-        <location filename="../qml/CombineCatalog.qml" line="+11"/>
+        <location filename="../qml/CombineCatalog.qml" line="+12"/>
         <source>Merge</source>
         <translation>Vereinen</translation>
     </message>
@@ -153,11 +153,31 @@
         <source>Choose two or more bodies that overlap, then Keep overlap: only the shared part is left.</source>
         <translation>Wähle zwei oder mehr Körper, die sich überlappen, dann Überlappung behalten: Nur der gemeinsame Teil bleibt.</translation>
     </message>
+    <message>
+        <location line="+3"/>
+        <source>Split</source>
+        <translation>Teilen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cuts one body in two with a plane. Pull the arrow to move the plane; each part can be moved on its own.</source>
+        <translation>Teilt einen Körper mit einer Ebene in zwei. Zieh am Pfeil, um die Ebene zu verschieben; jedes Teil lässt sich einzeln bewegen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose one body, then Split. Pull the arrow or type a position; choose X, Y or Z for the direction of the cut.</source>
+        <translation>Wähle einen Körper, dann Teilen. Zieh am Pfeil oder tippe eine Position; wähle X, Y oder Z als Richtung des Schnitts.</translation>
+    </message>
 </context>
 <context>
     <name>CombineFlyout</name>
     <message>
-        <location filename="../qml/CombineFlyout.qml" line="+42"/>
+        <location filename="../qml/CombineFlyout.qml" line="+43"/>
+        <source>Choose one body first.</source>
+        <translation>Wähle zuerst einen Körper.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Choose two or more bodies first (Shift+click).</source>
         <translation>Wähle zuerst zwei oder mehr Körper (Umschalt+Klick).</translation>
     </message>
@@ -708,12 +728,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+690"/>
+        <location line="+708"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-689"/>
+        <location line="-707"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -744,11 +764,12 @@
     </message>
     <message>
         <location line="+1"/>
+        <location line="+696"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-694"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -779,18 +800,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+344"/>
+        <location line="+358"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-342"/>
-        <location line="+343"/>
+        <location line="-356"/>
+        <location line="+357"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-337"/>
+        <location line="-351"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -821,13 +842,18 @@
         <translation>Nichts zu tun: Die Körper stehen schon auf dem Bett.</translation>
     </message>
     <message>
-        <location line="+20"/>
-        <location line="+231"/>
+        <location line="+21"/>
+        <location line="+244"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-211"/>
+        <location line="-226"/>
+        <source>This body cannot be split: it may be part of another body.</source>
+        <translation>Dieser Körper lässt sich nicht teilen: Er ist vielleicht Teil eines anderen Körpers.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
         <source>Choose two or more bodies that are not part of another body yet.</source>
         <translation>Wähle zwei oder mehr Körper, die noch nicht Teil eines anderen Körpers sind.</translation>
     </message>
@@ -887,7 +913,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+26"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -918,8 +944,8 @@
     </message>
     <message>
         <location line="+2"/>
-        <source>Choose two or more bodies (Shift+click), then merge them, subtract the others from the first, or keep only what they share.</source>
-        <translation>Wähle zwei oder mehr Körper (Umschalt+Klick). Dann vereinen, die anderen aus dem ersten ausschneiden oder nur den gemeinsamen Teil behalten.</translation>
+        <source>Choose two or more bodies (Shift+click), then merge them, subtract the others from the first or keep only what they share. One body can be split in two.</source>
+        <translation>Wähle zwei oder mehr Körper (Umschalt+Klick). Dann vereinen, die anderen aus dem ersten ausschneiden oder nur den gemeinsamen Teil behalten. Ein einzelner Körper lässt sich in zwei teilen.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -932,7 +958,17 @@
         <translation>Einheit: mm</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+17"/>
+        <source>Combine</source>
+        <translation>Kombinieren</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Placing</source>
+        <translation>Platzierung</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Width</source>
         <translation>Breite</translation>
     </message>
@@ -1000,6 +1036,11 @@
         <location line="+1"/>
         <source>Letter size</source>
         <translation>Schriftgröße</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Position</source>
+        <translation>Position</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -1071,9 +1112,19 @@
         <source>Text “%1”, letters %2 mm, height %3 mm</source>
         <translation>Text „%1“, Buchstaben %2 mm, Höhe %3 mm</translation>
     </message>
+    <message>
+        <location line="+3"/>
+        <source>Split across %1 at %2 mm</source>
+        <translation>Geteilt quer zu %1 bei %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Part placed, moved by %1, %2, %3 mm</source>
+        <translation>Teil platziert, verschoben um %1, %2, %3 mm</translation>
+    </message>
     <message numerus="yes">
         <location line="+4"/>
-        <location line="+31"/>
+        <location line="+32"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>%n Körper ausgeschnitten</numerusform>
@@ -1081,7 +1132,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="-30"/>
+        <location line="-31"/>
         <source>Overlap kept with %n body(ies)</source>
         <translation>
             <numerusform>Überlappung mit %n Körper behalten</numerusform>
@@ -1160,6 +1211,11 @@
         <location line="+1"/>
         <source>%1 laid on a face</source>
         <translation>%1 auf eine Fläche gelegt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 split in two</source>
+        <translation>%1 in zwei geteilt</translation>
     </message>
     <message numerus="yes">
         <location line="+4"/>
@@ -1334,6 +1390,21 @@
     </message>
     <message>
         <location line="+4"/>
+        <source>The cutting plane does not touch the body. Move it into the body.</source>
+        <translation>Die Schnittebene berührt den Körper nicht. Schiebe sie in den Körper hinein.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>A cutter does not touch the body, so nothing is cut out. Move it onto the body.</source>
+        <translation>Ein Ausschneider berührt den Körper nicht, deshalb wird nichts ausgeschnitten. Schiebe ihn auf den Körper.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>These bodies cannot be combined cleanly. Move one of them a little, so that no faces lie exactly on each other.</source>
+        <translation>Diese Körper lassen sich nicht sauber kombinieren. Schiebe einen ein kleines Stück, damit keine Flächen genau aufeinander liegen.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>The bodies do not overlap, so nothing is left. Move them so that they touch.</source>
         <translation>Die Körper überlappen sich nicht, deshalb bleibt nichts übrig. Verschiebe sie so, dass sie sich berühren.</translation>
     </message>
@@ -1353,7 +1424,12 @@
         <translation>Diese Form ließ sich nicht bauen.</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+36"/>
+        <source>, part %1</source>
+        <translation>, Teil %1</translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Face of %1</source>
         <translation>Fläche von %1</translation>
     </message>
@@ -1402,32 +1478,32 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-350"/>
+        <location line="-372"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-671"/>
+        <location line="-685"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+706"/>
+        <location line="+720"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-584"/>
+        <location line="-598"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+313"/>
+        <location line="+327"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+296"/>
+        <location line="+297"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -1471,7 +1547,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+72"/>
+        <location filename="../qml/RightPanel.qml" line="+76"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -1497,6 +1573,16 @@
     </message>
     <message>
         <location line="+5"/>
+        <source>Cut</source>
+        <translation>Schnitt</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Cut across</source>
+        <translation>Quer schneiden</translation>
+    </message>
+    <message>
+        <location line="+38"/>
         <source>Hole</source>
         <translation>Loch</translation>
     </message>

@@ -78,3 +78,23 @@ Wir wählen **Option A**:
 ## Belege
 - UX §7.1 und Ablauf D (§15), `docs/spikes/kernel-robustheit.md`, `tests/geometry/test_booleans.cpp`.
 - Tests folgen mit 1.7a–f (Golden-Tests Volumen, Fläche, BBox, Topologie, Gültigkeit; Ablauf D Schritte 2–4).
+
+## Ergänzung 2026-10-21 (Umsetzung 1.7a–f)
+Beim Bauen haben sich Einzelheiten ergeben, die vom ersten Text abweichen oder ihn ergänzen:
+
+1. **Teilstücke einer zerschnittenen Fläche** heißen `…#1`, `…#2` (nie zweimal derselbe Name), statt einen Fehler zu melden: Ein Schlitz quer
+   über eine Fläche soll nicht scheitern. Ein Verweis auf den alten Namen wird dann „braucht Hilfe“ (Regel 6).
+2. **Löcher pflegt `reconcileCuts`** (Kern, ohne Qt) im selben Undo-Schritt wie die Änderung. Die Schritte tragen das Wort `auto = yes`; von Hand
+   gemachte Schritte fasst die Pflege nie an. Ein später abgelegtes Loch hängt an eine **neue Kette** (`combine(Ergebnis, Loch)`), nicht an einen
+   früheren Schritt, weil ein Schritt nur Körper früherer Schritte braucht. Das Ergebnis ist dasselbe.
+3. **Ziele ändern:** Nimmt die Person einen Körper vom Etikett, merkt sich das Loch ihn in `Body::cutExceptions` (Ausnahmen, benannt nach dem
+   Körper, der er am Anfang der Kette war).
+4. **Durchgehend:** Das Werkzeug wird im Schritt vom Schritt der Form neu gebaut (`FeatureType::throughParams`, `throughTool`), an beiden Enden um
+   die Länge von Ziel und Werkzeug verlängert; die Mitte bleibt, so stimmt es auch bei gedrehten Löchern. Ein Loch, das auf einer Fläche
+   steht, schneidet deshalb sofort; schwebt es darüber (Hüllquader berühren sich nicht), schneidet es nicht. Nur Quader, Zylinder, Röhre, Prisma,
+   Stern und Schrift haben den Wert `through`.
+5. **Teilen:** Schritt `split` (Achse, Lage, zwei neue Körper); jeder Teil bekommt gleich einen Schritt `place` (Verschiebung x, y, z). So bleibt
+   die Lage-Regel aus ADR-0010 ohne Sonderfall in der Oberfläche. Das Rezept hat dafür drei Einträge.
+6. **Verbraucht, abgeleitet:** ein Schritt, der nichts liefert (Fehler), verbraucht nichts: Die Körper bleiben in der Ansicht, der Schritt nennt
+   das Problem. `keepTools = yes` lässt Ausschneider als Körper stehen.
+7. **Fuzzy:** nicht eingebaut. „Bündig machen“ als angebotene Lösung bleibt offen.

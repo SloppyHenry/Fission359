@@ -154,3 +154,26 @@ TEST_CASE("combine: intersecting bodies that do not touch is an error that helps
     REQUIRE(state->issue.has_value());
     CHECK(state->issue->code == FeatureIssueCode::combineEmpty);
 }
+
+TEST_CASE("combine: a cutter chosen by hand that misses the body is an error that helps",
+          "[combine]") {
+    World world;
+    const FeatureId box = world.add("box", {{"x", "0"}});
+    const FeatureId away = world.add("cylinder", {{"x", "500"}});
+    const FeatureId cut =
+        world.add("combine", {}, {world.bodyOf(box), world.bodyOf(away)}, {{"mode", "subtract"}});
+    const RecomputeResult result = world.run();
+    const FeatureState* state = result.state(cut);
+    REQUIRE(state != nullptr);
+    CHECK(state->status == FeatureStatus::error);
+    REQUIRE(state->issue.has_value());
+    CHECK(state->issue->code == FeatureIssueCode::combineNoOverlap);
+
+    // A hole the program put down may miss: that is no error (it has no cut then).
+    World other;
+    const FeatureId plate = other.add("box", {{"x", "0"}});
+    const FeatureId pin = other.add("cylinder", {{"x", "500"}});
+    const FeatureId quiet = other.add("combine", {}, {other.bodyOf(plate), other.bodyOf(pin)},
+                                      {{"mode", "subtract"}, {"auto", "yes"}});
+    CHECK(other.run().state(quiet)->status == FeatureStatus::ok);
+}

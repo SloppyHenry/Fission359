@@ -35,6 +35,7 @@ enum class FeatureIssueCode {
     fontNotFound,           ///< The font is not on this computer; `subject` is its name.
     fontStyleMissing,       ///< The font has no such style (bold, italic); `subject` is its name.
     combineEmpty,           ///< Combining left nothing (an overlap of bodies that do not overlap).
+    combineNoOverlap,       ///< A tool does not touch the body it was to cut.
 };
 
 struct FeatureIssue {

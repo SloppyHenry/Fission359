@@ -7,6 +7,7 @@ import QtQuick
 // of its tooltip card, what the hint line says, and the words the command search finds it by
 // (German and English at once). Rule 10 of the master prompt: every tool brings these along.
 QtObject {
+    // `needs`: how many bodies must be chosen (1 for splitting; the others work on two or more).
     readonly property var ways: [
         { id: "merge", name: qsTr("Merge"), icon: "combine",
           tip: qsTr("Makes the chosen bodies one body. Choose two or more first."),
@@ -22,7 +23,12 @@ QtObject {
           tip: qsTr("Keeps only the part that all chosen bodies have in common."),
           hint: qsTr("Choose two or more bodies that overlap, then Keep overlap: only the shared part is left."),
           synonyms: { de: ["überlappung", "schnittmenge", "schnitt", "gemeinsam", "durchschnitt"],
-                      en: ["overlap", "intersect", "intersection", "common", "shared"] } }
+                      en: ["overlap", "intersect", "intersection", "common", "shared"] } },
+        { id: "split", name: qsTr("Split"), icon: "scissors", needs: 1,
+          tip: qsTr("Cuts one body in two with a plane. Pull the arrow to move the plane; each part can be moved on its own."),
+          hint: qsTr("Choose one body, then Split. Pull the arrow or type a position; choose X, Y or Z for the direction of the cut."),
+          synonyms: { de: ["teilen", "trennen", "durchschneiden", "halbieren", "schneiden", "zerteilen"],
+                      en: ["split", "divide", "slice", "halve", "separate", "cut in two"] } }
     ]
 
     function find(id) {

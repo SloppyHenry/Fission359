@@ -55,6 +55,22 @@ public:
         const auto named = [](const FeatureOutput& body) {
             return geo::NamedSolid{body.solid, body.faces};
         };
+        // A cutter chosen by hand that is nowhere near the body is a mistake worth telling: the
+        // result would be the body unchanged. (A hole put down by the program may miss: then it
+        // simply has no cut.)
+        if (*mode == geo::BooleanOp::subtract && textOf(input.feature, "auto", "no") != "yes") {
+            const geo::Bounds target = context.kernel.bounds(input.inputs.front().solid);
+            for (std::size_t i = 1; i < input.inputs.size(); ++i) {
+                const geo::Bounds tool = context.kernel.bounds(input.inputs[i].solid);
+                const bool apart = tool.min.x > target.max.x || tool.max.x < target.min.x ||
+                                   tool.min.y > target.max.y || tool.max.y < target.min.y ||
+                                   tool.min.z > target.max.z || tool.max.z < target.min.z;
+                if (apart) {
+                    throw geo::GeometryError(geo::GeometryErrorCode::noOverlap,
+                                             "combine: a cutter does not touch the body");
+                }
+            }
+        }
         std::vector<geo::NamedSolid> tools;
         const bool forHoles = textOf(input.feature, "auto", "no") == "yes";
         const double targetSize = context.kernel.bounds(input.inputs.front().solid).diagonal();

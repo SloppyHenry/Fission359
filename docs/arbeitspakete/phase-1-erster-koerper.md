@@ -164,7 +164,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.7 Kombinieren
-**Status:** in Arbeit (1.7a in Review, 2026-10-20; ADR-0011 angenommen) · **Größe:** M · **Abhängigkeiten:** AP-1.5
+**Status:** Review (2026-10-21; wartet auf Test durch den Product Owner) · **Größe:** M · **Abhängigkeiten:** AP-1.5
 
 **Umfang:**
 - Vereinen, Ausschneiden, Überlappung behalten, Teilen (an Ebene oder Fläche)
@@ -177,9 +177,20 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Fehlerfälle (nicht überlappend, koplanar, ungültig) mit Meldungen aus dem Katalog
 
 **Akzeptanzkriterien:**
-- [ ] Alle Kombinationen aus dem Kernel-Spike (AP-0.5) liefern gültige Körper oder eine verständliche Meldung
-- [ ] Ändert man ein Loch nachträglich (Größe, Position), wird es korrekt neu ausgeschnitten
-- [ ] Ablauf D, Schritte 2–4, läuft automatisiert grün; es gibt keinen Schritt „Gruppieren“
+- [x] Alle Kombinationen aus dem Kernel-Spike (AP-0.5) liefern gültige Körper oder eine verständliche Meldung
+- [x] Ändert man ein Loch nachträglich (Größe, Position), wird es korrekt neu ausgeschnitten
+- [x] Ablauf D, Schritte 2–4, läuft automatisiert grün; es gibt keinen Schritt „Gruppieren“
+
+**Abschlussvermerk 2026-10-21 (wartet auf Test durch den Product Owner):**
+- Ergebnis: Vereinen, Ausschneiden, Überlappung behalten (Menü Körper und Palette „Kombinieren“), Teilen an einer Ebene (X, Y, Z; Pfeil-Griff
+  im Werkzeug Größe), Live-Löcher ohne Gruppieren mit Etikett „Schneidet aus: …“ (Ziele per Klick änderbar), „Geht ganz durch“ (Standard),
+  Ausschneider optional als Körper behalten. Kernel-Booleans exakt mit Flächennamen; die Kombinationen des Kernel-Spikes laufen über die GAL.
+- Festlegungen: [ADR-0011](../adr/0011-kombinieren-und-loecher.md) samt Ergänzung (ein Schritt „combine“, Löcher pflegt `reconcileCuts`, kombinierte
+  Körper wandern samt Löchern, jeder Teil eines Teilens bekommt einen Schritt „place“, Körpername bleibt, Symbol dahinter).
+- Offene Reste: Schnittebene beim Teilen nur als Pfeil (keine halbtransparente Fläche); Teilen nur an Achsenebenen (Fläche: Phase 2, AP-2.12);
+  Drehen und Größe ändern von kombinierten Körpern noch nicht; „bündig machen“ (Fuzzy-Wiederholung) fehlt; Zugehörigkeit eines Lochs wird beim
+  Loslassen neu geprüft, nicht während des Ziehens; die Prüfung rechnet im Oberflächen-Thread (nur wenn Löcher da sind, Messwert in der
+  PR-Beschreibung); Löschen eines Lochs mit AP-1.9.
 
 ---
 
