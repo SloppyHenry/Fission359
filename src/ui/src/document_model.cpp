@@ -538,15 +538,33 @@ void DocumentModel::rebuildLists() {
     // Bodies
     QVariantList bodies;
     std::map<std::string, int> counted;
+    // A result of combining keeps the name of the body it started as ("Box 1"), also its type
+    // and number: a small symbol behind the name says it was cut (ADR-0011).
+    std::map<std::string, std::pair<std::string, int>> origin; // body id -> type and number
     int index = 0;
     for (const core::Body& body : m_history.document().bodies()) {
         const core::Feature* maker = m_history.document().findFeature(body.createdBy);
-        const std::string type = maker != nullptr ? maker->type : std::string();
+        std::string type = maker != nullptr ? maker->type : std::string();
+        int number = 0;
+        std::string name = body.name;
+        if (type == "combine" && !maker->inputs.empty() &&
+            origin.contains(maker->inputs.front().value)) {
+            const auto& started = origin.at(maker->inputs.front().value);
+            type = started.first;
+            number = started.second;
+            const core::Body* first = m_history.document().findBody(maker->inputs.front());
+            if (name.empty() && first != nullptr) {
+                name = first->name;
+            }
+        } else {
+            number = ++counted[type];
+        }
+        origin[body.id.value] = {type, number};
         QVariantMap entry;
         entry[QStringLiteral("index")] = index++;
         entry[QStringLiteral("type")] = toQString(type);
-        entry[QStringLiteral("number")] = ++counted[type];
-        entry[QStringLiteral("name")] = toQString(body.name);
+        entry[QStringLiteral("number")] = number;
+        entry[QStringLiteral("name")] = toQString(name);
         entry[QStringLiteral("color")] =
             QColor(body.color.red, body.color.green, body.color.blue).name();
         entry[QStringLiteral("visible")] = body.visible;
@@ -1764,7 +1782,8 @@ QVariantMap DocumentModel::cutLabel(int bodyIndex) const {
     }
     const core::Body& hole = bodies[static_cast<std::size_t>(bodyIndex)];
     const auto bounds = bodyBounds(toQString(hole.id.value));
-    const auto targets = core::cutTargetsOf(m_history.document(), *m_result, *m_kernel, hole.id);
+    const auto targets =
+        core::cutTargetsOf(m_history.document(), *m_result, m_registry, *m_kernel, hole.id);
     if (!hole.hole || !hole.visible || !bounds || targets.empty()) {
         return label;
     }

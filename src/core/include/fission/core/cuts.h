@@ -25,7 +25,8 @@ namespace fission::core {
 ///  - a hole that does not cut any more because it is no longer marked as hole leaves its cuts;
 ///  - a hole that touches a body it does not cut yet gets a new cut step after the hole's own.
 ///
-/// "Touches" is exact (the kernel intersects both bodies, a box test comes first). Calculates the
+/// "Touches" is exact (the kernel intersects both bodies, a box test comes first). A hole that goes
+/// all the way through also reaches what it lies on: it is tested made long as well. Calculates the
 /// document on the calling thread, but only when it has holes; `cache` is kept between calls so
 /// that unchanged steps cost nothing. Returns true if the document changed.
 bool reconcileCuts(History& history, const FeatureRegistry& registry,
@@ -41,6 +42,7 @@ struct CutTarget {
 /// The bodies `hole` touches (and cuts, or would cut if it were not taken off the list), in the
 /// order of the document. Empty for a body that is no hole.
 std::vector<CutTarget> cutTargetsOf(const Document& document, const RecomputeResult& result,
+                                    const FeatureRegistry& registry,
                                     const geo::GeometryKernel& kernel, const BodyId& hole);
 
 } // namespace fission::core

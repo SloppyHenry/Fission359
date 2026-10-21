@@ -40,15 +40,53 @@ bool boxesOverlap(const geo::Bounds& a, const geo::Bounds& b) {
            a.min.z <= b.max.z + kMargin && b.min.z <= a.max.z + kMargin;
 }
 
-// Do the two bodies share any volume? A kernel that cannot tell says no (no cut is made on a
-// guess, rule 6).
-bool touches(const geo::GeometryKernel& kernel, const BodyResult& a, const BodyResult& b) {
+// Does the hole `hole` reach the body `target`? A hole that goes all the way through also reaches
+// what it stands on, so it is tested made long as well, but only if the hole itself touches the
+// target's box (a hole floating above does not cut). A kernel that cannot tell says no: no cut is
+// made on a guess (rule 6).
+struct Knowledge {
+    const Document& document;
+    const FeatureRegistry& registry;
+    const geo::GeometryKernel& kernel;
+    const RecomputeResult& result;
+};
+
+bool intersects(const geo::GeometryKernel& kernel, const geo::NamedSolid& a,
+                const geo::NamedSolid& b) {
     try {
-        if (!boxesOverlap(kernel.bounds(a.solid), kernel.bounds(b.solid))) {
+        kernel.boolean(geo::BooleanOp::intersect, a, {b});
+        return true;
+    } catch (const geo::GeometryError&) {
+        return false;
+    }
+}
+
+bool touches(const Knowledge& know, const BodyId& holeId, const BodyResult& hole,
+             const BodyResult& target) {
+    try {
+        const geo::Bounds holeBox = know.kernel.bounds(hole.solid);
+        const geo::Bounds targetBox = know.kernel.bounds(target.solid);
+        if (!boxesOverlap(holeBox, targetBox)) {
             return false;
         }
-        kernel.boolean(geo::BooleanOp::intersect, namedSolid(a), {namedSolid(b)});
-        return true;
+        const geo::NamedSolid targetSolid = namedSolid(target);
+        if (intersects(know.kernel, namedSolid(hole), targetSolid)) {
+            return true;
+        }
+        const Body* body = know.document.findBody(holeId);
+        InputStep step;
+        step.feature = body != nullptr ? know.document.findFeature(body->createdBy) : nullptr;
+        step.type = step.feature != nullptr ? know.registry.find(step.feature->type) : nullptr;
+        if (const FeatureState* made =
+                step.feature != nullptr ? know.result.state(step.feature->id) : nullptr) {
+            step.params = made->params;
+        }
+        const ExecuteContext context{know.kernel, {}};
+        const double reach = targetBox.diagonal() + holeBox.diagonal();
+        if (const auto longer = throughTool(step, reach, context)) {
+            return intersects(know.kernel, *longer, targetSolid);
+        }
+        return false;
     } catch (const geo::GeometryError&) {
         return false;
     }
@@ -150,6 +188,7 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
         return false;
     }
     const RecomputeResult& result = *calculated;
+    const Knowledge know{document, registry, kernel, result};
     const std::uint64_t revisionBefore = document.revision();
 
     // 1. Holes that left, or are none any more, are taken out of their cuts.
@@ -173,7 +212,7 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
             const bool stays = tool != nullptr && tool->hole &&
                                !isException(document, *tool, cut->inputs.front()) &&
                                (target == nullptr || toolResult == nullptr ||
-                                touches(kernel, *toolResult, *target));
+                                touches(know, cut->inputs[i], *toolResult, *target));
             if (stays) {
                 kept.push_back(cut->inputs[i]);
             }
@@ -201,7 +240,7 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
         for (Head& head : heads) {
             if (chainContains(document, head.body, hole) ||
                 isException(document, *document.findBody(hole), head.body) ||
-                !touches(kernel, tool, *head.shape)) {
+                !touches(know, hole, tool, *head.shape)) {
                 continue;
             }
             const Body headBody = *document.findBody(head.body);
@@ -228,7 +267,9 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
 }
 
 std::vector<CutTarget> cutTargetsOf(const Document& document, const RecomputeResult& result,
+                                    const FeatureRegistry& registry,
                                     const geo::GeometryKernel& kernel, const BodyId& hole) {
+    const Knowledge know{document, registry, kernel, result};
     std::vector<CutTarget> targets;
     const BodyResult* tool = resultOf(result, hole);
     const Body* body = document.findBody(hole);
@@ -237,7 +278,7 @@ std::vector<CutTarget> cutTargetsOf(const Document& document, const RecomputeRes
     }
     for (const Head& head : headsOf(document, result)) {
         const bool cutNow = chainContains(document, head.body, hole);
-        if (cutNow || touches(kernel, *tool, *head.shape)) {
+        if (cutNow || touches(know, hole, *tool, *head.shape)) {
             targets.push_back({head.body, rootOf(document, head.body), cutNow});
         }
     }

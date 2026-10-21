@@ -241,7 +241,8 @@ TEST_CASE("cuts: the bodies a hole touches, and the ones taken off the label", "
     world.reconcile();
     REQUIRE(world.cutSteps() == 2);
 
-    auto targets = cutTargetsOf(world.history.document(), world.run(), *world.kernel, pin);
+    auto targets =
+        cutTargetsOf(world.history.document(), world.run(), world.registry, *world.kernel, pin);
     REQUIRE(targets.size() == 2);
     CHECK(targets[0].root == left);
     CHECK(targets[0].cutNow);
@@ -252,7 +253,8 @@ TEST_CASE("cuts: the bodies a hole touches, and the ones taken off the label", "
     CHECK(world.reconcile());
     CHECK(world.cutSteps() == 1);
     CHECK_FALSE(world.reconcile());
-    targets = cutTargetsOf(world.history.document(), world.run(), *world.kernel, pin);
+    targets =
+        cutTargetsOf(world.history.document(), world.run(), world.registry, *world.kernel, pin);
     REQUIRE(targets.size() == 2); // it still touches the right box ...
     for (const CutTarget& target : targets) {
         CHECK(target.cutNow == (target.root == left)); // ... but does not cut it
@@ -268,7 +270,8 @@ TEST_CASE("cuts: a body that is no hole has no targets", "[cuts]") {
     World world;
     world.plate();
     const BodyId pin = world.pin("0");
-    CHECK(cutTargetsOf(world.history.document(), world.run(), *world.kernel, pin).empty());
+    CHECK(cutTargetsOf(world.history.document(), world.run(), world.registry, *world.kernel, pin)
+              .empty());
 }
 
 TEST_CASE("cuts: a hole goes all the way through, also when the body grows", "[cuts][through]") {
@@ -318,4 +321,31 @@ TEST_CASE("cuts: a sphere as a hole is as big as it is", "[cuts][through]") {
     const double volume = world.volumeOfShown();
     CHECK(volume < kPlate);
     CHECK(volume > kPlate - 4.0 / 3.0 * std::numbers::pi * 64.0 - 1e-6);
+}
+
+TEST_CASE("cuts: a hole that stands on a body cuts it, one floating above does not",
+          "[cuts][through]") {
+    World world;
+    world.plate(); // 40 x 40 x 10, on the bed
+    // Put down on the top face: it touches it and nothing more. It goes all the way through.
+    const BodyId down = world.add("cylinder", {{"radius", "3"}, {"height", "4"}, {"z", "10"}});
+    world.asHole(down);
+    world.reconcile();
+    CHECK(world.cutSteps() == 1);
+    CHECK(world.volumeOfShown() == Approx(kPlate - hole(3, 10)).epsilon(1e-6));
+
+    World other;
+    other.plate();
+    const BodyId floating = other.add("cylinder", {{"radius", "3"}, {"height", "4"}, {"z", "30"}});
+    other.asHole(floating);
+    other.reconcile();
+    CHECK(other.cutSteps() == 0);
+
+    // A ball needs to sink in: standing on the plate it does not cut.
+    World ball;
+    ball.plate();
+    const BodyId sphere = ball.add("sphere", {{"radius", "4"}, {"z", "10"}});
+    ball.asHole(sphere);
+    ball.reconcile();
+    CHECK(ball.cutSteps() == 0);
 }

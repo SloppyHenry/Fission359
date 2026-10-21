@@ -237,6 +237,13 @@ private:
 /// A new step of this type with every value at its default and the bodies it will create.
 FeatureDraft defaultDraft(const FeatureType& type);
 
+/// The body of `step` made again for a hole that goes all the way through: `reach` mm longer at
+/// both ends (see `FeatureType::throughParams`). Its faces are named as the faces of the short
+/// body are ("F2/cylinder/side"), so the walls of the hole keep their names. nullopt when the
+/// shape cannot be longer or the person switched "through" off.
+std::optional<geo::NamedSolid> throughTool(const InputStep& step, double reach,
+                                           const ExecuteContext& context);
+
 /// The name of a face as a reference stores it: "F5/box/top".
 std::string elementName(const Feature& feature, std::string_view role);
 

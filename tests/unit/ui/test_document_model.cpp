@@ -649,3 +649,18 @@ TEST_CASE("the label of a hole names what it cuts and lets the person change tha
     CHECK(f.model->recipe().size() == 3);
     CHECK_FALSE(f.model->setCutTarget(0, 0, true)); // the box is no hole
 }
+
+TEST_CASE("a cut body keeps its name, a symbol says it was cut", "[ui][document-model][combine]") {
+    Fixture f;
+    f.model->startPlacing("cylinder", true, 0.0, 0.0, 0.0);
+    f.model->setStepValue(1, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    const QVariantMap box = f.model->bodies().at(0).toMap();
+    const QVariantMap cut = f.model->bodies().at(2).toMap();
+    CHECK(cut["type"].toString() == "box");
+    CHECK(cut["number"].toInt() == 1);
+    CHECK(cut["name"].toString() == box["name"].toString());
+    CHECK(cut["cut"].toBool());
+    CHECK(f.model->bodies().at(1).toMap()["number"].toInt() == 1); // "Cylinder 1"
+}

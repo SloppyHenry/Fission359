@@ -160,7 +160,9 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "(click its tile), type:50,tab,20,enter (type sizes), set:style,bold (a word "
             "of the chosen step), grab:width,40,0,8 (press a handle, pull it by view pixels "
             "in small moves, let go), point:cornerRadius (put the pointer on that handle and leave "
-            "it there), expect:width,40 (fail unless the chosen step has at least "
+            "it there), recipe:box,cylinder,combine (fail unless the recipe has exactly these "
+            "steps), "
+            "expect:width,40 (fail unless the chosen step has at least "
             "that value, no drag is left and its handles are still shown), near:x,12 (fail "
             "unless the chosen step has exactly that value), tool:size (choose a tool of the "
             "palette), filtermenu (open the choice menu of the 3D view), snap:off (snapping off as "
@@ -319,6 +321,26 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                                .arg(handles->editing())
                                .arg(handles->handles().size());
                     g_simulationFailure = 4;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("recipe")) {
+            // recipe:box,cylinder,combine - the steps of the recipe are exactly these types, in
+            // this order (a step "group" must never appear: holes cut without it). Otherwise the
+            // program ends with an error (for the tests).
+            const QStringList wanted = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 350;
+            checkAfter(delay, viewport, model, [model, wanted] {
+                QStringList found;
+                for (const QVariant& step : model->recipe()) {
+                    found << step.toMap()["type"].toString();
+                }
+                if (found != wanted) {
+                    qWarning().noquote()
+                        << QStringLiteral("expected the recipe %1; found %2")
+                               .arg(wanted.join(QLatin1Char(',')), found.join(QLatin1Char(',')));
+                    g_simulationFailure = 5;
                 }
             });
             continue;
