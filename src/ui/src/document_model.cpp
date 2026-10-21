@@ -1049,7 +1049,26 @@ bool DocumentModel::moveCurrent(const std::array<std::optional<double>, 3>& posi
     return done;
 }
 
+bool DocumentModel::groupCanTurn(const core::Feature& step) const {
+    std::vector<const core::Feature*> forms;
+    collectForms(step, forms);
+    return !forms.empty() &&
+           std::all_of(forms.begin(), forms.end(), [](const core::Feature* form) {
+               return form->params.contains("rotX") && form->params.contains("rotY") &&
+                      form->params.contains("rotZ");
+           });
+}
+
 std::optional<geo::Angles> DocumentModel::currentTurn() const {
+    const auto& steps = m_history.document().features();
+    if (m_currentStep >= 0 && m_currentStep < static_cast<int>(steps.size()) &&
+        steps[static_cast<std::size_t>(m_currentStep)].type == "combine") {
+        // A combined body has no turn of its own: it is turned from "not turned" by the amount
+        // dragged, all its parts about the middle of the whole.
+        return groupCanTurn(steps[static_cast<std::size_t>(m_currentStep)])
+                   ? std::optional<geo::Angles>(geo::Angles{})
+                   : std::nullopt;
+    }
     geo::Angles angles;
     int found = 0;
     for (const QVariant& entry : m_stepValues) {
@@ -1072,6 +1091,15 @@ std::optional<geo::Angles> DocumentModel::currentTurn() const {
 
 std::optional<geo::Point3d> DocumentModel::currentTurnCentre() const {
     const auto& features = m_history.document().features();
+    if (m_currentStep >= 0 && m_currentStep < static_cast<int>(features.size()) &&
+        features[static_cast<std::size_t>(m_currentStep)].type == "combine") {
+        const auto box = currentBodyBounds();
+        if (!box || !currentTurn()) {
+            return std::nullopt;
+        }
+        return geo::Point3d{(box->min.x + box->max.x) / 2.0, (box->min.y + box->max.y) / 2.0,
+                            (box->min.z + box->max.z) / 2.0};
+    }
     if (!currentTurn() || m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size()) ||
         !m_result) {
         return std::nullopt;
@@ -1091,6 +1119,41 @@ bool DocumentModel::beginTurn() {
         return false;
     }
     const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    m_turnGroup.clear();
+    if (feature.type == "combine") {
+        const auto centre = currentTurnCentre();
+        std::vector<const core::Feature*> forms;
+        collectForms(feature, forms);
+        if (!centre || !m_result) {
+            return false;
+        }
+        for (const core::Feature* form : forms) {
+            const core::FeatureType* type = m_registry.find(form->type);
+            const core::FeatureState* state = m_result->state(form->id);
+            if (type == nullptr || state == nullptr || !state->description) {
+                m_turnGroup.clear();
+                return false;
+            }
+            TurnStart start;
+            start.id = form->id;
+            static constexpr const char* kPlace[3] = {"x", "y", "z"};
+            static constexpr const char* kTurn[3] = {"rotX", "rotY", "rotZ"};
+            for (std::size_t i = 0; i < 3; ++i) {
+                start.place[i] = form->params.at(kPlace[i]);
+                start.turn[i] = form->params.at(kTurn[i]);
+                start.placeValue[i] = state->params.at(kPlace[i]).value;
+            }
+            start.turnValue = core::FeatureType::turnOf(state->params);
+            // The middle of the part before its turn, minus its foot.
+            core::ResolvedParams atOrigin = state->params;
+            for (const char* name : kPlace) {
+                atOrigin.at(name).value = 0.0;
+            }
+            start.centreOffset = type->bodyCentre(atOrigin);
+            m_turnGroup.push_back(std::move(start));
+        }
+        m_turnGroupCentre = *centre;
+    }
     core::CommandDescription label{
         "rotateBody", {{"type", feature.type}, {"number", std::to_string(feature.number)}}};
     if (!feature.outputs.empty()) {
@@ -1103,6 +1166,45 @@ bool DocumentModel::beginTurn() {
 }
 
 bool DocumentModel::turnCurrent(const geo::Angles& angles) {
+    if (!m_turnGroup.empty() && m_history.inTransaction()) {
+        // Every part turns about the same point by the same amount: its own turn changes, and
+        // its place so that its middle goes where the turn takes it.
+        const std::uint64_t before = m_history.document().revision();
+        const bool back = angles.isZero(); // back to the start: as typed
+        static constexpr const char* kPlace[3] = {"x", "y", "z"};
+        static constexpr const char* kTurn[3] = {"rotX", "rotY", "rotZ"};
+        bool done = true;
+        for (const TurnStart& part : m_turnGroup) {
+            const geo::Angles turned =
+                geo::anglesOf(geo::rotationOf(angles) * geo::rotationOf(part.turnValue),
+                              part.turnValue);
+            const geo::Point3d middle{part.placeValue[0] + part.centreOffset.x,
+                                      part.placeValue[1] + part.centreOffset.y,
+                                      part.placeValue[2] + part.centreOffset.z};
+            const geo::Point3d moved = geo::rotatedAbout(middle, m_turnGroupCentre, angles);
+            const double foot[3] = {part.placeValue[0] + moved.x - middle.x,
+                                    part.placeValue[1] + moved.y - middle.y,
+                                    part.placeValue[2] + moved.z - middle.z};
+            const double turnNow[3] = {turned.x, turned.y, turned.z};
+            const double turnWas[3] = {part.turnValue.x, part.turnValue.y, part.turnValue.z};
+            for (std::size_t i = 0; i < 3; ++i) {
+                const bool same = back || std::abs(turnNow[i] - turnWas[i]) < 1e-9;
+                done = m_history.execute(core::makeSetFeatureValue(
+                           part.id, kTurn[i],
+                           same ? part.turn[i].expression : core::numberText(turnNow[i]))) &&
+                       done;
+                const bool stays = back || std::abs(foot[i] - part.placeValue[i]) < 1e-9;
+                done = m_history.execute(core::makeSetFeatureValue(
+                           part.id, kPlace[i],
+                           stays ? part.place[i].expression : core::numberText(foot[i]))) &&
+                       done;
+            }
+        }
+        if (m_history.document().revision() != before) {
+            documentChanged();
+        }
+        return done;
+    }
     const auto& features = m_history.document().features();
     const auto present = currentTurn();
     if (!present || m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size())) {
@@ -1163,17 +1265,12 @@ std::optional<geo::Bounds> DocumentModel::placingBodyBounds() const {
     return feature != nullptr ? boundsOfFeature(*feature) : std::nullopt;
 }
 
-bool DocumentModel::beginScale() {
-    const auto& features = m_history.document().features();
-    if (!currentPosition() || m_currentStep < 0 ||
-        m_currentStep >= static_cast<int>(features.size()) || !m_result) {
-        return false;
-    }
-    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+std::optional<DocumentModel::ScaleStart>
+DocumentModel::scaleStartOf(const core::Feature& feature) const {
     const core::FeatureType* type = m_registry.find(feature.type);
-    const core::FeatureState* state = m_result->state(feature.id);
+    const core::FeatureState* state = m_result ? m_result->state(feature.id) : nullptr;
     if (type == nullptr || state == nullptr || !state->description) {
-        return false;
+        return std::nullopt;
     }
     ScaleStart start;
     start.id = feature.id;
@@ -1188,16 +1285,45 @@ bool DocumentModel::beginScale() {
         const auto value = feature.params.find(kNames[axis]);
         const auto worked = state->params.find(kNames[axis]);
         if (value == feature.params.end() || worked == state->params.end()) {
-            return false;
+            return std::nullopt;
         }
         start.place[axis] = value->second;
         start.placeValue[axis] = worked->second.value;
     }
     if (start.sizes.empty()) {
-        return false;
+        return std::nullopt;
     }
     start.params = state->params;
-    m_scale = std::move(start);
+    return start;
+}
+
+bool DocumentModel::beginScale() {
+    const auto& features = m_history.document().features();
+    if (!currentPosition() || m_currentStep < 0 ||
+        m_currentStep >= static_cast<int>(features.size()) || !m_result) {
+        return false;
+    }
+    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    // A combined body is made larger as every part it is made of, holes included.
+    std::vector<const core::Feature*> forms;
+    if (feature.type == "combine") {
+        collectForms(feature, forms);
+    } else {
+        forms.push_back(&feature);
+    }
+    std::vector<ScaleStart> starts;
+    for (const core::Feature* form : forms) {
+        auto start = scaleStartOf(*form);
+        if (!start) {
+            return false; // a part that has no sizes (a part of a split) cannot be made larger
+        }
+        starts.push_back(std::move(*start));
+    }
+    if (starts.empty()) {
+        return false;
+    }
+    m_scale = starts.front();
+    m_scaleGroup = std::move(starts);
     core::CommandDescription label{
         "scaleBody",
         {{"type", feature.type}, {"number", std::to_string(feature.number)}, {"value", "100"}}};
@@ -1210,17 +1336,14 @@ bool DocumentModel::beginScale() {
     return true;
 }
 
-bool DocumentModel::acceptsScale(double factor) const {
-    if (!m_scale || !std::isfinite(factor) || !(factor > 0.0)) {
-        return false;
-    }
-    const core::Feature* feature = m_history.document().findFeature(m_scale->id);
+bool DocumentModel::acceptsScaleOf(const ScaleStart& start, double factor) const {
+    const core::Feature* feature = m_history.document().findFeature(start.id);
     const core::FeatureType* type = feature != nullptr ? m_registry.find(feature->type) : nullptr;
     if (type == nullptr) {
         return false;
     }
-    core::ResolvedParams params = m_scale->params;
-    for (const auto& [name, value] : m_scale->sizes) {
+    core::ResolvedParams params = start.params;
+    for (const auto& [name, value] : start.sizes) {
         core::Quantity& quantity = params.at(name);
         const double scaled = quantity.value * factor;
         if ((quantity.value > 0.0 && scaled < kSmallestSize) || scaled > kLargestSize) {
@@ -1231,16 +1354,20 @@ bool DocumentModel::acceptsScale(double factor) const {
     return !type->validate(params).has_value();
 }
 
-bool DocumentModel::scaleCurrent(double factor, const geo::Point3d& anchor) {
-    if (!m_scale || !m_history.inTransaction() || !std::isfinite(factor) || !(factor > 0.0) ||
-        m_history.document().findFeature(m_scale->id) == nullptr) {
+bool DocumentModel::acceptsScale(double factor) const {
+    if (!m_scale || !std::isfinite(factor) || !(factor > 0.0)) {
         return false;
     }
-    const core::FeatureId id = m_scale->id;
+    return std::all_of(m_scaleGroup.begin(), m_scaleGroup.end(),
+                       [&](const ScaleStart& start) { return acceptsScaleOf(start, factor); });
+}
+
+bool DocumentModel::applyScale(const ScaleStart& start, double factor,
+                               const geo::Point3d& anchor) {
+    const core::FeatureId id = start.id;
     const bool unchanged = std::abs(factor - 1.0) < 1e-12; // back to the start: as typed
-    const std::uint64_t before = m_history.document().revision();
     bool done = true;
-    for (const auto& [name, value] : m_scale->sizes) {
+    for (const auto& [name, value] : start.sizes) {
         const std::optional<std::string> text =
             unchanged ? value.expression
                       : core::scaledExpression(value.expression, value.kind, factor);
@@ -1249,15 +1376,30 @@ bool DocumentModel::scaleCurrent(double factor, const geo::Point3d& anchor) {
     static constexpr const char* kNames[3] = {"x", "y", "z"};
     const double from[3] = {anchor.x, anchor.y, anchor.z};
     for (std::size_t axis = 0; axis < 3; ++axis) {
-        const double place = m_scale->placeValue[axis];
+        const double place = start.placeValue[axis];
         // Grown about its own place on this axis (the bed under a body): the value stays as it
         // was typed, a formula included.
         const double fixed = std::abs(from[axis] - place) < 1e-6 ? place : from[axis];
         const double wanted = fixed + factor * (place - fixed);
         const std::string text = unchanged || std::abs(wanted - place) < 1e-9
-                                     ? m_scale->place[axis].expression
+                                     ? start.place[axis].expression
                                      : core::numberText(wanted);
         done = m_history.execute(core::makeSetFeatureValue(id, kNames[axis], text)) && done;
+    }
+    return done;
+}
+
+bool DocumentModel::scaleCurrent(double factor, const geo::Point3d& anchor) {
+    if (!m_scale || !m_history.inTransaction() || !std::isfinite(factor) || !(factor > 0.0)) {
+        return false;
+    }
+    const std::uint64_t before = m_history.document().revision();
+    bool done = true;
+    for (const ScaleStart& start : m_scaleGroup) {
+        if (m_history.document().findFeature(start.id) == nullptr) {
+            return false;
+        }
+        done = applyScale(start, factor, anchor) && done;
     }
     m_history.setTransactionValue("value", core::numberText(factor * 100.0));
     if (m_history.document().revision() != before) {

@@ -374,6 +374,25 @@ private:
         core::ResolvedParams params;
     };
     std::optional<ScaleStart> m_scale;
+    /// A combined body is made larger as all the parts it is made of (the first one is `m_scale`).
+    std::vector<ScaleStart> m_scaleGroup;
+    // The parts of a combined body when it is turned, as they were when the turn began.
+    struct TurnStart {
+        core::FeatureId id;
+        std::array<core::Value, 3> place; ///< x, y, z as typed
+        std::array<double, 3> placeValue{};
+        std::array<core::Value, 3> turn; ///< rotX, rotY, rotZ as typed
+        geo::Angles turnValue;
+        geo::Point3d centreOffset; ///< the middle of the part before its turn, minus its foot
+    };
+    std::vector<TurnStart> m_turnGroup;
+    geo::Point3d m_turnGroupCentre; ///< what the whole turns about: the middle of its box
+    /// The parts of the chosen combined body can all turn / be made larger (each has the values
+    /// for it); false for a part of a split (it has only a place).
+    bool groupCanTurn(const core::Feature& step) const;
+    std::optional<ScaleStart> scaleStartOf(const core::Feature& feature) const;
+    bool acceptsScaleOf(const ScaleStart& start, double factor) const;
+    bool applyScale(const ScaleStart& start, double factor, const geo::Point3d& anchor);
     core::History m_history;
     core::RecomputeCache m_cutCache; ///< for the cuts of holes (own memory: a separate calculation)
     std::shared_ptr<const core::RecomputeResult> m_result;

@@ -73,6 +73,10 @@ public:
         ++builds;
         return inner_->makeCylinder(radius, height, base);
     }
+    fission::geo::NamedSolid rotate(const fission::geo::NamedSolid& solid, fission::geo::Point3d centre,
+                                    const fission::geo::Angles& angles) const override {
+        return inner_->rotate(solid, centre, angles);
+    }
     fission::geo::NamedSolid translate(const fission::geo::NamedSolid& solid,
                                        fission::geo::Point3d delta) const override {
         return inner_->translate(solid, delta);
@@ -770,4 +774,78 @@ TEST_CASE("splitting: what cannot be split", "[ui][document-model][split]") {
     REQUIRE(f.model->splitBody(box) >= 0);
     f.model->waitForCalculation();
     CHECK(f.model->splitBody(box) == -1); // it is part of the split now
+}
+
+namespace {
+
+// A cut body: the box 20 x 20 x 20 with a hole of radius 4 at x = 5 (the hole is the 2nd step).
+void cutBoxWithOffCentreHole(Fixture& f) {
+    const int step = f.model->startPlacing("cylinder", true, 5.0, 0.0, 0.0);
+    f.model->setStepValue(step, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 3);
+}
+
+double valueOfStep(const Fixture& f, int step, const char* name) {
+    return std::stod(
+        f.model->document().features().at(static_cast<std::size_t>(step)).params.at(name).expression);
+}
+
+} // namespace
+
+TEST_CASE("a cut body turns as one, its hole about the middle of the whole",
+          "[ui][document-model][combine]") {
+    Fixture f;
+    cutBoxWithOffCentreHole(f);
+    f.model->selectStep(2);
+    REQUIRE(f.model->currentTurn().has_value());
+    const auto centre = f.model->currentTurnCentre();
+    REQUIRE(centre.has_value());
+    CHECK(centre->z == Approx(10.0));
+
+    REQUIRE(f.model->beginTurn());
+    REQUIRE(f.model->turnCurrent({0.0, 0.0, 90.0}));
+    f.model->commitChange();
+    f.model->waitForCalculation();
+
+    CHECK(valueOfStep(f, 0, "rotZ") == Approx(90.0));
+    CHECK(valueOfStep(f, 1, "rotZ") == Approx(90.0));
+    // The hole was at x = 5; a quarter turn about the middle (0, 0) takes it to y = 5.
+    CHECK(valueOfStep(f, 1, "x") == Approx(0.0).margin(1e-9));
+    CHECK(valueOfStep(f, 1, "y") == Approx(5.0));
+    CHECK(f.model->recipe().size() == 3); // it still cuts
+    CHECK(f.step(2)["state"].toString() == "ok");
+
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(valueOfStep(f, 1, "x") == Approx(5.0));
+    CHECK(valueOfStep(f, 1, "rotZ") == Approx(0.0));
+}
+
+TEST_CASE("a cut body is made larger as one, its hole with it", "[ui][document-model][combine]") {
+    Fixture f;
+    cutBoxWithOffCentreHole(f);
+    f.model->selectStep(2);
+
+    REQUIRE(f.model->beginScale());
+    CHECK(f.model->acceptsScale(2.0));
+    CHECK_FALSE(f.model->acceptsScale(1000.0));
+    REQUIRE(f.model->scaleCurrent(2.0, {0.0, 0.0, 0.0}));
+    f.model->commitChange();
+    f.model->waitForCalculation();
+
+    CHECK(valueOfStep(f, 0, "width") == Approx(40.0));
+    CHECK(valueOfStep(f, 1, "radius") == Approx(8.0));
+    CHECK(valueOfStep(f, 1, "x") == Approx(10.0)); // its place moved away from the anchor, too
+    CHECK(f.model->recipe().size() == 3);
+}
+
+TEST_CASE("the parts of a split cannot be turned or made larger yet", "[ui][document-model][split]") {
+    Fixture f;
+    REQUIRE(f.model->splitBody(f.model->bodyIdAt(0)) >= 0);
+    f.model->waitForCalculation();
+    f.model->selectStep(2); // the first part: a placing step
+    CHECK_FALSE(f.model->beginScale());
+    CHECK_FALSE(f.model->currentTurn().has_value());
 }
