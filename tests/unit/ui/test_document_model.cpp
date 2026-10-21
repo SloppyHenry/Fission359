@@ -578,3 +578,36 @@ TEST_CASE("holes cut live: switching 'as hole' on and off", "[ui][document-model
     CHECK(f.model->recipe().size() == 2);
     CHECK(f.model->scene()->bodies.size() == 2);
 }
+
+TEST_CASE("a cut body moves as one, its hole with it", "[ui][document-model][combine]") {
+    Fixture f;
+    const int step = f.model->startPlacing("cylinder", true, 0.0, 0.0, 0.0);
+    f.model->setStepValue(step, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 3);
+    const auto xOf = [&](int index) {
+        return f.model->document().features().at(static_cast<std::size_t>(index))
+            .params.at("x").expression;
+    };
+
+    // By the gizmo: choose the cut body, drag it 30 mm.
+    f.model->selectStep(2);
+    REQUIRE(f.model->beginMove());
+    REQUIRE(f.model->moveCurrent({30.0, std::nullopt, std::nullopt}));
+    f.model->commitChange();
+    f.model->waitForCalculation();
+
+    CHECK(xOf(0) == "30");
+    CHECK(xOf(1) == "30");
+    CHECK(f.model->recipe().size() == 3); // the hole went along: it still cuts
+    CHECK(f.model->historyPosition() == 2);
+
+    // By align / drop (a list of bodies and distances).
+    const QString cut = f.model->bodyIdAt(2);
+    REQUIRE(f.model->moveBodiesBy({{cut, {-10.0, 0.0, 0.0}}}, "moveBody"));
+    f.model->waitForCalculation();
+    CHECK(xOf(0) == "20");
+    CHECK(xOf(1) == "20");
+    CHECK(f.model->recipe().size() == 3);
+}

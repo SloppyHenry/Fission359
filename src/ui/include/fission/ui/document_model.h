@@ -364,8 +364,13 @@ private:
     core::RecomputeCache m_cutCache; ///< for the cuts of holes (own memory: a separate calculation)
     std::shared_ptr<const core::RecomputeResult> m_result;
     std::optional<geo::Bounds> boundsOfFeature(const core::Feature& feature) const;
-    /// The numbers x, y and z of a step, if it has a place.
+    /// The numbers x, y and z of a step, if it has a place. For a combined body the place of the
+    /// first form it is made of (the target comes first).
     std::optional<std::array<double, 3>> positionOfFeature(const core::Feature& feature) const;
+    /// The steps that put a body in its place: the step itself, or for a combined body all the
+    /// steps of its parts, holes included (ADR-0011, they move together).
+    std::optional<std::array<double, 3>> liveValues(const core::Feature& step) const;
+    void collectForms(const core::Feature& step, std::vector<const core::Feature*>& out) const;
     /// Writes the turn and the foot of a seat into the step (one value after the other).
     void writeSeat(const core::FeatureId& id, const geo::Seat& seat);
     const core::Body* findBody(const QString& bodyId) const;

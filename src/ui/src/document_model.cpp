@@ -902,6 +902,11 @@ void DocumentModel::cancelChange() {
 }
 
 std::optional<std::array<double, 3>> DocumentModel::currentPosition() const {
+    const auto& steps = m_history.document().features();
+    if (m_currentStep >= 0 && m_currentStep < static_cast<int>(steps.size()) &&
+        steps[static_cast<std::size_t>(m_currentStep)].type == "combine") {
+        return positionOfFeature(steps[static_cast<std::size_t>(m_currentStep)]);
+    }
     std::array<double, 3> position{0.0, 0.0, 0.0};
     int found = 0;
     for (const QVariant& entry : m_stepValues) {
@@ -946,10 +951,41 @@ bool DocumentModel::moveCurrent(const std::array<std::optional<double>, 3>& posi
         m_currentStep >= static_cast<int>(features.size())) {
         return false;
     }
-    const core::FeatureId id = features[static_cast<std::size_t>(m_currentStep)].id;
+    const core::Feature& current = features[static_cast<std::size_t>(m_currentStep)];
+    const core::FeatureId id = current.id;
     const std::uint64_t before = m_history.document().revision();
     static constexpr const char* kNames[3] = {"x", "y", "z"};
     bool done = true;
+    if (current.type == "combine") {
+        // A combined body: every part moves by the same distance, so the first part ends where
+        // the person put it (the others keep their distance to it).
+        std::vector<const core::Feature*> forms;
+        collectForms(current, forms);
+        const auto anchor = forms.empty() ? std::nullopt : liveValues(*forms.front());
+        if (!anchor) {
+            return false;
+        }
+        for (const core::Feature* form : forms) {
+            const auto from = liveValues(*form);
+            if (!from) {
+                done = false;
+                continue;
+            }
+            for (std::size_t axis = 0; axis < 3; ++axis) {
+                if (position[axis]) {
+                    const double target = (*from)[axis] + (*position[axis] - (*anchor)[axis]);
+                    done = m_history.execute(core::makeSetFeatureValue(
+                               form->id, kNames[axis],
+                               QString::number(target, 'g', 12).toStdString())) &&
+                           done;
+                }
+            }
+        }
+        if (m_history.document().revision() != before) {
+            documentChanged();
+        }
+        return done;
+    }
     for (std::size_t axis = 0; axis < 3; ++axis) {
         if (position[axis]) {
             // 12 digits: snapped numbers read back as typed ("12.5", not "12.5000000001").
@@ -1404,8 +1440,57 @@ std::optional<geo::Bounds> DocumentModel::bodyBounds(const QString& bodyId) cons
     return feature != nullptr ? boundsOfFeature(*feature) : std::nullopt;
 }
 
+// x, y and z as they are written in the step now (the last calculation may still be behind a
+// drag); a value that is a formula is taken from the last calculation.
+std::optional<std::array<double, 3>> DocumentModel::liveValues(const core::Feature& step) const {
+    const core::FeatureState* state = m_result ? m_result->state(step.id) : nullptr;
+    std::array<double, 3> values{};
+    static constexpr const char* kNames[3] = {"x", "y", "z"};
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        const auto given = step.params.find(kNames[axis]);
+        if (given == step.params.end()) {
+            return std::nullopt;
+        }
+        if (const auto number =
+                core::evaluateExpression(given->second.expression, given->second.kind)) {
+            values[axis] = *number;
+        } else if (state != nullptr && state->params.contains(kNames[axis])) {
+            values[axis] = state->params.at(kNames[axis]).value;
+        } else {
+            return std::nullopt;
+        }
+    }
+    return values;
+}
+
+void DocumentModel::collectForms(const core::Feature& step,
+                                 std::vector<const core::Feature*>& out) const {
+    if (step.params.contains("x") && step.params.contains("y") && step.params.contains("z")) {
+        if (std::find(out.begin(), out.end(), &step) == out.end()) {
+            out.push_back(&step);
+        }
+        return;
+    }
+    if (step.type != "combine") {
+        return;
+    }
+    for (const core::BodyId& input : step.inputs) {
+        const core::Body* body = m_history.document().findBody(input);
+        const core::Feature* maker =
+            body != nullptr ? m_history.document().findFeature(body->createdBy) : nullptr;
+        if (maker != nullptr && maker != &step) {
+            collectForms(*maker, out);
+        }
+    }
+}
+
 std::optional<std::array<double, 3>>
 DocumentModel::positionOfFeature(const core::Feature& feature) const {
+    if (feature.type == "combine") {
+        std::vector<const core::Feature*> forms;
+        collectForms(feature, forms);
+        return forms.empty() ? std::nullopt : positionOfFeature(*forms.front());
+    }
     const core::FeatureState* state = m_result ? m_result->state(feature.id) : nullptr;
     std::array<double, 3> position{};
     static constexpr const char* kNames[3] = {"x", "y", "z"};
@@ -1445,16 +1530,20 @@ bool DocumentModel::moveBodiesBy(
         const core::Body* body = findBody(bodyId);
         const core::Feature* feature =
             body != nullptr ? m_history.document().findFeature(body->createdBy) : nullptr;
-        // A step that makes several bodies would move them all: left alone (until combining).
+        // A step that makes several bodies would move them all: left alone.
         if (feature == nullptr || feature->outputs.size() != 1 ||
-            !done.insert(feature->id.value).second) {
+            (delta[0] == 0.0 && delta[1] == 0.0 && delta[2] == 0.0)) {
             continue;
         }
-        const auto from = positionOfFeature(*feature);
-        if (!from || (delta[0] == 0.0 && delta[1] == 0.0 && delta[2] == 0.0)) {
-            continue;
+        // A combined body moves as the parts it is made of, its holes with it.
+        std::vector<const core::Feature*> forms;
+        collectForms(*feature, forms);
+        for (const core::Feature* form : forms) {
+            const auto from = positionOfFeature(*form);
+            if (from && done.insert(form->id.value).second) {
+                movers.push_back({form->id, *from, delta, feature->type, body->name});
+            }
         }
-        movers.push_back({feature->id, *from, delta, feature->type, body->name});
     }
     if (movers.empty()) {
         return false;
