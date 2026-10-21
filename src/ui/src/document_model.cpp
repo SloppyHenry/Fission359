@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "fission/core/commands.h"
+#include "fission/core/cuts.h"
 #include "fission/core/scaling.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
@@ -802,7 +803,14 @@ bool DocumentModel::setStepValue(int index, const QString& name, const QString& 
     }
     const core::FeatureId id = features[static_cast<std::size_t>(index)].id;
     const std::uint64_t before = m_history.document().revision();
-    if (!m_history.execute(core::makeSetFeatureValue(id, name.toStdString(), text.toStdString()))) {
+    auto command = core::makeSetFeatureValue(id, name.toStdString(), text.toStdString());
+    // With holes in the document the change may move one into or out of a body: its cuts follow
+    // in the same step.
+    if (hasCuttingParts()) {
+        if (!executeWithCuts(std::move(command), {"setValue", {{"field", name.toStdString()}}})) {
+            return false;
+        }
+    } else if (!m_history.execute(std::move(command))) {
         return false;
     }
     if (m_history.document().revision() != before) { // typing the same value again does nothing
@@ -852,8 +860,39 @@ void DocumentModel::beginChange(const QString& field) {
     m_history.beginTransaction({"setValue", {{"field", field.toStdString()}}});
 }
 
-void DocumentModel::commitChange() {
+void DocumentModel::finishTransaction() {
+    const bool cut = core::reconcileCuts(m_history, m_registry, *m_kernel, m_cutCache);
     m_history.commitTransaction();
+    if (cut) {
+        documentChanged();
+    }
+}
+
+bool DocumentModel::hasCuttingParts() const {
+    const core::Document& document = m_history.document();
+    return std::any_of(document.bodies().begin(), document.bodies().end(),
+                       [](const core::Body& body) { return body.hole; }) ||
+           std::any_of(document.features().begin(), document.features().end(),
+                       [](const core::Feature& step) {
+                           return step.type == "combine" && step.texts.count("auto") != 0 &&
+                                  step.texts.at("auto") == "yes";
+                       });
+}
+
+bool DocumentModel::executeWithCuts(std::unique_ptr<core::Command> command,
+                                    core::CommandDescription label) {
+    m_history.beginTransaction(std::move(label));
+    const bool done = m_history.execute(std::move(command));
+    if (!done) {
+        m_history.cancelTransaction();
+        return false;
+    }
+    finishTransaction();
+    return true;
+}
+
+void DocumentModel::commitChange() {
+    finishTransaction();
     emit historyChanged();
 }
 
@@ -1173,10 +1212,17 @@ void DocumentModel::setBodyHole(int index, bool hole) {
         return;
     }
     const std::uint64_t before = m_history.document().revision();
-    if (m_history.execute(
-            core::makeSetBodyHole(bodies[static_cast<std::size_t>(index)].id, hole)) &&
+    const core::Body& body = bodies[static_cast<std::size_t>(index)];
+    core::CommandDescription label{hole ? "holeBody" : "solidBody", {{"name", body.name}}};
+    if (const core::Feature* maker = m_history.document().findFeature(body.createdBy)) {
+        label.values["type"] = maker->type;
+        label.values["number"] = std::to_string(maker->number);
+    }
+    // A hole cuts what it touches, a body that is none any more stops cutting: the cuts change
+    // with the mark, in the same step.
+    if (executeWithCuts(core::makeSetBodyHole(body.id, hole), std::move(label)) &&
         m_history.document().revision() != before) {
-        documentChanged(false); // the shape is the same, only how it is drawn changes
+        documentChanged();
     }
 }
 
@@ -1301,7 +1347,7 @@ bool DocumentModel::finishPlacing() {
     if (!m_placing) {
         return false;
     }
-    m_history.commitTransaction();
+    finishTransaction();
     m_placing = false;
     const int placedStep = stepIndexOf(m_placingFeature);
     const core::Feature* placed = m_history.document().findFeature(m_placingFeature);
@@ -1433,7 +1479,7 @@ bool DocumentModel::moveBodiesBy(
             }
         }
     }
-    m_history.commitTransaction();
+    finishTransaction();
     if (m_history.document().revision() != before) {
         documentChanged();
     }
@@ -1531,7 +1577,7 @@ bool DocumentModel::seatBodyOnFace(const QString& bodyId, const geo::Point3d& po
     const core::FeatureId id = feature->id;
     m_history.beginTransaction(std::move(label));
     writeSeat(id, seat);
-    m_history.commitTransaction();
+    finishTransaction();
     if (m_history.document().revision() != before) {
         documentChanged();
     }
@@ -1611,7 +1657,7 @@ QStringList DocumentModel::pasteBodies() {
         }
         created.push_back(toQString(body.value));
     }
-    m_history.commitTransaction();
+    finishTransaction();
     if (m_history.document().revision() != before) {
         documentChanged();
     }

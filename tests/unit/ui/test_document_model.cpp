@@ -506,3 +506,75 @@ TEST_CASE("combining: merged bodies all leave the list, bad requests do nothing"
     // A body that is part of a result cannot be combined again.
     CHECK(f.model->combineBodies({box, pin}, "merge").isEmpty());
 }
+
+TEST_CASE("holes cut live: a hole put down on a body cuts it, in one step",
+          "[ui][document-model][combine][acceptance]") {
+    Fixture f; // a box 20 x 20 x 20 on the bed
+    const int step = f.model->startPlacing("cylinder", true, 0.0, 0.0, 0.0);
+    REQUIRE(step >= 0);
+    REQUIRE(f.model->setStepValue(step, "radius", "4"));
+    REQUIRE(f.model->finishPlacing());
+    f.model->waitForCalculation();
+
+    // The recipe has box, cylinder and the cut; there is no step "group".
+    REQUIRE(f.model->recipe().size() == 3);
+    CHECK(f.step(2)["type"].toString() == "combine");
+    CHECK(f.step(2)["state"].toString() == "ok");
+    const QVariantList bodies = f.model->bodies();
+    CHECK(bodies.at(0).toMap()["consumed"].toBool());
+    CHECK(bodies.at(2).toMap()["cut"].toBool());
+    // The result is a solid body, the hole stays in the scene as a ghost.
+    REQUIRE(f.model->scene()->bodies.size() == 2);
+    CHECK(f.model->scene()->bodies[0].color.alpha() < 255);
+
+    // Putting it down was one step to undo.
+    CHECK(f.model->historyPosition() == 1);
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 1);
+    CHECK(f.model->scene()->bodies.size() == 1);
+    REQUIRE(f.model->redo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3);
+}
+
+TEST_CASE("holes cut live: moving the hole away takes the cut back, in one step",
+          "[ui][document-model][combine][acceptance]") {
+    Fixture f;
+    const int step = f.model->startPlacing("cylinder", true, 0.0, 0.0, 0.0);
+    f.model->setStepValue(step, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 3);
+    const int steps = f.model->historyPosition();
+
+    REQUIRE(f.model->setStepValue(step, "x", "100"));
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 2); // the cut is gone ...
+    CHECK_FALSE(f.model->bodies().at(0).toMap()["consumed"].toBool());
+    CHECK(f.model->historyPosition() == steps + 1); // ... in the very step of the move
+
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3);
+}
+
+TEST_CASE("holes cut live: switching 'as hole' on and off", "[ui][document-model][combine]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->setStepValue(1, "radius", "4");
+    f.model->setStepValue(1, "x", "0");
+    f.model->setStepValue(1, "y", "0");
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 2);
+
+    f.model->setBodyHole(1, true);
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3); // it cuts the box
+    CHECK(f.model->nextUndo()["key"].toString() == "holeBody");
+
+    f.model->setBodyHole(1, false);
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 2);
+    CHECK(f.model->scene()->bodies.size() == 2);
+}

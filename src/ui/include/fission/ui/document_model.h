@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "fission/core/command.h"
 #include "fission/core/document.h"
 #include "fission/core/element_names.h"
 #include "fission/core/feature_type.h"
@@ -332,6 +333,13 @@ private:
     void documentChanged(bool geometryChanged = true);
     int stepIndexOf(const core::FeatureId& id) const;
     void setCalculating(bool calculating);
+    /// Ends the open transaction. Cuts that holes need are updated first, so that they are part
+    /// of the same step (ADR-0011).
+    void finishTransaction();
+    /// True when a body is marked as hole or a cut for a hole exists.
+    bool hasCuttingParts() const;
+    /// Runs one command and the cuts it needs as one step, described by `label`.
+    bool executeWithCuts(std::unique_ptr<core::Command> command, core::CommandDescription label);
     void rebuildLists();
     void rebuildScene();
     QVariantList buildStepValues() const;
@@ -353,6 +361,7 @@ private:
     };
     std::optional<ScaleStart> m_scale;
     core::History m_history;
+    core::RecomputeCache m_cutCache; ///< for the cuts of holes (own memory: a separate calculation)
     std::shared_ptr<const core::RecomputeResult> m_result;
     std::optional<geo::Bounds> boundsOfFeature(const core::Feature& feature) const;
     /// The numbers x, y and z of a step, if it has a place.
