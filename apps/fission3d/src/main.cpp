@@ -41,6 +41,7 @@
 #include "fission/render/scene.h"
 #include "fission/services/log.h"
 #include "fission/services/startup_clock.h"
+#include "fission/ui/align_controller.h"
 #include "fission/ui/app_info.h"
 #include "fission/ui/app_options.h"
 #include "fission/ui/distance_controller.h"
@@ -166,7 +167,10 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "with Shift held; snap:on), grid:0.1 (the step of "
             "snapping in mm, 0 = automatic), "
             "distance:left,5 (type 5 into the distance measure on that side of the chosen "
-            "body: left, right, front or back), "
+            "body: left, right, front or back), selectall (choose every body), step:2 (choose the "
+            "body of that step, from 0), align:x,min "
+            "(click the point that lines the chosen bodies up along x, y or z: min, centre or "
+            "max), menu:dropToBed (choose that entry of the menus), "
             "gizmo:x,40,0,8 (press "
             "a part of the gizmo: x, y, z, xy, xz, yz or free, "
             "pull it by view pixels, let go; with a fifth value hold the button stays down), "
@@ -283,7 +287,8 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                  fission::ui::PlacementController* placement, fission::ui::DocumentModel* model,
                  fission::ui::HandleController* handles, fission::ui::GizmoController* gizmo,
                  fission::ui::RotateController* rotate, fission::ui::ScaleController* scale,
-                 fission::ui::DistanceController* distances, const QString& actions,
+                 fission::ui::DistanceController* distances, fission::ui::AlignController* align,
+                 fission::ui::SelectionController* selection, const QString& actions,
                  std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
@@ -479,6 +484,45 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                                                 .arg(spec.value(0), spec.value(1));
                     g_simulationFailure = 4;
                 }
+            });
+            continue;
+        }
+        if (action.trimmed() == QLatin1String("selectall")) { // all bodies chosen
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [selection] { selection->chooseAllBodies(); });
+            continue;
+        }
+        if (kind == QLatin1String("step")) { // step:1 - choose that step of the recipe (from 0)
+            const int step = action.mid(colon + 1).trimmed().toInt();
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [selection, model, step] {
+                selection->chooseBody(model->bodyIndexOf(model->bodyOfStep(step)), false);
+            });
+            continue;
+        }
+        if (kind == QLatin1String("align")) {
+            // align:x,min - click the point of the tool Move that lines the chosen bodies up
+            // along x (or y, z): min | centre | max.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [align, spec] {
+                const int index = align->indexOf(spec.value(0).trimmed(), spec.value(1).trimmed());
+                if (index < 0 || !align->align(index)) {
+                    qWarning().noquote()
+                        << QStringLiteral("no point to align %1 on %2 (or nothing moves)")
+                               .arg(spec.value(0), spec.value(1));
+                    g_simulationFailure = 4;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("menu")) {
+            // menu:dropToBed - the same as choosing that entry of the menus (duplicate, copy,
+            // paste, dropToBed, seatOnFace ...).
+            const QString id = action.mid(colon + 1).trimmed();
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [window, id] {
+                QMetaObject::invokeMethod(window, "run", Q_ARG(QVariant, id));
             });
             continue;
         }
@@ -818,6 +862,7 @@ int main(int argc, char* argv[]) {
     appOptions.camera = options.camera;
     appOptions.rightTab = options.rightTab;
     appOptions.softShadows = options.softShadows;
+    appOptions.parked = qEnvironmentVariableIsSet("FISSION_PARK_WINDOW");
     fission::ui::Numbers numbers;
 
     // The document: the one box of the start, calculated before the first frame.
@@ -854,6 +899,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Scale", &scale);
     fission::ui::DistanceController distances(&documentModel);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Distances", &distances);
+    fission::ui::AlignController align(&documentModel, &selection);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Align", &align);
     // The pictures on the tiles of the shape gallery come from the geometry kernel.
     engine.addImageProvider(QStringLiteral("shapes"), new fission::ui::ShapePreviews(kernel));
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Language", &language);
@@ -882,6 +929,7 @@ int main(int argc, char* argv[]) {
         rotate.attach(viewport);
         scale.attach(viewport);
         distances.attach(viewport);
+        align.attach(viewport);
         distances.attachGizmo(&gizmo);
         viewport->setScene(documentModel.scene());
         const QMetaObject::Connection sceneConnection =
@@ -937,6 +985,8 @@ int main(int argc, char* argv[]) {
     fission::ui::RotateController* const rotateController = &rotate;
     fission::ui::ScaleController* const scaleController = &scale;
     fission::ui::DistanceController* const distanceController = &distances;
+    fission::ui::AlignController* const alignController = &align;
+    fission::ui::SelectionController* const selectionController = &selection;
     if (!options.smokeTestPath.isEmpty()) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
@@ -945,8 +995,8 @@ int main(int argc, char* argv[]) {
         // simulation after 4 seconds (and report success for what never ran).
         const auto started = std::make_shared<bool>(false);
         auto grab = [window, viewport, placementController, &documentModel, handleController,
-                     gizmoController, rotateController, scaleController, distanceController, path,
-                     simulate, started] {
+                     gizmoController, rotateController, scaleController, distanceController,
+                     alignController, selectionController, path, simulate, started] {
             if (*started) {
                 return; // the first frame can be reported more than once
             }
@@ -961,7 +1011,7 @@ int main(int argc, char* argv[]) {
             if (viewport != nullptr && !simulate.isEmpty()) {
                 playActions(window, viewport, placementController, &documentModel, handleController,
                             gizmoController, rotateController, scaleController, distanceController,
-                            simulate, shoot);
+                            alignController, selectionController, simulate, shoot);
             } else {
                 shoot();
             }

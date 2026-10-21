@@ -159,6 +159,28 @@ void PlacementController::cancel() {
     }
 }
 
+bool PlacementController::seatChosen(double x, double y) {
+    if (m_model == nullptr || m_viewport == nullptr || m_model->placing()) {
+        return false;
+    }
+    const QString body = m_model->bodyOfStep(m_model->currentStep());
+    if (body.isEmpty()) {
+        return false;
+    }
+    // The body itself is looked through, or it would lie on its own top.
+    const auto landing = m_viewport->landingAt(x, y, body, m_model->workplaneZ(), true);
+    if (!landing) {
+        return false;
+    }
+    const double step = snapStep();
+    const geo::Point3d normal{landing->nx, landing->ny, landing->nz};
+    const geo::Point3d point =
+        landing->tilted
+            ? snappedOnFace(*landing, step)
+            : geo::Point3d{snapped(landing->x, step), snapped(landing->y, step), landing->z};
+    return m_model->seatBodyOnFace(body, point, normal);
+}
+
 int PlacementController::add(const QString& type, bool asHole) {
     return m_model != nullptr ? m_model->addShape(type, asHole) : -1;
 }

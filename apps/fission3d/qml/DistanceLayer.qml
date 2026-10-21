@@ -17,7 +17,9 @@ Item {
     property var obstacles: []
     // The number that is a field now (place in Distances.labels), or -1.
     property int editing: -1
-    readonly property bool typing: editing >= 0 && input.activeFocus
+    // The number field of the band being typed into (the fields live in the delegates).
+    readonly property var field: editing >= 0 && editing < chips.count ? chips.itemAt(editing).field : null
+    readonly property bool typing: field !== null && field.activeFocus
 
     Binding {
         target: Distances
@@ -33,6 +35,7 @@ Item {
             return
         }
         editing = index
+        const input = chips.itemAt(index).field
         input.refused = false
         input.text = Numbers.format(Distances.labels[index].value, 3)
         input.pendingEdit = false
@@ -41,8 +44,11 @@ Item {
     }
 
     function close() {
+        const previous = field
         editing = -1
-        input.focus = false
+        if (previous !== null) {
+            previous.focus = false
+        }
     }
 
     // The number typed, put into the document: the body moves so that the band measures that.
@@ -50,7 +56,7 @@ Item {
         if (editing < 0) {
             return true
         }
-        const value = Numbers.evaluate(input.text.trim(), "length")
+        const value = Numbers.evaluate(field.text.trim(), "length")
         return !isNaN(value) && Distances.setDistance(editing, value)
     }
 
@@ -61,6 +67,8 @@ Item {
     }
 
     Repeater {
+        id: chips
+
         model: Distances.labels.length
 
         delegate: Item {
@@ -68,6 +76,7 @@ Item {
 
             required property int index
             readonly property var info: index < Distances.labels.length ? Distances.labels[index] : null
+            readonly property alias field: input
             readonly property bool open: root.editing === index
             readonly property bool pointed: area.containsMouse
 

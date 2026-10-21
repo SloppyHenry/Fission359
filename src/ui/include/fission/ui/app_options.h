@@ -20,6 +20,7 @@ class AppOptions : public QObject {
     Q_PROPERTY(QString camera MEMBER camera NOTIFY changed)
     Q_PROPERTY(QString rightTab MEMBER rightTab NOTIFY changed)
     Q_PROPERTY(bool softShadows MEMBER softShadows NOTIFY changed)
+    Q_PROPERTY(bool parked MEMBER parked NOTIFY changed)
 
 public:
     explicit AppOptions(QObject* parent = nullptr) : QObject(parent) {}
@@ -37,6 +38,10 @@ public:
     QString rightTab;
     /// developer option --no-soft-shadows switches the occlusion off for comparison images
     bool softShadows = true;
+    /// developer option (environment FISSION_PARK_WINDOW): the window opens far outside the screen
+    /// and never takes the focus, so that the window tests on a Mac do not pop up in front of
+    /// the person who is working there
+    bool parked = false;
 
 signals:
     void changed();

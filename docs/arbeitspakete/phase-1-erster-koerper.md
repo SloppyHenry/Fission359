@@ -91,7 +91,7 @@ Wertblase, Tippen ersetzt Ziehen, `Tab`, Esc. Ablauf D Schritt 1 automatisch gr�
 ---
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
-**Status:** in Arbeit (1.6a, 1.6b, 1.6c1 erledigt, 1.6c2 und 1.6d im Review) · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Status:** Review (1.6a, 1.6b, 1.6c1 erledigt; 1.6c2, 1.6d, 1.6e warten auf Test durch den Product Owner) · **Größe:** L · **Abhängigkeiten:** AP-1.4
 **Bauanleitungen:** [1.6c2](anleitungen/AP-1.6c2.md) · [1.6d](anleitungen/AP-1.6d.md) · [1.6e](anleitungen/AP-1.6e.md) · Pflege und Folgearbeiten: [pflege.md](anleitungen/pflege.md)
 
 **Umfang:**
@@ -105,7 +105,7 @@ Wertblase, Tippen ersetzt Ziehen, `Tab`, Esc. Ablauf D Schritt 1 automatisch gr�
 
 **Akzeptanzkriterien:**
 - [x] Eine Form lässt sich per Abstandsmaß exakt „5 mm vom Rand“ platzieren (Test `app_distance_five_from_edge`, Review 2026-10-20)
-- [ ] Jede Transformation steht als Rezept-Eintrag im Verlauf und ist editierbar
+- [x] Jede Transformation steht als Rezept-Eintrag im Verlauf und ist editierbar (Verschieben, Drehen, Vergrößern, Fangen, Abstandsmaß, Ausrichten, Aufs Bett/Auf Fläche legen, Duplizieren: je ein Eintrag in „Letzte Aktionen“; die Lage steht als Werte im Panel des Schritts, ADR-0010; Review 2026-10-20)
 
 #### Zerlegung (2026-10-18, vom Product Owner bestätigt)
 Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo, Ringe, Fang-Marken und Abstandsmaße zeichnet die
@@ -120,7 +120,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 | **c1) Fangen beim Verschieben** | erledigt (PR #34) | `interaction/snap.h`, `ui::SnapSession` im `GizmoController`; Fang-Marken und Ausrichtungslinie; ⇧ aus; Raster auf dem Bett (Ansicht ▸ „Raster beim Ziehen“); Genauigkeit in der Statuszeile (Auto, Schieberegler 0,01–10 mm, Zahlenfeld) |
 | **c2) Fangen bei Maß-Griffen und Ablegen** | Review (2026-10-20) | dieselben Punkte und Marken für die Maß-Griffe (`HandleController`), den Eck-Griff (`ScaleController`) und das Ablegen (`PlacementController`); gemeinsamer ⇧-Schalter `ui::snappingSuppressed()`; Marken des Ablegens in `HandleSource::placement` |
 | **d) Abstandsmaße** | Review (2026-10-20) | `interaction/distances.h` (Rechnung: nächstes Hindernis je Richtung, Bettrand, „Abstand setzen“); `ui::DistanceController` + `DistanceLayer.qml`: Bänder im Werkzeug „Verschieben“ bei gewähltem Körper, Zahl anklicken und tippen = ein Verschieben (Undo-Schritt „Körper verschoben“); `--simulate "distance:left,5"`; Akzeptanzkriterium 1 als Test `app_distance_five_from_edge` |
-| **e) Rest** | offen | Ausrichten mehrerer Körper; „Aufs Bett legen“; „Auf Fläche legen“ für vorhandene Körper (nutzt `seatOnFace`); Kopieren, Einfügen, Duplizieren (⌘D) mit Versatz |
+| **e) Rest** | Review (2026-10-20) | Ausrichten (`interaction/align.h`, `ui::AlignController`, 9 Punkte am Rahmen mehrerer gewählter Körper, Vorschau-Ebene); Aufs Bett legen (Taste **D**, Menü Körper); Auf Fläche legen für vorhandene Körper (Menü Körper, Klick auf die Fläche, `PlacementController::seatChosen`); Kopieren, Einfügen, Duplizieren (⌘C/⌘V/⌘D, Versatz 10 mm in X und Y je Einfügen); alles über `DocumentModel::moveBodiesBy` bzw. `pasteBodies`, ein Undo-Schritt je Aktion |
 
 #### Festlegungen (Product Owner)
 - **Lage im Rezept** ([ADR-0010](../adr/0010-lage-im-rezept.md)): Verschieben, Drehen und Vergrößern ändern die Werte des Schritts, der
@@ -137,6 +137,10 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - **Abstandsmaße (d):** Kante zu Kante (Hüllquader, gedrehte Körper zählen mit ihrem Hüllquader), nur in Bett-Richtung (±X, ±Y), je Richtung das nächste
   Hindernis mit überlappendem Grundriss, sonst der Bettrand (steht der Körper über dem Rand, kein Band); Löcher zählen nicht. Sichtbar im Werkzeug
   „Verschieben“ bei gewähltem Körper, auch ohne Ziehen. Ein Maß verschiebt nur und hält den Abstand nicht fest (kein Bezug).
+- **Rest (e):** Alle Aktionen ändern nur die Lage-Werte (x, y, z, Winkel) der Schritte, Formeln in unberührten Werten bleiben; Schritte, die mehrere
+  Körper erzeugen oder Eingänge haben (ab AP-1.7), werden übersprungen bzw. sind nicht kopierbar. Kopie/Einfügen nur im Programm (System-Zwischenablage
+  mit AP-1.10); jedes weitere Einfügen derselben Zwischenablage rückt um weitere 10 mm; Duplizieren ersetzt die Zwischenablage (Treppe).
+  Ausrichten: Punkte am Rahmen aller gewählten Körper, bei Werkzeug „Verschieben“; Kopieren/Löschen/Ausschneiden: Ausschneiden erst mit AP-1.9.
 - **Fangen:** Der gezogene Körper fängt mit Ecken, Kantenmitten und Flächenmitten seines achsparallelen Hüllquaders an Punkten anderer
   Körper und des Betts, Achse für Achse; Punkt-Fang hat Vorrang. Reichweite 10 px. Getippte Zahlen werden nie gefangen.
   - *Maß-Griffe (c2):* Die bewegte Seite des Hüllquaders (9 Punkte) fängt entlang einer Bett-Achse; nur bei achsparalleler Griffrichtung

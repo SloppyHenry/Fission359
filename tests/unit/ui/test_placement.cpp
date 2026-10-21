@@ -566,3 +566,40 @@ TEST_CASE("snap: on a wall there is only the grid along the face", "[ui][placeme
     CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::placement).empty());
     REQUIRE(f.placement->finish());
 }
+
+// --- laying a body that is already there on a face (AP-1.6e) ---
+
+TEST_CASE("seat: the chosen body lies on the wall under the pointer", "[ui][placement][seat]") {
+    Fixture f;
+    f.viewport.setCamera(35.0, 25.0, 300.0);
+    const int step = f.model->addShape(QStringLiteral("box"), false);
+    REQUIRE(step >= 0);
+    REQUIRE(f.model->setStepValue(step, QStringLiteral("x"), QStringLiteral("0")));
+    REQUIRE(f.model->setStepValue(step, QStringLiteral("y"), QStringLiteral("-60")));
+    REQUIRE(f.model->setStepValue(step, QStringLiteral("z"), QStringLiteral("0")));
+    f.model->selectStep(step); // the one that is laid on a face
+    f.refresh();
+    const int before = f.stepsDone();
+
+    // The front wall of the demo box (y = -10, the one this view looks at), halfway up.
+    const QPointF at = f.pixel(0.0, -10.0, 10.0);
+    REQUIRE(f.placement->seatChosen(at.x(), at.y()));
+    f.refresh();
+    const Box3 box = extentOf(*f.model->scene(), f.model->bodyOfStep(step).toStdString());
+    CHECK(box.maxY == Approx(-10.0).margin(0.01)); // touching the wall
+    CHECK(box.minY == Approx(-30.0).margin(0.01)); // standing out of it
+    CHECK(f.stepsDone() == before + 1);
+
+    // A click on nothing leaves the body where it is.
+    const double minY = box.minY;
+    CHECK_FALSE(f.placement->seatChosen(-5.0, -5.0));
+    f.refresh();
+    CHECK(extentOf(*f.model->scene(), f.model->bodyOfStep(step).toStdString()).minY ==
+          Approx(minY));
+}
+
+TEST_CASE("seat: nothing chosen, nothing laid", "[ui][placement][seat]") {
+    Fixture f;
+    f.model->selectStep(-1);
+    CHECK_FALSE(f.placement->seatChosen(500.0, 300.0));
+}

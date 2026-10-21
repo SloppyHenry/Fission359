@@ -13,6 +13,8 @@ Window {
     readonly property string primaryKey: isMac ? "⌘" : qsTr("Ctrl+")
     property string documentName: qsTr("Untitled")
     property string tool: "move"
+    // "Lay on face": the next click on a face puts the chosen body on it (Esc leaves it).
+    property bool seating: false
     // Developer option --simulate "filtermenu": opens the menu "Choose: ..." of the 3D view.
     property bool filterMenuOpen: false
     onFilterMenuOpenChanged: if (filterMenuOpen) viewOverlay.openFilterMenu()
@@ -39,6 +41,16 @@ Window {
     minimumWidth: 640
     minimumHeight: 480
     visible: true
+    // Developer option (environment FISSION_PARK_WINDOW, for the window tests): far outside the
+    // screen and without the focus, so that it does not pop up in front of anyone.
+    Binding { when: AppOptions.parked; target: root; property: "x"; value: -30000 }
+    Binding { when: AppOptions.parked; target: root; property: "y"; value: -30000 }
+    Binding {
+        when: AppOptions.parked
+        target: root
+        property: "flags"
+        value: Qt.Window | Qt.WindowDoesNotAcceptFocus | Qt.WindowStaysOnBottomHint
+    }
     color: Theme.chrome
     title: qsTr("Fission3D")
 
@@ -61,8 +73,9 @@ Window {
             { id: "history", text: qsTr("Recent actions"), checked: root.historyOpen },
             { separator: true },
             { id: "cut", text: qsTr("Cut"), shortcut: primaryKey + "X", nativeShortcut: "Ctrl+X", enabled: false },
-            { id: "copy", text: qsTr("Copy"), shortcut: primaryKey + "C", nativeShortcut: "Ctrl+C", enabled: false },
-            { id: "paste", text: qsTr("Paste"), shortcut: primaryKey + "V", nativeShortcut: "Ctrl+V", enabled: false },
+            { id: "copy", text: qsTr("Copy"), shortcut: primaryKey + "C", nativeShortcut: "Ctrl+C", enabled: Selection.count > 0 && !root.typing },
+            { id: "paste", text: qsTr("Paste"), shortcut: primaryKey + "V", nativeShortcut: "Ctrl+V", enabled: DocumentModel.canPaste && !root.typing },
+            { id: "duplicate", text: qsTr("Duplicate"), shortcut: primaryKey + "D", nativeShortcut: "Ctrl+D", enabled: Selection.count > 0 && !root.typing },
             { id: "delete", text: qsTr("Delete"), shortcut: isMac ? "⌫" : qsTr("Del"), enabled: false },
             { id: "selectall", text: qsTr("Select all"), shortcut: primaryKey + "A", nativeShortcut: "Ctrl+A", enabled: DocumentModel.bodies.length > 0 || root.typing },
             { id: "selectnone", text: qsTr("Select nothing"), shortcut: qsTr("Esc"), enabled: Selection.count > 0 },
@@ -94,6 +107,9 @@ Window {
         ] },
         { title: qsTr("Body"), items: [
             { id: "hole", text: qsTr("As hole"), checked: root.chosenAreHoles, enabled: Selection.count > 0 },
+            { separator: true },
+            { id: "dropToBed", text: qsTr("Drop to bed"), shortcut: "D", enabled: Selection.count > 0 },
+            { id: "seatOnFace", text: qsTr("Lay on face"), enabled: Selection.count > 0 },
             { separator: true },
             { id: "merge", text: qsTr("Merge"), enabled: false },
             { id: "subtract", text: qsTr("Subtract"), enabled: false },
@@ -165,6 +181,7 @@ Window {
     Binding { target: Handles; property: "mode"; value: root.tool === "size" ? "size" : root.tool === "move" ? "labels" : "off" }
     Binding { target: Gizmo; property: "enabled"; value: root.tool === "move" }
     Binding { target: Distances; property: "enabled"; value: root.tool === "move" }
+    Binding { target: Align; property: "enabled"; value: root.tool === "move" }
     Binding { target: Rotate; property: "enabled"; value: root.tool === "rotate" }
     Binding { target: Scale; property: "enabled"; value: root.tool === "size" }
     // Pulling a corner ends "type the sizes" right after putting a shape down: the digits are
@@ -207,6 +224,27 @@ Window {
             }
             break
         case "selectnone": Selection.clear(); Handles.armed = false; break
+        case "copy":
+            if (!DocumentModel.copyBodies(chosenBodies)) {
+                showHint(qsTr("This body cannot be copied yet."))
+            }
+            break
+        case "paste": Selection.chooseBodies(DocumentModel.pasteBodies()); break
+        case "duplicate": {
+            const copies = DocumentModel.duplicateBodies(chosenBodies)
+            if (copies.length > 0) {
+                Selection.chooseBodies(copies)
+            } else {
+                showHint(qsTr("This body cannot be copied yet."))
+            }
+            break
+        }
+        case "dropToBed":
+            if (!DocumentModel.dropToBed(chosenBodies)) {
+                showHint(qsTr("Nothing to drop: the bodies already stand on the bed."))
+            }
+            break
+        case "seatOnFace": seating = true; break
         case "hole": {
             const holeNow = !root.chosenAreHoles
             for (const index of root.chosenBodyIndexes) {
@@ -330,10 +368,19 @@ Window {
     Shortcut { sequence: "F"; onActivated: root.run("view.frame") }
     Shortcut { sequence: "L"; enabled: Selection.singleFaceChosen; onActivated: root.run("view.lookat") }
     Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
+    Shortcut { sequence: "Ctrl+C"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("copy") }
+    Shortcut { sequence: "Ctrl+V"; enabled: !root.isMac && DocumentModel.canPaste && !root.typing; onActivated: root.run("paste") }
+    Shortcut { sequence: "Ctrl+D"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("duplicate") }
+    Shortcut { sequence: "D"; enabled: Selection.count > 0 && !root.typing && !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("dropToBed") }
+    Shortcut {
+        sequence: "Escape"
+        enabled: root.seating
+        onActivated: root.seating = false
+    }
     Shortcut {
         sequence: "Escape"
         enabled: Selection.count > 0 && !root.typing && !Handles.editing && !Gizmo.editing
-                 && !Rotate.editing && !Scale.editing
+                 && !Rotate.editing && !Scale.editing && !root.seating
         onActivated: root.run("selectnone")
     }
     Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
@@ -559,11 +606,33 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            AlignLayer {
+                id: alignLayer
+
+                anchors.fill: parent
+            }
+
             DistanceLayer {
                 id: distanceLayer
 
                 anchors.fill: parent
                 obstacles: viewOverlay.obstacles
+            }
+
+            // "Lay on face": the next click puts the chosen body on the face under the pointer.
+            MouseArea {
+                anchors.fill: parent
+                enabled: root.seating
+                visible: root.seating
+                cursorShape: Qt.CrossCursor
+                z: 5
+                onClicked: mouse => {
+                    if (Placement.seatChosen(mouse.x, mouse.y)) {
+                        root.seating = false
+                    } else {
+                        root.showHint(qsTr("Click a face of the print bed or of another body."))
+                    }
+                }
             }
 
             RotateLayer {
@@ -667,7 +736,8 @@ Window {
         width: parent.width
         selection: root.selectionText
         toolName: root.toolName(root.tool)
-        hint: Placement.active ? qsTr("Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt")
+        hint: root.seating ? qsTr("Click the face the body should lie on. Esc cancels.")
+            : Placement.active ? qsTr("Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt")
             : Gizmo.editing ? qsTr("Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.")
             : Rotate.editing ? qsTr("Type an angle to turn exactly (Tab for the next ring), Enter accepts, Esc puts it back.")
             : Scale.editing ? qsTr("All sizes change alike; the corner across stays. Type a percentage, Enter accepts, Esc puts it back.")
@@ -783,6 +853,10 @@ Window {
         case "holeBody": return qsTr("%1 made a hole").arg(body)
         case "moveBody": return qsTr("%1 moved").arg(body)
         case "rotateBody": return qsTr("%1 turned").arg(body)
+        case "dropBody": return step.count === "1" ? qsTr("%1 dropped to the bed").arg(body) : qsTr("Bodies dropped to the bed")
+        case "alignBodies": return qsTr("Bodies aligned")
+        case "seatBody": return qsTr("%1 laid on a face").arg(body)
+        case "pasteBodies": return step.count === "1" ? qsTr("%1 pasted").arg(typeLabel(step.type)) : qsTr("Bodies pasted")
         case "scaleBody":
             return Number(step.value) < 100
                 ? qsTr("%1 made smaller to %2 %").arg(body).arg(Numbers.format(Number(step.value), 1))
@@ -860,6 +934,8 @@ Window {
     }))
 
     readonly property var chosenBodyIndexes: Selection.items.map(item => item.bodyIndex)
+    // The ids of the chosen bodies (once each, also when faces of a body are chosen).
+    readonly property var chosenBodies: Array.from(new Set(Selection.items.map(item => item.body)))
     // Every chosen body is a hole: "As hole" in the menu is ticked and a click turns it off.
     readonly property bool chosenAreHoles: chosenBodyIndexes.length > 0
         && chosenBodyIndexes.every(index => index >= 0 && index < DocumentModel.bodies.length && DocumentModel.bodies[index].hole)

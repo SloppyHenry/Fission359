@@ -218,6 +218,21 @@ void SelectionController::chooseAllBodies() {
     }
 }
 
+void SelectionController::chooseBodies(const QStringList& bodyIds) {
+    if (!m_model) {
+        return;
+    }
+    std::vector<core::SelectionItem> chosen;
+    for (const QString& id : bodyIds) {
+        if (const auto item = itemFor(id, core::SelectableKind::body, 0)) {
+            chosen.push_back(*item);
+        }
+    }
+    if (m_selection.set(std::move(chosen))) {
+        choiceChanged();
+    }
+}
+
 bool SelectionController::lookAtChosenFace() {
     if (!m_viewport || !singleFaceChosen()) {
         return false;
