@@ -34,7 +34,7 @@ geo::NamedSolid namedSolid(const BodyResult& body) {
 }
 
 bool boxesOverlap(const geo::Bounds& a, const geo::Bounds& b) {
-    constexpr double kMargin = 1e-7;
+    constexpr double kMargin = 1e-4; // a hole that stands on a face may be a hair off it
     return a.min.x <= b.max.x + kMargin && b.min.x <= a.max.x + kMargin &&
            a.min.y <= b.max.y + kMargin && b.min.y <= a.max.y + kMargin &&
            a.min.z <= b.max.z + kMargin && b.min.z <= a.max.z + kMargin;
@@ -51,13 +51,15 @@ struct Knowledge {
     const RecomputeResult& result;
 };
 
+// A kernel that fails on the pair (not: finds nothing in common) is taken as touching: the cut step
+// is made and says what is wrong (rule 5), instead of nothing happening.
 bool intersects(const geo::GeometryKernel& kernel, const geo::NamedSolid& a,
                 const geo::NamedSolid& b) {
     try {
         kernel.boolean(geo::BooleanOp::intersect, a, {b});
         return true;
-    } catch (const geo::GeometryError&) {
-        return false;
+    } catch (const geo::GeometryError& error) {
+        return error.code() != geo::GeometryErrorCode::emptyResult;
     }
 }
 

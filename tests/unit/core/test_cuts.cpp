@@ -7,6 +7,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <chrono>
 #include <numbers>
 
 #include "fission/core/commands.h"
@@ -348,4 +349,33 @@ TEST_CASE("cuts: a hole that stands on a body cuts it, one floating above does n
     ball.asHole(sphere);
     ball.reconcile();
     CHECK(ball.cutSteps() == 0);
+}
+
+TEST_CASE("cuts: how long the check takes (reported, not a limit)", "[cuts][time]") {
+    World world;
+    world.plate();
+    const BodyId pin = world.pin("0");
+    world.asHole(pin);
+    const auto start = std::chrono::steady_clock::now();
+    world.reconcile(); // cold: everything is calculated
+    const auto cold = std::chrono::steady_clock::now();
+    world.reconcile(); // warm: nothing changed
+    const auto warm = std::chrono::steady_clock::now();
+    const auto ms = [](auto from, auto to) {
+        return std::chrono::duration<double, std::milli>(to - from).count();
+    };
+    WARN("reconcileCuts: cold " << ms(start, cold) << " ms, warm " << ms(cold, warm) << " ms");
+    CHECK(ms(cold, warm) < 500.0);
+}
+
+TEST_CASE("cuts: a hole as wide as the body, a hair above it, still cuts", "[cuts][through]") {
+    World world;
+    world.add("box", {{"width", "20"}, {"depth", "20"}, {"height", "20"}, {"x", "0"}});
+    // Radius 10 on a box 20 wide (the first try of everybody), off centre, 0.00001 mm above.
+    const BodyId pin =
+        world.add("cylinder",
+                  {{"radius", "10"}, {"height", "20"}, {"x", "0"}, {"y", "-7"}, {"z", "20.00001"}});
+    world.asHole(pin);
+    world.reconcile();
+    CHECK(world.cutSteps() == 1);
 }

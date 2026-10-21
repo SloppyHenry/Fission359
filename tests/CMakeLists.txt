@@ -201,7 +201,7 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
   add_test(NAME app_flow_d_hole
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-flow-d-hole.png" --language en --size 1280x800
-            --camera=0,90,260 --simulate "drophole:cylinder,366,341;recipe:box,cylinder,combine")
+            --camera=0,90,260 --simulate "hover:10,10;hover:10,10;drophole:cylinder,366,341;recipe:box,cylinder,combine")
   set_tests_properties(app_flow_d_hole PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-1.7b, Ablauf D step 3: the ghost of the hole is pulled along X with the real mouse path;
@@ -209,7 +209,7 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
   add_test(NAME app_flow_d_hole_move
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-flow-d-hole-move.png" --language en --size 1280x800
-            --camera=0,90,260 --simulate "drophole:cylinder,366,341;step:1;gizmo:x,12,0,8;recipe:box,cylinder,combine")
+            --camera=0,90,260 --simulate "hover:10,10;hover:10,10;drophole:cylinder,366,341;step:1;gizmo:x,12,0,8;recipe:box,cylinder,combine")
   set_tests_properties(app_flow_d_hole_move PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-1.7d: two chosen bodies are merged through the menu Body; the recipe gets one step.
