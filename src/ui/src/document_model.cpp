@@ -146,6 +146,9 @@ DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel, 
     m_detailTimer.setSingleShot(true);
     m_detailTimer.setInterval(120); // zooming in steps: wait until it settles
     connect(&m_detailTimer, &QTimer::timeout, this, [this] { startDetailJob(); });
+    m_liveCutTimer.setSingleShot(true);
+    m_liveCutTimer.setInterval(150);
+    connect(&m_liveCutTimer, &QTimer::timeout, this, [this] { liveCuts(); });
     m_engine = std::make_unique<core::RecomputeEngine>(
         m_registry, *m_kernel, [this](const core::RecomputeEvent& event) { onEngineEvent(event); });
     // Reading the computer's fonts takes a moment: not on the interface thread (rule 9).
@@ -854,12 +857,16 @@ bool DocumentModel::setStepValue(int index, const QString& name, const QString& 
     auto command = core::makeSetFeatureValue(id, name.toStdString(), text.toStdString());
     // With holes in the document the change may move one into or out of a body: its cuts follow
     // in the same step.
-    if (hasCuttingParts()) {
+    if (hasCuttingParts() && !m_history.inTransaction()) {
         if (!executeWithCuts(std::move(command), {"setValue", {{"field", name.toStdString()}}})) {
             return false;
         }
-    } else if (!m_history.execute(std::move(command))) {
-        return false;
+    } else {
+        // Typed alone: the cuts follow in its step. During a drag they follow every so often.
+        if (!m_history.execute(std::move(command))) {
+            return false;
+        }
+        scheduleLiveCuts();
     }
     if (m_history.document().revision() != before) { // typing the same value again does nothing
         documentChanged();
@@ -908,7 +915,22 @@ void DocumentModel::beginChange(const QString& field) {
     m_history.beginTransaction({"setValue", {{"field", field.toStdString()}}});
 }
 
+void DocumentModel::scheduleLiveCuts() {
+    if (m_history.inTransaction() && hasCuttingParts() && !m_liveCutTimer.isActive()) {
+        m_liveCutTimer.start();
+    }
+}
+
+void DocumentModel::liveCuts() {
+    // Inside the open step of the drag, so that all of it stays one step to undo; never alone.
+    if (m_history.inTransaction() && hasCuttingParts() &&
+        core::reconcileCuts(m_history, m_registry, *m_kernel, m_cutCache)) {
+        documentChanged();
+    }
+}
+
 void DocumentModel::finishTransaction() {
+    m_liveCutTimer.stop();
     const bool cut = core::reconcileCuts(m_history, m_registry, *m_kernel, m_cutCache);
     m_history.commitTransaction();
     if (cut) {
@@ -945,6 +967,7 @@ void DocumentModel::commitChange() {
 }
 
 void DocumentModel::cancelChange() {
+    m_liveCutTimer.stop();
     m_history.cancelTransaction();
     documentChanged();
 }
@@ -1031,6 +1054,7 @@ bool DocumentModel::moveCurrent(const std::array<std::optional<double>, 3>& posi
         }
         if (m_history.document().revision() != before) {
             documentChanged();
+        scheduleLiveCuts();
         }
         return done;
     }
@@ -1045,6 +1069,7 @@ bool DocumentModel::moveCurrent(const std::array<std::optional<double>, 3>& posi
     }
     if (m_history.document().revision() != before) {
         documentChanged();
+        scheduleLiveCuts();
     }
     return done;
 }
@@ -1202,6 +1227,7 @@ bool DocumentModel::turnCurrent(const geo::Angles& angles) {
         }
         if (m_history.document().revision() != before) {
             documentChanged();
+        scheduleLiveCuts();
         }
         return done;
     }
@@ -1230,6 +1256,7 @@ bool DocumentModel::turnCurrent(const geo::Angles& angles) {
     }
     if (m_history.document().revision() != before) {
         documentChanged();
+        scheduleLiveCuts();
     }
     return done;
 }
@@ -1404,6 +1431,7 @@ bool DocumentModel::scaleCurrent(double factor, const geo::Point3d& anchor) {
     m_history.setTransactionValue("value", core::numberText(factor * 100.0));
     if (m_history.document().revision() != before) {
         documentChanged();
+        scheduleLiveCuts();
     }
     return done;
 }
@@ -1591,6 +1619,7 @@ void DocumentModel::cancelPlacing() {
     if (!m_placing) {
         return;
     }
+    m_liveCutTimer.stop();
     m_history.cancelTransaction();
     m_placing = false;
     documentChanged();

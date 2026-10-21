@@ -456,6 +456,11 @@ private:
         std::make_shared<std::atomic<std::uint64_t>>(0);
     std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_detailMeshes;
     QTimer m_detailTimer;
+    // While a drag goes on, cuts of holes are looked at every so often (not at every move of the
+    // mouse): a hole pulled onto or off a body cuts it live (rule 13).
+    QTimer m_liveCutTimer;
+    void scheduleLiveCuts();
+    void liveCuts();
     QThreadPool m_detailPool;
 
     // Last: its thread must be stopped before the rest goes away.

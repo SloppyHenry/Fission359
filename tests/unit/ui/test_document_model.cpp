@@ -849,3 +849,43 @@ TEST_CASE("the parts of a split cannot be turned or made larger yet", "[ui][docu
     CHECK_FALSE(f.model->beginScale());
     CHECK_FALSE(f.model->currentTurn().has_value());
 }
+
+TEST_CASE("holes cut live while they are dragged, and all of it is one step",
+          "[ui][document-model][combine][acceptance]") {
+    Fixture f;
+    const int step = f.model->startPlacing("cylinder", true, 100.0, 0.0, 0.0);
+    f.model->setStepValue(step, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 2); // far away: it cuts nothing
+    const int position = f.model->historyPosition();
+
+    f.model->selectStep(step);
+    REQUIRE(f.model->beginMove());
+    REQUIRE(f.model->moveCurrent({0.0, 0.0, std::nullopt}));
+    // The pointer rests for a moment: the cut appears while the button is still down.
+    QElapsedTimer waited;
+    waited.start();
+    while (f.model->recipe().size() < 3 && waited.elapsed() < 3000) {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+        QThread::msleep(10);
+    }
+    CHECK(f.model->recipe().size() == 3);
+    f.model->commitChange();
+    f.model->waitForCalculation();
+    CHECK(f.model->historyPosition() == position + 1);
+    CHECK(f.model->recipe().size() == 3);
+
+    // Pulled away again: back to two steps, still one step to undo.
+    REQUIRE(f.model->beginMove());
+    REQUIRE(f.model->moveCurrent({100.0, 0.0, std::nullopt}));
+    waited.restart();
+    while (f.model->recipe().size() > 2 && waited.elapsed() < 3000) {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+        QThread::msleep(10);
+    }
+    CHECK(f.model->recipe().size() == 2);
+    f.model->cancelChange(); // Esc: all of it is taken back, the cut comes back with it
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3);
+}
