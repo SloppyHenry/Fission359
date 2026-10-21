@@ -73,7 +73,8 @@ public:
         ++builds;
         return inner_->makeCylinder(radius, height, base);
     }
-    fission::geo::NamedSolid rotate(const fission::geo::NamedSolid& solid, fission::geo::Point3d centre,
+    fission::geo::NamedSolid rotate(const fission::geo::NamedSolid& solid,
+                                    fission::geo::Point3d centre,
                                     const fission::geo::Angles& angles) const override {
         return inner_->rotate(solid, centre, angles);
     }
@@ -81,10 +82,11 @@ public:
                                        fission::geo::Point3d delta) const override {
         return inner_->translate(solid, delta);
     }
-    fission::geo::NamedSolid
-    boolean(fission::geo::BooleanOp op, const fission::geo::NamedSolid& target,
-            const std::vector<fission::geo::NamedSolid>& tools) const override {
-        return inner_->boolean(op, target, tools);
+    fission::geo::NamedSolid boolean(fission::geo::BooleanOp op,
+                                     const fission::geo::NamedSolid& target,
+                                     const std::vector<fission::geo::NamedSolid>& tools,
+                                     double fuzzy) const override {
+        return inner_->boolean(op, target, tools, fuzzy);
     }
     fission::geo::SolidReport measure(const fission::geo::Solid& solid) const override {
         return inner_->measure(solid);
@@ -788,8 +790,11 @@ void cutBoxWithOffCentreHole(Fixture& f) {
 }
 
 double valueOfStep(const Fixture& f, int step, const char* name) {
-    return std::stod(
-        f.model->document().features().at(static_cast<std::size_t>(step)).params.at(name).expression);
+    return std::stod(f.model->document()
+                         .features()
+                         .at(static_cast<std::size_t>(step))
+                         .params.at(name)
+                         .expression);
 }
 
 } // namespace
@@ -841,7 +846,8 @@ TEST_CASE("a cut body is made larger as one, its hole with it", "[ui][document-m
     CHECK(f.model->recipe().size() == 3);
 }
 
-TEST_CASE("the parts of a split cannot be turned or made larger yet", "[ui][document-model][split]") {
+TEST_CASE("the parts of a split cannot be turned or made larger yet",
+          "[ui][document-model][split]") {
     Fixture f;
     REQUIRE(f.model->splitBody(f.model->bodyIdAt(0)) >= 0);
     f.model->waitForCalculation();

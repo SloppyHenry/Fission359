@@ -39,7 +39,9 @@ Rectangle {
     readonly property var cutValues: stepValues.filter(v => v.group === "cut")
     signal axisChosen(int axis)
     // The switch "keep the tools" of a combine step.
-    readonly property var keepToolsText: stepTexts.find(t => t.kind === "flag")
+    readonly property var keepToolsText: stepTexts.find(t => t.name === "keepTools")
+    readonly property var fuzzyText: stepTexts.find(t => t.name === "fuzzy")
+    readonly property bool subtracts: stepTexts.some(t => t.name === "mode" && t.value === "subtract")
     property string tab: "object"      // object | printer
     property string printerName: ""
     property string bedText: ""
@@ -208,13 +210,21 @@ Rectangle {
             }
 
             Section {
-                visible: root.tab === "object" && root.keepToolsText !== undefined
-                heading: qsTr("Cutting out")
+                visible: root.tab === "object" && root.fuzzyText !== undefined
+                heading: qsTr("Combining")
 
                 Toggle {
+                    visible: root.subtracts
                     text: qsTr("Keep the tools as bodies")
                     checked: root.keepToolsText !== undefined && root.keepToolsText.value === "yes"
                     onToggled: root.textCommitted("keepTools", checked ? "yes" : "no")
+                }
+
+                // The way out when faces lie almost on each other and the result is not clean.
+                Toggle {
+                    text: qsTr("Make flush (closes gaps under 0.001 mm)")
+                    checked: root.fuzzyText !== undefined && root.fuzzyText.value === "yes"
+                    onToggled: root.textCommitted("fuzzy", checked ? "yes" : "no")
                 }
             }
 

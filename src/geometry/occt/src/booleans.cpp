@@ -5,6 +5,7 @@
 // every face of the result keeps the role of the input face it comes from.
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <memory>
 #include <string>
@@ -137,8 +138,8 @@ std::vector<std::pair<int, std::string>> decide(const Lineage& lineage, const ch
 } // namespace
 
 NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,
-                        const std::vector<NamedSolid>& tools) {
-    if (tools.empty()) {
+                        const std::vector<NamedSolid>& tools, double fuzzy) {
+    if (tools.empty() || !std::isfinite(fuzzy) || fuzzy < 0.0) {
         throw GeometryError(GeometryErrorCode::invalidInput, "boolean: no tool given");
     }
     try {
@@ -170,6 +171,9 @@ NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,
         algo->SetArguments(argumentList);
         algo->SetTools(toolList);
         algo->SetRunParallel(false);
+        if (fuzzy > 0.0) {
+            algo->SetFuzzyValue(fuzzy);
+        }
         algo->SetNonDestructive(true);
         algo->Build();
         if (!algo->IsDone() || algo->HasErrors() || algo->Shape().IsNull()) {

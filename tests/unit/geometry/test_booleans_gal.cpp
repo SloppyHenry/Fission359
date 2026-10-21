@@ -324,3 +324,17 @@ TEST_CASE("spike A9/A10: boxes that overlap or part by a hair", "[boolean][spike
         CHECK(report.volume == exactly(2000.0));
     }
 }
+
+TEST_CASE("fuzzy: faces a hair apart are joined when the person asks for it", "[boolean][fuzzy]") {
+    const NamedSolid a = box(10, 10, 10, {0, 0, 0}, "F1/box");
+    const NamedSolid hair = box(10, 10, 10, {9.9995, 0, 0}, "F2/box"); // overlap 0.0005 mm
+    SolidReport exact;
+    givesValidOrRefuses([&] { return occt::booleanNamed(BooleanOp::merge, a, {hair}); }, &exact);
+
+    const NamedSolid flush = occt::booleanNamed(BooleanOp::merge, a, {hair}, 0.001);
+    const SolidReport report = occt::measure(flush.solid);
+    CHECK(report.valid);
+    CHECK(report.solids == 1);
+    checkNamed(flush);
+    CHECK_THROWS_AS(occt::booleanNamed(BooleanOp::merge, a, {hair}, -1.0), GeometryError);
+}

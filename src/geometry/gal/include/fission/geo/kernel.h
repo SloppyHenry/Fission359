@@ -91,12 +91,19 @@ public:
     /// (target first). The result is always **one** body (a compound if it falls apart).
     /// `subtract` with tools that miss the target gives the target back unchanged. Throws
     /// `GeometryError` with `emptyResult` if nothing is left. The default refuses.
+    /// `fuzzy` (mm, 0 = exact) lets faces that lie closer than that count as one: the way out
+    /// for bodies whose faces lie almost on each other, offered to the person, never used unasked.
     virtual NamedSolid boolean(BooleanOp op, const NamedSolid& target,
-                               const std::vector<NamedSolid>& tools) const {
+                               const std::vector<NamedSolid>& tools, double fuzzy) const {
         (void)op;
         (void)target;
         (void)tools;
+        (void)fuzzy;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot combine bodies");
+    }
+    NamedSolid boolean(BooleanOp op, const NamedSolid& target,
+                       const std::vector<NamedSolid>& tools) const {
+        return boolean(op, target, tools, 0.0);
     }
 
     /// The names of the fonts lettering can use (bundled and installed), sorted. Takes a moment

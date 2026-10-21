@@ -736,12 +736,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+708"/>
+        <location line="+715"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-707"/>
+        <location line="-714"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -772,12 +772,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+696"/>
+        <location line="+703"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-694"/>
+        <location line="-701"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -911,7 +911,7 @@
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
     <message>
-        <location line="+96"/>
+        <location line="+103"/>
         <source>Click a face of the print bed or of another body.</source>
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
@@ -1408,8 +1408,8 @@
     </message>
     <message>
         <location line="+3"/>
-        <source>These bodies cannot be combined cleanly. Move one of them a little, so that no faces lie exactly on each other.</source>
-        <translation>These bodies cannot be combined cleanly. Move one of them a little, so that no faces lie exactly on each other.</translation>
+        <source>These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.</source>
+        <translation>These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1432,7 +1432,7 @@
         <translation>This shape could not be built.</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+40"/>
         <source>, part %1</source>
         <translation>, part %1</translation>
     </message>
@@ -1486,22 +1486,22 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-372"/>
+        <location line="-376"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-685"/>
+        <location line="-692"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+720"/>
+        <location line="+727"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-598"/>
+        <location line="-605"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
@@ -1511,7 +1511,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+297"/>
+        <location line="+304"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -1555,7 +1555,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+76"/>
+        <location filename="../qml/RightPanel.qml" line="+78"/>
         <source>Object</source>
         <translation>Object</translation>
     </message>
@@ -1601,13 +1601,18 @@
     </message>
     <message>
         <location line="+8"/>
-        <source>Cutting out</source>
-        <translation>Cutting out</translation>
+        <source>Combining</source>
+        <translation>Combining</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>Keep the tools as bodies</source>
         <translation>Keep the tools as bodies</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Make flush (closes gaps under 0.001 mm)</source>
+        <translation>Make flush (closes gaps under 0.001 mm)</translation>
     </message>
     <message>
         <location line="+8"/>

@@ -39,7 +39,7 @@ public:
     std::vector<TextFieldSpec> texts() const override {
         // `auto`: "yes" for a step the program keeps up to date for a hole (ADR-0011).
         // `keepTools`: "yes" keeps the tools of a subtract as bodies of their own.
-        return {{"mode", "merge"}, {"auto", "no"}, {"keepTools", "no"}};
+        return {{"mode", "merge"}, {"auto", "no"}, {"keepTools", "no"}, {"fuzzy", "no"}};
     }
 
     std::optional<FeatureIssue> validate(const ResolvedParams&) const override {
@@ -88,7 +88,10 @@ public:
             }
             tools.push_back(named(input.inputs[i]));
         }
-        geo::NamedSolid made = context.kernel.boolean(*mode, named(input.inputs.front()), tools);
+        // `fuzzy` = yes: faces closer than 0.001 mm count as one (the person asked for it).
+        const double fuzzy = textOf(input.feature, "fuzzy", "no") == "yes" ? 0.001 : 0.0;
+        geo::NamedSolid made =
+            context.kernel.boolean(*mode, named(input.inputs.front()), tools, fuzzy);
         FeatureResult result;
         result.outputs.push_back(
             {input.feature.outputs.at(0), std::move(made.solid), std::move(made.faces)});

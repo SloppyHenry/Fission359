@@ -30,9 +30,9 @@ public:
     NamedSolid translate(const NamedSolid& solid, Point3d delta) const override {
         return translateNamed(solid, delta);
     }
-    NamedSolid boolean(BooleanOp op, const NamedSolid& target,
-                       const std::vector<NamedSolid>& tools) const override {
-        return booleanNamed(op, target, tools);
+    NamedSolid boolean(BooleanOp op, const NamedSolid& target, const std::vector<NamedSolid>& tools,
+                       double fuzzy) const override {
+        return booleanNamed(op, target, tools, fuzzy);
     }
     std::vector<std::string> fontFamilies() const override { return fonts_.families(); }
     std::vector<FontStyle> fontStyles(const std::string& family) const override {

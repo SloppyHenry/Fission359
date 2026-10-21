@@ -1002,7 +1002,7 @@ Window {
             return qsTr("A cutter does not touch the body, so nothing is cut out. Move it onto the body.")
         }
         if (problem.code === "kernelResultInvalid" && step && step.type === "combine") {
-            return qsTr("These bodies cannot be combined cleanly. Move one of them a little, so that no faces lie exactly on each other.")
+            return qsTr("These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.")
         }
         if (problem.code === "combineEmpty") {
             return qsTr("The bodies do not overlap, so nothing is left. Move them so that they touch.")

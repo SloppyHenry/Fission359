@@ -48,7 +48,7 @@ NamedSolid translateNamed(const NamedSolid& solid, Point3d delta);
 
 /// Combines bodies (see `GeometryKernel::boolean`). Throws GeometryError.
 NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,
-                        const std::vector<NamedSolid>& tools);
+                        const std::vector<NamedSolid>& tools, double fuzzy = 0.0);
 
 /// Volume, area, bounding box, topology counts and validity of a body.
 SolidReport measure(const Solid& solid);

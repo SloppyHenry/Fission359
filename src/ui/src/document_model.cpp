@@ -694,12 +694,12 @@ QVariantList DocumentModel::buildStepTexts() const {
         entry[QStringLiteral("value")] =
             toQString(given != feature.texts.end() ? given->second : spec.defaultValue);
         // `mode` and `auto` are the program's business (combine steps), `keepTools` a switch.
-        entry[QStringLiteral("kind")] = spec.name == "font"        ? QStringLiteral("font")
-                                        : spec.name == "style"     ? QStringLiteral("style")
-                                        : spec.name == "keepTools" ? QStringLiteral("flag")
-                                        : spec.name == "mode" || spec.name == "auto"
-                                            ? QStringLiteral("hidden")
-                                            : QStringLiteral("text");
+        entry[QStringLiteral("kind")] =
+            spec.name == "font"                                ? QStringLiteral("font")
+            : spec.name == "style"                             ? QStringLiteral("style")
+            : spec.name == "keepTools" || spec.name == "fuzzy" ? QStringLiteral("flag")
+            : spec.name == "mode" || spec.name == "auto"       ? QStringLiteral("hidden")
+                                                               : QStringLiteral("text");
         texts.push_back(entry);
     }
     return texts;
@@ -1054,7 +1054,7 @@ bool DocumentModel::moveCurrent(const std::array<std::optional<double>, 3>& posi
         }
         if (m_history.document().revision() != before) {
             documentChanged();
-        scheduleLiveCuts();
+            scheduleLiveCuts();
         }
         return done;
     }
@@ -1077,11 +1077,10 @@ bool DocumentModel::moveCurrent(const std::array<std::optional<double>, 3>& posi
 bool DocumentModel::groupCanTurn(const core::Feature& step) const {
     std::vector<const core::Feature*> forms;
     collectForms(step, forms);
-    return !forms.empty() &&
-           std::all_of(forms.begin(), forms.end(), [](const core::Feature* form) {
-               return form->params.contains("rotX") && form->params.contains("rotY") &&
-                      form->params.contains("rotZ");
-           });
+    return !forms.empty() && std::all_of(forms.begin(), forms.end(), [](const core::Feature* form) {
+        return form->params.contains("rotX") && form->params.contains("rotY") &&
+               form->params.contains("rotZ");
+    });
 }
 
 std::optional<geo::Angles> DocumentModel::currentTurn() const {
@@ -1200,9 +1199,8 @@ bool DocumentModel::turnCurrent(const geo::Angles& angles) {
         static constexpr const char* kTurn[3] = {"rotX", "rotY", "rotZ"};
         bool done = true;
         for (const TurnStart& part : m_turnGroup) {
-            const geo::Angles turned =
-                geo::anglesOf(geo::rotationOf(angles) * geo::rotationOf(part.turnValue),
-                              part.turnValue);
+            const geo::Angles turned = geo::anglesOf(
+                geo::rotationOf(angles) * geo::rotationOf(part.turnValue), part.turnValue);
             const geo::Point3d middle{part.placeValue[0] + part.centreOffset.x,
                                       part.placeValue[1] + part.centreOffset.y,
                                       part.placeValue[2] + part.centreOffset.z};
@@ -1227,7 +1225,7 @@ bool DocumentModel::turnCurrent(const geo::Angles& angles) {
         }
         if (m_history.document().revision() != before) {
             documentChanged();
-        scheduleLiveCuts();
+            scheduleLiveCuts();
         }
         return done;
     }
@@ -1389,8 +1387,7 @@ bool DocumentModel::acceptsScale(double factor) const {
                        [&](const ScaleStart& start) { return acceptsScaleOf(start, factor); });
 }
 
-bool DocumentModel::applyScale(const ScaleStart& start, double factor,
-                               const geo::Point3d& anchor) {
+bool DocumentModel::applyScale(const ScaleStart& start, double factor, const geo::Point3d& anchor) {
     const core::FeatureId id = start.id;
     const bool unchanged = std::abs(factor - 1.0) < 1e-12; // back to the start: as typed
     bool done = true;
@@ -2043,8 +2040,8 @@ QVariantMap DocumentModel::splitPlane() const {
     }
     const core::Feature& step = features[static_cast<std::size_t>(m_currentStep)];
     const core::FeatureState* state = m_result->state(step.id);
-    const auto input = step.inputs.empty() ? m_result->bodies.end()
-                                           : m_result->bodies.find(step.inputs.front());
+    const auto input =
+        step.inputs.empty() ? m_result->bodies.end() : m_result->bodies.find(step.inputs.front());
     if (step.type != "split" || state == nullptr || !state->description ||
         input == m_result->bodies.end() || state->params.empty()) {
         return plane;
@@ -2066,8 +2063,8 @@ QVariantMap DocumentModel::splitPlane() const {
     const int u = axis == 0 ? 1 : 0;
     const int v = axis == 2 ? 1 : 2;
     QVariantList corners;
-    for (const auto [cu, cv] : {std::pair{-1, -1}, std::pair{1, -1}, std::pair{1, 1},
-                                std::pair{-1, 1}}) {
+    for (const auto [cu, cv] :
+         {std::pair{-1, -1}, std::pair{1, -1}, std::pair{1, 1}, std::pair{-1, 1}}) {
         double point[3] = {0.0, 0.0, 0.0};
         point[axis] = at;
         point[u] = cu < 0 ? low[u] - margin : high[u] + margin;
