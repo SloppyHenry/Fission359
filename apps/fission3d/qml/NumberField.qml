@@ -182,8 +182,19 @@ Item {
                         root.errorInfo = ({})
                         pendingEdit = true
                     }
-                    Keys.onUpPressed: event => root.step(1, event.modifiers)
-                    Keys.onDownPressed: event => root.step(-1, event.modifiers)
+                    // Option+arrow and Cmd+arrow are cursor moves of a text field (to the end of
+                    // the line): claim them, or the field never sees the key.
+                    Keys.onShortcutOverride: event => {
+                        if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                            event.accepted = true
+                        }
+                    }
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                            root.step(event.key === Qt.Key_Up ? 1 : -1, event.modifiers)
+                            event.accepted = true
+                        }
+                    }
                 }
 
                 Txt {
