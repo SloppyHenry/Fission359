@@ -239,6 +239,9 @@ public:
     /// The box that touches the body of the chosen step (mm, exactly: a turned cylinder or a
     /// sphere touches it). Nothing when the step has no body, or its body is from an older result.
     std::optional<geo::Bounds> currentBodyBounds() const;
+    /// The same for the shape that is being put down (AP-1.6c2: its size is needed to line it up
+    /// with other bodies). Nothing while it has not been calculated yet.
+    std::optional<geo::Bounds> placingBodyBounds() const;
     /// Starts making the body of the chosen step larger or smaller: everything until
     /// `commitChange` is one step in the history ("Box made larger to 150 %"); `cancelChange`
     /// takes it back. False when the step has no sizes or no place.
@@ -311,6 +314,7 @@ private:
     std::optional<ScaleStart> m_scale;
     core::History m_history;
     std::shared_ptr<const core::RecomputeResult> m_result;
+    std::optional<geo::Bounds> boundsOfFeature(const core::Feature& feature) const;
     std::shared_ptr<const render::RenderScene> m_scene;
     std::shared_ptr<const ElementNameMap> m_elementNames = std::make_shared<ElementNameMap>();
     Numbers* m_numbers = nullptr;

@@ -53,6 +53,11 @@ std::vector<SnapPoint> snapPointsOf(const geo::TriangleMesh& mesh);
 /// The 8 corners, 12 edge middles and 6 face middles of a box.
 std::vector<SnapPoint> snapPointsOfBox(const Vec3& low, const Vec3& high);
 
+/// The 9 points of one side of a box: its 4 corners, 4 edge middles and the middle of the side.
+/// `axis` (0 = x, 1 = y, 2 = z) is the axis the side stands across, `upper` the side with the
+/// larger value. A size handle moves such a side, a shape put down stands on the lower z side.
+std::vector<SnapPoint> snapPointsOfBoxSide(const Vec3& low, const Vec3& high, int axis, bool upper);
+
 /// The same for the top of the print bed (z = 0, origin in the middle): 4 corners, 4 edge middles
 /// and the middle.
 std::vector<SnapPoint> snapPointsOfBed(double sizeX, double sizeY);
@@ -79,5 +84,21 @@ struct SnapResult {
 /// target in every free axis at once is preferred; otherwise each axis catches on its own.
 SnapResult snapOffset(const std::vector<SnapPoint>& movers, const std::vector<SnapPoint>& targets,
                       const Vec3& offset, const std::array<bool, 3>& free, const Vec3& reach);
+
+/// A factor of an even enlargement that caught, and what it caught on (for the marks).
+struct ScaleCatch {
+    double factor = 1.0;
+    /// The catch per axis, the point of the body being the corner as it stands at `factor`. All
+    /// three axes hold the same catch when the corner sits on a point of the others.
+    SnapResult result;
+};
+
+/// The even enlargement of a body (the corner across from `corner0`, `anchor`, stays where it is;
+/// `corner0` is the corner that is held, where it stood when the drag began) that puts the held
+/// corner on the nearest catch: on a point of `targets`, or in line with one on one axis.
+/// `wanted` is the factor the pointer asks for, `reach` how far (mm) the corner may be off on each
+/// axis. Empty when nothing is near. A catch on a point wins over one on a single axis.
+std::optional<ScaleCatch> snapScaleFactor(const Vec3& anchor, const Vec3& corner0, double wanted,
+                                          const std::vector<SnapPoint>& targets, const Vec3& reach);
 
 } // namespace fission::interaction

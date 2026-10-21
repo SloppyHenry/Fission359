@@ -16,6 +16,7 @@
 #include "fission/geo/occt/kernel.h"
 #include "fission/ui/document_model.h"
 #include "fission/ui/placement_controller.h"
+#include "fission/ui/snap_session.h"
 #include "fission/ui/viewport_3d.h"
 
 using Catch::Approx;
@@ -457,4 +458,111 @@ TEST_CASE("placing: a sphere and lettering touch the wall too", "[ui][placement]
         CHECK(nearWall == Approx(wallY).margin(0.05));
         CHECK(std::abs((view.side < 0.0 ? box.minY : box.maxY) - wallY) > 0.5);
     }
+}
+
+// --- catching (AP-1.6c2) ---
+
+namespace {
+
+// Snapping is off as if Shift were held, until the end of the scope.
+struct SnapOff {
+    SnapOff() { fission::ui::setSnappingSuppressedForTests(true); }
+    ~SnapOff() { fission::ui::setSnappingSuppressedForTests(false); }
+    SnapOff(const SnapOff&) = delete;
+    SnapOff& operator=(const SnapOff&) = delete;
+};
+
+// The demo box moved so that its right side is at 10.35 mm, not on a whole millimetre.
+struct Beside : Fixture {
+    Beside() {
+        REQUIRE(model->setStepValue(0, QStringLiteral("x"), QStringLiteral("0.35")));
+        refresh();
+    }
+
+    // Puts a box down with the centre of its footprint 0.4 mm off the side of the demo box: the
+    // pointer goes there, the shape appears, and the pointer moves on (a shape that is not
+    // there yet cannot catch). Returns the id of the new body; the shape still follows.
+    std::string putDown(double gap) {
+        const double centre = 10.35 + gap + 10.0; // the new box is 20 mm wide
+        const QPointF at = pixel(centre, 0.0, 0.0);
+        REQUIRE(placement->begin(QStringLiteral("box"), false, at.x(), at.y()));
+        model->waitForCalculation();
+        placement->moveTo(at.x(), at.y());
+        return std::string(model->placingBodyId().toStdString());
+    }
+};
+
+} // namespace
+
+TEST_CASE("snap: a shape put down catches on the side of a body", "[ui][placement][snap]") {
+    Beside f;
+    const int before = f.stepsDone();
+    const std::string id = f.putDown(0.4);
+    f.refresh();
+
+    // While it follows: a mark on what it hangs on.
+    CHECK_FALSE(f.viewport.handleGraphics(Viewport3D::HandleSource::placement).empty());
+    REQUIRE(f.placement->finish());
+    f.refresh();
+    // Its side touches the other, exactly: not 0.4 mm away, and not on a whole millimetre.
+    const Box3 box = extentOf(*f.model->scene(), id);
+    CHECK(box.minX == Approx(10.35).margin(1e-4));
+    CHECK(box.maxX == Approx(30.35).margin(1e-4));
+    // Gone with the drag.
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::placement).empty());
+    CHECK(f.stepsDone() == before + 1); // one step for the whole drag
+}
+
+TEST_CASE("snap: out of reach a shape put down rests on the grid", "[ui][placement][snap]") {
+    Beside f;
+    const std::string id = f.putDown(14.7);
+    REQUIRE(f.placement->finish());
+    f.refresh();
+    const Box3 box = extentOf(*f.model->scene(), id);
+    const double centre = (box.minX + box.maxX) / 2.0;
+    CHECK(centre == Approx(std::round(centre)).margin(1e-3));
+    CHECK(box.minX > 20.0);
+}
+
+TEST_CASE("snap: with Shift a shape put down follows the pointer freely", "[ui][placement][snap]") {
+    Beside f;
+    SnapOff off;
+    const std::string id = f.putDown(0.4);
+    REQUIRE_FALSE(id.empty());
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::placement).empty());
+    REQUIRE(f.placement->finish());
+    // Where the pointer was: the middle at 20.75 (the side 0.4 mm off the other body at 10.35),
+    // neither caught on it nor on the grid. Read from the step, which is exact.
+    const int step = static_cast<int>(f.model->recipe().size()) - 1;
+    f.model->selectStep(step);
+    double x = -1e9;
+    for (const QVariant& entry : f.model->stepValues()) {
+        if (entry.toMap()["name"].toString() == QLatin1String("x")) {
+            x = entry.toMap()["value"].toDouble();
+        }
+    }
+    CHECK(x == Approx(20.75).margin(0.02));
+}
+
+TEST_CASE("snap: Esc while catching leaves nothing behind", "[ui][placement][snap]") {
+    Beside f;
+    const int before = f.stepsDone();
+    f.putDown(0.4);
+    f.placement->cancel();
+    f.refresh();
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::placement).empty());
+    CHECK(f.model->bodies().size() == 1);
+    CHECK(f.stepsDone() == before);
+}
+
+TEST_CASE("snap: on a wall there is only the grid along the face", "[ui][placement][snap]") {
+    Fixture f;
+    f.viewport.setCamera(35.0, 25.0, 300.0);
+    // A point on the right wall of the demo box (x = 10), halfway up and 3.3 mm off the middle.
+    const QPointF at = f.pixel(10.0, 3.3, 10.0);
+    REQUIRE(f.placement->begin(QStringLiteral("box"), false, at.x(), at.y()));
+    f.model->waitForCalculation();
+    f.placement->moveTo(at.x(), at.y());
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::placement).empty());
+    REQUIRE(f.placement->finish());
 }

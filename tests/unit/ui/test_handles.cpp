@@ -27,6 +27,7 @@
 #include "fission/ui/document_model.h"
 #include "fission/ui/handle_controller.h"
 #include "fission/ui/placement_controller.h"
+#include "fission/ui/snap_session.h"
 #include "fission/ui/viewport_3d.h"
 
 using Catch::Approx;
@@ -675,4 +676,234 @@ TEST_CASE("handles: the radius dot of a sphere stays under the pointer as the sp
     const QVariantMap after = f.handle("radius");
     CHECK(std::hypot(after["x"].toDouble() - pointer.x(), after["y"].toDouble() - pointer.y()) <
           6.0);
+}
+
+// --- catching (AP-1.6c2) ---
+
+namespace {
+
+// Snapping is off as if Shift were held, until the end of the scope.
+struct SnapOff {
+    SnapOff() { fission::ui::setSnappingSuppressedForTests(true); }
+    ~SnapOff() { fission::ui::setSnappingSuppressedForTests(false); }
+    SnapOff(const SnapOff&) = delete;
+    SnapOff& operator=(const SnapOff&) = delete;
+};
+
+// The box round a body of the scene, by its place in the list of bodies.
+struct Extent {
+    double low[3] = {1e30, 1e30, 1e30};
+    double high[3] = {-1e30, -1e30, -1e30};
+};
+
+Extent extentOf(const DocumentModel& model, int body) {
+    Extent extent;
+    const std::string id = model.bodyIdAt(body).toStdString();
+    for (const auto& candidate : model.scene()->bodies) {
+        if (candidate.id != id) {
+            continue;
+        }
+        for (const auto& p : candidate.mesh->positions) {
+            const double v[3] = {p.x, p.y, p.z};
+            for (int a = 0; a < 3; ++a) {
+                extent.low[a] = std::min(extent.low[a], v[a]);
+                extent.high[a] = std::max(extent.high[a], v[a]);
+            }
+        }
+    }
+    return extent;
+}
+
+// The demo box in the middle, a box on each side of it at a place that is not a whole millimetre.
+struct Neighbours : Fixture {
+    Neighbours() {
+        for (const char* x : {"75.3", "-75.3"}) {
+            const int step = model->addShape(QStringLiteral("box"), false);
+            REQUIRE(step >= 0);
+            REQUIRE(model->setStepValue(step, QStringLiteral("x"), QLatin1String(x)));
+            REQUIRE(model->setStepValue(step, QStringLiteral("y"), QStringLiteral("0")));
+            REQUIRE(model->setStepValue(step, QStringLiteral("z"), QStringLiteral("0")));
+        }
+        model->selectStep(0);
+        refresh();
+    }
+
+    // Takes the handle of `parameter` and goes on with the pointer, snapping off, until the value
+    // is `target` (to a thousandth). Stays holding the handle; returns where the pointer is. The
+    // caller lets snapping have its say by switching it on and calling `dragTo` again.
+    QPointF steer(const QString& parameter, double target) {
+        const QVariantMap start = handle(parameter);
+        const QPointF from(start["x"].toDouble(), start["y"].toDouble());
+        const QPointF way(start["dirX"].toDouble(), start["dirY"].toDouble());
+        const double perMillimetre = start["pixelsPerMillimetre"].toDouble();
+        REQUIRE(handles->beginDrag(start["index"].toInt(), from.x(), from.y()));
+        double pixels = 0.0;
+        double value = handles->dragTo(from.x(), from.y());
+        double slope = 1.0 / perMillimetre; // value per pixel; better after the first move
+        for (int i = 0; i < 12 && std::abs(target - value) > 0.001; ++i) {
+            const double next = pixels + (target - value) / slope;
+            const double nextValue =
+                handles->dragTo(from.x() + way.x() * next, from.y() + way.y() * next);
+            if (std::abs(next - pixels) > 1e-9 && std::abs(nextValue - value) > 1e-9) {
+                slope = (nextValue - value) / (next - pixels);
+            }
+            pixels = next;
+            value = nextValue;
+        }
+        REQUIRE(value == Approx(target).margin(0.002));
+        return {from.x() + way.x() * pixels, from.y() + way.y() * pixels};
+    }
+
+    // The face the handle of `width` moves: its side (+1 right, -1 left) and where it stands.
+    double faceOfWidth() const {
+        const QVariantMap world =
+            model->stepHandles().at(handle("width")["candidate"].toInt()).toMap();
+        return world["x"].toDouble();
+    }
+    // The side of the neighbour across from that face.
+    double neighbourSide() const {
+        return faceOfWidth() > 0.0 ? extentOf(*model, 1).low[0] : extentOf(*model, 2).high[0];
+    }
+};
+
+} // namespace
+
+TEST_CASE("snap: a size handle catches the face on the side of another body",
+          "[ui][handles][snap]") {
+    Neighbours f;
+    const double side = f.neighbourSide();
+    const double face = f.faceOfWidth();
+    // The face 0.4 mm short of the other body: the width this is (it grows to both sides).
+    const double short_ = (std::abs(side) - 0.4);
+    const QPointF pointer = [&] {
+        SnapOff off;
+        return f.steer(QStringLiteral("width"), 2.0 * short_);
+    }();
+    const std::size_t dotsBefore =
+        f.viewport.handleGraphics(Viewport3D::HandleSource::size).dots.size();
+    f.handles->dragTo(pointer.x(), pointer.y()); // snapping is on again
+
+    // While held: a mark on the point caught, the grid on the bed.
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::size).dots.size() > dotsBefore);
+    CHECK(f.viewport.snapGridStep() > 0.0);
+    REQUIRE(f.handles->endDrag());
+    f.refresh();
+
+    // The sides touch, exactly: not 0.4 mm short, and not on a whole millimetre either.
+    CHECK(f.value(QStringLiteral("width")) == Approx(2.0 * std::abs(side)).margin(1e-4));
+    const Extent mine = extentOf(*f.model, 0);
+    CHECK((face > 0.0 ? mine.high[0] : mine.low[0]) == Approx(side).margin(1e-4));
+    CHECK(f.viewport.snapGridStep() == 0.0);
+    CHECK(f.viewport.handleGraphics(Viewport3D::HandleSource::size).dots.size() <= dotsBefore);
+}
+
+TEST_CASE("snap: a size handle with Shift held is free", "[ui][handles][snap]") {
+    Neighbours f;
+    const double short_ = std::abs(f.neighbourSide()) - 0.4;
+    SnapOff off;
+    const QPointF pointer = f.steer(QStringLiteral("width"), 2.0 * short_);
+    f.handles->dragTo(pointer.x(), pointer.y());
+    CHECK(f.viewport.snapGridStep() == 0.0); // no grid either
+    REQUIRE(f.handles->endDrag());
+    f.refresh();
+    // Where the pointer put it, 0.4 mm short; neither flush nor on a whole millimetre.
+    CHECK(f.value(QStringLiteral("width")) == Approx(2.0 * short_).margin(0.002));
+}
+
+TEST_CASE("snap: out of reach a size handle goes to the grid", "[ui][handles][snap]") {
+    Neighbours f;
+    const double short_ = std::abs(f.neighbourSide()) - 13.4;
+    const QPointF pointer = [&] {
+        SnapOff off;
+        return f.steer(QStringLiteral("width"), 2.0 * short_);
+    }();
+    f.handles->dragTo(pointer.x(), pointer.y());
+    REQUIRE(f.handles->endDrag());
+    f.refresh();
+    const double width = f.value(QStringLiteral("width"));
+    CHECK(width == Approx(std::round(width)));
+    CHECK(width < 2.0 * std::abs(f.neighbourSide()) - 20.0);
+}
+
+TEST_CASE("snap: typing a size is not caught on anything", "[ui][handles][snap]") {
+    Neighbours f;
+    const double short_ = std::abs(f.neighbourSide()) - 0.4;
+    const QPointF pointer = [&] {
+        SnapOff off;
+        return f.steer(QStringLiteral("width"), 2.0 * short_);
+    }();
+    f.handles->dragTo(pointer.x(), pointer.y());
+    REQUIRE(f.handles->typeInsteadOfDrag());
+    CHECK(f.viewport.snapGridStep() == 0.0);
+    const int index = f.handle("width")["index"].toInt();
+    CHECK(f.handles->setValue(index, QStringLiteral("37.3")));
+    REQUIRE(f.handles->commitEdit());
+    f.refresh();
+    CHECK(f.value(QStringLiteral("width")) == Approx(37.3));
+}
+
+TEST_CASE("snap: one catching drag is one step in the history and Esc takes it back",
+          "[ui][handles][snap]") {
+    Neighbours f;
+    const int before = f.stepsDone();
+    const double short_ = std::abs(f.neighbourSide()) - 0.4;
+    const QPointF pointer = [&] {
+        SnapOff off;
+        return f.steer(QStringLiteral("width"), 2.0 * short_);
+    }();
+    f.handles->dragTo(pointer.x(), pointer.y());
+    f.handles->cancelDrag();
+    f.refresh();
+    CHECK(f.value(QStringLiteral("width")) == Approx(20.0));
+    CHECK(f.stepsDone() == before);
+    CHECK(f.viewport.snapGridStep() == 0.0);
+
+    const QPointF again = [&] {
+        SnapOff off;
+        return f.steer(QStringLiteral("width"), 2.0 * short_);
+    }();
+    f.handles->dragTo(again.x(), again.y());
+    REQUIRE(f.handles->endDrag());
+    f.refresh();
+    CHECK(f.stepsDone() == before + 1);
+}
+
+TEST_CASE("snap: the radius of a sphere, which rises as it grows, has only the grid",
+          "[ui][handles][snap]") {
+    Fixture f;
+    const int sphere = f.model->addShape(QStringLiteral("sphere"), false);
+    REQUIRE(sphere >= 0);
+    REQUIRE(f.model->setStepValue(sphere, QStringLiteral("x"), QStringLiteral("0")));
+    REQUIRE(f.model->setStepValue(sphere, QStringLiteral("y"), QStringLiteral("0")));
+    REQUIRE(f.model->setStepValue(sphere, QStringLiteral("z"), QStringLiteral("0")));
+    REQUIRE(f.model->setStepValue(sphere, QStringLiteral("radius"), QStringLiteral("10")));
+    const int box = f.model->addShape(QStringLiteral("box"), false);
+    REQUIRE(f.model->setStepValue(box, QStringLiteral("x"), QStringLiteral("22.3")));
+    REQUIRE(f.model->setStepValue(box, QStringLiteral("y"), QStringLiteral("0")));
+    REQUIRE(f.model->setStepValue(box, QStringLiteral("z"), QStringLiteral("0")));
+    f.model->selectStep(sphere);
+    f.refresh();
+
+    const QVariantMap start = f.handle(QStringLiteral("radius"));
+    const QPointF from(start["x"].toDouble(), start["y"].toDouble());
+    const QPointF way(start["dirX"].toDouble(), start["dirY"].toDouble());
+    REQUIRE(f.handles->beginDrag(start["index"].toInt(), from.x(), from.y()));
+    double value = 10.0;
+    {
+        SnapOff off; // steer to a radius that is not a whole millimetre
+        double pixels = 0.0;
+        for (int i = 0; i < 12 && std::abs(value - 12.35) > 0.001; ++i) {
+            pixels += (12.35 - value) * start["pixelsPerMillimetre"].toDouble() * 0.7;
+            value = f.handles->dragTo(from.x() + way.x() * pixels, from.y() + way.y() * pixels);
+        }
+        REQUIRE(value == Approx(12.35).margin(0.01));
+        const double steered = pixels;
+        // Snapping on again: the grid, never the side of the box (12.3 would be that).
+        fission::ui::setSnappingSuppressedForTests(false);
+        const double caught =
+            f.handles->dragTo(from.x() + way.x() * steered, from.y() + way.y() * steered);
+        fission::ui::setSnappingSuppressedForTests(true); // (the guard puts it back)
+        CHECK(caught == Approx(std::round(caught)));
+    }
+    REQUIRE(f.handles->endDrag());
 }

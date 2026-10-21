@@ -346,7 +346,7 @@
         <translation>Unbenannt</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+19"/>
         <source>%1 × %2</source>
         <translation>%1 × %2</translation>
     </message>
@@ -755,7 +755,12 @@
         <translation>Tippe ein Maß (Tab für das nächste, Enter zum Beenden) oder ziehe an den Punkten.</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+2"/>
+        <source>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</source>
+        <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Unit: mm</source>
         <translation>Einheit: mm</translation>
     </message>
@@ -1178,11 +1183,6 @@
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
-    <message>
-        <location line="+7"/>
-        <source>Drag a shape onto the print bed or onto a face, or click it. “As hole” makes it a hole.</source>
-        <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an. Mit „Als Loch“ wird sie zum Loch.</translation>
-    </message>
 </context>
 <context>
     <name>MenuStrip</name>
@@ -1387,7 +1387,7 @@
         <translation>Gleichmäßig vergrößern</translation>
     </message>
     <message>
-        <location line="+86"/>
+        <location line="+88"/>
         <source>%1 %</source>
         <translation>%1 %</translation>
     </message>
@@ -1588,8 +1588,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Drag a dot to change a size, or a corner square to scale everything evenly. You can also drag the body itself.</source>
-        <translation>Ziehe an einem Punkt, um ein Maß zu ändern, oder an einem Eck-Quadrat, um alles gleichmäßig zu vergrößern. Du kannst auch den Körper selbst ziehen.</translation>
+        <source>Drag a dot to change a size, or a corner square to scale everything evenly; it snaps to corners and middles. Hold Shift to switch snapping off. You can also drag the body itself.</source>
+        <translation>Ziehe an einem Punkt, um ein Maß zu ändern, oder an einem Eck-Quadrat, um alles gleichmäßig zu vergrößern; es fängt an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Du kannst auch den Körper selbst ziehen.</translation>
     </message>
 </context>
 <context>
@@ -1628,7 +1628,7 @@
 <context>
     <name>ViewOverlay</name>
     <message>
-        <location filename="../qml/ViewOverlay.qml" line="+86"/>
+        <location filename="../qml/ViewOverlay.qml" line="+90"/>
         <location line="+10"/>
         <source>Orthographic</source>
         <translation>Orthografisch</translation>

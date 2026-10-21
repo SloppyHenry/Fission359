@@ -18,7 +18,9 @@
 #include <string>
 
 #include "fission/interaction/drag.h"
+#include "fission/render/scene_renderer.h"
 #include "fission/ui/document_model.h"
+#include "fission/ui/snap_session.h"
 #include "fission/ui/viewport_3d.h"
 
 namespace fission::ui {
@@ -35,6 +37,11 @@ namespace fission::ui {
 /// typing replaces dragging (a number is the percentage), Enter accepts, Esc puts it back. Where a
 /// size would become impossible, the corner stops at the nearest possible factor. One drag is
 /// one step in the history ("Box made larger to 150 %"), no new step in the recipe.
+///
+/// The corner held catches (AP-1.6c2) on the corners, edge middles and face middles of the other
+/// bodies and of the bed before the factor rests on whole percent: the factor is then whatever
+/// puts the corner there (137.4 %). Shift switches catching off; the factor rests on whole
+/// percent again, and the body stays even (rule 11).
 ///
 /// Like the rings, the handles are drawn in the scene with depth (`Viewport3D::setHandleGraphics`);
 /// the window holds the places to grab and the value bubble.
@@ -116,6 +123,10 @@ private:
     std::optional<Box> shownBox();
     static QVector3D topCorner(const Box& box, int corner);
     bool applyFactor(double factor);
+    /// The factor that puts the held corner on a point of the others, near the `asked` one, or
+    /// nothing. Sets the marks of the catch.
+    std::optional<double> snappedFactor(double asked);
+    void clearSnap();
     void setEditing(bool editing);
     void finish();
 
@@ -147,6 +158,11 @@ private:
     double m_diagonal = 0.0; ///< from the anchor to the corner held (mm)
     double m_factor = 1.0;   ///< what was written last
     std::optional<interaction::AxisDrag> m_drag;
+    geo::Point3d m_held; ///< the corner held, where it stood when the drag began (mm)
+
+    // Catching (AP-1.6c2): the points of the others, and what the last catch looks like.
+    SnapSession m_snap;
+    render::HandleGraphics m_snapMarks;
 };
 
 } // namespace fission::ui

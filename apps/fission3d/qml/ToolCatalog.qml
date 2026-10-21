@@ -26,7 +26,7 @@ QtObject {
                       en: ["rotate", "turn", "spin", "tilt", "angle"] } },
         { id: "size", name: qsTr("Size"), icon: "scale",
           tip: qsTr("Dots on the faces change one size of the shape, the squares on the corners all of them alike (larger, smaller). Corners and holes stay round."),
-          hint: qsTr("Drag a dot to change a size, or a corner square to scale everything evenly. You can also drag the body itself."),
+          hint: qsTr("Drag a dot to change a size, or a corner square to scale everything evenly; it snaps to corners and middles. Hold Shift to switch snapping off. You can also drag the body itself."),
           synonyms: { de: ["größe", "maße", "breite", "höhe", "tiefe", "strecken", "länger", "skalieren", "vergrößern", "verkleinern", "proportional", "prozent", "gleichmäßig"],
                       en: ["size", "dimensions", "width", "height", "depth", "stretch", "resize", "scale", "enlarge", "shrink", "proportional", "percent", "uniform"] } }
     ]

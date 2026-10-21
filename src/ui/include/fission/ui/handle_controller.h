@@ -17,7 +17,9 @@
 #include <string>
 
 #include "fission/interaction/drag.h"
+#include "fission/render/scene_renderer.h"
 #include "fission/ui/document_model.h"
+#include "fission/ui/snap_session.h"
 #include "fission/ui/viewport_3d.h"
 
 namespace fission::ui {
@@ -30,6 +32,11 @@ namespace fission::ui {
 /// turns a drag of the pointer into a value, and changes the document through `DocumentModel`.
 /// Everything between `beginEdit` and `commitEdit` (a drag, or typing with Tab from value to
 /// value) is one step in the history; `cancelEdit` (Esc) takes it all back.
+///
+/// A handle that moves a face along a bed axis (AP-1.6c2) catches on the corners, edge middles and
+/// face middles of other bodies and of the bed, before it falls back on the grid; Shift switches
+/// catching and grid off. A turned body, a sphere and the details (corner radius, wall) have only
+/// the grid.
 class HandleController : public QObject {
     Q_OBJECT
     /// The handles on screen, one for each value, in the order they are shown (view pixels):
@@ -129,6 +136,13 @@ signals:
 
 private:
     void setEditing(bool editing);
+    /// Prepares catching for the handle grabbed (`m_dragAxis`, `m_dragOrigin` are set).
+    void beginSnap(const QVariantMap& world);
+    /// Ends catching: marks and grid of the view go.
+    void clearSnap();
+    /// The value the handle takes where it catches on something, or nothing. `wanted` is the
+    /// value the pointer asks for (not rounded).
+    std::optional<double> snappedValue(double wanted);
     /// The box round the body of the current step as last calculated (mm); false if none.
     bool bodyBounds(QVector3D& low, QVector3D& high);
     /// Whether a solid body is between the eye and `point`.
@@ -199,6 +213,12 @@ private:
     double m_dragTravel = 1.0;
     double m_dragValue = 0.0;
     QString m_dragParameter;
+
+    // Catching (AP-1.6c2): the face the handle moves, on a bed axis. `m_snapAxis` is -1 for a
+    // handle that only has the grid.
+    SnapSession m_snap;
+    int m_snapAxis = -1;
+    render::HandleGraphics m_snapMarks;
 };
 
 } // namespace fission::ui

@@ -3,9 +3,15 @@
 
 #include "fission/ui/placement_controller.h"
 
+#include <QColor>
+#include <QVector3D>
+
+#include <array>
 #include <cmath>
+#include <vector>
 
 #include "fission/geo/seat.h"
+#include "fission/interaction/snap.h"
 
 namespace fission::ui {
 
@@ -44,17 +50,69 @@ double PlacementController::snapStep() const {
     return chosen > 0.0 ? chosen : kSnapMillimetres;
 }
 
+void PlacementController::clearSnap() {
+    m_snap.end();
+    if (m_marked && m_viewport != nullptr) {
+        m_viewport->setHandleGraphics({}, Viewport3D::HandleSource::placement);
+    }
+    m_marked = false;
+}
+
+std::pair<double, double> PlacementController::flatSpot(const Viewport3D::Landing& landing) {
+    if (snappingSuppressed()) {
+        clearSnap();
+        return {landing.x, landing.y};
+    }
+    const double step = snapStep();
+    const std::pair<double, double> onGrid{snapped(landing.x, step), snapped(landing.y, step)};
+    // The size of the shape is known a moment after it appeared: the very first place is the grid.
+    const auto bounds = m_model->placingBodyBounds();
+    const auto scene = m_model->scene();
+    if (!bounds || !scene) {
+        clearSnap();
+        return onGrid;
+    }
+    // The shape stands on its underside, centred on the place (rule of the shapes): its footprint
+    // is the 9 points of the lower side of the box round it, as they would be at the origin.
+    const double halfX = (bounds->max.x - bounds->min.x) / 2.0;
+    const double halfY = (bounds->max.y - bounds->min.y) / 2.0;
+    const double height = bounds->max.z - bounds->min.z;
+    auto movers =
+        interaction::snapPointsOfBoxSide({-halfX, -halfY, 0.0}, {halfX, halfY, height}, 2, false);
+    if (m_snap.active()) {
+        m_snap.setMovers(std::move(movers));
+    } else {
+        m_snap.beginWithMovers(*scene, m_model->placingBodyId().toStdString(), std::move(movers));
+    }
+    const QVector3D around(static_cast<float>(landing.x), static_cast<float>(landing.y),
+                           static_cast<float>(landing.z));
+    const interaction::SnapResult caught =
+        m_snap.snap({landing.x, landing.y, landing.z}, {true, true, false},
+                    snapReachAround(*m_viewport, around));
+    render::HandleGraphics marks;
+    if (caught.caught()) {
+        marks = SnapSession::marksOf(caught, m_viewport->property("accentColor").value<QColor>(),
+                                     millimetresPerPixelAt(*m_viewport, around));
+    }
+    m_viewport->setHandleGraphics(marks, Viewport3D::HandleSource::placement);
+    m_marked = !marks.empty();
+    return {caught.axes[0] ? caught.offset[0] : onGrid.first,
+            caught.axes[1] ? caught.offset[1] : onGrid.second};
+}
+
 bool PlacementController::begin(const QString& type, bool asHole, double x, double y,
                                 bool upright) {
     if (m_model == nullptr || m_viewport == nullptr) {
         return false;
     }
+    clearSnap();
     const auto landing = m_viewport->landingAt(x, y, {}, m_model->workplaneZ(), !upright);
     if (!landing) {
         return false;
     }
-    if (m_model->startPlacing(type, asHole, snapped(landing->x, snapStep()),
-                              snapped(landing->y, snapStep()), landing->z) < 0) {
+    // (The shape does not exist yet: nothing to catch with, only the grid, or free with Shift.)
+    const auto spot = flatSpot(*landing);
+    if (m_model->startPlacing(type, asHole, spot.first, spot.second, landing->z) < 0) {
         return false;
     }
     if (landing->tilted) {
@@ -72,11 +130,12 @@ bool PlacementController::landAt(double x, double y, bool upright) {
         return false; // the ray misses everything: the shape stays where it was
     }
     if (landing->tilted) {
+        clearSnap(); // on a wall only the grid along the face
         m_model->placeOnFace(snappedOnFace(*landing, snapStep()),
                              {landing->nx, landing->ny, landing->nz});
     } else {
-        m_model->placeAt(snapped(landing->x, snapStep()), snapped(landing->y, snapStep()),
-                         landing->z, landing->surface);
+        const auto spot = flatSpot(*landing);
+        m_model->placeAt(spot.first, spot.second, landing->z, landing->surface);
     }
     return true;
 }
@@ -89,10 +148,12 @@ void PlacementController::moveTo(double x, double y, bool upright) {
 }
 
 bool PlacementController::finish() {
+    clearSnap();
     return m_model != nullptr && m_model->finishPlacing();
 }
 
 void PlacementController::cancel() {
+    clearSnap();
     if (m_model != nullptr) {
         m_model->cancelPlacing();
     }

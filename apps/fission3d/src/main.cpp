@@ -53,6 +53,7 @@
 #include "fission/ui/scale_controller.h"
 #include "fission/ui/selection_controller.h"
 #include "fission/ui/shape_previews.h"
+#include "fission/ui/snap_session.h"
 #include "fission/ui/theme.h"
 #include "fission/ui/viewport_3d.h"
 
@@ -448,7 +449,11 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         if (kind == QLatin1String("snap")) { // snap:off / snap:on - Shift held, or not
             const bool off = action.mid(colon + 1).trimmed() == QLatin1String("off");
             delay += 350;
-            QTimer::singleShot(delay, viewport, [gizmo, off] { gizmo->setSnapSuppressed(off); });
+            QTimer::singleShot(delay, viewport, [gizmo, off] {
+                gizmo->setSnapSuppressed(off);
+                fission::ui::setSnappingSuppressedForTests(
+                    off); // size handles, corners, putting down
+            });
             continue;
         }
         if (kind == QLatin1String("tool")) { // tool:size - a tool of the palette
@@ -562,7 +567,13 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                 if (numbers.size() >= 2 &&
                     placement->begin(shape, kind == QLatin1String("drophole"), numbers[0],
                                      numbers[1], upright)) {
-                    placement->finish();
+                    // The size of the shape is known a moment after it appeared; from then on it
+                    // catches on other bodies, so the pointer moves once more before it lets go
+                    // (as a hand would).
+                    QTimer::singleShot(250, viewport, [placement, numbers, upright] {
+                        placement->moveTo(numbers[0], numbers[1], upright);
+                        placement->finish();
+                    });
                 }
                 return;
             }
