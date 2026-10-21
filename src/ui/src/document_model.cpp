@@ -2034,6 +2034,55 @@ bool DocumentModel::setCutTarget(int holeIndex, int rootIndex, bool cut) {
     return true;
 }
 
+QVariantMap DocumentModel::splitPlane() const {
+    QVariantMap plane;
+    plane[QStringLiteral("valid")] = false;
+    const auto& features = m_history.document().features();
+    if (m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size()) || !m_result) {
+        return plane;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(m_currentStep)];
+    const core::FeatureState* state = m_result->state(step.id);
+    const auto input = step.inputs.empty() ? m_result->bodies.end()
+                                           : m_result->bodies.find(step.inputs.front());
+    if (step.type != "split" || state == nullptr || !state->description ||
+        input == m_result->bodies.end() || state->params.empty()) {
+        return plane;
+    }
+    geo::Bounds box;
+    try {
+        box = m_kernel->bounds(input->second.solid);
+    } catch (const geo::GeometryError&) {
+        return plane;
+    }
+    const int axis = static_cast<int>(std::lround(state->params.at("axis").value));
+    const double at = state->params.at("position").value;
+    if (axis < 0 || axis > 2) {
+        return plane;
+    }
+    const double low[3] = {box.min.x, box.min.y, box.min.z};
+    const double high[3] = {box.max.x, box.max.y, box.max.z};
+    const double margin = 0.12 * box.diagonal();
+    const int u = axis == 0 ? 1 : 0;
+    const int v = axis == 2 ? 1 : 2;
+    QVariantList corners;
+    for (const auto [cu, cv] : {std::pair{-1, -1}, std::pair{1, -1}, std::pair{1, 1},
+                                std::pair{-1, 1}}) {
+        double point[3] = {0.0, 0.0, 0.0};
+        point[axis] = at;
+        point[u] = cu < 0 ? low[u] - margin : high[u] + margin;
+        point[v] = cv < 0 ? low[v] - margin : high[v] + margin;
+        QVariantMap corner;
+        corner[QStringLiteral("x")] = point[0];
+        corner[QStringLiteral("y")] = point[1];
+        corner[QStringLiteral("z")] = point[2];
+        corners.push_back(corner);
+    }
+    plane[QStringLiteral("valid")] = true;
+    plane[QStringLiteral("corners")] = corners;
+    return plane;
+}
+
 bool DocumentModel::setSplitAxis(int stepIndex, int axis) {
     const auto& features = m_history.document().features();
     if (stepIndex < 0 || stepIndex >= static_cast<int>(features.size()) || axis < 0 || axis > 2 ||

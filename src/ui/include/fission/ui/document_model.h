@@ -245,6 +245,9 @@ public:
     /// Lets the cut of a split step run across another axis (0 = x, 1 = y, 2 = z): the plane goes
     /// to the middle of the body on that axis. One step.
     Q_INVOKABLE bool setSplitAxis(int stepIndex, int axis);
+    /// The cutting plane of the chosen split step, to be drawn as a translucent sheet: `valid` and
+    /// `corners`, four points `{x, y, z}` (mm) round the plane, a little larger than the body.
+    Q_INVOKABLE QVariantMap splitPlane() const;
     Q_INVOKABLE int splitBody(const QString& bodyId);
     Q_INVOKABLE QString combineBodies(const QStringList& bodyIds, const QString& mode);
     bool canPaste() const noexcept { return !m_clipboard.empty(); }

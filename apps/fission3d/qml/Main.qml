@@ -647,6 +647,13 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            // The cutting plane of the chosen split, as a translucent sheet.
+            SplitPlaneLayer {
+                anchors.fill: parent
+                viewport: viewport
+                plane: root.splitPlaneInfo
+            }
+
             // The label "Cuts out: …" on a chosen hole.
             CutLayer {
                 anchors.fill: parent
@@ -1027,6 +1034,10 @@ Window {
             ? DocumentModel.bodyIndexOf(DocumentModel.bodyOfStep(DocumentModel.currentStep)) : -1
         return index >= 0 && DocumentModel.bodies[index].hole
     }
+
+    // The cutting plane of the chosen split step (asked again when the values change).
+    readonly property var splitPlaneInfo: DocumentModel.stepValues && DocumentModel.currentStep >= 0
+        ? DocumentModel.splitPlane() : ({ valid: false })
 
     // The one chosen body, if it is a hole: the label "Cuts out: …" hangs on it.
     readonly property int chosenHoleIndex: {
