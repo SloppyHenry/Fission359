@@ -75,6 +75,14 @@ public:
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot turn bodies");
     }
 
+    /// The same body moved by `delta` (mm). A pure move, like `rotate`: the faces stay the faces
+    /// they were, with their roles, in the same order. The default refuses.
+    virtual NamedSolid translate(const NamedSolid& solid, Point3d delta) const {
+        (void)solid;
+        (void)delta;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move bodies");
+    }
+
     /// Combines `target` with `tools` exactly (no tolerance), then joins faces that lie in one
     /// surface. Faces keep the roles they had in their input; where one input face is cut into
     /// several pieces, the pieces get the role with `#1`, `#2` ... appended (never one name twice).

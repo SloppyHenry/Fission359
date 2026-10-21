@@ -43,6 +43,9 @@ NamedSolid makeNamedCylinder(double radius, double height, Point3d base = {});
 /// same order with the same roles. Throws GeometryError for values that are not numbers.
 NamedSolid rotateNamed(const NamedSolid& solid, Point3d centre, const Angles& angles);
 
+/// The body moved by `delta` (see `GeometryKernel::translate`).
+NamedSolid translateNamed(const NamedSolid& solid, Point3d delta);
+
 /// Combines bodies (see `GeometryKernel::boolean`). Throws GeometryError.
 NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,
                         const std::vector<NamedSolid>& tools);

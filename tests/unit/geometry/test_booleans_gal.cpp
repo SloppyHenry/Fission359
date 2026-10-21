@@ -173,3 +173,16 @@ TEST_CASE("boolean: a tool with no role for a face is refused", "[boolean]") {
     CHECK_THROWS_AS(occt::booleanNamed(BooleanOp::subtract, plate(), {broken}), GeometryError);
     CHECK_THROWS_AS(occt::booleanNamed(BooleanOp::subtract, plate(), {}), GeometryError);
 }
+
+TEST_CASE("translate: a moved body keeps its faces and their names", "[solid][golden]") {
+    const NamedSolid moved = occt::translateNamed(plate(), {5.0, -7.0, 3.0});
+    const SolidReport report = occt::measure(moved.solid);
+    CHECK(report.valid);
+    CHECK(report.volume == exactly(16000.0));
+    CHECK(report.boxMin.x == Approx(-15.0));
+    CHECK(report.boxMin.y == Approx(-27.0));
+    CHECK(report.boxMin.z == Approx(3.0));
+    CHECK(rolesOf(moved) == rolesOf(plate()));
+    checkNamed(moved);
+    CHECK_THROWS_AS(occt::translateNamed(plate(), {std::nan(""), 0.0, 0.0}), GeometryError);
+}

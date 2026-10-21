@@ -13,6 +13,7 @@ add_executable(fission_unit_tests
   core/test_cuts.cpp
   features/test_primitives.cpp
   features/test_combine.cpp
+  features/test_split.cpp
   features/test_text_feature.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp

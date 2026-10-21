@@ -27,6 +27,9 @@ public:
                       const Angles& angles) const override {
         return rotateNamed(solid, centre, angles);
     }
+    NamedSolid translate(const NamedSolid& solid, Point3d delta) const override {
+        return translateNamed(solid, delta);
+    }
     NamedSolid boolean(BooleanOp op, const NamedSolid& target,
                        const std::vector<NamedSolid>& tools) const override {
         return booleanNamed(op, target, tools);
