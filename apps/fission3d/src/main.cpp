@@ -43,6 +43,7 @@
 #include "fission/services/startup_clock.h"
 #include "fission/ui/app_info.h"
 #include "fission/ui/app_options.h"
+#include "fission/ui/distance_controller.h"
 #include "fission/ui/document_model.h"
 #include "fission/ui/gizmo_controller.h"
 #include "fission/ui/handle_controller.h"
@@ -164,6 +165,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "palette), filtermenu (open the choice menu of the 3D view), snap:off (snapping off as "
             "with Shift held; snap:on), grid:0.1 (the step of "
             "snapping in mm, 0 = automatic), "
+            "distance:left,5 (type 5 into the distance measure on that side of the chosen "
+            "body: left, right, front or back), "
             "gizmo:x,40,0,8 (press "
             "a part of the gizmo: x, y, z, xy, xz, yz or free, "
             "pull it by view pixels, let go; with a fifth value hold the button stays down), "
@@ -280,7 +283,8 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                  fission::ui::PlacementController* placement, fission::ui::DocumentModel* model,
                  fission::ui::HandleController* handles, fission::ui::GizmoController* gizmo,
                  fission::ui::RotateController* rotate, fission::ui::ScaleController* scale,
-                 const QString& actions, std::function<void()> done) {
+                 fission::ui::DistanceController* distances, const QString& actions,
+                 std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
@@ -461,6 +465,21 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             delay += 350;
             QTimer::singleShot(delay, viewport,
                                [window, tool] { window->setProperty("tool", tool); });
+            continue;
+        }
+        if (kind == QLatin1String("distance")) {
+            // distance:left,5 - type 5 into the distance measure on that side (left | right |
+            // front | back) of the chosen body, as a click on the number and Enter would.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [distances, spec] {
+                const int index = distances->indexOfSide(spec.value(0).trimmed());
+                if (index < 0 || !distances->setDistance(index, spec.value(1).toDouble())) {
+                    qWarning().noquote() << QStringLiteral("no distance %1 to set to %2")
+                                                .arg(spec.value(0), spec.value(1));
+                    g_simulationFailure = 4;
+                }
+            });
             continue;
         }
         if (kind == QLatin1String("key")) { // key:Right - a key pressed and let go
@@ -833,6 +852,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Rotate", &rotate);
     fission::ui::ScaleController scale(&documentModel);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Scale", &scale);
+    fission::ui::DistanceController distances(&documentModel);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Distances", &distances);
     // The pictures on the tiles of the shape gallery come from the geometry kernel.
     engine.addImageProvider(QStringLiteral("shapes"), new fission::ui::ShapePreviews(kernel));
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Language", &language);
@@ -860,6 +881,8 @@ int main(int argc, char* argv[]) {
         gizmo.attach(viewport);
         rotate.attach(viewport);
         scale.attach(viewport);
+        distances.attach(viewport);
+        distances.attachGizmo(&gizmo);
         viewport->setScene(documentModel.scene());
         const QMetaObject::Connection sceneConnection =
             QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
@@ -913,6 +936,7 @@ int main(int argc, char* argv[]) {
     fission::ui::GizmoController* const gizmoController = &gizmo;
     fission::ui::RotateController* const rotateController = &rotate;
     fission::ui::ScaleController* const scaleController = &scale;
+    fission::ui::DistanceController* const distanceController = &distances;
     if (!options.smokeTestPath.isEmpty()) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
@@ -921,7 +945,8 @@ int main(int argc, char* argv[]) {
         // simulation after 4 seconds (and report success for what never ran).
         const auto started = std::make_shared<bool>(false);
         auto grab = [window, viewport, placementController, &documentModel, handleController,
-                     gizmoController, rotateController, scaleController, path, simulate, started] {
+                     gizmoController, rotateController, scaleController, distanceController, path,
+                     simulate, started] {
             if (*started) {
                 return; // the first frame can be reported more than once
             }
@@ -935,7 +960,8 @@ int main(int argc, char* argv[]) {
             };
             if (viewport != nullptr && !simulate.isEmpty()) {
                 playActions(window, viewport, placementController, &documentModel, handleController,
-                            gizmoController, rotateController, scaleController, simulate, shoot);
+                            gizmoController, rotateController, scaleController, distanceController,
+                            simulate, shoot);
             } else {
                 shoot();
             }

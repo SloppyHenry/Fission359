@@ -267,6 +267,23 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=0,30,160 --simulate "grid:3;snap:off;drop:box,462,312;near:x,20")
   set_tests_properties(app_snap_drop_off PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE WILL_FAIL TRUE)
+  # AP-1.6d, acceptance criterion 1 of AP-1.6: a shape stands exactly 5 mm from the edge of the bed
+  # by its distance measure. The box put down stands at x = -30 (20 mm wide): its left side is
+  # then 5 mm from the edge at x = -128 + 5 + 10 = -113.
+  add_test(NAME app_distance_five_from_edge
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-distance.png" --language en --size 1280x800
+            --camera=20,35,170 --simulate "put:box;tool:move;distance:left,5;near:x,-113")
+  set_tests_properties(app_distance_five_from_edge PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # The same from the other side: 5 mm from the right edge, the middle at x = 128 - 5 - 10 = 113.
+  # (The box put down is beside the first one, not in line with it: no body is in the way.)
+  add_test(NAME app_distance_other_side
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-distance-right.png" --language en --size 1280x800
+            --camera=20,35,170 --simulate "put:box;tool:move;distance:right,5;near:x,113")
+  set_tests_properties(app_distance_other_side PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

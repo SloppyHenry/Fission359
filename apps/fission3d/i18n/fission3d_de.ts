@@ -69,6 +69,15 @@
     </message>
 </context>
 <context>
+    <name>DistanceLayer</name>
+    <message>
+        <location filename="../qml/DistanceLayer.qml" line="+133"/>
+        <location line="+64"/>
+        <source>Distance</source>
+        <translation>Abstand</translation>
+    </message>
+</context>
+<context>
     <name>DocTabs</name>
     <message>
         <location filename="../qml/DocTabs.qml" line="+43"/>
@@ -582,12 +591,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+596"/>
+        <location line="+604"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-595"/>
+        <location line="-603"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -643,18 +652,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+298"/>
+        <location line="+299"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-296"/>
-        <location line="+297"/>
+        <location line="-297"/>
+        <location line="+298"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-291"/>
+        <location line="-292"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -664,7 +673,7 @@
         <translation>Mittlere Maustaste ziehen dreht die Ansicht, Umschalt + mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+44"/>
+        <location line="+45"/>
         <source>Settings arrive in a later version.</source>
         <translation>Die Einstellungen kommen in einer späteren Version.</translation>
     </message>
@@ -725,7 +734,7 @@
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
     <message>
-        <location line="+140"/>
+        <location line="+147"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
@@ -1159,27 +1168,27 @@
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-569"/>
+        <location line="-577"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+604"/>
+        <location line="+612"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-496"/>
+        <location line="-504"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+267"/>
+        <location line="+268"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+252"/>
+        <location line="+259"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -1553,13 +1562,13 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Arrows move the chosen body along one direction, squares in a plane, the dot across the bed. You can also drag the body itself.</source>
-        <translation>Pfeile verschieben den gewählten Körper in eine Richtung, Quadrate in einer Ebene, der Punkt über das Bett. Du kannst auch den Körper selbst ziehen.</translation>
+        <source>Arrows move the chosen body along one direction, squares in a plane, the dot across the bed. The numbers on the bands are the distances to the next body or the edge of the bed. You can also drag the body itself.</source>
+        <translation>Pfeile schieben den gewählten Körper in eine Richtung, Quadrate in einer Ebene, der Punkt über das Bett. Die Zahlen an den Bändern sind die Abstände zum nächsten Körper oder zum Bettrand. Du kannst auch den Körper selbst ziehen.</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm).</source>
-        <translation>Ziehe einen Pfeil, ein Quadrat oder den Körper selbst; er fängt an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Pfeiltasten verschieben um 1 mm (mit Umschalt 10 mm).</translation>
+        <source>Drag an arrow, a square or the body itself; it snaps to corners and middles. Hold Shift to switch snapping off. Arrow keys move by 1 mm (Shift: 10 mm). Click a distance to type it.</source>
+        <translation>Ziehe einen Pfeil, ein Quadrat oder den Körper selbst; er fängt an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Pfeiltasten verschieben um 1 mm (mit Umschalt 10 mm). Klicke auf einen Abstand, um ihn einzutippen.</translation>
     </message>
     <message>
         <location line="+3"/>
