@@ -619,6 +619,15 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            // The label "Cuts out: …" on a chosen hole.
+            CutLayer {
+                anchors.fill: parent
+                viewport: viewport
+                info: root.cutLabelInfo
+                nameOf: root.bodyName
+                onTargetToggled: (bodyIndex, cut) => DocumentModel.setCutTarget(root.chosenHoleIndex, bodyIndex, cut)
+            }
+
             // "Lay on face": the next click puts the chosen body on the face under the pointer.
             MouseArea {
                 anchors.fill: parent
@@ -857,6 +866,7 @@ Window {
                 ? qsTr("%1 changed to %2").arg(valueLabel(step.field)).arg(step.value)
                 : qsTr("%1 changed").arg(valueLabel(step.field))
         case "setText": return qsTr("Text of %1 changed").arg(body)
+        case "cutTargets": return qsTr("What %1 cuts out changed").arg(body)
         case "holeBody": return qsTr("%1 made a hole").arg(body)
         case "moveBody": return qsTr("%1 moved").arg(body)
         case "rotateBody": return qsTr("%1 turned").arg(body)
@@ -952,6 +962,18 @@ Window {
     // Every chosen body is a hole: "As hole" in the menu is ticked and a click turns it off.
     readonly property bool chosenAreHoles: chosenBodyIndexes.length > 0
         && chosenBodyIndexes.every(index => index >= 0 && index < DocumentModel.bodies.length && DocumentModel.bodies[index].hole)
+
+    // The one chosen body, if it is a hole: the label "Cuts out: …" hangs on it.
+    readonly property int chosenHoleIndex: {
+        const indexes = chosenBodyIndexes
+        if (indexes.length !== 1 || indexes[0] < 0 || indexes[0] >= DocumentModel.bodies.length) {
+            return -1
+        }
+        return DocumentModel.bodies[indexes[0]].hole ? indexes[0] : -1
+    }
+    // Read the list of bodies so that the label is asked again when a body or a cut changes.
+    readonly property var cutLabelInfo: DocumentModel.bodies && chosenHoleIndex >= 0
+        ? DocumentModel.cutLabel(chosenHoleIndex) : ({ valid: false })
 
     readonly property var bodyList: DocumentModel.bodies.map(body => ({
         name: body.name !== "" ? body.name : typeLabel(body.type) + " " + body.number,

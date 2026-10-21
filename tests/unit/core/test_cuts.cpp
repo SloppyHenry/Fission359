@@ -127,8 +127,8 @@ TEST_CASE("cuts: a hole that moves away is taken out, back in is cut again", "[c
     const BodyId pin = world.pin("0");
     world.asHole(pin);
     world.reconcile();
-    const Feature& pinStep = *world.history.document().findFeature(
-        world.history.document().findBody(pin)->createdBy);
+    const Feature& pinStep =
+        *world.history.document().findFeature(world.history.document().findBody(pin)->createdBy);
 
     world.history.execute(makeSetFeatureValue(pinStep.id, "x", "100"));
     CHECK(world.reconcile());
@@ -148,8 +148,8 @@ TEST_CASE("cuts: moving a hole and its cuts are one step to undo", "[cuts]") {
     world.plate();
     const BodyId pin = world.pin("100");
     world.asHole(pin);
-    const Feature& pinStep = *world.history.document().findFeature(
-        world.history.document().findBody(pin)->createdBy);
+    const Feature& pinStep =
+        *world.history.document().findFeature(world.history.document().findBody(pin)->createdBy);
     const std::size_t before = world.history.position();
 
     world.history.beginTransaction({"moveBody", {}});
@@ -198,8 +198,8 @@ TEST_CASE("cuts: two holes make two cuts that follow one another", "[cuts]") {
     CHECK(world.volumeOfShown() == Approx(kPlate - 2.0 * hole(3, 10)).epsilon(1e-6));
 
     // Taking the first out leaves the second cutting the plate.
-    const Feature& step = *world.history.document().findFeature(
-        world.history.document().findBody(first)->createdBy);
+    const Feature& step =
+        *world.history.document().findFeature(world.history.document().findBody(first)->createdBy);
     world.history.execute(makeSetFeatureValue(step.id, "x", "100"));
     world.reconcile();
     CHECK(world.cutSteps() == 1);
@@ -227,4 +227,46 @@ TEST_CASE("cuts: steps made by hand are left alone", "[cuts]") {
     REQUIRE(world.history.addFeature(std::move(draft)).has_value());
     CHECK_FALSE(world.reconcile());
     CHECK(world.cutSteps() == 1);
+}
+
+TEST_CASE("cuts: the bodies a hole touches, and the ones taken off the label", "[cuts]") {
+    World world;
+    const BodyId left =
+        world.add("box", {{"width", "20"}, {"depth", "20"}, {"height", "10"}, {"x", "-12"}});
+    const BodyId right =
+        world.add("box", {{"width", "20"}, {"depth", "20"}, {"height", "10"}, {"x", "12"}});
+    const BodyId pin = world.add(
+        "cylinder", {{"radius", "3"}, {"height", "20"}, {"x", "0"}, {"z", "-5"}, {"y", "0"}});
+    world.asHole(pin);
+    world.reconcile();
+    REQUIRE(world.cutSteps() == 2);
+
+    auto targets = cutTargetsOf(world.history.document(), world.run(), *world.kernel, pin);
+    REQUIRE(targets.size() == 2);
+    CHECK(targets[0].root == left);
+    CHECK(targets[0].cutNow);
+    CHECK(targets[1].root == right);
+
+    // The person takes the right box off the label: its cut goes, and stays away.
+    world.history.execute(makeSetBodyCutExceptions(pin, {right}));
+    CHECK(world.reconcile());
+    CHECK(world.cutSteps() == 1);
+    CHECK_FALSE(world.reconcile());
+    targets = cutTargetsOf(world.history.document(), world.run(), *world.kernel, pin);
+    REQUIRE(targets.size() == 2); // it still touches the right box ...
+    for (const CutTarget& target : targets) {
+        CHECK(target.cutNow == (target.root == left)); // ... but does not cut it
+    }
+
+    // And back on the label.
+    world.history.execute(makeSetBodyCutExceptions(pin, {}));
+    CHECK(world.reconcile());
+    CHECK(world.cutSteps() == 2);
+}
+
+TEST_CASE("cuts: a body that is no hole has no targets", "[cuts]") {
+    World world;
+    world.plate();
+    const BodyId pin = world.pin("0");
+    CHECK(cutTargetsOf(world.history.document(), world.run(), *world.kernel, pin).empty());
 }

@@ -107,6 +107,24 @@
     </message>
 </context>
 <context>
+    <name>CutLayer</name>
+    <message>
+        <location filename="../qml/CutLayer.qml" line="+64"/>
+        <source>Cuts out: %1</source>
+        <translation>Schneidet aus: %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cuts out nothing</source>
+        <translation>Schneidet nichts aus</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Choose what this hole cuts out</source>
+        <translation>Wählen, was dieses Loch ausschneidet</translation>
+    </message>
+</context>
+<context>
     <name>DistanceLayer</name>
     <message>
         <location filename="../qml/DistanceLayer.qml" line="+133"/>
@@ -634,12 +652,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+661"/>
+        <location line="+670"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-660"/>
+        <location line="-669"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -798,7 +816,7 @@
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+96"/>
         <source>Click a face of the print bed or of another body.</source>
         <translation>Klicke auf eine Fläche des Druckbetts oder eines anderen Körpers.</translation>
     </message>
@@ -989,7 +1007,7 @@
     </message>
     <message numerus="yes">
         <location line="+4"/>
-        <location line="+30"/>
+        <location line="+31"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>%n Körper ausgeschnitten</numerusform>
@@ -997,7 +1015,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="-29"/>
+        <location line="-30"/>
         <source>Overlap kept with %n body(ies)</source>
         <translation>
             <numerusform>Überlappung mit %n Körper behalten</numerusform>
@@ -1036,6 +1054,11 @@
         <location line="+1"/>
         <source>Text of %1 changed</source>
         <translation>Text von %1 geändert</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>What %1 cuts out changed</source>
+        <translation>Was %1 ausschneidet, geändert</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1259,7 +1282,7 @@
         <translation>Diese Form ließ sich nicht bauen.</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+46"/>
         <source>Face of %1</source>
         <translation>Fläche von %1</translation>
     </message>
@@ -1308,22 +1331,22 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-325"/>
+        <location line="-338"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-644"/>
+        <location line="-653"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+679"/>
+        <location line="+688"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-557"/>
+        <location line="-566"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
@@ -1333,7 +1356,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+282"/>
+        <location line="+291"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>

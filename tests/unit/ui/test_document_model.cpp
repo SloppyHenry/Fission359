@@ -587,8 +587,11 @@ TEST_CASE("a cut body moves as one, its hole with it", "[ui][document-model][com
     f.model->waitForCalculation();
     REQUIRE(f.model->recipe().size() == 3);
     const auto xOf = [&](int index) {
-        return f.model->document().features().at(static_cast<std::size_t>(index))
-            .params.at("x").expression;
+        return f.model->document()
+            .features()
+            .at(static_cast<std::size_t>(index))
+            .params.at("x")
+            .expression;
     };
 
     // By the gizmo: choose the cut body, drag it 30 mm.
@@ -610,4 +613,39 @@ TEST_CASE("a cut body moves as one, its hole with it", "[ui][document-model][com
     CHECK(xOf(0) == "20");
     CHECK(xOf(1) == "20");
     CHECK(f.model->recipe().size() == 3);
+}
+
+TEST_CASE("the label of a hole names what it cuts and lets the person change that",
+          "[ui][document-model][combine]") {
+    Fixture f;
+    const int step = f.model->startPlacing("cylinder", true, 0.0, 0.0, 0.0);
+    f.model->setStepValue(step, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    const int hole = 1; // the second body of the document
+
+    QVariantMap label = f.model->cutLabel(hole);
+    REQUIRE(label["valid"].toBool());
+    CHECK(label["z"].toDouble() == Approx(20.0));
+    REQUIRE(label["targets"].toList().size() == 1);
+    const QVariantMap target = label["targets"].toList().at(0).toMap();
+    CHECK(target["index"].toInt() == 0); // the box it started as
+    CHECK(target["cut"].toBool());
+    CHECK_FALSE(f.model->cutLabel(0)["valid"].toBool()); // the box is no hole
+
+    // Taking the box off the label: no cut any more, one step, and it stays so.
+    const int position = f.model->historyPosition();
+    REQUIRE(f.model->setCutTarget(hole, 0, false));
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 2);
+    CHECK(f.model->historyPosition() == position + 1);
+    CHECK_FALSE(f.model->cutLabel(hole)["targets"].toList().at(0).toMap()["cut"].toBool());
+    REQUIRE(f.model->setStepValue(step, "radius", "5")); // a change next to it brings no cut back
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 2);
+
+    REQUIRE(f.model->setCutTarget(hole, 0, true));
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3);
+    CHECK_FALSE(f.model->setCutTarget(0, 0, true)); // the box is no hole
 }

@@ -232,6 +232,13 @@ public:
     /// body is the target, the others are the tools. The result has the target's name and colour.
     /// Returns the id of the result; empty when it cannot be done (fewer than two bodies, a body
     /// that does not exist or is part of another result already).
+    /// The label "cuts out: ..." of a hole (rule 13): `valid`, where it hangs (`x`, `y`, `z`: the
+    /// middle of the top of the ghost) and `targets`, the bodies the hole touches, each as
+    /// `{ index, cut }` (the index of the body it started as, and whether the hole cuts it).
+    Q_INVOKABLE QVariantMap cutLabel(int bodyIndex) const;
+    /// Lets the hole `holeIndex` cut the body `rootIndex` (or not), as one step. False when the
+    /// body is no hole or the index is wrong.
+    Q_INVOKABLE bool setCutTarget(int holeIndex, int rootIndex, bool cut);
     Q_INVOKABLE QString combineBodies(const QStringList& bodyIds, const QString& mode);
     bool canPaste() const noexcept { return !m_clipboard.empty(); }
     /// How far (mm) a copy lies from the original, in x and in y.

@@ -344,6 +344,16 @@ std::optional<FeatureId> Document::consumerOf(const BodyId& id) const {
     return std::nullopt;
 }
 
+bool Document::setBodyCutExceptions(const BodyId& id, std::vector<BodyId> exceptions) {
+    Body* body = mutableBody(id);
+    if (body == nullptr) {
+        return false;
+    }
+    body->cutExceptions = std::move(exceptions);
+    touch();
+    return true;
+}
+
 const Body* Document::findBody(const BodyId& id) const {
     const auto found =
         std::find_if(bodies_.begin(), bodies_.end(), [&](const Body& b) { return b.id == id; });

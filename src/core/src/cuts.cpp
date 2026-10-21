@@ -74,6 +74,41 @@ bool chainContains(const Document& document, BodyId head, const BodyId& tool) {
     }
 }
 
+// The body at the start of a chain of combine steps: the one that was cut or merged into first.
+BodyId rootOf(const Document& document, BodyId body) {
+    for (;;) {
+        const Body* found = document.findBody(body);
+        const Feature* step = found != nullptr ? document.findFeature(found->createdBy) : nullptr;
+        if (step == nullptr || step->type != "combine" || step->inputs.empty()) {
+            return body;
+        }
+        body = step->inputs.front();
+    }
+}
+
+bool isException(const Document& document, const Body& hole, const BodyId& head) {
+    const BodyId root = rootOf(document, head);
+    return std::find(hole.cutExceptions.begin(), hole.cutExceptions.end(), root) !=
+           hole.cutExceptions.end();
+}
+
+// The bodies on show that are not holes, with what a hole is tested against.
+struct Head {
+    BodyId body;             // the body as it is now (the end of a chain of cuts)
+    const BodyResult* shape; // what a hole is tested against
+};
+
+std::vector<Head> headsOf(const Document& document, const RecomputeResult& result) {
+    std::vector<Head> heads;
+    for (const Body& body : document.bodies()) {
+        const BodyResult* shape = resultOf(result, body.id);
+        if (!body.hole && body.visible && shape != nullptr && !document.consumerOf(body.id)) {
+            heads.push_back({body.id, shape});
+        }
+    }
+    return heads;
+}
+
 // Takes a cut away: whatever used its result uses the body it cut again.
 void removeCut(History& history, const FeatureId& cutId) {
     const Document& document = history.document();
@@ -136,6 +171,7 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
             const BodyResult* toolResult = resultOf(result, cut->inputs[i]);
             // Without geometry to judge by, the cut stays as it is.
             const bool stays = tool != nullptr && tool->hole &&
+                               !isException(document, *tool, cut->inputs.front()) &&
                                (target == nullptr || toolResult == nullptr ||
                                 touches(kernel, *toolResult, *target));
             if (stays) {
@@ -153,17 +189,7 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
     }
 
     // 2. Holes that touch a body they do not cut yet get a cut.
-    struct Head {
-        BodyId body;           // the body as it is now (the end of a chain of cuts)
-        const BodyResult* shape; // what a hole is tested against
-    };
-    std::vector<Head> heads;
-    for (const Body& body : document.bodies()) {
-        const BodyResult* shape = resultOf(result, body.id);
-        if (!body.hole && body.visible && shape != nullptr && !document.consumerOf(body.id)) {
-            heads.push_back({body.id, shape});
-        }
-    }
+    std::vector<Head> heads = headsOf(document, result);
     std::vector<BodyId> holes;
     for (const Body& body : document.bodies()) {
         if (body.hole && body.visible && resultOf(result, body.id) != nullptr) {
@@ -173,7 +199,9 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
     for (const BodyId& hole : holes) {
         const BodyResult& tool = *resultOf(result, hole);
         for (Head& head : heads) {
-            if (chainContains(document, head.body, hole) || !touches(kernel, tool, *head.shape)) {
+            if (chainContains(document, head.body, hole) ||
+                isException(document, *document.findBody(hole), head.body) ||
+                !touches(kernel, tool, *head.shape)) {
                 continue;
             }
             const Body headBody = *document.findBody(head.body);
@@ -197,6 +225,23 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
         }
     }
     return document.revision() != revisionBefore;
+}
+
+std::vector<CutTarget> cutTargetsOf(const Document& document, const RecomputeResult& result,
+                                    const geo::GeometryKernel& kernel, const BodyId& hole) {
+    std::vector<CutTarget> targets;
+    const BodyResult* tool = resultOf(result, hole);
+    const Body* body = document.findBody(hole);
+    if (tool == nullptr || body == nullptr || !body->hole) {
+        return targets;
+    }
+    for (const Head& head : headsOf(document, result)) {
+        const bool cutNow = chainContains(document, head.body, hole);
+        if (cutNow || touches(kernel, *tool, *head.shape)) {
+            targets.push_back({head.body, rootOf(document, head.body), cutNow});
+        }
+    }
+    return targets;
 }
 
 } // namespace fission::core

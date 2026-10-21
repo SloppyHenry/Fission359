@@ -392,6 +392,22 @@ std::unique_ptr<Command> makeSetBodyHole(BodyId id, bool hole) {
         });
 }
 
+std::unique_ptr<Command> makeSetBodyCutExceptions(BodyId id, std::vector<BodyId> exceptions) {
+    std::string key = "bodyCutExceptions/" + id.value;
+    return std::make_unique<SetCommand<std::vector<BodyId>>>(
+        std::move(key), std::move(exceptions),
+        [id](const Document& document) -> std::optional<std::vector<BodyId>> {
+            const Body* body = document.findBody(id);
+            return body != nullptr ? std::optional(body->cutExceptions) : std::nullopt;
+        },
+        [id](Document& document, const std::vector<BodyId>& value) {
+            return document.setBodyCutExceptions(id, value);
+        },
+        [id](const Document& document, const std::vector<BodyId>&) {
+            return bodyLabel(document, id, "cutTargets");
+        });
+}
+
 std::unique_ptr<Command> makeAddParameter(Parameter parameter) {
     return std::make_unique<AddParameterCommand>(std::move(parameter));
 }

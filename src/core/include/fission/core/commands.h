@@ -60,6 +60,9 @@ std::unique_ptr<Command> makeSetBodyVisible(BodyId id, bool visible);
 /// Marks a body as a hole ("Als Loch") or takes the mark away.
 std::unique_ptr<Command> makeSetBodyHole(BodyId id, bool hole);
 
+/// Sets the bodies a hole must not cut (the choices of the label "cuts out: ...").
+std::unique_ptr<Command> makeSetBodyCutExceptions(BodyId id, std::vector<BodyId> exceptions);
+
 // Named measures
 std::unique_ptr<Command> makeAddParameter(Parameter parameter);
 std::unique_ptr<Command> makeRemoveParameter(std::string name);

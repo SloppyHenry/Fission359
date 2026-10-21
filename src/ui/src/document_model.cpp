@@ -1754,6 +1754,66 @@ QStringList DocumentModel::pasteBodies() {
     return created;
 }
 
+QVariantMap DocumentModel::cutLabel(int bodyIndex) const {
+    QVariantMap label;
+    label[QStringLiteral("valid")] = false;
+    const auto& bodies = m_history.document().bodies();
+    if (bodyIndex < 0 || bodyIndex >= static_cast<int>(bodies.size()) || !m_result) {
+        return label;
+    }
+    const core::Body& hole = bodies[static_cast<std::size_t>(bodyIndex)];
+    const auto bounds = bodyBounds(toQString(hole.id.value));
+    const auto targets = core::cutTargetsOf(m_history.document(), *m_result, *m_kernel, hole.id);
+    if (!hole.hole || !hole.visible || !bounds || targets.empty()) {
+        return label;
+    }
+    QVariantList list;
+    for (const core::CutTarget& target : targets) {
+        QVariantMap entry;
+        entry[QStringLiteral("index")] = bodyIndexOf(toQString(target.root.value));
+        entry[QStringLiteral("cut")] = target.cutNow;
+        list.push_back(entry);
+    }
+    label[QStringLiteral("valid")] = true;
+    label[QStringLiteral("x")] = (bounds->min.x + bounds->max.x) / 2.0;
+    label[QStringLiteral("y")] = (bounds->min.y + bounds->max.y) / 2.0;
+    label[QStringLiteral("z")] = bounds->max.z;
+    label[QStringLiteral("targets")] = list;
+    return label;
+}
+
+bool DocumentModel::setCutTarget(int holeIndex, int rootIndex, bool cut) {
+    const auto& bodies = m_history.document().bodies();
+    const auto count = static_cast<int>(bodies.size());
+    if (holeIndex < 0 || holeIndex >= count || rootIndex < 0 || rootIndex >= count ||
+        !bodies[static_cast<std::size_t>(holeIndex)].hole) {
+        return false;
+    }
+    const core::Body& hole = bodies[static_cast<std::size_t>(holeIndex)];
+    const core::BodyId root = bodies[static_cast<std::size_t>(rootIndex)].id;
+    std::vector<core::BodyId> exceptions = hole.cutExceptions;
+    const auto found = std::find(exceptions.begin(), exceptions.end(), root);
+    if (cut && found != exceptions.end()) {
+        exceptions.erase(found);
+    } else if (!cut && found == exceptions.end()) {
+        exceptions.push_back(root);
+    }
+    core::CommandDescription label{"cutTargets", {{"name", hole.name}}};
+    if (const core::Feature* maker = m_history.document().findFeature(hole.createdBy)) {
+        label.values["type"] = maker->type;
+        label.values["number"] = std::to_string(maker->number);
+    }
+    const std::uint64_t before = m_history.document().revision();
+    if (!executeWithCuts(core::makeSetBodyCutExceptions(hole.id, std::move(exceptions)),
+                         std::move(label))) {
+        return false;
+    }
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+    return true;
+}
+
 QString DocumentModel::combineBodies(const QStringList& bodyIds, const QString& mode) {
     if (bodyIds.size() < 2 ||
         (mode != QLatin1String("merge") && mode != QLatin1String("subtract") &&

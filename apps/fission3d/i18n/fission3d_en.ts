@@ -107,6 +107,24 @@
     </message>
 </context>
 <context>
+    <name>CutLayer</name>
+    <message>
+        <location filename="../qml/CutLayer.qml" line="+64"/>
+        <source>Cuts out: %1</source>
+        <translation>Cuts out: %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cuts out nothing</source>
+        <translation>Cuts out nothing</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Choose what this hole cuts out</source>
+        <translation>Choose what this hole cuts out</translation>
+    </message>
+</context>
+<context>
     <name>DistanceLayer</name>
     <message>
         <location filename="../qml/DistanceLayer.qml" line="+133"/>
@@ -634,12 +652,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+661"/>
+        <location line="+670"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-660"/>
+        <location line="-669"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -798,7 +816,7 @@
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+96"/>
         <source>Click a face of the print bed or of another body.</source>
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
@@ -989,7 +1007,7 @@
     </message>
     <message numerus="yes">
         <location line="+4"/>
-        <location line="+30"/>
+        <location line="+31"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>Cut out %n body</numerusform>
@@ -997,7 +1015,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="-29"/>
+        <location line="-30"/>
         <source>Overlap kept with %n body(ies)</source>
         <translation>
             <numerusform>Overlap kept with %n body</numerusform>
@@ -1036,6 +1054,11 @@
         <location line="+1"/>
         <source>Text of %1 changed</source>
         <translation>Text of %1 changed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>What %1 cuts out changed</source>
+        <translation>What %1 cuts out changed</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1259,7 +1282,7 @@
         <translation>This shape could not be built.</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+46"/>
         <source>Face of %1</source>
         <translation>Face of %1</translation>
     </message>
@@ -1308,22 +1331,22 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-325"/>
+        <location line="-338"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-644"/>
+        <location line="-653"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+679"/>
+        <location line="+688"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-557"/>
+        <location line="-566"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
@@ -1333,7 +1356,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+282"/>
+        <location line="+291"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>

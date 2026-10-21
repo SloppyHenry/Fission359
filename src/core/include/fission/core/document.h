@@ -78,6 +78,9 @@ struct Body {
     bool hole = false;
     BodyKind kind = BodyKind::precise;
     FeatureId createdBy;
+    /// Bodies this hole must not cut although it touches them (the person took them off the label
+    /// "cuts out: ..."). Named by the body they were when the hole met them, see `reconcileCuts`.
+    std::vector<BodyId> cutExceptions;
 
     bool operator==(const Body&) const = default;
 };
@@ -197,6 +200,7 @@ public:
     bool setBodyColor(const BodyId& id, Color color);
     bool setBodyVisible(const BodyId& id, bool visible);
     bool setBodyHole(const BodyId& id, bool hole);
+    bool setBodyCutExceptions(const BodyId& id, std::vector<BodyId> exceptions);
 
 private:
     Feature* mutableFeature(const FeatureId& id);

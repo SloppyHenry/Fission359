@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "fission/core/feature_type.h"
 #include "fission/core/history.h"
 #include "fission/core/recompute.h"
@@ -28,5 +30,17 @@ namespace fission::core {
 /// that unchanged steps cost nothing. Returns true if the document changed.
 bool reconcileCuts(History& history, const FeatureRegistry& registry,
                    const geo::GeometryKernel& kernel, RecomputeCache& cache);
+
+/// A body a hole cuts or could cut.
+struct CutTarget {
+    BodyId head; ///< The body as it is shown now.
+    BodyId root; ///< The body it started as: what `Body::cutExceptions` names.
+    bool cutNow = false;
+};
+
+/// The bodies `hole` touches (and cuts, or would cut if it were not taken off the list), in the
+/// order of the document. Empty for a body that is no hole.
+std::vector<CutTarget> cutTargetsOf(const Document& document, const RecomputeResult& result,
+                                    const geo::GeometryKernel& kernel, const BodyId& hole);
 
 } // namespace fission::core
