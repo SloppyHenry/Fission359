@@ -26,7 +26,7 @@ AP-1.2 (erledigt), AP-1.8 erledigt.
 ## Festlegungen
 - Keine modalen Dialoge (Regel 1). Rückfragen erscheinen als Karte **im Panel** (inline), mit Knöpfen.
 - „Ausblenden“ statt Löschen ist der empfohlene Weg zum Ausprobieren (UX §4).
-- Löschen eines Körpers in der Ansicht (Entf/⌫) = Löschen des Schritts, der ihn macht (und bei kombinierten Körpern: Haltepunkt 3).
+- Löschen eines Körpers in der Ansicht (Entf/⌫) = Löschen des Schritts, der ihn macht (und bei kombinierten Körpern: Haltepunkt 3). Wird ein **Loch** gelöscht, nimmt `core::reconcileCuts` (AP-1.7) seinen Schnitt im selben Undo-Schritt mit; das ist mit einem Test zu belegen.
 
 ## Haltepunkte (am Anfang fragen)
 1. **Zeitmarker im Dokument?** Empfehlung: ja, die Stelle des Markers wird mit der Datei gespeichert (wie Fusion), Verschieben ist ein

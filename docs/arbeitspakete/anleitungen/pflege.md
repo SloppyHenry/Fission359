@@ -86,3 +86,17 @@ Linux-Desktop prüfen (Product Owner oder Testrechner mit Desktop-Sitzung); wenn
 ## P12 `main.cpp` aufräumen
 **Größe:** S · `apps/fission3d/src/main.cpp` hat ~950 Zeilen; `playActions` (die `--simulate`-Aktionen) in eine eigene Datei
 `apps/fission3d/src/simulate.cpp` ziehen, ohne Verhaltensänderung. Alle Fenster-Tests müssen unverändert grün sein.
+
+## P13 Löcher im Hintergrund prüfen (Regel 9)
+**Größe:** M · Offen aus AP-1.7. `core::reconcileCuts` rechnet die Berührung von Löchern und Körpern (Booleans) im Oberflächen-Thread: kalt
+26 ms, warm 4 ms bei einem Loch in einer Platte, wächst mit der Zahl der Körper und Löcher. **Vor dem Nutzertest 1 (AP-1.13) erledigen.**
+1. Messung zuerst: ein Dokument mit 10 Körpern und 20 Löchern (Test in `tests/unit/core/test_cuts.cpp`, nur melden); ab etwa 50 ms ist es ein Fehler.
+2. Lösung: die Prüfung läuft in der Neuberechnung (`RecomputeEngine`) im Hintergrund und liefert eine Liste „Loch X braucht Schnitt Y“;
+   die Oberfläche wendet sie beim Loslassen im selben Undo-Schritt an. Beim Ziehen zeigt die Ansicht das letzte Ergebnis (wie heute).
+3. Die Tests `[cuts]` und `holes cut live …` müssen unverändert grün bleiben; Zeitmessung im PR nennen.
+
+## P14 Teile eines geteilten Körpers drehen und vergrößern
+**Größe:** S · Offen aus AP-1.7e. Ein Teil hat nur den Schritt „Teil platziert“ (nur x, y, z): Drehen und Größe ändern sind aus
+(`DocumentModel::beginTurn/beginScale` geben false). Vorschlag: den Schritt `place` um `rotX/rotY/rotZ` ergänzen (Drehung des Teils um seine Mitte,
+wie bei den Formen) und für das Vergrößern den Eck-Griff auf den Schritt davor zurückführen (Teilen und Quelle gemeinsam vergrößern, `scaleStartOf`
+geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Product Owner klären, ob Vergrößern eines Teils das ganze Geteilte vergrößern soll.

@@ -192,7 +192,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Nachtrag 2026-10-21: halbtransparente Schnittebene, Drehen und Größe ändern kombinierter Körper (alle Teile gemeinsam), Löcher schneiden
   schon beim Ziehen live (alle 150 ms im selben Schritt), „Bündig machen“ (Fuzzy 0,001 mm) als Schalter am Schritt.
 - Offene Reste: Teilen nur an Achsenebenen (an einer Fläche: Phase 2, AP-2.12); Teile eines geteilten Körpers lassen sich noch nicht drehen oder
-  vergrößern; die Prüfung der Löcher rechnet im Oberflächen-Thread (kalt 26 ms, warm 4 ms, kleine Modelle); Löschen eines Lochs mit AP-1.9.
+  vergrößern; die Prüfung der Löcher rechnet im Oberflächen-Thread (kalt 26 ms, warm 4 ms, kleine Modelle); Löschen eines Lochs mit AP-1.9; Prüfung im Hintergrund und Drehen/Vergrößern von Teilen siehe [pflege.md](anleitungen/pflege.md) P13, P14; Teilen an einer Fläche mit AP-2.12.
 
 ---
 
