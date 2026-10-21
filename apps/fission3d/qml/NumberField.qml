@@ -251,7 +251,9 @@ Item {
         if (root.readOnly) {
             return
         }
-        const size = (modifiers & Qt.ShiftModifier) ? 10 : (modifiers & (Qt.AltModifier | Qt.ControlModifier)) ? 0.1 : 1
+        console.warn("arrow key: modifiers", modifiers, "application", Qt.application.keyboardModifiers)
+        modifiers |= Qt.application.keyboardModifiers
+        const size = (modifiers & Qt.ShiftModifier) ? 10 : (modifiers & (Qt.AltModifier | Qt.ControlModifier | Qt.MetaModifier)) ? 0.1 : 1
         const moved = Numbers.adjusted(input.text, root.kind, direction * size)
         if (moved === "") {
             return // the text is not a formula (yet): the line below the field says why
