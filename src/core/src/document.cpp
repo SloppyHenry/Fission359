@@ -336,10 +336,20 @@ bool Document::setFeatureInputs(const FeatureId& id, std::vector<BodyId> inputs)
 
 std::optional<FeatureId> Document::consumerOf(const BodyId& id) const {
     for (const Feature& feature : features_) {
-        if (!feature.suppressed &&
-            std::find(feature.inputs.begin(), feature.inputs.end(), id) != feature.inputs.end()) {
-            return feature.id;
+        if (feature.suppressed) {
+            continue;
         }
+        const auto used = std::find(feature.inputs.begin(), feature.inputs.end(), id);
+        if (used == feature.inputs.end()) {
+            continue;
+        }
+        // A combine that keeps its tools only uses them: they stay bodies of their own.
+        const auto keeps = feature.texts.find("keepTools");
+        if (used != feature.inputs.begin() && keeps != feature.texts.end() &&
+            keeps->second == "yes") {
+            continue;
+        }
+        return feature.id;
     }
     return std::nullopt;
 }

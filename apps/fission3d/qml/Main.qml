@@ -111,9 +111,9 @@ Window {
             { id: "dropToBed", text: qsTr("Drop to bed"), shortcut: "D", enabled: Selection.count > 0 },
             { id: "seatOnFace", text: qsTr("Lay on face"), enabled: Selection.count > 0 },
             { separator: true },
-            { id: "merge", text: qsTr("Merge"), enabled: false },
-            { id: "subtract", text: qsTr("Subtract"), enabled: false },
-            { id: "overlap", text: qsTr("Keep overlap"), enabled: false },
+            { id: "merge", text: qsTr("Merge"), enabled: root.chosenBodies.length >= 2 },
+            { id: "subtract", text: qsTr("Subtract"), enabled: root.chosenBodies.length >= 2 },
+            { id: "overlap", text: qsTr("Keep overlap"), enabled: root.chosenBodies.length >= 2 },
             { id: "split", text: qsTr("Split"), enabled: false }
         ] },
         { title: qsTr("Window"), items: [
@@ -245,6 +245,9 @@ Window {
             }
             break
         case "seatOnFace": seating = true; break
+        case "merge":
+        case "subtract":
+        case "overlap": combine(id); break
         case "hole": {
             const holeNow = !root.chosenAreHoles
             for (const index of root.chosenBodyIndexes) {
@@ -274,6 +277,17 @@ Window {
 
     // A word of the chosen step was changed (text, font or style). A font that lacks the style in
     // use takes it back to regular in the same step, and says so.
+    // Combines the chosen bodies: the one chosen first is changed, the others are the tools.
+    function combine(way) {
+        const made = DocumentModel.combineBodies(root.chosenBodies, way)
+        if (made === "") {
+            showHint(qsTr("Choose two or more bodies that are not part of another body yet."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+    }
+
     function changeWords(name, text) {
         const step = DocumentModel.currentStep
         if (name === "font" && currentStyleName !== "regular"
@@ -681,10 +695,14 @@ Window {
                 onDisplayRequested: mode => root.display = mode
                 onToolRequested: tool => root.tool = tool
                 flyout: root.flyout
+                combineReady: root.chosenBodies.length >= 2
+                onCombineRequested: way => root.combine(way)
                 onFlyoutCloseRequested: root.flyout = ""
                 onGroupRequested: group => {
                     if (group === "shapes") {
                         root.flyout = root.flyout === "shapes" ? "" : "shapes"
+                    } else if (group === "combine") {
+                        root.flyout = root.flyout === "combine" ? "" : "combine"
                     } else {
                         root.flyout = ""
                         root.showHint(qsTr("This tool group arrives in a later version."))
@@ -754,6 +772,7 @@ Window {
             : Handles.editing ? qsTr("Enter accepts, Tab goes to the next size, Esc leaves everything as it was.")
             : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
+            : root.flyout === "combine" ? qsTr("Choose two or more bodies (Shift+click), then merge them, subtract the others from the first, or keep only what they share.")
             : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.")
             : root.hoverText !== "" ? root.hoverText
             : Selection.count > 0 ? toolCatalog.find(root.tool).hint
@@ -942,6 +961,9 @@ Window {
             case "topRadius": return qsTr("The top radius cannot be negative.")
             default: return qsTr("%1 must be bigger than zero.").arg(valueLabel(problem.field))
             }
+        }
+        if (problem.code === "combineEmpty") {
+            return qsTr("The bodies do not overlap, so nothing is left. Move them so that they touch.")
         }
         if (problem.code === "inputFailed" || problem.code === "inputMissing") {
             return qsTr("An earlier step has a problem.")

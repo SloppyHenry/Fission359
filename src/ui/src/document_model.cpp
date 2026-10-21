@@ -192,10 +192,16 @@ std::string combineMode(const core::Feature* step) {
     return mode != step->texts.end() ? mode->second : std::string();
 }
 
-BodyPart partOf(const core::Document& document, const core::Body& body) {
+// `result`: the last calculation. A step that has no result (it failed and never worked) takes
+// nothing in: what it was to combine stays in view, and the step says what is wrong.
+BodyPart partOf(const core::Document& document, const core::RecomputeResult* result,
+                const core::Body& body) {
     BodyPart part;
-    if (const auto consumer = document.consumerOf(body.id)) {
-        const core::Feature* step = document.findFeature(*consumer);
+    const auto consumer = document.consumerOf(body.id);
+    const core::Feature* step = consumer ? document.findFeature(*consumer) : nullptr;
+    const bool works = step != nullptr && !step->outputs.empty() && result != nullptr &&
+                       result->bodies.contains(step->outputs.front());
+    if (step != nullptr && works) {
         const bool isTool = !step->inputs.empty() && step->inputs.front() != body.id;
         if (isTool && combineMode(step) == "subtract") {
             part.toolGhost = true;
@@ -462,7 +468,7 @@ void DocumentModel::rebuildScene() {
         const std::lock_guard lock(m_meshMutex);
         for (const core::Body& body : m_history.document().bodies()) {
             const auto made = m_result->bodies.find(body.id);
-            const BodyPart part = partOf(m_history.document(), body);
+            const BodyPart part = partOf(m_history.document(), m_result.get(), body);
             if (!body.visible || made == m_result->bodies.end() || part.consumed) {
                 continue;
             }
@@ -569,7 +575,7 @@ void DocumentModel::rebuildLists() {
             QColor(body.color.red, body.color.green, body.color.blue).name();
         entry[QStringLiteral("visible")] = body.visible;
         entry[QStringLiteral("hole")] = body.hole;
-        const BodyPart part = partOf(m_history.document(), body);
+        const BodyPart part = partOf(m_history.document(), m_result.get(), body);
         entry[QStringLiteral("consumed")] = part.consumed; // part of a result: not listed
         entry[QStringLiteral("cut")] = part.cut;
         bodies.push_back(entry);
@@ -665,9 +671,13 @@ QVariantList DocumentModel::buildStepTexts() const {
         entry[QStringLiteral("name")] = toQString(spec.name);
         entry[QStringLiteral("value")] =
             toQString(given != feature.texts.end() ? given->second : spec.defaultValue);
-        entry[QStringLiteral("kind")] = spec.name == "font"    ? QStringLiteral("font")
-                                        : spec.name == "style" ? QStringLiteral("style")
-                                                               : QStringLiteral("text");
+        // `mode` and `auto` are the program's business (combine steps), `keepTools` a switch.
+        entry[QStringLiteral("kind")] = spec.name == "font"        ? QStringLiteral("font")
+                                        : spec.name == "style"     ? QStringLiteral("style")
+                                        : spec.name == "keepTools" ? QStringLiteral("flag")
+                                        : spec.name == "mode" || spec.name == "auto"
+                                            ? QStringLiteral("hidden")
+                                            : QStringLiteral("text");
         texts.push_back(entry);
     }
     return texts;
@@ -1851,9 +1861,7 @@ QString DocumentModel::combineBodies(const QStringList& bodyIds, const QString& 
     }
     const core::Body target = *findBody(bodyIds.front());
 
-    core::FeatureDraft draft;
-    draft.type = "combine";
-    draft.typeVersion = 1;
+    core::FeatureDraft draft = core::defaultDraft(*m_registry.find("combine"));
     draft.texts["mode"] = mode.toStdString();
     draft.inputs = std::move(inputs);
     draft.newBodies = 1;

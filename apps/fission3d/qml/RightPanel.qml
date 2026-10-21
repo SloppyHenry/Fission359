@@ -34,6 +34,8 @@ Rectangle {
     // "Go all the way through": a switch for a hole whose shape runs straight (a value 0 or 1).
     readonly property var throughValue: stepValues.find(v => v.group === "through")
     property bool isHole: false
+    // The switch "keep the tools" of a combine step.
+    readonly property var keepToolsText: stepTexts.find(t => t.kind === "flag")
     property string tab: "object"      // object | printer
     property string printerName: ""
     property string bedText: ""
@@ -161,7 +163,18 @@ Rectangle {
             }
 
             Section {
-                visible: root.tab === "object" && root.stepTexts.length > 0
+                visible: root.tab === "object" && root.keepToolsText !== undefined
+                heading: qsTr("Cutting out")
+
+                Toggle {
+                    text: qsTr("Keep the tools as bodies")
+                    checked: root.keepToolsText !== undefined && root.keepToolsText.value === "yes"
+                    onToggled: root.textCommitted("keepTools", checked ? "yes" : "no")
+                }
+            }
+
+            Section {
+                visible: root.tab === "object" && root.stepTexts.some(t => t.kind === "text" || t.kind === "font" || t.kind === "style")
                 heading: qsTr("Text")
 
                 Repeater {

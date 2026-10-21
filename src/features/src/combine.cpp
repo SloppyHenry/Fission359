@@ -38,7 +38,8 @@ public:
 
     std::vector<TextFieldSpec> texts() const override {
         // `auto`: "yes" for a step the program keeps up to date for a hole (ADR-0011).
-        return {{"mode", "merge"}, {"auto", "no"}};
+        // `keepTools`: "yes" keeps the tools of a subtract as bodies of their own.
+        return {{"mode", "merge"}, {"auto", "no"}, {"keepTools", "no"}};
     }
 
     std::optional<FeatureIssue> validate(const ResolvedParams&) const override {

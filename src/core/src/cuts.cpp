@@ -244,10 +244,9 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
                 continue;
             }
             const Body headBody = *document.findBody(head.body);
-            FeatureDraft draft;
-            draft.type = "combine";
-            draft.typeVersion = 1;
-            draft.texts = {{"mode", "subtract"}, {"auto", "yes"}};
+            FeatureDraft draft = defaultDraft(*registry.find("combine"));
+            draft.texts["mode"] = "subtract";
+            draft.texts["auto"] = "yes";
             draft.inputs = {head.body, hole};
             draft.newBodies = 1;
             const auto added = history.addFeature(std::move(draft));

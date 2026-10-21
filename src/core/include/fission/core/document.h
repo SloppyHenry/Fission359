@@ -187,7 +187,8 @@ public:
     bool setFeatureInputs(const FeatureId& id, std::vector<BodyId> inputs);
     /// The step that uses the body as an input, which is then "consumed": it is part of that
     /// step's result and not a body of its own any more (ADR-0011). Steps that are switched off
-    /// consume nothing. nullopt when no step uses it.
+    /// consume nothing, and a combine with the word `keepTools` = `yes` only uses its tools (all
+    /// inputs but the first): they stay bodies of their own. nullopt when no step uses it.
     std::optional<FeatureId> consumerOf(const BodyId& id) const;
     bool setFeatureSuppressed(const FeatureId& id, bool suppressed);
     bool setFeatureRefs(const FeatureId& id, std::string_view name,

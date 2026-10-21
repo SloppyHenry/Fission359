@@ -204,6 +204,13 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=0,90,260 --simulate "drophole:cylinder,366,341;recipe:box,cylinder,combine")
   set_tests_properties(app_flow_d_hole PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.7d: two chosen bodies are merged through the menu Body; the recipe gets one step.
+  add_test(NAME app_combine_menu
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-combine-menu.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "put:cylinder;selectall;menu:merge;recipe:box,cylinder,combine")
+  set_tests_properties(app_combine_menu PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-1.6b3: a shape dropped on a wall lies on it (a quarter turn about X); with Alt it stays up.
   add_test(NAME app_wall_drop
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>

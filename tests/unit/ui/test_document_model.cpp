@@ -664,3 +664,48 @@ TEST_CASE("a cut body keeps its name, a symbol says it was cut", "[ui][document-
     CHECK(cut["cut"].toBool());
     CHECK(f.model->bodies().at(1).toMap()["number"].toInt() == 1); // "Cylinder 1"
 }
+
+TEST_CASE("combining: a step that fails leaves what it was to combine in view",
+          "[ui][document-model][combine]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("box", false) == 1);
+    f.model->setStepValue(1, "x", "500"); // far from the first box
+    f.model->waitForCalculation();
+    const QString first = f.model->bodyIdAt(0);
+    const QString second = f.model->bodyIdAt(1);
+
+    REQUIRE_FALSE(f.model->combineBodies({first, second}, "intersect").isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.step(2)["state"].toString() == "fails");
+    CHECK(f.step(2)["problem"].toMap()["code"].toString() == "combineEmpty");
+    // Nothing disappeared: both boxes are still there to be moved together.
+    CHECK(f.model->scene()->bodies.size() == 2);
+    CHECK_FALSE(f.model->bodies().at(0).toMap()["consumed"].toBool());
+}
+
+TEST_CASE("combining: cutters can be kept as bodies", "[ui][document-model][combine]") {
+    Fixture f;
+    f.model->addShape("cylinder", false);
+    f.model->setStepValue(1, "radius", "4");
+    f.model->setStepValue(1, "x", "0");
+    f.model->setStepValue(1, "y", "0");
+    f.model->waitForCalculation();
+    const QString cut =
+        f.model->combineBodies({f.model->bodyIdAt(0), f.model->bodyIdAt(1)}, "subtract");
+    REQUIRE_FALSE(cut.isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.model->scene()->bodies[0].color.alpha() < 255); // the cutter is a ghost
+
+    REQUIRE(f.model->setStepText(2, "keepTools", "yes"));
+    f.model->waitForCalculation();
+    REQUIRE(f.model->scene()->bodies.size() == 2);
+    CHECK(f.model->scene()->bodies[0].color.alpha() == 255); // an ordinary body again
+    CHECK_FALSE(f.model->bodies().at(1).toMap()["consumed"].toBool());
+
+    f.model->selectStep(2);
+    bool flag = false;
+    for (const QVariant& text : f.model->stepTexts()) {
+        flag = flag || text.toMap()["kind"].toString() == "flag";
+    }
+    CHECK(flag);
+}

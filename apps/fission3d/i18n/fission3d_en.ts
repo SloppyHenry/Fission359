@@ -107,6 +107,62 @@
     </message>
 </context>
 <context>
+    <name>CombineCatalog</name>
+    <message>
+        <location filename="../qml/CombineCatalog.qml" line="+11"/>
+        <source>Merge</source>
+        <translation>Merge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the chosen bodies one body. Choose two or more first.</source>
+        <translation>Makes the chosen bodies one body. Choose two or more first.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose two or more bodies, then Merge: they become one body that takes the name and colour of the first.</source>
+        <translation>Choose two or more bodies, then Merge: they become one body that takes the name and colour of the first.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Subtract</source>
+        <translation>Subtract</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cuts the other bodies out of the first one you chose. The cutters stay as ghosts you can still move.</source>
+        <translation>Cuts the other bodies out of the first one you chose. The cutters stay as ghosts you can still move.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the body to cut first, then the cutters, then Subtract. A cutter stays as a ghost; change it and the cut follows.</source>
+        <translation>Choose the body to cut first, then the cutters, then Subtract. A cutter stays as a ghost; change it and the cut follows.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Keep overlap</source>
+        <translation>Keep overlap</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keeps only the part that all chosen bodies have in common.</source>
+        <translation>Keeps only the part that all chosen bodies have in common.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose two or more bodies that overlap, then Keep overlap: only the shared part is left.</source>
+        <translation>Choose two or more bodies that overlap, then Keep overlap: only the shared part is left.</translation>
+    </message>
+</context>
+<context>
+    <name>CombineFlyout</name>
+    <message>
+        <location filename="../qml/CombineFlyout.qml" line="+42"/>
+        <source>Choose two or more bodies first (Shift+click).</source>
+        <translation>Choose two or more bodies first (Shift+click).</translation>
+    </message>
+</context>
+<context>
     <name>CutLayer</name>
     <message>
         <location filename="../qml/CutLayer.qml" line="+64"/>
@@ -652,12 +708,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+671"/>
+        <location line="+690"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-670"/>
+        <location line="-689"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -723,18 +779,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+330"/>
+        <location line="+344"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-328"/>
-        <location line="+329"/>
+        <location line="-342"/>
+        <location line="+343"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-323"/>
+        <location line="-337"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -765,13 +821,18 @@
         <translation>Nothing to drop: the bodies already stand on the bed.</translation>
     </message>
     <message>
-        <location line="+17"/>
-        <location line="+220"/>
+        <location line="+20"/>
+        <location line="+231"/>
         <source>This arrives in a later version.</source>
         <translation>This arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-195"/>
+        <location line="-211"/>
+        <source>Choose two or more bodies that are not part of another body yet.</source>
+        <translation>Choose two or more bodies that are not part of another body yet.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
         <source>“%1” has no %2 style, so the lettering is regular again.</source>
         <translation>“%1” has no %2 style, so the lettering is regular again.</translation>
     </message>
@@ -821,7 +882,7 @@
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+86"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
@@ -857,6 +918,11 @@
     </message>
     <message>
         <location line="+2"/>
+        <source>Choose two or more bodies (Shift+click), then merge them, subtract the others from the first, or keep only what they share.</source>
+        <translation>Choose two or more bodies (Shift+click), then merge them, subtract the others from the first, or keep only what they share.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</source>
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
@@ -1268,6 +1334,11 @@
     </message>
     <message>
         <location line="+4"/>
+        <source>The bodies do not overlap, so nothing is left. Move them so that they touch.</source>
+        <translation>The bodies do not overlap, so nothing is left. Move them so that they touch.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>An earlier step has a problem.</source>
         <translation>An earlier step has a problem.</translation>
     </message>
@@ -1331,32 +1402,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-346"/>
+        <location line="-350"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-653"/>
+        <location line="-671"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+688"/>
+        <location line="+706"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-566"/>
+        <location line="-584"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+299"/>
+        <location line="+313"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+292"/>
+        <location line="+296"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -1400,7 +1471,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+70"/>
+        <location filename="../qml/RightPanel.qml" line="+72"/>
         <source>Object</source>
         <translation>Object</translation>
     </message>
@@ -1433,6 +1504,16 @@
         <location line="+3"/>
         <source>Goes all the way through</source>
         <translation>Goes all the way through</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Cutting out</source>
+        <translation>Cutting out</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Keep the tools as bodies</source>
+        <translation>Keep the tools as bodies</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -1815,7 +1896,7 @@
 <context>
     <name>ViewOverlay</name>
     <message>
-        <location filename="../qml/ViewOverlay.qml" line="+90"/>
+        <location filename="../qml/ViewOverlay.qml" line="+93"/>
         <location line="+10"/>
         <source>Orthographic</source>
         <translation>Orthographic</translation>
@@ -1943,7 +2024,7 @@
         <translation>Measure, section, print check, weight.</translation>
     </message>
     <message>
-        <location line="+54"/>
+        <location line="+69"/>
         <source>Home view (Home)</source>
         <translation>Home view (Home)</translation>
     </message>
@@ -1968,17 +2049,17 @@
         <translation>Orbit</translation>
     </message>
     <message>
-        <location line="-369"/>
+        <location line="-384"/>
         <source>Orbit: drag with the right mouse button – or drag this button</source>
         <translation>Orbit: drag with the right mouse button – or drag this button</translation>
     </message>
     <message>
-        <location line="+377"/>
+        <location line="+392"/>
         <source>Pan</source>
         <translation>Pan</translation>
     </message>
     <message>
-        <location line="-370"/>
+        <location line="-385"/>
         <source>Pan: drag with the middle mouse button – or drag this button</source>
         <translation>Pan: drag with the middle mouse button – or drag this button</translation>
     </message>
@@ -1998,7 +2079,7 @@
         <translation>Pan: Shift + middle mouse button – or drag this button</translation>
     </message>
     <message>
-        <location line="+379"/>
+        <location line="+394"/>
         <source>Zoom</source>
         <translation>Zoom</translation>
     </message>
