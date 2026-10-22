@@ -165,7 +165,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.7 Kombinieren
-**Status:** Review (2026-10-21; wartet auf Test durch den Product Owner) · **Größe:** M · **Abhängigkeiten:** AP-1.5
+**Status:** erledigt (2026-10-22, vom Product Owner geprüft und gemerged, PR #43) · **Größe:** M · **Abhängigkeiten:** AP-1.5
 **Bauanleitung:** [anleitungen/AP-1.7.md](anleitungen/AP-1.7.md)
 
 **Umfang:**
@@ -183,7 +183,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - [x] Ändert man ein Loch nachträglich (Größe, Position), wird es korrekt neu ausgeschnitten
 - [x] Ablauf D, Schritte 2–4, läuft automatisiert grün; es gibt keinen Schritt „Gruppieren“
 
-**Abschlussvermerk 2026-10-21 (wartet auf Test durch den Product Owner):**
+**Abschlussvermerk 2026-10-21:**
 - Ergebnis: Vereinen, Ausschneiden, Überlappung behalten (Menü Körper und Palette „Kombinieren“), Teilen an einer Ebene (X, Y, Z; Pfeil-Griff
   im Werkzeug Größe), Live-Löcher ohne Gruppieren mit Etikett „Schneidet aus: …“ (Ziele per Klick änderbar), „Geht ganz durch“ (Standard),
   Ausschneider optional als Körper behalten. Kernel-Booleans exakt mit Flächennamen; die Kombinationen des Kernel-Spikes laufen über die GAL.
@@ -197,7 +197,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.8 Eigenschaften-Panel und Werteingabe
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.1
+**Status:** in Arbeit (1.8a erledigt 2026-10-22, PR #44; 1.8b–d offen) · **Größe:** M · **Abhängigkeiten:** AP-1.1
 **Bauanleitung:** [anleitungen/AP-1.8.md](anleitungen/AP-1.8.md)
 
 **Umfang:**
