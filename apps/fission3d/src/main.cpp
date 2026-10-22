@@ -343,13 +343,6 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     qWarning().noquote()
                         << QStringLiteral("expected the recipe %1; found %2")
                                .arg(wanted.join(QLatin1Char(',')), found.join(QLatin1Char(',')));
-                    // Temporary diagnosis (Linux only failure): where did the shapes end up?
-                    for (const QVariant& step : model->recipe()) {
-                        qWarning().noquote() << QStringLiteral("recipe step") << step;
-                    }
-                    for (const QVariant& entry : model->stepValues()) {
-                        qWarning().noquote() << QStringLiteral("value") << entry;
-                    }
                     g_simulationFailure = 5;
                 }
             });

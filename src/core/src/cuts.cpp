@@ -4,7 +4,6 @@
 #include "fission/core/cuts.h"
 
 #include <algorithm>
-#include <cstdio>
 #include <vector>
 
 #include "fission/core/commands.h"
@@ -69,18 +68,13 @@ bool touches(const Knowledge& know, const BodyId& holeId, const BodyResult& hole
     try {
         const geo::Bounds holeBox = know.kernel.bounds(hole.solid);
         const geo::Bounds targetBox = know.kernel.bounds(target.solid);
-        std::fprintf(stderr, "cuts: hole z %g..%g y %g..%g, target z %g..%g y %g..%g\n",
-                     holeBox.min.z, holeBox.max.z, holeBox.min.y, holeBox.max.y, targetBox.min.z,
-                     targetBox.max.z, targetBox.min.y, targetBox.max.y);
         if (!boxesOverlap(holeBox, targetBox)) {
-            std::fprintf(stderr, "cuts: boxes do not overlap\n");
             return false;
         }
         const geo::NamedSolid targetSolid = namedSolid(target);
         if (intersects(know.kernel, namedSolid(hole), targetSolid)) {
             return true;
         }
-        std::fprintf(stderr, "cuts: hole itself does not intersect\n");
         const Body* body = know.document.findBody(holeId);
         InputStep step;
         step.feature = body != nullptr ? know.document.findFeature(body->createdBy) : nullptr;
@@ -92,14 +86,10 @@ bool touches(const Knowledge& know, const BodyId& holeId, const BodyResult& hole
         const ExecuteContext context{know.kernel, {}};
         const double reach = targetBox.diagonal() + holeBox.diagonal();
         if (const auto longer = throughTool(step, reach, context)) {
-            const bool yes = intersects(know.kernel, *longer, targetSolid);
-            std::fprintf(stderr, "cuts: long tool intersects: %d\n", yes);
-            return yes;
+            return intersects(know.kernel, *longer, targetSolid);
         }
-        std::fprintf(stderr, "cuts: no long tool\n");
         return false;
-    } catch (const geo::GeometryError& error) {
-        std::fprintf(stderr, "cuts: kernel error %s\n", error.what());
+    } catch (const geo::GeometryError&) {
         return false;
     }
 }
@@ -197,7 +187,6 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
     }
     const std::optional<RecomputeResult> calculated = recompute(document, registry, kernel, cache);
     if (!calculated) {
-        std::fprintf(stderr, "cuts: recompute gave nothing\n");
         return false;
     }
     const RecomputeResult& result = *calculated;
@@ -233,7 +222,6 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
         if (kept.size() == cut->inputs.size()) {
             continue;
         }
-        std::fprintf(stderr, "cuts: a cut loses %zu tools\n", cut->inputs.size() - kept.size());
         if (kept.size() == 1) {
             removeCut(history, id);
         } else {
@@ -264,7 +252,6 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
             draft.inputs = {head.body, hole};
             draft.newBodies = 1;
             const auto added = history.addFeature(std::move(draft));
-            std::fprintf(stderr, "cuts: combine added: %d\n", added.has_value() ? 1 : 0);
             const Feature* step = added ? document.findFeature(*added) : nullptr;
             if (step == nullptr || step->outputs.empty()) {
                 continue;
