@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QVariantMap>
 
 #include "fission/core/expression.h"
 
@@ -30,6 +31,18 @@ public:
     /// A number as text with at most `decimals` decimals and no trailing zeros ("12,5" in German,
     /// "12.5" in English).
     Q_INVOKABLE QString format(double value, int decimals = 3) const;
+
+    /// The text moved by `delta` (millimetres or degrees) for the arrow keys: a number becomes the
+    /// new number in the user's decimal separator, a formula stays one (`Breite/2` becomes
+    /// `(Breite/2) + 1`). Empty when the text is not a valid expression.
+    Q_INVOKABLE QString adjusted(const QString& text, const QString& kind, double delta) const;
+
+    /// Why `text` is not a valid expression, for the line under the field: `code` (the name of
+    /// the error, "unknownName", "missingClosingBracket", ...), `start` and `end` (the wrong part
+    /// of the text, in characters), `subject` (the unknown word) and `suggestion` (the known
+    /// name, function or unit that is closest to it, or empty). Empty map when the text is fine
+    /// or empty.
+    Q_INVOKABLE QVariantMap explain(const QString& text, const QString& kind) const;
 
 private:
     core::NamedMeasures m_measures;

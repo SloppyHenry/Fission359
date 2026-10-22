@@ -31,4 +31,13 @@ std::string numberText(double value);
 std::optional<std::string> scaledExpression(std::string_view expression, QuantityKind kind,
                                             double factor);
 
+/// A value of a step moved by `delta` (in mm or degrees; the arrow keys of the number field):
+/// - a number becomes the new number;
+/// - a formula is kept: `Breite/2` becomes `(Breite/2) + 1` and a lone name `Breite + 1`;
+/// - a formula that already ends in a step gets one step instead of two: `(Breite/2) + 1` moved
+///   by 1 is `(Breite/2) + 2`, and moved back by 2 it is `Breite/2` again.
+/// Nothing when `expression` is not a valid expression of `kind` or `delta` is not finite.
+std::optional<std::string> adjustedExpression(std::string_view expression, QuantityKind kind,
+                                              double delta);
+
 } // namespace fission::core

@@ -92,6 +92,52 @@ std::optional<Factored> factoredOf(std::string_view text) {
     return std::nullopt;
 }
 
+/// A formula of the form `(inner) + step`, `(inner) - step` or `name + step`, taken apart. The
+/// step is signed.
+struct Stepped {
+    std::string_view inner;
+    double step = 0.0;
+};
+
+std::optional<Stepped> steppedOf(std::string_view text) {
+    // The last binary `+` or `-` outside of brackets: what follows must be a plain number.
+    int depth = 0;
+    std::optional<std::size_t> sign;
+    char before = '(';
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        const char c = text[i];
+        depth += c == '(' ? 1 : c == ')' ? -1 : 0;
+        const bool binary = before != '(' && before != '+' && before != '-' && before != '*' &&
+                            before != '/' && before != ';' && before != ',';
+        if (depth == 0 && (c == '+' || c == '-') && binary) {
+            sign = i;
+        }
+        if (std::isspace(static_cast<unsigned char>(c)) == 0) {
+            before = c;
+        }
+    }
+    if (!sign) {
+        return std::nullopt;
+    }
+    const std::string_view head = trimmed(text.substr(0, *sign));
+    const std::string_view tail = trimmed(text.substr(*sign + 1));
+    if (!isPlainNumber(tail)) {
+        return std::nullopt;
+    }
+    const auto step = evaluateExpression(tail, QuantityKind::plain);
+    if (!step) {
+        return std::nullopt;
+    }
+    const double signed_ = text[*sign] == '-' ? -*step : *step;
+    if (isBracketed(head)) {
+        return Stepped{trimmed(head.substr(1, head.size() - 2)), signed_};
+    }
+    if (isValidMeasureName(head)) {
+        return Stepped{head, signed_};
+    }
+    return std::nullopt;
+}
+
 } // namespace
 
 std::string numberText(double value) {
@@ -154,6 +200,46 @@ std::optional<std::string> scaledExpression(std::string_view expression, Quantit
         result = std::string(inner) + " * " + numberText(combined);
     } else {
         result = "(" + std::string(inner) + ") * " + numberText(combined);
+    }
+    if (!Expression::parse(result)) {
+        return std::nullopt; // cannot happen for a formula that parsed; better safe
+    }
+    return result;
+}
+
+std::optional<std::string> adjustedExpression(std::string_view expression, QuantityKind kind,
+                                              double delta) {
+    if (!std::isfinite(delta)) {
+        return std::nullopt;
+    }
+    const auto parsed = Expression::parse(expression);
+    if (!parsed) {
+        return std::nullopt;
+    }
+    if (parsed.value().references().empty()) {
+        EvaluationContext context;
+        context.kind = kind;
+        const auto value = parsed.value().evaluate(context);
+        if (!value) {
+            return std::nullopt;
+        }
+        return numberText(value.value().value + delta);
+    }
+    const std::string_view text = trimmed(expression);
+    std::string_view inner = text;
+    double present = 0.0;
+    if (const auto stepped = steppedOf(text)) {
+        inner = stepped->inner;
+        present = stepped->step;
+    }
+    const double combined = present + delta;
+    std::string result;
+    if (std::abs(combined) < 1e-9) {
+        result = std::string(inner); // back to the formula as it was typed
+    } else {
+        const std::string head =
+            isValidMeasureName(inner) ? std::string(inner) : "(" + std::string(inner) + ")";
+        result = head + (combined < 0.0 ? " - " : " + ") + numberText(std::abs(combined));
     }
     if (!Expression::parse(result)) {
         return std::nullopt; // cannot happen for a formula that parsed; better safe

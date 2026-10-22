@@ -226,6 +226,19 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=20,35,160 --simulate "selectall;menu:split;recipe:box,split,place,place")
   set_tests_properties(app_split_menu PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.8a: the arrow keys in the field "width": +1, with Shift +10 (a new box is 20 mm wide).
+  # On macOS in a German environment, as started from a German terminal: numbers must not
+  # follow its decimal comma (20 - 0,1 once came out as 19).
+  set(_fission_german_env "")
+  if(APPLE)
+    set(_fission_german_env "LANG=de_DE.UTF-8;LC_ALL=de_DE.UTF-8")
+  endif()
+  add_test(NAME app_number_field_arrows
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-number-field-arrows.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "put:box;focus:width;key:Up;near:width,21;key:Shift+Up;near:width,31;key:Alt+Down;near:width,30.9;key:Ctrl+Down;near:width,30.8")
+  set_tests_properties(app_number_field_arrows PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env};${_fission_german_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-1.6b3: a shape dropped on a wall lies on it (a quarter turn about X); with Alt it stays up.
   add_test(NAME app_wall_drop
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>

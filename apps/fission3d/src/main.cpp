@@ -17,6 +17,7 @@
 #include <QMouseEvent>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQuickItem>
 #include <QQuickWindow>
 #include <QSaveFile>
 #include <QStandardPaths>
@@ -184,7 +185,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "right, back right, back left - pull it by view pixels, let go; a fifth value hold "
             "keeps the button down), "
             "drag:x,y,40,0,8 (press at a point of the 3D view, "
-            "pull, let go), key:Right (press a key), separated by semicolons."),
+            "pull, let go), focus:width (the cursor into that field), key:Right (press a key), "
+            "separated by semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
@@ -568,6 +570,33 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     QCoreApplication::sendEvent(window, &release);
                 });
             }
+            continue;
+        }
+        if (kind == QLatin1String("focus")) { // focus:width - the cursor goes into that field
+            const QString field = action.mid(colon + 1).trimmed();
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [window, field] {
+                // Fields made by a Repeater are children of the picture, not of the object tree.
+                const QString name = QStringLiteral("field_") + field;
+                const auto find = [&name](auto&& self, QQuickItem* parent) -> QQuickItem* {
+                    for (QQuickItem* child : parent->childItems()) {
+                        if (child->objectName() == name) {
+                            return child;
+                        }
+                        if (QQuickItem* found = self(self, child)) {
+                            return found;
+                        }
+                    }
+                    return nullptr;
+                };
+                QQuickItem* item = find(find, window->contentItem());
+                if (item == nullptr) {
+                    qWarning().noquote() << QStringLiteral("no field %1 to focus").arg(field);
+                    g_simulationFailure = 4;
+                    return;
+                }
+                QMetaObject::invokeMethod(item, "takeFocus");
+            });
             continue;
         }
         if (kind == QLatin1String("near")) {

@@ -24,6 +24,9 @@ Rectangle {
         return bold ? (italic ? "boldItalic" : "bold") : (italic ? "italic" : "regular")
     }
     signal valueCommitted(string name, string text)
+    // Dragging the name of a field changes its value as one step of the history.
+    signal dragStarted(string name)
+    signal dragFinished(bool accepted)
     signal textCommitted(string name, string text)
     function focusText() {
         wordRepeater.itemAt(0)?.focusAndSelect()
@@ -38,6 +41,21 @@ Rectangle {
     readonly property var axisValue: stepValues.find(v => v.group === "axis")
     readonly property var cutValues: stepValues.filter(v => v.group === "cut")
     signal axisChosen(int axis)
+    // The fields stay when only their numbers change (a field being dragged or stepped with the
+    // arrow keys must not be rebuilt under the hand): the repeaters get the names, which differ
+    // only when the shape has other fields.
+    function valueNamed(name) {
+        return stepValues.find(v => v.name === name)
+            ?? ({ name: name, label: "", kind: "length", axis: "", value: 0, expression: "", error: false })
+    }
+    readonly property string sizeKey: sizeValues.map(v => v.name).join("|")
+    readonly property string positionKey: positionValues.map(v => v.name).join("|")
+    readonly property string rotationKey: rotationValues.map(v => v.name).join("|")
+    readonly property string cutKey: cutValues.map(v => v.name).join("|")
+    readonly property var sizeNames: sizeKey === "" ? [] : sizeKey.split("|")
+    readonly property var positionNames: positionKey === "" ? [] : positionKey.split("|")
+    readonly property var rotationNames: rotationKey === "" ? [] : rotationKey.split("|")
+    readonly property var cutNames: cutKey === "" ? [] : cutKey.split("|")
     // The switch "keep the tools" of a combine step.
     readonly property var keepToolsText: stepTexts.find(t => t.name === "keepTools")
     readonly property var fuzzyText: stepTexts.find(t => t.name === "fuzzy")
@@ -169,30 +187,35 @@ Rectangle {
                 }
 
                 Repeater {
-                    model: root.cutValues
+                    model: root.cutNames
 
                     delegate: NumberField {
                         id: cutField
 
-                        required property var modelData
+                        required property string modelData
+                        readonly property var entry: root.valueNamed(modelData)
 
+                        objectName: "field_" + modelData
                         width: parent.width
-                        label: modelData.label
-                        kind: modelData.kind
+                        label: entry.label
+                        kind: entry.kind
                         unit: "mm"
-                        invalid: modelData.error
-                        onTextCommitted: text => root.valueCommitted(modelData.name, text)
+                        invalid: entry.error
+                        onTextCommitted: text => root.valueCommitted(modelData, text)
+                        draggable: true
+                        onDragStarted: root.dragStarted(modelData)
+                        onDragFinished: accepted => root.dragFinished(accepted)
 
                         Binding {
                             target: cutField
                             property: "value"
-                            value: cutField.modelData.value
+                            value: cutField.entry.value
                         }
 
                         Binding {
                             target: cutField
                             property: "expression"
-                            value: cutField.modelData.expression
+                            value: cutField.entry.expression
                         }
                     }
                 }
@@ -292,30 +315,35 @@ Rectangle {
                 heading: qsTr("Size")
 
                 Repeater {
-                    model: root.sizeValues
+                    model: root.sizeNames
 
                     delegate: NumberField {
                         id: sizeField
 
-                        required property var modelData
+                        required property string modelData
+                        readonly property var entry: root.valueNamed(modelData)
 
+                        objectName: "field_" + modelData
                         width: parent.width
-                        label: modelData.label
-                        kind: modelData.kind
-                        unit: modelData.kind === "angle" ? "°" : modelData.kind === "plain" ? "" : "mm"
-                        invalid: modelData.error
-                        onTextCommitted: text => root.valueCommitted(modelData.name, text)
+                        label: entry.label
+                        kind: entry.kind
+                        unit: entry.kind === "angle" ? "°" : entry.kind === "plain" ? "" : "mm"
+                        invalid: entry.error
+                        onTextCommitted: text => root.valueCommitted(modelData, text)
+                        draggable: true
+                        onDragStarted: root.dragStarted(modelData)
+                        onDragFinished: accepted => root.dragFinished(accepted)
 
                         Binding {
                             target: sizeField
                             property: "value"
-                            value: sizeField.modelData.value
+                            value: sizeField.entry.value
                         }
 
                         Binding {
                             target: sizeField
                             property: "expression"
-                            value: sizeField.modelData.expression
+                            value: sizeField.entry.expression
                         }
                     }
                 }
@@ -330,30 +358,35 @@ Rectangle {
                     spacing: 8
 
                     Repeater {
-                        model: root.positionValues
+                        model: root.positionNames
 
                         delegate: NumberField {
                             id: positionField
 
-                            required property var modelData
+                            required property string modelData
+                            readonly property var entry: root.valueNamed(modelData)
 
+                            objectName: "field_" + modelData
                             width: (parent.width - 16) / 3
-                            axis: modelData.axis
-                            kind: modelData.kind
+                            axis: entry.axis
+                            kind: entry.kind
                             unit: ""
-                            invalid: modelData.error
-                            onTextCommitted: text => root.valueCommitted(modelData.name, text)
+                            invalid: entry.error
+                            onTextCommitted: text => root.valueCommitted(modelData, text)
+                            draggable: true
+                            onDragStarted: root.dragStarted(modelData)
+                            onDragFinished: accepted => root.dragFinished(accepted)
 
                             Binding {
                                 target: positionField
                                 property: "value"
-                                value: positionField.modelData.value
+                                value: positionField.entry.value
                             }
 
                             Binding {
                                 target: positionField
                                 property: "expression"
-                                value: positionField.modelData.expression
+                                value: positionField.entry.expression
                             }
                         }
                     }
@@ -369,30 +402,35 @@ Rectangle {
                     spacing: 8
 
                     Repeater {
-                        model: root.rotationValues
+                        model: root.rotationNames
 
                         delegate: NumberField {
                             id: rotationField
 
-                            required property var modelData
+                            required property string modelData
+                            readonly property var entry: root.valueNamed(modelData)
 
+                            objectName: "field_" + modelData
                             width: (parent.width - 16) / 3
-                            axis: modelData.axis
-                            kind: modelData.kind
+                            axis: entry.axis
+                            kind: entry.kind
                             unit: "°"
-                            invalid: modelData.error
-                            onTextCommitted: text => root.valueCommitted(modelData.name, text)
+                            invalid: entry.error
+                            onTextCommitted: text => root.valueCommitted(modelData, text)
+                            draggable: true
+                            onDragStarted: root.dragStarted(modelData)
+                            onDragFinished: accepted => root.dragFinished(accepted)
 
                             Binding {
                                 target: rotationField
                                 property: "value"
-                                value: rotationField.modelData.value
+                                value: rotationField.entry.value
                             }
 
                             Binding {
                                 target: rotationField
                                 property: "expression"
-                                value: rotationField.modelData.expression
+                                value: rotationField.entry.expression
                             }
                         }
                     }

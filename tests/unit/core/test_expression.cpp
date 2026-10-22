@@ -4,6 +4,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <clocale>
 #include <cstdint>
 #include <string>
 
@@ -27,6 +28,28 @@ TEST_CASE("plain numbers, comma and dot are both decimal separators", "[expressi
     CHECK(mm("2,5") == Approx(2.5));
     CHECK(mm("  7  ") == Approx(7.0));
     CHECK(mm(".5") == Approx(0.5));
+}
+
+TEST_CASE("numbers read the same in a German environment", "[expression][locale]") {
+    // Qt takes the C locale from the environment (LANG=de_DE.UTF-8 in a German terminal); a
+    // number must not stop at the dot there.
+    struct RestoreLocale {
+        std::string saved = std::setlocale(LC_NUMERIC, nullptr);
+        ~RestoreLocale() { std::setlocale(LC_NUMERIC, saved.c_str()); }
+    } restore;
+    const char* german = nullptr;
+    for (const char* name : {"de_DE.UTF-8", "de_DE.utf8", "de_DE"}) {
+        if (std::setlocale(LC_NUMERIC, name) != nullptr) {
+            german = name;
+            break;
+        }
+    }
+    if (german == nullptr) {
+        SKIP("no German locale installed");
+    }
+    CHECK(mm("19.9") == Approx(19.9));
+    CHECK(mm("19,9") == Approx(19.9));
+    CHECK(mm("20 - 0.1") == Approx(19.9));
 }
 
 TEST_CASE("arithmetic follows the usual rules", "[expression]") {

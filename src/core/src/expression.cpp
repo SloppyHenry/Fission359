@@ -7,6 +7,8 @@
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
+#include <locale>
+#include <sstream>
 
 namespace fission::core {
 
@@ -327,8 +329,12 @@ private:
         auto node = std::make_shared<Node>();
         node->type = Node::Type::number;
         node->range = {start, pos_};
-        node->number = std::strtod(digits.c_str(), nullptr);
-        if (!std::isfinite(node->number)) {
+        // Not std::strtod: it follows the C locale, which Qt sets from the environment. In a
+        // German terminal it would stop at the dot and read "19.9" as 19.
+        std::istringstream in(digits);
+        in.imbue(std::locale::classic());
+        in >> node->number;
+        if (in.fail() || !std::isfinite(node->number)) { // fails when out of range
             fail(ExpressionErrorCode::notFinite, node->range);
         }
         return node;
