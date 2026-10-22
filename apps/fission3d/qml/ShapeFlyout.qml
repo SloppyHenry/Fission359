@@ -196,7 +196,7 @@ Float {
                                 dragState.type = tile.modelData.type
                             }
                             if (dragState.active) {
-                                root.dragTo(area.mapToItem(root.parent, mouse.x, mouse.y))
+                                root.dragTo(area.mapToItem(root.parent, mouse.x, mouse.y), mouse.modifiers)
                             }
                         }
 
@@ -257,7 +257,7 @@ Float {
     }
 
     // --- what the pointer does while a tile is dragged ---------------------------------------
-    function dragTo(point) {
+    function dragTo(point, modifiers) {
         dragState.at = point
         if (dragState.cancelled) {
             return
@@ -271,7 +271,8 @@ Float {
             return
         }
         // Alt keeps the shape upright on the work plane instead of lying on a wall or slope.
-        const upright = (Qt.application.keyboardModifiers & Qt.AltModifier) !== 0
+        // (Qt.application has no keyboardModifiers in QML: the mouse event brings them.)
+        const upright = (modifiers & Qt.AltModifier) !== 0
         if (Placement.active) {
             Placement.moveTo(point.x, point.y, upright)
         } else {
