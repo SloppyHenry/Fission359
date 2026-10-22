@@ -69,9 +69,9 @@ bool touches(const Knowledge& know, const BodyId& holeId, const BodyResult& hole
     try {
         const geo::Bounds holeBox = know.kernel.bounds(hole.solid);
         const geo::Bounds targetBox = know.kernel.bounds(target.solid);
-        std::fprintf(stderr, "cuts: hole z %g..%g y %g..%g, target z %g..%g y %g..%g\n", holeBox.min.z,
-                     holeBox.max.z, holeBox.min.y, holeBox.max.y, targetBox.min.z, targetBox.max.z,
-                     targetBox.min.y, targetBox.max.y);
+        std::fprintf(stderr, "cuts: hole z %g..%g y %g..%g, target z %g..%g y %g..%g\n",
+                     holeBox.min.z, holeBox.max.z, holeBox.min.y, holeBox.max.y, targetBox.min.z,
+                     targetBox.max.z, targetBox.min.y, targetBox.max.y);
         if (!boxesOverlap(holeBox, targetBox)) {
             std::fprintf(stderr, "cuts: boxes do not overlap\n");
             return false;
@@ -233,6 +233,7 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
         if (kept.size() == cut->inputs.size()) {
             continue;
         }
+        std::fprintf(stderr, "cuts: a cut loses %zu tools\n", cut->inputs.size() - kept.size());
         if (kept.size() == 1) {
             removeCut(history, id);
         } else {
@@ -263,6 +264,7 @@ bool reconcileCuts(History& history, const FeatureRegistry& registry,
             draft.inputs = {head.body, hole};
             draft.newBodies = 1;
             const auto added = history.addFeature(std::move(draft));
+            std::fprintf(stderr, "cuts: combine added: %d\n", added.has_value() ? 1 : 0);
             const Feature* step = added ? document.findFeature(*added) : nullptr;
             if (step == nullptr || step->outputs.empty()) {
                 continue;
