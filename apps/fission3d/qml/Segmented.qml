@@ -40,6 +40,7 @@ Rectangle {
 
                 implicitHeight: 30
                 implicitWidth: content.implicitWidth + 20
+                horizontalPadding: 10 // the label sits in the middle of its segment
                 hoverEnabled: true
                 Accessible.name: modelData.text
                 Accessible.checkable: true

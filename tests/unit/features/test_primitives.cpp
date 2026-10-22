@@ -109,8 +109,9 @@ std::uint32_t faceOf(const FeatureOutput& output, const std::string& role) {
 
 TEST_CASE("the built-in feature types are registered", "[features]") {
     Setup setup;
-    CHECK(setup.registry.ids() == std::vector<std::string>{"box", "cone", "cylinder", "hemisphere",
-                                                           "prism", "pyramid", "sphere", "star",
+    CHECK(setup.registry.ids() == std::vector<std::string>{"box", "combine", "cone", "cylinder",
+                                                           "hemisphere", "place", "prism",
+                                                           "pyramid", "sphere", "split", "star",
                                                            "text", "torus", "tube", "wedge"});
 }
 
@@ -256,7 +257,7 @@ TEST_CASE("a default draft has every value and its body", "[features]") {
     const FeatureDraft draft = defaultDraft(*setup.registry.find("box"));
     CHECK(draft.type == "box");
     CHECK(draft.newBodies == 1);
-    CHECK(draft.params.size() == 10); // four sizes, the place and the turn
+    CHECK(draft.params.size() == 11); // four sizes, the place, the turn and "through"
     CHECK(draft.params.at("width").expression == "20");
     CHECK(draft.params.at("x").kind == QuantityKind::length);
 }

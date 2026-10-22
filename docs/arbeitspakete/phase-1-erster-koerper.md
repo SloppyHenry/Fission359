@@ -91,7 +91,7 @@ Wertblase, Tippen ersetzt Ziehen, `Tab`, Esc. Ablauf D Schritt 1 automatisch gr�
 ---
 
 ### AP-1.6 Transformieren: Gizmo, Fangen, Abstandsmaße
-**Status:** Review (1.6a, 1.6b, 1.6c1 erledigt; 1.6c2, 1.6d, 1.6e warten auf Test durch den Product Owner) · **Größe:** L · **Abhängigkeiten:** AP-1.4
+**Status:** erledigt (2026-10-21, vom Product Owner geprüft) · **Größe:** L · **Abhängigkeiten:** AP-1.4
 **Bauanleitungen:** [1.6c2](anleitungen/AP-1.6c2.md) · [1.6d](anleitungen/AP-1.6d.md) · [1.6e](anleitungen/AP-1.6e.md) · Pflege und Folgearbeiten: [pflege.md](anleitungen/pflege.md)
 
 **Umfang:**
@@ -118,9 +118,9 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 | **b2) Gleichmäßig vergrößern** | erledigt (PR #31) | Eck-Quadrate im Werkzeug „Größe“, Prozent an der Wertblase, alle Längen im gleichen Verhältnis (`core::scaledExpression`), `GeometryKernel::exactBounds` |
 | **b3) Ablegen an Wänden** | erledigt (PR #33) | Unterseite auf jede Fläche (`geo/seat.h`), ⌥ = aufrecht |
 | **c1) Fangen beim Verschieben** | erledigt (PR #34) | `interaction/snap.h`, `ui::SnapSession` im `GizmoController`; Fang-Marken und Ausrichtungslinie; ⇧ aus; Raster auf dem Bett (Ansicht ▸ „Raster beim Ziehen“); Genauigkeit in der Statuszeile (Auto, Schieberegler 0,01–10 mm, Zahlenfeld) |
-| **c2) Fangen bei Maß-Griffen und Ablegen** | Review (2026-10-20) | dieselben Punkte und Marken für die Maß-Griffe (`HandleController`), den Eck-Griff (`ScaleController`) und das Ablegen (`PlacementController`); gemeinsamer ⇧-Schalter `ui::snappingSuppressed()`; Marken des Ablegens in `HandleSource::placement` |
-| **d) Abstandsmaße** | Review (2026-10-20) | `interaction/distances.h` (Rechnung: nächstes Hindernis je Richtung, Bettrand, „Abstand setzen“); `ui::DistanceController` + `DistanceLayer.qml`: Bänder im Werkzeug „Verschieben“ bei gewähltem Körper, Zahl anklicken und tippen = ein Verschieben (Undo-Schritt „Körper verschoben“); `--simulate "distance:left,5"`; Akzeptanzkriterium 1 als Test `app_distance_five_from_edge` |
-| **e) Rest** | Review (2026-10-20) | Ausrichten (`interaction/align.h`, `ui::AlignController`, 9 Punkte am Rahmen mehrerer gewählter Körper, Vorschau-Ebene); Aufs Bett legen (Taste **D**, Menü Körper); Auf Fläche legen für vorhandene Körper (Menü Körper, Klick auf die Fläche, `PlacementController::seatChosen`); Kopieren, Einfügen, Duplizieren (⌘C/⌘V/⌘D, Versatz 10 mm in X und Y je Einfügen); alles über `DocumentModel::moveBodiesBy` bzw. `pasteBodies`, ein Undo-Schritt je Aktion |
+| **c2) Fangen bei Maß-Griffen und Ablegen** | erledigt (2026-10-21) | dieselben Punkte und Marken für die Maß-Griffe (`HandleController`), den Eck-Griff (`ScaleController`) und das Ablegen (`PlacementController`); gemeinsamer ⇧-Schalter `ui::snappingSuppressed()`; Marken des Ablegens in `HandleSource::placement` |
+| **d) Abstandsmaße** | erledigt (2026-10-21) | `interaction/distances.h` (Rechnung: nächstes Hindernis je Richtung, Bettrand, „Abstand setzen“); `ui::DistanceController` + `DistanceLayer.qml`: Bänder im Werkzeug „Verschieben“ bei gewähltem Körper, Zahl anklicken und tippen = ein Verschieben (Undo-Schritt „Körper verschoben“); `--simulate "distance:left,5"`; Akzeptanzkriterium 1 als Test `app_distance_five_from_edge` |
+| **e) Rest** | erledigt (2026-10-21) | Ausrichten (`interaction/align.h`, `ui::AlignController`, 9 Punkte am Rahmen mehrerer gewählter Körper, Vorschau-Ebene); Aufs Bett legen (Taste **D**, Menü Körper); Auf Fläche legen für vorhandene Körper (Menü Körper, Klick auf die Fläche, `PlacementController::seatChosen`); Kopieren, Einfügen, Duplizieren (⌘C/⌘V/⌘D, Versatz 10 mm in X und Y je Einfügen); alles über `DocumentModel::moveBodiesBy` bzw. `pasteBodies`, ein Undo-Schritt je Aktion |
 
 #### Festlegungen (Product Owner)
 - **Lage im Rezept** ([ADR-0010](../adr/0010-lage-im-rezept.md)): Verschieben, Drehen und Vergrößern ändern die Werte des Schritts, der
@@ -165,7 +165,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.7 Kombinieren
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.5
+**Status:** Review (2026-10-21; wartet auf Test durch den Product Owner) · **Größe:** M · **Abhängigkeiten:** AP-1.5
 **Bauanleitung:** [anleitungen/AP-1.7.md](anleitungen/AP-1.7.md)
 
 **Umfang:**
@@ -179,9 +179,20 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Fehlerfälle (nicht überlappend, koplanar, ungültig) mit Meldungen aus dem Katalog
 
 **Akzeptanzkriterien:**
-- [ ] Alle Kombinationen aus dem Kernel-Spike (AP-0.5) liefern gültige Körper oder eine verständliche Meldung
-- [ ] Ändert man ein Loch nachträglich (Größe, Position), wird es korrekt neu ausgeschnitten
-- [ ] Ablauf D, Schritte 2–4, läuft automatisiert grün; es gibt keinen Schritt „Gruppieren“
+- [x] Alle Kombinationen aus dem Kernel-Spike (AP-0.5) liefern gültige Körper oder eine verständliche Meldung
+- [x] Ändert man ein Loch nachträglich (Größe, Position), wird es korrekt neu ausgeschnitten
+- [x] Ablauf D, Schritte 2–4, läuft automatisiert grün; es gibt keinen Schritt „Gruppieren“
+
+**Abschlussvermerk 2026-10-21 (wartet auf Test durch den Product Owner):**
+- Ergebnis: Vereinen, Ausschneiden, Überlappung behalten (Menü Körper und Palette „Kombinieren“), Teilen an einer Ebene (X, Y, Z; Pfeil-Griff
+  im Werkzeug Größe), Live-Löcher ohne Gruppieren mit Etikett „Schneidet aus: …“ (Ziele per Klick änderbar), „Geht ganz durch“ (Standard),
+  Ausschneider optional als Körper behalten. Kernel-Booleans exakt mit Flächennamen; die Kombinationen des Kernel-Spikes laufen über die GAL.
+- Festlegungen: [ADR-0011](../adr/0011-kombinieren-und-loecher.md) samt Ergänzung (ein Schritt „combine“, Löcher pflegt `reconcileCuts`, kombinierte
+  Körper wandern samt Löchern, jeder Teil eines Teilens bekommt einen Schritt „place“, Körpername bleibt, Symbol dahinter).
+- Nachtrag 2026-10-21: halbtransparente Schnittebene, Drehen und Größe ändern kombinierter Körper (alle Teile gemeinsam), Löcher schneiden
+  schon beim Ziehen live (alle 150 ms im selben Schritt), „Bündig machen“ (Fuzzy 0,001 mm) als Schalter am Schritt.
+- Offene Reste: Teilen nur an Achsenebenen (an einer Fläche: Phase 2, AP-2.12); Teile eines geteilten Körpers lassen sich noch nicht drehen oder
+  vergrößern; die Prüfung der Löcher rechnet im Oberflächen-Thread (kalt 26 ms, warm 4 ms, kleine Modelle); Löschen eines Lochs mit AP-1.9; Prüfung im Hintergrund und Drehen/Vergrößern von Teilen siehe [pflege.md](anleitungen/pflege.md) P13, P14; Teilen an einer Fläche mit AP-2.12.
 
 ---
 

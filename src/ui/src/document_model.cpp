@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "fission/core/commands.h"
+#include "fission/core/cuts.h"
 #include "fission/core/scaling.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
@@ -84,6 +85,10 @@ const char* issueCodeName(core::FeatureIssueCode code) {
         return "fontNotFound";
     case core::FeatureIssueCode::fontStyleMissing:
         return "fontStyleMissing";
+    case core::FeatureIssueCode::combineEmpty:
+        return "combineEmpty";
+    case core::FeatureIssueCode::combineNoOverlap:
+        return "combineNoOverlap";
     }
     return "kernelFailed";
 }
@@ -141,6 +146,9 @@ DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel, 
     m_detailTimer.setSingleShot(true);
     m_detailTimer.setInterval(120); // zooming in steps: wait until it settles
     connect(&m_detailTimer, &QTimer::timeout, this, [this] { startDetailJob(); });
+    m_liveCutTimer.setSingleShot(true);
+    m_liveCutTimer.setInterval(150);
+    connect(&m_liveCutTimer, &QTimer::timeout, this, [this] { liveCuts(); });
     m_engine = std::make_unique<core::RecomputeEngine>(
         m_registry, *m_kernel, [this](const core::RecomputeEvent& event) { onEngineEvent(event); });
     // Reading the computer's fonts takes a moment: not on the interface thread (rule 9).
@@ -171,6 +179,43 @@ constexpr int kHoleAlpha = 110;
 
 const PrinterProfile& generic() {
     return printerCatalog().front();
+}
+
+// How a body takes part in the recipe once steps combine bodies (ADR-0011).
+struct BodyPart {
+    bool consumed = false;  ///< Part of another body's result: not shown as a body of its own.
+    bool toolGhost = false; ///< A tool of a subtract: stays a ghost, still within reach.
+    bool cut = false; ///< Its result had something cut out of it (the symbol behind its name).
+};
+
+// The word "mode" of a combine step, empty for any other step.
+std::string combineMode(const core::Feature* step) {
+    if (step == nullptr || step->type != "combine") {
+        return {};
+    }
+    const auto mode = step->texts.find("mode");
+    return mode != step->texts.end() ? mode->second : std::string();
+}
+
+// `result`: the last calculation. A step that has no result (it failed and never worked) takes
+// nothing in: what it was to combine stays in view, and the step says what is wrong.
+BodyPart partOf(const core::Document& document, const core::RecomputeResult* result,
+                const core::Body& body) {
+    BodyPart part;
+    const auto consumer = document.consumerOf(body.id);
+    const core::Feature* step = consumer ? document.findFeature(*consumer) : nullptr;
+    const bool works = step != nullptr && !step->outputs.empty() && result != nullptr &&
+                       result->bodies.contains(step->outputs.front());
+    if (step != nullptr && works) {
+        const bool isTool = !step->inputs.empty() && step->inputs.front() != body.id;
+        if (isTool && combineMode(step) == "subtract") {
+            part.toolGhost = true;
+        } else {
+            part.consumed = true;
+        }
+    }
+    part.cut = combineMode(document.findFeature(body.createdBy)) == "subtract";
+    return part;
 }
 } // namespace
 
@@ -428,7 +473,8 @@ void DocumentModel::rebuildScene() {
         const std::lock_guard lock(m_meshMutex);
         for (const core::Body& body : m_history.document().bodies()) {
             const auto made = m_result->bodies.find(body.id);
-            if (!body.visible || made == m_result->bodies.end()) {
+            const BodyPart part = partOf(m_history.document(), m_result.get(), body);
+            if (!body.visible || made == m_result->bodies.end() || part.consumed) {
                 continue;
             }
             const std::uint64_t key = meshKey(made->second);
@@ -448,7 +494,7 @@ void DocumentModel::rebuildScene() {
                 drawn.meshVersion = key * 16;
             }
             drawn.color = QColor(body.color.red, body.color.green, body.color.blue);
-            if (body.hole) {
+            if (body.hole || part.toolGhost) {
                 drawn.color.setAlpha(kHoleAlpha); // a ghost: it is a tool, not a part
             }
             scene->bodies.push_back(std::move(drawn));
@@ -503,19 +549,54 @@ void DocumentModel::rebuildLists() {
     // Bodies
     QVariantList bodies;
     std::map<std::string, int> counted;
+    // A result of combining keeps the name of the body it started as ("Box 1"), also its type
+    // and number: a small symbol behind the name says it was cut (ADR-0011).
+    struct Origin {
+        std::string type;
+        int number = 0;
+        int part = 0; ///< 1, 2 ...: which part of a split it is (0 = not a part)
+    };
+    std::map<std::string, Origin> origin; // body id -> what it started as
     int index = 0;
     for (const core::Body& body : m_history.document().bodies()) {
         const core::Feature* maker = m_history.document().findFeature(body.createdBy);
-        const std::string type = maker != nullptr ? maker->type : std::string();
+        std::string type = maker != nullptr ? maker->type : std::string();
+        int number = 0;
+        int partNumber = 0;
+        std::string name = body.name;
+        const bool continues =
+            maker != nullptr && (type == "combine" || type == "place" || type == "split") &&
+            !maker->inputs.empty() && origin.contains(maker->inputs.front().value);
+        if (continues) {
+            const Origin& started = origin.at(maker->inputs.front().value);
+            type = started.type;
+            number = started.number;
+            partNumber = started.part;
+            if (maker->type == "split") {
+                const auto at = std::find(maker->outputs.begin(), maker->outputs.end(), body.id);
+                partNumber = static_cast<int>(at - maker->outputs.begin()) + 1;
+            }
+            const core::Body* first = m_history.document().findBody(maker->inputs.front());
+            if (name.empty() && first != nullptr) {
+                name = first->name;
+            }
+        } else {
+            number = ++counted[type];
+        }
+        origin[body.id.value] = {type, number, partNumber};
         QVariantMap entry;
         entry[QStringLiteral("index")] = index++;
         entry[QStringLiteral("type")] = toQString(type);
-        entry[QStringLiteral("number")] = ++counted[type];
-        entry[QStringLiteral("name")] = toQString(body.name);
+        entry[QStringLiteral("number")] = number;
+        entry[QStringLiteral("part")] = partNumber; // "Box 1, part 2" after a split
+        entry[QStringLiteral("name")] = toQString(name);
         entry[QStringLiteral("color")] =
             QColor(body.color.red, body.color.green, body.color.blue).name();
         entry[QStringLiteral("visible")] = body.visible;
         entry[QStringLiteral("hole")] = body.hole;
+        const BodyPart part = partOf(m_history.document(), m_result.get(), body);
+        entry[QStringLiteral("consumed")] = part.consumed; // part of a result: not listed
+        entry[QStringLiteral("cut")] = part.cut;
         bodies.push_back(entry);
     }
     m_bodies = bodies;
@@ -557,10 +638,14 @@ QVariantList DocumentModel::buildStepValues() const {
         QVariantMap entry;
         entry[QStringLiteral("name")] = toQString(spec.name);
         const bool turn = spec.name == "rotX" || spec.name == "rotY" || spec.name == "rotZ";
-        entry[QStringLiteral("group")] = (spec.name == "x" || spec.name == "y" || spec.name == "z")
-                                             ? QStringLiteral("position")
-                                         : turn ? QStringLiteral("rotation")
-                                                : QStringLiteral("size");
+        entry[QStringLiteral("group")] =
+            (spec.name == "x" || spec.name == "y" || spec.name == "z") ? QStringLiteral("position")
+            : turn                                                     ? QStringLiteral("rotation")
+            : spec.name == "through"                                   ? QStringLiteral("through")
+            : spec.name == "axis"                                      ? QStringLiteral("axis")
+            : spec.name == "position"                                  ? QStringLiteral("cut")
+            : spec.name == "anchorU" || spec.name == "anchorV"         ? QStringLiteral("hidden")
+                                                                       : QStringLiteral("size");
         // The coloured letter in front of a place or a turn: x, y, z (empty for sizes).
         entry[QStringLiteral("axis")] = turn ? toQString(spec.name.substr(3, 1)).toLower()
                                         : (spec.name == "x" || spec.name == "y" || spec.name == "z")
@@ -608,8 +693,12 @@ QVariantList DocumentModel::buildStepTexts() const {
         entry[QStringLiteral("name")] = toQString(spec.name);
         entry[QStringLiteral("value")] =
             toQString(given != feature.texts.end() ? given->second : spec.defaultValue);
-        entry[QStringLiteral("kind")] = spec.name == "font"    ? QStringLiteral("font")
-                                        : spec.name == "style" ? QStringLiteral("style")
+        // `mode` and `auto` are the program's business (combine steps), `keepTools` a switch.
+        entry[QStringLiteral("kind")] =
+            spec.name == "font"                                ? QStringLiteral("font")
+            : spec.name == "style"                             ? QStringLiteral("style")
+            : spec.name == "keepTools" || spec.name == "fuzzy" ? QStringLiteral("flag")
+            : spec.name == "mode" || spec.name == "auto"       ? QStringLiteral("hidden")
                                                                : QStringLiteral("text");
         texts.push_back(entry);
     }
@@ -765,8 +854,19 @@ bool DocumentModel::setStepValue(int index, const QString& name, const QString& 
     }
     const core::FeatureId id = features[static_cast<std::size_t>(index)].id;
     const std::uint64_t before = m_history.document().revision();
-    if (!m_history.execute(core::makeSetFeatureValue(id, name.toStdString(), text.toStdString()))) {
-        return false;
+    auto command = core::makeSetFeatureValue(id, name.toStdString(), text.toStdString());
+    // With holes in the document the change may move one into or out of a body: its cuts follow
+    // in the same step.
+    if (hasCuttingParts() && !m_history.inTransaction()) {
+        if (!executeWithCuts(std::move(command), {"setValue", {{"field", name.toStdString()}}})) {
+            return false;
+        }
+    } else {
+        // Typed alone: the cuts follow in its step. During a drag they follow every so often.
+        if (!m_history.execute(std::move(command))) {
+            return false;
+        }
+        scheduleLiveCuts();
     }
     if (m_history.document().revision() != before) { // typing the same value again does nothing
         documentChanged();
@@ -815,17 +915,69 @@ void DocumentModel::beginChange(const QString& field) {
     m_history.beginTransaction({"setValue", {{"field", field.toStdString()}}});
 }
 
-void DocumentModel::commitChange() {
+void DocumentModel::scheduleLiveCuts() {
+    if (m_history.inTransaction() && hasCuttingParts() && !m_liveCutTimer.isActive()) {
+        m_liveCutTimer.start();
+    }
+}
+
+void DocumentModel::liveCuts() {
+    // Inside the open step of the drag, so that all of it stays one step to undo; never alone.
+    if (m_history.inTransaction() && hasCuttingParts() &&
+        core::reconcileCuts(m_history, m_registry, *m_kernel, m_cutCache)) {
+        documentChanged();
+    }
+}
+
+void DocumentModel::finishTransaction() {
+    m_liveCutTimer.stop();
+    const bool cut = core::reconcileCuts(m_history, m_registry, *m_kernel, m_cutCache);
     m_history.commitTransaction();
+    if (cut) {
+        documentChanged();
+    }
+}
+
+bool DocumentModel::hasCuttingParts() const {
+    const core::Document& document = m_history.document();
+    return std::any_of(document.bodies().begin(), document.bodies().end(),
+                       [](const core::Body& body) { return body.hole; }) ||
+           std::any_of(document.features().begin(), document.features().end(),
+                       [](const core::Feature& step) {
+                           return step.type == "combine" && step.texts.count("auto") != 0 &&
+                                  step.texts.at("auto") == "yes";
+                       });
+}
+
+bool DocumentModel::executeWithCuts(std::unique_ptr<core::Command> command,
+                                    core::CommandDescription label) {
+    m_history.beginTransaction(std::move(label));
+    const bool done = m_history.execute(std::move(command));
+    if (!done) {
+        m_history.cancelTransaction();
+        return false;
+    }
+    finishTransaction();
+    return true;
+}
+
+void DocumentModel::commitChange() {
+    finishTransaction();
     emit historyChanged();
 }
 
 void DocumentModel::cancelChange() {
+    m_liveCutTimer.stop();
     m_history.cancelTransaction();
     documentChanged();
 }
 
 std::optional<std::array<double, 3>> DocumentModel::currentPosition() const {
+    const auto& steps = m_history.document().features();
+    if (m_currentStep >= 0 && m_currentStep < static_cast<int>(steps.size()) &&
+        steps[static_cast<std::size_t>(m_currentStep)].type == "combine") {
+        return positionOfFeature(steps[static_cast<std::size_t>(m_currentStep)]);
+    }
     std::array<double, 3> position{0.0, 0.0, 0.0};
     int found = 0;
     for (const QVariant& entry : m_stepValues) {
@@ -870,10 +1022,42 @@ bool DocumentModel::moveCurrent(const std::array<std::optional<double>, 3>& posi
         m_currentStep >= static_cast<int>(features.size())) {
         return false;
     }
-    const core::FeatureId id = features[static_cast<std::size_t>(m_currentStep)].id;
+    const core::Feature& current = features[static_cast<std::size_t>(m_currentStep)];
+    const core::FeatureId id = current.id;
     const std::uint64_t before = m_history.document().revision();
     static constexpr const char* kNames[3] = {"x", "y", "z"};
     bool done = true;
+    if (current.type == "combine") {
+        // A combined body: every part moves by the same distance, so the first part ends where
+        // the person put it (the others keep their distance to it).
+        std::vector<const core::Feature*> forms;
+        collectForms(current, forms);
+        const auto anchor = forms.empty() ? std::nullopt : liveValues(*forms.front());
+        if (!anchor) {
+            return false;
+        }
+        for (const core::Feature* form : forms) {
+            const auto from = liveValues(*form);
+            if (!from) {
+                done = false;
+                continue;
+            }
+            for (std::size_t axis = 0; axis < 3; ++axis) {
+                if (position[axis]) {
+                    const double target = (*from)[axis] + (*position[axis] - (*anchor)[axis]);
+                    done = m_history.execute(core::makeSetFeatureValue(
+                               form->id, kNames[axis],
+                               QString::number(target, 'g', 12).toStdString())) &&
+                           done;
+                }
+            }
+        }
+        if (m_history.document().revision() != before) {
+            documentChanged();
+            scheduleLiveCuts();
+        }
+        return done;
+    }
     for (std::size_t axis = 0; axis < 3; ++axis) {
         if (position[axis]) {
             // 12 digits: snapped numbers read back as typed ("12.5", not "12.5000000001").
@@ -885,11 +1069,30 @@ bool DocumentModel::moveCurrent(const std::array<std::optional<double>, 3>& posi
     }
     if (m_history.document().revision() != before) {
         documentChanged();
+        scheduleLiveCuts();
     }
     return done;
 }
 
+bool DocumentModel::groupCanTurn(const core::Feature& step) const {
+    std::vector<const core::Feature*> forms;
+    collectForms(step, forms);
+    return !forms.empty() && std::all_of(forms.begin(), forms.end(), [](const core::Feature* form) {
+        return form->params.contains("rotX") && form->params.contains("rotY") &&
+               form->params.contains("rotZ");
+    });
+}
+
 std::optional<geo::Angles> DocumentModel::currentTurn() const {
+    const auto& steps = m_history.document().features();
+    if (m_currentStep >= 0 && m_currentStep < static_cast<int>(steps.size()) &&
+        steps[static_cast<std::size_t>(m_currentStep)].type == "combine") {
+        // A combined body has no turn of its own: it is turned from "not turned" by the amount
+        // dragged, all its parts about the middle of the whole.
+        return groupCanTurn(steps[static_cast<std::size_t>(m_currentStep)])
+                   ? std::optional<geo::Angles>(geo::Angles{})
+                   : std::nullopt;
+    }
     geo::Angles angles;
     int found = 0;
     for (const QVariant& entry : m_stepValues) {
@@ -912,6 +1115,15 @@ std::optional<geo::Angles> DocumentModel::currentTurn() const {
 
 std::optional<geo::Point3d> DocumentModel::currentTurnCentre() const {
     const auto& features = m_history.document().features();
+    if (m_currentStep >= 0 && m_currentStep < static_cast<int>(features.size()) &&
+        features[static_cast<std::size_t>(m_currentStep)].type == "combine") {
+        const auto box = currentBodyBounds();
+        if (!box || !currentTurn()) {
+            return std::nullopt;
+        }
+        return geo::Point3d{(box->min.x + box->max.x) / 2.0, (box->min.y + box->max.y) / 2.0,
+                            (box->min.z + box->max.z) / 2.0};
+    }
     if (!currentTurn() || m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size()) ||
         !m_result) {
         return std::nullopt;
@@ -931,6 +1143,41 @@ bool DocumentModel::beginTurn() {
         return false;
     }
     const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    m_turnGroup.clear();
+    if (feature.type == "combine") {
+        const auto centre = currentTurnCentre();
+        std::vector<const core::Feature*> forms;
+        collectForms(feature, forms);
+        if (!centre || !m_result) {
+            return false;
+        }
+        for (const core::Feature* form : forms) {
+            const core::FeatureType* type = m_registry.find(form->type);
+            const core::FeatureState* state = m_result->state(form->id);
+            if (type == nullptr || state == nullptr || !state->description) {
+                m_turnGroup.clear();
+                return false;
+            }
+            TurnStart start;
+            start.id = form->id;
+            static constexpr const char* kPlace[3] = {"x", "y", "z"};
+            static constexpr const char* kTurn[3] = {"rotX", "rotY", "rotZ"};
+            for (std::size_t i = 0; i < 3; ++i) {
+                start.place[i] = form->params.at(kPlace[i]);
+                start.turn[i] = form->params.at(kTurn[i]);
+                start.placeValue[i] = state->params.at(kPlace[i]).value;
+            }
+            start.turnValue = core::FeatureType::turnOf(state->params);
+            // The middle of the part before its turn, minus its foot.
+            core::ResolvedParams atOrigin = state->params;
+            for (const char* name : kPlace) {
+                atOrigin.at(name).value = 0.0;
+            }
+            start.centreOffset = type->bodyCentre(atOrigin);
+            m_turnGroup.push_back(std::move(start));
+        }
+        m_turnGroupCentre = *centre;
+    }
     core::CommandDescription label{
         "rotateBody", {{"type", feature.type}, {"number", std::to_string(feature.number)}}};
     if (!feature.outputs.empty()) {
@@ -943,6 +1190,45 @@ bool DocumentModel::beginTurn() {
 }
 
 bool DocumentModel::turnCurrent(const geo::Angles& angles) {
+    if (!m_turnGroup.empty() && m_history.inTransaction()) {
+        // Every part turns about the same point by the same amount: its own turn changes, and
+        // its place so that its middle goes where the turn takes it.
+        const std::uint64_t before = m_history.document().revision();
+        const bool back = angles.isZero(); // back to the start: as typed
+        static constexpr const char* kPlace[3] = {"x", "y", "z"};
+        static constexpr const char* kTurn[3] = {"rotX", "rotY", "rotZ"};
+        bool done = true;
+        for (const TurnStart& part : m_turnGroup) {
+            const geo::Angles turned = geo::anglesOf(
+                geo::rotationOf(angles) * geo::rotationOf(part.turnValue), part.turnValue);
+            const geo::Point3d middle{part.placeValue[0] + part.centreOffset.x,
+                                      part.placeValue[1] + part.centreOffset.y,
+                                      part.placeValue[2] + part.centreOffset.z};
+            const geo::Point3d moved = geo::rotatedAbout(middle, m_turnGroupCentre, angles);
+            const double foot[3] = {part.placeValue[0] + moved.x - middle.x,
+                                    part.placeValue[1] + moved.y - middle.y,
+                                    part.placeValue[2] + moved.z - middle.z};
+            const double turnNow[3] = {turned.x, turned.y, turned.z};
+            const double turnWas[3] = {part.turnValue.x, part.turnValue.y, part.turnValue.z};
+            for (std::size_t i = 0; i < 3; ++i) {
+                const bool same = back || std::abs(turnNow[i] - turnWas[i]) < 1e-9;
+                done = m_history.execute(core::makeSetFeatureValue(
+                           part.id, kTurn[i],
+                           same ? part.turn[i].expression : core::numberText(turnNow[i]))) &&
+                       done;
+                const bool stays = back || std::abs(foot[i] - part.placeValue[i]) < 1e-9;
+                done = m_history.execute(core::makeSetFeatureValue(
+                           part.id, kPlace[i],
+                           stays ? part.place[i].expression : core::numberText(foot[i]))) &&
+                       done;
+            }
+        }
+        if (m_history.document().revision() != before) {
+            documentChanged();
+            scheduleLiveCuts();
+        }
+        return done;
+    }
     const auto& features = m_history.document().features();
     const auto present = currentTurn();
     if (!present || m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size())) {
@@ -968,6 +1254,7 @@ bool DocumentModel::turnCurrent(const geo::Angles& angles) {
     }
     if (m_history.document().revision() != before) {
         documentChanged();
+        scheduleLiveCuts();
     }
     return done;
 }
@@ -1003,17 +1290,12 @@ std::optional<geo::Bounds> DocumentModel::placingBodyBounds() const {
     return feature != nullptr ? boundsOfFeature(*feature) : std::nullopt;
 }
 
-bool DocumentModel::beginScale() {
-    const auto& features = m_history.document().features();
-    if (!currentPosition() || m_currentStep < 0 ||
-        m_currentStep >= static_cast<int>(features.size()) || !m_result) {
-        return false;
-    }
-    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+std::optional<DocumentModel::ScaleStart>
+DocumentModel::scaleStartOf(const core::Feature& feature) const {
     const core::FeatureType* type = m_registry.find(feature.type);
-    const core::FeatureState* state = m_result->state(feature.id);
+    const core::FeatureState* state = m_result ? m_result->state(feature.id) : nullptr;
     if (type == nullptr || state == nullptr || !state->description) {
-        return false;
+        return std::nullopt;
     }
     ScaleStart start;
     start.id = feature.id;
@@ -1028,16 +1310,45 @@ bool DocumentModel::beginScale() {
         const auto value = feature.params.find(kNames[axis]);
         const auto worked = state->params.find(kNames[axis]);
         if (value == feature.params.end() || worked == state->params.end()) {
-            return false;
+            return std::nullopt;
         }
         start.place[axis] = value->second;
         start.placeValue[axis] = worked->second.value;
     }
     if (start.sizes.empty()) {
-        return false;
+        return std::nullopt;
     }
     start.params = state->params;
-    m_scale = std::move(start);
+    return start;
+}
+
+bool DocumentModel::beginScale() {
+    const auto& features = m_history.document().features();
+    if (!currentPosition() || m_currentStep < 0 ||
+        m_currentStep >= static_cast<int>(features.size()) || !m_result) {
+        return false;
+    }
+    const core::Feature& feature = features[static_cast<std::size_t>(m_currentStep)];
+    // A combined body is made larger as every part it is made of, holes included.
+    std::vector<const core::Feature*> forms;
+    if (feature.type == "combine") {
+        collectForms(feature, forms);
+    } else {
+        forms.push_back(&feature);
+    }
+    std::vector<ScaleStart> starts;
+    for (const core::Feature* form : forms) {
+        auto start = scaleStartOf(*form);
+        if (!start) {
+            return false; // a part that has no sizes (a part of a split) cannot be made larger
+        }
+        starts.push_back(std::move(*start));
+    }
+    if (starts.empty()) {
+        return false;
+    }
+    m_scale = starts.front();
+    m_scaleGroup = std::move(starts);
     core::CommandDescription label{
         "scaleBody",
         {{"type", feature.type}, {"number", std::to_string(feature.number)}, {"value", "100"}}};
@@ -1050,17 +1361,14 @@ bool DocumentModel::beginScale() {
     return true;
 }
 
-bool DocumentModel::acceptsScale(double factor) const {
-    if (!m_scale || !std::isfinite(factor) || !(factor > 0.0)) {
-        return false;
-    }
-    const core::Feature* feature = m_history.document().findFeature(m_scale->id);
+bool DocumentModel::acceptsScaleOf(const ScaleStart& start, double factor) const {
+    const core::Feature* feature = m_history.document().findFeature(start.id);
     const core::FeatureType* type = feature != nullptr ? m_registry.find(feature->type) : nullptr;
     if (type == nullptr) {
         return false;
     }
-    core::ResolvedParams params = m_scale->params;
-    for (const auto& [name, value] : m_scale->sizes) {
+    core::ResolvedParams params = start.params;
+    for (const auto& [name, value] : start.sizes) {
         core::Quantity& quantity = params.at(name);
         const double scaled = quantity.value * factor;
         if ((quantity.value > 0.0 && scaled < kSmallestSize) || scaled > kLargestSize) {
@@ -1071,16 +1379,19 @@ bool DocumentModel::acceptsScale(double factor) const {
     return !type->validate(params).has_value();
 }
 
-bool DocumentModel::scaleCurrent(double factor, const geo::Point3d& anchor) {
-    if (!m_scale || !m_history.inTransaction() || !std::isfinite(factor) || !(factor > 0.0) ||
-        m_history.document().findFeature(m_scale->id) == nullptr) {
+bool DocumentModel::acceptsScale(double factor) const {
+    if (!m_scale || !std::isfinite(factor) || !(factor > 0.0)) {
         return false;
     }
-    const core::FeatureId id = m_scale->id;
+    return std::all_of(m_scaleGroup.begin(), m_scaleGroup.end(),
+                       [&](const ScaleStart& start) { return acceptsScaleOf(start, factor); });
+}
+
+bool DocumentModel::applyScale(const ScaleStart& start, double factor, const geo::Point3d& anchor) {
+    const core::FeatureId id = start.id;
     const bool unchanged = std::abs(factor - 1.0) < 1e-12; // back to the start: as typed
-    const std::uint64_t before = m_history.document().revision();
     bool done = true;
-    for (const auto& [name, value] : m_scale->sizes) {
+    for (const auto& [name, value] : start.sizes) {
         const std::optional<std::string> text =
             unchanged ? value.expression
                       : core::scaledExpression(value.expression, value.kind, factor);
@@ -1089,19 +1400,35 @@ bool DocumentModel::scaleCurrent(double factor, const geo::Point3d& anchor) {
     static constexpr const char* kNames[3] = {"x", "y", "z"};
     const double from[3] = {anchor.x, anchor.y, anchor.z};
     for (std::size_t axis = 0; axis < 3; ++axis) {
-        const double place = m_scale->placeValue[axis];
+        const double place = start.placeValue[axis];
         // Grown about its own place on this axis (the bed under a body): the value stays as it
         // was typed, a formula included.
         const double fixed = std::abs(from[axis] - place) < 1e-6 ? place : from[axis];
         const double wanted = fixed + factor * (place - fixed);
         const std::string text = unchanged || std::abs(wanted - place) < 1e-9
-                                     ? m_scale->place[axis].expression
+                                     ? start.place[axis].expression
                                      : core::numberText(wanted);
         done = m_history.execute(core::makeSetFeatureValue(id, kNames[axis], text)) && done;
+    }
+    return done;
+}
+
+bool DocumentModel::scaleCurrent(double factor, const geo::Point3d& anchor) {
+    if (!m_scale || !m_history.inTransaction() || !std::isfinite(factor) || !(factor > 0.0)) {
+        return false;
+    }
+    const std::uint64_t before = m_history.document().revision();
+    bool done = true;
+    for (const ScaleStart& start : m_scaleGroup) {
+        if (m_history.document().findFeature(start.id) == nullptr) {
+            return false;
+        }
+        done = applyScale(start, factor, anchor) && done;
     }
     m_history.setTransactionValue("value", core::numberText(factor * 100.0));
     if (m_history.document().revision() != before) {
         documentChanged();
+        scheduleLiveCuts();
     }
     return done;
 }
@@ -1136,10 +1463,17 @@ void DocumentModel::setBodyHole(int index, bool hole) {
         return;
     }
     const std::uint64_t before = m_history.document().revision();
-    if (m_history.execute(
-            core::makeSetBodyHole(bodies[static_cast<std::size_t>(index)].id, hole)) &&
+    const core::Body& body = bodies[static_cast<std::size_t>(index)];
+    core::CommandDescription label{hole ? "holeBody" : "solidBody", {{"name", body.name}}};
+    if (const core::Feature* maker = m_history.document().findFeature(body.createdBy)) {
+        label.values["type"] = maker->type;
+        label.values["number"] = std::to_string(maker->number);
+    }
+    // A hole cuts what it touches, a body that is none any more stops cutting: the cuts change
+    // with the mark, in the same step.
+    if (executeWithCuts(core::makeSetBodyHole(body.id, hole), std::move(label)) &&
         m_history.document().revision() != before) {
-        documentChanged(false); // the shape is the same, only how it is drawn changes
+        documentChanged();
     }
 }
 
@@ -1264,7 +1598,7 @@ bool DocumentModel::finishPlacing() {
     if (!m_placing) {
         return false;
     }
-    m_history.commitTransaction();
+    finishTransaction();
     m_placing = false;
     const int placedStep = stepIndexOf(m_placingFeature);
     const core::Feature* placed = m_history.document().findFeature(m_placingFeature);
@@ -1282,6 +1616,7 @@ void DocumentModel::cancelPlacing() {
     if (!m_placing) {
         return;
     }
+    m_liveCutTimer.stop();
     m_history.cancelTransaction();
     m_placing = false;
     documentChanged();
@@ -1321,8 +1656,57 @@ std::optional<geo::Bounds> DocumentModel::bodyBounds(const QString& bodyId) cons
     return feature != nullptr ? boundsOfFeature(*feature) : std::nullopt;
 }
 
+// x, y and z as they are written in the step now (the last calculation may still be behind a
+// drag); a value that is a formula is taken from the last calculation.
+std::optional<std::array<double, 3>> DocumentModel::liveValues(const core::Feature& step) const {
+    const core::FeatureState* state = m_result ? m_result->state(step.id) : nullptr;
+    std::array<double, 3> values{};
+    static constexpr const char* kNames[3] = {"x", "y", "z"};
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        const auto given = step.params.find(kNames[axis]);
+        if (given == step.params.end()) {
+            return std::nullopt;
+        }
+        if (const auto number =
+                core::evaluateExpression(given->second.expression, given->second.kind)) {
+            values[axis] = *number;
+        } else if (state != nullptr && state->params.contains(kNames[axis])) {
+            values[axis] = state->params.at(kNames[axis]).value;
+        } else {
+            return std::nullopt;
+        }
+    }
+    return values;
+}
+
+void DocumentModel::collectForms(const core::Feature& step,
+                                 std::vector<const core::Feature*>& out) const {
+    if (step.params.contains("x") && step.params.contains("y") && step.params.contains("z")) {
+        if (std::find(out.begin(), out.end(), &step) == out.end()) {
+            out.push_back(&step);
+        }
+        return;
+    }
+    if (step.type != "combine") {
+        return;
+    }
+    for (const core::BodyId& input : step.inputs) {
+        const core::Body* body = m_history.document().findBody(input);
+        const core::Feature* maker =
+            body != nullptr ? m_history.document().findFeature(body->createdBy) : nullptr;
+        if (maker != nullptr && maker != &step) {
+            collectForms(*maker, out);
+        }
+    }
+}
+
 std::optional<std::array<double, 3>>
 DocumentModel::positionOfFeature(const core::Feature& feature) const {
+    if (feature.type == "combine") {
+        std::vector<const core::Feature*> forms;
+        collectForms(feature, forms);
+        return forms.empty() ? std::nullopt : positionOfFeature(*forms.front());
+    }
     const core::FeatureState* state = m_result ? m_result->state(feature.id) : nullptr;
     std::array<double, 3> position{};
     static constexpr const char* kNames[3] = {"x", "y", "z"};
@@ -1362,16 +1746,20 @@ bool DocumentModel::moveBodiesBy(
         const core::Body* body = findBody(bodyId);
         const core::Feature* feature =
             body != nullptr ? m_history.document().findFeature(body->createdBy) : nullptr;
-        // A step that makes several bodies would move them all: left alone (until combining).
+        // A step that makes several bodies would move them all: left alone.
         if (feature == nullptr || feature->outputs.size() != 1 ||
-            !done.insert(feature->id.value).second) {
+            (delta[0] == 0.0 && delta[1] == 0.0 && delta[2] == 0.0)) {
             continue;
         }
-        const auto from = positionOfFeature(*feature);
-        if (!from || (delta[0] == 0.0 && delta[1] == 0.0 && delta[2] == 0.0)) {
-            continue;
+        // A combined body moves as the parts it is made of, its holes with it.
+        std::vector<const core::Feature*> forms;
+        collectForms(*feature, forms);
+        for (const core::Feature* form : forms) {
+            const auto from = positionOfFeature(*form);
+            if (from && done.insert(form->id.value).second) {
+                movers.push_back({form->id, *from, delta, feature->type, body->name});
+            }
         }
-        movers.push_back({feature->id, *from, delta, feature->type, body->name});
     }
     if (movers.empty()) {
         return false;
@@ -1396,7 +1784,7 @@ bool DocumentModel::moveBodiesBy(
             }
         }
     }
-    m_history.commitTransaction();
+    finishTransaction();
     if (m_history.document().revision() != before) {
         documentChanged();
     }
@@ -1494,7 +1882,7 @@ bool DocumentModel::seatBodyOnFace(const QString& bodyId, const geo::Point3d& po
     const core::FeatureId id = feature->id;
     m_history.beginTransaction(std::move(label));
     writeSeat(id, seat);
-    m_history.commitTransaction();
+    finishTransaction();
     if (m_history.document().revision() != before) {
         documentChanged();
     }
@@ -1574,12 +1962,262 @@ QStringList DocumentModel::pasteBodies() {
         }
         created.push_back(toQString(body.value));
     }
-    m_history.commitTransaction();
+    finishTransaction();
     if (m_history.document().revision() != before) {
         documentChanged();
     }
     emit historyChanged();
     return created;
+}
+
+QVariantMap DocumentModel::cutLabel(int bodyIndex) const {
+    QVariantMap label;
+    label[QStringLiteral("valid")] = false;
+    const auto& bodies = m_history.document().bodies();
+    if (bodyIndex < 0 || bodyIndex >= static_cast<int>(bodies.size()) || !m_result) {
+        return label;
+    }
+    const core::Body& hole = bodies[static_cast<std::size_t>(bodyIndex)];
+    const auto bounds = bodyBounds(toQString(hole.id.value));
+    const auto targets =
+        core::cutTargetsOf(m_history.document(), *m_result, m_registry, *m_kernel, hole.id);
+    if (!hole.hole || !hole.visible || !bounds || targets.empty()) {
+        return label;
+    }
+    QVariantList list;
+    for (const core::CutTarget& target : targets) {
+        QVariantMap entry;
+        entry[QStringLiteral("index")] = bodyIndexOf(toQString(target.root.value));
+        entry[QStringLiteral("cut")] = target.cutNow;
+        list.push_back(entry);
+    }
+    label[QStringLiteral("valid")] = true;
+    label[QStringLiteral("x")] = (bounds->min.x + bounds->max.x) / 2.0;
+    label[QStringLiteral("y")] = (bounds->min.y + bounds->max.y) / 2.0;
+    label[QStringLiteral("z")] = bounds->max.z;
+    label[QStringLiteral("targets")] = list;
+    return label;
+}
+
+bool DocumentModel::setCutTarget(int holeIndex, int rootIndex, bool cut) {
+    const auto& bodies = m_history.document().bodies();
+    const auto count = static_cast<int>(bodies.size());
+    if (holeIndex < 0 || holeIndex >= count || rootIndex < 0 || rootIndex >= count ||
+        !bodies[static_cast<std::size_t>(holeIndex)].hole) {
+        return false;
+    }
+    const core::Body& hole = bodies[static_cast<std::size_t>(holeIndex)];
+    const core::BodyId root = bodies[static_cast<std::size_t>(rootIndex)].id;
+    std::vector<core::BodyId> exceptions = hole.cutExceptions;
+    const auto found = std::find(exceptions.begin(), exceptions.end(), root);
+    if (cut && found != exceptions.end()) {
+        exceptions.erase(found);
+    } else if (!cut && found == exceptions.end()) {
+        exceptions.push_back(root);
+    }
+    core::CommandDescription label{"cutTargets", {{"name", hole.name}}};
+    if (const core::Feature* maker = m_history.document().findFeature(hole.createdBy)) {
+        label.values["type"] = maker->type;
+        label.values["number"] = std::to_string(maker->number);
+    }
+    const std::uint64_t before = m_history.document().revision();
+    if (!executeWithCuts(core::makeSetBodyCutExceptions(hole.id, std::move(exceptions)),
+                         std::move(label))) {
+        return false;
+    }
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+    return true;
+}
+
+QVariantMap DocumentModel::splitPlane() const {
+    QVariantMap plane;
+    plane[QStringLiteral("valid")] = false;
+    const auto& features = m_history.document().features();
+    if (m_currentStep < 0 || m_currentStep >= static_cast<int>(features.size()) || !m_result) {
+        return plane;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(m_currentStep)];
+    const core::FeatureState* state = m_result->state(step.id);
+    const auto input =
+        step.inputs.empty() ? m_result->bodies.end() : m_result->bodies.find(step.inputs.front());
+    if (step.type != "split" || state == nullptr || !state->description ||
+        input == m_result->bodies.end() || state->params.empty()) {
+        return plane;
+    }
+    geo::Bounds box;
+    try {
+        box = m_kernel->bounds(input->second.solid);
+    } catch (const geo::GeometryError&) {
+        return plane;
+    }
+    const int axis = static_cast<int>(std::lround(state->params.at("axis").value));
+    const double at = state->params.at("position").value;
+    if (axis < 0 || axis > 2) {
+        return plane;
+    }
+    const double low[3] = {box.min.x, box.min.y, box.min.z};
+    const double high[3] = {box.max.x, box.max.y, box.max.z};
+    const double margin = 0.12 * box.diagonal();
+    const int u = axis == 0 ? 1 : 0;
+    const int v = axis == 2 ? 1 : 2;
+    QVariantList corners;
+    for (const auto& [cu, cv] :
+         {std::pair{-1, -1}, std::pair{1, -1}, std::pair{1, 1}, std::pair{-1, 1}}) {
+        double point[3] = {0.0, 0.0, 0.0};
+        point[axis] = at;
+        point[u] = cu < 0 ? low[u] - margin : high[u] + margin;
+        point[v] = cv < 0 ? low[v] - margin : high[v] + margin;
+        QVariantMap corner;
+        corner[QStringLiteral("x")] = point[0];
+        corner[QStringLiteral("y")] = point[1];
+        corner[QStringLiteral("z")] = point[2];
+        corners.push_back(corner);
+    }
+    plane[QStringLiteral("valid")] = true;
+    plane[QStringLiteral("corners")] = corners;
+    return plane;
+}
+
+bool DocumentModel::setSplitAxis(int stepIndex, int axis) {
+    const auto& features = m_history.document().features();
+    if (stepIndex < 0 || stepIndex >= static_cast<int>(features.size()) || axis < 0 || axis > 2 ||
+        !m_result) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(stepIndex)];
+    const auto input =
+        step.inputs.empty() ? m_result->bodies.end() : m_result->bodies.find(step.inputs.front());
+    if (step.type != "split" || input == m_result->bodies.end()) {
+        return false;
+    }
+    geo::Bounds box;
+    try {
+        box = m_kernel->exactBounds(input->second.solid);
+    } catch (const geo::GeometryError&) {
+        return false;
+    }
+    const double size[3] = {box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z};
+    const double low[3] = {box.min.x, box.min.y, box.min.z};
+    const int u = axis == 0 ? 1 : 0;
+    const int v = axis == 2 ? 1 : 2;
+    const auto text = [](double value) { return QString::number(value, 'g', 12).toStdString(); };
+    const core::FeatureId id = step.id;
+    // The plane goes to the middle of the body on the new axis (where it surely cuts).
+    m_history.beginTransaction({"setValue", {{"field", "axis"}}});
+    bool done = m_history.execute(core::makeSetFeatureValue(id, "axis", std::to_string(axis)));
+    done = m_history.execute(
+               core::makeSetFeatureValue(id, "position", text(low[axis] + size[axis] / 2.0))) &&
+           done;
+    done =
+        m_history.execute(core::makeSetFeatureValue(id, "anchorU", text(low[u] + size[u] / 2.0))) &&
+        done;
+    done =
+        m_history.execute(core::makeSetFeatureValue(id, "anchorV", text(low[v] + size[v] / 2.0))) &&
+        done;
+    finishTransaction();
+    documentChanged();
+    return done;
+}
+
+int DocumentModel::splitBody(const QString& bodyId) {
+    const core::Body* body = findBody(bodyId);
+    const auto box = bodyBounds(bodyId);
+    if (body == nullptr || !box || m_history.document().consumerOf(body->id)) {
+        return -1;
+    }
+    // Across the longest side, in the middle: halving is what most people want first.
+    const double size[3] = {box->max.x - box->min.x, box->max.y - box->min.y,
+                            box->max.z - box->min.z};
+    const double low[3] = {box->min.x, box->min.y, box->min.z};
+    int axis = 0;
+    for (int i = 1; i < 3; ++i) {
+        axis = size[i] > size[axis] + 1e-9 ? i : axis;
+    }
+    const int u = axis == 0 ? 1 : 0;
+    const int v = axis == 2 ? 1 : 2;
+    const auto number = [](double value) {
+        return core::Value{QString::number(value, 'g', 12).toStdString(),
+                           core::QuantityKind::length};
+    };
+
+    core::FeatureDraft draft = core::defaultDraft(*m_registry.find("split"));
+    draft.inputs = {body->id};
+    draft.params["axis"] = {std::to_string(axis), core::QuantityKind::plain};
+    draft.params["position"] = number(low[axis] + size[axis] / 2.0);
+    draft.params["anchorU"] = number(low[u] + size[u] / 2.0);
+    draft.params["anchorV"] = number(low[v] + size[v] / 2.0);
+
+    core::CommandDescription label{"splitBody", {{"name", body->name}}};
+    if (const core::Feature* maker = m_history.document().findFeature(body->createdBy)) {
+        label.values["type"] = maker->type;
+        label.values["number"] = std::to_string(maker->number);
+    }
+    m_history.beginTransaction(std::move(label));
+    const auto split = m_history.addFeature(std::move(draft));
+    const core::Feature* step = split ? m_history.document().findFeature(*split) : nullptr;
+    if (step == nullptr || step->outputs.size() != 2) {
+        m_history.cancelTransaction();
+        return -1;
+    }
+    // Each part gets a step of its own that puts it where it is wanted: a part cannot be moved
+    // through the split, which makes two bodies (ADR-0010 point 3).
+    const std::vector<core::BodyId> parts = step->outputs;
+    for (const core::BodyId& part : parts) {
+        core::FeatureDraft place = core::defaultDraft(*m_registry.find("place"));
+        place.inputs = {part};
+        if (!m_history.addFeature(std::move(place))) {
+            m_history.cancelTransaction();
+            return -1;
+        }
+    }
+    finishTransaction();
+    m_currentFeature = *split;
+    documentChanged();
+    return stepIndexOf(*split);
+}
+
+QString DocumentModel::combineBodies(const QStringList& bodyIds, const QString& mode) {
+    if (bodyIds.size() < 2 ||
+        (mode != QLatin1String("merge") && mode != QLatin1String("subtract") &&
+         mode != QLatin1String("intersect"))) {
+        return {};
+    }
+    std::vector<core::BodyId> inputs;
+    for (const QString& id : bodyIds) {
+        const core::Body* body = findBody(id);
+        if (body == nullptr || std::find(inputs.begin(), inputs.end(), body->id) != inputs.end() ||
+            m_history.document().consumerOf(body->id)) {
+            return {};
+        }
+        inputs.push_back(body->id);
+    }
+    const core::Body target = *findBody(bodyIds.front());
+
+    core::FeatureDraft draft = core::defaultDraft(*m_registry.find("combine"));
+    draft.texts["mode"] = mode.toStdString();
+    draft.inputs = std::move(inputs);
+    draft.newBodies = 1;
+
+    m_history.beginTransaction(
+        {"combineBodies",
+         {{"mode", mode.toStdString()}, {"count", std::to_string(bodyIds.size())}}});
+    const auto id = m_history.addFeature(std::move(draft));
+    const core::Feature* feature = id ? m_history.document().findFeature(*id) : nullptr;
+    if (feature == nullptr || feature->outputs.empty()) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    const core::BodyId result = feature->outputs.front();
+    if (!target.name.empty()) {
+        m_history.execute(core::makeSetBodyName(result, target.name));
+    }
+    m_history.execute(core::makeSetBodyColor(result, target.color));
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return toQString(result.value);
 }
 
 QStringList DocumentModel::duplicateBodies(const QStringList& bodyIds) {

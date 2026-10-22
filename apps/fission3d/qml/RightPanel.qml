@@ -31,6 +31,17 @@ Rectangle {
     readonly property var sizeValues: stepValues.filter(v => v.group === "size")
     readonly property var positionValues: stepValues.filter(v => v.group === "position")
     readonly property var rotationValues: stepValues.filter(v => v.group === "rotation")
+    // "Go all the way through": a switch for a hole whose shape runs straight (a value 0 or 1).
+    readonly property var throughValue: stepValues.find(v => v.group === "through")
+    property bool isHole: false
+    // A split: the axis it cuts across (0 = x, 1 = y, 2 = z) and where.
+    readonly property var axisValue: stepValues.find(v => v.group === "axis")
+    readonly property var cutValues: stepValues.filter(v => v.group === "cut")
+    signal axisChosen(int axis)
+    // The switch "keep the tools" of a combine step.
+    readonly property var keepToolsText: stepTexts.find(t => t.name === "keepTools")
+    readonly property var fuzzyText: stepTexts.find(t => t.name === "fuzzy")
+    readonly property bool subtracts: stepTexts.some(t => t.name === "mode" && t.value === "subtract")
     property string tab: "object"      // object | printer
     property string printerName: ""
     property string bedText: ""
@@ -147,7 +158,78 @@ Rectangle {
             }
 
             Section {
-                visible: root.tab === "object" && root.stepTexts.length > 0
+                visible: root.tab === "object" && root.axisValue !== undefined
+                heading: qsTr("Cut")
+
+                Segmented {
+                    accessibleName: qsTr("Cut across")
+                    current: root.axisValue !== undefined ? Math.round(root.axisValue.value) : 2
+                    model: [{ value: 0, text: "X" }, { value: 1, text: "Y" }, { value: 2, text: "Z" }]
+                    onActivated: value => root.axisChosen(value)
+                }
+
+                Repeater {
+                    model: root.cutValues
+
+                    delegate: NumberField {
+                        id: cutField
+
+                        required property var modelData
+
+                        width: parent.width
+                        label: modelData.label
+                        kind: modelData.kind
+                        unit: "mm"
+                        invalid: modelData.error
+                        onTextCommitted: text => root.valueCommitted(modelData.name, text)
+
+                        Binding {
+                            target: cutField
+                            property: "value"
+                            value: cutField.modelData.value
+                        }
+
+                        Binding {
+                            target: cutField
+                            property: "expression"
+                            value: cutField.modelData.expression
+                        }
+                    }
+                }
+            }
+
+            Section {
+                visible: root.tab === "object" && root.isHole && root.throughValue !== undefined
+                heading: qsTr("Hole")
+
+                Toggle {
+                    text: qsTr("Goes all the way through")
+                    checked: root.throughValue !== undefined && root.throughValue.value >= 0.5
+                    onToggled: root.valueCommitted("through", checked ? "1" : "0")
+                }
+            }
+
+            Section {
+                visible: root.tab === "object" && root.fuzzyText !== undefined
+                heading: qsTr("Combining")
+
+                Toggle {
+                    visible: root.subtracts
+                    text: qsTr("Keep the tools as bodies")
+                    checked: root.keepToolsText !== undefined && root.keepToolsText.value === "yes"
+                    onToggled: root.textCommitted("keepTools", checked ? "yes" : "no")
+                }
+
+                // The way out when faces lie almost on each other and the result is not clean.
+                Toggle {
+                    text: qsTr("Make flush (closes gaps under 0.001 mm)")
+                    checked: root.fuzzyText !== undefined && root.fuzzyText.value === "yes"
+                    onToggled: root.textCommitted("fuzzy", checked ? "yes" : "no")
+                }
+            }
+
+            Section {
+                visible: root.tab === "object" && root.stepTexts.some(t => t.kind === "text" || t.kind === "font" || t.kind === "style")
                 heading: qsTr("Text")
 
                 Repeater {

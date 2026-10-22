@@ -34,6 +34,8 @@ enum class FeatureIssueCode {
     textGlyphsMissing,      ///< The font has no character for part of a text; `subject` lists them.
     fontNotFound,           ///< The font is not on this computer; `subject` is its name.
     fontStyleMissing,       ///< The font has no such style (bold, italic); `subject` is its name.
+    combineEmpty,           ///< Combining left nothing (an overlap of bodies that do not overlap).
+    combineNoOverlap,       ///< A tool does not touch the body it was to cut.
 };
 
 struct FeatureIssue {
@@ -109,12 +111,24 @@ struct FeatureResult {
     std::vector<FeatureOutput> outputs;
 };
 
+class FeatureType;
+
+/// The step that made an input body, for a step that has to rebuild its input differently
+/// (a hole made longer, see `FeatureType::throughParams`).
+struct InputStep {
+    const Feature* feature = nullptr;
+    const FeatureType* type = nullptr;
+    ResolvedParams params; ///< As worked out.
+};
+
 struct ExecuteInput {
     const Feature& feature;
     const ResolvedParams& params;
     /// Results for `feature.inputs`, in the same order. Their face roles are full names
     /// ("F1/box/top"), so a step can pass them on.
     const std::vector<FeatureOutput>& inputs;
+    /// The steps that made `inputs`, in the same order (empty where the recompute had none).
+    std::vector<InputStep> producers = {};
 };
 
 struct ExecuteContext {
@@ -156,6 +170,28 @@ public:
                                   const ExecuteContext& context) const = 0;
 
     virtual Description describe(const ResolvedParams& params) const = 0;
+
+    /// For a hole that goes all the way through (ADR-0011): the values of the step with the body
+    /// made `reach` mm longer at both ends along its own axis, so that it leaves whatever it cuts
+    /// on both sides. nullopt for a shape that does not run straight (a sphere) or when the person
+    /// switched "through" off. The default is nullopt.
+    virtual std::optional<ResolvedParams> throughParams(const ResolvedParams& params,
+                                                        double reach) const {
+        (void)params;
+        (void)reach;
+        return std::nullopt;
+    }
+
+    /// Like `describe`, for a step whose sentence depends on its words or inputs (a combine says
+    /// how many tools it has). The default asks `describe`.
+    virtual Description describeStep(const Feature& feature, const ResolvedParams& params) const {
+        (void)feature;
+        return describe(params);
+    }
+
+    /// True for a type whose result keeps the full names of its input faces ("F1/box/top"): the
+    /// roles it reports are final and not prefixed with this step's number and type.
+    virtual bool passesOnNames() const { return false; }
 
     /// The handles of the step, in the order they are shown. A value that can be changed from
     /// several equal places (both ends of a box, all around a cylinder) is listed once for
@@ -201,6 +237,13 @@ private:
 
 /// A new step of this type with every value at its default and the bodies it will create.
 FeatureDraft defaultDraft(const FeatureType& type);
+
+/// The body of `step` made again for a hole that goes all the way through: `reach` mm longer at
+/// both ends (see `FeatureType::throughParams`). Its faces are named as the faces of the short
+/// body are ("F2/cylinder/side"), so the walls of the hole keep their names. nullopt when the
+/// shape cannot be longer or the person switched "through" off.
+std::optional<geo::NamedSolid> throughTool(const InputStep& step, double reach,
+                                           const ExecuteContext& context);
 
 /// The name of a face as a reference stores it: "F5/box/top".
 std::string elementName(const Feature& feature, std::string_view role);

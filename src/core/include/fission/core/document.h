@@ -78,6 +78,9 @@ struct Body {
     bool hole = false;
     BodyKind kind = BodyKind::precise;
     FeatureId createdBy;
+    /// Bodies this hole must not cut although it touches them (the person took them off the label
+    /// "cuts out: ..."). Named by the body they were when the hole met them, see `reconcileCuts`.
+    std::vector<BodyId> cutExceptions;
 
     bool operator==(const Body&) const = default;
 };
@@ -179,6 +182,14 @@ public:
     /// Sets a text of a step; false when the step has no text of that name.
     bool setFeatureText(const FeatureId& id, std::string_view name, std::string text);
     bool setFeatureLabel(const FeatureId& id, std::string label);
+    /// Replaces the bodies a step works on. Refused (false) when one does not exist or is made by
+    /// this step or a later one.
+    bool setFeatureInputs(const FeatureId& id, std::vector<BodyId> inputs);
+    /// The step that uses the body as an input, which is then "consumed": it is part of that
+    /// step's result and not a body of its own any more (ADR-0011). Steps that are switched off
+    /// consume nothing, and a combine with the word `keepTools` = `yes` only uses its tools (all
+    /// inputs but the first): they stay bodies of their own. nullopt when no step uses it.
+    std::optional<FeatureId> consumerOf(const BodyId& id) const;
     bool setFeatureSuppressed(const FeatureId& id, bool suppressed);
     bool setFeatureRefs(const FeatureId& id, std::string_view name,
                         std::vector<PersistentRef> refs);
@@ -190,6 +201,7 @@ public:
     bool setBodyColor(const BodyId& id, Color color);
     bool setBodyVisible(const BodyId& id, bool visible);
     bool setBodyHole(const BodyId& id, bool hole);
+    bool setBodyCutExceptions(const BodyId& id, std::vector<BodyId> exceptions);
 
 private:
     Feature* mutableFeature(const FeatureId& id);

@@ -96,6 +96,28 @@ FeatureDraft defaultDraft(const FeatureType& type) {
     return draft;
 }
 
+std::optional<geo::NamedSolid> throughTool(const InputStep& step, double reach,
+                                           const ExecuteContext& context) {
+    if (step.feature == nullptr || step.type == nullptr) {
+        return std::nullopt;
+    }
+    const auto longer = step.type->throughParams(step.params, reach);
+    if (!longer) {
+        return std::nullopt;
+    }
+    const std::vector<FeatureOutput> none;
+    FeatureResult made = step.type->execute({*step.feature, *longer, none}, context);
+    if (made.outputs.empty()) {
+        return std::nullopt;
+    }
+    geo::NamedSolid result;
+    result.solid = std::move(made.outputs.front().solid);
+    for (const geo::NamedFace& face : made.outputs.front().faces) {
+        result.faces.push_back({face.faceId, elementName(*step.feature, face.role)});
+    }
+    return result;
+}
+
 std::string elementName(const Feature& feature, std::string_view role) {
     std::string name = "F" + std::to_string(feature.number) + "/" + feature.type + "/";
     name += role;

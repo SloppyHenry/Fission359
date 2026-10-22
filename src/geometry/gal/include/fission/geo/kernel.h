@@ -30,6 +30,13 @@ struct NamedSolid {
     std::vector<NamedFace> faces;
 };
 
+/// How bodies are combined (AP-1.7, ADR-0011).
+enum class BooleanOp {
+    merge,    ///< The target and the tools as one body.
+    subtract, ///< The target without the places the tools take.
+    intersect ///< Only what target and tools have in common.
+};
+
 /// What features may ask of the geometry kernel (docs/03-architektur.md §4). The core and the
 /// feature types only know this interface; the OpenCASCADE implementation is handed in by the
 /// application, tests may hand in another one.
@@ -66,6 +73,37 @@ public:
         (void)centre;
         (void)angles;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot turn bodies");
+    }
+
+    /// The same body moved by `delta` (mm). A pure move, like `rotate`: the faces stay the faces
+    /// they were, with their roles, in the same order. The default refuses.
+    virtual NamedSolid translate(const NamedSolid& solid, Point3d delta) const {
+        (void)solid;
+        (void)delta;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move bodies");
+    }
+
+    /// Combines `target` with `tools` exactly (no tolerance), then joins faces that lie in one
+    /// surface. Faces keep the roles they had in their input; where one input face is cut into
+    /// several pieces, the pieces get the role with `#1`, `#2` ... appended (never one name twice).
+    /// A face that comes from a tool and now bounds the cut keeps the tool's role. Equal roles
+    /// from different inputs that are joined into one face leave the role of the earlier input
+    /// (target first). The result is always **one** body (a compound if it falls apart).
+    /// `subtract` with tools that miss the target gives the target back unchanged. Throws
+    /// `GeometryError` with `emptyResult` if nothing is left. The default refuses.
+    /// `fuzzy` (mm, 0 = exact) lets faces that lie closer than that count as one: the way out
+    /// for bodies whose faces lie almost on each other, offered to the person, never used unasked.
+    virtual NamedSolid boolean(BooleanOp op, const NamedSolid& target,
+                               const std::vector<NamedSolid>& tools, double fuzzy) const {
+        (void)op;
+        (void)target;
+        (void)tools;
+        (void)fuzzy;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot combine bodies");
+    }
+    NamedSolid boolean(BooleanOp op, const NamedSolid& target,
+                       const std::vector<NamedSolid>& tools) const {
+        return boolean(op, target, tools, 0.0);
     }
 
     /// The names of the fonts lettering can use (bundled and installed), sorted. Takes a moment

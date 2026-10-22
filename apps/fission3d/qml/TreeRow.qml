@@ -18,6 +18,7 @@ Rectangle {
     property string iconName: ""
     property color swatch: "transparent"
     property bool hole: false          // a hole: the swatch is an empty outline (a ghost)
+    property bool cut: false           // something was cut out of this body: a small hole symbol follows the name
     property string text: ""
     property string count: ""
     signal eyeToggled
@@ -77,11 +78,23 @@ Rectangle {
         }
     }
 
+    Icon {
+        visible: root.cut
+        anchors.left: nameText.left
+        anchors.leftMargin: Math.min(nameText.contentWidth, nameText.width) + 5
+        anchors.verticalCenter: parent.verticalCenter
+        name: "hole"
+        size: 13
+        color: Theme.fg4
+    }
+
     Txt {
+        id: nameText
+
         anchors.left: lead.visible ? lead.right : parent.left
         anchors.leftMargin: lead.visible ? 6 : (root.child ? 24 : 6)
         anchors.right: countText.visible ? countText.left : eyeButton.visible ? eyeButton.left : parent.right
-        anchors.rightMargin: 6
+        anchors.rightMargin: root.cut ? 24 : 6
         anchors.verticalCenter: parent.verticalCenter
         text: root.text
         color: root.group || root.selected ? Theme.fg : root.eyeOn ? Theme.fg2 : Theme.fg4

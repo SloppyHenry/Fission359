@@ -26,7 +26,13 @@ public:
         return withPlace({{"width", QuantityKind::length, "20"},
                           {"depth", QuantityKind::length, "20"},
                           {"height", QuantityKind::length, "20"},
-                          {"cornerRadius", QuantityKind::length, "0"}});
+                          {"cornerRadius", QuantityKind::length, "0"}},
+                         /*prismatic=*/true);
+    }
+
+    std::optional<ResolvedParams> throughParams(const ResolvedParams& params,
+                                                double reach) const override {
+        return prismaticThrough(params, reach);
     }
 
     std::optional<FeatureIssue> validate(const ResolvedParams& params) const override {

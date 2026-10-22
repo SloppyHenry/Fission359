@@ -111,10 +111,10 @@ Window {
             { id: "dropToBed", text: qsTr("Drop to bed"), shortcut: "D", enabled: Selection.count > 0 },
             { id: "seatOnFace", text: qsTr("Lay on face"), enabled: Selection.count > 0 },
             { separator: true },
-            { id: "merge", text: qsTr("Merge"), enabled: false },
-            { id: "subtract", text: qsTr("Subtract"), enabled: false },
-            { id: "overlap", text: qsTr("Keep overlap"), enabled: false },
-            { id: "split", text: qsTr("Split"), enabled: false }
+            { id: "merge", text: qsTr("Merge"), enabled: root.chosenBodies.length >= 2 },
+            { id: "subtract", text: qsTr("Subtract"), enabled: root.chosenBodies.length >= 2 },
+            { id: "overlap", text: qsTr("Keep overlap"), enabled: root.chosenBodies.length >= 2 },
+            { id: "split", text: qsTr("Split"), enabled: root.chosenBodies.length === 1 }
         ] },
         { title: qsTr("Window"), items: [
             { id: "minimize", text: qsTr("Minimize"), shortcut: primaryKey + "M", nativeShortcut: "Ctrl+M" },
@@ -245,6 +245,10 @@ Window {
             }
             break
         case "seatOnFace": seating = true; break
+        case "split": splitChosen(); break
+        case "merge":
+        case "subtract":
+        case "overlap": combine(id); break
         case "hole": {
             const holeNow = !root.chosenAreHoles
             for (const index of root.chosenBodyIndexes) {
@@ -274,6 +278,30 @@ Window {
 
     // A word of the chosen step was changed (text, font or style). A font that lacks the style in
     // use takes it back to regular in the same step, and says so.
+    function splitChosen() {
+        if (DocumentModel.splitBody(root.chosenBodies[0]) < 0) {
+            showHint(qsTr("This body cannot be split: it may be part of another body."))
+            return
+        }
+        root.flyout = ""
+        root.tool = "size" // its handle, the dot on the plane, is shown by this tool
+    }
+
+    // Combines the chosen bodies: the one chosen first is changed, the others are the tools.
+    function combine(way) {
+        if (way === "split") {
+            splitChosen()
+            return
+        }
+        const made = DocumentModel.combineBodies(root.chosenBodies, way)
+        if (made === "") {
+            showHint(qsTr("Choose two or more bodies that are not part of another body yet."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+    }
+
     function changeWords(name, text) {
         const step = DocumentModel.currentStep
         if (name === "font" && currentStyleName !== "regular"
@@ -619,6 +647,22 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            // The cutting plane of the chosen split, as a translucent sheet.
+            SplitPlaneLayer {
+                anchors.fill: parent
+                viewport: viewport
+                plane: root.splitPlaneInfo
+            }
+
+            // The label "Cuts out: …" on a chosen hole.
+            CutLayer {
+                anchors.fill: parent
+                viewport: viewport
+                info: root.cutLabelInfo
+                nameOf: root.bodyName
+                onTargetToggled: (bodyIndex, cut) => DocumentModel.setCutTarget(root.chosenHoleIndex, bodyIndex, cut)
+            }
+
             // "Lay on face": the next click puts the chosen body on the face under the pointer.
             MouseArea {
                 anchors.fill: parent
@@ -672,10 +716,14 @@ Window {
                 onDisplayRequested: mode => root.display = mode
                 onToolRequested: tool => root.tool = tool
                 flyout: root.flyout
+                chosenCount: root.chosenBodies.length
+                onCombineRequested: way => root.combine(way)
                 onFlyoutCloseRequested: root.flyout = ""
                 onGroupRequested: group => {
                     if (group === "shapes") {
                         root.flyout = root.flyout === "shapes" ? "" : "shapes"
+                    } else if (group === "combine") {
+                        root.flyout = root.flyout === "combine" ? "" : "combine"
                     } else {
                         root.flyout = ""
                         root.showHint(qsTr("This tool group arrives in a later version."))
@@ -720,11 +768,13 @@ Window {
             }
             stepTitle: root.currentStepTitle
             stepValues: root.stepValueList
+            isHole: root.currentStepIsHole
             stepTexts: DocumentModel.stepTexts
             fonts: DocumentModel.fontFamilies
             fontStyles: DocumentModel.fontStyles(root.currentFontName)
             onTextCommitted: (name, text) => root.changeWords(name, text)
             onTabRequested: tab => root.rightTab = tab
+            onAxisChosen: axis => DocumentModel.setSplitAxis(DocumentModel.currentStep, axis)
             onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)
         }
     }
@@ -744,6 +794,7 @@ Window {
             : Handles.editing ? qsTr("Enter accepts, Tab goes to the next size, Esc leaves everything as it was.")
             : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
+            : root.flyout === "combine" ? qsTr("Choose two or more bodies (Shift+click), then merge them, subtract the others from the first or keep only what they share. One body can be split in two.")
             : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.")
             : root.hoverText !== "" ? root.hoverText
             : Selection.count > 0 ? toolCatalog.find(root.tool).hint
@@ -765,6 +816,9 @@ Window {
     }
 
     function typeLabel(type) {
+        if (type === "combine") { return qsTr("Combine") }
+        if (type === "split") { return qsTr("Split") }
+        if (type === "place") { return qsTr("Placing") }
         const name = shapeCatalog.nameOf(type)
         return name !== "" ? name : qsTr("Body")
     }
@@ -785,6 +839,7 @@ Window {
         case "sides": return qsTr("Sides")
         case "points": return qsTr("Points")
         case "size": return qsTr("Letter size")
+        case "position": return qsTr("Position")
         default: return name
         }
     }
@@ -833,6 +888,19 @@ Window {
                 ? qsTr("Text “%1” (%2), letters %3 mm, height %4 mm").arg(step.texts.text).arg(styleLabel(style)).arg(n(v[0])).arg(n(v[1]))
                 : qsTr("Text “%1”, letters %2 mm, height %3 mm").arg(step.texts.text).arg(n(v[0])).arg(n(v[1]))
         }
+        if (step.type === "split" && v.length === 2) {
+            return qsTr("Split across %1 at %2 mm").arg(["X", "Y", "Z"][Math.round(v[0])]).arg(n(v[1]))
+        }
+        if (step.type === "place" && v.length === 3) {
+            return qsTr("Part placed, moved by %1, %2, %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+        }
+        if (step.type === "combine" && v.length === 1) {
+            switch (step.texts.mode) {
+            case "subtract": return qsTr("Cut out %n body(ies)", "", v[0])
+            case "intersect": return qsTr("Overlap kept with %n body(ies)", "", v[0])
+            default: return qsTr("Merged with %n body(ies)", "", v[0])
+            }
+        }
         return typeLabel(step.type)
     }
 
@@ -850,12 +918,20 @@ Window {
                 ? qsTr("%1 changed to %2").arg(valueLabel(step.field)).arg(step.value)
                 : qsTr("%1 changed").arg(valueLabel(step.field))
         case "setText": return qsTr("Text of %1 changed").arg(body)
+        case "cutTargets": return qsTr("What %1 cuts out changed").arg(body)
         case "holeBody": return qsTr("%1 made a hole").arg(body)
         case "moveBody": return qsTr("%1 moved").arg(body)
         case "rotateBody": return qsTr("%1 turned").arg(body)
         case "dropBody": return step.count === "1" ? qsTr("%1 dropped to the bed").arg(body) : qsTr("Bodies dropped to the bed")
         case "alignBodies": return qsTr("Bodies aligned")
         case "seatBody": return qsTr("%1 laid on a face").arg(body)
+        case "splitBody": return qsTr("%1 split in two").arg(body)
+        case "combineBodies":
+            switch (step.mode) {
+            case "subtract": return qsTr("Cut out %n body(ies)", "", Number(step.count) - 1)
+            case "intersect": return qsTr("Overlap of %n body(ies) kept", "", Number(step.count))
+            default: return qsTr("%n body(ies) merged", "", Number(step.count))
+            }
         case "pasteBodies": return step.count === "1" ? qsTr("%1 pasted").arg(typeLabel(step.type)) : qsTr("Bodies pasted")
         case "scaleBody":
             return Number(step.value) < 100
@@ -919,6 +995,18 @@ Window {
             default: return qsTr("%1 must be bigger than zero.").arg(valueLabel(problem.field))
             }
         }
+        if (problem.code === "kernelRejected" && problem.field === "position") {
+            return qsTr("The cutting plane does not touch the body. Move it into the body.")
+        }
+        if (problem.code === "combineNoOverlap") {
+            return qsTr("A cutter does not touch the body, so nothing is cut out. Move it onto the body.")
+        }
+        if (problem.code === "kernelResultInvalid" && step && step.type === "combine") {
+            return qsTr("These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.")
+        }
+        if (problem.code === "combineEmpty") {
+            return qsTr("The bodies do not overlap, so nothing is left. Move them so that they touch.")
+        }
         if (problem.code === "inputFailed" || problem.code === "inputMissing") {
             return qsTr("An earlier step has a problem.")
         }
@@ -940,11 +1028,37 @@ Window {
     readonly property bool chosenAreHoles: chosenBodyIndexes.length > 0
         && chosenBodyIndexes.every(index => index >= 0 && index < DocumentModel.bodies.length && DocumentModel.bodies[index].hole)
 
+    // The body of the chosen step is a hole (its panel offers "goes all the way through").
+    readonly property bool currentStepIsHole: {
+        const index = DocumentModel.bodies && DocumentModel.currentStep >= 0
+            ? DocumentModel.bodyIndexOf(DocumentModel.bodyOfStep(DocumentModel.currentStep)) : -1
+        return index >= 0 && DocumentModel.bodies[index].hole
+    }
+
+    // The cutting plane of the chosen split step (asked again when the values change).
+    readonly property var splitPlaneInfo: DocumentModel.stepValues && DocumentModel.currentStep >= 0
+        ? DocumentModel.splitPlane() : ({ valid: false })
+
+    // The one chosen body, if it is a hole: the label "Cuts out: …" hangs on it.
+    readonly property int chosenHoleIndex: {
+        const indexes = chosenBodyIndexes
+        if (indexes.length !== 1 || indexes[0] < 0 || indexes[0] >= DocumentModel.bodies.length) {
+            return -1
+        }
+        return DocumentModel.bodies[indexes[0]].hole ? indexes[0] : -1
+    }
+    // Read the list of bodies so that the label is asked again when a body or a cut changes.
+    readonly property var cutLabelInfo: DocumentModel.bodies && chosenHoleIndex >= 0
+        ? DocumentModel.cutLabel(chosenHoleIndex) : ({ valid: false })
+
     readonly property var bodyList: DocumentModel.bodies.map(body => ({
-        name: body.name !== "" ? body.name : typeLabel(body.type) + " " + body.number,
+        name: (body.name !== "" ? body.name : typeLabel(body.type) + " " + body.number)
+              + (body.part > 0 ? qsTr(", part %1").arg(body.part) : ""),
         color: body.color,
         visible: body.visible,
         hole: body.hole,
+        consumed: body.consumed,
+        cut: body.cut,
         chosen: chosenBodyIndexes.indexOf(body.index) >= 0
     }))
 

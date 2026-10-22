@@ -21,7 +21,13 @@ public:
 
     std::vector<ParamSpec> parameters() const override {
         return withPlace(
-            {{"radius", QuantityKind::length, "10"}, {"height", QuantityKind::length, "20"}});
+            {{"radius", QuantityKind::length, "10"}, {"height", QuantityKind::length, "20"}},
+            /*prismatic=*/true);
+    }
+
+    std::optional<ResolvedParams> throughParams(const ResolvedParams& params,
+                                                double reach) const override {
+        return prismaticThrough(params, reach);
     }
 
     std::optional<FeatureIssue> validate(const ResolvedParams& params) const override {

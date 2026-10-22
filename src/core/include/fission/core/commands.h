@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "fission/core/command.h"
 #include "fission/core/document.h"
@@ -47,6 +48,8 @@ std::unique_ptr<Command> makeSetFeatureValue(FeatureId id, std::string name,
                                              std::string expression);
 /// Sets a word-valued field of a step (the text of a lettering, the name of its font).
 std::unique_ptr<Command> makeSetFeatureText(FeatureId id, std::string name, std::string text);
+/// Replaces the bodies a step works on (a combine step gets another tool).
+std::unique_ptr<Command> makeSetFeatureInputs(FeatureId id, std::vector<BodyId> inputs);
 std::unique_ptr<Command> makeSetFeatureLabel(FeatureId id, std::string label);
 /// Switches a step off or on ("ausblenden").
 std::unique_ptr<Command> makeSetFeatureSuppressed(FeatureId id, bool suppressed);
@@ -56,6 +59,9 @@ std::unique_ptr<Command> makeSetBodyColor(BodyId id, Color color);
 std::unique_ptr<Command> makeSetBodyVisible(BodyId id, bool visible);
 /// Marks a body as a hole ("Als Loch") or takes the mark away.
 std::unique_ptr<Command> makeSetBodyHole(BodyId id, bool hole);
+
+/// Sets the bodies a hole must not cut (the choices of the label "cuts out: ...").
+std::unique_ptr<Command> makeSetBodyCutExceptions(BodyId id, std::vector<BodyId> exceptions);
 
 // Named measures
 std::unique_ptr<Command> makeAddParameter(Parameter parameter);

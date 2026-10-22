@@ -30,7 +30,13 @@ public:
 
     std::vector<ParamSpec> parameters() const override {
         return withPlace(
-            {{"size", QuantityKind::length, "10"}, {"height", QuantityKind::length, "2"}});
+            {{"size", QuantityKind::length, "10"}, {"height", QuantityKind::length, "2"}},
+            /*prismatic=*/true);
+    }
+
+    std::optional<ResolvedParams> throughParams(const ResolvedParams& params,
+                                                double reach) const override {
+        return prismaticThrough(params, reach);
     }
 
     std::vector<TextFieldSpec> texts() const override {

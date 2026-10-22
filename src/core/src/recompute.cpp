@@ -103,7 +103,7 @@ std::string cacheKey(const Feature& feature, const FeatureType& type, const Reso
 FeatureIssue issueFromKernel(const geo::GeometryError& error) {
     switch (error.code()) {
     case geo::GeometryErrorCode::invalidInput:
-        return issueOf(FeatureIssueCode::kernelRejected, {}, error.what());
+        return issueOf(FeatureIssueCode::kernelRejected, error.subject(), error.what());
     case geo::GeometryErrorCode::invalidResult:
         return issueOf(FeatureIssueCode::kernelResultInvalid, {}, error.what());
     case geo::GeometryErrorCode::textEmpty:
@@ -114,6 +114,10 @@ FeatureIssue issueFromKernel(const geo::GeometryError& error) {
         return issueOf(FeatureIssueCode::fontNotFound, error.subject(), error.what());
     case geo::GeometryErrorCode::fontStyleMissing:
         return issueOf(FeatureIssueCode::fontStyleMissing, error.subject(), error.what());
+    case geo::GeometryErrorCode::emptyResult:
+        return issueOf(FeatureIssueCode::combineEmpty, {}, error.what());
+    case geo::GeometryErrorCode::noOverlap:
+        return issueOf(FeatureIssueCode::combineNoOverlap, {}, error.what());
     case geo::GeometryErrorCode::kernelFailure:
         break;
     }
@@ -195,6 +199,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
 
     // Puts the bodies of a calculated or remembered entry into the result.
     const auto publish = [&](const Feature& feature, const Entry& entry, bool stale) {
+        const FeatureType* made = registry.find(feature.type);
+        const bool passesOnNames = made != nullptr && made->passesOnNames();
         for (std::size_t i = 0; i < entry.outputs.size() && i < feature.outputs.size(); ++i) {
             BodyResult body;
             body.id = feature.outputs[i];
@@ -204,7 +210,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             body.token = entry.token;
             body.outputIndex = i;
             for (const geo::NamedFace& role : entry.outputs[i].roles) {
-                body.faces.push_back({role.faceId, elementName(feature, role.role)});
+                body.faces.push_back(
+                    {role.faceId, passesOnNames ? role.role : elementName(feature, role.role)});
             }
             result.bodies[body.id] = std::move(body);
         }
@@ -246,11 +253,12 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             fail(std::move(*issue));
             continue;
         }
-        state.description = type->describe(state.params);
+        state.description = type->describeStep(feature, state.params);
 
         // Bodies it works on.
         std::vector<const BodyResult*> inputBodies;
         std::vector<FeatureOutput> inputs;
+        std::vector<InputStep> producers;
         bool inputIssue = false;
         bool staleInput = false;
         for (const BodyId& id : feature.inputs) {
@@ -271,6 +279,16 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                 input.faces.push_back({face.faceId, face.name});
             }
             inputs.push_back(std::move(input));
+
+            InputStep producer;
+            producer.feature = document.findFeature(found->second.producer);
+            if (producer.feature != nullptr) {
+                producer.type = registry.find(producer.feature->type);
+                if (const FeatureState* made = result.state(producer.feature->id)) {
+                    producer.params = made->params;
+                }
+            }
+            producers.push_back(std::move(producer));
         }
         if (inputIssue) {
             continue;
@@ -290,7 +308,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             std::vector<Output> outputs;
             try {
                 const ExecuteContext context{kernel, cancel};
-                FeatureResult made = type->execute({feature, state.params, inputs}, context);
+                FeatureResult made =
+                    type->execute({feature, state.params, inputs, std::move(producers)}, context);
                 if (cancel.stop_requested()) {
                     return std::nullopt; // a step that gave up because it was asked to
                 }

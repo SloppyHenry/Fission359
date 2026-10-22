@@ -300,6 +300,27 @@ NamedSolid rotateNamed(const NamedSolid& solid, Point3d centre, const Angles& an
     }
 }
 
+NamedSolid translateNamed(const NamedSolid& solid, Point3d delta) {
+    if (!isFinite(delta)) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "translate: not a number");
+    }
+    if (delta.x == 0.0 && delta.y == 0.0 && delta.z == 0.0) {
+        return solid;
+    }
+    try {
+        gp_Trsf move;
+        move.SetTranslation(gp_Vec(delta.x, delta.y, delta.z));
+        const TopoDS_Shape moved =
+            BRepBuilderAPI_Transform(shapeOf(solid.solid), move, /*Copy=*/true).Shape();
+        NamedSolid result;
+        result.solid = validated(moved, "translate");
+        result.faces = solid.faces;
+        return result;
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "translate: the kernel failed");
+    }
+}
+
 Solid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner, double cornerRadius) {
     return makeNamedBox(sizeX, sizeY, sizeZ, corner, cornerRadius).solid;
 }

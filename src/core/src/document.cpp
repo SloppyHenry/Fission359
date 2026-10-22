@@ -317,6 +317,53 @@ bool Document::setFeatureRefs(const FeatureId& id, std::string_view name,
 
 // --- bodies -------------------------------------------------------------------------------
 
+bool Document::setFeatureInputs(const FeatureId& id, std::vector<BodyId> inputs) {
+    const auto self = indexOf(id);
+    if (!self) {
+        return false;
+    }
+    for (const BodyId& input : inputs) {
+        const Body* body = findBody(input);
+        const auto maker = body != nullptr ? indexOf(body->createdBy) : std::nullopt;
+        if (!maker || *maker >= *self) {
+            return false;
+        }
+    }
+    features_[*self].inputs = std::move(inputs);
+    touch();
+    return true;
+}
+
+std::optional<FeatureId> Document::consumerOf(const BodyId& id) const {
+    for (const Feature& feature : features_) {
+        if (feature.suppressed) {
+            continue;
+        }
+        const auto used = std::find(feature.inputs.begin(), feature.inputs.end(), id);
+        if (used == feature.inputs.end()) {
+            continue;
+        }
+        // A combine that keeps its tools only uses them: they stay bodies of their own.
+        const auto keeps = feature.texts.find("keepTools");
+        if (used != feature.inputs.begin() && keeps != feature.texts.end() &&
+            keeps->second == "yes") {
+            continue;
+        }
+        return feature.id;
+    }
+    return std::nullopt;
+}
+
+bool Document::setBodyCutExceptions(const BodyId& id, std::vector<BodyId> exceptions) {
+    Body* body = mutableBody(id);
+    if (body == nullptr) {
+        return false;
+    }
+    body->cutExceptions = std::move(exceptions);
+    touch();
+    return true;
+}
+
 const Body* Document::findBody(const BodyId& id) const {
     const auto found =
         std::find_if(bodies_.begin(), bodies_.end(), [&](const Body& b) { return b.id == id; });

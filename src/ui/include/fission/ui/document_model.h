@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "fission/core/command.h"
 #include "fission/core/document.h"
 #include "fission/core/element_names.h"
 #include "fission/core/feature_type.h"
@@ -227,6 +228,28 @@ public:
     Q_INVOKABLE QStringList pasteBodies();
     /// Copies and pastes in one go: the copy lies 10 mm to the side and to the back.
     Q_INVOKABLE QStringList duplicateBodies(const QStringList& bodyIds);
+    /// Combines bodies in one step (ADR-0011): `mode` is merge | subtract | intersect, the first
+    /// body is the target, the others are the tools. The result has the target's name and colour.
+    /// Returns the id of the result; empty when it cannot be done (fewer than two bodies, a body
+    /// that does not exist or is part of another result already).
+    /// The label "cuts out: ..." of a hole (rule 13): `valid`, where it hangs (`x`, `y`, `z`: the
+    /// middle of the top of the ghost) and `targets`, the bodies the hole touches, each as
+    /// `{ index, cut }` (the index of the body it started as, and whether the hole cuts it).
+    Q_INVOKABLE QVariantMap cutLabel(int bodyIndex) const;
+    /// Lets the hole `holeIndex` cut the body `rootIndex` (or not), as one step. False when the
+    /// body is no hole or the index is wrong.
+    Q_INVOKABLE bool setCutTarget(int holeIndex, int rootIndex, bool cut);
+    /// Splits a body in two across its longest side, in the middle (AP-1.7e): a step for the cut
+    /// and one step per part to move it. One step to undo. Returns the index of the cut's step
+    /// (chosen, so that its arrow shows) or -1 when it cannot be done.
+    /// Lets the cut of a split step run across another axis (0 = x, 1 = y, 2 = z): the plane goes
+    /// to the middle of the body on that axis. One step.
+    Q_INVOKABLE bool setSplitAxis(int stepIndex, int axis);
+    /// The cutting plane of the chosen split step, to be drawn as a translucent sheet: `valid` and
+    /// `corners`, four points `{x, y, z}` (mm) round the plane, a little larger than the body.
+    Q_INVOKABLE QVariantMap splitPlane() const;
+    Q_INVOKABLE int splitBody(const QString& bodyId);
+    Q_INVOKABLE QString combineBodies(const QStringList& bodyIds, const QString& mode);
     bool canPaste() const noexcept { return !m_clipboard.empty(); }
     /// How far (mm) a copy lies from the original, in x and in y.
     static constexpr double kPasteOffset = 10.0;
@@ -327,6 +350,13 @@ private:
     void documentChanged(bool geometryChanged = true);
     int stepIndexOf(const core::FeatureId& id) const;
     void setCalculating(bool calculating);
+    /// Ends the open transaction. Cuts that holes need are updated first, so that they are part
+    /// of the same step (ADR-0011).
+    void finishTransaction();
+    /// True when a body is marked as hole or a cut for a hole exists.
+    bool hasCuttingParts() const;
+    /// Runs one command and the cuts it needs as one step, described by `label`.
+    bool executeWithCuts(std::unique_ptr<core::Command> command, core::CommandDescription label);
     void rebuildLists();
     void rebuildScene();
     QVariantList buildStepValues() const;
@@ -347,11 +377,36 @@ private:
         core::ResolvedParams params;
     };
     std::optional<ScaleStart> m_scale;
+    /// A combined body is made larger as all the parts it is made of (the first one is `m_scale`).
+    std::vector<ScaleStart> m_scaleGroup;
+    // The parts of a combined body when it is turned, as they were when the turn began.
+    struct TurnStart {
+        core::FeatureId id;
+        std::array<core::Value, 3> place; ///< x, y, z as typed
+        std::array<double, 3> placeValue{};
+        std::array<core::Value, 3> turn; ///< rotX, rotY, rotZ as typed
+        geo::Angles turnValue;
+        geo::Point3d centreOffset; ///< the middle of the part before its turn, minus its foot
+    };
+    std::vector<TurnStart> m_turnGroup;
+    geo::Point3d m_turnGroupCentre; ///< what the whole turns about: the middle of its box
+    /// The parts of the chosen combined body can all turn / be made larger (each has the values
+    /// for it); false for a part of a split (it has only a place).
+    bool groupCanTurn(const core::Feature& step) const;
+    std::optional<ScaleStart> scaleStartOf(const core::Feature& feature) const;
+    bool acceptsScaleOf(const ScaleStart& start, double factor) const;
+    bool applyScale(const ScaleStart& start, double factor, const geo::Point3d& anchor);
     core::History m_history;
+    core::RecomputeCache m_cutCache; ///< for the cuts of holes (own memory: a separate calculation)
     std::shared_ptr<const core::RecomputeResult> m_result;
     std::optional<geo::Bounds> boundsOfFeature(const core::Feature& feature) const;
-    /// The numbers x, y and z of a step, if it has a place.
+    /// The numbers x, y and z of a step, if it has a place. For a combined body the place of the
+    /// first form it is made of (the target comes first).
     std::optional<std::array<double, 3>> positionOfFeature(const core::Feature& feature) const;
+    /// The steps that put a body in its place: the step itself, or for a combined body all the
+    /// steps of its parts, holes included (ADR-0011, they move together).
+    std::optional<std::array<double, 3>> liveValues(const core::Feature& step) const;
+    void collectForms(const core::Feature& step, std::vector<const core::Feature*>& out) const;
     /// Writes the turn and the foot of a seat into the step (one value after the other).
     void writeSeat(const core::FeatureId& id, const geo::Seat& seat);
     const core::Body* findBody(const QString& bodyId) const;
@@ -404,6 +459,11 @@ private:
         std::make_shared<std::atomic<std::uint64_t>>(0);
     std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_detailMeshes;
     QTimer m_detailTimer;
+    // While a drag goes on, cuts of holes are looked at every so often (not at every move of the
+    // mouse): a hole pulled onto or off a body cuts it live (rule 13).
+    QTimer m_liveCutTimer;
+    void scheduleLiveCuts();
+    void liveCuts();
     QThreadPool m_detailPool;
 
     // Last: its thread must be stopped before the rest goes away.

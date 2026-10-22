@@ -73,6 +73,21 @@ public:
         ++builds;
         return inner_->makeCylinder(radius, height, base);
     }
+    fission::geo::NamedSolid rotate(const fission::geo::NamedSolid& solid,
+                                    fission::geo::Point3d centre,
+                                    const fission::geo::Angles& angles) const override {
+        return inner_->rotate(solid, centre, angles);
+    }
+    fission::geo::NamedSolid translate(const fission::geo::NamedSolid& solid,
+                                       fission::geo::Point3d delta) const override {
+        return inner_->translate(solid, delta);
+    }
+    fission::geo::NamedSolid boolean(fission::geo::BooleanOp op,
+                                     const fission::geo::NamedSolid& target,
+                                     const std::vector<fission::geo::NamedSolid>& tools,
+                                     double fuzzy) const override {
+        return inner_->boolean(op, target, tools, fuzzy);
+    }
     fission::geo::SolidReport measure(const fission::geo::Solid& solid) const override {
         return inner_->measure(solid);
     }
@@ -169,7 +184,7 @@ TEST_CASE("values of the chosen step, formulas stay visible", "[ui][document-mod
     f.model->selectStep(0);
     CHECK(f.model->currentStep() == 0);
     QVariantList values = f.model->stepValues();
-    REQUIRE(values.size() == 10); // width depth height cornerRadius x y z rotX rotY rotZ
+    REQUIRE(values.size() == 11); // width depth height cornerRadius x y z rotX rotY rotZ through
     CHECK(values[0].toMap()["name"].toString() == "width");
     CHECK(values[0].toMap()["group"].toString() == "size");
     CHECK(values[0].toMap()["expression"].toString().isEmpty()); // typed as a plain number
@@ -436,4 +451,447 @@ TEST_CASE("quick changes never take a body out of the view", "[ui][document-mode
     REQUIRE(f.model->elementNames() != nullptr);
     CHECK(f.model->elementNames()->size() == 1);
     CHECK(extentOf(*f.model->scene()).maxX == Approx(40.0));
+}
+
+TEST_CASE("combining: parts of a result leave the list, tools of a cut stay as ghosts",
+          "[ui][document-model][combine]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    // In the box, where it is a cutter that touches it.
+    f.model->setStepValue(1, "radius", "4");
+    f.model->setStepValue(1, "x", "0");
+    f.model->setStepValue(1, "y", "0");
+    f.model->waitForCalculation();
+    REQUIRE(f.model->scene()->bodies.size() == 2);
+
+    const QString box = f.model->bodyIdAt(0);
+    const QString pin = f.model->bodyIdAt(1);
+    const QString cut = f.model->combineBodies({box, pin}, "subtract");
+    REQUIRE_FALSE(cut.isEmpty());
+    f.model->waitForCalculation();
+
+    // The box is part of the result now; the cylinder stays, as a ghost.
+    const QVariantList bodies = f.model->bodies();
+    REQUIRE(bodies.size() == 3);
+    CHECK(bodies.at(0).toMap()["consumed"].toBool());
+    CHECK_FALSE(bodies.at(1).toMap()["consumed"].toBool());
+    CHECK_FALSE(bodies.at(2).toMap()["consumed"].toBool());
+    CHECK(bodies.at(2).toMap()["cut"].toBool());
+    CHECK_FALSE(bodies.at(0).toMap()["cut"].toBool());
+
+    REQUIRE(f.model->scene()->bodies.size() == 2);
+    CHECK(f.model->scene()->bodies[0].id == pin.toStdString());
+    CHECK(f.model->scene()->bodies[0].color.alpha() < 255);
+    CHECK(f.model->scene()->bodies[1].id == cut.toStdString());
+    CHECK(f.model->scene()->bodies[1].color.alpha() == 255);
+
+    // The recipe says what happened, and the step is one entry in "last actions".
+    CHECK(f.model->recipe().size() == 3);
+    CHECK(f.step(2)["type"].toString() == "combine");
+    CHECK(f.step(2)["state"].toString() == "ok");
+    CHECK(f.step(2)["values"].toList().at(0).toDouble() == Approx(1.0));
+    CHECK(f.model->nextUndo()["key"].toString() == "combineBodies");
+
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->scene()->bodies.size() == 2);
+    CHECK_FALSE(f.model->bodies().at(0).toMap()["consumed"].toBool());
+    CHECK(f.model->recipe().size() == 2);
+}
+
+TEST_CASE("combining: merged bodies all leave the list, bad requests do nothing",
+          "[ui][document-model][combine]") {
+    Fixture f;
+    f.model->addShape("cylinder", false);
+    f.model->waitForCalculation();
+    const QString box = f.model->bodyIdAt(0);
+    const QString pin = f.model->bodyIdAt(1);
+
+    CHECK(f.model->combineBodies({box}, "merge").isEmpty());
+    CHECK(f.model->combineBodies({box, pin}, "glue").isEmpty());
+    CHECK(f.model->combineBodies({box, "nobody"}, "merge").isEmpty());
+    CHECK(f.model->recipe().size() == 2);
+
+    const QString merged = f.model->combineBodies({box, pin}, "merge");
+    REQUIRE_FALSE(merged.isEmpty());
+    f.model->waitForCalculation();
+    REQUIRE(f.model->scene()->bodies.size() == 1);
+    CHECK(f.model->scene()->bodies[0].id == merged.toStdString());
+    // A body that is part of a result cannot be combined again.
+    CHECK(f.model->combineBodies({box, pin}, "merge").isEmpty());
+}
+
+TEST_CASE("holes cut live: a hole put down on a body cuts it, in one step",
+          "[ui][document-model][combine][acceptance]") {
+    Fixture f; // a box 20 x 20 x 20 on the bed
+    const int step = f.model->startPlacing("cylinder", true, 0.0, 0.0, 0.0);
+    REQUIRE(step >= 0);
+    REQUIRE(f.model->setStepValue(step, "radius", "4"));
+    REQUIRE(f.model->finishPlacing());
+    f.model->waitForCalculation();
+
+    // The recipe has box, cylinder and the cut; there is no step "group".
+    REQUIRE(f.model->recipe().size() == 3);
+    CHECK(f.step(2)["type"].toString() == "combine");
+    CHECK(f.step(2)["state"].toString() == "ok");
+    const QVariantList bodies = f.model->bodies();
+    CHECK(bodies.at(0).toMap()["consumed"].toBool());
+    CHECK(bodies.at(2).toMap()["cut"].toBool());
+    // The result is a solid body, the hole stays in the scene as a ghost.
+    REQUIRE(f.model->scene()->bodies.size() == 2);
+    CHECK(f.model->scene()->bodies[0].color.alpha() < 255);
+
+    // Putting it down was one step to undo.
+    CHECK(f.model->historyPosition() == 1);
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 1);
+    CHECK(f.model->scene()->bodies.size() == 1);
+    REQUIRE(f.model->redo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3);
+}
+
+TEST_CASE("holes cut live: moving the hole away takes the cut back, in one step",
+          "[ui][document-model][combine][acceptance]") {
+    Fixture f;
+    const int step = f.model->startPlacing("cylinder", true, 0.0, 0.0, 0.0);
+    f.model->setStepValue(step, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 3);
+    const int steps = f.model->historyPosition();
+
+    REQUIRE(f.model->setStepValue(step, "x", "100"));
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 2); // the cut is gone ...
+    CHECK_FALSE(f.model->bodies().at(0).toMap()["consumed"].toBool());
+    CHECK(f.model->historyPosition() == steps + 1); // ... in the very step of the move
+
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3);
+}
+
+TEST_CASE("holes cut live: switching 'as hole' on and off", "[ui][document-model][combine]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->setStepValue(1, "radius", "4");
+    f.model->setStepValue(1, "x", "0");
+    f.model->setStepValue(1, "y", "0");
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 2);
+
+    f.model->setBodyHole(1, true);
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3); // it cuts the box
+    CHECK(f.model->nextUndo()["key"].toString() == "holeBody");
+
+    f.model->setBodyHole(1, false);
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 2);
+    CHECK(f.model->scene()->bodies.size() == 2);
+}
+
+TEST_CASE("a cut body moves as one, its hole with it", "[ui][document-model][combine]") {
+    Fixture f;
+    const int step = f.model->startPlacing("cylinder", true, 0.0, 0.0, 0.0);
+    f.model->setStepValue(step, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 3);
+    const auto xOf = [&](int index) {
+        return f.model->document()
+            .features()
+            .at(static_cast<std::size_t>(index))
+            .params.at("x")
+            .expression;
+    };
+
+    // By the gizmo: choose the cut body, drag it 30 mm.
+    f.model->selectStep(2);
+    REQUIRE(f.model->beginMove());
+    REQUIRE(f.model->moveCurrent({30.0, std::nullopt, std::nullopt}));
+    f.model->commitChange();
+    f.model->waitForCalculation();
+
+    CHECK(xOf(0) == "30");
+    CHECK(xOf(1) == "30");
+    CHECK(f.model->recipe().size() == 3); // the hole went along: it still cuts
+    CHECK(f.model->historyPosition() == 2);
+
+    // By align / drop (a list of bodies and distances).
+    const QString cut = f.model->bodyIdAt(2);
+    REQUIRE(f.model->moveBodiesBy({{cut, {-10.0, 0.0, 0.0}}}, "moveBody"));
+    f.model->waitForCalculation();
+    CHECK(xOf(0) == "20");
+    CHECK(xOf(1) == "20");
+    CHECK(f.model->recipe().size() == 3);
+}
+
+TEST_CASE("the label of a hole names what it cuts and lets the person change that",
+          "[ui][document-model][combine]") {
+    Fixture f;
+    const int step = f.model->startPlacing("cylinder", true, 0.0, 0.0, 0.0);
+    f.model->setStepValue(step, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    const int hole = 1; // the second body of the document
+
+    QVariantMap label = f.model->cutLabel(hole);
+    REQUIRE(label["valid"].toBool());
+    CHECK(label["z"].toDouble() == Approx(20.0));
+    REQUIRE(label["targets"].toList().size() == 1);
+    const QVariantMap target = label["targets"].toList().at(0).toMap();
+    CHECK(target["index"].toInt() == 0); // the box it started as
+    CHECK(target["cut"].toBool());
+    CHECK_FALSE(f.model->cutLabel(0)["valid"].toBool()); // the box is no hole
+
+    // Taking the box off the label: no cut any more, one step, and it stays so.
+    const int position = f.model->historyPosition();
+    REQUIRE(f.model->setCutTarget(hole, 0, false));
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 2);
+    CHECK(f.model->historyPosition() == position + 1);
+    CHECK_FALSE(f.model->cutLabel(hole)["targets"].toList().at(0).toMap()["cut"].toBool());
+    REQUIRE(f.model->setStepValue(step, "radius", "5")); // a change next to it brings no cut back
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 2);
+
+    REQUIRE(f.model->setCutTarget(hole, 0, true));
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3);
+    CHECK_FALSE(f.model->setCutTarget(0, 0, true)); // the box is no hole
+}
+
+TEST_CASE("a cut body keeps its name, a symbol says it was cut", "[ui][document-model][combine]") {
+    Fixture f;
+    f.model->startPlacing("cylinder", true, 0.0, 0.0, 0.0);
+    f.model->setStepValue(1, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    const QVariantMap box = f.model->bodies().at(0).toMap();
+    const QVariantMap cut = f.model->bodies().at(2).toMap();
+    CHECK(cut["type"].toString() == "box");
+    CHECK(cut["number"].toInt() == 1);
+    CHECK(cut["name"].toString() == box["name"].toString());
+    CHECK(cut["cut"].toBool());
+    CHECK(f.model->bodies().at(1).toMap()["number"].toInt() == 1); // "Cylinder 1"
+}
+
+TEST_CASE("combining: a step that fails leaves what it was to combine in view",
+          "[ui][document-model][combine]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("box", false) == 1);
+    f.model->setStepValue(1, "x", "500"); // far from the first box
+    f.model->waitForCalculation();
+    const QString first = f.model->bodyIdAt(0);
+    const QString second = f.model->bodyIdAt(1);
+
+    REQUIRE_FALSE(f.model->combineBodies({first, second}, "intersect").isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.step(2)["state"].toString() == "fails");
+    CHECK(f.step(2)["problem"].toMap()["code"].toString() == "combineEmpty");
+    // Nothing disappeared: both boxes are still there to be moved together.
+    CHECK(f.model->scene()->bodies.size() == 2);
+    CHECK_FALSE(f.model->bodies().at(0).toMap()["consumed"].toBool());
+}
+
+TEST_CASE("combining: cutters can be kept as bodies", "[ui][document-model][combine]") {
+    Fixture f;
+    f.model->addShape("cylinder", false);
+    f.model->setStepValue(1, "radius", "4");
+    f.model->setStepValue(1, "x", "0");
+    f.model->setStepValue(1, "y", "0");
+    f.model->waitForCalculation();
+    const QString cut =
+        f.model->combineBodies({f.model->bodyIdAt(0), f.model->bodyIdAt(1)}, "subtract");
+    REQUIRE_FALSE(cut.isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.model->scene()->bodies[0].color.alpha() < 255); // the cutter is a ghost
+
+    REQUIRE(f.model->setStepText(2, "keepTools", "yes"));
+    f.model->waitForCalculation();
+    REQUIRE(f.model->scene()->bodies.size() == 2);
+    CHECK(f.model->scene()->bodies[0].color.alpha() == 255); // an ordinary body again
+    CHECK_FALSE(f.model->bodies().at(1).toMap()["consumed"].toBool());
+
+    f.model->selectStep(2);
+    bool flag = false;
+    for (const QVariant& text : f.model->stepTexts()) {
+        flag = flag || text.toMap()["kind"].toString() == "flag";
+    }
+    CHECK(flag);
+}
+
+TEST_CASE("splitting: a body becomes two parts that can be moved one by one",
+          "[ui][document-model][split]") {
+    Fixture f; // a box 20 x 20 x 20
+    const int step = f.model->splitBody(f.model->bodyIdAt(0));
+    REQUIRE(step == 1);
+    f.model->waitForCalculation();
+
+    // The cut and one placing step for each part; the whole is one step to undo.
+    REQUIRE(f.model->recipe().size() == 4);
+    CHECK(f.step(1)["type"].toString() == "split");
+    CHECK(f.step(2)["type"].toString() == "place");
+    CHECK(f.step(1)["state"].toString() == "ok");
+    CHECK(f.model->historyPosition() == 1);
+    CHECK(f.model->currentStep() == 1); // chosen: its arrow is shown
+    REQUIRE(f.model->scene()->bodies.size() == 2);
+
+    // The longest side was cut in the middle (all sides are equal here: x), parts named.
+    const QVariantList bodies = f.model->bodies();
+    REQUIRE(bodies.size() == 5);
+    CHECK(f.step(2)["state"].toString() == "ok");
+    CHECK(f.step(3)["state"].toString() == "ok");
+    CHECK(bodies.at(0).toMap()["consumed"].toBool());
+    CHECK(bodies.at(1).toMap()["consumed"].toBool());
+    CHECK(bodies.at(3).toMap()["part"].toInt() == 1);
+    CHECK(bodies.at(4).toMap()["part"].toInt() == 2);
+    CHECK(bodies.at(3).toMap()["type"].toString() == "box");
+
+    // A part moves through its own step, the other one stays.
+    REQUIRE(f.model->moveBodiesBy({{f.model->bodyIdAt(3), {-30.0, 0.0, 0.0}}}, "moveBody"));
+    f.model->waitForCalculation();
+    CHECK(f.model->document().features().at(2).params.at("x").expression == "-30");
+    CHECK(f.model->document().features().at(3).params.at("x").expression == "0");
+
+    // Moving the arrow of the cut changes where it is cut.
+    REQUIRE(f.model->setStepValue(1, "position", "4"));
+    f.model->waitForCalculation();
+    CHECK(f.step(1)["state"].toString() == "ok");
+
+    REQUIRE(f.model->undo());
+    REQUIRE(f.model->undo());
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 1);
+}
+
+TEST_CASE("splitting: what cannot be split", "[ui][document-model][split]") {
+    Fixture f;
+    CHECK(f.model->splitBody("nobody") == -1);
+    const QString box = f.model->bodyIdAt(0);
+    REQUIRE(f.model->splitBody(box) >= 0);
+    f.model->waitForCalculation();
+    CHECK(f.model->splitBody(box) == -1); // it is part of the split now
+}
+
+namespace {
+
+// A cut body: the box 20 x 20 x 20 with a hole of radius 4 at x = 5 (the hole is the 2nd step).
+void cutBoxWithOffCentreHole(Fixture& f) {
+    const int step = f.model->startPlacing("cylinder", true, 5.0, 0.0, 0.0);
+    f.model->setStepValue(step, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 3);
+}
+
+double valueOfStep(const Fixture& f, int step, const char* name) {
+    return std::stod(f.model->document()
+                         .features()
+                         .at(static_cast<std::size_t>(step))
+                         .params.at(name)
+                         .expression);
+}
+
+} // namespace
+
+TEST_CASE("a cut body turns as one, its hole about the middle of the whole",
+          "[ui][document-model][combine]") {
+    Fixture f;
+    cutBoxWithOffCentreHole(f);
+    f.model->selectStep(2);
+    REQUIRE(f.model->currentTurn().has_value());
+    const auto centre = f.model->currentTurnCentre();
+    REQUIRE(centre.has_value());
+    CHECK(centre->z == Approx(10.0));
+
+    REQUIRE(f.model->beginTurn());
+    REQUIRE(f.model->turnCurrent({0.0, 0.0, 90.0}));
+    f.model->commitChange();
+    f.model->waitForCalculation();
+
+    CHECK(valueOfStep(f, 0, "rotZ") == Approx(90.0));
+    CHECK(valueOfStep(f, 1, "rotZ") == Approx(90.0));
+    // The hole was at x = 5; a quarter turn about the middle (0, 0) takes it to y = 5.
+    CHECK(valueOfStep(f, 1, "x") == Approx(0.0).margin(1e-9));
+    CHECK(valueOfStep(f, 1, "y") == Approx(5.0));
+    CHECK(f.model->recipe().size() == 3); // it still cuts
+    CHECK(f.step(2)["state"].toString() == "ok");
+
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(valueOfStep(f, 1, "x") == Approx(5.0));
+    CHECK(valueOfStep(f, 1, "rotZ") == Approx(0.0));
+}
+
+TEST_CASE("a cut body is made larger as one, its hole with it", "[ui][document-model][combine]") {
+    Fixture f;
+    cutBoxWithOffCentreHole(f);
+    f.model->selectStep(2);
+
+    REQUIRE(f.model->beginScale());
+    CHECK(f.model->acceptsScale(2.0));
+    CHECK_FALSE(f.model->acceptsScale(1000.0));
+    REQUIRE(f.model->scaleCurrent(2.0, {0.0, 0.0, 0.0}));
+    f.model->commitChange();
+    f.model->waitForCalculation();
+
+    CHECK(valueOfStep(f, 0, "width") == Approx(40.0));
+    CHECK(valueOfStep(f, 1, "radius") == Approx(8.0));
+    CHECK(valueOfStep(f, 1, "x") == Approx(10.0)); // its place moved away from the anchor, too
+    CHECK(f.model->recipe().size() == 3);
+}
+
+TEST_CASE("the parts of a split cannot be turned or made larger yet",
+          "[ui][document-model][split]") {
+    Fixture f;
+    REQUIRE(f.model->splitBody(f.model->bodyIdAt(0)) >= 0);
+    f.model->waitForCalculation();
+    f.model->selectStep(2); // the first part: a placing step
+    CHECK_FALSE(f.model->beginScale());
+    CHECK_FALSE(f.model->currentTurn().has_value());
+}
+
+TEST_CASE("holes cut live while they are dragged, and all of it is one step",
+          "[ui][document-model][combine][acceptance]") {
+    Fixture f;
+    const int step = f.model->startPlacing("cylinder", true, 100.0, 0.0, 0.0);
+    f.model->setStepValue(step, "radius", "4");
+    f.model->finishPlacing();
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 2); // far away: it cuts nothing
+    const int position = f.model->historyPosition();
+
+    f.model->selectStep(step);
+    REQUIRE(f.model->beginMove());
+    REQUIRE(f.model->moveCurrent({0.0, 0.0, std::nullopt}));
+    // The pointer rests for a moment: the cut appears while the button is still down.
+    QElapsedTimer waited;
+    waited.start();
+    while (f.model->recipe().size() < 3 && waited.elapsed() < 3000) {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+        QThread::msleep(10);
+    }
+    CHECK(f.model->recipe().size() == 3);
+    f.model->commitChange();
+    f.model->waitForCalculation();
+    CHECK(f.model->historyPosition() == position + 1);
+    CHECK(f.model->recipe().size() == 3);
+
+    // Pulled away again: back to two steps, still one step to undo.
+    REQUIRE(f.model->beginMove());
+    REQUIRE(f.model->moveCurrent({100.0, 0.0, std::nullopt}));
+    waited.restart();
+    while (f.model->recipe().size() > 2 && waited.elapsed() < 3000) {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+        QThread::msleep(10);
+    }
+    CHECK(f.model->recipe().size() == 2);
+    f.model->cancelChange(); // Esc: all of it is taken back, the cut comes back with it
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3);
 }

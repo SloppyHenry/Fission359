@@ -92,14 +92,35 @@ inline void markRole(std::vector<core::HandleSpec>& out, std::size_t first, core
 }
 
 /// The values a type lists: its own, then the place (x, y, z) and the turn.
-inline std::vector<core::ParamSpec> withPlace(std::vector<core::ParamSpec> own) {
+/// Own values plus the place and the turn. `prismatic`: the shape runs straight along its axis
+/// (box, cylinder, prism, star, tube, lettering), so as a hole it can go all the way through:
+/// it gets the value `through` (1 = yes, the default).
+inline std::vector<core::ParamSpec> withPlace(std::vector<core::ParamSpec> own,
+                                              bool prismatic = false) {
     for (const char* name : {"x", "y", "z"}) {
         own.push_back({name, core::QuantityKind::length, "0"});
     }
     for (core::ParamSpec& spec : core::turnParameters()) {
         own.push_back(std::move(spec));
     }
+    if (prismatic) {
+        own.push_back({"through", core::QuantityKind::plain, "1"});
+    }
     return own;
+}
+
+/// `FeatureType::throughParams` of a shape that stands on its foot with a value `height`: longer
+/// by `reach` at both ends, so the middle (what a turn is about) stays where it is.
+inline std::optional<core::ResolvedParams> prismaticThrough(const core::ResolvedParams& params,
+                                                            double reach) {
+    const auto through = params.find("through");
+    if (through == params.end() || through->second.value < 0.5 || !(reach > 0.0)) {
+        return std::nullopt;
+    }
+    core::ResolvedParams longer = params;
+    longer.at("height").value += 2.0 * reach;
+    longer.at("z").value -= reach;
+    return longer;
 }
 
 /// The body as the step made it, turned by the step's `rotX/rotY/rotZ` about `centre` (nothing

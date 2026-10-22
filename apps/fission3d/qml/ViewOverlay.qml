@@ -24,6 +24,9 @@ Item {
     property string filter: "all"          // what can be chosen: all | body | face | edge | vertex
     property string flyout: ""             // the open tool group: "" or "shapes"
     signal flyoutCloseRequested
+    /// More than one body is chosen: the ways to combine can be used.
+    property int chosenCount: 0
+    signal combineRequested(string way)
     signal filterRequested(string filter)
     signal orthographicToggled
     signal displayRequested(string mode)
@@ -369,6 +372,21 @@ Item {
         }
         width: Math.min(460, root.width - x - 130)
         onCloseRequested: root.flyoutCloseRequested()
+    }
+
+    // --- the ways to combine, next to their button in the palette ----------------------------------
+    CombineFlyout {
+        id: combineFlyout
+
+        visible: root.flyout === "combine"
+        chosen: root.chosenCount
+        x: palette.x + palette.width + 10
+        y: {
+            const button = groupRepeater.itemAt(3)
+            const wanted = button ? button.mapToItem(root, 0, 0).y - 6 : 60
+            return Math.max(60, Math.min(wanted, root.height - height - 12))
+        }
+        onWayChosen: way => root.combineRequested(way)
     }
 
     // --- view cube and buttons (top right) -------------------------------------------------
