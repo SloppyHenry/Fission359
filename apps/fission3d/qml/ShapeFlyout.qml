@@ -40,7 +40,14 @@ Float {
         property string type: ""
         property point at: Qt.point(0, 0) // in the coordinates of the 3D view
         property bool overView: false
+        // The gallery steps out of the way as soon as the shape touches the bed (it stays where
+        // it is, only invisible, so that the drag keeps going), and closes when the shape is let
+        // go there.
+        property bool collapsed: false
     }
+
+    opacity: dragState.collapsed ? 0.0 : 1.0
+    Behavior on opacity { NumberAnimation { duration: 120 } }
 
     // The picture that follows the pointer while it is not yet over the 3D view.
     Image {
@@ -62,6 +69,7 @@ Float {
         onActivated: {
             Placement.cancel()
             dragState.cancelled = true
+            dragState.collapsed = false
         }
     }
 
@@ -188,7 +196,7 @@ Float {
                                 dragState.type = tile.modelData.type
                             }
                             if (dragState.active) {
-                                root.dragTo(area.mapToItem(root.parent, mouse.x, mouse.y))
+                                root.dragTo(area.mapToItem(root.parent, mouse.x, mouse.y), mouse.modifiers)
                             }
                         }
 
@@ -203,6 +211,7 @@ Float {
                         onCanceled: {
                             Placement.cancel()
                             dragState.active = false
+                            dragState.collapsed = false
                         }
                     }
 
@@ -248,13 +257,13 @@ Float {
     }
 
     // --- what the pointer does while a tile is dragged ---------------------------------------
-    function dragTo(point) {
+    function dragTo(point, modifiers) {
         dragState.at = point
         if (dragState.cancelled) {
             return
         }
         const view = root.parent
-        const inFlyout = root.contains(root.mapFromItem(view, point.x, point.y))
+        const inFlyout = !dragState.collapsed && root.contains(root.mapFromItem(view, point.x, point.y))
         const inView = point.x >= 0 && point.y >= 0 && point.x < view.width && point.y < view.height
         dragState.overView = inView && !inFlyout
         if (!dragState.overView) {
@@ -262,21 +271,28 @@ Float {
             return
         }
         // Alt keeps the shape upright on the work plane instead of lying on a wall or slope.
-        const upright = (Qt.application.keyboardModifiers & Qt.AltModifier) !== 0
+        // (Qt.application has no keyboardModifiers in QML: the mouse event brings them.)
+        const upright = (modifiers & Qt.AltModifier) !== 0
         if (Placement.active) {
             Placement.moveTo(point.x, point.y, upright)
         } else {
             Placement.begin(dragState.type, root.asHole, point.x, point.y, upright)
         }
+        if (Placement.active) {
+            dragState.collapsed = true // the bed is touched: the gallery no longer covers it
+        }
     }
 
     function dropHere() {
-        if (Placement.active) {
-            Placement.finish()
-        }
+        const placed = Placement.active && Placement.finish()
+        const wasCollapsed = dragState.collapsed
         dragState.active = false
         dragState.cancelled = false
         dragState.overView = false
+        dragState.collapsed = false
+        if (placed && wasCollapsed) {
+            root.closeRequested() // the shape is down: the gallery closes (the palette opens it again)
+        }
     }
 
     function putOnBed(type) {

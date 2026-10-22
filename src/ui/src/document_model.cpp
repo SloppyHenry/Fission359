@@ -2063,7 +2063,7 @@ QVariantMap DocumentModel::splitPlane() const {
     const int u = axis == 0 ? 1 : 0;
     const int v = axis == 2 ? 1 : 2;
     QVariantList corners;
-    for (const auto [cu, cv] :
+    for (const auto& [cu, cv] :
          {std::pair{-1, -1}, std::pair{1, -1}, std::pair{1, 1}, std::pair{-1, 1}}) {
         double point[3] = {0.0, 0.0, 0.0};
         point[axis] = at;
