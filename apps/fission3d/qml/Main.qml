@@ -72,11 +72,11 @@ Window {
             { id: "redo", text: redoText, shortcut: isMac ? "⇧⌘Z" : qsTr("Ctrl+Shift+Z"), nativeShortcut: "Ctrl+Shift+Z", enabled: root.redoAvailable },
             { id: "history", text: qsTr("Recent actions"), checked: root.historyOpen },
             { separator: true },
-            { id: "cut", text: qsTr("Cut"), shortcut: primaryKey + "X", nativeShortcut: "Ctrl+X", enabled: false },
+            { id: "cut", text: qsTr("Cut"), shortcut: primaryKey + "X", nativeShortcut: "Ctrl+X", enabled: Selection.count > 0 && !root.typing },
             { id: "copy", text: qsTr("Copy"), shortcut: primaryKey + "C", nativeShortcut: "Ctrl+C", enabled: Selection.count > 0 && !root.typing },
             { id: "paste", text: qsTr("Paste"), shortcut: primaryKey + "V", nativeShortcut: "Ctrl+V", enabled: DocumentModel.canPaste && !root.typing },
             { id: "duplicate", text: qsTr("Duplicate"), shortcut: primaryKey + "D", nativeShortcut: "Ctrl+D", enabled: Selection.count > 0 && !root.typing },
-            { id: "delete", text: qsTr("Delete"), shortcut: isMac ? "⌫" : qsTr("Del"), enabled: false },
+            { id: "delete", text: qsTr("Delete"), shortcut: isMac ? "⌫" : qsTr("Del"), enabled: Selection.count > 0 && !root.typing },
             { id: "selectall", text: qsTr("Select all"), shortcut: primaryKey + "A", nativeShortcut: "Ctrl+A", enabled: DocumentModel.bodies.length > 0 || root.typing },
             { id: "selectnone", text: qsTr("Select nothing"), shortcut: qsTr("Esc"), enabled: Selection.count > 0 },
             { separator: true },
@@ -196,6 +196,44 @@ Window {
         }
     }
 
+    // ---- deleting (AP-1.9): the steps that make the chosen bodies --------------------------------
+    // What deleting would break, as a question in the recipe: { steps, dependents, text, canHide }.
+    property var pendingDeletion: null
+
+    function circled(position) {
+        return String.fromCharCode(0x2460 + position)
+    }
+
+    // Asks first when other steps use what goes, or when more than the chosen step goes.
+    function requestDeletion(plan, canHide) {
+        if (plan.steps.length === 0) {
+            return
+        }
+        if (plan.dependents.length === 0 && plan.steps.length === 1) {
+            DocumentModel.deleteSteps(plan.steps)
+            return
+        }
+        const list = plan.dependents.map(circled).join(" ")
+        const text = plan.dependents.length > 0
+            ? qsTr("%n step(s) use what you delete: %1. They will need help.", "", plan.dependents.length).arg(list)
+            : qsTr("This also deletes %n shape(s) that are only there for it.", "", plan.steps.length - 1)
+        pendingDeletion = { steps: plan.steps, dependents: plan.dependents, text: text,
+                            canHide: canHide && plan.steps.length === 1 }
+    }
+
+    function deleteChosen() {
+        if (chosenBodies.length > 0) {
+            requestDeletion(DocumentModel.deletionOfBodies(chosenBodies), false)
+        }
+    }
+
+    Connections {
+        target: DocumentModel
+
+        // The question is about a recipe that is not there any more.
+        function onRecipeChanged() { root.pendingDeletion = null }
+    }
+
     function run(id) {
         switch (id) {
         case "quit": Qt.quit(); break
@@ -230,6 +268,14 @@ Window {
             }
             break
         case "paste": Selection.chooseBodies(DocumentModel.pasteBodies()); break
+        case "cut":
+            if (DocumentModel.copyBodies(chosenBodies)) {
+                deleteChosen()
+            } else {
+                showHint(qsTr("This body cannot be copied yet."))
+            }
+            break
+        case "delete": deleteChosen(); break
         case "duplicate": {
             const copies = DocumentModel.duplicateBodies(chosenBodies)
             if (copies.length > 0) {
@@ -398,6 +444,9 @@ Window {
     Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
     Shortcut { sequence: "Ctrl+C"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("copy") }
     Shortcut { sequence: "Ctrl+V"; enabled: !root.isMac && DocumentModel.canPaste && !root.typing; onActivated: root.run("paste") }
+    Shortcut { sequence: "Delete"; enabled: Selection.count > 0 && !root.typing && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("delete") }
+    Shortcut { sequence: "Backspace"; enabled: Selection.count > 0 && !root.typing && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("delete") }
+    Shortcut { sequence: "Ctrl+X"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("cut") }
     Shortcut { sequence: "Ctrl+D"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("duplicate") }
     Shortcut { sequence: "D"; enabled: Selection.count > 0 && !root.typing && !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("dropToBed") }
     Shortcut {
@@ -533,7 +582,23 @@ Window {
             currentStep: DocumentModel.currentStep
             onTabRequested: tab => root.leftTab = tab
             onAddRequested: root.flyout = "shapes"
+            deletion: root.pendingDeletion
             onStepRequested: index => DocumentModel.selectStep(DocumentModel.currentStep === index ? -1 : index)
+            onStepHovered: (index, on) => viewport.lightUpBodies(on ? [DocumentModel.bodyOfStep(index)] : [])
+            onStepRenamed: (index, text) => DocumentModel.setStepLabel(index, text)
+            onStepHideRequested: (index, hide) => DocumentModel.setStepSuppressed(index, hide)
+            onStepDeleteRequested: index => root.requestDeletion(DocumentModel.deletionOfStep(index), true)
+            onDeleteConfirmed: {
+                const steps = root.pendingDeletion.steps
+                root.pendingDeletion = null
+                DocumentModel.deleteSteps(steps)
+            }
+            onHideInstead: {
+                const steps = root.pendingDeletion.steps
+                root.pendingDeletion = null
+                DocumentModel.setStepSuppressed(steps[0], true)
+            }
+            onDeleteCancelled: root.pendingDeletion = null
             onBodyVisibilityRequested: (index, visible) => DocumentModel.setBodyVisible(index, visible)
             onBodyChosen: (index, extend) => Selection.chooseBody(index, extend)
             onBedVisibilityRequested: visible => root.bedVisible = visible
@@ -927,6 +992,10 @@ Window {
             default: return qsTr("Merged with %n body(ies)", "", v[0])
             }
         }
+        // A kind of step this version does not know (a file from a later version).
+        if (shapeCatalog.nameOf(step.type) === "" && ["combine", "split", "place"].indexOf(step.type) < 0) {
+            return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
+        }
         return typeLabel(step.type)
     }
 
@@ -1042,9 +1111,22 @@ Window {
         return qsTr("This shape could not be built.")
     }
 
+    function recipeIcon(type) {
+        switch (type) {
+        case "combine": return "combine"
+        case "split": return "scissors"
+        case "place": return "move"
+        case "text": return "text"
+        default: return "cube"
+        }
+    }
+
     readonly property var recipeList: DocumentModel.recipe.map(step => ({
-        text: step.problem ? stepText(step) + " – " + problemText(step.problem, step) : stepText(step),
-        state: step.state
+        text: stepText(step),
+        icon: recipeIcon(step.type),
+        label: step.label,
+        state: step.state,
+        problem: step.problem ? problemText(step.problem, step) : ""
     }))
 
     readonly property var chosenBodyIndexes: Selection.items.map(item => item.bodyIndex)

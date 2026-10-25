@@ -726,6 +726,26 @@ void Viewport3D::requestRegionPick(const QRectF& area, bool extend) {
     }
 }
 
+void Viewport3D::lightUpBodies(const QStringList& bodyIds) {
+    std::vector<render::Highlight> next;
+    for (const QString& id : bodyIds) {
+        if (!id.isEmpty()) {
+            render::Highlight light;
+            light.body = id.toStdString();
+            light.hover = true;
+            next.push_back(std::move(light));
+        }
+    }
+    const auto same = [](const render::Highlight& a, const render::Highlight& b) {
+        return a.body == b.body;
+    };
+    if (std::equal(next.begin(), next.end(), m_listHover.begin(), m_listHover.end(), same)) {
+        return;
+    }
+    m_listHover = std::move(next);
+    update();
+}
+
 void Viewport3D::hoverAgain() {
     if (m_hoverPosition && m_pressButton == Qt::NoButton) {
         requestPick(PickIntent::hover, *m_hoverPosition);
@@ -1040,6 +1060,16 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect, bool pickIdle) {
                                         });
         if (!chosen) {
             snapshot.highlights.push_back(*m_hover);
+        }
+    }
+    for (const render::Highlight& light : m_listHover) {
+        const bool chosen =
+            std::any_of(m_selectionHighlights.begin(), m_selectionHighlights.end(),
+                        [&](const render::Highlight& h) {
+                            return h.body == light.body && h.kind == core::SelectableKind::body;
+                        });
+        if (!chosen) {
+            snapshot.highlights.push_back(light);
         }
     }
     snapshot.handles = m_handleGraphics[0];

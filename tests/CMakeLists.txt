@@ -350,6 +350,13 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=20,35,200 --simulate "put:box;menu:duplicate;near:x,-20;near:y,-20")
   set_tests_properties(app_duplicate PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # Delete: the chosen shape goes (its step with it); Undo brings the same step back.
+  add_test(NAME app_delete_step
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-delete.png" --language en --size 1280x800
+            --camera=20,35,200 --simulate "put:cylinder;menu:delete;recipe:box;menu:undo;recipe:box,cylinder")
+  set_tests_properties(app_delete_step PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

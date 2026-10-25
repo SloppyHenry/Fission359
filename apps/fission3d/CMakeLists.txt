@@ -10,7 +10,7 @@ set(FISSION_QML_FILES
   qml/Main.qml qml/AboutWindow.qml qml/AppMenu.qml qml/BedLabels.qml qml/Btn.qml qml/DocTabs.qml
   qml/Float.qml qml/Focusring.qml qml/HistoryPanel.qml qml/Icon.qml qml/IconBtn.qml qml/InfoRow.qml qml/LeftPanel.qml
   qml/LibraryCard.qml qml/Logo.qml qml/MenuStrip.qml qml/NativeMenuBar.qml qml/NavButton.qml
-  qml/NumberField.qml qml/ColorField.qml qml/ContextBar.qml qml/BodyHeader.qml qml/PanelHeader.qml qml/RightPanel.qml qml/Section.qml qml/Segmented.qml
+  qml/NumberField.qml qml/ColorField.qml qml/ContextBar.qml qml/RecipeRow.qml qml/RowMenu.qml qml/BodyHeader.qml qml/PanelHeader.qml qml/RightPanel.qml qml/Section.qml qml/Segmented.qml
   qml/StatusBar.qml qml/SnapControl.qml qml/ToolButton3D.qml qml/TreeRow.qml qml/Txt.qml qml/ViewCube.qml
   qml/ViewOverlay.qml qml/ShapeCatalog.qml qml/ShapeFlyout.qml qml/Toggle.qml qml/HandleLayer.qml qml/GizmoLayer.qml qml/RotateLayer.qml qml/ScaleLayer.qml qml/DistanceLayer.qml qml/CutLayer.qml qml/SplitPlaneLayer.qml qml/CombineCatalog.qml qml/CombineFlyout.qml qml/AlignLayer.qml qml/ToolCatalog.qml qml/StyleButton.qml qml/WordField.qml qml/FontField.qml qml/icons.js qml/clearplace.js)
 

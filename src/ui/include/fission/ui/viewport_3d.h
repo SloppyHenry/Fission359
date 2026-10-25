@@ -256,6 +256,9 @@ public:
     void requestPick(PickIntent intent, const QPointF& position, bool extend = false);
     /// The pointer is at a point of the view (item pixels), as if it had moved there.
     Q_INVOKABLE void hoverAt(double x, double y);
+    /// Lights up whole bodies as if the pointer were over them (the pointer is over a row of the
+    /// recipe or of the body list). An empty list takes the light away.
+    Q_INVOKABLE void lightUpBodies(const QStringList& bodyIds);
     /// Asks what can be seen inside a rectangle (item pixels); the answer comes as `regionPicked`.
     void requestRegionPick(const QRectF& area, bool extend);
 
@@ -358,6 +361,7 @@ private:
     std::vector<render::Highlight> m_selectionHighlights;
     std::array<render::HandleGraphics, 7> m_handleGraphics;
     std::optional<render::Highlight> m_hover;
+    std::vector<render::Highlight> m_listHover; ///< lit up from a list, see `lightUpBodies`
     std::deque<PickRequest> m_pickQueue;
     QTimer m_pickTimer;
     std::atomic<int> m_picksInFlight{0}; ///< asked of the renderer, answer not yet here

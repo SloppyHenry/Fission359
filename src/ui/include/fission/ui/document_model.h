@@ -191,6 +191,21 @@ public:
     /// Puts a filament colour back to its default. False for an own colour or one that is
     /// unchanged.
     Q_INVOKABLE bool resetPaletteColor(int index);
+    // --- the recipe as the person edits it (AP-1.9) ---
+    /// What deleting the step at `index` would do: { steps: [positions], dependents: [positions] }.
+    /// `dependents` are steps that use a body the deleted steps make; they would "need help".
+    /// Cuts the program keeps for holes (`auto`) are no dependents: they go with the hole.
+    Q_INVOKABLE QVariantMap deletionOfStep(int index) const;
+    /// What deleting the bodies would do: the steps that make them and, for a body that is a
+    /// result of combining or splitting, the shapes that are only there for it (ADR-0011).
+    Q_INVOKABLE QVariantMap deletionOfBodies(const QStringList& bodyIds) const;
+    /// Deletes the steps at `indexes` (and with them the bodies they make) as one step of the
+    /// history; the cuts of holes follow. False when there is nothing to delete.
+    Q_INVOKABLE bool deleteSteps(const QVariantList& indexes);
+    /// Switches the step at `index` off (hidden, "ausblenden") or on again.
+    Q_INVOKABLE bool setStepSuppressed(int index, bool suppressed);
+    /// Gives the step at `index` a name of its own; empty takes the name away.
+    Q_INVOKABLE bool setStepLabel(int index, const QString& label);
     /// Marks a body as a hole ("Als Loch") or takes the mark away.
     Q_INVOKABLE void setBodyHole(int index, bool hole);
     /// The styles a font has, as names ("regular", "bold", "italic", "boldItalic"); empty if the

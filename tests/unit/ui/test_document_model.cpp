@@ -993,3 +993,130 @@ TEST_CASE("the palette can be adjusted and extended per project", "[ui][document
     // ... and nothing of this is a step of the history
     CHECK_FALSE((f.model->canUndo() && f.model->nextUndo()["key"].toString() == "colorBody"));
 }
+
+TEST_CASE("deleting a step is one undo step and brings back the same step",
+          "[ui][document-model][recipe]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->waitForCalculation();
+    const fission::core::Document before = f.model->document();
+    const int steps = f.model->historyPosition();
+
+    REQUIRE(f.model->deletionOfStep(1)["dependents"].toList().isEmpty());
+    REQUIRE(f.model->deleteSteps({1}));
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 1);
+    CHECK(f.model->bodies().size() == 1);
+    CHECK(f.model->historyPosition() == steps + 1);
+
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->document().sameContentAs(before)); // same id, number and body
+    CHECK(f.model->recipe().size() == 2);
+    CHECK_FALSE(f.model->deleteSteps({}));
+    CHECK_FALSE(f.model->deleteSteps({7}));
+}
+
+TEST_CASE("deleting a step that others use says who needs help", "[ui][document-model][recipe]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->waitForCalculation();
+    const QString box = f.model->bodyIdAt(0);
+    const QString pin = f.model->bodyIdAt(1);
+    REQUIRE_FALSE(f.model->combineBodies({box, pin}, "merge").isEmpty());
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 3);
+
+    const QVariantMap plan = f.model->deletionOfStep(0);
+    CHECK(plan["steps"].toList() == QVariantList{0});
+    CHECK(plan["dependents"].toList() == QVariantList{2}); // the merge needs the box
+
+    REQUIRE(f.model->deleteSteps({0}));
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 2);
+    CHECK(f.step(1)["state"].toString() == "fails"); // the merge reports the missing input
+    CHECK(f.step(1)["problem"].toMap()["code"].toString() == "inputMissing");
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.step(2)["state"].toString() == "ok");
+}
+
+TEST_CASE("deleting a body that is a result takes the shapes that are only there for it",
+          "[ui][document-model][recipe]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->waitForCalculation();
+    const QString made =
+        f.model->combineBodies({f.model->bodyIdAt(0), f.model->bodyIdAt(1)}, "merge");
+    REQUIRE_FALSE(made.isEmpty());
+    f.model->waitForCalculation();
+
+    const QVariantMap plan = f.model->deletionOfBodies({made});
+    CHECK(plan["steps"].toList() == QVariantList{0, 1, 2});
+    CHECK(plan["dependents"].toList().isEmpty());
+    const int steps = f.model->historyPosition();
+    REQUIRE(f.model->deleteSteps(plan["steps"].toList()));
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().isEmpty());
+    CHECK(f.model->historyPosition() == steps + 1); // all of it one step
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3);
+
+    // A shape somebody else uses stays: only the box is used by a second merge.
+    Fixture g;
+    REQUIRE(g.model->addShape("cylinder", false) == 1);
+    REQUIRE(g.model->addShape("sphere", false) == 2);
+    g.model->waitForCalculation();
+    const QString box = g.model->bodyIdAt(0);
+    const QString first = g.model->combineBodies({box, g.model->bodyIdAt(1)}, "merge");
+    g.model->waitForCalculation();
+    REQUIRE_FALSE(first.isEmpty());
+    const QVariantMap sphereOnly = g.model->deletionOfBodies({g.model->bodyIdAt(1)});
+    CHECK(sphereOnly["steps"].toList().size() == 1);
+}
+
+TEST_CASE("deleting a hole takes its cut with it, in the same step",
+          "[ui][document-model][recipe]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->setStepValue(1, "radius", "4");
+    f.model->setStepValue(1, "x", "0");
+    f.model->setStepValue(1, "y", "0");
+    f.model->setBodyHole(1, true);
+    f.model->waitForCalculation();
+    REQUIRE(f.model->recipe().size() == 3); // the box, the hole and the cut
+
+    const QVariantMap plan = f.model->deletionOfStep(1);
+    CHECK(plan["dependents"].toList().isEmpty()); // the cut is no step somebody built on
+    const int steps = f.model->historyPosition();
+    REQUIRE(f.model->deleteSteps({1}));
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 1);
+    CHECK(f.step(0)["state"].toString() == "ok");
+    CHECK(f.model->historyPosition() == steps + 1);
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 3);
+}
+
+TEST_CASE("a step can be hidden and named; both undo", "[ui][document-model][recipe]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->waitForCalculation();
+    REQUIRE(f.model->setStepSuppressed(1, true));
+    f.model->waitForCalculation();
+    CHECK(f.step(1)["state"].toString() == "off");
+    CHECK(f.step(1)["suppressed"].toBool());
+    CHECK(f.model->nextUndo()["key"].toString() == "suppress");
+    CHECK_FALSE(f.model->setStepSuppressed(1, true)); // already off
+
+    REQUIRE(f.model->setStepLabel(1, "  The pin "));
+    CHECK(f.step(1)["label"].toString() == "The pin");
+    CHECK_FALSE(f.model->setStepLabel(1, "The pin"));
+    REQUIRE(f.model->undo());
+    CHECK(f.step(1)["label"].toString().isEmpty());
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.step(1)["state"].toString() == "ok");
+}
