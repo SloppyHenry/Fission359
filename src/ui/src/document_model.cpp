@@ -671,6 +671,7 @@ QVariantList DocumentModel::buildStepValues() const {
             spec.kind == core::QuantityKind::angle   ? QStringLiteral("angle")
             : spec.kind == core::QuantityKind::plain ? QStringLiteral("plain") // a count: no unit
                                                      : QStringLiteral("length");
+        entry[QStringLiteral("advanced")] = spec.advanced;
         values.push_back(entry);
     }
     return values;
@@ -885,6 +886,22 @@ void DocumentModel::setBodyVisible(int index, bool visible) {
         m_history.document().revision() != before) {
         documentChanged(false); // geometry did not change: no recompute needed
     }
+}
+
+bool DocumentModel::setBodyName(int index, const QString& name) {
+    const auto& bodies = m_history.document().bodies();
+    const std::string trimmed = name.trimmed().toStdString();
+    if (index < 0 || index >= static_cast<int>(bodies.size()) || trimmed.empty()) {
+        return false;
+    }
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(
+            core::makeSetBodyName(bodies[static_cast<std::size_t>(index)].id, trimmed)) ||
+        m_history.document().revision() == before) {
+        return false;
+    }
+    documentChanged(false); // a name is no geometry
+    return true;
 }
 
 bool DocumentModel::undo() {

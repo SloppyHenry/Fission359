@@ -107,6 +107,19 @@
     </message>
 </context>
 <context>
+    <name>BodyHeader</name>
+    <message>
+        <location filename="../qml/BodyHeader.qml" line="+71"/>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click to rename the body.</source>
+        <translation>Click to rename the body.</translation>
+    </message>
+</context>
+<context>
     <name>CombineCatalog</name>
     <message>
         <location filename="../qml/CombineCatalog.qml" line="+13"/>
@@ -736,12 +749,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+717"/>
+        <location line="+725"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-716"/>
+        <location line="-724"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -772,12 +785,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+705"/>
+        <location line="+713"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-703"/>
+        <location line="-711"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -921,7 +934,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+36"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -1486,7 +1499,7 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-378"/>
+        <location line="-386"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
@@ -1511,7 +1524,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+306"/>
+        <location line="+314"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -1547,7 +1560,7 @@
 <context>
     <name>NumberField</name>
     <message>
-        <location filename="../qml/NumberField.qml" line="+312"/>
+        <location filename="../qml/NumberField.qml" line="+323"/>
         <source>I don&apos;t know “%1”. Did you mean “%2”?</source>
         <translation>I don&apos;t know “%1”. Did you mean “%2”?</translation>
     </message>
@@ -1645,7 +1658,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+96"/>
+        <location filename="../qml/RightPanel.qml" line="+120"/>
         <source>Object</source>
         <translation>Object</translation>
     </message>
@@ -1665,12 +1678,12 @@
         <translation>Click a body to change it.</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <source>Change a value or type a formula.</source>
         <translation>Change a value or type a formula.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+36"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
@@ -1680,7 +1693,7 @@
         <translation>Cut across</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="+307"/>
         <source>Hole</source>
         <translation>Hole</translation>
     </message>
@@ -1705,12 +1718,30 @@
         <translation>Make flush (closes gaps under 0.001 mm)</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="-286"/>
         <source>Text</source>
         <translation>Text</translation>
     </message>
+    <message numerus="yes">
+        <location line="-75"/>
+        <source>%n body(ies) selected</source>
+        <translation>
+            <numerusform>%n body selected</numerusform>
+            <numerusform>%n bodies selected</numerusform>
+        </translation>
+    </message>
     <message>
-        <location line="+11"/>
+        <location line="+1"/>
+        <source>Changes here apply to all of them.</source>
+        <translation>Changes here apply to all of them.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Combine</source>
+        <translation>Combine</translation>
+    </message>
+    <message>
+        <location line="+80"/>
         <source>Words</source>
         <translation>Words</translation>
     </message>
@@ -1745,7 +1776,13 @@
         <translation>Rotation</translation>
     </message>
     <message>
-        <location line="+47"/>
+        <location line="+57"/>
+        <location line="+8"/>
+        <source>More</source>
+        <translation>More</translation>
+    </message>
+    <message>
+        <location line="+90"/>
         <source>Get new shapes from “Shapes” in the tool bar on the left – or press %1 and describe what you want to build.</source>
         <translation>Get new shapes from “Shapes” in the tool bar on the left – or press %1 and describe what you want to build.</translation>
     </message>
@@ -1935,7 +1972,7 @@
 <context>
     <name>ShapeFlyout</name>
     <message>
-        <location filename="../qml/ShapeFlyout.qml" line="+81"/>
+        <location filename="../qml/ShapeFlyout.qml" line="+89"/>
         <source>Shapes</source>
         <translation>Shapes</translation>
     </message>

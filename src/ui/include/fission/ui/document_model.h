@@ -169,6 +169,8 @@ public:
     /// Sets the value `name` of step `index` to what was typed (a number or a formula).
     Q_INVOKABLE bool setStepValue(int index, const QString& name, const QString& text);
     Q_INVOKABLE void setBodyVisible(int index, bool visible);
+    /// Gives a body a new name (one step of the history). Empty or unchanged names do nothing.
+    Q_INVOKABLE bool setBodyName(int index, const QString& name);
     /// Marks a body as a hole ("Als Loch") or takes the mark away.
     Q_INVOKABLE void setBodyHole(int index, bool hole);
     /// The styles a font has, as names ("regular", "bold", "italic", "boldItalic"); empty if the

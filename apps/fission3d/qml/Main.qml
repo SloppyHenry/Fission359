@@ -767,6 +767,14 @@ Window {
                 viewport.frameAll()
             }
             stepTitle: root.currentStepTitle
+            mode: root.panelMode
+            bodyName: root.bodyName(root.panelBodyIndex)
+            renamable: root.panelBodyIndex >= 0
+            partText: Selection.items.length === 1 ? root.partName(Selection.items[0].kind, Selection.items[0].bodyIndex) : ""
+            bodyCount: root.chosenBodies.length
+            canCombine: root.chosenBodies.length >= 2
+            onNameCommitted: name => DocumentModel.setBodyName(root.panelBodyIndex, name)
+            onCombineRequested: way => root.combine(way)
             stepValues: root.stepValueList
             isHole: root.currentStepIsHole
             stepTexts: DocumentModel.stepTexts
@@ -1108,6 +1116,26 @@ Window {
         }
     }
 
+    // Which set of sections the property panel shows (see RightPanel.mode).
+    readonly property string panelMode: {
+        if (root.chosenBodies.length > 1) {
+            return "bodies"
+        }
+        const items = Selection.items
+        if (items.length > 0 && items.every(item => item.kind !== "body") && items[0].bodyIndex >= 0) {
+            return "part"
+        }
+        return DocumentModel.stepValues.length > 0 ? "body" : "none"
+    }
+    // The body the panel shows: the chosen one, else the one the chosen recipe step makes.
+    readonly property int panelBodyIndex: {
+        if (root.chosenBodies.length === 1 && chosenBodyIndexes.length > 0) {
+            return chosenBodyIndexes[0]
+        }
+        return DocumentModel.bodies && DocumentModel.currentStep >= 0
+            ? DocumentModel.bodyIndexOf(DocumentModel.bodyOfStep(DocumentModel.currentStep)) : -1
+    }
+
     readonly property string currentStepTitle: {
         const index = DocumentModel.currentStep
         return index >= 0 && index < DocumentModel.recipe.length
@@ -1122,6 +1150,7 @@ Window {
         expression: value.expression,
         value: value.value,
         kind: value.kind,
-        error: value.error
+        error: value.error,
+        advanced: value.advanced
     }))
 }

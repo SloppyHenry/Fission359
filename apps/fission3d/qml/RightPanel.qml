@@ -10,6 +10,21 @@ Rectangle {
     id: root
 
     property string stepTitle: ""
+    // What is chosen: none | body (one body, or a step picked in the recipe) | bodies | part
+    // (a face, an edge or a corner of one body). Each has its own set of sections.
+    property string mode: "none"
+    property string bodyName: ""
+    property bool renamable: false
+    property string partText: ""        // "Face of Box 1"
+    property int bodyCount: 0
+    property bool canCombine: false
+    signal nameCommitted(string name)
+    signal combineRequested(string way)
+    // The values of one step: shown for one body and for a part of it.
+    readonly property bool showsStep: tab === "object" && (mode === "body" || mode === "part")
+                                      && stepValues.length > 0
+    // "More": what is rarely changed stays folded away until asked for.
+    property bool moreOpen: false
     property var stepValues: []        // [{ name, label, group, expression, value, kind, error }]
     property var stepTexts: []         // [{ name, value, kind }] kind: text | font
     property var fonts: []             // names of the fonts lettering can use
@@ -31,7 +46,8 @@ Rectangle {
     function focusText() {
         wordRepeater.itemAt(0)?.focusAndSelect()
     }
-    readonly property var sizeValues: stepValues.filter(v => v.group === "size")
+    readonly property var sizeValues: stepValues.filter(v => v.group === "size" && !v.advanced)
+    readonly property var advancedSizeValues: stepValues.filter(v => v.group === "size" && v.advanced)
     readonly property var positionValues: stepValues.filter(v => v.group === "position")
     readonly property var rotationValues: stepValues.filter(v => v.group === "rotation")
     // "Go all the way through": a switch for a hole whose shape runs straight (a value 0 or 1).
@@ -49,6 +65,8 @@ Rectangle {
             ?? ({ name: name, label: "", kind: "length", axis: "", value: 0, expression: "", error: false })
     }
     readonly property string sizeKey: sizeValues.map(v => v.name).join("|")
+    readonly property string advancedSizeKey: advancedSizeValues.map(v => v.name).join("|")
+    readonly property var advancedSizeNames: advancedSizeKey === "" ? [] : advancedSizeKey.split("|")
     readonly property string positionKey: positionValues.map(v => v.name).join("|")
     readonly property string rotationKey: rotationValues.map(v => v.name).join("|")
     readonly property string cutKey: cutValues.map(v => v.name).join("|")
@@ -60,6 +78,8 @@ Rectangle {
     readonly property var keepToolsText: stepTexts.find(t => t.name === "keepTools")
     readonly property var fuzzyText: stepTexts.find(t => t.name === "fuzzy")
     readonly property bool subtracts: stepTexts.some(t => t.name === "mode" && t.value === "subtract")
+    readonly property bool hasMore: advancedSizeValues.length > 0 || (isHole && throughValue !== undefined)
+                                    || fuzzyText !== undefined
     property string tab: "object"      // object | printer
     property string printerName: ""
     property string bedText: ""
@@ -70,6 +90,10 @@ Rectangle {
     signal printerChosen(string id)
 
     color: Theme.panel
+
+    CombineCatalog {
+        id: combineCatalog
+    }
     clip: true
 
     Rectangle {
@@ -162,21 +186,53 @@ Rectangle {
 
             // header: what is selected
             PanelHeader {
-                visible: root.tab === "object" && root.stepValues.length === 0
+                visible: root.tab === "object" && root.mode === "none"
                 iconName: "select"
                 title: qsTr("Nothing selected")
                 subtitle: qsTr("Click a body to change it.")
             }
 
+            BodyHeader {
+                visible: root.tab === "object" && (root.mode === "body" || root.mode === "part")
+                name: root.renamable ? root.bodyName : root.stepTitle
+                typeName: root.renamable ? root.stepTitle : ""
+                renamable: root.renamable
+                subtitle: root.mode === "part" ? root.partText : qsTr("Change a value or type a formula.")
+                onRenamed: name => root.nameCommitted(name)
+            }
+
             PanelHeader {
-                visible: root.tab === "object" && root.stepValues.length > 0
+                visible: root.tab === "object" && root.mode === "bodies"
                 iconName: "cube"
-                title: root.stepTitle
-                subtitle: qsTr("Change a value or type a formula.")
+                title: qsTr("%n body(ies) selected", "", root.bodyCount)
+                subtitle: qsTr("Changes here apply to all of them.")
             }
 
             Section {
-                visible: root.tab === "object" && root.axisValue !== undefined
+                visible: root.tab === "object" && root.mode === "bodies" && root.canCombine
+                heading: qsTr("Combine")
+
+                Row {
+                    width: parent.width
+                    spacing: 8
+
+                    Repeater {
+                        model: combineCatalog.ways.filter(way => way.needs === undefined)
+
+                        delegate: ToolButton3D {
+                            required property var modelData
+
+                            text: modelData.label
+                            width: (parent.width - 16) / 3
+                            iconName: modelData.icon
+                            onClicked: root.combineRequested(modelData.id)
+                        }
+                    }
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.axisValue !== undefined
                 heading: qsTr("Cut")
 
                 Segmented {
@@ -222,37 +278,7 @@ Rectangle {
             }
 
             Section {
-                visible: root.tab === "object" && root.isHole && root.throughValue !== undefined
-                heading: qsTr("Hole")
-
-                Toggle {
-                    text: qsTr("Goes all the way through")
-                    checked: root.throughValue !== undefined && root.throughValue.value >= 0.5
-                    onToggled: root.valueCommitted("through", checked ? "1" : "0")
-                }
-            }
-
-            Section {
-                visible: root.tab === "object" && root.fuzzyText !== undefined
-                heading: qsTr("Combining")
-
-                Toggle {
-                    visible: root.subtracts
-                    text: qsTr("Keep the tools as bodies")
-                    checked: root.keepToolsText !== undefined && root.keepToolsText.value === "yes"
-                    onToggled: root.textCommitted("keepTools", checked ? "yes" : "no")
-                }
-
-                // The way out when faces lie almost on each other and the result is not clean.
-                Toggle {
-                    text: qsTr("Make flush (closes gaps under 0.001 mm)")
-                    checked: root.fuzzyText !== undefined && root.fuzzyText.value === "yes"
-                    onToggled: root.textCommitted("fuzzy", checked ? "yes" : "no")
-                }
-            }
-
-            Section {
-                visible: root.tab === "object" && root.stepTexts.some(t => t.kind === "text" || t.kind === "font" || t.kind === "style")
+                visible: root.showsStep && root.stepTexts.some(t => t.kind === "text" || t.kind === "font" || t.kind === "style")
                 heading: qsTr("Text")
 
                 Repeater {
@@ -311,7 +337,7 @@ Rectangle {
             }
 
             Section {
-                visible: root.tab === "object" && root.sizeValues.length > 0
+                visible: root.showsStep && root.sizeValues.length > 0
                 heading: qsTr("Size")
 
                 Repeater {
@@ -350,7 +376,7 @@ Rectangle {
             }
 
             Section {
-                visible: root.tab === "object" && root.positionValues.length > 0
+                visible: root.showsStep && root.positionValues.length > 0
                 heading: qsTr("Position")
 
                 Row {
@@ -394,7 +420,7 @@ Rectangle {
             }
 
             Section {
-                visible: root.tab === "object" && root.rotationValues.length > 0
+                visible: root.showsStep && root.rotationValues.length > 0
                 heading: qsTr("Rotation")
 
                 Row {
@@ -437,8 +463,116 @@ Rectangle {
                 }
             }
 
+            // "▸ More": the rarely changed values of the step, folded away.
+            Item {
+                visible: root.showsStep && root.hasMore
+                width: parent.width
+                height: 40
+
+                AbstractButton {
+                    id: moreButton
+
+                    objectName: "moreButton"
+                    x: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: 30
+                    implicitWidth: moreLabel.implicitWidth + 12
+                    hoverEnabled: true
+                    Accessible.name: qsTr("More")
+                    Accessible.checkable: true
+                    Accessible.checked: root.moreOpen
+                    onClicked: root.moreOpen = !root.moreOpen
+
+                    contentItem: Txt {
+                        id: moreLabel
+
+                        text: (root.moreOpen ? "▾ " : "▸ ") + qsTr("More")
+                        color: moreButton.hovered ? Theme.fg : Theme.fg3
+                        font.weight: Font.Medium
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    background: Rectangle {
+                        radius: 6
+                        color: moreButton.hovered ? Theme.field : "transparent"
+
+                        Focusring {
+                            visible: moreButton.visualFocus
+                        }
+                    }
+                }
+            }
+
             Section {
-                visible: root.tab === "object" && root.stepValues.length === 0
+                visible: root.showsStep && root.moreOpen && root.advancedSizeValues.length > 0
+
+                Repeater {
+                    model: root.advancedSizeNames
+
+                    delegate: NumberField {
+                        id: advancedField
+
+                        required property string modelData
+                        readonly property var entry: root.valueNamed(modelData)
+
+                        objectName: "field_" + modelData
+                        width: parent.width
+                        label: entry.label
+                        kind: entry.kind
+                        unit: entry.kind === "angle" ? "°" : entry.kind === "plain" ? "" : "mm"
+                        invalid: entry.error
+                        onTextCommitted: text => root.valueCommitted(modelData, text)
+                        draggable: true
+                        onDragStarted: root.dragStarted(modelData)
+                        onDragFinished: accepted => root.dragFinished(accepted)
+
+                        Binding {
+                            target: advancedField
+                            property: "value"
+                            value: advancedField.entry.value
+                        }
+
+                        Binding {
+                            target: advancedField
+                            property: "expression"
+                            value: advancedField.entry.expression
+                        }
+                    }
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.moreOpen && root.isHole && root.throughValue !== undefined
+                heading: qsTr("Hole")
+
+                Toggle {
+                    text: qsTr("Goes all the way through")
+                    checked: root.throughValue !== undefined && root.throughValue.value >= 0.5
+                    onToggled: root.valueCommitted("through", checked ? "1" : "0")
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.moreOpen && root.fuzzyText !== undefined
+                heading: qsTr("Combining")
+
+                Toggle {
+                    visible: root.subtracts
+                    text: qsTr("Keep the tools as bodies")
+                    checked: root.keepToolsText !== undefined && root.keepToolsText.value === "yes"
+                    onToggled: root.textCommitted("keepTools", checked ? "yes" : "no")
+                }
+
+                // The way out when faces lie almost on each other and the result is not clean.
+                Toggle {
+                    text: qsTr("Make flush (closes gaps under 0.001 mm)")
+                    checked: root.fuzzyText !== undefined && root.fuzzyText.value === "yes"
+                    onToggled: root.textCommitted("fuzzy", checked ? "yes" : "no")
+                }
+            }
+
+            Section {
+                visible: root.tab === "object" && root.mode === "none"
 
                 Txt {
                     width: parent.width

@@ -196,6 +196,10 @@ TEST_CASE("values of the chosen step, formulas stay visible", "[ui][document-mod
     CHECK(values[7].toMap()["axis"].toString() == "x");
     CHECK(values[7].toMap()["kind"].toString() == "angle");
     CHECK(values[9].toMap()["axis"].toString() == "z");
+    // Only what is rarely changed hides behind "More": "through", not the corner radius.
+    CHECK_FALSE(values[3].toMap()["advanced"].toBool());
+    CHECK(values[10].toMap()["name"].toString() == "through");
+    CHECK(values[10].toMap()["advanced"].toBool());
 
     f.model->setStepValue(0, "depth", "10 + 5");
     f.model->waitForCalculation();
@@ -241,6 +245,24 @@ TEST_CASE("hiding a body does not calculate again", "[ui][document-model]") {
     CHECK(f.model->result()->revision == revision);
     f.model->setBodyVisible(0, true);
     CHECK(f.model->scene()->bodies.size() == 1);
+}
+
+TEST_CASE("renaming a body is one step of the history", "[ui][document-model]") {
+    Fixture f;
+    const auto revision = f.model->result()->revision;
+    const QString before = f.model->bodies().at(0).toMap()["name"].toString();
+    CHECK(f.model->setBodyName(0, QStringLiteral("  Deckel ")));
+    CHECK(f.model->bodies().at(0).toMap()["name"].toString() == "Deckel");
+    CHECK_FALSE(f.model->calculating()); // a name is no geometry
+    CHECK(f.model->result()->revision == revision);
+    CHECK(f.model->nextUndo()["key"].toString() == "nameBody");
+
+    CHECK_FALSE(f.model->setBodyName(0, QStringLiteral("   "))); // a body always has a name
+    CHECK_FALSE(f.model->setBodyName(0, QStringLiteral("Deckel"))); // nothing changes
+
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->bodies().at(0).toMap()["name"].toString() == before);
 }
 
 TEST_CASE("number fields know the named measures of the document", "[ui][numbers]") {

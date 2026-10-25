@@ -50,6 +50,8 @@ struct ParamSpec {
     std::string name;
     QuantityKind kind = QuantityKind::length;
     std::string defaultExpression;
+    /// Rarely changed: the properties panel keeps it behind "More" (e.g. "through").
+    bool advanced = false;
 };
 
 /// A word-valued field of a step (a text, the name of a font) with its default.
