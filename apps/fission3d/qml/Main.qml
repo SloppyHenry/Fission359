@@ -693,6 +693,20 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            ContextBar {
+                anchors.fill: parent
+                viewport: viewport
+                obstacles: viewOverlay.obstacles
+                kind: root.contextKind
+                bodyIds: root.chosenBodies
+                allHoles: root.chosenAreHoles
+                bodyColor: root.chosenColor
+                busy: Handles.editing || Gizmo.editing || Rotate.editing || Scale.editing
+                      || Placement.active || root.seating || root.typing
+                onActionRequested: action => root.run(action)
+                onColorChosen: color => DocumentModel.setBodiesColor(root.colorTargets, color)
+            }
+
             BedLabels {
                 anchors.fill: parent
                 viewport: viewport
@@ -1128,6 +1142,20 @@ Window {
             return "part"
         }
         return DocumentModel.stepValues.length > 0 ? "body" : "none"
+    }
+    // What the context bar next to the selection is for: body | bodies | face | none.
+    readonly property string contextKind: {
+        const items = Selection.items
+        if (items.length === 0) {
+            return "none"
+        }
+        if (chosenBodies.length > 1) {
+            return "bodies"
+        }
+        if (items.some(item => item.kind === "body")) {
+            return "body"
+        }
+        return Selection.singleFaceChosen ? "face" : "none"
     }
     // The bodies a colour choice applies to (once each), and their colour if it is the same.
     readonly property var colorTargets: {

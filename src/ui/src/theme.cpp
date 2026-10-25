@@ -54,7 +54,8 @@ void Theme::rebuild() {
 QVariantList Theme::filaments() {
     QVariantList list;
     for (const auto& [key, colour] : filamentPalette()) {
-        list.push_back(QVariantMap{{QStringLiteral("key"), key}, {QStringLiteral("color"), colour}});
+        list.push_back(
+            QVariantMap{{QStringLiteral("key"), key}, {QStringLiteral("color"), colour}});
     }
     return list;
 }

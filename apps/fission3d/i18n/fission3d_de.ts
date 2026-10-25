@@ -282,6 +282,51 @@
     </message>
 </context>
 <context>
+    <name>ContextBar</name>
+    <message>
+        <location filename="../qml/ContextBar.qml" line="+35"/>
+        <source>As part</source>
+        <translation>Als Teil</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>As hole</source>
+        <translation>Als Loch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+8"/>
+        <source>Colour</source>
+        <translation>Farbe</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Duplicate</source>
+        <translation>Duplizieren</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+7"/>
+        <source>To the bed</source>
+        <translation>Aufs Bett</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Merge</source>
+        <translation>Vereinen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut out</source>
+        <translation>Ausschneiden</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Look at face</source>
+        <translation>Auf Fläche schauen</translation>
+    </message>
+</context>
+<context>
     <name>CutLayer</name>
     <message>
         <location filename="../qml/CutLayer.qml" line="+64"/>
@@ -827,12 +872,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+727"/>
+        <location line="+741"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-726"/>
+        <location line="-740"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -863,12 +908,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+715"/>
+        <location line="+729"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-713"/>
+        <location line="-727"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -1007,7 +1052,7 @@
         <translation>Klicke auf eine Fläche des Druckbetts oder eines anderen Körpers.</translation>
     </message>
     <message>
-        <location line="+86"/>
+        <location line="+100"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
@@ -1590,17 +1635,17 @@
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-692"/>
+        <location line="-706"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+727"/>
+        <location line="+741"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-605"/>
+        <location line="-619"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
@@ -1610,7 +1655,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+316"/>
+        <location line="+330"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>

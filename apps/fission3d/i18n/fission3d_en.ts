@@ -282,6 +282,51 @@
     </message>
 </context>
 <context>
+    <name>ContextBar</name>
+    <message>
+        <location filename="../qml/ContextBar.qml" line="+35"/>
+        <source>As part</source>
+        <translation>As part</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>As hole</source>
+        <translation>As hole</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+8"/>
+        <source>Colour</source>
+        <translation>Colour</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Duplicate</source>
+        <translation>Duplicate</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+7"/>
+        <source>To the bed</source>
+        <translation>To the bed</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Merge</source>
+        <translation>Merge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut out</source>
+        <translation>Cut out</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Look at face</source>
+        <translation>Look at face</translation>
+    </message>
+</context>
+<context>
     <name>CutLayer</name>
     <message>
         <location filename="../qml/CutLayer.qml" line="+64"/>
@@ -827,12 +872,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+727"/>
+        <location line="+741"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-726"/>
+        <location line="-740"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -863,12 +908,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+715"/>
+        <location line="+729"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-713"/>
+        <location line="-727"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1007,7 +1052,7 @@
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
     <message>
-        <location line="+86"/>
+        <location line="+100"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
@@ -1590,17 +1635,17 @@
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-692"/>
+        <location line="-706"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+727"/>
+        <location line="+741"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-605"/>
+        <location line="-619"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
@@ -1610,7 +1655,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+316"/>
+        <location line="+330"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>

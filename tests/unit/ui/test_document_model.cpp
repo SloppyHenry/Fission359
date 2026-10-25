@@ -257,7 +257,7 @@ TEST_CASE("renaming a body is one step of the history", "[ui][document-model]") 
     CHECK(f.model->result()->revision == revision);
     CHECK(f.model->nextUndo()["key"].toString() == "nameBody");
 
-    CHECK_FALSE(f.model->setBodyName(0, QStringLiteral("   "))); // a body always has a name
+    CHECK_FALSE(f.model->setBodyName(0, QStringLiteral("   ")));    // a body always has a name
     CHECK_FALSE(f.model->setBodyName(0, QStringLiteral("Deckel"))); // nothing changes
 
     REQUIRE(f.model->undo());
@@ -939,4 +939,24 @@ TEST_CASE("colouring bodies is one step, undoable, and recomputes nothing",
     REQUIRE(f.model->undo());
     CHECK(f.model->bodies().at(0).toMap()["color"].toString() != "#d93f36");
     CHECK(f.model->bodies().at(1).toMap()["color"].toString() != "#d93f36");
+}
+
+TEST_CASE("the box round several bodies is the box of all of them", "[ui][document-model]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->waitForCalculation();
+    const QString first = f.model->bodyIdAt(0);
+    const QString second = f.model->bodyIdAt(1);
+    const auto a = f.model->boundsOfBodies({first});
+    const auto b = f.model->boundsOfBodies({second});
+    const auto both = f.model->boundsOfBodies({first, second});
+    REQUIRE(a["valid"].toBool());
+    REQUIRE(both["valid"].toBool());
+    for (int axis = 0; axis < 3; ++axis) {
+        CHECK(both["min"].toList()[axis].toDouble() ==
+              std::min(a["min"].toList()[axis].toDouble(), b["min"].toList()[axis].toDouble()));
+        CHECK(both["max"].toList()[axis].toDouble() ==
+              std::max(a["max"].toList()[axis].toDouble(), b["max"].toList()[axis].toDouble()));
+    }
+    CHECK_FALSE(f.model->boundsOfBodies({}).value("valid").toBool());
 }

@@ -213,6 +213,9 @@ public:
     // combining) is left out.
     /// The box that touches the body `bodyId` exactly (mm); nothing when it is not calculated.
     std::optional<geo::Bounds> bodyBounds(const QString& bodyId) const;
+    /// The box round the bodies `bodyIds` together: { valid, min: [x, y, z], max: [x, y, z] } (mm).
+    /// Not valid when none of them is calculated. For things that float beside a body.
+    Q_INVOKABLE QVariantMap boundsOfBodies(const QStringList& bodyIds) const;
     /// Moves each body by its `delta` (mm). `key` names the step ("moveBody", "dropBody" ...).
     /// False when nothing moved.
     bool moveBodiesBy(const std::vector<std::pair<QString, std::array<double, 3>>>& moves,

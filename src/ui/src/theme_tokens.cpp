@@ -236,11 +236,16 @@ QColor composite(const QColor& top, const QColor& base) {
 }
 
 QList<QPair<QString, QColor>> filamentPalette() {
-    return {{QStringLiteral("black"), QColor("#2E2F33")},  {QStringLiteral("white"), QColor("#ECE8E1")},
-            {QStringLiteral("grey"), QColor("#8A8D93")},   {QStringLiteral("red"), QColor("#D93F36")},
-            {QStringLiteral("blue"), QColor("#3F83D6")},   {QStringLiteral("green"), QColor("#3FA55B")},
-            {QStringLiteral("yellow"), QColor("#F2B93A")}, {QStringLiteral("orange"), QColor("#EE7B30")},
-            {QStringLiteral("silver"), QColor("#C3C7CD")}, {QStringLiteral("natural"), QColor("#D9C7A3")}};
+    return {{QStringLiteral("black"), QColor("#2E2F33")},
+            {QStringLiteral("white"), QColor("#ECE8E1")},
+            {QStringLiteral("grey"), QColor("#8A8D93")},
+            {QStringLiteral("red"), QColor("#D93F36")},
+            {QStringLiteral("blue"), QColor("#3F83D6")},
+            {QStringLiteral("green"), QColor("#3FA55B")},
+            {QStringLiteral("yellow"), QColor("#F2B93A")},
+            {QStringLiteral("orange"), QColor("#EE7B30")},
+            {QStringLiteral("silver"), QColor("#C3C7CD")},
+            {QStringLiteral("natural"), QColor("#D9C7A3")}};
 }
 
 QList<QPair<QString, QColor>> accentSuggestions() {

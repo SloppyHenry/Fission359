@@ -1708,6 +1708,31 @@ std::optional<geo::Bounds> DocumentModel::bodyBounds(const QString& bodyId) cons
     return feature != nullptr ? boundsOfFeature(*feature) : std::nullopt;
 }
 
+QVariantMap DocumentModel::boundsOfBodies(const QStringList& bodyIds) const {
+    std::optional<geo::Bounds> total;
+    for (const QString& id : bodyIds) {
+        const auto box = bodyBounds(id);
+        if (!box) {
+            continue;
+        }
+        if (!total) {
+            total = box;
+            continue;
+        }
+        total->min = {std::min(total->min.x, box->min.x), std::min(total->min.y, box->min.y),
+                      std::min(total->min.z, box->min.z)};
+        total->max = {std::max(total->max.x, box->max.x), std::max(total->max.y, box->max.y),
+                      std::max(total->max.z, box->max.z)};
+    }
+    QVariantMap map;
+    map[QStringLiteral("valid")] = total.has_value();
+    if (total) {
+        map[QStringLiteral("min")] = QVariantList{total->min.x, total->min.y, total->min.z};
+        map[QStringLiteral("max")] = QVariantList{total->max.x, total->max.y, total->max.z};
+    }
+    return map;
+}
+
 // x, y and z as they are written in the step now (the last calculation may still be behind a
 // drag); a value that is a formula is taken from the last calculation.
 std::optional<std::array<double, 3>> DocumentModel::liveValues(const core::Feature& step) const {
