@@ -365,6 +365,14 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --simulate "put:cylinder;put:sphere;marker:2;put:cone;recipe:box,cylinder,cone,sphere;marker:-1;recipe:box,cylinder,cone,sphere")
   set_tests_properties(app_time_marker PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # The time marker is pulled up with the mouse (real mouse events through the window).
+  add_test(NAME app_time_marker_drag
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-marker-drag.png" --language de --size 1280x800
+            --camera=20,35,200
+            --simulate "put:cylinder;put:sphere;markerdrag:-150,8;markerset;recipe:box,cylinder,sphere")
+  set_tests_properties(app_time_marker_drag PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

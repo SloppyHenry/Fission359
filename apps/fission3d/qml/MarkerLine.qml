@@ -14,10 +14,13 @@ Item {
     property bool atEnd: true
     // While it is dragged: the vertical distance moved.
     readonly property bool dragging: drag.active
+    // Pressed on the line (before it moves): the list must not scroll away under the hand.
+    readonly property bool held: tap.pressed || drag.active
     readonly property real moved: drag.active ? drag.activeTranslation.y : 0
     signal dragMoved(real dy)
     signal released(real dy)
     signal reset
+    property real lastMoved: 0
 
     width: parent ? parent.width : 260
     height: 28
@@ -36,11 +39,22 @@ Item {
 
         target: null
         xAxis.enabled: false
-        onTranslationChanged: root.dragMoved(activeTranslation.y)
-        onActiveChanged: if (!active) { root.released(translation.y) }
+        // The distance is remembered: it is already gone when the drag ends.
+        onActiveTranslationChanged: {
+            root.lastMoved = activeTranslation.y
+            root.dragMoved(activeTranslation.y)
+        }
+        onActiveChanged: {
+            if (!active) {
+                root.released(root.lastMoved)
+                root.lastMoved = 0
+            }
+        }
     }
 
     TapHandler {
+        id: tap
+
         onDoubleTapped: root.reset()
     }
 

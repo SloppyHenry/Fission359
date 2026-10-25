@@ -30,6 +30,7 @@ Rectangle {
     // The time marker: the number of steps that count (-1: all of them).
     property int marker: -1
     signal markerRequested(int count)
+    property bool markerHeld: false
 
     // The gap between rows (0 … number of steps) a marker would stand in if it were let go
     // `dy` pixels from where `line` is.
@@ -350,7 +351,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: Math.min(parent.height * 0.46, recipeColumn.implicitHeight)
+        height: Math.min(parent.height * 0.46, recipeHeader.height + recipeBody.implicitHeight)
 
         Rectangle {
             width: parent.width
@@ -371,48 +372,67 @@ Rectangle {
             z: 3
         }
 
-        Column {
-            id: recipeColumn
+        Item {
+            id: recipeHeader
 
             width: parent.width
+            height: 40
 
-            Item {
-                width: parent.width
-                height: 40
+            Txt {
+                anchors.left: parent.left
+                anchors.leftMargin: 14
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Recipe")
+                color: Theme.fg
+                font.weight: Font.DemiBold
+                elide: Text.ElideNone
+            }
+
+            Rectangle {
+                anchors.right: parent.right
+                anchors.rightMargin: 14
+                anchors.verticalCenter: parent.verticalCenter
+                width: kbd.implicitWidth + 12
+                height: 20
+                radius: 4
+                color: Theme.field
+                border.width: 1
+                border.color: Theme.line2
 
                 Txt {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Recipe")
-                    color: Theme.fg
-                    font.weight: Font.DemiBold
+                    id: kbd
+
+                    anchors.centerIn: parent
+                    text: Qt.platform.os === "osx" ? "⌘Z" : qsTr("Ctrl+Z")
+                    mono: true
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: Font.Medium
                     elide: Text.ElideNone
                 }
-
-                Rectangle {
-                    anchors.right: parent.right
-                    anchors.rightMargin: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: kbd.implicitWidth + 12
-                    height: 20
-                    radius: 4
-                    color: Theme.field
-                    border.width: 1
-                    border.color: Theme.line2
-
-                    Txt {
-                        id: kbd
-
-                        anchors.centerIn: parent
-                        text: Qt.platform.os === "osx" ? "⌘Z" : qsTr("Ctrl+Z")
-                        mono: true
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.weight: Font.Medium
-                        elide: Text.ElideNone
-                    }
-                }
             }
+        }
+
+        // The steps scroll when there are more than fit; the header stays.
+        Flickable {
+            id: recipeScroll
+
+            anchors.top: recipeHeader.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            contentHeight: recipeBody.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: !root.markerHeld
+
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AsNeeded
+            }
+
+            Column {
+                id: recipeBody
+
+                width: recipeScroll.width
 
             // What deleting asks: the steps that would need help, with the ways out.
             Rectangle {
@@ -481,6 +501,10 @@ Rectangle {
                     id: stepRepeater
 
                     model: root.recipe
+                    // A new step shows at the bottom of the list.
+                    onCountChanged: Qt.callLater(() => {
+                        recipeScroll.contentY = Math.max(0, recipeScroll.contentHeight - recipeScroll.height)
+                    })
 
                     delegate: Column {
                         id: stepItem
@@ -500,6 +524,7 @@ Rectangle {
                             onDragMoved: dy => root.markerDragged(markerHere, dy)
                             onReleased: dy => root.markerReleased(markerHere, dy)
                             onReset: root.markerRequested(-1)
+                            onHeldChanged: root.markerHeld = held
                         }
 
                         RecipeRow {
@@ -537,6 +562,7 @@ Rectangle {
             MarkerLine {
                 id: markerEnd
 
+                objectName: "markerEnd"
                 x: 8
                 width: parent.width - 16
                 visible: root.marker < 0 || root.marker >= root.recipe.length
@@ -545,6 +571,7 @@ Rectangle {
                 onDragMoved: dy => root.markerDragged(markerEnd, dy)
                 onReleased: dy => root.markerReleased(markerEnd, dy)
                 onReset: root.markerRequested(-1)
+                onHeldChanged: root.markerHeld = held
             }
 
             Txt {
@@ -558,6 +585,7 @@ Rectangle {
                 font.pixelSize: Theme.fontSizeSmall
                 wrapMode: Text.WordWrap
                 elide: Text.ElideNone
+            }
             }
         }
     }

@@ -565,6 +565,47 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             QTimer::singleShot(delay, viewport, [model, count] { model->moveMarker(count); });
             continue;
         }
+        if (kind == QLatin1String("markerdrag")) {
+            // markerdrag:-150,8 - press on the time marker at the end of the recipe, pull it 150
+            // view pixels up in 8 moves, let go: real mouse events, as a hand would do.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const int steps = spec.size() >= 2 ? std::max(1, spec[1].toInt()) : 8;
+            delay = pressAndPull(
+                window, viewport, delay,
+                [window, viewport] {
+                    // Visual children, not QObject children: what is on screen under the window.
+                    std::function<QQuickItem*(QQuickItem*)> find = [&](QQuickItem* item) {
+                        if (item->objectName() == QLatin1String("markerEnd")) {
+                            return item;
+                        }
+                        for (QQuickItem* child : item->childItems()) {
+                            if (QQuickItem* found = find(child)) {
+                                return found;
+                            }
+                        }
+                        return static_cast<QQuickItem*>(nullptr);
+                    };
+                    QQuickItem* line = find(window->contentItem());
+                    if (line == nullptr) {
+                        return QPointF();
+                    }
+                    return viewport->mapFromScene(
+                        line->mapToScene(QPointF(line->width() / 2, line->height() / 2)));
+                },
+                QPointF(0.0, spec.value(0).toDouble()), steps);
+            continue;
+        }
+        if (kind == QLatin1String("markerset")) { // markerset - the time marker is pulled back
+            delay += 350;
+            checkAfter(delay, viewport, model, [model] {
+                if (model->marker() < 0) {
+                    qWarning().noquote()
+                        << QStringLiteral("expected the time marker to be pulled back");
+                    g_simulationFailure = 5;
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("key")) { // key:Right - a key pressed and let go
             const QKeySequence sequence = QKeySequence::fromString(action.mid(colon + 1).trimmed());
             delay += 350;
