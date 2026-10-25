@@ -25,6 +25,13 @@ AP-1.1 (erledigt). Sinnvoll nach AP-1.7 und AP-1.9 (dann sind `combine`, `split`
 - `History::markClean/isClean` gibt es schon (für „ungespeichert“).
 - MIME-Typ `application/x-fission3d` und macOS-Dokumenttyp sind in `packaging/` angelegt (AP-0.7).
 
+## Aus AP-1.9 und AP-1.8 übernommen (in der Datei zu speichern)
+- **Zeitmarker:** `Document::rollback()` (Anzahl der zählenden Schritte, leer = alle) gehört in `document.json` als `rollback` (Zahl; fehlt = alle).
+  Beim Laden: Wert ≥ Schrittzahl = alle. Roundtrip- und Migrationstest (Datei ohne das Feld öffnet wie bisher).
+- **Farbpalette des Projekts:** Die Palette (Standardfarben, angepasst, plus eigene Farben) liegt bisher nur in `DocumentModel::palette` und geht beim
+  Beenden verloren. Empfehlung: nur die **Abweichungen** speichern (`settings.palette`: angepasste Standardfarben nach Schlüssel, eigene Farben in
+  Reihenfolge), ein neues Projekt startet weiter mit den Standardfarben. Als Haltepunkt 5 bestätigen lassen.
+
 ## Festlegungen
 - Format nach Architektur §7: ZIP mit `manifest.json`, `document.json`, `assets/`, `cache/` (optional), `preview.png`.
   Quelle der Wahrheit ist `document.json`. `formatVersion` = **1**.
