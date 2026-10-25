@@ -232,12 +232,16 @@ Rectangle {
                 }
 
                 Repeater {
-                    model: root.bodies
+                    // The rows stay when only a value of a body changes (a choice changes
+                    // `chosen`): a row that is rebuilt between the two clicks of a double click
+                    // could not be renamed. So the model is the number of bodies.
+                    model: root.bodies.length
 
                     delegate: TreeRow {
-                        required property var modelData
                         required property int index
+                        readonly property var modelData: index < root.bodies.length ? root.bodies[index] : ({})
 
+                        objectName: "bodyRow_" + index
                         // A body that is part of a result is not a body of its own (hidden, its
                         // position in the list stays the position in the document).
                         visible: !modelData.consumed
@@ -550,7 +554,6 @@ Rectangle {
                                 rowMenu.y = Math.max(8, spot.y - rowMenu.height / 2)
                                 rowMenu.open()
                             }
-                            function startRename() { stepRow.startRename() }
                         }
 
                         function startRename() { stepRow.startRename() }

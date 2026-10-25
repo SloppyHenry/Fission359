@@ -605,8 +605,10 @@ void DocumentModel::rebuildLists() {
         const BodyPart part = partOf(m_history.document(), m_result.get(), body);
         // What a step behind the time marker would make is not there: not listed either.
         const auto madeAt = m_history.document().indexOf(body.createdBy);
+        const core::Feature* madeBy = m_history.document().findFeature(body.createdBy);
         const bool beyond =
-            marker() >= 0 && madeAt && *madeAt >= static_cast<std::size_t>(marker());
+            (marker() >= 0 && madeAt && *madeAt >= static_cast<std::size_t>(marker())) ||
+            (madeBy != nullptr && madeBy->suppressed); // a hidden step makes nothing either
         entry[QStringLiteral("beyond")] = beyond;
         entry[QStringLiteral("consumed")] = part.consumed || beyond; // part of a result: not listed
         entry[QStringLiteral("cut")] = part.cut;

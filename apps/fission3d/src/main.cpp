@@ -565,6 +565,95 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             QTimer::singleShot(delay, viewport, [model, count] { model->moveMarker(count); });
             continue;
         }
+        if (kind == QLatin1String("rowdouble") || kind == QLatin1String("rowediting")) {
+            // rowdouble:1 - a double click on the row of step 1 of the recipe (real mouse events);
+            // rowediting:1 - that row is being renamed now (otherwise the program ends with an
+            // error). "body:1" names a row of the body list instead.
+            const QString which = action.mid(colon + 1).trimmed();
+            const QString name = which.startsWith(QLatin1Char('b'))
+                                     ? QStringLiteral("bodyRow_") + which.mid(1)
+                                     : QStringLiteral("recipeRow_") + which;
+            const auto findRow = [window, name] {
+                std::function<QQuickItem*(QQuickItem*)> find = [&](QQuickItem* item) {
+                    if (item->objectName() == name) {
+                        return item;
+                    }
+                    for (QQuickItem* child : item->childItems()) {
+                        if (QQuickItem* found = find(child)) {
+                            return found;
+                        }
+                    }
+                    return static_cast<QQuickItem*>(nullptr);
+                };
+                return find(window->contentItem());
+            };
+            if (kind == QLatin1String("rowediting")) {
+                delay += 350;
+                QTimer::singleShot(delay, viewport, [findRow, name] {
+                    QQuickItem* row = findRow();
+                    if (row == nullptr || !row->property("editing").toBool()) {
+                        qWarning().noquote()
+                            << QStringLiteral("expected %1 to be renamed now").arg(name);
+                        g_simulationFailure = 5;
+                    }
+                });
+                continue;
+            }
+            for (const QEvent::Type type : {QEvent::MouseButtonPress, QEvent::MouseButtonRelease,
+                                            QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
+                delay += type == QEvent::MouseButtonPress ? 120 : 40;
+                QTimer::singleShot(delay, viewport, [window, findRow, type] {
+                    QQuickItem* row = findRow();
+                    if (row == nullptr) {
+                        return;
+                    }
+                    const QPointF scene =
+                        row->mapToScene(QPointF(row->width() / 3, row->height() / 2));
+                    const bool press = type == QEvent::MouseButtonPress;
+                    QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()),
+                                      Qt::LeftButton, press ? Qt::LeftButton : Qt::NoButton,
+                                      Qt::NoModifier);
+                    QCoreApplication::sendEvent(window, &event);
+                });
+            }
+            continue;
+        }
+        if (kind == QLatin1String("clickitem") || kind == QLatin1String("rightclickitem")) {
+            // clickitem:menu_rename - a click on the item of the interface with that object name
+            // (rightclickitem: the right button): real mouse events through the window.
+            const QString name = action.mid(colon + 1).trimmed();
+            const Qt::MouseButton button =
+                kind == QLatin1String("clickitem") ? Qt::LeftButton : Qt::RightButton;
+            for (const QEvent::Type type : {QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
+                delay += type == QEvent::MouseButtonPress ? 350 : 60;
+                QTimer::singleShot(delay, viewport, [window, name, type, button] {
+                    std::function<QQuickItem*(QQuickItem*)> find = [&](QQuickItem* item) {
+                        if (item->objectName() == name && item->isVisible()) {
+                            return item;
+                        }
+                        for (QQuickItem* child : item->childItems()) {
+                            if (QQuickItem* found = find(child)) {
+                                return found;
+                            }
+                        }
+                        return static_cast<QQuickItem*>(nullptr);
+                    };
+                    QQuickItem* item = find(window->contentItem());
+                    if (item == nullptr) {
+                        qWarning().noquote() << QStringLiteral("no item %1 to click").arg(name);
+                        g_simulationFailure = 5;
+                        return;
+                    }
+                    const QPointF scene =
+                        item->mapToScene(QPointF(item->width() / 3, item->height() / 2));
+                    const bool press = type == QEvent::MouseButtonPress;
+                    QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()), button,
+                                      press ? button : Qt::NoButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(window, &event);
+                });
+            }
+            continue;
+        }
         if (kind == QLatin1String("markerdrag")) {
             // markerdrag:-150,8 - press on the time marker at the end of the recipe, pull it 150
             // view pixels up in 8 moves, let go: real mouse events, as a hand would do.

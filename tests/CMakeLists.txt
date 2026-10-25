@@ -373,6 +373,36 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --simulate "put:cylinder;put:sphere;markerdrag:-150,8;markerset;recipe:box,cylinder,sphere")
   set_tests_properties(app_time_marker_drag PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # A double click on a row of the recipe renames the step (real mouse events).
+  add_test(NAME app_recipe_rename
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-recipe-rename.png" --language de --size 1280x800
+            --camera=20,35,200 --simulate "put:cylinder;rowdouble:1;rowediting:1")
+  set_tests_properties(app_recipe_rename PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # The same for a row of the body list.
+  add_test(NAME app_body_rename
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-body-rename.png" --language de --size 1280x800
+            --camera=20,35,200 --simulate "put:cylinder;rowdouble:b1;rowediting:b1")
+  set_tests_properties(app_body_rename PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # Right click on a row of the recipe, "Rename" in its menu: the row is being renamed.
+  add_test(NAME app_recipe_menu_rename
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-recipe-menu.png" --language de --size 1280x800
+            --camera=20,35,200
+            --simulate "put:cylinder;rightclickitem:recipeRow_1;clickitem:menu_rename;rowediting:1")
+  set_tests_properties(app_recipe_menu_rename PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # ... and "Hide" in the same menu hides the step (the body list loses the body).
+  add_test(NAME app_recipe_menu_hide
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-recipe-hide.png" --language de --size 1280x800
+            --camera=20,35,200
+            --simulate "put:cylinder;rightclickitem:recipeRow_1;clickitem:menu_hide;recipe:box,cylinder")
+  set_tests_properties(app_recipe_menu_hide PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)

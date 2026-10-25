@@ -69,10 +69,14 @@ Rectangle {
         acceptedButtons: Qt.LeftButton
         gesturePolicy: TapHandler.ReleaseWithinBounds
         onTapped: {
-            root.forceActiveFocus()
+            // The second click of a double click must not take the focus away from the name
+            // that is being typed.
+            if (!root.editing) {
+                root.forceActiveFocus()
+            }
             root.clicked()
         }
-        onDoubleTapped: root.startRename()
+        onDoubleTapped: Qt.callLater(root.startRename)
     }
 
     TapHandler {

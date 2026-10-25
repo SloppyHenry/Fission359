@@ -53,19 +53,18 @@ Rectangle {
         onHoveredChanged: root.hovered(hovered)
     }
 
-    TapHandler {
-        acceptedButtons: Qt.LeftButton
-        gesturePolicy: TapHandler.ReleaseWithinBounds
-        enabled: root.renamable
-        onDoubleTapped: root.startRename()
-    }
-
+    // One handler for both: two handlers on the same row did not see the double click.
     TapHandler {
         acceptedButtons: Qt.LeftButton
         gesturePolicy: TapHandler.ReleaseWithinBounds
         onTapped: (point, button) => {
             if (!eyeButton.hovered) {
                 root.clicked((point.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0)
+            }
+        }
+        onDoubleTapped: {
+            if (root.renamable && !eyeButton.hovered) {
+                Qt.callLater(root.startRename)
             }
         }
     }
