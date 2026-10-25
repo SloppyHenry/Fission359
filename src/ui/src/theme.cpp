@@ -51,15 +51,6 @@ void Theme::rebuild() {
     emit tokensChanged();
 }
 
-QVariantList Theme::filaments() {
-    QVariantList list;
-    for (const auto& [key, colour] : filamentPalette()) {
-        list.push_back(
-            QVariantMap{{QStringLiteral("key"), key}, {QStringLiteral("color"), colour}});
-    }
-    return list;
-}
-
 QStringList Theme::fontFamilies() {
     // IBM Plex Sans ships with the program. If it cannot be loaded, the system font takes over
     // (docs/08-gestaltung.md §3): San Francisco on macOS, Cantarell or Noto Sans on Linux.

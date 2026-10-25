@@ -122,7 +122,7 @@
 <context>
     <name>ColorField</name>
     <message>
-        <location filename="../qml/ColorField.qml" line="+18"/>
+        <location filename="../qml/ColorField.qml" line="+20"/>
         <source>Black</source>
         <translation>Schwarz</translation>
     </message>
@@ -172,12 +172,22 @@
         <translation>Natur</translation>
     </message>
     <message>
-        <location line="+66"/>
+        <location line="+1"/>
+        <source>Own colour</source>
+        <translation>Eigene Farbe</translation>
+    </message>
+    <message>
+        <location line="+70"/>
+        <source>Double-click to adjust</source>
+        <translation>Doppelklick zum Anpassen</translation>
+    </message>
+    <message>
+        <location line="+12"/>
         <source>Own colour…</source>
         <translation>Eigene Farbe…</translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+43"/>
         <source>Tone</source>
         <translation>Farbton</translation>
     </message>
@@ -192,9 +202,24 @@
         <translation>Helligkeit</translation>
     </message>
     <message>
-        <location line="+37"/>
-        <source>Use this colour</source>
-        <translation>Diese Farbe nehmen</translation>
+        <location line="+40"/>
+        <source>Keep this colour</source>
+        <translation>Farbe übernehmen</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Add this colour</source>
+        <translation>Farbe hinzufügen</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Back to standard</source>
+        <translation>Zurück zum Standard</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
     </message>
 </context>
 <context>

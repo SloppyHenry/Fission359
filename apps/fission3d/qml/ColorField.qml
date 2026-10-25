@@ -5,8 +5,10 @@ import QtQuick
 import QtQuick.Controls.Basic
 import Fission3D.Ui
 
-// The colour of a body: the filament colours as swatches, and "Own colour…" for any other.
-// `current` is the colour now ("#rrggbb"), empty if the chosen bodies differ.
+// The colour of a body: the palette of the project as swatches (the filament colours, then the
+// own colours). A click chooses a colour, a double click adjusts the swatch for the rest of the
+// session of this project; "Own colour…" adds a new swatch. `current` is the colour now
+// ("#rrggbb"), empty if the chosen bodies differ.
 Item {
     id: root
 
@@ -24,7 +26,8 @@ Item {
         case "yellow": return qsTr("Yellow")
         case "orange": return qsTr("Orange")
         case "silver": return qsTr("Silver")
-        default: return qsTr("Natural")
+        case "natural": return qsTr("Natural")
+        default: return qsTr("Own colour")
         }
     }
 
@@ -32,8 +35,11 @@ Item {
         return a !== "" && b !== "" && Qt.colorEqual(a, b)
     }
 
-    // Opens the popover for an own colour (also called by the context bar).
-    function openOwn() {
+    // Opens the editor for the swatch at `index`, or for a new one (-1).
+    function edit(index) {
+        ownPopup.editIndex = index
+        ownPopup.picked = index >= 0 ? DocumentModel.palette[index].color
+                                     : (root.current !== "" ? root.current : "#D93F36")
         ownPopup.open()
     }
 
@@ -48,13 +54,14 @@ Item {
         spacing: 8
 
         Repeater {
-            model: Theme.filaments
+            model: DocumentModel.palette
 
             delegate: Rectangle {
                 id: swatch
 
                 required property var modelData
-                readonly property bool selected: root.sameColor(root.current, modelData.color.toString())
+                required property int index
+                readonly property bool selected: root.sameColor(root.current, modelData.color)
 
                 objectName: "swatch_" + modelData.key
                 width: 28
@@ -65,7 +72,15 @@ Item {
                 border.color: selected ? Theme.accent : Theme.edge
                 Accessible.name: root.nameOf(modelData.key)
                 Accessible.role: Accessible.Button
-                Accessible.onPressAction: root.chosen(modelData.color.toString())
+                Accessible.onPressAction: root.chosen(modelData.color)
+
+                // A click waits for the double click interval: a double click only adjusts.
+                Timer {
+                    id: clickTimer
+
+                    interval: Qt.styleHints.mouseDoubleClickInterval
+                    onTriggered: root.chosen(swatch.modelData.color)
+                }
 
                 MouseArea {
                     id: area
@@ -73,12 +88,16 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.chosen(swatch.modelData.color.toString())
+                    onClicked: clickTimer.restart()
+                    onDoubleClicked: {
+                        clickTimer.stop()
+                        root.edit(swatch.index)
+                    }
                 }
 
                 ToolTip.visible: area.containsMouse
                 ToolTip.delay: 500
-                ToolTip.text: root.nameOf(modelData.key)
+                ToolTip.text: root.nameOf(modelData.key) + " · " + qsTr("Double-click to adjust")
             }
         }
     }
@@ -91,14 +110,16 @@ Item {
         anchors.topMargin: 8
         small: true
         text: qsTr("Own colour…")
-        onClicked: ownPopup.open()
+        onClicked: root.edit(-1)
     }
 
     // Not a dialog: a small popover that stays out of the way and closes with Esc or a click beside.
     Popup {
         id: ownPopup
 
-        property color picked: root.current !== "" ? root.current : "#D93F36"
+        property int editIndex: -1 // the swatch that is adjusted, -1 for a new colour
+        property color picked: "#D93F36"
+        readonly property bool editingOwn: editIndex >= 0 && DocumentModel.palette[editIndex]?.custom === true
 
         y: ownButton.y + ownButton.height + 6
         width: parent.width
@@ -166,14 +187,46 @@ Item {
                 }
             }
 
-            Btn {
-                objectName: "ownApply"
-                variant: "primary"
-                small: true
-                text: qsTr("Use this colour")
-                onClicked: {
-                    root.chosen(Qt.hsva(hue.value, sat.value, val.value, 1).toString())
-                    ownPopup.close()
+            Row {
+                spacing: 8
+
+                Btn {
+                    objectName: "ownApply"
+                    variant: "primary"
+                    small: true
+                    text: ownPopup.editIndex >= 0 ? qsTr("Keep this colour") : qsTr("Add this colour")
+                    onClicked: {
+                        const color = Qt.hsva(hue.value, sat.value, val.value, 1).toString()
+                        if (ownPopup.editIndex >= 0) {
+                            DocumentModel.setPaletteColor(ownPopup.editIndex, color)
+                        } else {
+                            DocumentModel.addPaletteColor(color)
+                            root.chosen(color)
+                        }
+                        ownPopup.close()
+                    }
+                }
+
+                Btn {
+                    objectName: "ownReset"
+                    visible: ownPopup.editIndex >= 0 && !ownPopup.editingOwn
+                    small: true
+                    text: qsTr("Back to standard")
+                    onClicked: {
+                        DocumentModel.resetPaletteColor(ownPopup.editIndex)
+                        ownPopup.close()
+                    }
+                }
+
+                Btn {
+                    objectName: "ownRemove"
+                    visible: ownPopup.editingOwn
+                    small: true
+                    text: qsTr("Remove")
+                    onClicked: {
+                        DocumentModel.removePaletteColor(ownPopup.editIndex)
+                        ownPopup.close()
+                    }
                 }
             }
         }

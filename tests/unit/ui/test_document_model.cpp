@@ -960,3 +960,34 @@ TEST_CASE("the box round several bodies is the box of all of them", "[ui][docume
     }
     CHECK_FALSE(f.model->boundsOfBodies({}).value("valid").toBool());
 }
+
+TEST_CASE("the palette can be adjusted and extended per project", "[ui][document-model][color]") {
+    Fixture f;
+    const auto start = f.model->palette();
+    REQUIRE(start.size() == 10);
+    const QString red = start.at(3).toMap()["color"].toString();
+
+    CHECK_FALSE(f.model->setPaletteColor(3, "nonsense"));
+    CHECK_FALSE(f.model->setPaletteColor(99, "#112233"));
+    REQUIRE(f.model->setPaletteColor(3, "#112233"));
+    CHECK(f.model->palette().at(3).toMap()["color"].toString() == "#112233");
+    CHECK_FALSE(f.model->setPaletteColor(3, "#112233")); // unchanged
+    CHECK(f.model->resetPaletteColor(3));
+    CHECK(f.model->palette().at(3).toMap()["color"].toString() == red);
+    CHECK_FALSE(f.model->resetPaletteColor(3));
+
+    const int own = f.model->addPaletteColor("#abcdef");
+    REQUIRE(own == 10);
+    CHECK(f.model->palette().at(own).toMap()["custom"].toBool());
+    CHECK_FALSE(f.model->resetPaletteColor(own));
+    CHECK_FALSE(f.model->removePaletteColor(3)); // a filament colour stays
+    CHECK(f.model->removePaletteColor(own));
+    CHECK(f.model->palette().size() == 10);
+
+    f.model->setPaletteColor(0, "#445566");
+    Fixture other; // a new project starts with the defaults again
+    CHECK(other.model->palette().at(0).toMap()["color"].toString() ==
+          start.at(0).toMap()["color"].toString());
+    // ... and nothing of this is a step of the history
+    CHECK_FALSE((f.model->canUndo() && f.model->nextUndo()["key"].toString() == "colorBody"));
+}

@@ -52,6 +52,10 @@ class DocumentModel : public QObject {
     /// [{ index, type, number, name, color, visible, hole }]; `name` is empty unless the person
     /// named it. `hole` is true for a body marked "As hole".
     Q_PROPERTY(QVariantList bodies READ bodies NOTIFY bodiesChanged)
+    /// The colours on offer for bodies: [{ key, color, custom }]. The filament colours of the
+    /// program, as adjusted for this project, then the person's own colours. A setting of the
+    /// project for this session, not a step of the history; a new project starts with the defaults.
+    Q_PROPERTY(QVariantList palette READ palette NOTIFY paletteChanged)
     /// Index in the recipe of the step whose values are shown, or -1.
     Q_PROPERTY(int currentStep READ currentStep NOTIFY currentStepChanged)
     /// Values of the current step: [{ name, group, expression, value, kind, error }].
@@ -134,6 +138,7 @@ public:
 
     QVariantList recipe() const { return m_recipe; }
     QVariantList bodies() const { return m_bodies; }
+    QVariantList palette() const;
     int currentStep() const noexcept { return m_currentStep; }
     QVariantList stepValues() const { return m_stepValues; }
     QVariantList stepTexts() const { return m_stepTexts; }
@@ -175,6 +180,16 @@ public:
     /// step of the history. False for an unknown colour or when nothing changes. Geometry stays
     /// as it is: no recompute.
     Q_INVOKABLE bool setBodiesColor(const QVariantList& indexes, const QString& color);
+    /// Changes the colour of the palette entry `index` ("#rrggbb"). False for a bad index or
+    /// colour.
+    Q_INVOKABLE bool setPaletteColor(int index, const QString& color);
+    /// Adds an own colour to the palette; its position, or -1 for a bad colour.
+    Q_INVOKABLE int addPaletteColor(const QString& color);
+    /// Takes an own colour out of the palette. Filament colours stay (False for those).
+    Q_INVOKABLE bool removePaletteColor(int index);
+    /// Puts a filament colour back to its default. False for an own colour or one that is
+    /// unchanged.
+    Q_INVOKABLE bool resetPaletteColor(int index);
     /// Marks a body as a hole ("Als Loch") or takes the mark away.
     Q_INVOKABLE void setBodyHole(int index, bool hole);
     /// The styles a font has, as names ("regular", "bold", "italic", "boldItalic"); empty if the
@@ -345,6 +360,7 @@ signals:
     void clipboardChanged();
     void historyChanged();
     void printerChanged();
+    void paletteChanged();
     /// A new result arrived: the names of the elements may be different now.
     void elementsChanged();
     /// A new scene for the 3D view.
@@ -461,6 +477,12 @@ private:
     void applyDetail(std::uint64_t generation, int level,
                      std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> meshes);
     QString m_printerId{QStringLiteral("generic")};
+    struct PaletteEntry {
+        QString key; ///< "black" … for the filament colours, "custom" for the person's own
+        QColor color;
+        bool custom = false;
+    };
+    std::vector<PaletteEntry> m_palette;
     int m_detailLevel = 0;
     int m_shownDetailLevel = 0;
     std::uint64_t m_detailGeneration = 0;

@@ -25,6 +25,7 @@
 #include "fission/render/detail.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/printer_catalog.h"
+#include "fission/ui/theme_tokens.h"
 
 namespace fission::ui {
 
@@ -142,6 +143,9 @@ bool isPlainNumber(const std::string& text) {
 DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel, QObject* parent)
     : QObject(parent), m_kernel(std::move(kernel)) {
     features::registerBuiltinFeatures(m_registry);
+    for (const auto& [key, color] : filamentPalette()) {
+        m_palette.push_back({key, color, false});
+    }
     m_detailPool.setMaxThreadCount(1);
     m_detailTimer.setSingleShot(true);
     m_detailTimer.setInterval(120); // zooming in steps: wait until it settles
@@ -902,6 +906,63 @@ bool DocumentModel::setBodyName(int index, const QString& name) {
     }
     documentChanged(false); // a name is no geometry
     return true;
+}
+
+QVariantList DocumentModel::palette() const {
+    QVariantList list;
+    for (const PaletteEntry& entry : m_palette) {
+        list.push_back(QVariantMap{{QStringLiteral("key"), entry.key},
+                                   {QStringLiteral("color"), entry.color.name()},
+                                   {QStringLiteral("custom"), entry.custom}});
+    }
+    return list;
+}
+
+bool DocumentModel::setPaletteColor(int index, const QString& color) {
+    const QColor chosen(color);
+    if (!chosen.isValid() || index < 0 || index >= static_cast<int>(m_palette.size()) ||
+        m_palette[static_cast<std::size_t>(index)].color == chosen) {
+        return false;
+    }
+    m_palette[static_cast<std::size_t>(index)].color = chosen;
+    emit paletteChanged();
+    return true;
+}
+
+int DocumentModel::addPaletteColor(const QString& color) {
+    const QColor chosen(color);
+    if (!chosen.isValid()) {
+        return -1;
+    }
+    m_palette.push_back({QStringLiteral("custom"), chosen, true});
+    emit paletteChanged();
+    return static_cast<int>(m_palette.size()) - 1;
+}
+
+bool DocumentModel::removePaletteColor(int index) {
+    if (index < 0 || index >= static_cast<int>(m_palette.size()) ||
+        !m_palette[static_cast<std::size_t>(index)].custom) {
+        return false;
+    }
+    m_palette.erase(m_palette.begin() + index);
+    emit paletteChanged();
+    return true;
+}
+
+bool DocumentModel::resetPaletteColor(int index) {
+    if (index < 0 || index >= static_cast<int>(m_palette.size()) ||
+        m_palette[static_cast<std::size_t>(index)].custom) {
+        return false;
+    }
+    PaletteEntry& entry = m_palette[static_cast<std::size_t>(index)];
+    for (const auto& [key, color] : filamentPalette()) {
+        if (key == entry.key && entry.color != color) {
+            entry.color = color;
+            emit paletteChanged();
+            return true;
+        }
+    }
+    return false;
 }
 
 bool DocumentModel::setBodiesColor(const QVariantList& indexes, const QString& color) {
