@@ -171,6 +171,10 @@ public:
     Q_INVOKABLE void setBodyVisible(int index, bool visible);
     /// Gives a body a new name (one step of the history). Empty or unchanged names do nothing.
     Q_INVOKABLE bool setBodyName(int index, const QString& name);
+    /// Colours the bodies at `indexes` (positions in `bodies`) with `color` ("#rrggbb") in one
+    /// step of the history. False for an unknown colour or when nothing changes. Geometry stays
+    /// as it is: no recompute.
+    Q_INVOKABLE bool setBodiesColor(const QVariantList& indexes, const QString& color);
     /// Marks a body as a hole ("Als Loch") or takes the mark away.
     Q_INVOKABLE void setBodyHole(int index, bool hole);
     /// The styles a font has, as names ("regular", "bold", "italic", "boldItalic"); empty if the

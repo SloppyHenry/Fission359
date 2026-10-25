@@ -76,6 +76,10 @@ double contrastRatio(const QColor& a, const QColor& b);
 /// Colour `top` (may be translucent) drawn over `base`.
 QColor composite(const QColor& top, const QColor& base);
 
+/// The body colours on offer (name key, colour): the filament colours a printer is loaded with.
+/// None is the colour of a 3D view (shading and edges do the rest; see the theme tests).
+QList<QPair<QString, QColor>> filamentPalette();
+
 /// Suggested accent colours (name key, colour), the first is the default.
 QList<QPair<QString, QColor>> accentSuggestions();
 

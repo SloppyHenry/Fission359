@@ -773,6 +773,8 @@ Window {
             partText: Selection.items.length === 1 ? root.partName(Selection.items[0].kind, Selection.items[0].bodyIndex) : ""
             bodyCount: root.chosenBodies.length
             canCombine: root.chosenBodies.length >= 2
+            bodyColor: root.chosenColor
+            onColorChosen: color => DocumentModel.setBodiesColor(root.colorTargets, color)
             onNameCommitted: name => DocumentModel.setBodyName(root.panelBodyIndex, name)
             onCombineRequested: way => root.combine(way)
             stepValues: root.stepValueList
@@ -952,7 +954,7 @@ Window {
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
         case "unsuppress": return qsTr("%1 step shown").arg(typeLabel(step.type))
         case "nameBody": return qsTr("Body renamed to “%1”").arg(step.value)
-        case "colorBody": return qsTr("Colour of %1 changed").arg(body)
+        case "colorBody": return step.count !== undefined ? qsTr("Colour of %n body(ies) changed", "", Number(step.count)) : qsTr("Colour of %1 changed").arg(body)
         case "showBody": return qsTr("%1 shown").arg(body)
         case "hideBody": return qsTr("%1 hidden").arg(body)
         case "addMeasure": return qsTr("Named measure “%1” added").arg(step.name)
@@ -1126,6 +1128,16 @@ Window {
             return "part"
         }
         return DocumentModel.stepValues.length > 0 ? "body" : "none"
+    }
+    // The bodies a colour choice applies to (once each), and their colour if it is the same.
+    readonly property var colorTargets: {
+        const chosen = Array.from(new Set(chosenBodyIndexes.filter(index => index >= 0)))
+        return chosen.length > 0 ? chosen : (panelBodyIndex >= 0 ? [panelBodyIndex] : [])
+    }
+    readonly property string chosenColor: {
+        const colors = new Set(colorTargets.filter(index => index < DocumentModel.bodies.length)
+                                           .map(index => DocumentModel.bodies[index].color))
+        return colors.size === 1 ? Array.from(colors)[0] : ""
     }
     // The body the panel shows: the chosen one, else the one the chosen recipe step makes.
     readonly property int panelBodyIndex: {

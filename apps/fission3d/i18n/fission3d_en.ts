@@ -120,6 +120,84 @@
     </message>
 </context>
 <context>
+    <name>ColorField</name>
+    <message>
+        <location filename="../qml/ColorField.qml" line="+18"/>
+        <source>Black</source>
+        <translation>Black</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>White</source>
+        <translation>White</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Grey</source>
+        <translation>Grey</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Red</source>
+        <translation>Red</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Blue</source>
+        <translation>Blue</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Green</source>
+        <translation>Green</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Yellow</source>
+        <translation>Yellow</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Orange</source>
+        <translation>Orange</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Silver</source>
+        <translation>Silver</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Natural</source>
+        <translation>Natural</translation>
+    </message>
+    <message>
+        <location line="+66"/>
+        <source>Own colour…</source>
+        <translation>Own colour…</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Tone</source>
+        <translation>Tone</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Strength</source>
+        <translation>Strength</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Brightness</source>
+        <translation>Brightness</translation>
+    </message>
+    <message>
+        <location line="+37"/>
+        <source>Use this colour</source>
+        <translation>Use this colour</translation>
+    </message>
+</context>
+<context>
     <name>CombineCatalog</name>
     <message>
         <location filename="../qml/CombineCatalog.qml" line="+13"/>
@@ -749,12 +827,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+725"/>
+        <location line="+727"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-724"/>
+        <location line="-726"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -785,12 +863,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+713"/>
+        <location line="+715"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-711"/>
+        <location line="-713"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -934,7 +1012,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+38"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -1304,6 +1382,14 @@
         <source>Colour of %1 changed</source>
         <translation>Colour of %1 changed</translation>
     </message>
+    <message numerus="yes">
+        <location line="+0"/>
+        <source>Colour of %n body(ies) changed</source>
+        <translation>
+            <numerusform>Colour of %n body changed</numerusform>
+            <numerusform>Colour of %n bodies changed</numerusform>
+        </translation>
+    </message>
     <message>
         <location line="+1"/>
         <source>%1 shown</source>
@@ -1499,7 +1585,7 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-386"/>
+        <location line="-388"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
@@ -1524,7 +1610,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+314"/>
+        <location line="+316"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -1658,7 +1744,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+120"/>
+        <location filename="../qml/RightPanel.qml" line="+123"/>
         <source>Object</source>
         <translation>Object</translation>
     </message>
@@ -1683,7 +1769,7 @@
         <translation>Change a value or type a formula.</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+47"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
@@ -1723,7 +1809,7 @@
         <translation>Text</translation>
     </message>
     <message numerus="yes">
-        <location line="-75"/>
+        <location line="-86"/>
         <source>%n body(ies) selected</source>
         <translation>
             <numerusform>%n body selected</numerusform>
@@ -1741,7 +1827,12 @@
         <translation>Combine</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+23"/>
+        <source>Colour</source>
+        <translation>Colour</translation>
+    </message>
+    <message>
+        <location line="+68"/>
         <source>Words</source>
         <translation>Words</translation>
     </message>

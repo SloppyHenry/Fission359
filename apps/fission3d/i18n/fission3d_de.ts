@@ -120,6 +120,84 @@
     </message>
 </context>
 <context>
+    <name>ColorField</name>
+    <message>
+        <location filename="../qml/ColorField.qml" line="+18"/>
+        <source>Black</source>
+        <translation>Schwarz</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>White</source>
+        <translation>Weiß</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Grey</source>
+        <translation>Grau</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Red</source>
+        <translation>Rot</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Blue</source>
+        <translation>Blau</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Green</source>
+        <translation>Grün</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Yellow</source>
+        <translation>Gelb</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Orange</source>
+        <translation>Orange</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Silver</source>
+        <translation>Silber</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Natural</source>
+        <translation>Natur</translation>
+    </message>
+    <message>
+        <location line="+66"/>
+        <source>Own colour…</source>
+        <translation>Eigene Farbe…</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Tone</source>
+        <translation>Farbton</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Strength</source>
+        <translation>Sättigung</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Brightness</source>
+        <translation>Helligkeit</translation>
+    </message>
+    <message>
+        <location line="+37"/>
+        <source>Use this colour</source>
+        <translation>Diese Farbe nehmen</translation>
+    </message>
+</context>
+<context>
     <name>CombineCatalog</name>
     <message>
         <location filename="../qml/CombineCatalog.qml" line="+13"/>
@@ -749,12 +827,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+725"/>
+        <location line="+727"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-724"/>
+        <location line="-726"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -785,12 +863,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+713"/>
+        <location line="+715"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-711"/>
+        <location line="-713"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -934,7 +1012,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+38"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -1304,6 +1382,14 @@
         <source>Colour of %1 changed</source>
         <translation>Farbe von %1 geändert</translation>
     </message>
+    <message numerus="yes">
+        <location line="+0"/>
+        <source>Colour of %n body(ies) changed</source>
+        <translation>
+            <numerusform>Farbe von %n Körper geändert</numerusform>
+            <numerusform>Farbe von %n Körpern geändert</numerusform>
+        </translation>
+    </message>
     <message>
         <location line="+1"/>
         <source>%1 shown</source>
@@ -1499,7 +1585,7 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-386"/>
+        <location line="-388"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
@@ -1524,7 +1610,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+314"/>
+        <location line="+316"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -1658,7 +1744,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+120"/>
+        <location filename="../qml/RightPanel.qml" line="+123"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -1683,7 +1769,7 @@
         <translation>Ändere einen Wert oder tippe eine Formel.</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+47"/>
         <source>Cut</source>
         <translation>Schnitt</translation>
     </message>
@@ -1723,7 +1809,7 @@
         <translation>Text</translation>
     </message>
     <message numerus="yes">
-        <location line="-75"/>
+        <location line="-86"/>
         <source>%n body(ies) selected</source>
         <translation>
             <numerusform>%n Körper ausgewählt</numerusform>
@@ -1741,7 +1827,12 @@
         <translation>Kombinieren</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+23"/>
+        <source>Colour</source>
+        <translation>Farbe</translation>
+    </message>
+    <message>
+        <location line="+68"/>
         <source>Words</source>
         <translation>Worte</translation>
     </message>

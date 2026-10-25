@@ -904,6 +904,41 @@ bool DocumentModel::setBodyName(int index, const QString& name) {
     return true;
 }
 
+bool DocumentModel::setBodiesColor(const QVariantList& indexes, const QString& color) {
+    const QColor chosen(color);
+    const auto& bodies = m_history.document().bodies();
+    if (!chosen.isValid() || indexes.isEmpty()) {
+        return false;
+    }
+    const core::Color target{static_cast<std::uint8_t>(chosen.red()),
+                             static_cast<std::uint8_t>(chosen.green()),
+                             static_cast<std::uint8_t>(chosen.blue())};
+    std::vector<core::BodyId> changing;
+    for (const QVariant& entry : indexes) {
+        const int index = entry.toInt();
+        if (index >= 0 && index < static_cast<int>(bodies.size()) &&
+            !(bodies[static_cast<std::size_t>(index)].color == target)) {
+            changing.push_back(bodies[static_cast<std::size_t>(index)].id);
+        }
+    }
+    if (changing.empty()) {
+        return false;
+    }
+    const core::Body* first = m_history.document().findBody(changing.front());
+    core::CommandDescription label{"colorBody", {{"name", first->name}}};
+    if (changing.size() > 1) {
+        label.values["count"] = std::to_string(changing.size());
+    }
+    m_history.beginTransaction(std::move(label));
+    for (const core::BodyId& id : changing) {
+        m_history.execute(core::makeSetBodyColor(id, target));
+    }
+    m_history.commitTransaction();
+    documentChanged(false); // a colour is no geometry
+    emit historyChanged();
+    return true;
+}
+
 bool DocumentModel::undo() {
     if (!m_history.undo()) {
         return false;

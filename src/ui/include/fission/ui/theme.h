@@ -10,6 +10,7 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QVariantList>
 
 #include "fission/ui/theme_tokens.h"
 
@@ -27,6 +28,8 @@ class Theme : public QObject {
 
     Q_PROPERTY(QStringList fontFamilies READ fontFamilies CONSTANT)
     Q_PROPERTY(QStringList monoFamilies READ monoFamilies CONSTANT)
+    /// The colours a body can be given: [{ key, color }], see `filamentPalette()`.
+    Q_PROPERTY(QVariantList filaments READ filaments CONSTANT)
 
     // Sizes (px at 100 % scale)
     Q_PROPERTY(int radius MEMBER kRadius CONSTANT)
@@ -65,6 +68,7 @@ public:
     /// The tokens in use, for C++ users (tests, the renderer palette).
     const ThemeTokens& tokens() const { return m_tokens; }
 
+    static QVariantList filaments();
     static QStringList fontFamilies();
     static QStringList monoFamilies();
 

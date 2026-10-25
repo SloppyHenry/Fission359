@@ -132,3 +132,31 @@ TEST_CASE("colours that already carry a meaning get a hint", "[theme]") {
     CHECK(accentClash(QColor("#2563D9")).isEmpty());
     CHECK(accentClash(QColor("#808080")).isEmpty());
 }
+
+TEST_CASE("every filament colour is told apart from both 3D views", "[theme][contrast]") {
+    const auto palette = filamentPalette();
+    CHECK(palette.size() == 10);
+    for (const bool dark : {true, false}) {
+        const ThemeTokens tokens = makeTokens(dark);
+        for (const auto& [name, colour] : palette) {
+            INFO(name.toStdString() << (dark ? " dark" : " light"));
+            // Black filament on the dark view and white on the light one are as dark or as bright
+            // as the view itself, as in real life: shading and the edge lines show the shape.
+            const bool blends = (dark && name == QLatin1String("black")) ||
+                                (!dark && name == QLatin1String("white"));
+            const double least = blends ? 1.0 : 1.1;
+            CHECK(contrastRatio(colour, tokens.view) >= least);
+            CHECK(contrastRatio(colour, tokens.view2) >= least);
+        }
+    }
+}
+
+TEST_CASE("the filament colours differ from each other", "[theme]") {
+    const auto palette = filamentPalette();
+    for (int a = 0; a < palette.size(); ++a) {
+        for (int b = a + 1; b < palette.size(); ++b) {
+            INFO(palette[a].first.toStdString() << " / " << palette[b].first.toStdString());
+            CHECK(palette[a].second != palette[b].second);
+        }
+    }
+}

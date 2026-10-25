@@ -20,6 +20,9 @@ Rectangle {
     property bool canCombine: false
     signal nameCommitted(string name)
     signal combineRequested(string way)
+    // The colour of the chosen bodies ("#rrggbb"; empty if they differ) and a new choice.
+    property string bodyColor: ""
+    signal colorChosen(string color)
     // The values of one step: shown for one body and for a part of it.
     readonly property bool showsStep: tab === "object" && (mode === "body" || mode === "part")
                                       && stepValues.length > 0
@@ -228,6 +231,17 @@ Rectangle {
                             onClicked: root.combineRequested(modelData.id)
                         }
                     }
+                }
+            }
+
+            Section {
+                visible: root.tab === "object" && (root.mode === "bodies" || (root.mode === "body" && root.renamable))
+                heading: qsTr("Colour")
+
+                ColorField {
+                    objectName: "bodyColor"
+                    current: root.bodyColor
+                    onChosen: color => root.colorChosen(color)
                 }
             }
 

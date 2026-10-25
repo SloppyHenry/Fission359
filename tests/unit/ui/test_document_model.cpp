@@ -917,3 +917,26 @@ TEST_CASE("holes cut live while they are dragged, and all of it is one step",
     f.model->waitForCalculation();
     CHECK(f.model->recipe().size() == 3);
 }
+
+TEST_CASE("colouring bodies is one step, undoable, and recomputes nothing",
+          "[ui][document-model][color]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->waitForCalculation();
+    const auto versionBefore = f.model->scene()->bodies[0].meshVersion;
+    const int steps = f.model->historyPosition();
+
+    CHECK_FALSE(f.model->setBodiesColor({0, 1}, "not a colour"));
+    CHECK_FALSE(f.model->setBodiesColor({}, "#d93f36"));
+    REQUIRE(f.model->setBodiesColor({0, 1}, "#d93f36"));
+    CHECK(f.model->historyPosition() == steps + 1); // both bodies, one step
+    CHECK(f.model->bodies().at(0).toMap()["color"].toString() == "#d93f36");
+    CHECK(f.model->bodies().at(1).toMap()["color"].toString() == "#d93f36");
+    CHECK(f.model->scene()->bodies[0].meshVersion == versionBefore); // same mesh, new colour
+    CHECK(f.model->nextUndo()["key"].toString() == "colorBody");
+    CHECK_FALSE(f.model->setBodiesColor({0, 1}, "#d93f36")); // nothing changes
+
+    REQUIRE(f.model->undo());
+    CHECK(f.model->bodies().at(0).toMap()["color"].toString() != "#d93f36");
+    CHECK(f.model->bodies().at(1).toMap()["color"].toString() != "#d93f36");
+}
