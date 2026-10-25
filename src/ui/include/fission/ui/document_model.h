@@ -52,9 +52,10 @@ class DocumentModel : public QObject {
     /// [{ index, type, number, name, color, visible, hole }]; `name` is empty unless the person
     /// named it. `hole` is true for a body marked "As hole".
     Q_PROPERTY(QVariantList bodies READ bodies NOTIFY bodiesChanged)
-    /// The colours on offer for bodies: [{ key, color, custom }]. The filament colours of the
-    /// program, as adjusted for this project, then the person's own colours. A setting of the
-    /// project for this session, not a step of the history; a new project starts with the defaults.
+    /// The colours on offer for bodies: [{ key, nameKey, color, custom }] (`nameKey`: the plain
+    /// word for the colour now). The filament colours of the program, as adjusted for this project,
+    /// then the person's own colours. A setting of the project for this session, not a step of the
+    /// history; a new project starts with the defaults.
     Q_PROPERTY(QVariantList palette READ palette NOTIFY paletteChanged)
     /// Index in the recipe of the step whose values are shown, or -1.
     Q_PROPERTY(int currentStep READ currentStep NOTIFY currentStepChanged)

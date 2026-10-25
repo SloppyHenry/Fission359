@@ -27,7 +27,11 @@ Item {
         case "orange": return qsTr("Orange")
         case "silver": return qsTr("Silver")
         case "natural": return qsTr("Natural")
-        default: return qsTr("Own colour")
+        case "turquoise": return qsTr("Turquoise")
+        case "violet": return qsTr("Violet")
+        case "pink": return qsTr("Pink")
+        case "brown": return qsTr("Brown")
+        default: return key
         }
     }
 
@@ -70,7 +74,7 @@ Item {
                 color: modelData.color
                 border.width: selected ? 2 : 1
                 border.color: selected ? Theme.accent : Theme.edge
-                Accessible.name: root.nameOf(modelData.key)
+                Accessible.name: root.nameOf(modelData.nameKey)
                 Accessible.role: Accessible.Button
                 Accessible.onPressAction: root.chosen(modelData.color)
 
@@ -97,7 +101,7 @@ Item {
 
                 ToolTip.visible: area.containsMouse
                 ToolTip.delay: 500
-                ToolTip.text: root.nameOf(modelData.key) + " · " + qsTr("Double-click to adjust")
+                ToolTip.text: root.nameOf(modelData.nameKey) + " · " + qsTr("Double-click to adjust")
             }
         }
     }
@@ -187,7 +191,9 @@ Item {
                 }
             }
 
-            Row {
+            // Wraps when the words are long (German): the buttons stay inside the frame.
+            Flow {
+                width: parent.width
                 spacing: 8
 
                 Btn {

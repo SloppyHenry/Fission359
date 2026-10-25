@@ -173,11 +173,26 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Own colour</source>
-        <translation>Own colour</translation>
+        <source>Turquoise</source>
+        <translation>Turquoise</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+1"/>
+        <source>Violet</source>
+        <translation>Violet</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pink</source>
+        <translation>Pink</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Brown</source>
+        <translation>Brown</translation>
+    </message>
+    <message>
+        <location line="+71"/>
         <source>Double-click to adjust</source>
         <translation>Double-click to adjust</translation>
     </message>

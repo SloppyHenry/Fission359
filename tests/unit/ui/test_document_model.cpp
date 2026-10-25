@@ -971,8 +971,10 @@ TEST_CASE("the palette can be adjusted and extended per project", "[ui][document
     CHECK_FALSE(f.model->setPaletteColor(99, "#112233"));
     REQUIRE(f.model->setPaletteColor(3, "#112233"));
     CHECK(f.model->palette().at(3).toMap()["color"].toString() == "#112233");
-    CHECK_FALSE(f.model->setPaletteColor(3, "#112233")); // unchanged
+    CHECK_FALSE(f.model->setPaletteColor(3, "#112233"));                     // unchanged
+    CHECK(f.model->palette().at(3).toMap()["nameKey"].toString() == "blue"); // the word follows
     CHECK(f.model->resetPaletteColor(3));
+    CHECK(f.model->palette().at(3).toMap()["nameKey"].toString() == "red");
     CHECK(f.model->palette().at(3).toMap()["color"].toString() == red);
     CHECK_FALSE(f.model->resetPaletteColor(3));
 

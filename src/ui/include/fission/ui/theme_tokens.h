@@ -80,6 +80,10 @@ QColor composite(const QColor& top, const QColor& base);
 /// None is the colour of a 3D view (shading and edges do the rest; see the theme tests).
 QList<QPair<QString, QColor>> filamentPalette();
 
+/// A plain word for a colour: "black", "white", "grey", "red", "orange", "yellow", "green",
+/// "turquoise", "blue", "violet", "pink" or "brown". For a swatch whose colour was adjusted.
+QString colourNameKey(const QColor& colour);
+
 /// Suggested accent colours (name key, colour), the first is the default.
 QList<QPair<QString, QColor>> accentSuggestions();
 

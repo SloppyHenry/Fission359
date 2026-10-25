@@ -910,8 +910,17 @@ bool DocumentModel::setBodyName(int index, const QString& name) {
 
 QVariantList DocumentModel::palette() const {
     QVariantList list;
+    const auto defaults = filamentPalette();
     for (const PaletteEntry& entry : m_palette) {
+        // The word follows the colour: an adjusted swatch is no longer "Grey" when it is green.
+        QString word = colourNameKey(entry.color);
+        for (const auto& [key, color] : defaults) {
+            if (!entry.custom && key == entry.key && color == entry.color) {
+                word = key;
+            }
+        }
         list.push_back(QVariantMap{{QStringLiteral("key"), entry.key},
+                                   {QStringLiteral("nameKey"), word},
                                    {QStringLiteral("color"), entry.color.name()},
                                    {QStringLiteral("custom"), entry.custom}});
     }

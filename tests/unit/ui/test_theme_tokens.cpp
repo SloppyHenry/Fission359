@@ -160,3 +160,18 @@ TEST_CASE("the filament colours differ from each other", "[theme]") {
         }
     }
 }
+
+TEST_CASE("a colour gets a plain word", "[theme]") {
+    CHECK(colourNameKey(QColor("#000000")) == "black");
+    CHECK(colourNameKey(QColor("#FFFFFF")) == "white");
+    CHECK(colourNameKey(QColor("#888888")) == "grey");
+    CHECK(colourNameKey(QColor("#FF0000")) == "red");
+    CHECK(colourNameKey(QColor("#FF8800")) == "orange");
+    CHECK(colourNameKey(QColor("#FFDD00")) == "yellow");
+    CHECK(colourNameKey(QColor("#22AA44")) == "green");
+    CHECK(colourNameKey(QColor("#00CCCC")) == "turquoise");
+    CHECK(colourNameKey(QColor("#2255DD")) == "blue");
+    CHECK(colourNameKey(QColor("#8844CC")) == "violet");
+    CHECK(colourNameKey(QColor("#EE3388")) == "pink");
+    CHECK(colourNameKey(QColor("#6B4423")) == "brown");
+}
