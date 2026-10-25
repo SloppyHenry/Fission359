@@ -340,6 +340,20 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     found << step.toMap()["type"].toString();
                 }
                 if (found != wanted) {
+                    // DIAG (temporary): where are the bodies?
+                    for (int i = 0; i < model->bodies().size(); ++i) {
+                        const auto box = model->bodyBounds(model->bodyIdAt(i));
+                        qWarning().noquote() << QStringLiteral("DIAG body %1 box %2")
+                            .arg(i).arg(box ? QStringLiteral("(%1,%2,%3)-(%4,%5,%6)")
+                                  .arg(box->min.x).arg(box->min.y).arg(box->min.z)
+                                  .arg(box->max.x).arg(box->max.y).arg(box->max.z)
+                                  : QStringLiteral("none"));
+                    }
+                    for (const QVariant& step : model->recipe()) {
+                        qWarning().noquote() << QStringLiteral("DIAG step %1 state %2 values %3")
+                            .arg(step.toMap()["type"].toString(), step.toMap()["state"].toString())
+                            .arg(QVariant(step.toMap()["values"]).toStringList().join(QLatin1Char(' ')));
+                    }
                     qWarning().noquote()
                         << QStringLiteral("expected the recipe %1; found %2")
                                .arg(wanted.join(QLatin1Char(',')), found.join(QLatin1Char(',')));
@@ -686,15 +700,20 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             if (kind == QLatin1String("drop") || kind == QLatin1String("drophole")) {
                 // A third number other than 0 holds the Alt key: the shape stays upright.
                 const bool upright = numbers.size() >= 3 && numbers[2] != 0.0;
-                if (numbers.size() >= 2 &&
+                const bool began = numbers.size() >= 2 &&
                     placement->begin(shape, kind == QLatin1String("drophole"), numbers[0],
-                                     numbers[1], upright)) {
+                                     numbers[1], upright);
+                qWarning().noquote() << QStringLiteral("DIAG drop began=%1 view=%2x%3 at %4,%5")
+                    .arg(began).arg(viewport->width()).arg(viewport->height())
+                    .arg(numbers.value(0)).arg(numbers.value(1));
+                if (began) {
                     // The size of the shape is known a moment after it appeared; from then on it
                     // catches on other bodies, so the pointer moves once more before it lets go
                     // (as a hand would).
                     QTimer::singleShot(250, viewport, [placement, numbers, upright] {
                         placement->moveTo(numbers[0], numbers[1], upright);
-                        placement->finish();
+                        const bool done = placement->finish();
+                        qWarning().noquote() << QStringLiteral("DIAG finish=%1").arg(done);
                     });
                 }
                 return;
