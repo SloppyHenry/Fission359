@@ -1120,3 +1120,48 @@ TEST_CASE("a step can be hidden and named; both undo", "[ui][document-model][rec
     f.model->waitForCalculation();
     CHECK(f.step(1)["state"].toString() == "ok");
 }
+
+TEST_CASE("the time marker shows an earlier state and new steps go in at it",
+          "[ui][document-model][recipe][marker]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    REQUIRE(f.model->addShape("sphere", false) == 2);
+    f.model->waitForCalculation();
+    REQUIRE(f.model->scene()->bodies.size() == 3);
+    CHECK(f.model->marker() == -1);
+    const fission::core::Document everything = f.model->document();
+
+    REQUIRE(f.model->moveMarker(2));
+    f.model->waitForCalculation();
+    CHECK(f.model->marker() == 2);
+    CHECK(f.step(1)["state"].toString() == "ok");
+    CHECK(f.step(2)["state"].toString() == "pending"); // not calculated, not "hidden"
+    CHECK_FALSE(f.step(2)["suppressed"].toBool());
+    CHECK(f.model->scene()->bodies.size() == 2);
+    CHECK(f.model->bodies().at(2).toMap()["beyond"].toBool());
+    CHECK(f.model->bodies().at(2).toMap()["consumed"].toBool()); // not listed
+    CHECK(f.model->nextUndo()["key"].toString() == "setRollback");
+    CHECK_FALSE(f.model->moveMarker(2)); // already there
+
+    // A new step lands at the marker (before the sphere) and the marker moves behind it.
+    REQUIRE(f.model->addShape("cone", false) >= 0);
+    f.model->waitForCalculation();
+    CHECK(f.step(2)["type"].toString() == "cone");
+    CHECK(f.step(3)["type"].toString() == "sphere");
+    CHECK(f.model->marker() == 3);
+    CHECK(f.model->scene()->bodies.size() == 3);
+
+    // Everything undoes, step by step, to the full recipe.
+    REQUIRE(f.model->undo()); // the cone
+    REQUIRE(f.model->undo()); // the marker
+    f.model->waitForCalculation();
+    CHECK(f.model->marker() == -1);
+    CHECK(f.model->document().sameContentAs(everything));
+    CHECK(f.model->scene()->bodies.size() == 3);
+
+    // Back at the end with one move.
+    REQUIRE(f.model->moveMarker(1));
+    REQUIRE(f.model->moveMarker(-1));
+    f.model->waitForCalculation();
+    CHECK(f.model->marker() == -1);
+}

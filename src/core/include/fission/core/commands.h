@@ -54,6 +54,9 @@ std::unique_ptr<Command> makeSetFeatureLabel(FeatureId id, std::string label);
 /// Switches a step off or on ("ausblenden").
 std::unique_ptr<Command> makeSetFeatureSuppressed(FeatureId id, bool suppressed);
 
+/// Pulls the time marker back to `count` steps (nullopt: all of them count, "jetzt" at the end).
+std::unique_ptr<Command> makeSetRollback(std::optional<std::size_t> count);
+
 std::unique_ptr<Command> makeSetBodyName(BodyId id, std::string name);
 std::unique_ptr<Command> makeSetBodyColor(BodyId id, Color color);
 std::unique_ptr<Command> makeSetBodyVisible(BodyId id, bool visible);

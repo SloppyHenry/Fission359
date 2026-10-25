@@ -19,7 +19,8 @@ void Document::setSettings(const DocumentSettings& settings) {
 bool Document::sameContentAs(const Document& other) const {
     return title == other.title && settings_ == other.settings_ &&
            parameters_ == other.parameters_ && features_ == other.features_ &&
-           bodies_ == other.bodies_ && lastFeatureNumber_ == other.lastFeatureNumber_;
+           bodies_ == other.bodies_ && lastFeatureNumber_ == other.lastFeatureNumber_ &&
+           rollback() == other.rollback();
 }
 
 // --- named measures ----------------------------------------------------------------------
@@ -122,6 +123,25 @@ std::vector<MeasureDefinition> Document::measureDefinitions() const {
 
 // --- recipe -------------------------------------------------------------------------------
 
+std::optional<std::size_t> Document::rollback() const noexcept {
+    if (rollback_ && *rollback_ < features_.size()) {
+        return rollback_;
+    }
+    return std::nullopt;
+}
+
+bool Document::setRollback(std::optional<std::size_t> count) {
+    if (count && *count >= features_.size()) {
+        count.reset();
+    }
+    if (rollback() == count) {
+        return false;
+    }
+    rollback_ = count;
+    touch();
+    return true;
+}
+
 const Feature* Document::findFeature(const FeatureId& id) const {
     const auto found = std::find_if(features_.begin(), features_.end(),
                                     [&](const Feature& f) { return f.id == id; });
@@ -145,7 +165,10 @@ std::optional<std::size_t> Document::indexOf(const FeatureId& id) const {
 
 std::optional<FeatureId> Document::addFeature(FeatureDraft draft,
                                               std::optional<std::size_t> position) {
-    const std::size_t at = std::min(position.value_or(features_.size()), features_.size());
+    // With the marker pulled back a new step goes in at the marker and the marker moves behind it.
+    const bool atMarker = !position && rollback().has_value();
+    const std::size_t at =
+        std::min(position.value_or(atMarker ? *rollback() : features_.size()), features_.size());
 
     // An input must be made by a step that comes earlier in the recipe: no cycles possible.
     for (const BodyId& input : draft.inputs) {
@@ -176,6 +199,9 @@ std::optional<FeatureId> Document::addFeature(FeatureDraft draft,
 
     const FeatureId id = feature.id;
     features_.insert(features_.begin() + static_cast<std::ptrdiff_t>(at), std::move(feature));
+    if (rollback_ && (at < *rollback_ || atMarker)) {
+        ++*rollback_;
+    }
     touch();
     return id;
 }
@@ -187,6 +213,9 @@ bool Document::removeFeature(const FeatureId& id) {
     }
     std::erase_if(bodies_, [&](const Body& body) { return body.createdBy == id; });
     features_.erase(features_.begin() + static_cast<std::ptrdiff_t>(*index));
+    if (rollback_ && *index < *rollback_) {
+        --*rollback_;
+    }
     touch();
     return true;
 }
@@ -206,6 +235,10 @@ std::optional<RemovedFeature> Document::takeFeature(const FeatureId& id) {
     }
     std::erase_if(bodies_, [&](const Body& body) { return body.createdBy == id; });
     features_.erase(features_.begin() + static_cast<std::ptrdiff_t>(*index));
+    if (rollback_ && *index < *rollback_) {
+        --*rollback_;
+        removed.movedMarker = true;
+    }
     touch();
     return removed;
 }
@@ -217,6 +250,9 @@ void Document::restoreFeature(RemovedFeature removed) {
     for (auto& [index, body] : removed.bodies) { // ascending, so each insert lands in place
         const std::size_t place = std::min(index, bodies_.size());
         bodies_.insert(bodies_.begin() + static_cast<std::ptrdiff_t>(place), std::move(body));
+    }
+    if (removed.movedMarker && rollback_) {
+        ++*rollback_;
     }
     touch();
 }

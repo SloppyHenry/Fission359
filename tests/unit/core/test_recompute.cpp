@@ -573,3 +573,44 @@ TEST_CASE("closing an engine during a long calculation does not hang", "[engine]
     }
     CHECK(Clock::now() - begun < std::chrono::seconds(3));
 }
+
+TEST_CASE("the time marker: steps behind it are not calculated, new steps go in at it",
+          "[recompute][marker]") {
+    World world;
+    const auto first = world.add("box", {{"width", "10"}});
+    const auto second = world.add("box", {{"width", "20"}});
+    const auto third = world.add("box", {{"width", "30"}});
+    const auto fourth = world.add("cylinder", {{"radius", "4"}});
+    REQUIRE_FALSE(world.document.rollback().has_value());
+    const Document everything = world.document;
+
+    REQUIRE(world.document.setRollback(2));
+    CHECK_FALSE(world.document.setRollback(2)); // nothing changes
+    const RecomputeResult before = world.run();
+    CHECK(before.features[0].status == FeatureStatus::ok);
+    CHECK(before.features[1].status == FeatureStatus::ok);
+    CHECK(before.features[2].status == FeatureStatus::suppressed);
+    CHECK(before.features[3].status == FeatureStatus::suppressed);
+    CHECK(before.bodies.contains(world.bodyOf(first)));
+    CHECK(before.bodies.contains(world.bodyOf(second)));
+    CHECK_FALSE(before.bodies.contains(world.bodyOf(third)));
+    CHECK_FALSE(before.bodies.contains(world.bodyOf(fourth)));
+
+    // A new step goes in at the marker and the marker stays behind it.
+    FeatureDraft draft = defaultDraft(*world.registry.find("sphere"));
+    const auto sphere = *world.document.addFeature(std::move(draft));
+    CHECK(*world.document.indexOf(sphere) == 2);
+    CHECK(world.document.rollback() == 3);
+    const RecomputeResult after = world.run();
+    CHECK(after.bodies.contains(world.bodyOf(sphere)));
+    CHECK_FALSE(after.bodies.contains(world.bodyOf(third)));
+
+    // Taking out a step before the marker keeps it in front of the same steps.
+    REQUIRE(world.document.removeFeature(first));
+    CHECK(world.document.rollback() == 2);
+    // A marker at the end is no marker.
+    REQUIRE(world.document.setRollback(99));
+    CHECK_FALSE(world.document.rollback().has_value());
+    CHECK_FALSE(world.document.sameContentAs(everything)); // steps differ now
+    CHECK(everything.sameContentAs(everything));
+}

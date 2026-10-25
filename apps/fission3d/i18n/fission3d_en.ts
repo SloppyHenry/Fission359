@@ -519,7 +519,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+63"/>
+        <location filename="../qml/LeftPanel.qml" line="+91"/>
         <source>Bodies</source>
         <translation>Bodies</translation>
     </message>
@@ -638,7 +638,7 @@
         <translation>Heart</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+55"/>
         <source>Recipe</source>
         <translation>Recipe</translation>
     </message>
@@ -663,12 +663,7 @@
         <translation>Cancel</translation>
     </message>
     <message>
-        <location line="+65"/>
-        <source>now</source>
-        <translation>now</translation>
-    </message>
-    <message>
-        <location line="+22"/>
+        <location line="+89"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Every change appears here as a sentence.</translation>
     </message>
@@ -947,12 +942,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+806"/>
+        <location line="+808"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-805"/>
+        <location line="-807"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -983,12 +978,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+794"/>
+        <location line="+796"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-792"/>
+        <location line="-794"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1134,7 +1129,7 @@
         <translation>Export arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+79"/>
+        <location line="+81"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -1506,6 +1501,16 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Time marker put back to now</source>
+        <translation>Time marker put back to now</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Time marker moved</source>
+        <translation>Time marker moved</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>%1 step hidden</source>
         <translation>%1 step hidden</translation>
     </message>
@@ -1727,22 +1732,22 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-405"/>
+        <location line="-406"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-771"/>
+        <location line="-773"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+806"/>
+        <location line="+808"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-684"/>
+        <location line="-686"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
@@ -1752,9 +1757,32 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+346"/>
+        <location line="+348"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
+    </message>
+</context>
+<context>
+    <name>MarkerLine</name>
+    <message>
+        <location filename="../qml/MarkerLine.qml" line="+25"/>
+        <source>Time marker</source>
+        <translation>Time marker</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Drag up to see an earlier state. Double-click to go back to now.</source>
+        <translation>Drag up to see an earlier state. Double-click to go back to now.</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>now</source>
+        <translation>now</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>now (earlier state)</source>
+        <translation>now (earlier state)</translation>
     </message>
 </context>
 <context>

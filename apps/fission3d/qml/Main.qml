@@ -599,6 +599,8 @@ Window {
                 DocumentModel.setStepSuppressed(steps[0], true)
             }
             onDeleteCancelled: root.pendingDeletion = null
+            marker: DocumentModel.marker
+            onMarkerRequested: count => DocumentModel.moveMarker(count)
             onBodyVisibilityRequested: (index, visible) => DocumentModel.setBodyVisible(index, visible)
             onBodyChosen: (index, extend) => Selection.chooseBody(index, extend)
             onBedVisibilityRequested: visible => root.bedVisible = visible
@@ -1034,6 +1036,7 @@ Window {
                 : qsTr("%1 made larger to %2 %").arg(body).arg(Numbers.format(Number(step.value), 1))
         case "solidBody": return qsTr("%1 made a part again").arg(body)
         case "setLabel": return qsTr("Step renamed")
+        case "setRollback": return step.count === "" ? qsTr("Time marker put back to now") : qsTr("Time marker moved")
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
         case "unsuppress": return qsTr("%1 step shown").arg(typeLabel(step.type))
         case "nameBody": return qsTr("Body renamed to “%1”").arg(step.value)

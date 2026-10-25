@@ -52,6 +52,9 @@ class DocumentModel : public QObject {
     /// [{ index, type, number, name, color, visible, hole }]; `name` is empty unless the person
     /// named it. `hole` is true for a body marked "As hole".
     Q_PROPERTY(QVariantList bodies READ bodies NOTIFY bodiesChanged)
+    /// The time marker "now": how many steps of the recipe count, -1 when all of them do. The
+    /// steps behind it are not calculated, what they make is not shown.
+    Q_PROPERTY(int marker READ marker NOTIFY recipeChanged)
     /// The colours on offer for bodies: [{ key, nameKey, color, custom }] (`nameKey`: the plain
     /// word for the colour now). The filament colours of the program, as adjusted for this project,
     /// then the person's own colours. A setting of the project for this session, not a step of the
@@ -140,6 +143,7 @@ public:
     QVariantList recipe() const { return m_recipe; }
     QVariantList bodies() const { return m_bodies; }
     QVariantList palette() const;
+    int marker() const;
     int currentStep() const noexcept { return m_currentStep; }
     QVariantList stepValues() const { return m_stepValues; }
     QVariantList stepTexts() const { return m_stepTexts; }
@@ -202,6 +206,9 @@ public:
     /// Deletes the steps at `indexes` (and with them the bodies they make) as one step of the
     /// history; the cuts of holes follow. False when there is nothing to delete.
     Q_INVOKABLE bool deleteSteps(const QVariantList& indexes);
+    /// Puts the time marker behind the first `count` steps (-1 or the number of steps: at the end).
+    /// One step of the history; a new step goes in at the marker and the marker moves behind it.
+    Q_INVOKABLE bool moveMarker(int count);
     /// Switches the step at `index` off (hidden, "ausblenden") or on again.
     Q_INVOKABLE bool setStepSuppressed(int index, bool suppressed);
     /// Gives the step at `index` a name of its own; empty takes the name away.

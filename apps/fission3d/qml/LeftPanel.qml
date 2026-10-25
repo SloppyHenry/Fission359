@@ -29,6 +29,34 @@ Rectangle {
     property var deletion: null
     // The time marker: the number of steps that count (-1: all of them).
     property int marker: -1
+    signal markerRequested(int count)
+
+    // The gap between rows (0 … number of steps) a marker would stand in if it were let go
+    // `dy` pixels from where `line` is.
+    function gapFor(line, dy) {
+        const y = line.mapToItem(rows, 0, line.height / 2).y + dy
+        let gap = 0
+        for (let i = 0; i < root.recipe.length; ++i) {
+            const row = stepRepeater.itemAt(i)
+            if (row && row.mapToItem(rows, 0, row.height / 2).y < y) {
+                gap = i + 1
+            }
+        }
+        return gap
+    }
+
+    function markerDragged(line, dy) {
+        const gap = gapFor(line, dy)
+        const row = gap < root.recipe.length ? stepRepeater.itemAt(gap) : null
+        ghost.y = (row ? row.mapToItem(recipeBox, 0, 0).y : rows.mapToItem(recipeBox, 0, rows.height).y) - 1
+        ghost.visible = true
+    }
+
+    function markerReleased(line, dy) {
+        ghost.visible = false
+        const gap = gapFor(line, dy)
+        root.markerRequested(gap >= root.recipe.length ? -1 : gap)
+    }
     signal tabRequested(string tab)
     signal addRequested
     signal bodyVisibilityRequested(int index, bool visible)
@@ -315,6 +343,19 @@ Rectangle {
             color: Theme.line
         }
 
+        Rectangle {
+            id: ghost
+
+            visible: false
+            x: 8
+            width: parent.width - 16
+            height: 2
+            radius: 1
+            color: Theme.accent
+            opacity: 0.7
+            z: 3
+        }
+
         Column {
             id: recipeColumn
 
@@ -426,67 +467,69 @@ Rectangle {
 
                     model: root.recipe
 
-                    delegate: RecipeRow {
+                    delegate: Column {
+                        id: stepItem
+
                         required property var modelData
                         required property int index
 
-                        objectName: "recipeRow_" + index
-                        position: index
-                        iconName: modelData.icon
-                        sentence: modelData.text
-                        label: modelData.label
-                        state: modelData.state
-                        problem: modelData.problem
-                        selected: index === root.currentStep
-                        beyondMarker: root.marker >= 0 && index >= root.marker
-                        onClicked: root.stepRequested(index)
-                        onHovered: on => root.stepHovered(index, on)
-                        onRenamed: text => root.stepRenamed(index, text)
-                        onDeleteRequested: root.stepDeleteRequested(index)
-                        onMenuRequested: (x, y) => {
-                            rowMenu.step = index
-                            const spot = mapToItem(root, x, y)
-                            rowMenu.x = Math.min(spot.x, root.width - rowMenu.width - 8)
-                            rowMenu.y = Math.max(8, spot.y - rowMenu.height / 2)
-                            rowMenu.open()
+                        width: rows.width
+
+                        MarkerLine {
+                            id: markerHere
+
+                            objectName: "marker"
+                            visible: stepItem.index === root.marker
+                            height: visible ? 28 : 0
+                            atEnd: false
+                            onDragMoved: dy => root.markerDragged(markerHere, dy)
+                            onReleased: dy => root.markerReleased(markerHere, dy)
+                            onReset: root.markerRequested(-1)
                         }
+
+                        RecipeRow {
+                            id: stepRow
+
+                            objectName: "recipeRow_" + stepItem.index
+                            position: stepItem.index
+                            iconName: stepItem.modelData.icon
+                            sentence: stepItem.modelData.text
+                            label: stepItem.modelData.label
+                            state: stepItem.modelData.state
+                            problem: stepItem.modelData.problem
+                            selected: stepItem.index === root.currentStep
+                            beyondMarker: root.marker >= 0 && stepItem.index >= root.marker
+                            onClicked: root.stepRequested(stepItem.index)
+                            onHovered: on => root.stepHovered(stepItem.index, on)
+                            onRenamed: text => root.stepRenamed(stepItem.index, text)
+                            onDeleteRequested: root.stepDeleteRequested(stepItem.index)
+                            onMenuRequested: (x, y) => {
+                                rowMenu.step = stepItem.index
+                                const spot = stepRow.mapToItem(root, x, y)
+                                rowMenu.x = Math.min(spot.x, root.width - rowMenu.width - 8)
+                                rowMenu.y = Math.max(8, spot.y - rowMenu.height / 2)
+                                rowMenu.open()
+                            }
+                            function startRename() { stepRow.startRename() }
+                        }
+
+                        function startRename() { stepRow.startRename() }
                     }
                 }
             }
 
-            // the time marker: everything above is "now"
-            Row {
+            // the time marker at the end: everything counts
+            MarkerLine {
+                id: markerEnd
+
                 x: 8
                 width: parent.width - 16
+                visible: root.marker < 0 || root.marker >= root.recipe.length
                 height: 28
-                spacing: 8
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: (parent.width - nowText.width - 16) / 2
-                    height: 2
-                    radius: 1
-                    color: Theme.accentLine
-                }
-
-                Txt {
-                    id: nowText
-
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("now")
-                    color: Theme.accentText
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.weight: Font.DemiBold
-                    elide: Text.ElideNone
-                }
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: (parent.width - nowText.width - 16) / 2
-                    height: 2
-                    radius: 1
-                    color: Theme.accentLine
-                }
+                atEnd: true
+                onDragMoved: dy => root.markerDragged(markerEnd, dy)
+                onReleased: dy => root.markerReleased(markerEnd, dy)
+                onReset: root.markerRequested(-1)
             }
 
             Txt {

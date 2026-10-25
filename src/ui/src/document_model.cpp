@@ -522,8 +522,10 @@ void DocumentModel::rebuildLists() {
         entry[QStringLiteral("type")] = toQString(feature.type);
         entry[QStringLiteral("label")] = toQString(feature.label);
         entry[QStringLiteral("suppressed")] = feature.suppressed;
-        entry[QStringLiteral("state")] =
-            feature.suppressed ? QStringLiteral("off") : stateName(state);
+        const bool beyond = i >= static_cast<std::size_t>(std::max(marker(), 0)) && marker() >= 0;
+        entry[QStringLiteral("state")] = feature.suppressed ? QStringLiteral("off")
+                                         : beyond           ? QStringLiteral("pending")
+                                                            : stateName(state);
         QVariantList values;
         if (state != nullptr && state->description) {
             for (const core::Quantity& value : state->description->values) {
@@ -601,7 +603,12 @@ void DocumentModel::rebuildLists() {
         entry[QStringLiteral("visible")] = body.visible;
         entry[QStringLiteral("hole")] = body.hole;
         const BodyPart part = partOf(m_history.document(), m_result.get(), body);
-        entry[QStringLiteral("consumed")] = part.consumed; // part of a result: not listed
+        // What a step behind the time marker would make is not there: not listed either.
+        const auto madeAt = m_history.document().indexOf(body.createdBy);
+        const bool beyond =
+            marker() >= 0 && madeAt && *madeAt >= static_cast<std::size_t>(marker());
+        entry[QStringLiteral("beyond")] = beyond;
+        entry[QStringLiteral("consumed")] = part.consumed || beyond; // part of a result: not listed
         entry[QStringLiteral("cut")] = part.cut;
         bodies.push_back(entry);
     }
@@ -1120,6 +1127,24 @@ QVariantMap DocumentModel::deletionOfBodies(const QStringList& bodyIds) const {
     plan[QStringLiteral("steps")] = positionsOf(document, steps);
     plan[QStringLiteral("dependents")] = dependentsOutside(document, steps);
     return plan;
+}
+
+int DocumentModel::marker() const {
+    const auto at = m_history.document().rollback();
+    return at ? static_cast<int>(*at) : -1;
+}
+
+bool DocumentModel::moveMarker(int count) {
+    const std::optional<std::size_t> target =
+        count < 0 ? std::nullopt : std::optional<std::size_t>(static_cast<std::size_t>(count));
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(core::makeSetRollback(target)) ||
+        m_history.document().revision() == before) {
+        return false;
+    }
+    documentChanged();
+    emit historyChanged();
+    return true;
 }
 
 bool DocumentModel::deleteSteps(const QVariantList& indexes) {

@@ -558,6 +558,13 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind ==
+            QLatin1String("marker")) { // marker:2 - the time marker behind 2 steps (-1: end)
+            const int count = action.mid(colon + 1).trimmed().toInt();
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [model, count] { model->moveMarker(count); });
+            continue;
+        }
         if (kind == QLatin1String("key")) { // key:Right - a key pressed and let go
             const QKeySequence sequence = QKeySequence::fromString(action.mid(colon + 1).trimmed());
             delay += 350;

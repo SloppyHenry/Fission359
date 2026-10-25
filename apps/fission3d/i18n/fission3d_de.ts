@@ -519,7 +519,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+63"/>
+        <location filename="../qml/LeftPanel.qml" line="+91"/>
         <source>Bodies</source>
         <translation>Körper</translation>
     </message>
@@ -638,7 +638,7 @@
         <translation>Herz</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+55"/>
         <source>Recipe</source>
         <translation>Rezept</translation>
     </message>
@@ -663,12 +663,7 @@
         <translation>Abbrechen</translation>
     </message>
     <message>
-        <location line="+65"/>
-        <source>now</source>
-        <translation>jetzt</translation>
-    </message>
-    <message>
-        <location line="+22"/>
+        <location line="+89"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Jede Änderung landet hier als Satz.</translation>
     </message>
@@ -947,12 +942,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+806"/>
+        <location line="+808"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-805"/>
+        <location line="-807"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -983,12 +978,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+794"/>
+        <location line="+796"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-792"/>
+        <location line="-794"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -1134,7 +1129,7 @@
         <translation>Der Export kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+79"/>
+        <location line="+81"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
@@ -1506,6 +1501,16 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Time marker put back to now</source>
+        <translation>Zeitmarker zurück auf „jetzt“</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Time marker moved</source>
+        <translation>Zeitmarker verschoben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>%1 step hidden</source>
         <translation>Schritt „%1“ ausgeblendet</translation>
     </message>
@@ -1727,22 +1732,22 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-405"/>
+        <location line="-406"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-771"/>
+        <location line="-773"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+806"/>
+        <location line="+808"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-684"/>
+        <location line="-686"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
@@ -1752,9 +1757,32 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+346"/>
+        <location line="+348"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
+    </message>
+</context>
+<context>
+    <name>MarkerLine</name>
+    <message>
+        <location filename="../qml/MarkerLine.qml" line="+25"/>
+        <source>Time marker</source>
+        <translation>Zeitmarker</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Drag up to see an earlier state. Double-click to go back to now.</source>
+        <translation>Nach oben ziehen zeigt einen früheren Stand. Doppelklick geht zurück zu „jetzt“.</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>now</source>
+        <translation>jetzt</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>now (earlier state)</source>
+        <translation>jetzt (früherer Stand)</translation>
     </message>
 </context>
 <context>
