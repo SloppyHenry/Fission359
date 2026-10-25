@@ -61,6 +61,9 @@ Rectangle {
     signal addRequested
     signal bodyVisibilityRequested(int index, bool visible)
     signal bodyChosen(int index, bool extend)
+    signal bodyRenamed(int index, string text)
+    signal bodyHovered(int index, bool on)
+    signal bodyColorChosen(int index, string color)
     signal bedVisibilityRequested(bool visible)
 
     color: Theme.panel
@@ -242,11 +245,23 @@ Rectangle {
                         selected: modelData.chosen
                         swatch: modelData.color
                         hole: modelData.hole === true
+                        badge: modelData.hole === true ? qsTr("Hole") : ""
+                        renamable: true
+                        colorEditable: true
                         text: modelData.name
                         eyeOn: modelData.visible
                         eyeLabel: qsTr("Visibility: %1").arg(modelData.name)
                         onEyeToggled: root.bodyVisibilityRequested(index, !modelData.visible)
                         onClicked: extend => root.bodyChosen(index, extend)
+                        onRenamed: text => root.bodyRenamed(index, text)
+                        onHovered: on => root.bodyHovered(index, on)
+                        onSwatchClicked: (x, y) => {
+                            colorPopup.body = index
+                            const spot = mapToItem(root, x, y)
+                            colorPopup.x = Math.max(8, Math.min(spot.x - 20, root.width - colorPopup.width - 8))
+                            colorPopup.y = spot.y + 4
+                            colorPopup.open()
+                        }
                     }
                 }
 
@@ -565,6 +580,32 @@ Rectangle {
                 root.stepHideRequested(step, !hidden)
             } else {
                 root.stepDeleteRequested(step)
+            }
+        }
+    }
+
+    // The colours of one body, next to its row: not a dialog, a click beside closes it.
+    Popup {
+        id: colorPopup
+
+        property int body: -1
+
+        width: root.width - 16
+        padding: 12
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            radius: Theme.radiusFloat
+            color: Theme.raise
+            border.width: 1
+            border.color: Theme.line2
+        }
+
+        contentItem: ColorField {
+            current: colorPopup.body >= 0 && colorPopup.body < root.bodies.length ? root.bodies[colorPopup.body].color : ""
+            onChosen: color => {
+                root.bodyColorChosen(colorPopup.body, color)
+                colorPopup.close()
             }
         }
     }

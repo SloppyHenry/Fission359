@@ -1165,3 +1165,15 @@ TEST_CASE("the time marker shows an earlier state and new steps go in at it",
     f.model->waitForCalculation();
     CHECK(f.model->marker() == -1);
 }
+
+TEST_CASE("renaming a body in the list is one step and undoes", "[ui][document-model][recipe]") {
+    Fixture f;
+    const QString before = f.model->bodies().at(0).toMap()["name"].toString();
+    REQUIRE(f.model->setBodyName(0, " Lid "));
+    CHECK(f.model->bodies().at(0).toMap()["name"].toString() == "Lid");
+    CHECK(f.model->nextUndo()["key"].toString() == "nameBody");
+    CHECK_FALSE(f.model->setBodyName(0, "Lid")); // unchanged
+    CHECK_FALSE(f.model->setBodyName(0, "   ")); // an empty name is refused
+    REQUIRE(f.model->undo());
+    CHECK(f.model->bodies().at(0).toMap()["name"].toString() == before);
+}

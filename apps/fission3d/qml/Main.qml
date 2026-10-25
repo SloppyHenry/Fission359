@@ -603,6 +603,9 @@ Window {
             onMarkerRequested: count => DocumentModel.moveMarker(count)
             onBodyVisibilityRequested: (index, visible) => DocumentModel.setBodyVisible(index, visible)
             onBodyChosen: (index, extend) => Selection.chooseBody(index, extend)
+            onBodyRenamed: (index, text) => DocumentModel.setBodyName(index, text)
+            onBodyHovered: (index, on) => viewport.lightUpBodies(on ? [DocumentModel.bodyIdAt(index)] : [])
+            onBodyColorChosen: (index, color) => DocumentModel.setBodiesColor([index], color)
             onBedVisibilityRequested: visible => root.bedVisible = visible
         }
 

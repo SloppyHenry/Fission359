@@ -21,7 +21,21 @@ Rectangle {
     property bool cut: false           // something was cut out of this body: a small hole symbol follows the name
     property string text: ""
     property string count: ""
+    property bool renamable: false     // a double click renames
+    property bool colorEditable: false // a click on the swatch opens the colours
+    property string badge: ""          // a small word behind the name ("Hole")
+    readonly property bool editing: nameInput.visible
     signal eyeToggled
+    signal swatchClicked(real x, real y)
+    signal renamed(string text)
+    signal hovered(bool on)
+
+    function startRename() {
+        nameInput.text = root.text
+        nameInput.visible = true
+        nameInput.forceActiveFocus()
+        nameInput.selectAll()
+    }
     /// The row was clicked (not its eye). `extend`: with Shift or Ctrl/Cmd held.
     signal clicked(bool extend)
 
@@ -35,6 +49,15 @@ Rectangle {
 
     HoverHandler {
         id: hover
+
+        onHoveredChanged: root.hovered(hovered)
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        gesturePolicy: TapHandler.ReleaseWithinBounds
+        enabled: root.renamable
+        onDoubleTapped: root.startRename()
     }
 
     TapHandler {
@@ -75,6 +98,19 @@ Rectangle {
             color: root.hole ? "transparent" : root.swatch
             border.width: root.hole ? 2 : 1
             border.color: root.hole ? root.swatch : Theme.edge
+
+            MouseArea {
+                anchors.fill: parent
+                anchors.margins: -4
+                enabled: root.colorEditable
+                cursorShape: root.colorEditable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: {
+                    const spot = mapToItem(root, width / 2, height)
+                    root.swatchClicked(spot.x, spot.y)
+                }
+                Accessible.name: qsTr("Colour of %1").arg(root.text)
+                Accessible.role: Accessible.Button
+            }
         }
     }
 
@@ -93,13 +129,60 @@ Rectangle {
 
         anchors.left: lead.visible ? lead.right : parent.left
         anchors.leftMargin: lead.visible ? 6 : (root.child ? 24 : 6)
-        anchors.right: countText.visible ? countText.left : eyeButton.visible ? eyeButton.left : parent.right
+        anchors.right: badgeText.visible ? badgeText.left : countText.visible ? countText.left : eyeButton.visible ? eyeButton.left : parent.right
         anchors.rightMargin: root.cut ? 24 : 6
         anchors.verticalCenter: parent.verticalCenter
         text: root.text
         color: root.group || root.selected ? Theme.fg : root.eyeOn ? Theme.fg2 : Theme.fg4
         font.weight: root.group || root.selected ? Font.DemiBold : Font.Normal
         font.strikeout: !root.eyeOn && !root.group
+    }
+
+    TextInput {
+        id: nameInput
+
+        visible: false
+        anchors.left: nameText.left
+        anchors.right: nameText.right
+        anchors.verticalCenter: parent.verticalCenter
+        color: Theme.fg
+        font.family: Theme.fontFamilies[0]
+        font.pixelSize: Theme.fontSize
+        font.weight: Font.DemiBold
+        selectionColor: Theme.accent
+        selectedTextColor: Theme.accentFg
+        clip: true
+        Accessible.name: qsTr("Name")
+        onAccepted: {
+            visible = false
+            root.renamed(text)
+        }
+        Keys.onEscapePressed: visible = false
+        onActiveFocusChanged: if (!activeFocus && visible) { visible = false }
+    }
+
+    // A small word that says what kind of body it is.
+    Rectangle {
+        id: badgeText
+
+        visible: root.badge !== ""
+        anchors.right: eyeButton.visible ? eyeButton.left : parent.right
+        anchors.rightMargin: 4
+        anchors.verticalCenter: parent.verticalCenter
+        width: badgeLabel.implicitWidth + 10
+        height: 18
+        radius: 4
+        color: Theme.field2
+
+        Txt {
+            id: badgeLabel
+
+            anchors.centerIn: parent
+            text: root.badge
+            color: Theme.fg3
+            font.pixelSize: Theme.fontSizeSmall
+            elide: Text.ElideNone
+        }
     }
 
     Txt {

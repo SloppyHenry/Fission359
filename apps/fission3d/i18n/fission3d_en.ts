@@ -519,7 +519,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+91"/>
+        <location filename="../qml/LeftPanel.qml" line="+94"/>
         <source>Bodies</source>
         <translation>Bodies</translation>
     </message>
@@ -553,12 +553,17 @@
         </translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+19"/>
+        <source>Hole</source>
+        <translation>Hole</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Visibility: %1</source>
         <translation>Visibility: %1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+21"/>
         <source>No bodies yet. Get a shape from “Shapes” in the tool bar or with %1.</source>
         <translation>No bodies yet. Get a shape from “Shapes” in the tool bar or with %1.</translation>
     </message>
@@ -942,12 +947,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+808"/>
+        <location line="+811"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-807"/>
+        <location line="-810"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -978,12 +983,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+796"/>
+        <location line="+799"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-794"/>
+        <location line="-797"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1129,7 +1134,7 @@
         <translation>Export arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+84"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -1737,17 +1742,17 @@
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-773"/>
+        <location line="-776"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+808"/>
+        <location line="+811"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-686"/>
+        <location line="-689"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
@@ -1757,7 +1762,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+348"/>
+        <location line="+351"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -2373,6 +2378,19 @@
         <location line="+1"/>
         <source>Drag a dot to change a size, or a corner square to scale everything evenly; it snaps to corners and middles. Hold Shift to switch snapping off. You can also drag the body itself.</source>
         <translation>Drag a dot to change a size, or a corner square to scale everything evenly; it snaps to corners and middles. Hold Shift to switch snapping off. You can also drag the body itself.</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <location filename="../qml/TreeRow.qml" line="+111"/>
+        <source>Colour of %1</source>
+        <translation>Colour of %1</translation>
+    </message>
+    <message>
+        <location line="+44"/>
+        <source>Name</source>
+        <translation>Name</translation>
     </message>
 </context>
 <context>
