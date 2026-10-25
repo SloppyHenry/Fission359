@@ -25,6 +25,7 @@
 #include "fission/render/detail.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/printer_catalog.h"
+#include "fission/ui/theme_tokens.h"
 
 namespace fission::ui {
 
@@ -142,6 +143,9 @@ bool isPlainNumber(const std::string& text) {
 DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel, QObject* parent)
     : QObject(parent), m_kernel(std::move(kernel)) {
     features::registerBuiltinFeatures(m_registry);
+    for (const auto& [key, color] : filamentPalette()) {
+        m_palette.push_back({key, color, false});
+    }
     m_detailPool.setMaxThreadCount(1);
     m_detailTimer.setSingleShot(true);
     m_detailTimer.setInterval(120); // zooming in steps: wait until it settles
@@ -671,6 +675,7 @@ QVariantList DocumentModel::buildStepValues() const {
             spec.kind == core::QuantityKind::angle   ? QStringLiteral("angle")
             : spec.kind == core::QuantityKind::plain ? QStringLiteral("plain") // a count: no unit
                                                      : QStringLiteral("length");
+        entry[QStringLiteral("advanced")] = spec.advanced;
         values.push_back(entry);
     }
     return values;
@@ -885,6 +890,123 @@ void DocumentModel::setBodyVisible(int index, bool visible) {
         m_history.document().revision() != before) {
         documentChanged(false); // geometry did not change: no recompute needed
     }
+}
+
+bool DocumentModel::setBodyName(int index, const QString& name) {
+    const auto& bodies = m_history.document().bodies();
+    const std::string trimmed = name.trimmed().toStdString();
+    if (index < 0 || index >= static_cast<int>(bodies.size()) || trimmed.empty()) {
+        return false;
+    }
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(
+            core::makeSetBodyName(bodies[static_cast<std::size_t>(index)].id, trimmed)) ||
+        m_history.document().revision() == before) {
+        return false;
+    }
+    documentChanged(false); // a name is no geometry
+    return true;
+}
+
+QVariantList DocumentModel::palette() const {
+    QVariantList list;
+    const auto defaults = filamentPalette();
+    for (const PaletteEntry& entry : m_palette) {
+        // The word follows the colour: an adjusted swatch is no longer "Grey" when it is green.
+        QString word = colourNameKey(entry.color);
+        for (const auto& [key, color] : defaults) {
+            if (!entry.custom && key == entry.key && color == entry.color) {
+                word = key;
+            }
+        }
+        list.push_back(QVariantMap{{QStringLiteral("key"), entry.key},
+                                   {QStringLiteral("nameKey"), word},
+                                   {QStringLiteral("color"), entry.color.name()},
+                                   {QStringLiteral("custom"), entry.custom}});
+    }
+    return list;
+}
+
+bool DocumentModel::setPaletteColor(int index, const QString& color) {
+    const QColor chosen(color);
+    if (!chosen.isValid() || index < 0 || index >= static_cast<int>(m_palette.size()) ||
+        m_palette[static_cast<std::size_t>(index)].color == chosen) {
+        return false;
+    }
+    m_palette[static_cast<std::size_t>(index)].color = chosen;
+    emit paletteChanged();
+    return true;
+}
+
+int DocumentModel::addPaletteColor(const QString& color) {
+    const QColor chosen(color);
+    if (!chosen.isValid()) {
+        return -1;
+    }
+    m_palette.push_back({QStringLiteral("custom"), chosen, true});
+    emit paletteChanged();
+    return static_cast<int>(m_palette.size()) - 1;
+}
+
+bool DocumentModel::removePaletteColor(int index) {
+    if (index < 0 || index >= static_cast<int>(m_palette.size()) ||
+        !m_palette[static_cast<std::size_t>(index)].custom) {
+        return false;
+    }
+    m_palette.erase(m_palette.begin() + index);
+    emit paletteChanged();
+    return true;
+}
+
+bool DocumentModel::resetPaletteColor(int index) {
+    if (index < 0 || index >= static_cast<int>(m_palette.size()) ||
+        m_palette[static_cast<std::size_t>(index)].custom) {
+        return false;
+    }
+    PaletteEntry& entry = m_palette[static_cast<std::size_t>(index)];
+    for (const auto& [key, color] : filamentPalette()) {
+        if (key == entry.key && entry.color != color) {
+            entry.color = color;
+            emit paletteChanged();
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DocumentModel::setBodiesColor(const QVariantList& indexes, const QString& color) {
+    const QColor chosen(color);
+    const auto& bodies = m_history.document().bodies();
+    if (!chosen.isValid() || indexes.isEmpty()) {
+        return false;
+    }
+    const core::Color target{static_cast<std::uint8_t>(chosen.red()),
+                             static_cast<std::uint8_t>(chosen.green()),
+                             static_cast<std::uint8_t>(chosen.blue())};
+    std::vector<core::BodyId> changing;
+    for (const QVariant& entry : indexes) {
+        const int index = entry.toInt();
+        if (index >= 0 && index < static_cast<int>(bodies.size()) &&
+            !(bodies[static_cast<std::size_t>(index)].color == target)) {
+            changing.push_back(bodies[static_cast<std::size_t>(index)].id);
+        }
+    }
+    if (changing.empty()) {
+        return false;
+    }
+    const core::Body* first = m_history.document().findBody(changing.front());
+    core::CommandDescription label{"colorBody", {{"name", first->name}}};
+    if (changing.size() > 1) {
+        label.values["count"] = std::to_string(changing.size());
+    }
+    m_history.beginTransaction(std::move(label));
+    for (const core::BodyId& id : changing) {
+        m_history.execute(core::makeSetBodyColor(id, target));
+    }
+    m_history.commitTransaction();
+    documentChanged(false); // a colour is no geometry
+    emit historyChanged();
+    return true;
 }
 
 bool DocumentModel::undo() {
@@ -1654,6 +1776,31 @@ std::optional<geo::Bounds> DocumentModel::bodyBounds(const QString& bodyId) cons
     const core::Feature* feature =
         body != nullptr ? m_history.document().findFeature(body->createdBy) : nullptr;
     return feature != nullptr ? boundsOfFeature(*feature) : std::nullopt;
+}
+
+QVariantMap DocumentModel::boundsOfBodies(const QStringList& bodyIds) const {
+    std::optional<geo::Bounds> total;
+    for (const QString& id : bodyIds) {
+        const auto box = bodyBounds(id);
+        if (!box) {
+            continue;
+        }
+        if (!total) {
+            total = box;
+            continue;
+        }
+        total->min = {std::min(total->min.x, box->min.x), std::min(total->min.y, box->min.y),
+                      std::min(total->min.z, box->min.z)};
+        total->max = {std::max(total->max.x, box->max.x), std::max(total->max.y, box->max.y),
+                      std::max(total->max.z, box->max.z)};
+    }
+    QVariantMap map;
+    map[QStringLiteral("valid")] = total.has_value();
+    if (total) {
+        map[QStringLiteral("min")] = QVariantList{total->min.x, total->min.y, total->min.z};
+        map[QStringLiteral("max")] = QVariantList{total->max.x, total->max.y, total->max.z};
+    }
+    return map;
 }
 
 // x, y and z as they are written in the step now (the last calculation may still be behind a

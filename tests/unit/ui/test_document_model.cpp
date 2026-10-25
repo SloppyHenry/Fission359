@@ -196,6 +196,10 @@ TEST_CASE("values of the chosen step, formulas stay visible", "[ui][document-mod
     CHECK(values[7].toMap()["axis"].toString() == "x");
     CHECK(values[7].toMap()["kind"].toString() == "angle");
     CHECK(values[9].toMap()["axis"].toString() == "z");
+    // Only what is rarely changed hides behind "More": "through", not the corner radius.
+    CHECK_FALSE(values[3].toMap()["advanced"].toBool());
+    CHECK(values[10].toMap()["name"].toString() == "through");
+    CHECK(values[10].toMap()["advanced"].toBool());
 
     f.model->setStepValue(0, "depth", "10 + 5");
     f.model->waitForCalculation();
@@ -241,6 +245,24 @@ TEST_CASE("hiding a body does not calculate again", "[ui][document-model]") {
     CHECK(f.model->result()->revision == revision);
     f.model->setBodyVisible(0, true);
     CHECK(f.model->scene()->bodies.size() == 1);
+}
+
+TEST_CASE("renaming a body is one step of the history", "[ui][document-model]") {
+    Fixture f;
+    const auto revision = f.model->result()->revision;
+    const QString before = f.model->bodies().at(0).toMap()["name"].toString();
+    CHECK(f.model->setBodyName(0, QStringLiteral("  Deckel ")));
+    CHECK(f.model->bodies().at(0).toMap()["name"].toString() == "Deckel");
+    CHECK_FALSE(f.model->calculating()); // a name is no geometry
+    CHECK(f.model->result()->revision == revision);
+    CHECK(f.model->nextUndo()["key"].toString() == "nameBody");
+
+    CHECK_FALSE(f.model->setBodyName(0, QStringLiteral("   ")));    // a body always has a name
+    CHECK_FALSE(f.model->setBodyName(0, QStringLiteral("Deckel"))); // nothing changes
+
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->bodies().at(0).toMap()["name"].toString() == before);
 }
 
 TEST_CASE("number fields know the named measures of the document", "[ui][numbers]") {
@@ -894,4 +916,80 @@ TEST_CASE("holes cut live while they are dragged, and all of it is one step",
     f.model->cancelChange(); // Esc: all of it is taken back, the cut comes back with it
     f.model->waitForCalculation();
     CHECK(f.model->recipe().size() == 3);
+}
+
+TEST_CASE("colouring bodies is one step, undoable, and recomputes nothing",
+          "[ui][document-model][color]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->waitForCalculation();
+    const auto versionBefore = f.model->scene()->bodies[0].meshVersion;
+    const int steps = f.model->historyPosition();
+
+    CHECK_FALSE(f.model->setBodiesColor({0, 1}, "not a colour"));
+    CHECK_FALSE(f.model->setBodiesColor({}, "#d93f36"));
+    REQUIRE(f.model->setBodiesColor({0, 1}, "#d93f36"));
+    CHECK(f.model->historyPosition() == steps + 1); // both bodies, one step
+    CHECK(f.model->bodies().at(0).toMap()["color"].toString() == "#d93f36");
+    CHECK(f.model->bodies().at(1).toMap()["color"].toString() == "#d93f36");
+    CHECK(f.model->scene()->bodies[0].meshVersion == versionBefore); // same mesh, new colour
+    CHECK(f.model->nextUndo()["key"].toString() == "colorBody");
+    CHECK_FALSE(f.model->setBodiesColor({0, 1}, "#d93f36")); // nothing changes
+
+    REQUIRE(f.model->undo());
+    CHECK(f.model->bodies().at(0).toMap()["color"].toString() != "#d93f36");
+    CHECK(f.model->bodies().at(1).toMap()["color"].toString() != "#d93f36");
+}
+
+TEST_CASE("the box round several bodies is the box of all of them", "[ui][document-model]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    f.model->waitForCalculation();
+    const QString first = f.model->bodyIdAt(0);
+    const QString second = f.model->bodyIdAt(1);
+    const auto a = f.model->boundsOfBodies({first});
+    const auto b = f.model->boundsOfBodies({second});
+    const auto both = f.model->boundsOfBodies({first, second});
+    REQUIRE(a["valid"].toBool());
+    REQUIRE(both["valid"].toBool());
+    for (int axis = 0; axis < 3; ++axis) {
+        CHECK(both["min"].toList()[axis].toDouble() ==
+              std::min(a["min"].toList()[axis].toDouble(), b["min"].toList()[axis].toDouble()));
+        CHECK(both["max"].toList()[axis].toDouble() ==
+              std::max(a["max"].toList()[axis].toDouble(), b["max"].toList()[axis].toDouble()));
+    }
+    CHECK_FALSE(f.model->boundsOfBodies({}).value("valid").toBool());
+}
+
+TEST_CASE("the palette can be adjusted and extended per project", "[ui][document-model][color]") {
+    Fixture f;
+    const auto start = f.model->palette();
+    REQUIRE(start.size() == 10);
+    const QString red = start.at(3).toMap()["color"].toString();
+
+    CHECK_FALSE(f.model->setPaletteColor(3, "nonsense"));
+    CHECK_FALSE(f.model->setPaletteColor(99, "#112233"));
+    REQUIRE(f.model->setPaletteColor(3, "#112233"));
+    CHECK(f.model->palette().at(3).toMap()["color"].toString() == "#112233");
+    CHECK_FALSE(f.model->setPaletteColor(3, "#112233"));                     // unchanged
+    CHECK(f.model->palette().at(3).toMap()["nameKey"].toString() == "blue"); // the word follows
+    CHECK(f.model->resetPaletteColor(3));
+    CHECK(f.model->palette().at(3).toMap()["nameKey"].toString() == "red");
+    CHECK(f.model->palette().at(3).toMap()["color"].toString() == red);
+    CHECK_FALSE(f.model->resetPaletteColor(3));
+
+    const int own = f.model->addPaletteColor("#abcdef");
+    REQUIRE(own == 10);
+    CHECK(f.model->palette().at(own).toMap()["custom"].toBool());
+    CHECK_FALSE(f.model->resetPaletteColor(own));
+    CHECK_FALSE(f.model->removePaletteColor(3)); // a filament colour stays
+    CHECK(f.model->removePaletteColor(own));
+    CHECK(f.model->palette().size() == 10);
+
+    f.model->setPaletteColor(0, "#445566");
+    Fixture other; // a new project starts with the defaults again
+    CHECK(other.model->palette().at(0).toMap()["color"].toString() ==
+          start.at(0).toMap()["color"].toString());
+    // ... and nothing of this is a step of the history
+    CHECK_FALSE((f.model->canUndo() && f.model->nextUndo()["key"].toString() == "colorBody"));
 }

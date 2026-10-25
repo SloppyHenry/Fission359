@@ -693,6 +693,20 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            ContextBar {
+                anchors.fill: parent
+                viewport: viewport
+                obstacles: viewOverlay.obstacles
+                kind: root.contextKind
+                bodyIds: root.chosenBodies
+                allHoles: root.chosenAreHoles
+                bodyColor: root.chosenColor
+                busy: Handles.editing || Gizmo.editing || Rotate.editing || Scale.editing
+                      || Placement.active || root.seating || root.typing
+                onActionRequested: action => root.run(action)
+                onColorChosen: color => DocumentModel.setBodiesColor(root.colorTargets, color)
+            }
+
             BedLabels {
                 anchors.fill: parent
                 viewport: viewport
@@ -767,6 +781,16 @@ Window {
                 viewport.frameAll()
             }
             stepTitle: root.currentStepTitle
+            mode: root.panelMode
+            bodyName: root.bodyName(root.panelBodyIndex)
+            renamable: root.panelBodyIndex >= 0
+            partText: Selection.items.length === 1 ? root.partName(Selection.items[0].kind, Selection.items[0].bodyIndex) : ""
+            bodyCount: root.chosenBodies.length
+            canCombine: root.chosenBodies.length >= 2
+            bodyColor: root.chosenColor
+            onColorChosen: color => DocumentModel.setBodiesColor(root.colorTargets, color)
+            onNameCommitted: name => DocumentModel.setBodyName(root.panelBodyIndex, name)
+            onCombineRequested: way => root.combine(way)
             stepValues: root.stepValueList
             isHole: root.currentStepIsHole
             stepTexts: DocumentModel.stepTexts
@@ -944,7 +968,7 @@ Window {
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
         case "unsuppress": return qsTr("%1 step shown").arg(typeLabel(step.type))
         case "nameBody": return qsTr("Body renamed to “%1”").arg(step.value)
-        case "colorBody": return qsTr("Colour of %1 changed").arg(body)
+        case "colorBody": return step.count !== undefined ? qsTr("Colour of %n body(ies) changed", "", Number(step.count)) : qsTr("Colour of %1 changed").arg(body)
         case "showBody": return qsTr("%1 shown").arg(body)
         case "hideBody": return qsTr("%1 hidden").arg(body)
         case "addMeasure": return qsTr("Named measure “%1” added").arg(step.name)
@@ -1108,6 +1132,50 @@ Window {
         }
     }
 
+    // Which set of sections the property panel shows (see RightPanel.mode).
+    readonly property string panelMode: {
+        if (root.chosenBodies.length > 1) {
+            return "bodies"
+        }
+        const items = Selection.items
+        if (items.length > 0 && items.every(item => item.kind !== "body") && items[0].bodyIndex >= 0) {
+            return "part"
+        }
+        return DocumentModel.stepValues.length > 0 ? "body" : "none"
+    }
+    // What the context bar next to the selection is for: body | bodies | face | none.
+    readonly property string contextKind: {
+        const items = Selection.items
+        if (items.length === 0) {
+            return "none"
+        }
+        if (chosenBodies.length > 1) {
+            return "bodies"
+        }
+        if (items.some(item => item.kind === "body")) {
+            return "body"
+        }
+        return Selection.singleFaceChosen ? "face" : "none"
+    }
+    // The bodies a colour choice applies to (once each), and their colour if it is the same.
+    readonly property var colorTargets: {
+        const chosen = Array.from(new Set(chosenBodyIndexes.filter(index => index >= 0)))
+        return chosen.length > 0 ? chosen : (panelBodyIndex >= 0 ? [panelBodyIndex] : [])
+    }
+    readonly property string chosenColor: {
+        const colors = new Set(colorTargets.filter(index => index < DocumentModel.bodies.length)
+                                           .map(index => DocumentModel.bodies[index].color))
+        return colors.size === 1 ? Array.from(colors)[0] : ""
+    }
+    // The body the panel shows: the chosen one, else the one the chosen recipe step makes.
+    readonly property int panelBodyIndex: {
+        if (root.chosenBodies.length === 1 && chosenBodyIndexes.length > 0) {
+            return chosenBodyIndexes[0]
+        }
+        return DocumentModel.bodies && DocumentModel.currentStep >= 0
+            ? DocumentModel.bodyIndexOf(DocumentModel.bodyOfStep(DocumentModel.currentStep)) : -1
+    }
+
     readonly property string currentStepTitle: {
         const index = DocumentModel.currentStep
         return index >= 0 && index < DocumentModel.recipe.length
@@ -1122,6 +1190,7 @@ Window {
         expression: value.expression,
         value: value.value,
         kind: value.kind,
-        error: value.error
+        error: value.error,
+        advanced: value.advanced
     }))
 }

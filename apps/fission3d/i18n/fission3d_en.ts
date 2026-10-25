@@ -107,6 +107,137 @@
     </message>
 </context>
 <context>
+    <name>BodyHeader</name>
+    <message>
+        <location filename="../qml/BodyHeader.qml" line="+71"/>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click to rename the body.</source>
+        <translation>Click to rename the body.</translation>
+    </message>
+</context>
+<context>
+    <name>ColorField</name>
+    <message>
+        <location filename="../qml/ColorField.qml" line="+20"/>
+        <source>Black</source>
+        <translation>Black</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>White</source>
+        <translation>White</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Grey</source>
+        <translation>Grey</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Red</source>
+        <translation>Red</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Blue</source>
+        <translation>Blue</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Green</source>
+        <translation>Green</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Yellow</source>
+        <translation>Yellow</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Orange</source>
+        <translation>Orange</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Silver</source>
+        <translation>Silver</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Natural</source>
+        <translation>Natural</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turquoise</source>
+        <translation>Turquoise</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Violet</source>
+        <translation>Violet</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pink</source>
+        <translation>Pink</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Brown</source>
+        <translation>Brown</translation>
+    </message>
+    <message>
+        <location line="+71"/>
+        <source>Double-click to adjust</source>
+        <translation>Double-click to adjust</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Own colour…</source>
+        <translation>Own colour…</translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>Tone</source>
+        <translation>Tone</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Strength</source>
+        <translation>Strength</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Brightness</source>
+        <translation>Brightness</translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>Keep this colour</source>
+        <translation>Keep this colour</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Add this colour</source>
+        <translation>Add this colour</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Back to standard</source>
+        <translation>Back to standard</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Remove</source>
+        <translation>Remove</translation>
+    </message>
+</context>
+<context>
     <name>CombineCatalog</name>
     <message>
         <location filename="../qml/CombineCatalog.qml" line="+13"/>
@@ -188,6 +319,51 @@
         <location line="+1"/>
         <source>Choose two or more bodies first (Shift+click).</source>
         <translation>Choose two or more bodies first (Shift+click).</translation>
+    </message>
+</context>
+<context>
+    <name>ContextBar</name>
+    <message>
+        <location filename="../qml/ContextBar.qml" line="+35"/>
+        <source>As part</source>
+        <translation>As part</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>As hole</source>
+        <translation>As hole</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+8"/>
+        <source>Colour</source>
+        <translation>Colour</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Duplicate</source>
+        <translation>Duplicate</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+7"/>
+        <source>To the bed</source>
+        <translation>To the bed</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Merge</source>
+        <translation>Merge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut out</source>
+        <translation>Cut out</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Look at face</source>
+        <translation>Look at face</translation>
     </message>
 </context>
 <context>
@@ -736,12 +912,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+717"/>
+        <location line="+741"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-716"/>
+        <location line="-740"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -772,12 +948,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+705"/>
+        <location line="+729"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-703"/>
+        <location line="-727"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -916,12 +1092,12 @@
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
     <message>
-        <location line="+86"/>
+        <location line="+100"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+38"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -1291,6 +1467,14 @@
         <source>Colour of %1 changed</source>
         <translation>Colour of %1 changed</translation>
     </message>
+    <message numerus="yes">
+        <location line="+0"/>
+        <source>Colour of %n body(ies) changed</source>
+        <translation>
+            <numerusform>Colour of %n body changed</numerusform>
+            <numerusform>Colour of %n bodies changed</numerusform>
+        </translation>
+    </message>
     <message>
         <location line="+1"/>
         <source>%1 shown</source>
@@ -1486,22 +1670,22 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-378"/>
+        <location line="-388"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-692"/>
+        <location line="-706"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+727"/>
+        <location line="+741"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-605"/>
+        <location line="-619"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
@@ -1511,7 +1695,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+306"/>
+        <location line="+330"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -1547,7 +1731,7 @@
 <context>
     <name>NumberField</name>
     <message>
-        <location filename="../qml/NumberField.qml" line="+312"/>
+        <location filename="../qml/NumberField.qml" line="+323"/>
         <source>I don&apos;t know “%1”. Did you mean “%2”?</source>
         <translation>I don&apos;t know “%1”. Did you mean “%2”?</translation>
     </message>
@@ -1645,7 +1829,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+96"/>
+        <location filename="../qml/RightPanel.qml" line="+123"/>
         <source>Object</source>
         <translation>Object</translation>
     </message>
@@ -1665,12 +1849,12 @@
         <translation>Click a body to change it.</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <source>Change a value or type a formula.</source>
         <translation>Change a value or type a formula.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+47"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
@@ -1680,7 +1864,7 @@
         <translation>Cut across</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="+307"/>
         <source>Hole</source>
         <translation>Hole</translation>
     </message>
@@ -1705,12 +1889,35 @@
         <translation>Make flush (closes gaps under 0.001 mm)</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="-286"/>
         <source>Text</source>
         <translation>Text</translation>
     </message>
+    <message numerus="yes">
+        <location line="-86"/>
+        <source>%n body(ies) selected</source>
+        <translation>
+            <numerusform>%n body selected</numerusform>
+            <numerusform>%n bodies selected</numerusform>
+        </translation>
+    </message>
     <message>
-        <location line="+11"/>
+        <location line="+1"/>
+        <source>Changes here apply to all of them.</source>
+        <translation>Changes here apply to all of them.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Combine</source>
+        <translation>Combine</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Colour</source>
+        <translation>Colour</translation>
+    </message>
+    <message>
+        <location line="+68"/>
         <source>Words</source>
         <translation>Words</translation>
     </message>
@@ -1745,7 +1952,13 @@
         <translation>Rotation</translation>
     </message>
     <message>
-        <location line="+47"/>
+        <location line="+57"/>
+        <location line="+8"/>
+        <source>More</source>
+        <translation>More</translation>
+    </message>
+    <message>
+        <location line="+90"/>
         <source>Get new shapes from “Shapes” in the tool bar on the left – or press %1 and describe what you want to build.</source>
         <translation>Get new shapes from “Shapes” in the tool bar on the left – or press %1 and describe what you want to build.</translation>
     </message>
@@ -1935,7 +2148,7 @@
 <context>
     <name>ShapeFlyout</name>
     <message>
-        <location filename="../qml/ShapeFlyout.qml" line="+81"/>
+        <location filename="../qml/ShapeFlyout.qml" line="+89"/>
         <source>Shapes</source>
         <translation>Shapes</translation>
     </message>

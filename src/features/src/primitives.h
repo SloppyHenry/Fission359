@@ -104,7 +104,7 @@ inline std::vector<core::ParamSpec> withPlace(std::vector<core::ParamSpec> own,
         own.push_back(std::move(spec));
     }
     if (prismatic) {
-        own.push_back({"through", core::QuantityKind::plain, "1"});
+        own.push_back({"through", core::QuantityKind::plain, "1", true});
     }
     return own;
 }

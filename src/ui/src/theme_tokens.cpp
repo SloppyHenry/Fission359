@@ -235,6 +235,56 @@ QColor composite(const QColor& top, const QColor& base) {
     return toColor(mixRgb(toRgb(base), toRgb(top), alpha));
 }
 
+QList<QPair<QString, QColor>> filamentPalette() {
+    return {{QStringLiteral("black"), QColor("#2E2F33")},
+            {QStringLiteral("white"), QColor("#ECE8E1")},
+            {QStringLiteral("grey"), QColor("#8A8D93")},
+            {QStringLiteral("red"), QColor("#D93F36")},
+            {QStringLiteral("blue"), QColor("#3F83D6")},
+            {QStringLiteral("green"), QColor("#3FA55B")},
+            {QStringLiteral("yellow"), QColor("#F2B93A")},
+            {QStringLiteral("orange"), QColor("#EE7B30")},
+            {QStringLiteral("silver"), QColor("#C3C7CD")},
+            {QStringLiteral("natural"), QColor("#D9C7A3")}};
+}
+
+QString colourNameKey(const QColor& colour) {
+    const double hue = colour.hsvHueF() < 0.0 ? 0.0 : colour.hsvHueF() * 360.0;
+    const double saturation = colour.hsvSaturationF();
+    const double value = colour.valueF();
+    if (value < 0.2) {
+        return QStringLiteral("black");
+    }
+    if (saturation < 0.15) {
+        return value > 0.88  ? QStringLiteral("white")
+               : value < 0.3 ? QStringLiteral("black")
+                             : QStringLiteral("grey");
+    }
+    const bool dark = value < 0.62;
+    if (hue < 12.0 || hue >= 345.0) {
+        return dark && saturation < 0.8 ? QStringLiteral("brown") : QStringLiteral("red");
+    }
+    if (hue < 45.0) {
+        return dark ? QStringLiteral("brown") : QStringLiteral("orange");
+    }
+    if (hue < 70.0) {
+        return dark && saturation > 0.3 ? QStringLiteral("brown") : QStringLiteral("yellow");
+    }
+    if (hue < 165.0) {
+        return QStringLiteral("green");
+    }
+    if (hue < 195.0) {
+        return QStringLiteral("turquoise");
+    }
+    if (hue < 255.0) {
+        return QStringLiteral("blue");
+    }
+    if (hue < 300.0) {
+        return QStringLiteral("violet");
+    }
+    return QStringLiteral("pink");
+}
+
 QList<QPair<QString, QColor>> accentSuggestions() {
     return {{QStringLiteral("blue"), defaultAccent()},
             {QStringLiteral("violet"), QColor("#7C4DDB")},

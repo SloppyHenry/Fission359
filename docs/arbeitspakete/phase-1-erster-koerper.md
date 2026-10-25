@@ -197,7 +197,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.8 Eigenschaften-Panel und Werteingabe
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.1
+**Status:** Review (2026-10-25) · **Größe:** M · **Abhängigkeiten:** AP-1.1
 **Bauanleitung:** [anleitungen/AP-1.8.md](anleitungen/AP-1.8.md)
 
 **Umfang:**
@@ -209,6 +209,14 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 **Akzeptanzkriterien:**
 - [ ] Zahlenfeld-Komponente ist einheitlich überall verwendet (keine Sonderfelder)
 - [ ] Ungültige Eingabe wird erklärt („‚Breitee‘ kenne ich nicht. Meintest du ‚Breite‘?“)
+
+**Abschlussvermerk (2026-10-25, Teile b–d):**
+- Panel nach Auswahl (Körper, mehrere, Fläche/Kante), umbenennbarer Körpername, „Mehr“ für Seltenes (`ParamSpec::advanced`).
+- Farbe: 10 Filamentfarben (`Theme.filaments`) plus „Eigene Farbe…“ als Popover; mehrere Körper = ein Undo-Schritt, keine Neuberechnung.
+- Kontextleiste neben der Auswahl: Körper (Als Loch/Teil · Farbe · Duplizieren · Aufs Bett), mehrere (Vereinen · Ausschneiden · Farbe · Aufs Bett),
+  Fläche (Auf Fläche schauen). Nicht gebaute Aktionen fehlen.
+- Offene Reste: „Mehr ▾“ der Kontextleiste (noch nichts Passendes), Kante ohne Aktionen (Abrunden ab AP-2.5), Ausrichten bei mehreren Körpern,
+  Farbe je Fläche (AP-3.4).
 
 ---
 
