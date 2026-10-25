@@ -187,6 +187,36 @@ Item {
                             else val.value = value
                         }
                         Accessible.name: modelData.label
+                        height: 22
+                        hoverEnabled: true
+
+                        // Slim like the other sliders of the interface: a thin rail, a small dot.
+                        background: Rectangle {
+                            x: slider.leftPadding
+                            y: slider.topPadding + slider.availableHeight / 2 - height / 2
+                            width: slider.availableWidth
+                            height: 4
+                            radius: 2
+                            color: Theme.field2
+
+                            Rectangle {
+                                width: slider.visualPosition * parent.width
+                                height: parent.height
+                                radius: 2
+                                color: Theme.accent
+                            }
+                        }
+
+                        handle: Rectangle {
+                            x: slider.leftPadding + slider.visualPosition * (slider.availableWidth - width)
+                            y: slider.topPadding + slider.availableHeight / 2 - height / 2
+                            implicitWidth: 14
+                            implicitHeight: 14
+                            radius: 7
+                            color: slider.pressed ? Theme.accent : Theme.fg
+                            border.width: slider.visualFocus ? 2 : 1
+                            border.color: slider.visualFocus ? Theme.accentLine : Theme.line2
+                        }
                     }
                 }
             }
