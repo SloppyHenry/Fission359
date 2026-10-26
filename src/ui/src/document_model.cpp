@@ -520,8 +520,12 @@ void DocumentModel::rebuildLists() {
         QVariantMap entry;
         entry[QStringLiteral("index")] = static_cast<int>(i);
         entry[QStringLiteral("type")] = toQString(feature.type);
-        entry[QStringLiteral("state")] =
-            feature.suppressed ? QStringLiteral("off") : stateName(state);
+        entry[QStringLiteral("label")] = toQString(feature.label);
+        entry[QStringLiteral("suppressed")] = feature.suppressed;
+        const bool beyond = i >= static_cast<std::size_t>(std::max(marker(), 0)) && marker() >= 0;
+        entry[QStringLiteral("state")] = feature.suppressed ? QStringLiteral("off")
+                                         : beyond           ? QStringLiteral("pending")
+                                                            : stateName(state);
         QVariantList values;
         if (state != nullptr && state->description) {
             for (const core::Quantity& value : state->description->values) {
@@ -599,7 +603,14 @@ void DocumentModel::rebuildLists() {
         entry[QStringLiteral("visible")] = body.visible;
         entry[QStringLiteral("hole")] = body.hole;
         const BodyPart part = partOf(m_history.document(), m_result.get(), body);
-        entry[QStringLiteral("consumed")] = part.consumed; // part of a result: not listed
+        // What a step behind the time marker would make is not there: not listed either.
+        const auto madeAt = m_history.document().indexOf(body.createdBy);
+        const core::Feature* madeBy = m_history.document().findFeature(body.createdBy);
+        const bool beyond =
+            (marker() >= 0 && madeAt && *madeAt >= static_cast<std::size_t>(marker())) ||
+            (madeBy != nullptr && madeBy->suppressed); // a hidden step makes nothing either
+        entry[QStringLiteral("beyond")] = beyond;
+        entry[QStringLiteral("consumed")] = part.consumed || beyond; // part of a result: not listed
         entry[QStringLiteral("cut")] = part.cut;
         bodies.push_back(entry);
     }
@@ -1006,6 +1017,200 @@ bool DocumentModel::setBodiesColor(const QVariantList& indexes, const QString& c
     m_history.commitTransaction();
     documentChanged(false); // a colour is no geometry
     emit historyChanged();
+    return true;
+}
+
+namespace {
+
+// A cut the program keeps for holes: it goes with its hole, it is no step somebody built on.
+bool isAutoCutStep(const core::Feature& step) {
+    const auto word = [&](const char* name) {
+        const auto found = step.texts.find(name);
+        return found != step.texts.end() ? found->second : std::string();
+    };
+    return step.type == "combine" && word("mode") == "subtract" && word("auto") == "yes";
+}
+
+} // namespace
+
+// The steps outside `steps` that work on what `steps` make, as positions.
+static QVariantList dependentsOutside(const core::Document& document,
+                                      const std::vector<core::FeatureId>& steps) {
+    std::set<std::size_t> found;
+    for (const core::FeatureId& id : steps) {
+        for (const core::FeatureId& dependent : document.dependentsOf(id)) {
+            if (std::find(steps.begin(), steps.end(), dependent) != steps.end()) {
+                continue;
+            }
+            const core::Feature* step = document.findFeature(dependent);
+            if (step != nullptr && !isAutoCutStep(*step)) {
+                found.insert(*document.indexOf(dependent));
+            }
+        }
+    }
+    QVariantList list;
+    for (const std::size_t position : found) {
+        list.push_back(static_cast<int>(position));
+    }
+    return list;
+}
+
+static QVariantList positionsOf(const core::Document& document,
+                                const std::vector<core::FeatureId>& steps) {
+    std::set<std::size_t> found;
+    for (const core::FeatureId& id : steps) {
+        found.insert(*document.indexOf(id));
+    }
+    QVariantList list;
+    for (const std::size_t position : found) {
+        list.push_back(static_cast<int>(position));
+    }
+    return list;
+}
+
+QVariantMap DocumentModel::deletionOfStep(int index) const {
+    const auto& features = m_history.document().features();
+    QVariantMap plan;
+    plan[QStringLiteral("steps")] = QVariantList{};
+    plan[QStringLiteral("dependents")] = QVariantList{};
+    if (index < 0 || index >= static_cast<int>(features.size())) {
+        return plan;
+    }
+    const std::vector<core::FeatureId> steps{features[static_cast<std::size_t>(index)].id};
+    plan[QStringLiteral("steps")] = positionsOf(m_history.document(), steps);
+    plan[QStringLiteral("dependents")] = dependentsOutside(m_history.document(), steps);
+    return plan;
+}
+
+QVariantMap DocumentModel::deletionOfBodies(const QStringList& bodyIds) const {
+    const core::Document& document = m_history.document();
+    std::vector<core::FeatureId> steps;
+    const auto add = [&](const core::FeatureId& id) {
+        if (std::find(steps.begin(), steps.end(), id) == steps.end()) {
+            steps.push_back(id);
+        }
+    };
+    for (const QString& id : bodyIds) {
+        if (const core::Body* body = findBody(id)) {
+            add(body->createdBy);
+        }
+    }
+    // The shapes that are only there for a combine or split that goes: every step whose bodies
+    // are used by nothing but the steps that go.
+    for (bool grew = true; grew;) {
+        grew = false;
+        const std::size_t before = steps.size();
+        const std::vector<core::FeatureId> now = steps;
+        for (const core::FeatureId& id : now) {
+            const core::Feature* step = document.findFeature(id);
+            if (step == nullptr || (step->type != "combine" && step->type != "split")) {
+                continue;
+            }
+            for (const core::BodyId& input : step->inputs) {
+                const core::Body* made = document.findBody(input);
+                if (made == nullptr) {
+                    continue;
+                }
+                const auto users = document.dependentsOf(made->createdBy);
+                const bool onlyForThem =
+                    std::all_of(users.begin(), users.end(), [&](const core::FeatureId& user) {
+                        const core::Feature* other = document.findFeature(user);
+                        return std::find(steps.begin(), steps.end(), user) != steps.end() ||
+                               (other != nullptr && isAutoCutStep(*other));
+                    });
+                if (onlyForThem) {
+                    add(made->createdBy);
+                }
+            }
+        }
+        grew = steps.size() != before;
+    }
+    QVariantMap plan;
+    plan[QStringLiteral("steps")] = positionsOf(document, steps);
+    plan[QStringLiteral("dependents")] = dependentsOutside(document, steps);
+    return plan;
+}
+
+int DocumentModel::marker() const {
+    const auto at = m_history.document().rollback();
+    return at ? static_cast<int>(*at) : -1;
+}
+
+bool DocumentModel::moveMarker(int count) {
+    const std::optional<std::size_t> target =
+        count < 0 ? std::nullopt : std::optional<std::size_t>(static_cast<std::size_t>(count));
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(core::makeSetRollback(target)) ||
+        m_history.document().revision() == before) {
+        return false;
+    }
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
+bool DocumentModel::deleteSteps(const QVariantList& indexes) {
+    const auto& features = m_history.document().features();
+    std::vector<core::FeatureId> ids;
+    for (const QVariant& entry : indexes) {
+        const int index = entry.toInt();
+        if (index >= 0 && index < static_cast<int>(features.size())) {
+            ids.push_back(features[static_cast<std::size_t>(index)].id);
+        }
+    }
+    if (ids.empty()) {
+        return false;
+    }
+    const core::Feature& first = *m_history.document().findFeature(ids.front());
+    core::CommandDescription label{"removeFeature", {{"type", first.type}}};
+    if (ids.size() > 1) {
+        label.values["count"] = std::to_string(ids.size());
+    }
+    m_history.beginTransaction(std::move(label));
+    bool any = false;
+    for (const core::FeatureId& id : ids) {
+        any = m_history.execute(core::makeRemoveFeature(id)) || any;
+    }
+    if (!any) {
+        m_history.cancelTransaction();
+        return false;
+    }
+    finishTransaction(); // the cuts of holes follow, in the same step
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
+bool DocumentModel::setStepSuppressed(int index, bool suppressed) {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size())) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.suppressed == suppressed) {
+        return false;
+    }
+    core::CommandDescription label{suppressed ? "suppress" : "unsuppress", {{"type", step.type}}};
+    if (!executeWithCuts(core::makeSetFeatureSuppressed(step.id, suppressed), std::move(label))) {
+        return false;
+    }
+    documentChanged();
+    return true;
+}
+
+bool DocumentModel::setStepLabel(int index, const QString& label) {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size())) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    const std::string text = label.trimmed().toStdString();
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(core::makeSetFeatureLabel(step.id, text)) ||
+        m_history.document().revision() == before) {
+        return false;
+    }
+    documentChanged(false); // a name is no geometry
     return true;
 }
 

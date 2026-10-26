@@ -17,10 +17,54 @@ Rectangle {
     property var recipe: []            // [{ text, state }]  state: ok | warning | fails | off | pending
     property int currentStep: -1       // the step whose values are shown (highlighted)
     signal stepRequested(int index)
+    // The recipe as the person edits it (AP-1.9).
+    signal stepHovered(int index, bool on)
+    signal stepRenamed(int index, string text)
+    signal stepDeleteRequested(int index)
+    signal stepHideRequested(int index, bool hide)
+    signal deleteConfirmed
+    signal hideInstead
+    signal deleteCancelled
+    // What deleting would break, as a question in the panel: { text, canHide } or null.
+    property var deletion: null
+    // The time marker: the number of steps that count (-1: all of them).
+    property int marker: -1
+    signal markerRequested(int count)
+    property bool markerHeld: false
+
+    // The gap between rows (0 … number of steps) a marker would stand in if it were let go
+    // `dy` pixels from where `line` is.
+    function gapFor(line, dy) {
+        const y = line.mapToItem(rows, 0, line.height / 2).y + dy
+        let gap = 0
+        for (let i = 0; i < root.recipe.length; ++i) {
+            const row = stepRepeater.itemAt(i)
+            if (row && row.mapToItem(rows, 0, row.height / 2).y < y) {
+                gap = i + 1
+            }
+        }
+        return gap
+    }
+
+    function markerDragged(line, dy) {
+        const gap = gapFor(line, dy)
+        const row = gap < root.recipe.length ? stepRepeater.itemAt(gap) : null
+        ghost.y = (row ? row.mapToItem(recipeBox, 0, 0).y : rows.mapToItem(recipeBox, 0, rows.height).y) - 1
+        ghost.visible = true
+    }
+
+    function markerReleased(line, dy) {
+        ghost.visible = false
+        const gap = gapFor(line, dy)
+        root.markerRequested(gap >= root.recipe.length ? -1 : gap)
+    }
     signal tabRequested(string tab)
     signal addRequested
     signal bodyVisibilityRequested(int index, bool visible)
     signal bodyChosen(int index, bool extend)
+    signal bodyRenamed(int index, string text)
+    signal bodyHovered(int index, bool on)
+    signal bodyColorChosen(int index, string color)
     signal bedVisibilityRequested(bool visible)
 
     color: Theme.panel
@@ -188,12 +232,16 @@ Rectangle {
                 }
 
                 Repeater {
-                    model: root.bodies
+                    // The rows stay when only a value of a body changes (a choice changes
+                    // `chosen`): a row that is rebuilt between the two clicks of a double click
+                    // could not be renamed. So the model is the number of bodies.
+                    model: root.bodies.length
 
                     delegate: TreeRow {
-                        required property var modelData
                         required property int index
+                        readonly property var modelData: index < root.bodies.length ? root.bodies[index] : ({})
 
+                        objectName: "bodyRow_" + index
                         // A body that is part of a result is not a body of its own (hidden, its
                         // position in the list stays the position in the document).
                         visible: !modelData.consumed
@@ -202,11 +250,23 @@ Rectangle {
                         selected: modelData.chosen
                         swatch: modelData.color
                         hole: modelData.hole === true
+                        badge: modelData.hole === true ? qsTr("Hole") : ""
+                        renamable: true
+                        colorEditable: true
                         text: modelData.name
                         eyeOn: modelData.visible
                         eyeLabel: qsTr("Visibility: %1").arg(modelData.name)
                         onEyeToggled: root.bodyVisibilityRequested(index, !modelData.visible)
                         onClicked: extend => root.bodyChosen(index, extend)
+                        onRenamed: text => root.bodyRenamed(index, text)
+                        onHovered: on => root.bodyHovered(index, on)
+                        onSwatchClicked: (x, y) => {
+                            colorPopup.body = index
+                            const spot = mapToItem(root, x, y)
+                            colorPopup.x = Math.max(8, Math.min(spot.x - 20, root.width - colorPopup.width - 8))
+                            colorPopup.y = spot.y + 4
+                            colorPopup.open()
+                        }
                     }
                 }
 
@@ -295,7 +355,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: Math.min(parent.height * 0.46, recipeColumn.implicitHeight)
+        height: Math.min(parent.height * 0.46, recipeHeader.height + recipeBody.implicitHeight)
 
         Rectangle {
             width: parent.width
@@ -303,151 +363,218 @@ Rectangle {
             color: Theme.line
         }
 
-        Column {
-            id: recipeColumn
+        Rectangle {
+            id: ghost
+
+            visible: false
+            x: 8
+            width: parent.width - 16
+            height: 2
+            radius: 1
+            color: Theme.accent
+            opacity: 0.7
+            z: 3
+        }
+
+        Item {
+            id: recipeHeader
 
             width: parent.width
+            height: 40
 
-            Item {
-                width: parent.width
-                height: 40
+            Txt {
+                anchors.left: parent.left
+                anchors.leftMargin: 14
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Recipe")
+                color: Theme.fg
+                font.weight: Font.DemiBold
+                elide: Text.ElideNone
+            }
+
+            Rectangle {
+                anchors.right: parent.right
+                anchors.rightMargin: 14
+                anchors.verticalCenter: parent.verticalCenter
+                width: kbd.implicitWidth + 12
+                height: 20
+                radius: 4
+                color: Theme.field
+                border.width: 1
+                border.color: Theme.line2
 
                 Txt {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Recipe")
-                    color: Theme.fg
-                    font.weight: Font.DemiBold
+                    id: kbd
+
+                    anchors.centerIn: parent
+                    text: Qt.platform.os === "osx" ? "⌘Z" : qsTr("Ctrl+Z")
+                    mono: true
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: Font.Medium
                     elide: Text.ElideNone
                 }
+            }
+        }
 
-                Rectangle {
-                    anchors.right: parent.right
-                    anchors.rightMargin: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: kbd.implicitWidth + 12
-                    height: 20
-                    radius: 4
-                    color: Theme.field
-                    border.width: 1
-                    border.color: Theme.line2
+        // The steps scroll when there are more than fit; the header stays.
+        Flickable {
+            id: recipeScroll
+
+            anchors.top: recipeHeader.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            contentHeight: recipeBody.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: !root.markerHeld
+
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AsNeeded
+            }
+
+            Column {
+                id: recipeBody
+
+                width: recipeScroll.width
+
+            // What deleting asks: the steps that would need help, with the ways out.
+            Rectangle {
+                visible: root.deletion !== null
+                x: 8
+                width: parent.width - 16
+                height: card.implicitHeight + 20
+                radius: 8
+                color: Theme.amberSoft
+                border.width: 1
+                border.color: Theme.amberLine
+
+                Column {
+                    id: card
+
+                    x: 10
+                    y: 10
+                    width: parent.width - 20
+                    spacing: 8
 
                     Txt {
-                        id: kbd
-
-                        anchors.centerIn: parent
-                        text: Qt.platform.os === "osx" ? "⌘Z" : qsTr("Ctrl+Z")
-                        mono: true
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.weight: Font.Medium
+                        width: parent.width
+                        text: root.deletion !== null ? root.deletion.text : ""
+                        color: Theme.fg
+                        wrapMode: Text.WordWrap
                         elide: Text.ElideNone
+                    }
+
+                    Flow {
+                        width: parent.width
+                        spacing: 6
+
+                        Btn {
+                            objectName: "deleteAnyway"
+                            small: true
+                            variant: "primary"
+                            text: qsTr("Delete anyway")
+                            onClicked: root.deleteConfirmed()
+                        }
+
+                        Btn {
+                            objectName: "hideInstead"
+                            small: true
+                            visible: root.deletion !== null && root.deletion.canHide
+                            text: qsTr("Only hide")
+                            onClicked: root.hideInstead()
+                        }
+
+                        Btn {
+                            objectName: "deleteCancel"
+                            small: true
+                            text: qsTr("Cancel")
+                            onClicked: root.deleteCancelled()
+                        }
                     }
                 }
             }
 
             Column {
+                id: rows
+
                 x: 8
                 width: parent.width - 16
 
                 Repeater {
-                    model: root.recipe
+                    id: stepRepeater
 
-                    delegate: Rectangle {
+                    model: root.recipe
+                    // A new step shows at the bottom of the list.
+                    onCountChanged: Qt.callLater(() => {
+                        recipeScroll.contentY = Math.max(0, recipeScroll.contentHeight - recipeScroll.height)
+                    })
+
+                    delegate: Column {
+                        id: stepItem
+
                         required property var modelData
                         required property int index
 
-                        width: parent.width
-                        height: stepText.implicitHeight + 12
-                        radius: 6
-                        color: index === root.currentStep ? Theme.accentSoft
-                             : modelData.state === "fails" ? Theme.badSoft : "transparent"
-                        opacity: modelData.state === "off" ? 0.55 : 1.0
+                        width: rows.width
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.stepRequested(index)
+                        MarkerLine {
+                            id: markerHere
+
+                            objectName: "marker"
+                            visible: stepItem.index === root.marker
+                            height: visible ? 28 : 0
+                            atEnd: false
+                            onDragMoved: dy => root.markerDragged(markerHere, dy)
+                            onReleased: dy => root.markerReleased(markerHere, dy)
+                            onReset: root.markerRequested(-1)
+                            onHeldChanged: root.markerHeld = held
                         }
 
-                        Row {
-                            anchors.fill: parent
-                            anchors.margins: 6
-                            anchors.leftMargin: 8
-                            spacing: 8
+                        RecipeRow {
+                            id: stepRow
 
-                            Txt {
-                                width: 18
-                                text: String.fromCharCode(0x2460 + index)
-                                color: Theme.fg4
-                                mono: true
-                                font.pixelSize: Theme.fontSizeSmall
-                                elide: Text.ElideNone
-                            }
-
-                            Txt {
-                                id: stepText
-
-                                width: parent.width - 18 - 8 - 22
-                                text: modelData.text
-                                color: Theme.fg
-                                wrapMode: Text.WordWrap
-                                elide: Text.ElideNone
-                            }
-
-                            Icon {
-                                visible: modelData.state === "ok"
-                                name: "ok"
-                                size: 13
-                                strokeWidth: 2.4
-                                color: Theme.ok
-                            }
-
-                            Icon {
-                                visible: modelData.state === "warning" || modelData.state === "fails"
-                                name: modelData.state === "fails" ? "x" : "warn"
-                                size: 13
-                                strokeWidth: 2.4
-                                color: modelData.state === "fails" ? Theme.bad : Theme.fg3
+                            objectName: "recipeRow_" + stepItem.index
+                            position: stepItem.index
+                            iconName: stepItem.modelData.icon
+                            sentence: stepItem.modelData.text
+                            label: stepItem.modelData.label
+                            state: stepItem.modelData.state
+                            problem: stepItem.modelData.problem
+                            selected: stepItem.index === root.currentStep
+                            beyondMarker: root.marker >= 0 && stepItem.index >= root.marker
+                            onClicked: root.stepRequested(stepItem.index)
+                            onHovered: on => root.stepHovered(stepItem.index, on)
+                            onRenamed: text => root.stepRenamed(stepItem.index, text)
+                            onDeleteRequested: root.stepDeleteRequested(stepItem.index)
+                            onMenuRequested: (x, y) => {
+                                rowMenu.step = stepItem.index
+                                const spot = stepRow.mapToItem(root, x, y)
+                                rowMenu.x = Math.min(spot.x, root.width - rowMenu.width - 8)
+                                rowMenu.y = Math.max(8, spot.y - rowMenu.height / 2)
+                                rowMenu.open()
                             }
                         }
+
+                        function startRename() { stepRow.startRename() }
                     }
                 }
             }
 
-            // the time marker: everything above is "now"
-            Row {
+            // the time marker at the end: everything counts
+            MarkerLine {
+                id: markerEnd
+
+                objectName: "markerEnd"
                 x: 8
                 width: parent.width - 16
+                visible: root.marker < 0 || root.marker >= root.recipe.length
                 height: 28
-                spacing: 8
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: (parent.width - nowText.width - 16) / 2
-                    height: 2
-                    radius: 1
-                    color: Theme.accentLine
-                }
-
-                Txt {
-                    id: nowText
-
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("now")
-                    color: Theme.accentText
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.weight: Font.DemiBold
-                    elide: Text.ElideNone
-                }
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: (parent.width - nowText.width - 16) / 2
-                    height: 2
-                    radius: 1
-                    color: Theme.accentLine
-                }
+                atEnd: true
+                onDragMoved: dy => root.markerDragged(markerEnd, dy)
+                onReleased: dy => root.markerReleased(markerEnd, dy)
+                onReset: root.markerRequested(-1)
+                onHeldChanged: root.markerHeld = held
             }
 
             Txt {
@@ -461,6 +588,55 @@ Rectangle {
                 font.pixelSize: Theme.fontSizeSmall
                 wrapMode: Text.WordWrap
                 elide: Text.ElideNone
+            }
+            }
+        }
+    }
+
+    RowMenu {
+        id: rowMenu
+
+        property int step: -1
+        readonly property bool hidden: step >= 0 && step < root.recipe.length && root.recipe[step].state === "off"
+
+        entries: [
+            { id: "rename", text: qsTr("Rename"), icon: "pencil" },
+            { id: "hide", text: hidden ? qsTr("Show") : qsTr("Hide"), icon: hidden ? "eye" : "eyeoff" },
+            { id: "delete", text: qsTr("Delete"), icon: "x", danger: true }
+        ]
+        onChosen: id => {
+            if (id === "rename") {
+                stepRepeater.itemAt(step)?.startRename()
+            } else if (id === "hide") {
+                root.stepHideRequested(step, !hidden)
+            } else {
+                root.stepDeleteRequested(step)
+            }
+        }
+    }
+
+    // The colours of one body, next to its row: not a dialog, a click beside closes it.
+    Popup {
+        id: colorPopup
+
+        property int body: -1
+
+        width: root.width - 16
+        padding: 12
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            radius: Theme.radiusFloat
+            color: Theme.raise
+            border.width: 1
+            border.color: Theme.line2
+        }
+
+        contentItem: ColorField {
+            current: colorPopup.body >= 0 && colorPopup.body < root.bodies.length ? root.bodies[colorPopup.body].color : ""
+            onChosen: color => {
+                root.bodyColorChosen(colorPopup.body, color)
+                colorPopup.close()
             }
         }
     }

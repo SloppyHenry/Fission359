@@ -217,6 +217,10 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         }
     };
 
+    // Steps behind the time marker are not calculated: they look like switched off ones, and
+    // what they would have made is not there.
+    const std::size_t counting = document.rollback().value_or(document.features().size());
+    std::size_t position = 0;
     for (const Feature& feature : document.features()) {
         if (cancel.stop_requested()) {
             return std::nullopt;
@@ -224,6 +228,12 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
 
         FeatureState state;
         state.id = feature.id;
+
+        if (position++ >= counting) {
+            state.status = FeatureStatus::suppressed;
+            result.features.push_back(std::move(state));
+            continue;
+        }
 
         // A step that fails: error on it, its last valid result (if it had one) stays visible.
         const auto fail = [&](FeatureIssue issue) {

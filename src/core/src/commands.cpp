@@ -332,6 +332,23 @@ std::unique_ptr<Command> makeSetFeatureSuppressed(FeatureId id, bool suppressed)
         });
 }
 
+std::unique_ptr<Command> makeSetRollback(std::optional<std::size_t> count) {
+    return std::make_unique<SetCommand<std::optional<std::size_t>>>(
+        "rollback", count,
+        [](const Document& document) -> std::optional<std::optional<std::size_t>> {
+            return document.rollback();
+        },
+        [](Document& document, const std::optional<std::size_t>& value) {
+            document.setRollback(value);
+            return true;
+        },
+        [](const Document&, const std::optional<std::size_t>& value) {
+            CommandDescription description{"setRollback", {}};
+            description.values["count"] = value ? std::to_string(*value) : std::string();
+            return description;
+        });
+}
+
 std::unique_ptr<Command> makeSetBodyName(BodyId id, std::string name) {
     std::string key = "bodyName/" + id.value;
     return std::make_unique<SetCommand<std::string>>(

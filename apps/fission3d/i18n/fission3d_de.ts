@@ -217,7 +217,7 @@
         <translation>Helligkeit</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+72"/>
         <source>Keep this colour</source>
         <translation>Farbe übernehmen</translation>
     </message>
@@ -519,7 +519,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+51"/>
+        <location filename="../qml/LeftPanel.qml" line="+94"/>
         <source>Bodies</source>
         <translation>Körper</translation>
     </message>
@@ -553,12 +553,17 @@
         </translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+19"/>
+        <source>Hole</source>
+        <translation>Loch</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Visibility: %1</source>
         <translation>Sichtbarkeit: %1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+21"/>
         <source>No bodies yet. Get a shape from “Shapes” in the tool bar or with %1.</source>
         <translation>Noch keine Körper. Hol dir eine Form über „Formen“ in der Werkzeugleiste oder mit %1.</translation>
     </message>
@@ -638,7 +643,7 @@
         <translation>Herz</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+55"/>
         <source>Recipe</source>
         <translation>Rezept</translation>
     </message>
@@ -648,14 +653,44 @@
         <translation>Strg+Z</translation>
     </message>
     <message>
-        <location line="+97"/>
-        <source>now</source>
-        <translation>jetzt</translation>
+        <location line="+44"/>
+        <source>Delete anyway</source>
+        <translation>Trotzdem löschen</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+8"/>
+        <source>Only hide</source>
+        <translation>Nur ausblenden</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <location line="+89"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Jede Änderung landet hier als Satz.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Rename</source>
+        <translation>Umbenennen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Show</source>
+        <translation>Einblenden</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Hide</source>
+        <translation>Ausblenden</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete</source>
+        <translation>Löschen</translation>
     </message>
 </context>
 <context>
@@ -912,12 +947,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+741"/>
+        <location line="+811"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-740"/>
+        <location line="-810"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -948,12 +983,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+729"/>
+        <location line="+799"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-727"/>
+        <location line="-797"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -984,18 +1019,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+358"/>
+        <location line="+407"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-356"/>
-        <location line="+357"/>
+        <location line="-405"/>
+        <location line="+406"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-351"/>
+        <location line="-400"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -1004,8 +1039,24 @@
         <source>Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen dreht die Ansicht, Umschalt + mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
+    <message numerus="yes">
+        <location line="+61"/>
+        <source>%n step(s) use what you delete: %1. They will need help.</source>
+        <translation>
+            <numerusform>%n Schritt benutzt, was du löschst: %1. Er braucht dann Hilfe.</numerusform>
+            <numerusform>%n Schritte benutzen, was du löschst: %1. Sie brauchen dann Hilfe.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>This also deletes %n shape(s) that are only there for it.</source>
+        <translation>
+            <numerusform>Das löscht auch %n Form, die nur dafür da ist.</numerusform>
+            <numerusform>Das löscht auch %n Formen, die nur dafür da sind.</numerusform>
+        </translation>
+    </message>
     <message>
-        <location line="+46"/>
+        <location line="+22"/>
         <source>Settings arrive in a later version.</source>
         <translation>Die Einstellungen kommen in einer späteren Version.</translation>
     </message>
@@ -1016,6 +1067,7 @@
     </message>
     <message>
         <location line="+25"/>
+        <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
         <translation>Diesen Körper kann man noch nicht kopieren.</translation>
@@ -1027,12 +1079,12 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+244"/>
+        <location line="+247"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-226"/>
+        <location line="-229"/>
         <source>This body cannot be split: it may be part of another body.</source>
         <translation>Dieser Körper lässt sich nicht teilen: Er ist vielleicht Teil eines anderen Körpers.</translation>
     </message>
@@ -1067,7 +1119,7 @@
         <translation>normal</translation>
     </message>
     <message>
-        <location line="+182"/>
+        <location line="+185"/>
         <source>The start page arrives in a later version.</source>
         <translation>Die Startseite kommt in einer späteren Version.</translation>
     </message>
@@ -1082,7 +1134,7 @@
         <translation>Der Export kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+84"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
@@ -1308,7 +1360,7 @@
     </message>
     <message numerus="yes">
         <location line="+4"/>
-        <location line="+32"/>
+        <location line="+36"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>%n Körper ausgeschnitten</numerusform>
@@ -1316,7 +1368,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="-31"/>
+        <location line="-35"/>
         <source>Overlap kept with %n body(ies)</source>
         <translation>
             <numerusform>Überlappung mit %n Körper behalten</numerusform>
@@ -1332,7 +1384,12 @@
         </translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+5"/>
+        <source>Step %1 (unknown kind)</source>
+        <translation>Schritt %1 (unbekannte Art)</translation>
+    </message>
+    <message>
+        <location line="+12"/>
         <source>%1 added</source>
         <translation>%1 hinzugefügt</translation>
     </message>
@@ -1446,6 +1503,16 @@
         <location line="+1"/>
         <source>Step renamed</source>
         <translation>Schritt umbenannt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Time marker put back to now</source>
+        <translation>Zeitmarker zurück auf „jetzt“</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Time marker moved</source>
+        <translation>Zeitmarker verschoben</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1616,7 +1683,7 @@
         <translation>Diese Form ließ sich nicht bauen.</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+53"/>
         <source>, part %1</source>
         <translation>, Teil %1</translation>
     </message>
@@ -1670,34 +1737,57 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-388"/>
+        <location line="-406"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-706"/>
+        <location line="-776"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+741"/>
+        <location line="+811"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-619"/>
+        <location line="-689"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+327"/>
+        <location line="+376"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+330"/>
+        <location line="+351"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
+    </message>
+</context>
+<context>
+    <name>MarkerLine</name>
+    <message>
+        <location filename="../qml/MarkerLine.qml" line="+25"/>
+        <source>Time marker</source>
+        <translation>Zeitmarker</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Drag up to see an earlier state. Double-click to go back to now.</source>
+        <translation>Nach oben ziehen zeigt einen früheren Stand. Doppelklick geht zurück zu „jetzt“.</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>now</source>
+        <translation>jetzt</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>now (earlier state)</source>
+        <translation>jetzt (früherer Stand)</translation>
     </message>
 </context>
 <context>
@@ -1824,6 +1914,34 @@
         <location line="+2"/>
         <source>That is not a number or formula.</source>
         <translation>Das ist keine Zahl und keine Formel.</translation>
+    </message>
+</context>
+<context>
+    <name>RecipeRow</name>
+    <message>
+        <location filename="../qml/RecipeRow.qml" line="+37"/>
+        <source>Needs help</source>
+        <translation>Braucht Hilfe</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Does not work</source>
+        <translation>Geht nicht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Hidden</source>
+        <translation>Ausgeblendet</translation>
+    </message>
+    <message>
+        <location line="+101"/>
+        <source>Name of the step</source>
+        <translation>Name des Schritts</translation>
+    </message>
+    <message>
+        <location line="+69"/>
+        <source>(hidden)</source>
+        <translation>(ausgeblendet)</translation>
     </message>
 </context>
 <context>
@@ -2260,6 +2378,19 @@
         <location line="+1"/>
         <source>Drag a dot to change a size, or a corner square to scale everything evenly; it snaps to corners and middles. Hold Shift to switch snapping off. You can also drag the body itself.</source>
         <translation>Ziehe an einem Punkt, um ein Maß zu ändern, oder an einem Eck-Quadrat, um alles gleichmäßig zu vergrößern; es fängt an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Du kannst auch den Körper selbst ziehen.</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <location filename="../qml/TreeRow.qml" line="+111"/>
+        <source>Colour of %1</source>
+        <translation>Farbe von %1</translation>
+    </message>
+    <message>
+        <location line="+44"/>
+        <source>Name</source>
+        <translation>Name</translation>
     </message>
 </context>
 <context>

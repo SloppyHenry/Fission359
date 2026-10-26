@@ -111,6 +111,7 @@ struct RemovedFeature {
     Feature feature;
     std::size_t index = 0;
     std::vector<std::pair<std::size_t, Body>> bodies; ///< Ascending by index.
+    bool movedMarker = false; ///< taking it out moved the time marker one step back
 };
 
 /// The document: named measures, the recipe (features in order) and the bodies it makes.
@@ -194,6 +195,14 @@ public:
     bool setFeatureRefs(const FeatureId& id, std::string_view name,
                         std::vector<PersistentRef> refs);
 
+    // --- the time marker ("jetzt", AP-1.9) -------------------------------------------------
+    /// How many steps of the recipe count, or nullopt for all of them. The steps after the
+    /// marker are not calculated: the model shows an earlier state, and a new step is put in at
+    /// the marker (it moves on behind it). Adding and taking out steps keeps it in its place.
+    std::optional<std::size_t> rollback() const noexcept;
+    /// Moves the marker; `count` at or beyond the end of the recipe means "all".
+    bool setRollback(std::optional<std::size_t> count);
+
     // --- bodies --------------------------------------------------------------------------
     const std::vector<Body>& bodies() const noexcept { return bodies_; }
     const Body* findBody(const BodyId& id) const;
@@ -213,6 +222,7 @@ private:
     std::vector<Feature> features_;
     std::vector<Body> bodies_;
     int lastFeatureNumber_ = 0;
+    std::optional<std::size_t> rollback_;
     std::uint64_t revision_ = 0;
     IdSource ids_;
 };

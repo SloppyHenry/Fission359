@@ -217,7 +217,7 @@
         <translation>Brightness</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+72"/>
         <source>Keep this colour</source>
         <translation>Keep this colour</translation>
     </message>
@@ -519,7 +519,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+51"/>
+        <location filename="../qml/LeftPanel.qml" line="+94"/>
         <source>Bodies</source>
         <translation>Bodies</translation>
     </message>
@@ -553,12 +553,17 @@
         </translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+19"/>
+        <source>Hole</source>
+        <translation>Hole</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Visibility: %1</source>
         <translation>Visibility: %1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+21"/>
         <source>No bodies yet. Get a shape from “Shapes” in the tool bar or with %1.</source>
         <translation>No bodies yet. Get a shape from “Shapes” in the tool bar or with %1.</translation>
     </message>
@@ -638,7 +643,7 @@
         <translation>Heart</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+55"/>
         <source>Recipe</source>
         <translation>Recipe</translation>
     </message>
@@ -648,14 +653,44 @@
         <translation>Ctrl+Z</translation>
     </message>
     <message>
-        <location line="+97"/>
-        <source>now</source>
-        <translation>now</translation>
+        <location line="+44"/>
+        <source>Delete anyway</source>
+        <translation>Delete anyway</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+8"/>
+        <source>Only hide</source>
+        <translation>Only hide</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <location line="+89"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Every change appears here as a sentence.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Rename</source>
+        <translation>Rename</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Show</source>
+        <translation>Show</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Hide</source>
+        <translation>Hide</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete</source>
+        <translation>Delete</translation>
     </message>
 </context>
 <context>
@@ -912,12 +947,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+741"/>
+        <location line="+811"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-740"/>
+        <location line="-810"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -948,12 +983,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+729"/>
+        <location line="+799"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-727"/>
+        <location line="-797"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -984,18 +1019,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+358"/>
+        <location line="+407"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-356"/>
-        <location line="+357"/>
+        <location line="-405"/>
+        <location line="+406"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-351"/>
+        <location line="-400"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -1004,8 +1039,24 @@
         <source>Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.</translation>
     </message>
+    <message numerus="yes">
+        <location line="+61"/>
+        <source>%n step(s) use what you delete: %1. They will need help.</source>
+        <translation>
+            <numerusform>%n step uses what you delete: %1. It will need help.</numerusform>
+            <numerusform>%n steps use what you delete: %1. They will need help.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>This also deletes %n shape(s) that are only there for it.</source>
+        <translation>
+            <numerusform>This also deletes %n shape that is only there for it.</numerusform>
+            <numerusform>This also deletes %n shapes that are only there for it.</numerusform>
+        </translation>
+    </message>
     <message>
-        <location line="+46"/>
+        <location line="+22"/>
         <source>Settings arrive in a later version.</source>
         <translation>Settings arrive in a later version.</translation>
     </message>
@@ -1016,6 +1067,7 @@
     </message>
     <message>
         <location line="+25"/>
+        <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
         <translation>This body cannot be copied yet.</translation>
@@ -1027,12 +1079,12 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+244"/>
+        <location line="+247"/>
         <source>This arrives in a later version.</source>
         <translation>This arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-226"/>
+        <location line="-229"/>
         <source>This body cannot be split: it may be part of another body.</source>
         <translation>This body cannot be split: it may be part of another body.</translation>
     </message>
@@ -1067,7 +1119,7 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+182"/>
+        <location line="+185"/>
         <source>The start page arrives in a later version.</source>
         <translation>The start page arrives in a later version.</translation>
     </message>
@@ -1082,7 +1134,7 @@
         <translation>Export arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+84"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -1308,7 +1360,7 @@
     </message>
     <message numerus="yes">
         <location line="+4"/>
-        <location line="+32"/>
+        <location line="+36"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>Cut out %n body</numerusform>
@@ -1316,7 +1368,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="-31"/>
+        <location line="-35"/>
         <source>Overlap kept with %n body(ies)</source>
         <translation>
             <numerusform>Overlap kept with %n body</numerusform>
@@ -1332,7 +1384,12 @@
         </translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+5"/>
+        <source>Step %1 (unknown kind)</source>
+        <translation>Step %1 (unknown kind)</translation>
+    </message>
+    <message>
+        <location line="+12"/>
         <source>%1 added</source>
         <translation>%1 added</translation>
     </message>
@@ -1446,6 +1503,16 @@
         <location line="+1"/>
         <source>Step renamed</source>
         <translation>Step renamed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Time marker put back to now</source>
+        <translation>Time marker put back to now</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Time marker moved</source>
+        <translation>Time marker moved</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1616,7 +1683,7 @@
         <translation>This shape could not be built.</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+53"/>
         <source>, part %1</source>
         <translation>, part %1</translation>
     </message>
@@ -1670,34 +1737,57 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-388"/>
+        <location line="-406"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-706"/>
+        <location line="-776"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+741"/>
+        <location line="+811"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-619"/>
+        <location line="-689"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+327"/>
+        <location line="+376"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+330"/>
+        <location line="+351"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
+    </message>
+</context>
+<context>
+    <name>MarkerLine</name>
+    <message>
+        <location filename="../qml/MarkerLine.qml" line="+25"/>
+        <source>Time marker</source>
+        <translation>Time marker</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Drag up to see an earlier state. Double-click to go back to now.</source>
+        <translation>Drag up to see an earlier state. Double-click to go back to now.</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>now</source>
+        <translation>now</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>now (earlier state)</source>
+        <translation>now (earlier state)</translation>
     </message>
 </context>
 <context>
@@ -1824,6 +1914,34 @@
         <location line="+2"/>
         <source>That is not a number or formula.</source>
         <translation>That is not a number or formula.</translation>
+    </message>
+</context>
+<context>
+    <name>RecipeRow</name>
+    <message>
+        <location filename="../qml/RecipeRow.qml" line="+37"/>
+        <source>Needs help</source>
+        <translation>Needs help</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Does not work</source>
+        <translation>Does not work</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Hidden</source>
+        <translation>Hidden</translation>
+    </message>
+    <message>
+        <location line="+101"/>
+        <source>Name of the step</source>
+        <translation>Name of the step</translation>
+    </message>
+    <message>
+        <location line="+69"/>
+        <source>(hidden)</source>
+        <translation>(hidden)</translation>
     </message>
 </context>
 <context>
@@ -2260,6 +2378,19 @@
         <location line="+1"/>
         <source>Drag a dot to change a size, or a corner square to scale everything evenly; it snaps to corners and middles. Hold Shift to switch snapping off. You can also drag the body itself.</source>
         <translation>Drag a dot to change a size, or a corner square to scale everything evenly; it snaps to corners and middles. Hold Shift to switch snapping off. You can also drag the body itself.</translation>
+    </message>
+</context>
+<context>
+    <name>TreeRow</name>
+    <message>
+        <location filename="../qml/TreeRow.qml" line="+111"/>
+        <source>Colour of %1</source>
+        <translation>Colour of %1</translation>
+    </message>
+    <message>
+        <location line="+44"/>
+        <source>Name</source>
+        <translation>Name</translation>
     </message>
 </context>
 <context>

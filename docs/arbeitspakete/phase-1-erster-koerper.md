@@ -221,7 +221,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.9 Rezept-Panel (Version 1)
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.2, AP-1.8
+**Status:** Review (2026-10-25) · **Größe:** M · **Abhängigkeiten:** AP-1.2, AP-1.8
 **Bauanleitung:** [anleitungen/AP-1.9.md](anleitungen/AP-1.9.md)
 
 **Umfang:**
@@ -232,8 +232,16 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Körper-Liste darunter: Sichtbarkeit, Farbe, Name, Typ-Badge
 
 **Akzeptanzkriterien:**
-- [ ] Ein Schritt in der Mitte des Rezepts lässt sich ändern, alles danach wird korrekt neu berechnet
-- [ ] Löschen eines Schritts mit Abhängigen fragt mit klarer Erklärung nach
+- [x] Ein Schritt in der Mitte des Rezepts lässt sich ändern, alles danach wird korrekt neu berechnet (Kerntest „a change recomputes only what it affects“; Zeitmarker-Tests)
+- [x] Löschen eines Schritts mit Abhängigen fragt mit klarer Erklärung nach (Karte im Panel, Tests `deletionOfStep`/`deleteSteps`, Bild im PR)
+
+**Abschlussvermerk (2026-10-25, Teile a–d):**
+- Rezeptzeilen mit Position (①), Symbol je Art, Satz, Name, Badge (ausgeblendet / braucht Hilfe / geht nicht, nie nur Farbe); Klick auf das Badge erklärt inline. Überfahren hebt den Körper hervor (`Viewport3D::lightUpBodies`).
+- Umbenennen (Doppelklick, F2, Menü), Ausblenden, Löschen; Rechtsklick-Menü `RowMenu`. Löschen mit Abhängigen oder mit mehr als einem Schritt fragt in einer Karte im Panel (Trotzdem löschen / Nur ausblenden / Abbrechen). Entf/⌫ und ⌘X wirken auf die gewählten Körper; ein Ergebnis aus Kombinieren nimmt die Formen mit, die nur dafür da sind (`deletionOfBodies`); ein Loch nimmt seinen Schnitt im selben Undo-Schritt mit.
+- Zeitmarker: `Document::rollback()` (Anzahl zählender Schritte), `makeSetRollback`; Schritte dahinter werden nicht berechnet (Status „pending“, ihre Körper fehlen). Neue Schritte landen am Marker, der Marker rückt dahinter; Hinzufügen und Entfernen halten ihn an seiner Stelle (Zufallstest in `test_history.cpp`). Ziehen mit Einrasten zwischen Zeilen, Doppelklick = zurück ans Ende.
+- Körperliste: Doppelklick benennt um, Klick auf den Farbpunkt öffnet die Farben, Badge „Loch“, Überfahren hebt hervor.
+- Festlegungen: Haltepunkte wie empfohlen (Zeitmarker kommt in die Datei, Karte statt Dialog, kombinierte Körper nehmen ihre Formen mit); im Rezept zählt die Position, nicht die Feature-Nummer. `RecipeSentences.js` wurde nicht angelegt: die Sätze bleiben in `Main.qml` (`stepText`), unbekannte Arten zeigen „Schritt N (unbekannte Art)“.
+- Offene Reste: Zeitmarker und Projektpalette werden erst mit AP-1.10 gespeichert (siehe dort); Umsortieren per Ziehen = P9; die Fenster-Tests `app_ring_turn` und `app_snap_corner_handle` fielen einmal unter Last durch (einzeln grün).
 
 ---
 

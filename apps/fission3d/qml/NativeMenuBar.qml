@@ -27,11 +27,13 @@ MenuBar {
                 delegate: MenuItem {
                     required property var modelData
 
-                    text: modelData.text || ""
+                    // The system menu on macOS 27 does not draw its own tick (the state is there, only
+                    // not shown), so the tick is part of the text; the entries that can be ticked
+                    // keep their place when it is not.
+                    text: (modelData.checked === true ? "✓  " : modelData.checked === false ? "     " : "")
+                          + (modelData.text || "")
                     separator: modelData.separator === true
                     enabled: modelData.enabled !== false
-                    checkable: modelData.checked !== undefined
-                    checked: modelData.checked === true
                     shortcut: modelData.nativeShortcut || ""
                     role: modelData.role === "about" ? MenuItem.AboutRole
                         : modelData.role === "preferences" ? MenuItem.PreferencesRole
