@@ -712,8 +712,8 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     // (as a hand would).
                     QTimer::singleShot(250, viewport, [placement, numbers, upright] {
                         placement->moveTo(numbers[0], numbers[1], upright);
-                        const bool done = placement->finish();
-                        qWarning().noquote() << QStringLiteral("DIAG finish=%1").arg(done);
+                        const bool finished = placement->finish();
+                        qWarning().noquote() << QStringLiteral("DIAG finish=%1").arg(finished);
                     });
                 }
                 return;
