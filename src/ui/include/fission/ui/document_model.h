@@ -127,6 +127,9 @@ public:
     std::uint64_t saveStamp() const noexcept;
     /// True when there is something not saved: steps since the last save, or a palette change.
     bool hasUnsavedChanges() const { return !m_history.isClean() || m_paletteDirty; }
+    /// The document counts as changed although no step was made (restored work: it is not what is
+    /// on disk).
+    void markChanged();
     /// The state now is the state on disk. Call only when `saveStamp()` is still the one the
     /// written file was made from.
     void markSaved();

@@ -14,7 +14,9 @@
 
 #include "fission/core/version.h"
 #include "fission/io/fission_file.h"
+#include "fission/services/autosave.h"
 #include "fission/services/recent_files.h"
+#include "fission/services/recovery_store.h"
 #include "fission/ui/document_model.h"
 
 namespace fission::ui {
@@ -47,10 +49,25 @@ QString codeOf(io::FileProblemCode code) {
 
 } // namespace
 
-FileController::FileController(DocumentModel* model, services::RecentFiles* recent, QObject* parent)
-    : QObject(parent), m_model(model), m_recent(recent) {
+FileController::FileController(DocumentModel* model, services::RecentFiles* recent,
+                               services::RecoveryStore* recovery, services::Autosave* autosave,
+                               QObject* parent)
+    : QObject(parent), m_model(model), m_recent(recent), m_recovery(recovery),
+      m_autosave(autosave) {
     m_pool.setMaxThreadCount(1); // saves go one after the other, in the order they were asked
     connect(model, &DocumentModel::historyChanged, this, &FileController::refreshModified);
+    if (m_autosave != nullptr) {
+        // Every step that was made counts; undoing and redoing are not new work.
+        connect(model, &DocumentModel::historyChanged, this, [this] {
+            const int position = m_model->historyPosition();
+            if (position > m_lastPosition) {
+                m_autosave->commandDone();
+            }
+            m_lastPosition = position;
+        });
+        connect(m_autosave, &services::Autosave::due, this, &FileController::writeRecovery);
+        m_autosave->start();
+    }
     connect(model, &DocumentModel::paletteChanged, this, &FileController::refreshModified);
 }
 
@@ -152,6 +169,13 @@ void FileController::finishSave(bool ok, const QString& path, std::uint64_t stam
         m_recent->add(path);
         emit recentFilesChanged();
     }
+    if (m_model->saveStamp() == stamp && m_recovery != nullptr) {
+        m_recovery->removeSessionFiles(); // the file itself is now the safe copy
+        m_recoveryStamp = 0;
+    }
+    if (m_autosave != nullptr) {
+        m_autosave->acknowledge();
+    }
     refreshModified();
     emit saveFinished(true);
 }
@@ -166,6 +190,12 @@ bool FileController::leave() {
         return true;
     }
     if (m_path.isEmpty()) {
+        // No file to save into: the project is set aside as rescue work, which the next start
+        // offers back ("We saved your work").
+        if (m_recovery != nullptr && writeRecoverySync() && m_recovery->keepSessionFiles()) {
+            m_recoveryStamp = 0;
+            return true;
+        }
         emit fileProblem(QStringLiteral("unsavedWork"), QString());
         return false;
     }
@@ -175,6 +205,123 @@ bool FileController::leave() {
     }
     waitForSave();
     return !m_model->hasUnsavedChanges();
+}
+
+void FileController::writeRecovery() {
+    if (m_recovery == nullptr || m_recovering) {
+        return;
+    }
+    if (!m_model->hasUnsavedChanges()) {
+        m_recovery->removeSessionFiles(); // nothing to rescue
+        m_recoveryStamp = 0;
+        return;
+    }
+    const std::uint64_t stamp = m_model->saveStamp();
+    if (stamp == m_recoveryStamp) {
+        return; // the rescue file already holds this state
+    }
+    core::Document snapshot = m_model->documentForSaving();
+    io::SaveExtras extras;
+    extras.appVersion = std::string(core::versionString());
+    const QString file = m_recovery->filePath();
+    const QString original = m_path;
+    m_recovering = true;
+    m_pool.start(
+        [this, snapshot = std::move(snapshot), extras = std::move(extras), file, original, stamp] {
+            const io::SaveResult result = io::save(snapshot, toPath(file), extras);
+            QMetaObject::invokeMethod(
+                this,
+                [this, ok = result.ok, original, stamp] {
+                    m_recovering = false;
+                    if (ok) {
+                        m_recovery->writeInfo(original);
+                        m_recoveryStamp = stamp;
+                    }
+                    if (m_autosave != nullptr) {
+                        m_autosave->acknowledge();
+                    }
+                },
+                Qt::QueuedConnection);
+        });
+}
+
+bool FileController::writeRecoverySync() {
+    if (m_recovery == nullptr) {
+        return false;
+    }
+    waitForSave();
+    writeRecovery();
+    waitForSave();
+    return QFileInfo::exists(m_recovery->filePath());
+}
+
+void FileController::checkRecovery() {
+    if (m_recovery == nullptr) {
+        return;
+    }
+    const auto found = m_recovery->rescued();
+    if (!found.empty()) {
+        emit rescuedWork(found.front().id, found.front().savedAt, found.front().originalPath);
+    }
+}
+
+void FileController::discardRescued(const QString& id) {
+    if (m_recovery != nullptr) {
+        m_recovery->discard(id);
+        checkRecovery(); // there may be older ones
+    }
+}
+
+bool FileController::restoreRescued(const QString& id) {
+    if (m_recovery == nullptr) {
+        return false;
+    }
+    const auto found = m_recovery->rescued();
+    const auto work = std::find_if(found.begin(), found.end(),
+                                   [&](const services::RescuedWork& w) { return w.id == id; });
+    if (work == found.end()) {
+        return false;
+    }
+    io::OpenOptions options;
+    options.openDamaged = true; // it is all there is; better than nothing
+    io::OpenResult result = io::open(toPath(work->fissionPath), options);
+    if (!result.document) {
+        emit fileProblem(QStringLiteral("documentUnreadable"), work->fissionPath);
+        m_recovery->discard(id);
+        return false;
+    }
+    if (!leave()) {
+        return false;
+    }
+    m_created.clear();
+    m_model->replaceDocument(std::move(*result.document));
+    m_model->markChanged(); // it is not what the file on disk holds
+    setPath(work->originalPath);
+    m_recoveryStamp = 0;
+    refreshModified();
+    // The rescue copy is only let go of once the work lies in the new session's own rescue file.
+    if (writeRecoverySync()) {
+        m_recovery->discard(id);
+    }
+    emit opened(work->originalPath);
+    checkRecovery();
+    return true;
+}
+
+void FileController::finishSession() {
+    if (m_autosave != nullptr) {
+        m_autosave->stop();
+    }
+    waitForSave();
+    if (!leave() && m_recovery != nullptr) {
+        // The file could not be written: the work goes to the rescue folder instead.
+        if (writeRecoverySync()) {
+            m_recovery->keepSessionFiles();
+        }
+    }
+    if (m_recovery != nullptr) {
+        m_recovery->endSession();
+    }
 }
 
 bool FileController::openFrom(const QUrl& url, bool openDamaged) {

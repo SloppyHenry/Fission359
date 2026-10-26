@@ -24,6 +24,7 @@
 #include <QSaveFile>
 #include <QStandardPaths>
 #include <QString>
+#include <QTemporaryDir>
 #include <QTimer>
 
 #include <algorithm>
@@ -42,8 +43,10 @@
 #include "fission/geo/occt/layer.h"
 #include "fission/render/benchmark_scene.h"
 #include "fission/render/scene.h"
+#include "fission/services/autosave.h"
 #include "fission/services/log.h"
 #include "fission/services/recent_files.h"
+#include "fission/services/recovery_store.h"
 #include "fission/services/startup_clock.h"
 #include "fission/ui/align_controller.h"
 #include "fission/ui/app_info.h"
@@ -1119,8 +1122,22 @@ int main(int argc, char* argv[]) {
     documentModel.waitForCalculation();
 
     QQmlApplicationEngine engine;
-    fission::services::RecentFiles recentFiles;
-    fission::ui::FileController files(&documentModel, &recentFiles);
+    // Test runs (a picture of the window, a parked window) keep their rescue files in a folder
+    // of their own: they must not leave work behind that the next real start would offer.
+    std::unique_ptr<QTemporaryDir> testRescueFolder;
+    if (!options.smokeTestPath.isEmpty() || appOptions.parked) {
+        testRescueFolder = std::make_unique<QTemporaryDir>();
+    }
+    fission::services::RecentFiles recentFiles(
+        testRescueFolder ? testRescueFolder->filePath(QStringLiteral("recent.ini")) : QString());
+    fission::services::RecoveryStore recovery(
+        testRescueFolder ? testRescueFolder->filePath(QStringLiteral("recovery")) : QString());
+    recovery.beginSession();
+    fission::services::Autosave autosave; // every 60 seconds and after every 20th command
+    fission::ui::FileController files(&documentModel, &recentFiles, &recovery, &autosave);
+    // Whatever way the program ends, nothing the person made is lost.
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &files,
+                     [&files] { files.finishSession(); });
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Files", &files);
     FileOpenFilter fileOpenFilter;
     app.installEventFilter(&fileOpenFilter);
@@ -1169,6 +1186,8 @@ int main(int argc, char* argv[]) {
         window->resize(options.size);
     }
     files.setPreviewGrabber([window] { return previewPng(window); });
+    // Work saved for the person after a crash is offered by a card, once the window is there.
+    QTimer::singleShot(0, &files, [&files] { files.checkRecovery(); });
     // A file to open: from the command line, from a double click that started the program, or
     // from one that arrives later.
     const auto openFile = [&files](const QString& path) { files.openPath(path); };
