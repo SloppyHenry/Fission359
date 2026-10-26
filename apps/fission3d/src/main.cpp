@@ -245,7 +245,9 @@ void sendMouse(QQuickWindow* window, fission::ui::Viewport3D* viewport, QEvent::
 // `patience` milliseconds and checks anyway.
 void whenCalculated(QObject* context, fission::ui::DocumentModel* model,
                     std::function<void()> check, int patience = 5000) {
-    const bool done = !model->calculating() && model->result() &&
+    // Also not while a shape is still being put down: on a slow machine (CI with the memory
+    // checker) the check came before the shape was let go, and a hole cuts only then.
+    const bool done = !model->placing() && !model->calculating() && model->result() &&
                       model->result()->revision == model->document().revision();
     if (done || patience <= 0) {
         check();
