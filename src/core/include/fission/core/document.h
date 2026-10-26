@@ -85,11 +85,35 @@ struct Body {
     bool operator==(const Body&) const = default;
 };
 
+/// One swatch of the project's colour palette that differs from the built-in filament colours,
+/// or an own colour the person added. An empty list means "the built-in palette, unchanged".
+struct PaletteEntry {
+    std::string key; ///< "black" ... for a filament colour, "custom" for an own one.
+    Color color;
+    bool custom = false;
+
+    bool operator==(const PaletteEntry&) const = default;
+};
+
 struct DocumentSettings {
     /// What a bare number in a length field means: 1.0 for millimetres, 25.4 for inches.
     double defaultUnitMillimetres = 1.0;
+    /// The project's palette (AP-1.8). Empty = built-in. Edits are no commands (no undo) but are
+    /// saved with the file.
+    std::vector<PaletteEntry> palette;
 
     bool operator==(const DocumentSettings&) const = default;
+};
+
+/// Everything a saved file holds, to build a document from (`Document::fromParts`).
+struct DocumentParts {
+    std::string title;
+    DocumentSettings settings;
+    std::vector<Parameter> parameters;
+    std::vector<Feature> features;
+    std::vector<Body> bodies;
+    int lastFeatureNumber = 0;
+    std::optional<std::size_t> rollback;
 };
 
 /// A new step, before the document gave it an id and a number.
@@ -125,6 +149,11 @@ public:
     Document() = default;
     /// Deterministic ids (tests).
     explicit Document(std::uint64_t idSeed) : ids_(idSeed) {}
+
+    /// Builds a document from loaded content. Ids, numbers and the order stay exactly as given
+    /// (references and names like "F5/..." depend on it); no new ids are made. The caller checks
+    /// that the parts agree with each other (see `fromJson`).
+    static Document fromParts(DocumentParts parts);
 
     std::string title;
     const DocumentSettings& settings() const noexcept { return settings_; }

@@ -11,6 +11,7 @@ add_executable(fission_unit_tests
   core/test_selection.cpp
   core/test_scaling.cpp
   core/test_cuts.cpp
+  core/test_serialize.cpp
   features/test_primitives.cpp
   features/test_combine.cpp
   features/test_split.cpp
