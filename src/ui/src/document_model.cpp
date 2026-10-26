@@ -3,10 +3,14 @@
 
 #include "fission/ui/document_model.h"
 
+#include <QByteArray>
+#include <QClipboard>
 #include <QColor>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QGuiApplication>
 #include <QMetaObject>
+#include <QMimeData>
 #include <QStringList>
 #include <QVariantMap>
 
@@ -140,11 +144,24 @@ bool isPlainNumber(const std::string& text) {
 
 } // namespace
 
+namespace {
+// The system clipboard, or none when there is no window system (unit tests).
+QClipboard* systemClipboard() {
+    return qobject_cast<QGuiApplication*>(QCoreApplication::instance()) != nullptr
+               ? QGuiApplication::clipboard()
+               : nullptr;
+}
+} // namespace
+
 DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel, QObject* parent)
     : QObject(parent), m_kernel(std::move(kernel)) {
     features::registerBuiltinFeatures(m_registry);
     for (const auto& [key, color] : filamentPalette()) {
         m_palette.push_back({key, color, false});
+    }
+    if (QClipboard* clipboard = systemClipboard()) {
+        // Another program (or another Fission3D) copied something: "Paste" may have changed.
+        connect(clipboard, &QClipboard::dataChanged, this, &DocumentModel::clipboardChanged);
     }
     m_detailPool.setMaxThreadCount(1);
     m_detailTimer.setSingleShot(true);
@@ -2355,12 +2372,45 @@ bool DocumentModel::copyBodies(const QStringList& bodyIds) {
     }
     m_clipboard = std::move(entries);
     m_pasted = 0;
+    if (QClipboard* clipboard = systemClipboard()) {
+        m_publishedClipboard = clipboardToJson(m_clipboard);
+        auto* data = new QMimeData; // the clipboard takes it over
+        data->setData(QString::fromLatin1(clipboardMimeType),
+                      QByteArray::fromStdString(m_publishedClipboard));
+        clipboard->setMimeData(data);
+    }
     emit clipboardChanged();
     return true;
 }
 
+bool DocumentModel::systemClipboardHasBodies() const {
+    const QClipboard* clipboard = systemClipboard();
+    return clipboard != nullptr && clipboard->mimeData() != nullptr &&
+           clipboard->mimeData()->hasFormat(QString::fromLatin1(clipboardMimeType));
+}
+
+// Something another Fission3D copied: pasted like our own copy. Our own copy is not read back.
+void DocumentModel::takeSystemClipboard() {
+    const QClipboard* clipboard = systemClipboard();
+    if (clipboard == nullptr || !systemClipboardHasBodies()) {
+        return;
+    }
+    const std::string text =
+        clipboard->mimeData()->data(QString::fromLatin1(clipboardMimeType)).toStdString();
+    if (text == m_publishedClipboard) {
+        return;
+    }
+    std::vector<ClipboardEntry> parts = clipboardFromJson(text);
+    if (!parts.empty()) {
+        m_clipboard = std::move(parts);
+        m_publishedClipboard = text;
+        m_pasted = 0;
+    }
+}
+
 QStringList DocumentModel::pasteBodies() {
     QStringList created;
+    takeSystemClipboard();
     if (m_clipboard.empty()) {
         return created;
     }

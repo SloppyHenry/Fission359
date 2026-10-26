@@ -16,6 +16,7 @@
 
 #include "fission/geo/occt/kernel.h"
 #include "fission/services/recent_files.h"
+#include "fission/ui/clipboard_payload.h"
 #include "fission/ui/document_model.h"
 #include "fission/ui/file_controller.h"
 
@@ -199,4 +200,36 @@ TEST_CASE("the recent files are newest first, without repeats, at most ten", "[f
     CHECK_FALSE(recent.paths().contains(folder.path("f11.fission")));
     recent.remove(folder.path("f5.fission"));
     CHECK_FALSE(recent.paths().contains(folder.path("f5.fission")));
+}
+
+TEST_CASE("copied bodies survive the clipboard format", "[files]") {
+    using namespace fission::ui;
+    ClipboardPart part;
+    part.draft.type = "box";
+    part.draft.typeVersion = 1;
+    part.draft.label = "Fu\xC3\x9F";
+    part.draft.params["width"] = {"2,5 * 4", fission::core::QuantityKind::length};
+    part.draft.texts["note"] = "hallo";
+    part.name = "Deckel";
+    part.color = {1, 2, 3};
+    part.hole = true;
+    ClipboardPart second = part;
+    second.name.clear();
+    second.hole = false;
+
+    const auto back = clipboardFromJson(clipboardToJson({part, second}));
+    REQUIRE(back.size() == 2);
+    CHECK(back[0].draft.type == "box");
+    CHECK(back[0].draft.label == part.draft.label);
+    CHECK(back[0].draft.params == part.draft.params);
+    CHECK(back[0].draft.texts == part.draft.texts);
+    CHECK(back[0].name == "Deckel");
+    CHECK(back[0].color == part.color);
+    CHECK(back[0].hole);
+    CHECK(back[1].name.empty());
+    CHECK_FALSE(back[1].hole);
+
+    CHECK(clipboardFromJson("").empty());
+    CHECK(clipboardFromJson("not json").empty());
+    CHECK(clipboardFromJson("{}").empty());
 }

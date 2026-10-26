@@ -29,6 +29,7 @@
 #include "fission/geo/kernel.h"
 #include "fission/geo/seat.h"
 #include "fission/render/scene.h"
+#include "fission/ui/clipboard_payload.h"
 
 namespace fission::ui {
 
@@ -312,7 +313,7 @@ public:
     Q_INVOKABLE QVariantMap splitPlane() const;
     Q_INVOKABLE int splitBody(const QString& bodyId);
     Q_INVOKABLE QString combineBodies(const QStringList& bodyIds, const QString& mode);
-    bool canPaste() const noexcept { return !m_clipboard.empty(); }
+    bool canPaste() const { return !m_clipboard.empty() || systemClipboardHasBodies(); }
     /// How far (mm) a copy lies from the original, in x and in y.
     static constexpr double kPasteOffset = 10.0;
 
@@ -477,13 +478,12 @@ private:
     void writeSeat(const core::FeatureId& id, const geo::Seat& seat);
     const core::Body* findBody(const QString& bodyId) const;
 
-    // What was copied: the step that makes a body and what the person did to the body itself.
-    struct ClipboardEntry {
-        core::FeatureDraft draft;
-        std::string name;
-        core::Color color;
-        bool hole = false;
-    };
+    // What was copied (also on the system clipboard, see clipboard_payload.h).
+    using ClipboardEntry = ClipboardPart;
+    /// Takes over what another Fission3D (or an earlier copy) left on the system clipboard.
+    void takeSystemClipboard();
+    bool systemClipboardHasBodies() const;
+    std::string m_publishedClipboard; ///< what this model put there last
     std::vector<ClipboardEntry> m_clipboard;
     int m_pasted = 0; ///< how often this clipboard was pasted: the next copy lies further off
     std::shared_ptr<const render::RenderScene> m_scene;
