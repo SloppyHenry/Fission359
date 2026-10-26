@@ -165,7 +165,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.7 Kombinieren
-**Status:** Review (2026-10-21; wartet auf Test durch den Product Owner) · **Größe:** M · **Abhängigkeiten:** AP-1.5
+**Status:** erledigt (2026-10-25, vom Product Owner geprüft) · **Größe:** M · **Abhängigkeiten:** AP-1.5
 **Bauanleitung:** [anleitungen/AP-1.7.md](anleitungen/AP-1.7.md)
 
 **Umfang:**
@@ -197,7 +197,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.8 Eigenschaften-Panel und Werteingabe
-**Status:** Review (2026-10-25) · **Größe:** M · **Abhängigkeiten:** AP-1.1
+**Status:** erledigt (2026-10-25, vom Product Owner geprüft, PR #44, #47) · **Größe:** M · **Abhängigkeiten:** AP-1.1
 **Bauanleitung:** [anleitungen/AP-1.8.md](anleitungen/AP-1.8.md)
 
 **Umfang:**
