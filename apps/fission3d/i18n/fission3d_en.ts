@@ -457,6 +457,72 @@
     </message>
 </context>
 <context>
+    <name>ExportCard</name>
+    <message>
+        <location filename="../qml/ExportCard.qml" line="+23"/>
+        <location line="+11"/>
+        <source>Export</source>
+        <translation>Export</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+5"/>
+        <source>File type</source>
+        <translation>File type</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>3MF (colours, for slicers)</source>
+        <translation>3MF (colours, for slicers)</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <location line="+5"/>
+        <source>Quality</source>
+        <translation>Quality</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Coarse</source>
+        <translation>Coarse</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Normal</source>
+        <translation>Normal</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Fine</source>
+        <translation>Fine</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Only chosen bodies</source>
+        <translation>Only chosen bodies</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Export…</source>
+        <translation>Export…</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Exporting… %1 %</source>
+        <translation>Exporting… %1 %</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+</context>
+<context>
     <name>FontField</name>
     <message>
         <location filename="../qml/FontField.qml" line="+120"/>
@@ -732,19 +798,19 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+531"/>
+        <location line="+534"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-530"/>
-        <location line="+573"/>
+        <location line="-533"/>
+        <location line="+645"/>
         <location line="+5"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
     <message>
-        <location line="-578"/>
+        <location line="-650"/>
         <source>Ctrl+Shift+S</source>
         <translation>Ctrl+Shift+S</translation>
     </message>
@@ -769,7 +835,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+76"/>
+        <location line="+77"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -779,7 +845,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-76"/>
+        <location line="-77"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -955,12 +1021,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+960"/>
+        <location line="+1032"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-959"/>
+        <location line="-1031"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -991,12 +1057,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+948"/>
+        <location line="+1020"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-946"/>
+        <location line="-1018"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1026,19 +1092,19 @@
         <translation>About Fission3D</translation>
     </message>
     <message>
-        <location line="+20"/>
-        <location line="+556"/>
+        <location line="+21"/>
+        <location line="+627"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-554"/>
-        <location line="+555"/>
+        <location line="-625"/>
+        <location line="+626"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-549"/>
+        <location line="-620"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -1064,7 +1130,7 @@
         </translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+54"/>
         <source>Settings arrive in a later version.</source>
         <translation>Settings arrive in a later version.</translation>
     </message>
@@ -1087,12 +1153,12 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+365"/>
+        <location line="+435"/>
         <source>This arrives in a later version.</source>
         <translation>This arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-347"/>
+        <location line="-417"/>
         <source>This body cannot be split: it may be part of another body.</source>
         <translation>This body cannot be split: it may be part of another body.</translation>
     </message>
@@ -1127,7 +1193,7 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+180"/>
+        <location line="+181"/>
         <source>Open</source>
         <translation>Open</translation>
     </message>
@@ -1138,7 +1204,50 @@
         <translation>Fission3D files (*.fission)</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+13"/>
+        <source>Export</source>
+        <translation>Export</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>STL files (*.stl)</source>
+        <translation>STL files (*.stl)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>3MF files (*.3mf)</source>
+        <translation>3MF files (*.3mf)</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+18"/>
+        <source>%n body(ies) exported.</source>
+        <translation>
+            <numerusform>%n body exported.</numerusform>
+            <numerusform>%n bodies exported.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Export cancelled.</source>
+        <translation>Export cancelled.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>There is nothing to export: no visible body.</source>
+        <translation>There is nothing to export: no visible body.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</source>
+        <translation>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The file could not be written. Is the folder writable and the disk not full?</source>
+        <translation>The file could not be written. Is the folder writable and the disk not full?</translation>
+    </message>
+    <message>
+        <location line="+43"/>
         <source>We saved your work from %1.</source>
         <translation>We saved your work from %1.</translation>
     </message>
@@ -1178,7 +1287,9 @@
         <translation>The project could not be saved. Your work is still open. Is the folder writable and the disk not full?</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-63"/>
+        <location line="+4"/>
+        <location line="+61"/>
         <location line="+5"/>
         <source>OK</source>
         <translation>OK</translation>
@@ -1229,12 +1340,7 @@
         <translation>Closing arrives together with saving.</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Export arrives in a later version.</source>
-        <translation>Export arrives in a later version.</translation>
-    </message>
-    <message>
-        <location line="+84"/>
+        <location line="+85"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -1842,27 +1948,27 @@
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-942"/>
+        <location line="-1014"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+977"/>
+        <location line="+1049"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-838"/>
+        <location line="-909"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+411"/>
+        <location line="+413"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+465"/>
+        <location line="+534"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
