@@ -3,6 +3,8 @@
 
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Dialogs
+import QtCore
 import Fission3D.Ui
 import Fission3D.View
 
@@ -11,7 +13,7 @@ Window {
 
     readonly property bool isMac: Qt.platform.os === "osx"
     readonly property string primaryKey: isMac ? "⌘" : qsTr("Ctrl+")
-    property string documentName: qsTr("Untitled")
+    readonly property string documentName: Files.fileName !== "" ? Files.fileName : qsTr("Untitled")
     property string tool: "move"
     // "Lay on face": the next click on a face puts the chosen body on it (Esc leaves it).
     property bool seating: false
@@ -52,21 +54,38 @@ Window {
         value: Qt.Window | Qt.WindowDoesNotAcceptFocus | Qt.WindowStaysOnBottomHint
     }
     color: Theme.chrome
-    title: qsTr("Fission3D")
+    // "Name.fission •": the dot says there is something not saved.
+    title: (Files.fileName !== "" ? Files.fileName + ".fission" : root.documentName)
+           + (Files.modified ? " •" : "") + " – " + qsTr("Fission3D")
+
+    // The files opened last, as entries of the File menu (a flat list under a heading).
+    readonly property var recentItems: {
+        const files = Files.recentFiles
+        if (files.length === 0) {
+            return []
+        }
+        const list = [{ separator: true }, { id: "recent.header", text: qsTr("Open recent"), enabled: false }]
+        for (let i = 0; i < files.length; ++i) {
+            list.push({ id: "recent." + i, text: "    " + Files.baseName(files[i]) })
+        }
+        return list
+    }
 
     // ---- the menus: one model for the system menu bar and the in-window menus ------------
     readonly property var menuModel: [
         { title: qsTr("File"), items: [
-            { id: "new", text: qsTr("New project"), shortcut: primaryKey + "N", nativeShortcut: "Ctrl+N", enabled: false },
-            { id: "open", text: qsTr("Open…"), shortcut: primaryKey + "O", nativeShortcut: "Ctrl+O", enabled: false },
-            { id: "save", text: qsTr("Save"), shortcut: primaryKey + "S", nativeShortcut: "Ctrl+S", enabled: false },
-            { id: "saveas", text: qsTr("Save as…"), shortcut: isMac ? "⇧⌘S" : qsTr("Ctrl+Shift+S"), nativeShortcut: "Ctrl+Shift+S", enabled: false },
+            { id: "new", text: qsTr("New project"), shortcut: primaryKey + "N", nativeShortcut: "Ctrl+N" },
+            { id: "open", text: qsTr("Open…"), shortcut: primaryKey + "O", nativeShortcut: "Ctrl+O" }
+        ].concat(recentItems, [
+            { separator: true },
+            { id: "save", text: qsTr("Save"), shortcut: primaryKey + "S", nativeShortcut: "Ctrl+S", enabled: Files.modified || Files.fileName === "" },
+            { id: "saveas", text: qsTr("Save as…"), shortcut: isMac ? "⇧⌘S" : qsTr("Ctrl+Shift+S"), nativeShortcut: "Ctrl+Shift+S" },
             { separator: true },
             { id: "export", text: qsTr("Export…"), shortcut: primaryKey + "E", nativeShortcut: "Ctrl+E", enabled: false },
             { separator: true },
             { id: "close", text: qsTr("Close"), shortcut: primaryKey + "W", nativeShortcut: "Ctrl+W", enabled: false },
             { id: "quit", text: qsTr("Quit Fission3D"), shortcut: primaryKey + "Q", nativeShortcut: "Ctrl+Q", role: "quit" }
-        ] },
+        ]) },
         { title: qsTr("Edit"), items: [
             { id: "undo", text: undoText, shortcut: primaryKey + "Z", nativeShortcut: "Ctrl+Z", enabled: root.undoAvailable },
             { id: "redo", text: redoText, shortcut: isMac ? "⇧⌘Z" : qsTr("Ctrl+Shift+Z"), nativeShortcut: "Ctrl+Shift+Z", enabled: root.redoAvailable },
@@ -234,9 +253,40 @@ Window {
         function onRecipeChanged() { root.pendingDeletion = null }
     }
 
+    // Leaving the program: a project with a file is saved on the way out (nothing to ask).
+    function quitProgram() {
+        if (Files.leave()) {
+            Qt.quit()
+        }
+    }
+
+    onClosing: close => {
+        if (!Files.leave()) {
+            close.accepted = false // the reason is on the card; the work stays open
+        }
+    }
+
     function run(id) {
+        if (id.startsWith("recent.")) {
+            const files = Files.recentFiles
+            const path = files[parseInt(id.substring(7))]
+            if (path !== undefined && !Files.openPath(path)) {
+                Files.forgetRecent(path)
+            }
+            return
+        }
         switch (id) {
-        case "quit": Qt.quit(); break
+        case "quit": quitProgram(); break
+        case "new": Files.newDocument(); break
+        case "open": openDialog.open(); break
+        case "save":
+            if (Files.fileName === "") {
+                saveDialog.open()
+            } else {
+                Files.save()
+            }
+            break
+        case "saveas": saveDialog.open(); break
         case "about": aboutWindow.show(); aboutWindow.raise(); break
         case "settings": showHint(qsTr("Settings arrive in a later version.")); break
         case "search": showHint(qsTr("Command search arrives in a later version.")); break
@@ -516,6 +566,10 @@ Window {
     Shortcut { sequence: "Ctrl+K"; onActivated: root.run("search") }
     Shortcut { sequence: "Ctrl+,"; onActivated: root.run("settings") }
     Shortcut { sequence: "Ctrl+Q"; enabled: !root.isMac; onActivated: root.run("quit") }
+    Shortcut { sequence: "Ctrl+N"; enabled: !root.isMac; onActivated: root.run("new") }
+    Shortcut { sequence: "Ctrl+O"; enabled: !root.isMac; onActivated: root.run("open") }
+    Shortcut { sequence: "Ctrl+S"; enabled: !root.isMac; onActivated: root.run("save") }
+    Shortcut { sequence: "Ctrl+Shift+S"; enabled: !root.isMac; onActivated: root.run("saveas") }
     // Undo and redo: on macOS the menu of the system carries them.
     Shortcut { sequence: "Ctrl+Z"; enabled: !root.isMac && root.undoAvailable; onActivated: root.run("undo") }
     Shortcut {
@@ -542,12 +596,98 @@ Window {
         }
     }
 
+    FileDialog {
+        id: openDialog
+
+        title: qsTr("Open")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [qsTr("Fission3D files (*.fission)")]
+        currentFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+        onAccepted: Files.openFrom(selectedFile)
+    }
+
+    FileDialog {
+        id: saveDialog
+
+        title: qsTr("Save")
+        fileMode: FileDialog.SaveFile
+        defaultSuffix: "fission"
+        nameFilters: [qsTr("Fission3D files (*.fission)")]
+        currentFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+        onAccepted: Files.saveTo(selectedFile)
+    }
+
+    // What happens to the 3D view when a file replaces the document: nothing chosen any more.
+    Connections {
+        target: DocumentModel
+
+        function onDocumentReplaced() {
+            Selection.clear()
+            Handles.armed = false
+        }
+    }
+
+    // Problems with files are a card with the way on, never a dialog (rule 5).
+    Connections {
+        target: Files
+
+        function onFileProblem(code, path) {
+            switch (code) {
+            case "damaged":
+                fileCard.show(qsTr("This file is damaged: it does not match what was saved. It can probably still be read."),
+                              [{ id: "openanyway", text: qsTr("Open anyway"), primary: true },
+                               { id: "cancel", text: qsTr("Cancel") }], path)
+                break
+            case "cannotWrite":
+                fileCard.show(qsTr("The project could not be saved. Your work is still open. Is the folder writable and the disk not full?"),
+                              [{ id: "saveas", text: qsTr("Save as…"), primary: true },
+                               { id: "cancel", text: qsTr("OK") }])
+                break
+            case "newerFormat":
+                fileCard.show(qsTr("This file was made with a newer Fission3D and is opened as far as this version understands it. To keep the original safe, save it under a new name."),
+                              [{ id: "saveas", text: qsTr("Save as…"), primary: true },
+                               { id: "cancel", text: qsTr("OK") }])
+                break
+            case "unsavedWork":
+                fileCard.show(qsTr("This project has not been saved yet. Save it first, then your work is safe."),
+                              [{ id: "saveas", text: qsTr("Save…"), primary: true },
+                               { id: "cancel", text: qsTr("Not now") }])
+                break
+            case "notAFissionFile":
+                root.showHint(qsTr("This is not a Fission3D file."))
+                break
+            case "documentUnreadable":
+                root.showHint(qsTr("This file is damaged and could not be opened."))
+                break
+            default:
+                root.showHint(qsTr("The file could not be read."))
+                break
+            }
+        }
+    }
+
+    NoticeCard {
+        id: fileCard
+
+        anchors.top: docTabs.bottom
+        anchors.topMargin: 10
+        anchors.horizontalCenter: parent.horizontalCenter
+        z: 20
+        onChosen: (id, payload) => {
+            if (id === "openanyway") {
+                Files.openPath(payload, true)
+            } else if (id === "saveas") {
+                saveDialog.open()
+            }
+        }
+    }
+
     DocTabs {
         id: docTabs
 
         anchors.top: menuStrip.bottom
         width: parent.width
-        documentName: root.documentName
+        documentName: root.documentName + (Files.modified ? " •" : "")
         canUndo: DocumentModel.canUndo
         canRedo: DocumentModel.canRedo
         undoTip: DocumentModel.canUndo ? qsTr("Undo: %1").arg(root.historyText(DocumentModel.nextUndo)) : ""

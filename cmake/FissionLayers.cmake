@@ -37,7 +37,7 @@ set(FISSION_ALLOWED_DEPS_fission_interaction
   fission_core fission_geometry fission_features fission_render Eigen3::Eigen
   Qt6::Core Qt6::Gui)
 set(FISSION_ALLOWED_DEPS_fission_ui
-  fission_core fission_features fission_interaction fission_render fission_services
+  fission_core fission_features fission_io fission_interaction fission_render fission_services
   Qt6::Core Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick)
 
 # fission_add_library(<name> SOURCES <files...> [PUBLIC <deps...>] [PRIVATE <deps...>])

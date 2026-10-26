@@ -519,7 +519,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+94"/>
+        <location filename="../qml/LeftPanel.qml" line="+95"/>
         <source>Bodies</source>
         <translation>Körper</translation>
     </message>
@@ -553,7 +553,7 @@
         </translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+23"/>
         <source>Hole</source>
         <translation>Loch</translation>
     </message>
@@ -643,7 +643,7 @@
         <translation>Herz</translation>
     </message>
     <message>
-        <location line="+55"/>
+        <location line="+52"/>
         <source>Recipe</source>
         <translation>Rezept</translation>
     </message>
@@ -653,7 +653,7 @@
         <translation>Strg+Z</translation>
     </message>
     <message>
-        <location line="+44"/>
+        <location line="+66"/>
         <source>Delete anyway</source>
         <translation>Trotzdem löschen</translation>
     </message>
@@ -668,12 +668,12 @@
         <translation>Abbrechen</translation>
     </message>
     <message>
-        <location line="+89"/>
+        <location line="+95"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Jede Änderung landet hier als Satz.</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+17"/>
         <source>Rename</source>
         <translation>Umbenennen</translation>
     </message>
@@ -696,7 +696,7 @@
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qml/Main.qml" line="+13"/>
+        <location filename="../qml/Main.qml" line="+15"/>
         <source>Ctrl+</source>
         <translation>Strg+</translation>
     </message>
@@ -711,12 +711,12 @@
         <translation>%1 × %2</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+22"/>
         <source>Fission3D</source>
         <translation>Fission3D</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+17"/>
         <source>File</source>
         <translation>Datei</translation>
     </message>
@@ -731,17 +731,20 @@
         <translation>Öffnen …</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
+        <location line="+531"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-530"/>
+        <location line="+561"/>
+        <location line="+5"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-566"/>
         <source>Ctrl+Shift+S</source>
         <translation>Strg+Umschalt+S</translation>
     </message>
@@ -781,7 +784,12 @@
         <translation>Strg+Umschalt+Z</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-24"/>
+        <source>Open recent</source>
+        <translation>Zuletzt geöffnet</translation>
+    </message>
+    <message>
+        <location line="+25"/>
         <source>Recent actions</source>
         <translation>Letzte Aktionen</translation>
     </message>
@@ -947,12 +955,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+811"/>
+        <location line="+932"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-810"/>
+        <location line="-931"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -983,12 +991,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+799"/>
+        <location line="+920"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-797"/>
+        <location line="-918"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -1019,18 +1027,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+407"/>
+        <location line="+528"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-405"/>
-        <location line="+406"/>
+        <location line="-526"/>
+        <location line="+527"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-400"/>
+        <location line="-521"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -1056,7 +1064,7 @@
         </translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+53"/>
         <source>Settings arrive in a later version.</source>
         <translation>Die Einstellungen kommen in einer späteren Version.</translation>
     </message>
@@ -1079,12 +1087,12 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+247"/>
+        <location line="+337"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-229"/>
+        <location line="-319"/>
         <source>This body cannot be split: it may be part of another body.</source>
         <translation>Dieser Körper lässt sich nicht teilen: Er ist vielleicht Teil eines anderen Körpers.</translation>
     </message>
@@ -1119,7 +1127,79 @@
         <translation>normal</translation>
     </message>
     <message>
-        <location line="+185"/>
+        <location line="+180"/>
+        <source>Open</source>
+        <translation>Öffnen</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+11"/>
+        <source>Fission3D files (*.fission)</source>
+        <translation>Fission3D-Dateien (*.fission)</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>This file is damaged: it does not match what was saved. It can probably still be read.</source>
+        <translation>Diese Datei ist beschädigt: sie stimmt nicht mehr mit dem überein, was gespeichert wurde. Vermutlich lässt sie sich trotzdem lesen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open anyway</source>
+        <translation>Trotzdem öffnen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The project could not be saved. Your work is still open. Is the folder writable and the disk not full?</source>
+        <translation>Das Projekt konnte nicht gespeichert werden. Deine Arbeit ist noch offen. Ist der Ordner beschreibbar und die Festplatte nicht voll?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+5"/>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>This file was made with a newer Fission3D and is opened as far as this version understands it. To keep the original safe, save it under a new name.</source>
+        <translation>Diese Datei stammt von einem neueren Fission3D und wird so weit geöffnet, wie diese Version sie versteht. Speichere sie unter einem neuen Namen, damit das Original unangetastet bleibt.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>This project has not been saved yet. Save it first, then your work is safe.</source>
+        <translation>Dieses Projekt ist noch nicht gespeichert. Speichere es zuerst, dann ist deine Arbeit sicher.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save…</source>
+        <translation>Speichern…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Not now</source>
+        <translation>Jetzt nicht</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>This is not a Fission3D file.</source>
+        <translation>Das ist keine Fission3D-Datei.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>This file is damaged and could not be opened.</source>
+        <translation>Diese Datei ist beschädigt und ließ sich nicht öffnen.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The file could not be read.</source>
+        <translation>Die Datei konnte nicht gelesen werden.</translation>
+    </message>
+    <message>
+        <location line="+34"/>
         <source>The start page arrives in a later version.</source>
         <translation>Die Startseite kommt in einer späteren Version.</translation>
     </message>
@@ -1742,27 +1822,27 @@
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-776"/>
+        <location line="-914"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+811"/>
+        <location line="+949"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-689"/>
+        <location line="-810"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+376"/>
+        <location line="+411"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+351"/>
+        <location line="+437"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -1770,7 +1850,7 @@
 <context>
     <name>MarkerLine</name>
     <message>
-        <location filename="../qml/MarkerLine.qml" line="+25"/>
+        <location filename="../qml/MarkerLine.qml" line="+28"/>
         <source>Time marker</source>
         <translation>Zeitmarker</translation>
     </message>
@@ -1780,7 +1860,7 @@
         <translation>Nach oben ziehen zeigt einen früheren Stand. Doppelklick geht zurück zu „jetzt“.</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+50"/>
         <source>now</source>
         <translation>jetzt</translation>
     </message>
@@ -1934,7 +2014,7 @@
         <translation>Ausgeblendet</translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+105"/>
         <source>Name of the step</source>
         <translation>Name des Schritts</translation>
     </message>
@@ -2383,7 +2463,7 @@
 <context>
     <name>TreeRow</name>
     <message>
-        <location filename="../qml/TreeRow.qml" line="+111"/>
+        <location filename="../qml/TreeRow.qml" line="+110"/>
         <source>Colour of %1</source>
         <translation>Farbe von %1</translation>
     </message>

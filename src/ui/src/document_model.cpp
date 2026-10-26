@@ -357,6 +357,75 @@ void DocumentModel::addDemoBox() {
     requestRecompute();
 }
 
+core::Document DocumentModel::documentForSaving() const {
+    core::Document copy = m_history.document();
+    core::DocumentSettings settings = copy.settings();
+    settings.palette.clear();
+    // Only a palette that differs from the built-in one is written; the file stays small and a
+    // new program version may add filament colours to the built-in one.
+    const auto defaults = filamentPalette();
+    bool builtIn = m_palette.size() == static_cast<std::size_t>(defaults.size());
+    for (std::size_t i = 0; builtIn && i < m_palette.size(); ++i) {
+        builtIn = !m_palette[i].custom && m_palette[i].key == defaults[static_cast<int>(i)].first &&
+                  m_palette[i].color == defaults[static_cast<int>(i)].second;
+    }
+    if (!builtIn) {
+        for (const PaletteEntry& entry : m_palette) {
+            settings.palette.push_back({entry.key.toStdString(),
+                                        {static_cast<std::uint8_t>(entry.color.red()),
+                                         static_cast<std::uint8_t>(entry.color.green()),
+                                         static_cast<std::uint8_t>(entry.color.blue())},
+                                        entry.custom});
+        }
+    }
+    copy.setSettings(settings);
+    return copy;
+}
+
+std::uint64_t DocumentModel::saveStamp() const noexcept {
+    return m_history.document().revision() + m_paletteStamp;
+}
+
+void DocumentModel::markSaved() {
+    m_history.markClean();
+    m_paletteDirty = false;
+}
+
+void DocumentModel::replaceDocument(core::Document document) {
+    m_liveCutTimer.stop();
+    // Results of the old document are still on their way; they carry lower revisions than this
+    // one and are dropped by `applyResult`.
+    document.raiseRevisionTo(m_history.document().revision() + 1);
+    m_palette.clear();
+    if (document.settings().palette.empty()) {
+        for (const auto& [key, color] : filamentPalette()) {
+            m_palette.push_back({key, color, false});
+        }
+    } else {
+        for (const core::PaletteEntry& entry : document.settings().palette) {
+            m_palette.push_back({toQString(entry.key),
+                                 QColor(entry.color.red, entry.color.green, entry.color.blue),
+                                 entry.custom});
+        }
+    }
+    m_paletteDirty = false;
+    ++m_paletteStamp;
+    m_history.reset(std::move(document));
+    m_placing = false;
+    m_placingFeature = {};
+    m_turnGroup.clear();
+    m_workplaneZ = 0.0;
+    m_workplaneBody.clear();
+    m_currentFeature = {};
+    m_currentStep = -1;
+    documentChanged();
+    emit paletteChanged();
+    emit placingChanged();
+    emit workplaneChanged();
+    emit currentStepChanged();
+    emit documentReplaced();
+}
+
 void DocumentModel::waitForCalculation() {
     m_engine->waitIdle();
     QCoreApplication::sendPostedEvents(this, 0);
@@ -919,6 +988,12 @@ bool DocumentModel::setBodyName(int index, const QString& name) {
     return true;
 }
 
+// A change of the palette is no step of the history (no undo) but it is something to save.
+void DocumentModel::paletteEdited() {
+    m_paletteDirty = true;
+    ++m_paletteStamp;
+}
+
 QVariantList DocumentModel::palette() const {
     QVariantList list;
     const auto defaults = filamentPalette();
@@ -945,6 +1020,7 @@ bool DocumentModel::setPaletteColor(int index, const QString& color) {
         return false;
     }
     m_palette[static_cast<std::size_t>(index)].color = chosen;
+    paletteEdited();
     emit paletteChanged();
     return true;
 }
@@ -955,6 +1031,7 @@ int DocumentModel::addPaletteColor(const QString& color) {
         return -1;
     }
     m_palette.push_back({QStringLiteral("custom"), chosen, true});
+    paletteEdited();
     emit paletteChanged();
     return static_cast<int>(m_palette.size()) - 1;
 }
@@ -965,6 +1042,7 @@ bool DocumentModel::removePaletteColor(int index) {
         return false;
     }
     m_palette.erase(m_palette.begin() + index);
+    paletteEdited();
     emit paletteChanged();
     return true;
 }
@@ -978,6 +1056,7 @@ bool DocumentModel::resetPaletteColor(int index) {
     for (const auto& [key, color] : filamentPalette()) {
         if (key == entry.key && entry.color != color) {
             entry.color = color;
+            paletteEdited();
             emit paletteChanged();
             return true;
         }

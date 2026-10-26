@@ -118,6 +118,21 @@ public:
     /// The one box the program starts with (replaces the demo body of AP-0.8).
     void addDemoBox();
 
+    // --- files (AP-1.10c; the file handling itself is `FileController`) ---
+    /// The document as it is written to a file: the steps as they are now plus the palette of
+    /// the project in the settings (empty while it is the built-in one).
+    core::Document documentForSaving() const;
+    /// Changes whenever the document or the palette changes: "did it change since I looked".
+    std::uint64_t saveStamp() const noexcept;
+    /// True when there is something not saved: steps since the last save, or a palette change.
+    bool hasUnsavedChanges() const { return !m_history.isClean() || m_paletteDirty; }
+    /// The state now is the state on disk. Call only when `saveStamp()` is still the one the
+    /// written file was made from.
+    void markSaved();
+    /// Opens another document in place of the current one: the steps are gone, so is the list
+    /// of undo steps, the choice, the work plane; the palette is the one of the file.
+    void replaceDocument(core::Document document);
+
     const core::Document& document() const noexcept { return m_history.document(); }
     std::shared_ptr<const core::RecomputeResult> result() const { return m_result; }
     std::shared_ptr<const render::RenderScene> scene() const { return m_scene; }
@@ -384,6 +399,9 @@ signals:
     void historyChanged();
     void printerChanged();
     void paletteChanged();
+    /// The document was replaced as a whole (a file was opened, a new project started): whatever
+    /// was chosen or in progress is gone.
+    void documentReplaced();
     /// A new result arrived: the names of the elements may be different now.
     void elementsChanged();
     /// A new scene for the 3D view.
@@ -506,6 +524,9 @@ private:
         bool custom = false;
     };
     std::vector<PaletteEntry> m_palette;
+    bool m_paletteDirty = false;
+    std::uint64_t m_paletteStamp = 0;
+    void paletteEdited();
     int m_detailLevel = 0;
     int m_shownDetailLevel = 0;
     std::uint64_t m_detailGeneration = 0;

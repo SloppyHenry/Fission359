@@ -33,6 +33,7 @@ add_executable(fission_unit_tests
   ui/test_theme_tokens.cpp
   ui/test_numbers.cpp
   ui/test_document_model.cpp
+  ui/test_file_controller.cpp
   ui/test_selection_controller.cpp
   ui/test_placement.cpp
   ui/test_handles.cpp
