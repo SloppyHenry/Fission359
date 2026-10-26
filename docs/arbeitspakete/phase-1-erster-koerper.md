@@ -246,7 +246,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.10 Dateien: Speichern, Laden, Autosave, Import und Export
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.1
+**Status:** Review (2026-10-26; wartet auf Test durch den Product Owner, PRs #53–#57) · **Größe:** M · **Abhängigkeiten:** AP-1.1
 **Bauanleitung:** [anleitungen/AP-1.10.md](anleitungen/AP-1.10.md)
 
 **Umfang:**
@@ -254,12 +254,21 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Atomisches Speichern, Autosave, Wiederherstellung nach Absturz („Wir haben deine Arbeit von 14:32 gerettet.“)
 - Zuletzt geöffnete Dateien; Dateizuordnung auf macOS und Linux
 - Export: STL (binär), 3MF (Körper als Objekte, mit Farben), Tessellierungsqualität wählbar
-- Import: STL und 3MF als freie Körper (Netz)
+- ~~Import: STL und 3MF als freie Körper (Netz)~~ → verschoben nach AP-4.1 (Entscheidung 2026-10-25: freie Körper gibt es erst dort)
 
 **Akzeptanzkriterien:**
-- [ ] Roundtrip-Tests: Speichern → Laden ergibt ein identisches Dokument und identische Geometrie
-- [ ] Ein simulierter Absturz während des Speicherns hinterlässt nie eine kaputte Datei
-- [ ] Exportiertes 3MF öffnet sich korrekt in Bambu Studio, OrcaSlicer und PrusaSlicer (manuell geprüft, Screenshots im Abschlussvermerk)
+- [x] Roundtrip-Tests: Speichern → Laden ergibt ein identisches Dokument und identische Geometrie
+- [x] Ein simulierter Absturz während des Speicherns hinterlässt nie eine kaputte Datei
+- [ ] Exportiertes 3MF öffnet sich korrekt in Bambu Studio, OrcaSlicer und PrusaSlicer (manuell geprüft, Screenshots im Abschlussvermerk) (offen: der Product Owner prüft das mit einem echten Slicer; die Tests lesen die Datei mit lib3mf wieder ein)
+
+**Abschlussvermerk (2026-10-26, Teile a–e):**
+- `.fission` = ZIP mit `manifest.json` (Version, Zeiten, SHA-256), `document.json` (Quelle der Wahrheit, `formatVersion` 1) und `preview.png`. Alle Inhalte des Dokuments inklusive Zeitmarker und Projektpalette (`settings.palette`) werden gespeichert; Ausdrücke bleiben Text. Unbekannte Felder und neuere Versionen werden gemeldet, nie ein Absturz; Migrationstabelle ist getestet (erfundene Version 0). Alt-Dateien `tests/fixtures/files/v1/` sind ab jetzt unveränderlich.
+- Speichern atomar (Temp-Datei, Flush, Umbenennen) und im Hintergrund; „gespeichert“ nur, wenn sich währenddessen nichts geändert hat. Fenstertitel „Name.fission •“, Zuletzt geöffnet (flache Liste im Datei-Menü, 10), Öffnen per Argument und macOS-Doppelklick.
+- Autosave alle 60 s und nach 20 Schritten in `AppDataLocation/recovery` (höchstens 10 Dateien); Karte „Wir haben deine Arbeit von … gerettet“ nach einem Absturz. Projekt mit Datei wird beim Beenden/Neu/Öffnen automatisch gespeichert; ein nie gespeichertes Projekt bleibt als Sicherung liegen und wird beim nächsten Start angeboten.
+- Export STL (binär) und 3MF (ein Objekt je Körper, Name, Farbe), Qualität Grob/Normal/Fein, im Hintergrund und abbrechbar; keine Löcher, keine verbrauchten oder versteckten Körper, nichts bei Körpern mit Rezept-Fehler. Lochkante ≤ 0,01 mm (Ablauf D Schritt 6, `test_export.cpp`).
+- System-Zwischenablage mit dem Dateiformat (aus AP-1.6): kopierte Körper liegen als `application/x-fission3d` bereit.
+- Festlegungen: Schriften werden nicht eingebettet (nur der Name); eine Datei aus einer neueren Version wird geöffnet, aber nur unter neuem Namen gespeichert; Palettenänderungen markieren „geändert“, haben aber kein Undo.
+- Offene Reste: 3MF in Bambu Studio / OrcaSlicer / PrusaSlicer von Hand öffnen (Product Owner); „Zuletzt geöffnet“ als Untermenü statt flacher Liste; Dateizuordnung unter Linux/macOS ist aus AP-0.7 vorhanden, aber nicht von Hand geprüft; Kernel-Abdeckung ≥ 85 % nicht neu gemessen; mehrere Dokumente (Tabs) = AP-1.11.
 
 ---
 

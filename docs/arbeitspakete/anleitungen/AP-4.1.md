@@ -11,6 +11,8 @@ importieren, Loch hinzufügen, Namen gravieren.
 ## Voraussetzungen
 AP-1.7 (Kombinieren), AP-1.10 (Dateien, Assets).
 
+**Übernommen aus AP-1.10:** Der Import von STL/3MF wurde dorthin verschoben (Entscheidung 2026-10-25). Dieses AP baut ihn: Menü Datei ▸ „Importieren…“ gibt es noch nicht, der Export (`src/io/include/fission/io/export.h`, 3MF mit lib3mf) steht und lässt sich zum Wiedereinlesen im Test benutzen; `BodyKind::free` und `SaveExtras`/`assets/` im `.fission`-Container sind für Netze vorbereitet (Netz-Körper gehören nach `assets/`, nicht in `document.json`).
+
 ## Vorher lesen
 - `docs/02-ux-konzept.md` §6 (präzise und frei: ein Modell; verbindlich), §7.3 (Auflösung freier Körper)
 - `docs/03-architektur.md` §4 (GAL: `Mesh`, gemischte Booleans über Manifold), §8 (Manifold Apache-2.0), `cmake/FissionLayers.cmake` (Manifold nur in
