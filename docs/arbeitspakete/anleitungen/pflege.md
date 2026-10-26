@@ -107,4 +107,4 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Product Owner klär
 **Größe:** S–M · **Herkunft:** Abschlussvermerke AP-1.8 und AP-1.9.
 - Kontextleiste: „Mehr ▾“ (Seltenes), Ausrichten bei mehreren Körpern; Kante bekommt Aktionen mit AP-2.5. Die Leiste kann Maßzahlen der Ansicht kurz verdecken.
 - Rezept: Sätze aus `Main.qml` (`stepText`) in eine Tabelle `RecipeSentences.js` ziehen, mit einem Test, dass jeder registrierte Feature-Typ einen Satz hat.
-- Fenster-Tests `app_ring_turn`, `app_snap_corner_handle` und `app_flow_d_hole` fallen unter Last gelegentlich durch (einzeln grün): Ursache suchen, nicht abschwächen (Ablauf D).
+- Fenster-Tests `app_ring_turn` und `app_snap_corner_handle` fallen unter Last gelegentlich durch (einzeln grün): Ursache suchen, nicht abschwächen (Ablauf D). Tipp aus `app_flow_d_hole` (PR #51): Eine Prüfung von `--simulate` muss auf das Ende der Aktion warten, nicht auf feste Zeiten; ein Diagnose-PR mit zusätzlichen Meldungen zeigt die Ursache direkt in der CI.

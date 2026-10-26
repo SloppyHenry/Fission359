@@ -221,7 +221,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.9 Rezept-Panel (Version 1)
-**Status:** Review (2026-10-25) · **Größe:** M · **Abhängigkeiten:** AP-1.2, AP-1.8
+**Status:** erledigt (2026-10-26, vom Product Owner geprüft, PR #49) · **Größe:** M · **Abhängigkeiten:** AP-1.2, AP-1.8
 **Bauanleitung:** [anleitungen/AP-1.9.md](anleitungen/AP-1.9.md)
 
 **Umfang:**
@@ -241,7 +241,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Zeitmarker: `Document::rollback()` (Anzahl zählender Schritte), `makeSetRollback`; Schritte dahinter werden nicht berechnet (Status „pending“, ihre Körper fehlen). Neue Schritte landen am Marker, der Marker rückt dahinter; Hinzufügen und Entfernen halten ihn an seiner Stelle (Zufallstest in `test_history.cpp`). Ziehen mit Einrasten zwischen Zeilen, Doppelklick = zurück ans Ende.
 - Körperliste: Doppelklick benennt um, Klick auf den Farbpunkt öffnet die Farben, Badge „Loch“, Überfahren hebt hervor.
 - Festlegungen: Haltepunkte wie empfohlen (Zeitmarker kommt in die Datei, Karte statt Dialog, kombinierte Körper nehmen ihre Formen mit); im Rezept zählt die Position, nicht die Feature-Nummer. `RecipeSentences.js` wurde nicht angelegt: die Sätze bleiben in `Main.qml` (`stepText`), unbekannte Arten zeigen „Schritt N (unbekannte Art)“.
-- Offene Reste: Zeitmarker und Projektpalette werden erst mit AP-1.10 gespeichert (siehe dort); Umsortieren per Ziehen = P9; die Fenster-Tests `app_ring_turn` und `app_snap_corner_handle` fielen einmal unter Last durch (einzeln grün).
+- Offene Reste: Zeitmarker und Projektpalette werden erst mit AP-1.10 gespeichert (siehe dort); Umsortieren per Ziehen = P9; die Fenster-Tests `app_ring_turn` und `app_snap_corner_handle` fielen einmal unter Last durch (einzeln grün). Der wacklige `app_flow_d_hole` war ein Wettlauf im Testrahmen (Prüfung vor dem Loslassen des Lochs), behoben in PR #51.
 
 ---
 
