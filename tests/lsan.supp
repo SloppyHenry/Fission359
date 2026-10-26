@@ -1,3 +1,9 @@
-# Leaks inside third-party libraries that the program triggers by loading its fonts: fontconfig
-# keeps its pattern cache until the process ends. Not ours, and the process is ending anyway.
-leak:libfontconfig
+# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# LeakSanitizer suppressions for third-party libraries (one reason per line).
+
+# minizip-ng (openssl backend, Linux): reading a deliberately corrupted ZIP leaks the 24-byte
+# hash state that the library itself creates on its error path. Not ours: our own hash use
+# (io/src/fission_file.cpp) creates and deletes its state in one function.
+leak:mz_crypt_sha_create
