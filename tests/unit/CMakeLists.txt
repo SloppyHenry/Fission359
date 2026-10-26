@@ -58,4 +58,10 @@ target_compile_definitions(fission_unit_tests PRIVATE
   FISSION_TEST_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures"
   FISSION_APP_FONTS_DIR="${CMAKE_SOURCE_DIR}/apps/fission3d/resources/fonts")
 
-catch_discover_tests(fission_unit_tests)
+# Under AddressSanitizer, known leaks of third-party libraries are listed in tests/lsan.supp.
+if(FISSION_SANITIZE MATCHES "address")
+  catch_discover_tests(fission_unit_tests
+    PROPERTIES ENVIRONMENT "LSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/tests/lsan.supp")
+else()
+  catch_discover_tests(fission_unit_tests)
+endif()
