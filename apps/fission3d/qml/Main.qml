@@ -631,6 +631,18 @@ Window {
     Connections {
         target: Files
 
+        function onRescuedWork(id, savedAt, originalPath) {
+            const when = new Date(savedAt)
+            const today = when.toDateString() === new Date().toDateString()
+            let text = qsTr("We saved your work from %1.")
+                .arg(today ? Qt.formatTime(when, "HH:mm") : Qt.formatDateTime(when, Locale.ShortFormat))
+            if (originalPath !== "") {
+                text += " " + qsTr("It belongs to “%1”.").arg(Files.baseName(originalPath))
+            }
+            rescueCard.show(text, [{ id: "restore", text: qsTr("Restore"), primary: true },
+                                   { id: "discard", text: qsTr("Discard") }], id)
+        }
+
         function onFileProblem(code, path) {
             switch (code) {
             case "damaged":
@@ -678,6 +690,22 @@ Window {
                 Files.openPath(payload, true)
             } else if (id === "saveas") {
                 saveDialog.open()
+            }
+        }
+    }
+
+    NoticeCard {
+        id: rescueCard
+
+        anchors.top: docTabs.bottom
+        anchors.topMargin: 10
+        anchors.horizontalCenter: parent.horizontalCenter
+        z: 21
+        onChosen: (id, payload) => {
+            if (id === "restore") {
+                Files.restoreRescued(payload)
+            } else {
+                Files.discardRescued(payload)
             }
         }
     }

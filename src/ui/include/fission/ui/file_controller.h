@@ -4,6 +4,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QDateTime>
 #include <QFileInfo>
 #include <QObject>
 #include <QString>
@@ -18,7 +19,9 @@
 
 namespace fission::services {
 class RecentFiles;
-}
+class RecoveryStore;
+class Autosave;
+} // namespace fission::services
 
 namespace fission::ui {
 
@@ -46,7 +49,10 @@ class FileController : public QObject {
     Q_PROPERTY(QStringList recentFiles READ recentFiles NOTIFY recentFilesChanged)
 
 public:
-    FileController(DocumentModel* model, services::RecentFiles* recent, QObject* parent = nullptr);
+    /// `recovery` and `autosave` are optional (without them nothing is saved on the side).
+    FileController(DocumentModel* model, services::RecentFiles* recent,
+                   services::RecoveryStore* recovery = nullptr,
+                   services::Autosave* autosave = nullptr, QObject* parent = nullptr);
     ~FileController() override;
 
     QString filePath() const { return m_path; }
@@ -80,6 +86,14 @@ public:
     /// is saved, waiting for the write. False when work would be lost: a project that was never
     /// saved, or a file that could not be written.
     Q_INVOKABLE bool leave();
+    /// Looks for work that was rescued from an earlier session and, if there is some, tells so
+    /// with `rescuedWork` (the newest first).
+    Q_INVOKABLE void checkRecovery();
+    /// Opens the rescued work in place of the current document (after leaving that one safely).
+    Q_INVOKABLE bool restoreRescued(const QString& id);
+    Q_INVOKABLE void discardRescued(const QString& id);
+    /// The end of the program: nothing the person made is lost, then the session is closed.
+    void finishSession();
     Q_INVOKABLE QString baseName(const QString& path) const;
     Q_INVOKABLE void forgetRecent(const QString& path);
 
@@ -97,9 +111,16 @@ signals:
     /// as understood) | unsavedWork (a project that was never saved stands in the way).
     void fileProblem(const QString& code, const QString& path);
     void opened(const QString& path);
+    /// Work of an earlier session was saved for the person: "We saved your work from 14:32."
+    /// `originalPath` is empty for a project that never had a file.
+    void rescuedWork(const QString& id, const QDateTime& savedAt, const QString& originalPath);
 
 private:
     void refreshModified();
+    /// Writes the project to the rescue folder in the background (only when something is not
+    /// saved and changed since the last rescue file).
+    void writeRecovery();
+    bool writeRecoverySync();
     void finishSave(bool ok, const QString& path, std::uint64_t stamp);
     void setPath(const QString& path);
 
@@ -111,6 +132,11 @@ private:
     QString m_created; ///< ISO time of the first save, handed on when saving over the file
     bool m_modified = false;
     bool m_saving = false;
+    services::RecoveryStore* m_recovery;
+    services::Autosave* m_autosave;
+    std::uint64_t m_recoveryStamp = 0; ///< the state the rescue file was written from
+    bool m_recovering = false;
+    int m_lastPosition = 0;
 };
 
 } // namespace fission::ui

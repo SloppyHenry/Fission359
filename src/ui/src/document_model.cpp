@@ -403,6 +403,10 @@ std::uint64_t DocumentModel::saveStamp() const noexcept {
     return m_history.document().revision() + m_paletteStamp;
 }
 
+void DocumentModel::markChanged() {
+    paletteEdited();
+}
+
 void DocumentModel::markSaved() {
     m_history.markClean();
     m_paletteDirty = false;

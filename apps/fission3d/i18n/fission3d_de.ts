@@ -738,13 +738,13 @@
     </message>
     <message>
         <location line="-530"/>
-        <location line="+561"/>
+        <location line="+573"/>
         <location line="+5"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
     <message>
-        <location line="-566"/>
+        <location line="-578"/>
         <source>Ctrl+Shift+S</source>
         <translation>Strg+Umschalt+S</translation>
     </message>
@@ -955,12 +955,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+932"/>
+        <location line="+960"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-931"/>
+        <location line="-959"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -991,12 +991,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+920"/>
+        <location line="+948"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-918"/>
+        <location line="-946"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -1027,18 +1027,18 @@
     </message>
     <message>
         <location line="+20"/>
-        <location line="+528"/>
+        <location line="+556"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-526"/>
-        <location line="+527"/>
+        <location line="-554"/>
+        <location line="+555"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-521"/>
+        <location line="-549"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -1087,12 +1087,12 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+337"/>
+        <location line="+365"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-319"/>
+        <location line="-347"/>
         <source>This body cannot be split: it may be part of another body.</source>
         <translation>Dieser Körper lässt sich nicht teilen: Er ist vielleicht Teil eines anderen Körpers.</translation>
     </message>
@@ -1139,6 +1139,26 @@
     </message>
     <message>
         <location line="+22"/>
+        <source>We saved your work from %1.</source>
+        <translation>Wir haben deine Arbeit von %1 gerettet.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>It belongs to “%1”.</source>
+        <translation>Sie gehört zu „%1“.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Restore</source>
+        <translation>Wiederherstellen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Discard</source>
+        <translation>Verwerfen</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>This file is damaged: it does not match what was saved. It can probably still be read.</source>
         <translation>Diese Datei ist beschädigt: sie stimmt nicht mehr mit dem überein, was gespeichert wurde. Vermutlich lässt sie sich trotzdem lesen.</translation>
     </message>
@@ -1199,7 +1219,7 @@
         <translation>Die Datei konnte nicht gelesen werden.</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+50"/>
         <source>The start page arrives in a later version.</source>
         <translation>Die Startseite kommt in einer späteren Version.</translation>
     </message>
@@ -1822,17 +1842,17 @@
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-914"/>
+        <location line="-942"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+949"/>
+        <location line="+977"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-810"/>
+        <location line="-838"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
@@ -1842,7 +1862,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+437"/>
+        <location line="+465"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
