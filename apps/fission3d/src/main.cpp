@@ -1252,6 +1252,11 @@ int main(int argc, char* argv[]) {
     // What the person set up is applied; the command line (for tests and pictures) wins over it
     // without being written down.
     fission::ui::Preferences preferences(&settings, &theme, &language);
+    // The assistant is for people; test runs (pictures, parked windows) skip it so that the
+    // pictures show the plain window, unless a test asks for it with FISSION_FIRST_RUN=1.
+    const bool testRun = !options.smokeTestPath.isEmpty() || appOptions.parked;
+    appOptions.firstRun =
+        !preferences.firstRunDone() && (!testRun || qEnvironmentVariableIsSet("FISSION_FIRST_RUN"));
     preferences.applyToInterface(!options.language.isEmpty(), !options.theme.isEmpty());
     if (!options.language.isEmpty()) {
         language.setCode(options.language);

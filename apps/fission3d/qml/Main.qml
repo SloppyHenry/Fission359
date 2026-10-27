@@ -774,6 +774,16 @@ Window {
         }
     }
 
+    FirstRunCard {
+        id: firstRunCard
+
+        visible: AppOptions.firstRun && !Preferences.firstRunDone
+        anchors.top: docTabs.bottom
+        anchors.topMargin: 10
+        anchors.horizontalCenter: parent.horizontalCenter
+        z: 23
+    }
+
     SettingsPage {
         id: settingsPage
 
