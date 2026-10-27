@@ -19,7 +19,7 @@ TEST_CASE("settings start at their defaults", "[settings]") {
     CHECK(settings.value(keys::mouseStyle) == QStringLiteral("fission"));
     CHECK(settings.value(keys::handleStyle) == QStringLiteral("axes"));
     CHECK(settings.value(keys::units) == QStringLiteral("mm"));
-    CHECK(settings.value(keys::decimals) == 2);
+    CHECK(settings.value(keys::decimals) == 3);
     CHECK(settings.value(keys::autosave));
     CHECK(settings.value(keys::autosaveMinutes) == 1);
     CHECK_FALSE(settings.value(keys::firstRunDone));
@@ -87,7 +87,7 @@ TEST_CASE("an unusable value is refused, and an unusable stored one counts as no
     CHECK(reread.value(keys::theme) == QStringLiteral("dark"));
     CHECK(reread.value(keys::uiScale) == 100);
     CHECK(reread.value(keys::mouseStyle) == QStringLiteral("sketchup"));
-    CHECK(reread.value(keys::decimals) == 2);
+    CHECK(reread.value(keys::decimals) == 3);
 }
 
 TEST_CASE("reset goes back to the defaults", "[settings]") {

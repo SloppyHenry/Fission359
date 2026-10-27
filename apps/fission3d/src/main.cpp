@@ -732,6 +732,31 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("setpref") || kind == QLatin1String("expecttr")) {
+            // setpref:language,de - a setting changed as the settings page does it (no restart).
+            // expecttr:SettingsPage,Settings,Einstellungen - this text of the interface reads so
+            // now (the language was switched while the program ran).
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 500;
+            QTimer::singleShot(delay, viewport, [=] {
+                bool ok = true;
+                if (kind == QLatin1String("setpref")) {
+                    ok = preferences->setProperty(spec.value(0).toUtf8(), spec.value(1));
+                } else {
+                    const QString found = QCoreApplication::translate(
+                        spec.value(0).toUtf8().constData(), spec.value(1).toUtf8().constData());
+                    ok = found == spec.value(2);
+                    if (!ok) {
+                        qWarning().noquote() << QStringLiteral("expected %1 to read %2; found %3")
+                                                    .arg(spec.value(1), spec.value(2), found);
+                    }
+                }
+                if (!ok) {
+                    g_simulationFailure = 7;
+                }
+            });
+            continue;
+        }
         // --- files (AP-1.10): the whole path through the real program, for the tests ---------
         if (kind == QLatin1String("save") || kind == QLatin1String("open") ||
             kind == QLatin1String("autosave") || kind == QLatin1String("crash") ||
@@ -1236,6 +1261,13 @@ int main(int argc, char* argv[]) {
     }
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Preferences", &preferences);
     documentModel.setPrinter(preferences.printerId());
+    files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
+    QObject::connect(&preferences, &fission::ui::Preferences::unitsChanged, &files, [&] {
+        files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
+    });
+    numbers.setMaxDecimals(preferences.decimals());
+    QObject::connect(&preferences, &fission::ui::Preferences::decimalsChanged, &numbers,
+                     [&] { numbers.setMaxDecimals(preferences.decimals()); });
     autosave.setEnabled(preferences.autosave());
     autosave.setIntervalMinutes(preferences.autosaveMinutes());
     QObject::connect(&preferences, &fission::ui::Preferences::autosaveChanged, &autosave, [&] {

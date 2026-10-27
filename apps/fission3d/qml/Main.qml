@@ -30,8 +30,11 @@ Window {
     property bool bedVisible: true
     property string transientHint: ""
     property string flyout: ""         // the open tool group of the palette: "" or "shapes"
-    readonly property bool narrow: width < Theme.narrowBreakpoint
-    readonly property bool veryNarrow: width < Theme.veryNarrowBreakpoint
+    // The scale of the interface (settings): a factor on everything drawn.
+    readonly property real uiFactor: Preferences.uiScale / 100
+    readonly property real logicalWidth: width / uiFactor
+    readonly property bool narrow: logicalWidth < Theme.narrowBreakpoint
+    readonly property bool veryNarrow: logicalWidth < Theme.veryNarrowBreakpoint
     readonly property bool sidebarsShown: !focusMode && !veryNarrow
     readonly property int leftWidth: sidebarsShown ? (narrow ? Theme.leftPanelWidthNarrow : Theme.leftPanelWidth) : 0
     readonly property int rightWidth: sidebarsShown ? (narrow ? Theme.rightPanelWidthNarrow : Theme.rightPanelWidth) : 0
@@ -159,6 +162,7 @@ Window {
     readonly property bool redoAvailable: DocumentModel.canRedo && !textHasHistory
     property bool historyOpen: false
     property bool exportOpen: false
+    property bool settingsOpen: false
     // A text field has the keyboard: keys such as Esc and Ctrl+A are for the text then.
     readonly property bool typing: root.activeFocusItem !== null && root.activeFocusItem !== undefined
                                    && root.activeFocusItem.cursorPosition !== undefined
@@ -291,7 +295,7 @@ Window {
         case "saveas": saveDialog.open(); break
         case "export": exportOpen = !exportOpen; break
         case "about": aboutWindow.show(); aboutWindow.raise(); break
-        case "settings": showHint(qsTr("Settings arrive in a later version.")); break
+        case "settings": settingsOpen = !settingsOpen; break
         case "search": showHint(qsTr("Command search arrives in a later version.")); break
         case "undo": DocumentModel.undo(); break
         case "redo": DocumentModel.redo(); break
@@ -591,6 +595,17 @@ Window {
     }
 
     // ---- layout (docs/08-gestaltung.md §1) ----------------------------------------------------
+    // Everything visible lives in `shell`, which is made larger or smaller as a whole when the
+    // person sets another scale (80 to 200 %): no restart, and the layout works with the window
+    // size divided by the scale.
+    Item {
+        id: shell
+
+        width: root.width / root.uiFactor
+        height: root.height / root.uiFactor
+        scale: root.uiFactor
+        transformOrigin: Item.TopLeft
+
     MenuStrip {
         id: menuStrip
 
@@ -756,6 +771,22 @@ Window {
                 root.showHint(qsTr("The file could not be read."))
                 break
             }
+        }
+    }
+
+    SettingsPage {
+        id: settingsPage
+
+        visible: root.settingsOpen
+        anchors.top: docTabs.bottom
+        anchors.topMargin: 10
+        anchors.horizontalCenter: parent.horizontalCenter
+        z: 22
+        onCloseRequested: root.settingsOpen = false
+        onPrinterRequested: {
+            root.settingsOpen = false
+            root.rightTab = "printer"
+            root.focusMode = false
         }
     }
 
@@ -1166,6 +1197,7 @@ Window {
     ShapeCatalog {
         id: shapeCatalog
     }
+    } // shell
 
     function typeLabel(type) {
         if (type === "combine") { return qsTr("Combine") }

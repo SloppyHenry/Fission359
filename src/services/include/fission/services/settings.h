@@ -66,7 +66,7 @@ inline const Key<bool> softShadows{"softShadows", true, [](const bool&) { return
 /// "mm" or "in": the unit of new documents.
 inline const Key<QString> units{"units", QStringLiteral("mm"),
                                 [](const QString& v) { return anyOf(v, {"mm", "in"}); }};
-inline const Key<int> decimals{"decimals", 2, [](const int& v) { return v >= 0 && v <= 4; }};
+inline const Key<int> decimals{"decimals", 3, [](const int& v) { return v >= 0 && v <= 4; }};
 inline const Key<bool> autosave{"autosave", true, [](const bool&) { return true; }};
 inline const Key<int> autosaveMinutes{"autosaveMinutes", 1,
                                       [](const int& v) { return v >= 1 && v <= 60; }};

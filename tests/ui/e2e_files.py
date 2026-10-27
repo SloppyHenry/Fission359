@@ -103,4 +103,12 @@ with tempfile.TemporaryDirectory() as data:
     check("mouseStyle=blender" in open(os.path.join(prefs, "settings.ini")).read(), "settings.ini")
     run(prefs, "expectpref:mouseStyle,blender;expectpref:softShadows,false")
 
+    # 7. The language changes while the program runs; the settings page opens without errors.
+    lang = os.path.join(data, "lang")
+    os.makedirs(lang)
+    run(lang, "expecttr:SettingsPage,Settings,Settings;setpref:language,de;"
+              "expecttr:SettingsPage,Settings,Einstellungen;setpref:language,en;"
+              "expecttr:SettingsPage,Settings,Settings;menu:settings;setpref:uiScale,150;"
+              "expectpref:uiScale,150;setpref:uiScale,100")
+
 print("OK")
