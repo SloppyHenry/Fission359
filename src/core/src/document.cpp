@@ -16,6 +16,18 @@ void Document::setSettings(const DocumentSettings& settings) {
     touch();
 }
 
+Document Document::fromParts(DocumentParts parts) {
+    Document document;
+    document.title = std::move(parts.title);
+    document.settings_ = std::move(parts.settings);
+    document.parameters_ = std::move(parts.parameters);
+    document.features_ = std::move(parts.features);
+    document.bodies_ = std::move(parts.bodies);
+    document.lastFeatureNumber_ = parts.lastFeatureNumber;
+    document.rollback_ = parts.rollback;
+    return document;
+}
+
 bool Document::sameContentAs(const Document& other) const {
     return title == other.title && settings_ == other.settings_ &&
            parameters_ == other.parameters_ && features_ == other.features_ &&
