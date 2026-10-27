@@ -133,4 +133,16 @@ with tempfile.TemporaryDirectory() as data:
     for example in ("box-with-hole", "star"):
         run(data, "example:%s;expectmodified:0" % example)
 
+    # 10. Several documents: tabs keep their own steps; closing saves; Ctrl+W logic.
+    tabs = os.path.join(data, "tabs")
+    os.makedirs(tabs)
+    one = os.path.join(tabs, "one.fission")
+    two = os.path.join(tabs, "two.fission")
+    run(tabs, "put:cylinder;save:%s;clickitem:tabNew;recipe:;put:sphere;save:%s;recipe:sphere;"
+              "clickitem:tab_0;recipe:box,cylinder;clickitem:tab_1;recipe:sphere;"
+              "clickitem:tabClose_1;recipe:box,cylinder;expectmodified:0" % (one, two))
+    # Tabs that were never saved stay as rescue work when the program ends.
+    run(tabs, "put:cone;clickitem:tabNew;put:star;clickitem:tabNew;recipe:")
+    run(tabs, "rescue:restore;rescue:restore;expectmodified:1")
+
 print("OK")

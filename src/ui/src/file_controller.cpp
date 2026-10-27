@@ -57,6 +57,7 @@ FileController::FileController(DocumentModel* model, services::RecentFiles* rece
                                QObject* parent)
     : QObject(parent), m_model(model), m_recent(recent), m_recovery(recovery),
       m_autosave(autosave) {
+    m_tabs.emplace_back();       // the document that is shown at the start
     m_pool.setMaxThreadCount(1); // saves go one after the other, in the order they were asked
     connect(model, &DocumentModel::historyChanged, this, &FileController::refreshModified);
     if (m_autosave != nullptr) {
@@ -67,6 +68,7 @@ FileController::FileController(DocumentModel* model, services::RecentFiles* rece
                 m_autosave->commandDone();
             }
             m_lastPosition = position;
+            emit tabsChanged();
         });
         connect(m_autosave, &services::Autosave::due, this, &FileController::writeRecovery);
         m_autosave->start();
@@ -79,7 +81,7 @@ FileController::~FileController() {
 }
 
 QString FileController::fileName() const {
-    return m_path.isEmpty() ? QString() : QFileInfo(m_path).completeBaseName();
+    return cur().path.isEmpty() ? QString() : QFileInfo(cur().path).completeBaseName();
 }
 
 QStringList FileController::recentFiles() const {
@@ -114,37 +116,6 @@ QStringList FileController::exampleNames() const {
     return names;
 }
 
-bool FileController::openExample(const QString& name) {
-    // The io layer reads files, not program resources: the example goes to a temporary file.
-    QFile resource(QStringLiteral(":/fission/examples/%1.fission").arg(name));
-    QTemporaryDir folder;
-    if (!resource.open(QIODevice::ReadOnly) || !folder.isValid()) {
-        emit fileProblem(QStringLiteral("cannotRead"), name);
-        return false;
-    }
-    const QString copy = folder.filePath(QStringLiteral("example.fission"));
-    QFile out(copy);
-    if (!out.open(QIODevice::WriteOnly) || out.write(resource.readAll()) < 0) {
-        emit fileProblem(QStringLiteral("cannotRead"), name);
-        return false;
-    }
-    out.close();
-    io::OpenResult result = io::open(toPath(copy));
-    if (!result.document) {
-        emit fileProblem(QStringLiteral("documentUnreadable"), name);
-        return false;
-    }
-    if (!leave()) {
-        return false;
-    }
-    m_created.clear();
-    m_model->replaceDocument(std::move(*result.document));
-    setPath(QString()); // a copy of its own: saving asks for a name
-    refreshModified();
-    emit opened(QString());
-    return true;
-}
-
 QString FileController::baseName(const QString& path) const {
     return QFileInfo(path).completeBaseName();
 }
@@ -161,22 +132,24 @@ void FileController::refreshModified() {
     if (now != m_modified) {
         m_modified = now;
         emit modifiedChanged();
+        emit tabsChanged();
     }
 }
 
 void FileController::setPath(const QString& path) {
-    if (path == m_path) {
+    if (path == cur().path) {
         return;
     }
-    m_path = path;
+    cur().path = path;
     emit fileChanged();
+    emit tabsChanged();
 }
 
 bool FileController::save() {
-    if (m_path.isEmpty()) {
+    if (cur().path.isEmpty()) {
         return false;
     }
-    return saveTo(QUrl::fromLocalFile(m_path));
+    return saveTo(QUrl::fromLocalFile(cur().path));
 }
 
 bool FileController::saveTo(const QUrl& url) {
@@ -191,12 +164,12 @@ bool FileController::saveTo(const QUrl& url) {
     // On the interface thread: everything that needs the document and the window.
     core::Document snapshot = m_model->documentForSaving();
     const std::uint64_t stamp = m_model->saveStamp();
-    if (m_created.isEmpty()) {
-        m_created = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+    if (cur().created.isEmpty()) {
+        cur().created = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
     }
     io::SaveExtras extras;
     extras.appVersion = std::string(core::versionString());
-    extras.created = m_created.toStdString();
+    extras.created = cur().created.toStdString();
     if (m_previewGrabber) {
         const QByteArray png = m_previewGrabber();
         extras.previewPng.assign(png.begin(), png.end());
@@ -232,8 +205,8 @@ void FileController::finishSave(bool ok, const QString& path, std::uint64_t stam
         emit recentFilesChanged();
     }
     if (m_model->saveStamp() == stamp && m_recovery != nullptr) {
-        m_recovery->removeSessionFiles(); // the file itself is now the safe copy
-        m_recoveryStamp = 0;
+        m_recovery->removeSessionFiles(cur().recoverySlot); // the file itself is now the safe copy
+        cur().recoveryStamp = 0;
     }
     if (m_autosave != nullptr) {
         m_autosave->acknowledge();
@@ -251,11 +224,12 @@ bool FileController::leave() {
     if (!m_model->hasUnsavedChanges()) {
         return true;
     }
-    if (m_path.isEmpty()) {
+    if (cur().path.isEmpty()) {
         // No file to save into: the project is set aside as rescue work, which the next start
         // offers back ("We saved your work").
-        if (m_recovery != nullptr && writeRecoverySync() && m_recovery->keepSessionFiles()) {
-            m_recoveryStamp = 0;
+        if (m_recovery != nullptr && writeRecoverySync() &&
+            m_recovery->keepSessionFiles(cur().recoverySlot)) {
+            cur().recoveryStamp = 0;
             return true;
         }
         emit fileProblem(QStringLiteral("unsavedWork"), QString());
@@ -274,37 +248,38 @@ void FileController::writeRecovery() {
         return;
     }
     if (!m_model->hasUnsavedChanges()) {
-        m_recovery->removeSessionFiles(); // nothing to rescue
-        m_recoveryStamp = 0;
+        m_recovery->removeSessionFiles(cur().recoverySlot); // nothing to rescue
+        cur().recoveryStamp = 0;
         return;
     }
     const std::uint64_t stamp = m_model->saveStamp();
-    if (stamp == m_recoveryStamp) {
+    if (stamp == cur().recoveryStamp) {
         return; // the rescue file already holds this state
     }
     core::Document snapshot = m_model->documentForSaving();
     io::SaveExtras extras;
     extras.appVersion = std::string(core::versionString());
-    const QString file = m_recovery->filePath();
-    const QString original = m_path;
+    const int slot = cur().recoverySlot;
+    const QString file = m_recovery->filePath(slot);
+    const QString original = cur().path;
     m_recovering = true;
-    m_pool.start(
-        [this, snapshot = std::move(snapshot), extras = std::move(extras), file, original, stamp] {
-            const io::SaveResult result = io::save(snapshot, toPath(file), extras);
-            QMetaObject::invokeMethod(
-                this,
-                [this, ok = result.ok, original, stamp] {
-                    m_recovering = false;
-                    if (ok) {
-                        m_recovery->writeInfo(original);
-                        m_recoveryStamp = stamp;
-                    }
-                    if (m_autosave != nullptr) {
-                        m_autosave->acknowledge();
-                    }
-                },
-                Qt::QueuedConnection);
-        });
+    m_pool.start([this, snapshot = std::move(snapshot), extras = std::move(extras), file, original,
+                  stamp, slot] {
+        const io::SaveResult result = io::save(snapshot, toPath(file), extras);
+        QMetaObject::invokeMethod(
+            this,
+            [this, ok = result.ok, original, stamp, slot] {
+                m_recovering = false;
+                if (ok) {
+                    m_recovery->writeInfo(original, slot);
+                    cur().recoveryStamp = stamp;
+                }
+                if (m_autosave != nullptr) {
+                    m_autosave->acknowledge();
+                }
+            },
+            Qt::QueuedConnection);
+    });
 }
 
 bool FileController::writeRecoverySync() {
@@ -314,7 +289,7 @@ bool FileController::writeRecoverySync() {
     waitForSave();
     writeRecovery();
     waitForSave();
-    return QFileInfo::exists(m_recovery->filePath());
+    return QFileInfo::exists(m_recovery->filePath(cur().recoverySlot));
 }
 
 void FileController::checkRecovery() {
@@ -334,56 +309,148 @@ void FileController::discardRescued(const QString& id) {
     }
 }
 
-bool FileController::restoreRescued(const QString& id) {
-    if (m_recovery == nullptr) {
+} // namespace fission::ui
+
+namespace fission::ui {
+
+// --- tabs: several documents (AP-1.11e) ---------------------------------------------------------
+// The shown document lives in the model; the others are put aside in their tab. Every tab has its
+// own file, its own undo list and its own rescue file.
+
+FileController::Tab& FileController::cur() {
+    return m_tabs[static_cast<std::size_t>(m_current)];
+}
+
+const FileController::Tab& FileController::cur() const {
+    return m_tabs[static_cast<std::size_t>(m_current)];
+}
+
+QVariantList FileController::tabs() const {
+    QVariantList list;
+    for (int i = 0; i < static_cast<int>(m_tabs.size()); ++i) {
+        const Tab& tab = m_tabs[static_cast<std::size_t>(i)];
+        const bool shown = i == m_current;
+        list.push_back(QVariantMap{
+            {QStringLiteral("name"),
+             tab.path.isEmpty() ? QString() : QFileInfo(tab.path).completeBaseName()},
+            {QStringLiteral("modified"), shown ? m_modified : tab.slot.hasUnsavedChanges()},
+            {QStringLiteral("current"), shown}});
+    }
+    return list;
+}
+
+bool FileController::switchTab(int index) {
+    if (index < 0 || index >= static_cast<int>(m_tabs.size())) {
         return false;
     }
-    const auto found = m_recovery->rescued();
-    const auto work = std::find_if(found.begin(), found.end(),
-                                   [&](const services::RescuedWork& w) { return w.id == id; });
-    if (work == found.end()) {
-        return false;
+    if (index == m_current) {
+        return true;
     }
-    io::OpenOptions options;
-    options.openDamaged = true; // it is all there is; better than nothing
-    io::OpenResult result = io::open(toPath(work->fissionPath), options);
-    if (!result.document) {
-        emit fileProblem(QStringLiteral("documentUnreadable"), work->fissionPath);
-        m_recovery->discard(id);
-        return false;
+    waitForSave(); // a save that is running belongs to the document that is shown now
+    if (m_model->hasUnsavedChanges() && m_recovery != nullptr) {
+        writeRecoverySync(); // what is not saved yet is safe while the tab is put aside
     }
-    if (!leave()) {
-        return false;
-    }
-    m_created.clear();
-    m_model->replaceDocument(std::move(*result.document));
-    m_model->markChanged(); // it is not what the file on disk holds
-    setPath(work->originalPath);
-    m_recoveryStamp = 0;
+    Tab& incoming = m_tabs[static_cast<std::size_t>(index)];
+    m_tabs[static_cast<std::size_t>(m_current)].slot = m_model->exchange(std::move(incoming.slot));
+    m_current = index;
+    m_lastPosition = m_model->historyPosition();
     refreshModified();
-    // The rescue copy is only let go of once the work lies in the new session's own rescue file.
-    if (writeRecoverySync()) {
-        m_recovery->discard(id);
-    }
-    emit opened(work->originalPath);
-    checkRecovery();
+    emit fileChanged();
+    emit tabsChanged();
+    emit currentTabChanged();
     return true;
 }
 
-void FileController::finishSession() {
-    if (m_autosave != nullptr) {
-        m_autosave->stop();
+bool FileController::newDocument() {
+    // A project that was never saved and not touched holds nothing of the person's: it is
+    // replaced instead of piling up empty tabs.
+    if (cur().path.isEmpty() && !m_model->hasUnsavedChanges()) {
+        core::Document fresh;
+        core::DocumentSettings settings = fresh.settings();
+        settings.defaultUnitMillimetres = m_newDocumentUnit;
+        fresh.setSettings(settings);
+        cur().created.clear();
+        cur().recoveryStamp = 0;
+        m_model->replaceDocument(std::move(fresh));
+        m_lastPosition = m_model->historyPosition();
+        refreshModified();
+        emit tabsChanged();
+        return true;
     }
-    waitForSave();
-    if (!leave() && m_recovery != nullptr) {
-        // The file could not be written: the work goes to the rescue folder instead.
-        if (writeRecoverySync()) {
-            m_recovery->keepSessionFiles();
+    Tab tab;
+    tab.slot = m_model->emptySlot(m_newDocumentUnit);
+    tab.recoverySlot = m_nextRecoverySlot++;
+    m_tabs.push_back(std::move(tab));
+    emit tabsChanged();
+    return switchTab(static_cast<int>(m_tabs.size()) - 1);
+}
+
+bool FileController::closeTab(int index) {
+    if (index < 0 || index >= static_cast<int>(m_tabs.size())) {
+        return false;
+    }
+    if (!switchTab(index) || !leave()) {
+        return false; // the work must not be lost; `leave` told why
+    }
+    m_model->markSaved(); // it is let go of: no rescue copy is to be made of it any more
+    if (m_tabs.size() == 1) {
+        // The last document: an empty one takes its place.
+        cur().created.clear();
+        cur().recoveryStamp = 0;
+        core::Document fresh;
+        core::DocumentSettings settings = fresh.settings();
+        settings.defaultUnitMillimetres = m_newDocumentUnit;
+        fresh.setSettings(settings);
+        m_model->replaceDocument(std::move(fresh));
+        setPath(QString());
+        refreshModified();
+        emit tabsChanged();
+        return true;
+    }
+    const int other = index > 0 ? index - 1 : 1;
+    switchTab(other);
+    m_tabs.erase(m_tabs.begin() + index);
+    if (index < m_current) {
+        --m_current;
+    }
+    emit tabsChanged();
+    emit currentTabChanged();
+    return true;
+}
+
+bool FileController::placeDocument(core::Document document, const QString& path,
+                                   const QString& created, bool changed) {
+    // Opening a file that is open already shows that tab.
+    if (!path.isEmpty()) {
+        for (int i = 0; i < static_cast<int>(m_tabs.size()); ++i) {
+            if (m_tabs[static_cast<std::size_t>(i)].path == path && !changed) {
+                return switchTab(i);
+            }
         }
     }
-    if (m_recovery != nullptr) {
-        m_recovery->endSession();
+    // A project that is empty and untouched (the one of the start) is replaced; otherwise the
+    // document gets a tab of its own.
+    const bool pristine = cur().path.isEmpty() && !m_model->hasUnsavedChanges();
+    if (!pristine) {
+        Tab tab;
+        tab.slot = m_model->emptySlot(m_newDocumentUnit);
+        tab.recoverySlot = m_nextRecoverySlot++;
+        m_tabs.push_back(std::move(tab));
+        if (!switchTab(static_cast<int>(m_tabs.size()) - 1)) {
+            return false;
+        }
     }
+    cur().created = created;
+    cur().recoveryStamp = 0;
+    m_model->replaceDocument(std::move(document));
+    if (changed) {
+        m_model->markChanged(); // it is not what the file on disk holds
+    }
+    setPath(path);
+    m_lastPosition = m_model->historyPosition();
+    refreshModified();
+    emit tabsChanged();
+    return true;
 }
 
 bool FileController::openFrom(const QUrl& url, bool openDamaged) {
@@ -409,19 +476,17 @@ bool FileController::openFrom(const QUrl& url, bool openDamaged) {
         }
         return false;
     }
-    if (!leave()) {
-        return false; // the work of the current project must not be lost; `leave` told why
-    }
     // A file from a newer program holds things this one does not know and would leave out when
     // writing: it is opened, but saving goes to a new name, never over the original.
     const bool fromNewer = std::any_of(result.problems.begin(), result.problems.end(),
                                        [](const io::FileProblem& problem) {
                                            return problem.code == io::FileProblemCode::newerFormat;
                                        });
-    m_created = fromNewer ? QString() : QString::fromStdString(result.info.created);
-    m_model->replaceDocument(std::move(*result.document));
-    setPath(fromNewer ? QString() : path);
-    refreshModified();
+    if (!placeDocument(std::move(*result.document), fromNewer ? QString() : path,
+                       fromNewer ? QString() : QString::fromStdString(result.info.created),
+                       false)) {
+        return false;
+    }
     if (m_recent != nullptr && !fromNewer) {
         m_recent->add(path);
         emit recentFilesChanged();
@@ -436,19 +501,88 @@ bool FileController::openFrom(const QUrl& url, bool openDamaged) {
     return true;
 }
 
-bool FileController::newDocument() {
-    if (!leave()) {
+bool FileController::openExample(const QString& name) {
+    // The io layer reads files, not program resources: the example goes to a temporary file.
+    QFile resource(QStringLiteral(":/fission/examples/%1.fission").arg(name));
+    QTemporaryDir folder;
+    if (!resource.open(QIODevice::ReadOnly) || !folder.isValid()) {
+        emit fileProblem(QStringLiteral("cannotRead"), name);
         return false;
     }
-    m_created.clear();
-    core::Document fresh;
-    core::DocumentSettings settings = fresh.settings();
-    settings.defaultUnitMillimetres = m_newDocumentUnit;
-    fresh.setSettings(settings);
-    m_model->replaceDocument(std::move(fresh));
-    setPath(QString());
-    refreshModified();
+    const QString copy = folder.filePath(QStringLiteral("example.fission"));
+    QFile out(copy);
+    if (!out.open(QIODevice::WriteOnly) || out.write(resource.readAll()) < 0) {
+        emit fileProblem(QStringLiteral("cannotRead"), name);
+        return false;
+    }
+    out.close();
+    io::OpenResult result = io::open(toPath(copy));
+    if (!result.document) {
+        emit fileProblem(QStringLiteral("documentUnreadable"), name);
+        return false;
+    }
+    // A copy of its own: saving asks for a name.
+    if (!placeDocument(std::move(*result.document), QString(), QString(), false)) {
+        return false;
+    }
+    emit opened(QString());
     return true;
+}
+
+bool FileController::restoreRescued(const QString& id) {
+    if (m_recovery == nullptr) {
+        return false;
+    }
+    const auto found = m_recovery->rescued();
+    const auto work = std::find_if(found.begin(), found.end(),
+                                   [&](const services::RescuedWork& w) { return w.id == id; });
+    if (work == found.end()) {
+        return false;
+    }
+    io::OpenOptions options;
+    options.openDamaged = true; // it is all there is; better than nothing
+    io::OpenResult result = io::open(toPath(work->fissionPath), options);
+    if (!result.document) {
+        emit fileProblem(QStringLiteral("documentUnreadable"), work->fissionPath);
+        m_recovery->discard(id);
+        return false;
+    }
+    if (!placeDocument(std::move(*result.document), work->originalPath, QString(), true)) {
+        return false;
+    }
+    // The rescue copy is only let go of once the work lies in this session's own rescue file.
+    if (writeRecoverySync()) {
+        m_recovery->discard(id);
+    }
+    emit opened(work->originalPath);
+    checkRecovery();
+    return true;
+}
+
+void FileController::finishSession() {
+    if (m_autosave != nullptr) {
+        m_autosave->stop();
+    }
+    waitForSave();
+    // Every document: saved into its file, or set aside as rescue work.
+    for (int i = 0; i < static_cast<int>(m_tabs.size()); ++i) {
+        const bool unsaved = i == m_current
+                                 ? m_model->hasUnsavedChanges()
+                                 : m_tabs[static_cast<std::size_t>(i)].slot.hasUnsavedChanges();
+        if (!unsaved) {
+            continue;
+        }
+        switchTab(i);
+        if (!leave() && m_recovery != nullptr) {
+            // The file could not be written: the work goes to the rescue folder instead.
+            if (writeRecoverySync()) {
+                m_recovery->keepSessionFiles(cur().recoverySlot);
+            }
+        }
+    }
+    if (m_recovery != nullptr) {
+        m_recovery->endSession();
+    }
 }
 
 } // namespace fission::ui

@@ -396,17 +396,22 @@
 <context>
     <name>DocTabs</name>
     <message>
-        <location filename="../qml/DocTabs.qml" line="+43"/>
+        <location filename="../qml/DocTabs.qml" line="+44"/>
         <source>Start page</source>
         <translation>Startseite</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+51"/>
+        <source>Untitled</source>
+        <translation>Unbenannt</translation>
+    </message>
+    <message>
+        <location line="+15"/>
         <source>Close</source>
         <translation>Schließen</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+27"/>
         <source>New project</source>
         <translation>Neues Projekt</translation>
     </message>
@@ -871,19 +876,19 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+555"/>
+        <location line="+557"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location line="-554"/>
-        <location line="+666"/>
+        <location line="-556"/>
+        <location line="+668"/>
         <location line="+5"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
     <message>
-        <location line="-671"/>
+        <location line="-673"/>
         <source>Ctrl+Shift+S</source>
         <translation>Strg+Umschalt+S</translation>
     </message>
@@ -1094,12 +1099,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1111"/>
+        <location line="+1114"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1110"/>
+        <location line="-1113"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -1130,12 +1135,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1099"/>
+        <location line="+1102"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1097"/>
+        <location line="-1100"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -1166,18 +1171,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+697"/>
+        <location line="+699"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-695"/>
-        <location line="+696"/>
+        <location line="-697"/>
+        <location line="+698"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-690"/>
+        <location line="-692"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -1203,7 +1208,7 @@
         </translation>
     </message>
     <message>
-        <location line="+55"/>
+        <location line="+56"/>
         <source>Command search arrives in a later version.</source>
         <translation>Die Befehlssuche kommt in einer späteren Version.</translation>
     </message>
@@ -1221,12 +1226,11 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+499"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-481"/>
+        <location line="+18"/>
         <source>This body cannot be split: it may be part of another body.</source>
         <translation>Dieser Körper lässt sich nicht teilen: Er ist vielleicht Teil eines anderen Körpers.</translation>
     </message>
@@ -1261,7 +1265,7 @@
         <translation>normal</translation>
     </message>
     <message>
-        <location line="+194"/>
+        <location line="+195"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
@@ -1398,12 +1402,7 @@
         <translation>Die Datei konnte nicht gelesen werden.</translation>
     </message>
     <message>
-        <location line="+103"/>
-        <source>Closing arrives together with saving.</source>
-        <translation>Schließen kommt zusammen mit dem Speichern.</translation>
-    </message>
-    <message>
-        <location line="+85"/>
+        <location line="+189"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
@@ -2011,27 +2010,27 @@
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1086"/>
+        <location line="-1089"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1121"/>
+        <location line="+1124"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-979"/>
+        <location line="-982"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+432"/>
+        <location line="+434"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+586"/>
+        <location line="+587"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -2773,12 +2772,12 @@
     <name>StartPage</name>
     <message>
         <location filename="../qml/StartPage.qml" line="+22"/>
-        <location line="+92"/>
+        <location line="+93"/>
         <source>Start</source>
         <translation>Start</translation>
     </message>
     <message>
-        <location line="-88"/>
+        <location line="-89"/>
         <source>Box with a hole</source>
         <translation>Box mit Loch</translation>
     </message>
@@ -2793,7 +2792,7 @@
         <translation>Stern</translation>
     </message>
     <message>
-        <location line="+96"/>
+        <location line="+97"/>
         <source>Back to the project</source>
         <translation>Zurück zum Projekt</translation>
     </message>

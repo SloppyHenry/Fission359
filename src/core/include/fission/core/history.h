@@ -79,6 +79,10 @@ public:
     /// Replaces the document (open file) and forgets all steps.
     void reset(Document document);
 
+    /// Makes the document's revision at least `floor` (see `Document::raiseRevisionTo`); a
+    /// history that takes the place of another one (switching documents) goes on after it.
+    void raiseRevisionTo(std::uint64_t floor) noexcept { document_.raiseRevisionTo(floor); }
+
 private:
     void pushStep(std::unique_ptr<Command> command);
 

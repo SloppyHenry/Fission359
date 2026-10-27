@@ -167,8 +167,6 @@ TEST_CASE("leaving: a project with a file is saved, one without is not thrown aw
     CHECK_FALSE(session.files.leave()); // never saved: refused, work stays
     REQUIRE(problems.codes.size() == 1);
     CHECK(problems.codes.front() == QStringLiteral("unsavedWork"));
-    CHECK_FALSE(session.files.newDocument());
-    CHECK(session.model.bodies().size() == 1);
 
     REQUIRE(session.files.saveTo(folder.url("a.fission")));
     session.files.waitForSave();
@@ -176,14 +174,90 @@ TEST_CASE("leaving: a project with a file is saved, one without is not thrown aw
     CHECK(session.files.leave()); // saved on the way out
     CHECK_FALSE(session.files.modified());
 
+    // A new project is a tab of its own; the first one stays as it is.
     REQUIRE(session.files.newDocument());
+    CHECK(session.files.tabs().size() == 2);
     CHECK(session.model.bodies().isEmpty());
     CHECK(session.files.filePath().isEmpty());
     CHECK_FALSE(session.files.modified());
 
+    // The file is open in the first tab already: opening it shows that tab.
     REQUIRE(session.files.openFrom(folder.url("a.fission")));
+    CHECK(session.files.tabs().size() == 2);
+    CHECK(session.files.currentTab() == 0);
     CHECK(session.model.bodies().front().toMap().value(QStringLiteral("name")).toString() ==
           QStringLiteral("Noch wichtiger"));
+}
+
+TEST_CASE("two documents do not touch each other", "[files]") {
+    application();
+    Folder folder;
+    Session session(folder.path("recent.ini"));
+    REQUIRE(session.model.setBodyName(0, QStringLiteral("Eins")));
+    REQUIRE(session.files.saveTo(folder.url("one.fission")));
+    session.files.waitForSave();
+
+    REQUIRE(session.files.newDocument());
+    REQUIRE(session.model.addShape(QStringLiteral("cylinder"), false) >= 0);
+    session.model.waitForCalculation();
+    REQUIRE(session.model.setBodyName(0, QStringLiteral("Zwei")));
+    CHECK(session.files.modified());
+    CHECK(session.model.canUndo());
+
+    // Back to the first: its own steps, nothing of the second, and no undo of the second.
+    REQUIRE(session.files.switchTab(0));
+    session.model.waitForCalculation();
+    CHECK(session.model.bodies().size() == 1);
+    CHECK(session.model.bodies().front().toMap().value(QStringLiteral("name")).toString() ==
+          QStringLiteral("Eins"));
+    CHECK(session.files.fileName() == QStringLiteral("one"));
+    CHECK_FALSE(session.files.modified());
+    CHECK(session.model.historyPosition() == 1); // its own undo list: the one rename
+
+    // The second kept its steps and its undo list.
+    REQUIRE(session.files.switchTab(1));
+    session.model.waitForCalculation();
+    CHECK(session.model.bodies().front().toMap().value(QStringLiteral("name")).toString() ==
+          QStringLiteral("Zwei"));
+    CHECK(session.files.modified());
+    CHECK(session.model.historyPosition() == 2); // the shape and the rename, nothing of the first
+    CHECK(session.model.undo());
+    CHECK(session.model.bodies().front().toMap().value(QStringLiteral("type")).toString() ==
+          QStringLiteral("cylinder"));
+
+    // Undo in the second never reached the first.
+    REQUIRE(session.files.switchTab(0));
+    session.model.waitForCalculation();
+    CHECK(session.model.bodies().front().toMap().value(QStringLiteral("name")).toString() ==
+          QStringLiteral("Eins"));
+}
+
+TEST_CASE("closing a tab saves it, and the last tab leaves an empty project", "[files]") {
+    application();
+    Folder folder;
+    Session session(folder.path("recent.ini"));
+    REQUIRE(session.files.saveTo(folder.url("one.fission")));
+    session.files.waitForSave();
+    REQUIRE(session.files.newDocument());
+    REQUIRE(session.model.addShape(QStringLiteral("sphere"), false) >= 0);
+    REQUIRE(session.files.saveTo(folder.url("two.fission")));
+    session.files.waitForSave();
+    REQUIRE(session.model.setBodyName(0, QStringLiteral("Geändert")));
+
+    REQUIRE(session.files.closeTab(1)); // saved on the way out
+    CHECK(session.files.tabs().size() == 1);
+    CHECK(session.files.fileName() == QStringLiteral("one"));
+
+    Session other(folder.path("recent2.ini"));
+    REQUIRE(other.files.openFrom(folder.url("two.fission")));
+    CHECK(other.model.bodies().front().toMap().value(QStringLiteral("name")).toString() ==
+          QStringLiteral("Geändert"));
+
+    // The last tab: an empty project takes its place.
+    REQUIRE(session.files.closeTab(0));
+    CHECK(session.files.tabs().size() == 1);
+    CHECK(session.model.bodies().isEmpty());
+    CHECK(session.files.filePath().isEmpty());
 }
 
 TEST_CASE("the recent files are newest first, without repeats, at most ten", "[files]") {
@@ -427,4 +501,36 @@ TEST_CASE("the rescue folder holds at most ten files, the oldest go first", "[fi
     fission::services::RecoveryStore reader(rescueFolder);
     CHECK(reader.rescued().size() <= 10);
     CHECK(reader.rescued().size() >= 9);
+}
+
+TEST_CASE("a tab never saved is rescue work when it is closed", "[files]") {
+    application();
+    Folder folder;
+    const QString rescueFolder = folder.path("recovery");
+    {
+        RescueSession session(folder.path("r1.ini"), rescueFolder);
+        session.rename(1);
+        REQUIRE(session.files.closeTab(0)); // never saved: set aside, not lost
+        CHECK(session.recovery.rescued().size() == 1);
+    }
+    RescueSession next(folder.path("r2.ini"), rescueFolder);
+    CHECK(next.recovery.rescued().size() == 1);
+}
+
+TEST_CASE("every tab has its own rescue file after a crash", "[files]") {
+    application();
+    Folder folder;
+    const QString rescueFolder = folder.path("recovery");
+    {
+        RescueSession session(folder.path("r1.ini"), rescueFolder);
+        session.rename(3); // first tab: autosave is due
+        REQUIRE(session.files.newDocument());
+        REQUIRE(session.model.addShape(QStringLiteral("cone"), false) >= 0);
+        session.model.waitForCalculation();
+        REQUIRE(session.files.switchTab(0)); // the second is put aside and written first
+        session.files.waitForSave();
+        pretendItCrashed(session.recovery);
+    }
+    RescueSession next(folder.path("r2.ini"), rescueFolder);
+    CHECK(next.recovery.rescued().size() == 2);
 }

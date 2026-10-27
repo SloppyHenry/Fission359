@@ -130,6 +130,31 @@ public:
     /// The bodies to export, in the order of the list of bodies; `onlyIds` empty = all of them.
     std::vector<ExportBody> exportBodies(const QStringList& onlyIds) const;
 
+    /// A whole document as it can be put aside while another one is shown: its steps and undo
+    /// list, the palette and what it had chosen (AP-1.11e, tabs). Opaque; only the model looks in.
+    class DocumentSlot {
+    public:
+        DocumentSlot();
+        ~DocumentSlot();
+        DocumentSlot(DocumentSlot&&) noexcept;
+        DocumentSlot& operator=(DocumentSlot&&) noexcept;
+        /// Something not saved in it (steps since the last save, a palette change).
+        bool hasUnsavedChanges() const;
+        /// How many steps its recipe has.
+        std::size_t stepCount() const;
+
+    private:
+        friend class DocumentModel;
+        struct Impl;
+        std::unique_ptr<Impl> d;
+    };
+    /// An empty document in a slot (`unitMillimetres`: what a bare number means in it).
+    DocumentSlot emptySlot(double unitMillimetres) const;
+    /// Shows the document of `incoming` and hands back the one that was shown, with its undo list
+    /// and everything, to be put aside. What was chosen or in progress is gone (a drag is ended
+    /// first by the caller).
+    DocumentSlot exchange(DocumentSlot incoming);
+
     // --- files (AP-1.10c; the file handling itself is `FileController`) ---
     /// The document as it is written to a file: the steps as they are now plus the palette of
     /// the project in the settings (empty while it is the built-in one).
