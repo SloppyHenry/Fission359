@@ -29,6 +29,7 @@
 #include "fission/geo/kernel.h"
 #include "fission/geo/seat.h"
 #include "fission/render/scene.h"
+#include "fission/ui/clipboard_payload.h"
 
 namespace fission::ui {
 
@@ -117,6 +118,21 @@ public:
 
     /// The one box the program starts with (replaces the demo body of AP-0.8).
     void addDemoBox();
+
+    // --- files (AP-1.10c; the file handling itself is `FileController`) ---
+    /// The document as it is written to a file: the steps as they are now plus the palette of
+    /// the project in the settings (empty while it is the built-in one).
+    core::Document documentForSaving() const;
+    /// Changes whenever the document or the palette changes: "did it change since I looked".
+    std::uint64_t saveStamp() const noexcept;
+    /// True when there is something not saved: steps since the last save, or a palette change.
+    bool hasUnsavedChanges() const { return !m_history.isClean() || m_paletteDirty; }
+    /// The state now is the state on disk. Call only when `saveStamp()` is still the one the
+    /// written file was made from.
+    void markSaved();
+    /// Opens another document in place of the current one: the steps are gone, so is the list
+    /// of undo steps, the choice, the work plane; the palette is the one of the file.
+    void replaceDocument(core::Document document);
 
     const core::Document& document() const noexcept { return m_history.document(); }
     std::shared_ptr<const core::RecomputeResult> result() const { return m_result; }
@@ -297,7 +313,7 @@ public:
     Q_INVOKABLE QVariantMap splitPlane() const;
     Q_INVOKABLE int splitBody(const QString& bodyId);
     Q_INVOKABLE QString combineBodies(const QStringList& bodyIds, const QString& mode);
-    bool canPaste() const noexcept { return !m_clipboard.empty(); }
+    bool canPaste() const { return !m_clipboard.empty() || systemClipboardHasBodies(); }
     /// How far (mm) a copy lies from the original, in x and in y.
     static constexpr double kPasteOffset = 10.0;
 
@@ -384,6 +400,9 @@ signals:
     void historyChanged();
     void printerChanged();
     void paletteChanged();
+    /// The document was replaced as a whole (a file was opened, a new project started): whatever
+    /// was chosen or in progress is gone.
+    void documentReplaced();
     /// A new result arrived: the names of the elements may be different now.
     void elementsChanged();
     /// A new scene for the 3D view.
@@ -459,13 +478,12 @@ private:
     void writeSeat(const core::FeatureId& id, const geo::Seat& seat);
     const core::Body* findBody(const QString& bodyId) const;
 
-    // What was copied: the step that makes a body and what the person did to the body itself.
-    struct ClipboardEntry {
-        core::FeatureDraft draft;
-        std::string name;
-        core::Color color;
-        bool hole = false;
-    };
+    // What was copied (also on the system clipboard, see clipboard_payload.h).
+    using ClipboardEntry = ClipboardPart;
+    /// Takes over what another Fission3D (or an earlier copy) left on the system clipboard.
+    void takeSystemClipboard();
+    bool systemClipboardHasBodies() const;
+    std::string m_publishedClipboard; ///< what this model put there last
     std::vector<ClipboardEntry> m_clipboard;
     int m_pasted = 0; ///< how often this clipboard was pasted: the next copy lies further off
     std::shared_ptr<const render::RenderScene> m_scene;
@@ -506,6 +524,9 @@ private:
         bool custom = false;
     };
     std::vector<PaletteEntry> m_palette;
+    bool m_paletteDirty = false;
+    std::uint64_t m_paletteStamp = 0;
+    void paletteEdited();
     int m_detailLevel = 0;
     int m_shownDetailLevel = 0;
     std::uint64_t m_detailGeneration = 0;

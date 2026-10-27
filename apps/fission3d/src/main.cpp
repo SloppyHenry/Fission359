@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Fission3D contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include <QBuffer>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
@@ -8,6 +9,7 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
+#include <QFileOpenEvent>
 #include <QFont>
 #include <QFontDatabase>
 #include <QGuiApplication>
@@ -41,12 +43,14 @@
 #include "fission/render/benchmark_scene.h"
 #include "fission/render/scene.h"
 #include "fission/services/log.h"
+#include "fission/services/recent_files.h"
 #include "fission/services/startup_clock.h"
 #include "fission/ui/align_controller.h"
 #include "fission/ui/app_info.h"
 #include "fission/ui/app_options.h"
 #include "fission/ui/distance_controller.h"
 #include "fission/ui/document_model.h"
+#include "fission/ui/file_controller.h"
 #include "fission/ui/gizmo_controller.h"
 #include "fission/ui/handle_controller.h"
 #include "fission/ui/language.h"
@@ -94,6 +98,7 @@ struct CommandLine {
     int benchmarkTriangles = 0;
     QString simulate;
     QSize size;
+    QString file; // a .fission file to open (double click, "fission3d model.fission")
 };
 
 // Reads the command line with a plain QCoreApplication: it needs no display, so --help and
@@ -191,12 +196,17 @@ CommandLine parseCommandLine(int& argc, char** argv) {
     const QCommandLineOption size(QStringLiteral("size"),
                                   QStringLiteral("Window size, for example 1280x800."),
                                   QStringLiteral("WxH"));
+    parser.addPositionalArgument(QStringLiteral("file"), QStringLiteral("A .fission file to open."),
+                                 QStringLiteral("[file.fission]"));
     parser.addOptions({smokeTest, measureStartup, theme, language, focus, about, openMenu,
                        showHistory, showShapes, camera, rightTab, benchmark, noSoftShadows,
                        reduceMotion, simulate, size});
     parser.process(core); // prints help or version and exits when asked
 
     CommandLine result;
+    if (!parser.positionalArguments().isEmpty()) {
+        result.file = parser.positionalArguments().constFirst();
+    }
     result.smokeTestPath = parser.value(smokeTest);
     result.measureStartup = parser.isSet(measureStartup);
     result.theme = parser.value(theme);
@@ -1023,6 +1033,41 @@ std::vector<std::string> bundledFontFiles() {
 
 } // namespace
 
+// macOS hands a double-clicked document to the running program (or the one that is starting) as
+// an event, not as an argument. The path is kept until the window exists.
+class FileOpenFilter final : public QObject {
+public:
+    std::function<void(const QString&)> open;
+    QString pending;
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override {
+        if (event->type() == QEvent::FileOpen) {
+            const QString path = static_cast<QFileOpenEvent*>(event)->file();
+            if (open) {
+                open(path);
+            } else {
+                pending = path;
+            }
+            return true;
+        }
+        return QObject::eventFilter(watched, event);
+    }
+};
+
+// The small picture for the file (preview.png): the window, 320 px wide.
+QByteArray previewPng(QQuickWindow* window) {
+    QImage frame = window->grabWindow();
+    if (frame.isNull()) {
+        return {};
+    }
+    frame = frame.scaledToWidth(320, Qt::SmoothTransformation);
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    buffer.open(QIODevice::WriteOnly);
+    return frame.save(&buffer, "PNG") ? bytes : QByteArray();
+}
+
 int main(int argc, char* argv[]) {
     // Process start (by the operating system) to the first drawn frame is the start time.
     const auto mainEntered = std::chrono::steady_clock::now();
@@ -1074,6 +1119,11 @@ int main(int argc, char* argv[]) {
     documentModel.waitForCalculation();
 
     QQmlApplicationEngine engine;
+    fission::services::RecentFiles recentFiles;
+    fission::ui::FileController files(&documentModel, &recentFiles);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Files", &files);
+    FileOpenFilter fileOpenFilter;
+    app.installEventFilter(&fileOpenFilter);
     fission::ui::Language language(&engine);
     language.setCode(options.language.isEmpty() ? QStringLiteral("system") : options.language);
 
@@ -1117,6 +1167,16 @@ int main(int argc, char* argv[]) {
     }
     if (options.size.isValid()) {
         window->resize(options.size);
+    }
+    files.setPreviewGrabber([window] { return previewPng(window); });
+    // A file to open: from the command line, from a double click that started the program, or
+    // from one that arrives later.
+    const auto openFile = [&files](const QString& path) { files.openPath(path); };
+    fileOpenFilter.open = openFile;
+    if (!options.file.isEmpty()) {
+        QTimer::singleShot(0, &app, [openFile, path = options.file] { openFile(path); });
+    } else if (!fileOpenFilter.pending.isEmpty()) {
+        QTimer::singleShot(0, &app, [openFile, path = fileOpenFilter.pending] { openFile(path); });
     }
     auto* viewport = window->findChild<fission::ui::Viewport3D*>(QStringLiteral("viewport"));
     if (viewport != nullptr) {

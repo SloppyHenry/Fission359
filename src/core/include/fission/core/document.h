@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -161,6 +162,11 @@ public:
 
     /// Increases with every change; lets others see "did it change since I looked".
     std::uint64_t revision() const noexcept { return revision_; }
+
+    /// Makes the revision at least `floor`. A document that replaces another (a file was
+    /// opened) continues after the old one's revisions, so that calculation results of the old
+    /// one are never taken for newer ones.
+    void raiseRevisionTo(std::uint64_t floor) noexcept { revision_ = std::max(revision_, floor); }
 
     /// True when both documents hold the same content (title, settings, measures, recipe, bodies).
     /// Revision and id generator state are not content. Used to prove that undo restores a state.
