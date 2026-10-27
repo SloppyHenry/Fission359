@@ -303,7 +303,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.12 Hinweis-System und Befehlssuche
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.11
+**Status:** Review (2026-10-27; wartet auf Test durch den Product Owner, PR #65) · **Größe:** M · **Abhängigkeiten:** AP-1.11
 **Bauanleitung:** [anleitungen/AP-1.12.md](anleitungen/AP-1.12.md)
 
 **Umfang:**
@@ -313,8 +313,15 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Meldungskatalog-Grundgerüst (Schlüssel → Text mit Platzhaltern → Aktionen); wird in AP-2.14 ausgebaut
 
 **Akzeptanzkriterien:**
-- [ ] „runde ecken“, „bohren“, „hohl“ und „namen“ finden das richtige Werkzeug
-- [ ] Jedes Werkzeug aus Phase 1 hat Hinweis, Tooltip-Karte und Synonyme
+- [x] „runde ecken“, „bohren“, „hohl“ und „namen“ finden das richtige Werkzeug (Unit-Test der Bewertung und Ende-zu-Ende-Test über den echten Katalog; Abrunden, Bohrung und Aushöhlen stehen als „kommt bald“ im Katalog)
+- [x] Jedes Werkzeug aus Phase 1 hat Hinweis, Tooltip-Karte und Synonyme (Test `commands_complete`, `scripts/tools/check_commands.py`)
+
+**Abschlussvermerk (2026-10-27, Teile a–d; autonom, Haltepunkte nach Empfehlung):**
+- Befehlskatalog `CommandCatalog.qml` (52 Einträge: Werkzeuge, Formen, Menübefehle, „kommt bald“) führt die Wörter von `ToolCatalog`/`ShapeCatalog` zusammen; Haltepunkt 2 abweichend: QML statt JS (lupdate liest `qsTr` aus beiden, QML ist einfacher einzubinden).
+- Befehlssuche (⌘K, Suchfeld): eigene Bewertung in C++ (`command_search.cpp`: ganzes Wort > Wortanfang > enthalten > ein Tippfehler, Umlaute und ß normalisiert, deutsche und englische Wörter zugleich); Ergebnisliste mit Kürzel und Grund bei nicht möglichen Befehlen; ↑/↓, Enter, Esc.
+- Hinweiszeile: ein Ort (`currentHint` in `Main.qml`) mit fester Rangfolge; im leeren Projekt sagt sie, wie man anfängt. `TooltipCard.qml` (Titel, Satz, Kürzel, Platz für Animation, 0,8 s) für Werkzeuge und Formen.
+- Meldungskatalog `MessageCatalog.qml`: alle 15 `FeatureIssueCode`s, Text je Code und Lösungsaktionen „Wert ändern“ und „Diesen Schritt ausblenden“ als Knöpfe unter der Erklärung am Rezept-Schritt; Test `messages_complete`.
+- Offene Reste: Tooltip-Karten für Menübefehle der Kontextleiste (nur Werkzeuge und Formen); die Fehlerkarte an der Stelle im 3D-Bild (nur inline am Rezept-Schritt); „Wert ändern“ wählt den Schritt, fokussiert aber das Feld nicht; Kürzel in Tooltip der Werkzeuge leer, solange sie keine haben.
 
 ---
 

@@ -15,6 +15,7 @@ AbstractButton {
     property bool expanded: false
     property string tipTitle: ""
     property string tipText: ""
+    property string tipShortcut: ""
 
     // Paddings as in the mockup (.palette .pt: 7 px top, 6 px bottom, 2 px sides), so the
     // highlight sits evenly around icon and label.
@@ -29,43 +30,13 @@ AbstractButton {
     Accessible.checked: active
 
     // Tooltip card: after 0.8 s a title and a sentence (rule 10 of the master prompt).
-    ToolTip {
-        id: tip
-
-        visible: root.hovered && root.tipText !== ""
-        delay: 800
+    TooltipCard {
+        visible: root.hovered && !root.pressed && root.tipText !== ""
         x: root.width + 14
         y: 0
-        padding: 10
-
-        contentItem: Column {
-            spacing: 3
-            width: 230
-
-            Txt {
-                width: parent.width
-                text: root.tipTitle !== "" ? root.tipTitle : root.text
-                color: Theme.fg
-                font.weight: Font.DemiBold
-                elide: Text.ElideNone
-            }
-
-            Txt {
-                width: parent.width
-                text: root.tipText
-                color: Theme.fg3
-                font.pixelSize: Theme.fontSizeSmall
-                wrapMode: Text.WordWrap
-                elide: Text.ElideNone
-            }
-        }
-
-        background: Rectangle {
-            radius: Theme.radiusFloat
-            color: Theme.panel
-            border.width: 1
-            border.color: Theme.line2
-        }
+        title: root.tipTitle !== "" ? root.tipTitle : root.text
+        sentence: root.tipText
+        shortcut: root.tipShortcut
     }
 
     contentItem: Column {

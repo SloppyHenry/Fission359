@@ -322,6 +322,623 @@
     </message>
 </context>
 <context>
+    <name>CommandCatalog</name>
+    <message>
+        <location filename="../qml/CommandCatalog.qml" line="+25"/>
+        <source>New project</source>
+        <translation>New project</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Starts an empty project in a tab of its own.</source>
+        <translation>Starts an empty project in a tab of its own.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An empty project opens next to the others.</source>
+        <translation>An empty project opens next to the others.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Open…</source>
+        <translation>Open…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Opens a saved project.</source>
+        <translation>Opens a saved project.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a .fission file; it opens in a tab of its own.</source>
+        <translation>Choose a .fission file; it opens in a tab of its own.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Save</source>
+        <translation>Save</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Saves the project. A new project asks for a name first.</source>
+        <translation>Saves the project. A new project asks for a name first.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Your work is also saved in the background, but only a saved project has a file.</source>
+        <translation>Your work is also saved in the background, but only a saved project has a file.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Save as…</source>
+        <translation>Save as…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Saves the project under another name.</source>
+        <translation>Saves the project under another name.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a name and a folder.</source>
+        <translation>Choose a name and a folder.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+Shift+S</source>
+        <translation>Ctrl+Shift+S</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Export…</source>
+        <translation>Export…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Writes the bodies as a 3MF or STL file for the slicer.</source>
+        <translation>Writes the bodies as a 3MF or STL file for the slicer.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the file type and how fine the surface should be.</source>
+        <translation>Choose the file type and how fine the surface should be.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Closes the project in this tab.</source>
+        <translation>Closes the project in this tab.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A project with a file is saved first; one without is kept as rescued work.</source>
+        <translation>A project with a file is saved first; one without is kept as rescued work.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Undo</source>
+        <translation>Undo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Takes back the last change.</source>
+        <translation>Takes back the last change.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Every change is a step that can be taken back, also with the arrow in the bar.</source>
+        <translation>Every change is a step that can be taken back, also with the arrow in the bar.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Redo</source>
+        <translation>Redo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Does again what was just taken back.</source>
+        <translation>Does again what was just taken back.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Only possible until you change something else.</source>
+        <translation>Only possible until you change something else.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+Shift+Z</source>
+        <translation>Ctrl+Shift+Z</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Copy</source>
+        <translation>Copy</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copies the chosen bodies.</source>
+        <translation>Copies the chosen bodies.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Paste puts them next to the originals; other projects can paste them too.</source>
+        <translation>Paste puts them next to the originals; other projects can paste them too.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Paste</source>
+        <translation>Paste</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Puts the copied bodies into the project.</source>
+        <translation>Puts the copied bodies into the project.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Every paste moves the copy a little further.</source>
+        <translation>Every paste moves the copy a little further.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Duplicate</source>
+        <translation>Duplicate</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a copy of the chosen bodies right next to them.</source>
+        <translation>Makes a copy of the chosen bodies right next to them.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The copy is chosen; press again for another one.</source>
+        <translation>The copy is chosen; press again for another one.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Removes the chosen bodies and the steps that made them.</source>
+        <translation>Removes the chosen bodies and the steps that made them.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Steps that use them are asked about first; undo brings everything back.</source>
+        <translation>Steps that use them are asked about first; undo brings everything back.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Del</source>
+        <translation>Del</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Select all</source>
+        <translation>Select all</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Chooses all bodies.</source>
+        <translation>Chooses all bodies.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Esc chooses nothing again.</source>
+        <translation>Esc chooses nothing again.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Settings…</source>
+        <translation>Settings…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Language, look, mouse, printer and units.</source>
+        <translation>Language, look, mouse, printer and units.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Everything changes at once and is remembered.</source>
+        <translation>Everything changes at once and is remembered.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>As hole</source>
+        <translation>As hole</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the chosen bodies holes: they cut out of the bodies they touch.</source>
+        <translation>Makes the chosen bodies holes: they cut out of the bodies they touch.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The hole stays visible as a ghost; you can still move it and change its size.</source>
+        <translation>The hole stays visible as a ghost; you can still move it and change its size.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Drop to bed</source>
+        <translation>Drop to bed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lets the chosen bodies fall onto the print bed.</source>
+        <translation>Lets the chosen bodies fall onto the print bed.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Useful after moving something up by mistake.</source>
+        <translation>Useful after moving something up by mistake.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Lay on face</source>
+        <translation>Lay on face</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turns the chosen body so that a face you click lies on the bed or on another face.</source>
+        <translation>Turns the chosen body so that a face you click lies on the bed or on another face.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click the face the body should lie on.</source>
+        <translation>Click the face the body should lie on.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Merge</source>
+        <translation>Merge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Joins two or more bodies into one.</source>
+        <translation>Joins two or more bodies into one.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the bodies first (Shift+click).</source>
+        <translation>Choose the bodies first (Shift+click).</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Subtract</source>
+        <translation>Subtract</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Takes the other chosen bodies away from the first.</source>
+        <translation>Takes the other chosen bodies away from the first.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the body first, then the cutters.</source>
+        <translation>Choose the body first, then the cutters.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Keep overlap</source>
+        <translation>Keep overlap</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keeps only what the chosen bodies have in common.</source>
+        <translation>Keeps only what the chosen bodies have in common.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose two or more bodies that overlap.</source>
+        <translation>Choose two or more bodies that overlap.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Split</source>
+        <translation>Split</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cuts one body in two at a plane.</source>
+        <translation>Cuts one body in two at a plane.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose one body, then place the plane.</source>
+        <translation>Choose one body, then place the plane.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Show everything</source>
+        <translation>Show everything</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zooms so that everything is in view.</source>
+        <translation>Zooms so that everything is in view.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view turns and zooms; nothing in the project changes.</source>
+        <translation>The view turns and zooms; nothing in the project changes.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Home view</source>
+        <translation>Home view</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Goes back to the starting view.</source>
+        <translation>Goes back to the starting view.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The keys 1 to 6 show the sides.</source>
+        <translation>The keys 1 to 6 show the sides.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pos1</source>
+        <translation>Pos1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Orthographic</source>
+        <translation>Orthographic</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the model without perspective: parallel lines stay parallel.</source>
+        <translation>Shows the model without perspective: parallel lines stay parallel.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Good for comparing sizes.</source>
+        <translation>Good for comparing sizes.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Print bed</source>
+        <translation>Print bed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows or hides the print bed.</source>
+        <translation>Shows or hides the print bed.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The bed shows where your printer can print.</source>
+        <translation>The bed shows where your printer can print.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Soft shadows</source>
+        <translation>Soft shadows</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Soft shadows in corners and crevices make shapes easier to read.</source>
+        <translation>Soft shadows in corners and crevices make shapes easier to read.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Switched off by itself when the graphics card cannot keep up.</source>
+        <translation>Switched off by itself when the graphics card cannot keep up.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Focus</source>
+        <translation>Focus</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Hides the panels so that only the model is left.</source>
+        <translation>Hides the panels so that only the model is left.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Press the same key again to bring the panels back.</source>
+        <translation>Press the same key again to bring the panels back.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shift+F</source>
+        <translation>Shift+F</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Recent actions</source>
+        <translation>Recent actions</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lists what you did, newest last; click one to go back to it.</source>
+        <translation>Lists what you did, newest last; click one to go back to it.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Every change is a sentence here.</source>
+        <translation>Every change is a sentence here.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Round edges</source>
+        <translation>Round edges</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rounds the edges of a body with one radius.</source>
+        <translation>Rounds the edges of a body with one radius.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+6"/>
+        <source>Choose edges, drag the dot.</source>
+        <translation>Choose edges, drag the dot.</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>Bevel edges</source>
+        <translation>Bevel edges</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cuts the edges of a body at an angle.</source>
+        <translation>Cuts the edges of a body at an angle.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Drilled hole</source>
+        <translation>Drilled hole</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A round hole in a face with a chosen diameter and depth, also countersunk.</source>
+        <translation>A round hole in a face with a chosen diameter and depth, also countersunk.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click a face, then drag the dot.</source>
+        <translation>Click a face, then drag the dot.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Hollow out</source>
+        <translation>Hollow out</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a body hollow with a wall of a chosen thickness.</source>
+        <translation>Makes a body hollow with a wall of a chosen thickness.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the body and the faces that stay open.</source>
+        <translation>Choose the body and the faces that stay open.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Pull up a sketch</source>
+        <translation>Pull up a sketch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turns a sketch into a body by pulling it up.</source>
+        <translation>Turns a sketch into a body by pulling it up.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Draw a sketch, then drag it up.</source>
+        <translation>Draw a sketch, then drag it up.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Sketch</source>
+        <translation>Sketch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Draws lines, circles and rectangles with exact measures on a face.</source>
+        <translation>Draws lines, circles and rectangles with exact measures on a face.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a face to draw on.</source>
+        <translation>Choose a face to draw on.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Pattern</source>
+        <translation>Pattern</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Repeats a body in a row, a grid or around a circle.</source>
+        <translation>Repeats a body in a row, a grid or around a circle.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the body, then the number and the distance.</source>
+        <translation>Choose the body, then the number and the distance.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Mirror</source>
+        <translation>Mirror</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a mirrored copy of a body.</source>
+        <translation>Makes a mirrored copy of a body.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the body and the plane to mirror at.</source>
+        <translation>Choose the body and the plane to mirror at.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>A %1 as the start of a shape. %2</source>
+        <translation>A %1 as the start of a shape. %2</translation>
+    </message>
+</context>
+<context>
+    <name>CommandPalette</name>
+    <message>
+        <location filename="../qml/CommandPalette.qml" line="+24"/>
+        <source>Command search</source>
+        <translation>Command search</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Tool</source>
+        <translation>Tool</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shape</source>
+        <translation>Shape</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>File</source>
+        <translation>File</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Edit</source>
+        <translation>Edit</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Body</source>
+        <translation>Body</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>View</source>
+        <translation>View</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Soon</source>
+        <translation>Soon</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>What do you want to do?</source>
+        <translation>What do you want to do?</translation>
+    </message>
+</context>
+<context>
     <name>ContextBar</name>
     <message>
         <location filename="../qml/ContextBar.qml" line="+35"/>
@@ -812,7 +1429,7 @@
         <translation>Cancel</translation>
     </message>
     <message>
-        <location line="+95"/>
+        <location line="+98"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Every change appears here as a sentence.</translation>
     </message>
@@ -876,19 +1493,19 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+557"/>
+        <location line="+643"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-556"/>
-        <location line="+668"/>
+        <location line="-642"/>
+        <location line="+754"/>
         <location line="+5"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
     <message>
-        <location line="-673"/>
+        <location line="-759"/>
         <source>Ctrl+Shift+S</source>
         <translation>Ctrl+Shift+S</translation>
     </message>
@@ -913,7 +1530,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+79"/>
+        <location line="+99"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -923,7 +1540,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-79"/>
+        <location line="-99"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -1099,12 +1716,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1114"/>
+        <location line="+1206"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1113"/>
+        <location line="-1205"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1135,12 +1752,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1102"/>
+        <location line="+1194"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1100"/>
+        <location line="-1192"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1170,19 +1787,24 @@
         <translation>About Fission3D</translation>
     </message>
     <message>
+        <location line="+20"/>
+        <source>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</source>
+        <translation>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</translation>
+    </message>
+    <message>
         <location line="+23"/>
-        <location line="+699"/>
+        <location line="+782"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-697"/>
-        <location line="+698"/>
+        <location line="-780"/>
+        <location line="+781"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-692"/>
+        <location line="-775"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -1192,7 +1814,7 @@
         <translation>Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.</translation>
     </message>
     <message numerus="yes">
-        <location line="+61"/>
+        <location line="+127"/>
         <source>%n step(s) use what you delete: %1. They will need help.</source>
         <translation>
             <numerusform>%n step uses what you delete: %1. It will need help.</numerusform>
@@ -1208,12 +1830,7 @@
         </translation>
     </message>
     <message>
-        <location line="+56"/>
-        <source>Command search arrives in a later version.</source>
-        <translation>Command search arrives in a later version.</translation>
-    </message>
-    <message>
-        <location line="+31"/>
+        <location line="+87"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -1367,7 +1984,42 @@
         <translation>OK</translation>
     </message>
     <message>
-        <location line="-2"/>
+        <location line="-612"/>
+        <source>Arrives in a later version.</source>
+        <translation>Arrives in a later version.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Choose a body first.</source>
+        <translation>Choose a body first.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Choose one body first.</source>
+        <translation>Choose one body first.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Choose two bodies first (Shift+click).</source>
+        <translation>Choose two bodies first (Shift+click).</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Nothing to undo.</source>
+        <translation>Nothing to undo.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nothing to redo.</source>
+        <translation>Nothing to redo.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy something first.</source>
+        <translation>Copy something first.</translation>
+    </message>
+    <message>
+        <location line="+595"/>
         <source>This file was made with a newer Fission3D and is opened as far as this version understands it. To keep the original safe, save it under a new name.</source>
         <translation>This file was made with a newer Fission3D and is opened as far as this version understands it. To keep the original safe, save it under a new name.</translation>
     </message>
@@ -1402,7 +2054,7 @@
         <translation>The file could not be read.</translation>
     </message>
     <message>
-        <location line="+189"/>
+        <location line="+206"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -1417,7 +2069,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="-1112"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -1457,12 +2109,12 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+1143"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+24"/>
         <source>Combine</source>
         <translation>Combine</translation>
     </message>
@@ -1846,112 +2498,7 @@
         <translation>Several changes</translation>
     </message>
     <message>
-        <location line="+15"/>
-        <source>I don’t know “%1”.</source>
-        <translation>I don’t know “%1”.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>“%1” has a problem itself.</source>
-        <translation>“%1” has a problem itself.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>That divides by zero.</source>
-        <translation>That divides by zero.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>This font has no character for %1. Choose another font or remove it.</source>
-        <translation>This font has no character for %1. Choose another font or remove it.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>“%1” has no %2 style. Choose another font or style.</source>
-        <translation>“%1” has no %2 style. Choose another font or style.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>The font “%1” is not on this computer. Choose another font.</source>
-        <translation>The font “%1” is not on this computer. Choose another font.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Type some text.</source>
-        <translation>Type some text.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The corners are too round for this size.</source>
-        <translation>The corners are too round for this size.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Use a whole number from 3 to 64.</source>
-        <translation>Use a whole number from 3 to 64.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The wall must be thinner than the radius.</source>
-        <translation>The wall must be thinner than the radius.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The tube must be thinner than the ring radius.</source>
-        <translation>The tube must be thinner than the ring radius.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The notches must lie closer to the middle than the tips.</source>
-        <translation>The notches must lie closer to the middle than the tips.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The top radius cannot be negative.</source>
-        <translation>The top radius cannot be negative.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>%1 must be bigger than zero.</source>
-        <translation>%1 must be bigger than zero.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>The cutting plane does not touch the body. Move it into the body.</source>
-        <translation>The cutting plane does not touch the body. Move it into the body.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>A cutter does not touch the body, so nothing is cut out. Move it onto the body.</source>
-        <translation>A cutter does not touch the body, so nothing is cut out. Move it onto the body.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.</source>
-        <translation>These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>The bodies do not overlap, so nothing is left. Move them so that they touch.</source>
-        <translation>The bodies do not overlap, so nothing is left. Move them so that they touch.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>An earlier step has a problem.</source>
-        <translation>An earlier step has a problem.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>%1 cannot be calculated.</source>
-        <translation>%1 cannot be calculated.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>This shape could not be built.</source>
-        <translation>This shape could not be built.</translation>
-    </message>
-    <message>
-        <location line="+53"/>
+        <location line="+72"/>
         <source>, part %1</source>
         <translation>, part %1</translation>
     </message>
@@ -2005,32 +2552,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-413"/>
+        <location line="-357"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1089"/>
+        <location line="-1192"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1124"/>
+        <location line="+1227"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-982"/>
+        <location line="-1065"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+434"/>
+        <location line="+500"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+587"/>
+        <location line="-547"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -2084,6 +2631,144 @@
         <location line="+0"/>
         <source>Settings (Ctrl+,)</source>
         <translation>Settings (Ctrl+,)</translation>
+    </message>
+</context>
+<context>
+    <name>MessageCatalog</name>
+    <message>
+        <location filename="../qml/MessageCatalog.qml" line="+48"/>
+        <source>Change value</source>
+        <translation>Change value</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Hide this step</source>
+        <translation>Hide this step</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>I don’t know “%1”.</source>
+        <translation>I don’t know “%1”.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>“%1” has a problem itself.</source>
+        <translation>“%1” has a problem itself.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>That divides by zero.</source>
+        <translation>That divides by zero.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>This font has no character for %1. Choose another font or remove it.</source>
+        <translation>This font has no character for %1. Choose another font or remove it.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>“%1” has no %2 style. Choose another font or style.</source>
+        <translation>“%1” has no %2 style. Choose another font or style.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The font “%1” is not on this computer. Choose another font.</source>
+        <translation>The font “%1” is not on this computer. Choose another font.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Type some text.</source>
+        <translation>Type some text.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The corners are too round for this size.</source>
+        <translation>The corners are too round for this size.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Use a whole number from 3 to 64.</source>
+        <translation>Use a whole number from 3 to 64.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The wall must be thinner than the radius.</source>
+        <translation>The wall must be thinner than the radius.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The tube must be thinner than the ring radius.</source>
+        <translation>The tube must be thinner than the ring radius.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The notches must lie closer to the middle than the tips.</source>
+        <translation>The notches must lie closer to the middle than the tips.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The top radius cannot be negative.</source>
+        <translation>The top radius cannot be negative.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 must be bigger than zero.</source>
+        <translation>%1 must be bigger than zero.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The cutting plane does not touch the body. Move it into the body.</source>
+        <translation>The cutting plane does not touch the body. Move it into the body.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The shape cannot be built with these values. Try changing a value a little.</source>
+        <translation>The shape cannot be built with these values. Try changing a value a little.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>A cutter does not touch the body, so nothing is cut out. Move it onto the body.</source>
+        <translation>A cutter does not touch the body, so nothing is cut out. Move it onto the body.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.</source>
+        <translation>These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The result is not a clean solid. Try changing a value a little.</source>
+        <translation>The result is not a clean solid. Try changing a value a little.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The bodies do not overlap, so nothing is left. Move them so that they touch.</source>
+        <translation>The bodies do not overlap, so nothing is left. Move them so that they touch.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>An earlier step has a problem.</source>
+        <translation>An earlier step has a problem.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 cannot be calculated.</source>
+        <translation>%1 cannot be calculated.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This kind of step is not known to this version of the program.</source>
+        <translation>This kind of step is not known to this version of the program.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The calculation was replaced by a newer change.</source>
+        <translation>The calculation was replaced by a newer change.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This shape could not be built.</source>
+        <translation>This shape could not be built.</translation>
     </message>
 </context>
 <context>
@@ -2202,7 +2887,7 @@
         <translation>Hidden</translation>
     </message>
     <message>
-        <location line="+105"/>
+        <location line="+109"/>
         <source>Name of the step</source>
         <translation>Name of the step</translation>
     </message>

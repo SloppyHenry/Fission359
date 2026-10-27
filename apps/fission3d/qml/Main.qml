@@ -150,6 +150,25 @@ Window {
         ] }
     ]
 
+    // The one sentence of the hint line, whatever state the program is in. The first line that
+    // applies wins: a drag or typing in progress, a shape being put down, a message, an open
+    // tool group, what is under the pointer, the tool when something is chosen, and at rest what
+    // to do next. Everything that wants to tell the person something goes through here (AP-1.12c).
+    readonly property string currentHint: root.seating ? qsTr("Click the face the body should lie on. Esc cancels.")
+            : Placement.active ? qsTr("Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt")
+            : Gizmo.editing ? qsTr("Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.")
+            : Rotate.editing ? qsTr("Type an angle to turn exactly (Tab for the next ring), Enter accepts, Esc puts it back.")
+            : Scale.editing ? qsTr("All sizes change alike; the corner across stays. Type a percentage, Enter accepts, Esc puts it back.")
+            : Handles.editing ? qsTr("Enter accepts, Tab goes to the next size, Esc leaves everything as it was.")
+            : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
+            : root.transientHint !== "" && hintTimer.running ? root.transientHint
+            : root.flyout === "combine" ? qsTr("Choose two or more bodies (Shift+click), then merge them, subtract the others from the first or keep only what they share. One body can be split in two.")
+            : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.")
+            : root.hoverText !== "" ? root.hoverText
+            : Selection.count > 0 ? toolCatalog.find(root.tool).hint
+            : DocumentModel.bodies.length === 0 ? qsTr("Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.").arg(primaryKey + "K")
+            : root.navigationText
+
     // ---- undo and redo ---------------------------------------------------------------------
     // While a text field holds text that was typed and not yet accepted, Ctrl+Z is for that
     // text. A field says so with `pendingEdit` (see NumberField); once the value is accepted,
@@ -164,6 +183,7 @@ Window {
     property bool exportOpen: false
     property bool settingsOpen: false
     property bool startOpen: AppOptions.startPage
+    property bool searchOpen: false
     // A text field has the keyboard: keys such as Esc and Ctrl+A are for the text then.
     readonly property bool typing: root.activeFocusItem !== null && root.activeFocusItem !== undefined
                                    && root.activeFocusItem.cursorPosition !== undefined
@@ -197,6 +217,72 @@ Window {
 
     ToolCatalog {
         id: toolCatalog
+    }
+
+    CommandCatalog {
+        id: commandCatalog
+
+        tools: toolCatalog
+        shapes: shapeCatalog
+        isMac: root.isMac
+        primaryKey: root.primaryKey
+    }
+
+    // Why a command cannot run now, in a sentence; empty when it can.
+    function commandReason(command) {
+        if (command.run.kind === "soon") {
+            return qsTr("Arrives in a later version.")
+        }
+        switch (command.needs) {
+        case "selection":
+            if (chosenBodies.length < 1) { return qsTr("Choose a body first.") }
+            break
+        case "one":
+            if (chosenBodies.length !== 1) { return qsTr("Choose one body first.") }
+            break
+        case "two":
+            if (chosenBodies.length < 2) { return qsTr("Choose two bodies first (Shift+click).") }
+            break
+        }
+        if (command.id === "menu.undo" && !undoAvailable) { return qsTr("Nothing to undo.") }
+        if (command.id === "menu.redo" && !redoAvailable) { return qsTr("Nothing to redo.") }
+        if (command.id === "menu.paste" && !DocumentModel.canPaste) { return qsTr("Copy something first.") }
+        return ""
+    }
+
+    // The results for the command search: the ids the search ranks, with what the list shows.
+    function searchResults(text) {
+        const ids = CommandSearch.search(text, commandCatalog.searchables())
+        return ids.slice(0, text === "" ? 8 : 30).map(id => {
+            const command = commandCatalog.find(id)
+            return { id: id, name: command.name, shortcut: command.shortcut || "",
+                     group: command.group, reason: commandReason(command) }
+        })
+    }
+
+    // The best match for a text (the tests use it); empty when nothing fits.
+    function topCommand(text) {
+        const ids = CommandSearch.search(text, commandCatalog.searchables())
+        return ids.length > 0 ? ids[0] : ""
+    }
+
+    // Does what the command says. A command that cannot run says why instead.
+    function runCommand(id) {
+        const command = commandCatalog.find(id)
+        if (command === null) {
+            return false
+        }
+        const reason = commandReason(command)
+        if (reason !== "") {
+            showHint(command.name + ": " + reason)
+            return false
+        }
+        switch (command.run.kind) {
+        case "tool": tool = command.run.id; break
+        case "shape": Placement.add(command.run.id, false); break
+        case "menu": run(command.run.id); break
+        }
+        return true
     }
 
     // What the tool of the palette shows on the chosen body (AP-1.6, docs/08-gestaltung.md §5):
@@ -298,7 +384,7 @@ Window {
         case "export": exportOpen = !exportOpen; break
         case "about": aboutWindow.show(); aboutWindow.raise(); break
         case "settings": settingsOpen = !settingsOpen; break
-        case "search": showHint(qsTr("Command search arrives in a later version.")); break
+        case "search": searchOpen = !searchOpen; break
         case "undo": DocumentModel.undo(); break
         case "redo": DocumentModel.redo(); break
         case "history": historyOpen = !historyOpen; break
@@ -812,6 +898,23 @@ Window {
         z: 23
     }
 
+    CommandPalette {
+        id: commandPalette
+
+        visible: root.searchOpen
+        anchors.top: docTabs.bottom
+        anchors.topMargin: 10
+        anchors.horizontalCenter: parent.horizontalCenter
+        z: 24
+        source: root.searchResults
+        onVisibleChanged: if (visible) open()
+        onCloseRequested: root.searchOpen = false
+        onChosen: id => {
+            root.searchOpen = false
+            root.runCommand(id)
+        }
+    }
+
     SettingsPage {
         id: settingsPage
 
@@ -1202,19 +1305,7 @@ Window {
         width: parent.width
         selection: root.selectionText
         toolName: root.toolName(root.tool)
-        hint: root.seating ? qsTr("Click the face the body should lie on. Esc cancels.")
-            : Placement.active ? qsTr("Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt")
-            : Gizmo.editing ? qsTr("Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.")
-            : Rotate.editing ? qsTr("Type an angle to turn exactly (Tab for the next ring), Enter accepts, Esc puts it back.")
-            : Scale.editing ? qsTr("All sizes change alike; the corner across stays. Type a percentage, Enter accepts, Esc puts it back.")
-            : Handles.editing ? qsTr("Enter accepts, Tab goes to the next size, Esc leaves everything as it was.")
-            : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
-            : root.transientHint !== "" && hintTimer.running ? root.transientHint
-            : root.flyout === "combine" ? qsTr("Choose two or more bodies (Shift+click), then merge them, subtract the others from the first or keep only what they share. One body can be split in two.")
-            : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.")
-            : root.hoverText !== "" ? root.hoverText
-            : Selection.count > 0 ? toolCatalog.find(root.tool).hint
-            : root.navigationText
+        hint: root.currentHint
         unitText: qsTr("Unit: mm")
         gridStep: viewport.snapStep
         gridAutomatic: viewport.fixedSnapStep === 0
@@ -1387,61 +1478,15 @@ Window {
     }))
 
     // One short sentence for what went wrong (the full message catalogue comes later).
+    MessageCatalog {
+        id: messageCatalog
+
+        valueLabel: root.valueLabel
+        styleLabel: root.styleLabel
+    }
+
     function problemText(problem, step) {
-        if (!problem) {
-            return ""
-        }
-        if (problem.detail === "unknownName") {
-            return qsTr("I don’t know “%1”.").arg(problem.subject)
-        }
-        if (problem.detail === "brokenDependency") {
-            return qsTr("“%1” has a problem itself.").arg(problem.subject)
-        }
-        if (problem.detail === "divisionByZero") {
-            return qsTr("That divides by zero.")
-        }
-        if (problem.code === "textGlyphsMissing") {
-            return qsTr("This font has no character for %1. Choose another font or remove it.").arg(problem.field)
-        }
-        if (problem.code === "fontStyleMissing") {
-            return qsTr("“%1” has no %2 style. Choose another font or style.")
-                .arg(problem.field).arg(styleLabel(step && step.texts ? step.texts.style : "regular"))
-        }
-        if (problem.code === "fontNotFound") {
-            return qsTr("The font “%1” is not on this computer. Choose another font.").arg(problem.field)
-        }
-        if (problem.code === "parameterOutOfRange") {
-            switch (problem.field) {
-            case "text": return qsTr("Type some text.")
-            case "cornerRadius": return qsTr("The corners are too round for this size.")
-            case "sides":
-            case "points": return qsTr("Use a whole number from 3 to 64.")
-            case "wall": return qsTr("The wall must be thinner than the radius.")
-            case "tubeRadius": return qsTr("The tube must be thinner than the ring radius.")
-            case "innerRadius": return qsTr("The notches must lie closer to the middle than the tips.")
-            case "topRadius": return qsTr("The top radius cannot be negative.")
-            default: return qsTr("%1 must be bigger than zero.").arg(valueLabel(problem.field))
-            }
-        }
-        if (problem.code === "kernelRejected" && problem.field === "position") {
-            return qsTr("The cutting plane does not touch the body. Move it into the body.")
-        }
-        if (problem.code === "combineNoOverlap") {
-            return qsTr("A cutter does not touch the body, so nothing is cut out. Move it onto the body.")
-        }
-        if (problem.code === "kernelResultInvalid" && step && step.type === "combine") {
-            return qsTr("These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.")
-        }
-        if (problem.code === "combineEmpty") {
-            return qsTr("The bodies do not overlap, so nothing is left. Move them so that they touch.")
-        }
-        if (problem.code === "inputFailed" || problem.code === "inputMissing") {
-            return qsTr("An earlier step has a problem.")
-        }
-        if (problem.code === "parameterInvalid") {
-            return qsTr("%1 cannot be calculated.").arg(valueLabel(problem.field))
-        }
-        return qsTr("This shape could not be built.")
+        return messageCatalog.text(problem, step)
     }
 
     function recipeIcon(type) {
@@ -1459,7 +1504,8 @@ Window {
         icon: recipeIcon(step.type),
         label: step.label,
         state: step.state,
-        problem: step.problem ? problemText(step.problem, step) : ""
+        problem: step.problem ? problemText(step.problem, step) : "",
+        problemActions: step.problem ? messageCatalog.actionsFor(step.problem) : []
     }))
 
     readonly property var chosenBodyIndexes: Selection.items.map(item => item.bodyIndex)
