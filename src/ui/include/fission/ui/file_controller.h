@@ -92,6 +92,9 @@ public:
     /// Opens the rescued work in place of the current document (after leaving that one safely).
     Q_INVOKABLE bool restoreRescued(const QString& id);
     Q_INVOKABLE void discardRescued(const QString& id);
+    /// Writes the rescue copy now and waits for it (what the autosave timer does; also for tests).
+    /// False when it could not be written or there is no rescue folder.
+    bool autosaveNow() { return writeRecoverySync(); }
     /// The end of the program: nothing the person made is lost, then the session is closed.
     void finishSession();
     Q_INVOKABLE QString baseName(const QString& path) const;

@@ -403,6 +403,13 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --simulate "put:cylinder;rightclickitem:recipeRow_1;clickitem:menu_hide;recipe:box,cylinder")
   set_tests_properties(app_recipe_menu_hide PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.10: save and open, a crash (kill -9) and the rescue card, quitting without saving, and the
+  # export files, all through the real program (the steps the person would try by hand).
+  add_test(NAME app_files_end_to_end
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/ui/e2e_files.py"
+            $<TARGET_FILE:fission3d> ${_fission_gui_runner})
+  set_tests_properties(app_files_end_to_end PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 600 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)
