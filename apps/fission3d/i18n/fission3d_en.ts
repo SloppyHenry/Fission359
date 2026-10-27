@@ -772,7 +772,7 @@
         <translation>Untitled</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+25"/>
         <source>%1 × %2</source>
         <translation>%1 × %2</translation>
     </message>
@@ -798,19 +798,19 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+534"/>
+        <location line="+554"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-533"/>
-        <location line="+645"/>
+        <location line="-553"/>
+        <location line="+665"/>
         <location line="+5"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
     <message>
-        <location line="-650"/>
+        <location line="-670"/>
         <source>Ctrl+Shift+S</source>
         <translation>Ctrl+Shift+S</translation>
     </message>
@@ -835,7 +835,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+77"/>
+        <location line="+78"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -845,7 +845,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-77"/>
+        <location line="-78"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -1021,12 +1021,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1032"/>
+        <location line="+1075"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1031"/>
+        <location line="-1074"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1057,12 +1057,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1020"/>
+        <location line="+1063"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1018"/>
+        <location line="-1061"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1092,19 +1092,19 @@
         <translation>About Fission3D</translation>
     </message>
     <message>
-        <location line="+21"/>
-        <location line="+627"/>
+        <location line="+22"/>
+        <location line="+662"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-625"/>
-        <location line="+626"/>
+        <location line="-660"/>
+        <location line="+661"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-620"/>
+        <location line="-655"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -1130,17 +1130,12 @@
         </translation>
     </message>
     <message>
-        <location line="+54"/>
-        <source>Settings arrive in a later version.</source>
-        <translation>Settings arrive in a later version.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
+        <location line="+55"/>
         <source>Command search arrives in a later version.</source>
         <translation>Command search arrives in a later version.</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+31"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -1153,12 +1148,12 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+435"/>
+        <location line="+464"/>
         <source>This arrives in a later version.</source>
         <translation>This arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-417"/>
+        <location line="-446"/>
         <source>This body cannot be split: it may be part of another body.</source>
         <translation>This body cannot be split: it may be part of another body.</translation>
     </message>
@@ -1193,7 +1188,7 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+181"/>
+        <location line="+194"/>
         <source>Open</source>
         <translation>Open</translation>
     </message>
@@ -1330,7 +1325,7 @@
         <translation>The file could not be read.</translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+66"/>
         <source>The start page arrives in a later version.</source>
         <translation>The start page arrives in a later version.</translation>
     </message>
@@ -1355,7 +1350,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+38"/>
+        <location line="+39"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -1400,7 +1395,7 @@
         <translation>Unit: mm</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+23"/>
         <source>Combine</source>
         <translation>Combine</translation>
     </message>
@@ -1943,32 +1938,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-406"/>
+        <location line="-413"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1014"/>
+        <location line="-1050"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1049"/>
+        <location line="+1085"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-909"/>
+        <location line="-944"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+413"/>
+        <location line="+432"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+534"/>
+        <location line="+551"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -2394,6 +2389,197 @@
         <location line="+47"/>
         <source>%1 × %2 × %3 mm</source>
         <translation>%1 × %2 × %3 mm</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPage</name>
+    <message>
+        <location filename="../qml/SettingsPage.qml" line="+22"/>
+        <location line="+7"/>
+        <source>Settings</source>
+        <translation>Settings</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <location line="+188"/>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
+    <message>
+        <location line="-155"/>
+        <source>General</source>
+        <translation>General</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+2"/>
+        <source>Language</source>
+        <translation>Language</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+40"/>
+        <source>Like the computer</source>
+        <translation>Like the computer</translation>
+    </message>
+    <message>
+        <location line="-36"/>
+        <source>Unit for new projects</source>
+        <translation>Unit for new projects</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Unit</source>
+        <translation>Unit</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Millimetres</source>
+        <translation>Millimetres</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Inches</source>
+        <translation>Inches</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Decimal places shown</source>
+        <translation>Decimal places shown</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Decimal places</source>
+        <translation>Decimal places</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Save automatically in the background</source>
+        <translation>Save automatically in the background</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Autosave interval</source>
+        <translation>Autosave interval</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>every minute</source>
+        <translation>every minute</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>every 5 minutes</source>
+        <translation>every 5 minutes</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>every 10 minutes</source>
+        <translation>every 10 minutes</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Look</source>
+        <translation>Look</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+2"/>
+        <source>Design</source>
+        <translation>Design</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Light</source>
+        <translation>Light</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Dark</source>
+        <translation>Dark</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Accent colour</source>
+        <translation>Accent colour</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>#rrggbb</source>
+        <translation>#rrggbb</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Own accent colour</source>
+        <translation>Own accent colour</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>This colour looks like an error message (red). It works, but you might take buttons for warnings.</source>
+        <translation>This colour looks like an error message (red). It works, but you might take buttons for warnings.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This colour looks like a warning (yellow). It works, but you might take buttons for warnings.</source>
+        <translation>This colour looks like a warning (yellow). It works, but you might take buttons for warnings.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This colour looks like “all fine” (green). It works, but you might take buttons for confirmations.</source>
+        <translation>This colour looks like “all fine” (green). It works, but you might take buttons for confirmations.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+2"/>
+        <source>Size of the interface</source>
+        <translation>Size of the interface</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Working</source>
+        <translation>Working</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+2"/>
+        <source>Mouse</source>
+        <translation>Mouse</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+2"/>
+        <source>Handles</source>
+        <translation>Handles</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Arrows along the axes</source>
+        <translation>Arrows along the axes</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Classic (squares)</source>
+        <translation>Classic (squares)</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Printer</source>
+        <translation>Printer</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>My printer</source>
+        <translation>My printer</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Choose another…</source>
+        <translation>Choose another…</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Back to the defaults</source>
+        <translation>Back to the defaults</translation>
     </message>
 </context>
 <context>

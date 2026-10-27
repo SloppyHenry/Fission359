@@ -30,7 +30,9 @@ public:
 
     /// A number as text with at most `decimals` decimals and no trailing zeros ("12,5" in German,
     /// "12.5" in English).
+    /// The person's setting "decimals" (0 to 4) is a ceiling: nothing is shown with more.
     Q_INVOKABLE QString format(double value, int decimals = 3) const;
+    void setMaxDecimals(int decimals) { m_maxDecimals = decimals; }
 
     /// The text moved by `delta` (millimetres or degrees) for the arrow keys: a number becomes the
     /// new number in the user's decimal separator, a formula stays one (`Breite/2` becomes
@@ -46,6 +48,7 @@ public:
 
 private:
     core::NamedMeasures m_measures;
+    int m_maxDecimals = 4;
 };
 
 } // namespace fission::ui

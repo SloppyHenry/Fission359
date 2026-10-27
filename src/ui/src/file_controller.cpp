@@ -379,7 +379,11 @@ bool FileController::newDocument() {
         return false;
     }
     m_created.clear();
-    m_model->replaceDocument(core::Document{});
+    core::Document fresh;
+    core::DocumentSettings settings = fresh.settings();
+    settings.defaultUnitMillimetres = m_newDocumentUnit;
+    fresh.setSettings(settings);
+    m_model->replaceDocument(std::move(fresh));
     setPath(QString());
     refreshModified();
     return true;

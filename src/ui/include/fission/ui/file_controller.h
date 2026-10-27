@@ -97,6 +97,8 @@ public:
     bool autosaveNow() { return writeRecoverySync(); }
     /// The end of the program: nothing the person made is lost, then the session is closed.
     void finishSession();
+    /// What a bare number means in a new project: 1 for millimetres, 25.4 for inches (setting).
+    void setNewDocumentUnit(double millimetres) { m_newDocumentUnit = millimetres; }
     Q_INVOKABLE QString baseName(const QString& path) const;
     Q_INVOKABLE void forgetRecent(const QString& path);
 
@@ -140,6 +142,7 @@ private:
     std::uint64_t m_recoveryStamp = 0; ///< the state the rescue file was written from
     bool m_recovering = false;
     int m_lastPosition = 0;
+    double m_newDocumentUnit = 1.0;
 };
 
 } // namespace fission::ui

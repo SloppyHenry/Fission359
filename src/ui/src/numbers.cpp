@@ -184,7 +184,7 @@ QString Numbers::format(double value, int decimals) const {
     if (!std::isfinite(value)) {
         return {};
     }
-    QString text = QLocale().toString(value, 'f', decimals);
+    QString text = QLocale().toString(value, 'f', std::min(decimals, m_maxDecimals));
     const QString separator = QLocale().decimalPoint();
     if (text.contains(separator)) {
         while (text.endsWith(QLatin1Char('0'))) {
