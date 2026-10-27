@@ -3,6 +3,8 @@
 
 #include "fission/services/autosave.h"
 
+#include <algorithm>
+
 namespace fission::services {
 
 Autosave::Autosave(int intervalMilliseconds, int commandsPerSave, QObject* parent)
@@ -17,6 +19,9 @@ Autosave::Autosave(int intervalMilliseconds, int commandsPerSave, QObject* paren
 }
 
 void Autosave::commandDone() {
+    if (!enabled_) {
+        return;
+    }
     if (++commands_ >= commandsPerSave_) {
         emit due();
     }
@@ -34,7 +39,22 @@ void Autosave::stop() {
 }
 
 void Autosave::start() {
-    timer_.start();
+    if (enabled_) {
+        timer_.start();
+    }
+}
+
+void Autosave::setEnabled(bool enabled) {
+    enabled_ = enabled;
+    if (enabled) {
+        timer_.start();
+    } else {
+        timer_.stop();
+    }
+}
+
+void Autosave::setIntervalMinutes(int minutes) {
+    timer_.setInterval(std::clamp(minutes, 1, 60) * 60000);
 }
 
 } // namespace fission::services

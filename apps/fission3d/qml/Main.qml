@@ -25,7 +25,8 @@ Window {
     property string rightTab: "object"
     property bool focusMode: AppOptions.focusMode
     property bool orthographic: false
-    property string mouseStyle: "fission"
+    // What the person set up is kept in the settings (Preferences) and comes back at the next start.
+    readonly property string mouseStyle: Preferences.mouseStyle
     property bool bedVisible: true
     property string transientHint: ""
     property string flyout: ""         // the open tool group of the palette: "" or "shapes"
@@ -297,8 +298,14 @@ Window {
         case "history": historyOpen = !historyOpen; break
         case "orthographic": orthographic = !orthographic; break
         case "bed": bedVisible = !bedVisible; break
-        case "softshadows": viewport.ambientOcclusion = !viewport.ambientOcclusion; break
-        case "snapgrid": viewport.snapGridShown = !viewport.snapGridShown; break
+        case "softshadows":
+            viewport.ambientOcclusion = !viewport.ambientOcclusion
+            Preferences.softShadows = viewport.ambientOcclusion
+            break
+        case "snapgrid":
+            viewport.snapGridShown = !viewport.snapGridShown
+            Preferences.snapGridShown = viewport.snapGridShown
+            break
         case "focus": focusMode = !focusMode; break
         case "minimize": root.showMinimized(); break
         case "fullscreen":
@@ -356,7 +363,7 @@ Window {
         }
         default:
             if (id.indexOf("mouse.") === 0) {
-                mouseStyle = id.substring(6)
+                Preferences.mouseStyle = id.substring(6)
             } else if (id.indexOf("view.") === 0) {
                 viewport.setStandardView(id.substring(5))
             } else {
@@ -459,7 +466,9 @@ Window {
         if (AppOptions.rightTab === "printer" || AppOptions.rightTab === "object") {
             rightTab = AppOptions.rightTab
         }
-        if (!AppOptions.softShadows) {
+        viewport.snapGridShown = Preferences.snapGridShown
+        viewport.fixedSnapStep = Preferences.snapStep
+        if (!AppOptions.softShadows || !Preferences.softShadows) {
             viewport.ambientOcclusion = false
         }
         if (AppOptions.openMenu >= 0) {
@@ -1088,6 +1097,7 @@ Window {
             nozzleText: qsTr("%1 mm").arg(DocumentModel.nozzle)
             onPrinterChosen: id => {
                 DocumentModel.setPrinter(id)
+                Preferences.printerId = id
                 viewport.frameAll()
             }
             stepTitle: root.currentStepTitle
@@ -1138,8 +1148,14 @@ Window {
         unitText: qsTr("Unit: mm")
         gridStep: viewport.snapStep
         gridAutomatic: viewport.fixedSnapStep === 0
-        onGridStepChosen: step => viewport.fixedSnapStep = step
-        onGridAutomaticChosen: viewport.fixedSnapStep = 0
+        onGridStepChosen: step => {
+            viewport.fixedSnapStep = step
+            Preferences.snapStep = step
+        }
+        onGridAutomaticChosen: {
+            viewport.fixedSnapStep = 0
+            Preferences.snapStep = 0
+        }
     }
 
     AboutWindow {

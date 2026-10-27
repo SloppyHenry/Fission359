@@ -96,4 +96,11 @@ with tempfile.TemporaryDirectory() as data:
         count = int.from_bytes(stl.read(4), "little")
     check(size == 84 + 50 * count and count > 12, "STL size does not fit its triangle count")
 
+    # 6. Settings are kept between starts: mouse style and soft shadows chosen in the menu.
+    prefs = os.path.join(data, "prefs")
+    os.makedirs(prefs)
+    run(prefs, "menu:mouse.blender;menu:softshadows;expectpref:mouseStyle,blender;expectpref:softShadows,false")
+    check("mouseStyle=blender" in open(os.path.join(prefs, "settings.ini")).read(), "settings.ini")
+    run(prefs, "expectpref:mouseStyle,blender;expectpref:softShadows,false")
+
 print("OK")
