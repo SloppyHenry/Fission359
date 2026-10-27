@@ -246,7 +246,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.10 Dateien: Speichern, Laden, Autosave, Import und Export
-**Status:** Review (2026-10-26; wartet auf Test durch den Product Owner, PRs #53–#57) · **Größe:** M · **Abhängigkeiten:** AP-1.1
+**Status:** erledigt (2026-10-27, gemergt mit PR #53–#58; Slicer-Prüfung des 3MF durch den Product Owner offen) · **Größe:** M · **Abhängigkeiten:** AP-1.1
 **Bauanleitung:** [anleitungen/AP-1.10.md](anleitungen/AP-1.10.md)
 
 **Umfang:**
@@ -273,7 +273,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.11 App-Shell, Einstellungen, Sprachen
-**Status:** Review (2026-10-27; wartet auf Test durch den Product Owner, PRs #59–#64) · **Größe:** M · **Abhängigkeiten:** AP-0.8
+**Status:** erledigt (2026-10-27, gemergt mit PR #59–#64) · **Größe:** M · **Abhängigkeiten:** AP-0.8
 **Bauanleitung:** [anleitungen/AP-1.11.md](anleitungen/AP-1.11.md)
 
 **Umfang:**
@@ -303,7 +303,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.12 Hinweis-System und Befehlssuche
-**Status:** Review (2026-10-27; wartet auf Test durch den Product Owner, PR #65) · **Größe:** M · **Abhängigkeiten:** AP-1.11
+**Status:** erledigt (2026-10-27, gemergt mit PR #65) · **Größe:** M · **Abhängigkeiten:** AP-1.11
 **Bauanleitung:** [anleitungen/AP-1.12.md](anleitungen/AP-1.12.md)
 
 **Umfang:**
