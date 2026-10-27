@@ -1197,6 +1197,7 @@ Window {
     ShapeCatalog {
         id: shapeCatalog
     }
+    } // shell
 
     function typeLabel(type) {
         if (type === "combine") { return qsTr("Combine") }
@@ -1569,4 +1570,3 @@ Window {
         advanced: value.advanced
     }))
 }
-    }
