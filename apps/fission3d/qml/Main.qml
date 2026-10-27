@@ -163,6 +163,7 @@ Window {
     property bool historyOpen: false
     property bool exportOpen: false
     property bool settingsOpen: false
+    property bool startOpen: AppOptions.startPage
     // A text field has the keyboard: keys such as Esc and Ctrl+A are for the text then.
     readonly property bool typing: root.activeFocusItem !== null && root.activeFocusItem !== undefined
                                    && root.activeFocusItem.cursorPosition !== undefined
@@ -774,6 +775,31 @@ Window {
         }
     }
 
+    Connections {
+        target: Files
+
+        function onOpened() {
+            root.startOpen = false
+        }
+    }
+
+    StartPage {
+        id: startPage
+
+        visible: root.startOpen
+        anchors.top: docTabs.bottom
+        anchors.bottom: statusBar.top
+        width: parent.width
+        z: 15
+        recent: Files.recentTiles()
+        examples: Files.exampleNames()
+        onVisibleChanged: if (visible) recent = Files.recentTiles()
+        onCloseRequested: root.startOpen = false
+        onNewRequested: if (Files.newDocument()) root.startOpen = false
+        onOpenRequested: path => { if (Files.openPath(path)) root.startOpen = false }
+        onExampleRequested: name => { if (Files.openExample(name)) root.startOpen = false }
+    }
+
     FirstRunCard {
         id: firstRunCard
 
@@ -844,7 +870,7 @@ Window {
         redoTip: DocumentModel.canRedo ? qsTr("Redo: %1").arg(root.historyText(DocumentModel.nextRedo)) : ""
         onUndoRequested: root.run("undo")
         onRedoRequested: root.run("redo")
-        onHomeRequested: root.showHint(qsTr("The start page arrives in a later version."))
+        onHomeRequested: root.startOpen = !root.startOpen
         onNewDocumentRequested: root.showHint(qsTr("This arrives in a later version."))
         onCloseRequested: root.showHint(qsTr("Closing arrives together with saving."))
         onExportRequested: root.run("export")

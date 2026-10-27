@@ -88,4 +88,8 @@ struct OpenResult {
 
 OpenResult open(const std::filesystem::path& path, const OpenOptions& options = {});
 
+/// Only the small picture of a `.fission` file (`preview.png`), for the tiles of the start page;
+/// empty when the file has none or cannot be read.
+std::vector<std::uint8_t> readPreview(const std::filesystem::path& path);
+
 } // namespace fission::io

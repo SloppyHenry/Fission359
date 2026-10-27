@@ -354,7 +354,10 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // recipe:box,cylinder,combine - the steps of the recipe are exactly these types, in
             // this order (a step "group" must never appear: holes cut without it). Otherwise the
             // program ends with an error (for the tests).
-            const QStringList wanted = action.mid(colon + 1).split(QLatin1Char(','));
+            QStringList wanted = action.mid(colon + 1).split(QLatin1Char(','));
+            if (wanted == QStringList{QString()}) {
+                wanted.clear(); // "recipe:" - no steps at all
+            }
             delay += 350;
             checkAfter(delay, viewport, model, [model, wanted] {
                 QStringList found;
@@ -728,6 +731,16 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     qWarning().noquote() << QStringLiteral("expected the setting %1 = %2; found %3")
                                                 .arg(spec.value(0), spec.value(1), found);
                     g_simulationFailure = 7;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("example")) { // example:keychain - opened from the start page
+            const QString name = action.mid(colon + 1).trimmed();
+            delay += 600;
+            QTimer::singleShot(delay, viewport, [files, name] {
+                if (!files->openExample(name)) {
+                    g_simulationFailure = 6;
                 }
             });
             continue;
@@ -1255,6 +1268,9 @@ int main(int argc, char* argv[]) {
     // The assistant is for people; test runs (pictures, parked windows) skip it so that the
     // pictures show the plain window, unless a test asks for it with FISSION_FIRST_RUN=1.
     const bool testRun = !options.smokeTestPath.isEmpty() || appOptions.parked;
+    // The start page opens with the program unless a file was asked for.
+    appOptions.startPage =
+        options.file.isEmpty() && (!testRun || qEnvironmentVariableIsSet("FISSION_START_PAGE"));
     appOptions.firstRun =
         !preferences.firstRunDone() && (!testRun || qEnvironmentVariableIsSet("FISSION_FIRST_RUN"));
     preferences.applyToInterface(!options.language.isEmpty(), !options.theme.isEmpty());

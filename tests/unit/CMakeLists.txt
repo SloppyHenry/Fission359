@@ -63,6 +63,7 @@ target_include_directories(fission_unit_tests SYSTEM PRIVATE "${FISSION_LIB3MF_C
 
 target_compile_definitions(fission_unit_tests PRIVATE
   FISSION_TEST_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures"
+  FISSION_APP_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/apps/fission3d/resources/examples"
   FISSION_APP_FONTS_DIR="${CMAKE_SOURCE_DIR}/apps/fission3d/resources/fonts")
 
 # Under AddressSanitizer, known leaks of third-party libraries are listed in tests/lsan.supp.

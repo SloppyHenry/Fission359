@@ -582,7 +582,7 @@
     <message>
         <location line="+8"/>
         <source>Let&apos;s go</source>
-        <translation>Los geht's</translation>
+        <translation>Los geht&apos;s</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -871,19 +871,19 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+554"/>
+        <location line="+555"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location line="-553"/>
-        <location line="+665"/>
+        <location line="-554"/>
+        <location line="+666"/>
         <location line="+5"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
     <message>
-        <location line="-670"/>
+        <location line="-671"/>
         <source>Ctrl+Shift+S</source>
         <translation>Strg+Umschalt+S</translation>
     </message>
@@ -908,7 +908,7 @@
         <translation>Bearbeiten</translation>
     </message>
     <message>
-        <location line="+78"/>
+        <location line="+79"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -918,7 +918,7 @@
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-78"/>
+        <location line="-79"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Strg+Umschalt+Z</translation>
     </message>
@@ -1094,12 +1094,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1085"/>
+        <location line="+1111"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1084"/>
+        <location line="-1110"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -1130,12 +1130,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1073"/>
+        <location line="+1099"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1071"/>
+        <location line="-1097"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -1165,19 +1165,19 @@
         <translation>Über Fission3D</translation>
     </message>
     <message>
-        <location line="+22"/>
-        <location line="+672"/>
+        <location line="+23"/>
+        <location line="+697"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-670"/>
-        <location line="+671"/>
+        <location line="-695"/>
+        <location line="+696"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-665"/>
+        <location line="-690"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -1221,12 +1221,12 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+474"/>
+        <location line="+499"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-456"/>
+        <location line="-481"/>
         <source>This body cannot be split: it may be part of another body.</source>
         <translation>Dieser Körper lässt sich nicht teilen: Er ist vielleicht Teil eines anderen Körpers.</translation>
     </message>
@@ -1398,12 +1398,7 @@
         <translation>Die Datei konnte nicht gelesen werden.</translation>
     </message>
     <message>
-        <location line="+76"/>
-        <source>The start page arrives in a later version.</source>
-        <translation>Die Startseite kommt in einer späteren Version.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
+        <location line="+103"/>
         <source>Closing arrives together with saving.</source>
         <translation>Schließen kommt zusammen mit dem Speichern.</translation>
     </message>
@@ -2016,17 +2011,17 @@
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1060"/>
+        <location line="-1086"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1095"/>
+        <location line="+1121"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-954"/>
+        <location line="-979"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
@@ -2036,7 +2031,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+561"/>
+        <location line="+586"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -2772,6 +2767,50 @@
         <location line="+96"/>
         <source>Grid step in millimetres</source>
         <translation>Rasterschritt in Millimetern</translation>
+    </message>
+</context>
+<context>
+    <name>StartPage</name>
+    <message>
+        <location filename="../qml/StartPage.qml" line="+22"/>
+        <location line="+92"/>
+        <source>Start</source>
+        <translation>Start</translation>
+    </message>
+    <message>
+        <location line="-88"/>
+        <source>Box with a hole</source>
+        <translation>Box mit Loch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keychain</source>
+        <translation>Schlüsselanhänger</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Star</source>
+        <translation>Stern</translation>
+    </message>
+    <message>
+        <location line="+96"/>
+        <source>Back to the project</source>
+        <translation>Zurück zum Projekt</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>New project</source>
+        <translation>Neues Projekt</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Opened recently</source>
+        <translation>Zuletzt geöffnet</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Examples</source>
+        <translation>Beispiele</translation>
     </message>
 </context>
 <context>
