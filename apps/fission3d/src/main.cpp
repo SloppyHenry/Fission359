@@ -7,6 +7,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QElapsedTimer>
+#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
 #include <QFileOpenEvent>
@@ -30,12 +31,14 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <csignal>
 #include <cstdio>
 #include <functional>
 #include <limits>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <unistd.h>
 #include <vector>
 
 #include "fission/core/version.h"
@@ -309,7 +312,8 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                  fission::ui::HandleController* handles, fission::ui::GizmoController* gizmo,
                  fission::ui::RotateController* rotate, fission::ui::ScaleController* scale,
                  fission::ui::DistanceController* distances, fission::ui::AlignController* align,
-                 fission::ui::SelectionController* selection, const QString& actions,
+                 fission::ui::SelectionController* selection, fission::ui::FileController* files,
+                 fission::ui::ExportController* exporter, const QString& actions,
                  std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
@@ -707,6 +711,60 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     qWarning().noquote()
                         << QStringLiteral("expected the time marker to be pulled back");
                     g_simulationFailure = 5;
+                }
+            });
+            continue;
+        }
+        // --- files (AP-1.10): the whole path through the real program, for the tests ---------
+        if (kind == QLatin1String("save") || kind == QLatin1String("open") ||
+            kind == QLatin1String("autosave") || kind == QLatin1String("crash") ||
+            kind == QLatin1String("rescue") || kind == QLatin1String("expectmodified") ||
+            kind == QLatin1String("export")) {
+            const QString argument = action.mid(colon + 1);
+            delay += 600; // what came before (a shape put down) is calculated and shown
+            QTimer::singleShot(delay, viewport, [=] {
+                bool ok = true;
+                if (kind == QLatin1String("save")) { // save:/path/file.fission
+                    ok = files->saveTo(QUrl::fromLocalFile(argument));
+                    files->waitForSave();
+                    ok = ok && !files->modified();
+                } else if (kind == QLatin1String("open")) { // open:/path/file.fission
+                    ok = files->openPath(argument);
+                } else if (kind == QLatin1String("autosave")) {
+                    ok = files->autosaveNow(); // what the timer does, at once
+                } else if (kind == QLatin1String("crash")) {
+                    ::kill(::getpid(), SIGKILL);              // no clean end: the same as kill -9
+                } else if (kind == QLatin1String("rescue")) { // rescue:restore
+                    QString id;
+                    const QMetaObject::Connection offered =
+                        QObject::connect(files, &fission::ui::FileController::rescuedWork, files,
+                                         [&id](const QString& found) { id = found; });
+                    files->checkRecovery();
+                    QObject::disconnect(offered);
+                    ok = !id.isEmpty() && files->restoreRescued(id);
+                } else if (kind == QLatin1String("expectmodified")) { // expectmodified:1
+                    ok = files->modified() == (argument.toInt() != 0);
+                } else if (kind == QLatin1String("export")) { // export:/path/file.3mf (or .stl)
+                    model->waitForCalculation();
+                    QString code = QStringLiteral("none");
+                    QEventLoop wait;
+                    QObject::connect(exporter, &fission::ui::ExportController::finished, &wait,
+                                     [&](const QString& result) {
+                                         code = result;
+                                         wait.quit();
+                                     });
+                    QTimer::singleShot(30000, &wait, &QEventLoop::quit);
+                    const bool stl = argument.endsWith(QLatin1String(".stl"));
+                    exporter->start(stl ? QStringLiteral("stl") : QStringLiteral("3mf"),
+                                    QStringLiteral("normal"), {}, QUrl::fromLocalFile(argument),
+                                    {});
+                    wait.exec();
+                    ok = code.isEmpty();
+                }
+                if (!ok) {
+                    qWarning().noquote()
+                        << QStringLiteral("the action %1 did not work").arg(action);
+                    g_simulationFailure = 6;
                 }
             });
             continue;
@@ -1125,14 +1183,17 @@ int main(int argc, char* argv[]) {
     QQmlApplicationEngine engine;
     // Test runs (a picture of the window, a parked window) keep their rescue files in a folder
     // of their own: they must not leave work behind that the next real start would offer.
+    // FISSION_DATA_DIR names that folder (tests that start the program twice share it).
     std::unique_ptr<QTemporaryDir> testRescueFolder;
-    if (!options.smokeTestPath.isEmpty() || appOptions.parked) {
+    QString dataFolder = qEnvironmentVariable("FISSION_DATA_DIR");
+    if (dataFolder.isEmpty() && (!options.smokeTestPath.isEmpty() || appOptions.parked)) {
         testRescueFolder = std::make_unique<QTemporaryDir>();
+        dataFolder = testRescueFolder->path();
     }
     fission::services::RecentFiles recentFiles(
-        testRescueFolder ? testRescueFolder->filePath(QStringLiteral("recent.ini")) : QString());
+        dataFolder.isEmpty() ? QString() : dataFolder + QStringLiteral("/recent.ini"));
     fission::services::RecoveryStore recovery(
-        testRescueFolder ? testRescueFolder->filePath(QStringLiteral("recovery")) : QString());
+        dataFolder.isEmpty() ? QString() : dataFolder + QStringLiteral("/recovery"));
     recovery.beginSession();
     fission::services::Autosave autosave; // every 60 seconds and after every 20th command
     fission::ui::FileController files(&documentModel, &recentFiles, &recovery, &autosave);
@@ -1267,6 +1328,8 @@ int main(int argc, char* argv[]) {
     fission::ui::DistanceController* const distanceController = &distances;
     fission::ui::AlignController* const alignController = &align;
     fission::ui::SelectionController* const selectionController = &selection;
+    fission::ui::FileController* const filesController = &files;
+    fission::ui::ExportController* const exporterPointer = &exporter;
     if (!options.smokeTestPath.isEmpty()) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
         const QString path = options.smokeTestPath;
@@ -1276,7 +1339,8 @@ int main(int argc, char* argv[]) {
         const auto started = std::make_shared<bool>(false);
         auto grab = [window, viewport, placementController, &documentModel, handleController,
                      gizmoController, rotateController, scaleController, distanceController,
-                     alignController, selectionController, path, simulate, started] {
+                     alignController, selectionController, filesController, exporterPointer, path,
+                     simulate, started] {
             if (*started) {
                 return; // the first frame can be reported more than once
             }
@@ -1291,7 +1355,8 @@ int main(int argc, char* argv[]) {
             if (viewport != nullptr && !simulate.isEmpty()) {
                 playActions(window, viewport, placementController, &documentModel, handleController,
                             gizmoController, rotateController, scaleController, distanceController,
-                            alignController, selectionController, simulate, shoot);
+                            alignController, selectionController, filesController, exporterPointer,
+                            simulate, shoot);
             } else {
                 shoot();
             }
