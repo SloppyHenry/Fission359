@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "fission/ui/language.h"
@@ -34,7 +34,7 @@ void Language::setCode(const QString& requested) {
     // English is the language of the source texts; its file only adds the plural forms.
     {
         auto translator = std::make_unique<QTranslator>();
-        if (translator->load(QStringLiteral(":/i18n/fission3d_%1.qm").arg(code))) {
+        if (translator->load(QStringLiteral(":/i18n/fission359_%1.qm").arg(code))) {
             QCoreApplication::installTranslator(translator.get());
             m_translator = std::move(translator);
         } else {

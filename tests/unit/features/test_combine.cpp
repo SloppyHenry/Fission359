@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // The combine step (AP-1.7a, ADR-0011): a result that keeps the names of its inputs, the

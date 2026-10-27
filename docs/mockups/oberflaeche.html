@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
-<!-- Fission3D – klickbares Oberflächen-Mockup (Attrappe, kein Produktionscode). Gestaltung nach Vorlage „Formwerk 3D“ des Product Owners. -->
-<title>Fission3D Oberfläche</title>
+<!-- Fission359 – klickbares Oberflächen-Mockup (Attrappe, kein Produktionscode). Gestaltung nach Vorlage „Formwerk 3D“ des Product Owners. -->
+<title>Fission359 Oberfläche</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
@@ -925,7 +925,7 @@ function renderMenu(){
   const menus = S.scene==='start' ? [['Datei','File'],['Bearbeiten','Edit'],['Ansicht','View'],['Hilfe','Help']]
     : [['Datei','File'],['Bearbeiten','Edit'],['Ansicht','View'],['Körper','Body'],['Fenster','Window'],['Hilfe','Help']];
   $('#menu').innerHTML=`
-    <div class="menu-l"><div class="brand">${LOGO}<span>Fission3D</span></div>${menus.map(([d,e])=>`<button class="mbtn" data-act="mock" data-msg="${T('Menü „'+d+'“ (Attrappe)','Menu “'+e+'” (dummy)')}">${T(d,e)}</button>`).join('')}</div>
+    <div class="menu-l"><div class="brand">${LOGO}<span>Fission359</span></div>${menus.map(([d,e])=>`<button class="mbtn" data-act="mock" data-msg="${T('Menü „'+d+'“ (Attrappe)','Menu “'+e+'” (dummy)')}">${T(d,e)}</button>`).join('')}</div>
     <button class="search" data-act="search" aria-label="${T('Befehlssuche öffnen','Open command search')}">${icon('search')}<span>${T('Was möchtest du tun?','What do you want to do?')}</span><kbd>⌘K</kbd></button>
     <div class="menu-r"><button class="iconbtn" data-act="settings" aria-label="${T('Einstellungen','Settings')}" title="${T('Einstellungen (⌘,)','Settings (⌘,)')}">${icon('gear')}</button><button class="mbtn" data-act="mock" data-msg="${T('Druckerprofil wechseln (bestimmt Druckbett, Düse, Farben)','Switch printer profile (bed, nozzle, colours)')}">${icon('printer')} ${T('Mein Drucker · 256 × 256 mm','My printer · 256 × 256 mm')}</button></div>`;
 }
@@ -1326,7 +1326,7 @@ function sceneOverlays(C,m){
     O.h+=`<div class="inset float"><h5>${T('So würde Skalieren aussehen','What scaling would look like')} <span class="vtag">${T('Erklärung','Explainer')}</span></h5>
       <svg viewBox="0 0 280 70" aria-hidden="true"><rect x="10" y="10" width="200" height="50" rx="20" ry="9" style="fill:var(--field-2);stroke:var(--bad)" stroke-width="1.5"/><ellipse cx="52" cy="35" rx="15" ry="7" style="fill:var(--view-2);stroke:var(--bad)"/>
       <path d="M232 20l26 30M258 20l-26 30" style="stroke:var(--bad)" stroke-width="3" stroke-linecap="round"/></svg>
-      ${T('Ecken und Loch würden oval. Fission3D streckt stattdessen. Verzerren gibt es nur ausdrücklich: Ändern ▸ Mehr ▸ Verzerren, mit Hinweis vorher.','Corners and hole would turn oval. Fission3D stretches instead. Distorting only on purpose: Modify ▸ More ▸ Distort, with a warning first.')}</div>`;
+      ${T('Ecken und Loch würden oval. Fission359 streckt stattdessen. Verzerren gibt es nur ausdrücklich: Ändern ▸ Mehr ▸ Verzerren, mit Hinweis vorher.','Corners and hole would turn oval. Fission359 stretches instead. Distorting only on purpose: Modify ▸ More ▸ Distort, with a warning first.')}</div>`;
   }
   if(id==='karte'){
     const st=S.kitStep;
@@ -1546,7 +1546,7 @@ function settingsHtml(){
             <button class="switch" role="switch" aria-checked="true" data-act="none"><span class="tr"></span>${T('Als Loch','As Hole')}</button>
             <button class="linkbtn" data-act="none">${T('Zeig mir wie','Show me how')}</button></div>
           ${clash?`<div class="ahint">${icon('warn')}<span>${T('Diese Farbe ähnelt einer Hinweisfarbe:','This colour resembles a hint colour:')} ${clash}. ${T('Hinweise am Modell fallen dann weniger auf. Du kannst sie trotzdem nehmen.','Hints on the model will stand out less. You can still use it.')}</span></div>`:''}
-          <p class="sd" style="margin:10px 0 0">${T('Schrift auf Knöpfen und Markierungen passt Fission3D automatisch an, damit alles gut lesbar bleibt.','Fission3D adjusts text on buttons and highlights automatically so everything stays readable.')}</p></div></div>
+          <p class="sd" style="margin:10px 0 0">${T('Schrift auf Knöpfen und Markierungen passt Fission359 automatisch an, damit alles gut lesbar bleibt.','Fission359 adjusts text on buttons and highlights automatically so everything stays readable.')}</p></div></div>
         <div class="srow"><span class="l">${T('Sprache','Language')}</span><div class="segc" role="group">${[['de','Deutsch'],['en','English']].map(([k,l])=>`<button data-act="lang" data-arg="${k}" aria-pressed="${S.lang===k}">${l}</button>`).join('')}</div></div>
       </section>
       <section class="card"><h2>${T('Griffe','Handles')}</h2><p class="sd">${T('So sehen die Griffe an einem ausgewählten Körper aus. Beide ändern Maße gleich: Rundungen und Löcher bleiben rund, jede Zahl ist eintippbar.','How handles look on a selected body. Both change sizes the same way: roundings and holes stay round, every number can be typed.')}</p>
@@ -1555,7 +1555,7 @@ function settingsHtml(){
           <button class="hcard" role="radio" aria-checked="${S.handles==='klassisch'}" data-act="handles" data-arg="klassisch">${handlePreview('klassisch')}<b>${T('Klassisch','Classic')}</b><span>${T('Weiße Eck-Quadrate, Hebe-Pfeil und Maßkästchen. Vertraut für Tinkercad-Umsteiger.','White corner squares, lift arrow and measure boxes. Familiar to Tinkercad switchers.')}</span></button></div>
       </section>
       <section class="card"><h2>${T('Bedienung','Controls')}</h2>
-        <div class="srow"><label for="mstyle">${T('Maus-Stil','Mouse style')}</label><select id="mstyle" class="sel" style="max-width:260px">${[T('Fission3D (Standard)','Fission3D (default)'),T('wie Fusion','like Fusion'),T('wie Tinkercad','like Tinkercad'),T('wie Blender','like Blender'),T('wie SketchUp','like SketchUp')].map(o=>`<option>${o}</option>`).join('')}</select></div>
+        <div class="srow"><label for="mstyle">${T('Maus-Stil','Mouse style')}</label><select id="mstyle" class="sel" style="max-width:260px">${[T('Fission359 (Standard)','Fission359 (default)'),T('wie Fusion','like Fusion'),T('wie Tinkercad','like Tinkercad'),T('wie Blender','like Blender'),T('wie SketchUp','like SketchUp')].map(o=>`<option>${o}</option>`).join('')}</select></div>
         <div class="srow"><span class="l">${T('Lotse','Guide')}</span><button class="switch" role="switch" aria-checked="${S.mode==='gefuehrt'}" data-act="mode" data-arg="${S.mode==='gefuehrt'?'experte':'gefuehrt'}"><span class="tr"></span>${T('Missionen und Hinweise zeigen','Show missions and tips')}</button></div>
       </section>
     </div>`;
@@ -1720,7 +1720,7 @@ function checksHtml(fx){
   const fineRow=`<div class="pchk"><span>${icon('sliders')}</span><div><b>${T('Feinheit','Fineness')}</b><p>${T('Weniger Dreiecke laden schneller, mehr sehen runder aus. Rundungen bleiben rund, nur feiner oder gröber unterteilt.','Fewer triangles load faster, more look rounder. Roundings stay round, just divided more finely or coarsely.')}</p>
           <div class="pa"><div class="segc" role="group" aria-label="${T('Feinheit','Fineness')}">${[['grob',T('Grob','Coarse')],['mittel',T('Mittel','Medium')],['fein',T('Fein','Fine')]].map(([k,l])=>`<button data-act="fine" data-arg="${k}" aria-pressed="${fine===k}">${l}</button>`).join('')}</div></div></div></div>`;
   if(pu==='spiel') return `<h3>${T('Prüfung','Check')}</h3>
-        ${ok(T('Maßstab in Metern','Scale in metres'),T('Spiele rechnen in Metern. Fission3D rechnet um: 50 mm werden 0,05 m.','Games use metres. Fission3D converts: 50 mm become 0.05 m.'))}
+        ${ok(T('Maßstab in Metern','Scale in metres'),T('Spiele rechnen in Metern. Fission359 rechnet um: 50 mm werden 0,05 m.','Games use metres. Fission359 converts: 50 mm become 0.05 m.'))}
         ${ok(T('Farben werden Materialien','Colours become materials'),T('Weiß und Rot kommen als zwei Materialien an.','White and red arrive as two materials.'))}
         ${ok(T('Steht auf dem Boden','Stands on the ground'),T('Der Nullpunkt liegt unten in der Mitte, wie Spiele es erwarten.','The origin sits at the bottom centre, as games expect.'))}${fineRow}`;
   if(pu==='web') return `<h3>${T('Prüfung','Check')}</h3>
@@ -1743,7 +1743,7 @@ function renderInfo(){
   <h3>${T('Szenen','Scenes')}</h3><div class="slist">${SCENES.map((s,i)=>`<button data-act="scene" data-arg="${s.id}" aria-current="${s.id===S.scene}">${i+1}. ${s.t()}</button>`).join('')}</div>
   <h3>${T('Zwei Griff-Arten','Two handle styles')}</h3>
   <p>${T('Entschieden: Beide bleiben. Jede:r stellt sie unter Einstellungen ▸ Griffe ein (Zahnrad oben rechts, ⌘,). Die Mockup-Leiste schaltet zum Vergleichen schnell um.','Decided: both stay. Everyone picks one under Settings ▸ Handles (gear top right, ⌘,). The mockup strip switches quickly for comparison.')}</p>
-  <h3>${T('Akzentfarbe','Accent colour')}</h3><p>${T('Entschieden: frei wählbar unter Einstellungen ▸ Aussehen, mit Vorschlägen und eigener Farbe. Fission3D leitet daraus alle Akzenttöne ab und hält dabei den Kontrast (WCAG AA). Ähnelt die Farbe Rot, Gelb oder Grün, erscheint ein Hinweis, weil diese Farben schon Bedeutungen haben.','Decided: free choice under Settings ▸ Appearance, with suggestions and a custom colour. Fission3D derives all accent shades and keeps contrast (WCAG AA). If the colour resembles red, yellow or green, a hint appears because those colours already carry meaning.')}</p>
+  <h3>${T('Akzentfarbe','Accent colour')}</h3><p>${T('Entschieden: frei wählbar unter Einstellungen ▸ Aussehen, mit Vorschlägen und eigener Farbe. Fission359 leitet daraus alle Akzenttöne ab und hält dabei den Kontrast (WCAG AA). Ähnelt die Farbe Rot, Gelb oder Grün, erscheint ein Hinweis, weil diese Farben schon Bedeutungen haben.','Decided: free choice under Settings ▸ Appearance, with suggestions and a custom colour. Fission359 derives all accent shades and keeps contrast (WCAG AA). If the colour resembles red, yellow or green, a hint appears because those colours already carry meaning.')}</p>
   <ul><li><b>${T('Achsen','Axes')}</b> ${T('(Standard): farbige Pfeile X/Y/Z zum Verschieben, Maßbänder an den Kanten zum Tippen, blaue Punkte zum Ziehen von Flächen (Werkzeug „Größe“). Wirkt wie ein CAD-Programm.','(default): coloured X/Y/Z arrows to move, measure bands along the edges for typing, blue dots to pull faces (tool “Size”). Feels like a CAD program.')}</li>
    <li><b>${T('Klassisch','Classic')}</b>: ${T('weiße Eck-Quadrate, Hebe-Pfeil, Maßkästchen. Vertraut für Tinkercad-Umsteiger.','white corner squares, lift arrow, measure boxes. Familiar to Tinkercad switchers.')}</li></ul>
   <p>${T('Beide Arten ändern Maße gleich: Löcher und Rundungen bleiben rund, jede Zahl ist eintippbar.','Both styles change sizes the same way: holes and roundings stay round, every number can be typed.')}</p>

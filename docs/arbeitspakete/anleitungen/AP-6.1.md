@@ -3,7 +3,7 @@
 **Größe:** M · **Phasendatei:** AP-6.1
 
 ## Ziel
-Fission3D findet neue Versionen selbst und aktualisiert sich ohne Datenverlust: macOS mit Sparkle 2 (EdDSA-signierter Appcast, Kanäle Stabil/Beta),
+Fission359 findet neue Versionen selbst und aktualisiert sich ohne Datenverlust: macOS mit Sparkle 2 (EdDSA-signierter Appcast, Kanäle Stabil/Beta),
 Linux-AppImage mit eingebetteter Update-Information (zsync) und Hinweis in der App, Flatpak über Flathub. Der Hinweis ist unaufdringlich, mit
 Änderungsübersicht in Alltagssprache. Update 0.9 → 1.0 behält Einstellungen, Profile und Bausteine.
 
@@ -22,7 +22,7 @@ ad hoc signierte Updates scheitern an Gatekeeper). Ohne Konto: Haltepunkt.
 
 ## Schritte
 1. Release-Workflow (`.github/workflows/release.yml`): bei Tag `v*` Pakete bauen, signieren (Secrets), notarisieren, Appcast erzeugen (Sparkle-Werkzeug
-   `generate_appcast`, EdDSA-Schlüssel als Secret), AppImage mit `zsync`-Datei und Update-Info (`gh-releases-zsync|SloppyHenry|Fission3D|latest|*.AppImage.zsync`),
+   `generate_appcast`, EdDSA-Schlüssel als Secret), AppImage mit `zsync`-Datei und Update-Info (`gh-releases-zsync|SloppyHenry|Fission359|latest|*.AppImage.zsync`),
    Release-Notizen aus `docs/aenderungen/<version>.md` (Alltagssprache, DE/EN).
 2. macOS: Sparkle 2 als Framework im Bundle (vcpkg-Port prüfen; sonst als Release-Binary mit Prüfsumme in `packaging/macos`, Lizenz in Notices),
    Brücke in `src/services/updates_macos.mm` (Objective-C++), Einstellungen: automatisch prüfen an/aus, Kanal.

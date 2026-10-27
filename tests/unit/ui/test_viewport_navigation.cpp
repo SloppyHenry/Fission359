@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Plays every mouse style through the real 3D view item with synthetic input: which gesture

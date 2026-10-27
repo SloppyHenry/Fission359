@@ -10,7 +10,7 @@ Ein Tag der Form `v<Version>-alpha.<n>` auf `main` lässt die CI nach den Pakete
 (Reiter **Releases**, mit .dmg, .AppImage und .flatpak). Beispiel für die erste Alpha:
 
 ```sh
-git tag -a v0.1.0-alpha.1 -m "Fission3D 0.1.0 alpha 1" && git push origin v0.1.0-alpha.1
+git tag -a v0.1.0-alpha.1 -m "Fission359 0.1.0 alpha 1" && git push origin v0.1.0-alpha.1
 ```
 
 Die Version im Programm (`project(… VERSION …)` in `CMakeLists.txt`) bleibt `0.1.0`; „alpha.1“ steht nur im Tag und im Titel.
@@ -28,36 +28,36 @@ Pakete sind nicht signiert (siehe unten): Der Gatekeeper-Umweg gilt auch für Al
 
 ### macOS (.dmg)
 
-Fission3D ist noch nicht bei Apple registriert (das kostet 99 €/Jahr). macOS warnt deshalb beim ersten Start. Das ist
+Fission359 ist noch nicht bei Apple registriert (das kostet 99 €/Jahr). macOS warnt deshalb beim ersten Start. Das ist
 erwartet und kein Fehler im Programm.
 
-1. Die Datei `Fission3D-<Version>-macos-arm64.dmg` doppelklicken.
-2. **Fission3D** auf **Programme** (Applications) ziehen.
-3. Fission3D aus **Programme** öffnen. macOS meldet, das Programm könne nicht überprüft werden. Auf **Fertig** klicken.
-4. **Systemeinstellungen → Datenschutz & Sicherheit** öffnen, nach unten scrollen und bei Fission3D auf
+1. Die Datei `Fission359-<Version>-macos-arm64.dmg` doppelklicken.
+2. **Fission359** auf **Programme** (Applications) ziehen.
+3. Fission359 aus **Programme** öffnen. macOS meldet, das Programm könne nicht überprüft werden. Auf **Fertig** klicken.
+4. **Systemeinstellungen → Datenschutz & Sicherheit** öffnen, nach unten scrollen und bei Fission359 auf
    **Trotzdem öffnen** klicken. Mit dem Passwort bestätigen.
    *(Bis macOS 14 genügt Rechtsklick auf das Programm → „Öffnen“ → „Öffnen“.)*
-5. Ab jetzt startet Fission3D wie jedes andere Programm.
+5. Ab jetzt startet Fission359 wie jedes andere Programm.
 
-Alternativ im Terminal: `xattr -dr com.apple.quarantine /Applications/Fission3D.app`
+Alternativ im Terminal: `xattr -dr com.apple.quarantine /Applications/Fission359.app`
 
 Dieselbe Anleitung liegt zweisprachig als Datei **Installationshilfe** im Disk-Image.
 
 ### Linux: AppImage
 
 ```sh
-chmod +x Fission3D-<Version>-x86_64.AppImage
-./Fission3D-<Version>-x86_64.AppImage
+chmod +x Fission359-<Version>-x86_64.AppImage
+./Fission359-<Version>-x86_64.AppImage
 ```
 
 Auf Ubuntu 24.04 braucht ein AppImage `libfuse2t64`: `sudo apt install libfuse2t64`.
-Ohne FUSE geht es auch so: `./Fission3D-….AppImage --appimage-extract-and-run`.
+Ohne FUSE geht es auch so: `./Fission359-….AppImage --appimage-extract-and-run`.
 
 ### Linux: Flatpak
 
 ```sh
-flatpak install --user Fission3D.flatpak
-flatpak run io.github.sloppyhenry.Fission3D
+flatpak install --user Fission359.flatpak
+flatpak run io.github.sloppyhenry.Fission359
 ```
 
 Dieses Flatpak ist für die lokale Nutzung gedacht (siehe ADR-0006); in Flathub ist es noch nicht.
@@ -109,8 +109,8 @@ dem Lauf verschwindet.
 
 | | |
 |---|---|
-| Anwendungs-ID (Bundle-ID, Flatpak, `.desktop`, Wayland) | `io.github.sloppyhenry.Fission3D` |
-| Projektdateien | `.fission`, MIME-Typ `application/x-fission3d`, macOS-UTI `io.github.sloppyhenry.Fission3D.project` |
+| Anwendungs-ID (Bundle-ID, Flatpak, `.desktop`, Wayland) | `io.github.sloppyhenry.Fission359` |
+| Projektdateien | `.fission`, MIME-Typ `application/x-fission359`, macOS-UTI `io.github.sloppyhenry.Fission359.project` |
 
 Die Dateizuordnung ist eingetragen; das Öffnen einer Datei per Doppelklick folgt, sobald das Dateiformat im
 Programm existiert (Phase 1).

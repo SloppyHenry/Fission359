@@ -18,7 +18,7 @@ Die Strings, Szenen und Daten im Mockup sind Beispiele, kein Produktionscode.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
-│ ◐ Fission3D  Datei Bearbeiten Ansicht Körper Fenster Hilfe  [⌕ Was möchtest du tun? ⌘K]  ⚙  Drucker │  Menüleiste 40 px
+│ ◐ Fission359  Datei Bearbeiten Ansicht Körper Fenster Hilfe  [⌕ Was möchtest du tun? ⌘K]  ⚙  Drucker │  Menüleiste 40 px
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │ ⌂ [Schlüsselanhänger ×] [Wandhalterung]  +                          ↶ ↷  [Exportieren] │  Dokument-Tabs 52 px
 ├──────────────┬────────────────────────────────────────────────────────┬──────────────┤

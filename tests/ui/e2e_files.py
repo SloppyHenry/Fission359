@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 """End-to-end test of the file features through the real program (AP-1.10).
 
 Starts the program several times with a data folder of its own and checks what a person would:
 save and open again, a crash (kill -9) and the rescue card, quitting a project that was never
-saved, and the export files. Usage: e2e_files.py <fission3d> [runner...]
+saved, and the export files. Usage: e2e_files.py <fission359> [runner...]
 """
 
 import json

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Splitting a body at a plane and putting the parts where they are wanted (AP-1.7e, ADR-0011):

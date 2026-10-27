@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Export from the interface (AP-1.10e): which bodies go in, background work, results as codes.

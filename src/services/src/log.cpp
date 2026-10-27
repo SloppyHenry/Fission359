@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "fission/services/log.h"
@@ -61,12 +61,12 @@ std::filesystem::path logDirectory() {
     const char* home = std::getenv("HOME");
     const std::filesystem::path homePath = home != nullptr ? home : ".";
 #if defined(__APPLE__)
-    return homePath / "Library" / "Logs" / "Fission3D";
+    return homePath / "Library" / "Logs" / "Fission359";
 #else
     if (const char* state = std::getenv("XDG_STATE_HOME"); state != nullptr && *state != '\0') {
-        return std::filesystem::path(state) / "fission3d";
+        return std::filesystem::path(state) / "fission359";
     }
-    return homePath / ".local" / "state" / "fission3d";
+    return homePath / ".local" / "state" / "fission359";
 #endif
 }
 
@@ -80,13 +80,13 @@ std::filesystem::path startLogging(std::string_view program) {
     try {
         const std::filesystem::path directory = logDirectory();
         std::filesystem::create_directories(directory);
-        logFile = directory / "fission3d.log";
+        logFile = directory / "fission359.log";
         sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
             logFile.string(), std::size_t{1} << 20, 3));
     } catch (const std::exception& error) {
         // No log file (read-only home, ...): the program still runs, the terminal gets the log.
         logFile = "(no log file)";
-        fprintf(stderr, "Fission3D: cannot write a log file: %s\n", error.what());
+        fprintf(stderr, "Fission359: cannot write a log file: %s\n", error.what());
     }
     auto logger =
         std::make_shared<spdlog::logger>(std::string(program), sinks.begin(), sinks.end());

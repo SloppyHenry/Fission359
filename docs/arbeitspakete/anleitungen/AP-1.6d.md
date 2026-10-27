@@ -96,7 +96,7 @@ Vorbild `ScaleController`:
 - In `main.cpp` als Singleton `Distances` anmelden.
 
 ### Schritt 4 – QML
-Neue Datei `apps/fission3d/qml/DistanceLayer.qml` (in `FISSION_QML_FILES` eintragen), Vorbild Beschriftungen in `HandleLayer.qml`:
+Neue Datei `apps/fission359/qml/DistanceLayer.qml` (in `FISSION_QML_FILES` eintragen), Vorbild Beschriftungen in `HandleLayer.qml`:
 - Je Etikett ein kleines Kästchen mit der Zahl („12,5“), Klick → Eingabefeld (dieselbe `NumberField`-Komponente, Regel 2), Enter
   übernimmt (`Distances.setDistance`), Esc bricht ab, `Tab` springt zum nächsten Band.
 - Etiketten weichen der Werkzeugleiste und anderen schwebenden Elementen aus (`clearplace.js`, wie die Griff-Beschriftungen).

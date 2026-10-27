@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Holes cut without grouping (AP-1.7b, ADR-0011, rule 13): the cuts are combine steps that the

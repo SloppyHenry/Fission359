@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Notarises a signed disk image with Apple and staples the ticket.

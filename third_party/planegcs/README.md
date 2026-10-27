@@ -17,7 +17,7 @@
   makes their relative include `../../SketcherGlobal.h` resolve to the stand-in below.)
 - `SketcherGlobal.h` — stand-in for FreeCAD's export-macro header (macro is empty).
 - `shim/` — replacements for FreeCAD internals PlaneGCS includes:
-  - `Base/Console.h`: `Base::Console()` and `Base::TimeElapsed` (written for Fission3D),
+  - `Base/Console.h`: `Base::Console()` and `Base::TimeElapsed` (written for Fission359),
   - `FCConfig.h`: empty,
   - `boost_graph_adjacency_list.hpp`: copy of `src/boost_graph_adjacency_list.hpp` from the same tag.
 - `CMakeLists.txt` — builds the static library target `planegcs` (Eigen 3 + Boost.Graph headers

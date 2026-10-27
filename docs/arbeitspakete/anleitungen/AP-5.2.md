@@ -11,7 +11,7 @@ aktiven Werkzeug. Alle Werkzeuge der Phasen 1–4, zusammen < 30 MB.
 AP-1.12 (Tooltip-Karte mit Platz für Animation).
 
 ## Vorher lesen
-Handbuch §9 (`--simulate`, `--smoke-test`), `apps/fission3d/src/main.cpp` (`playActions`); `docs/02-ux-konzept.md` §11.
+Handbuch §9 (`--simulate`, `--smoke-test`), `apps/fission359/src/main.cpp` (`playActions`); `docs/02-ux-konzept.md` §11.
 
 ## Haltepunkte
 1. **Format:** Empfehlung: animiertes WebP oder kurze Bildfolge (PNG-Sprite) statt Video, weil Qt Multimedia eine neue Abhängigkeit wäre. Qt kann

@@ -42,7 +42,7 @@ Alle Kernbibliotheken (OpenCASCADE, Manifold, Eigen, lib3mf, …) sollen auf mac
 - **vcpkg** im Manifest-Modus, Baseline in `vcpkg.json` (`builtin-baseline`). `scripts/setup`
   klont vcpkg nach `.vcpkg/` (nicht im Repo, kein Submodul) und setzt es auf genau diesen Stand.
 - **Eigene Triplets** (`cmake/vcpkg-triplets/`): dynamische Bibliotheken, nur Release-Builds.
-  Debug-Builds von Fission3D linken die Release-Bibliotheken; das halbiert Bauzeit und Plattenbedarf.
+  Debug-Builds von Fission359 linken die Release-Bibliotheken; das halbiert Bauzeit und Plattenbedarf.
 - **Binär-Cache:** vcpkg-Standard (`~/.cache/vcpkg/archives`, lokal). Die CI-Anbindung folgt in AP-0.3.
 - **Schichten:** Welche Schicht welche Bibliothek linken darf, steht in `cmake/FissionLayers.cmake`
   (z. B. OpenCASCADE `TK*` nur `fission_geometry_occt`). Der Build prüft das beim Konfigurieren.

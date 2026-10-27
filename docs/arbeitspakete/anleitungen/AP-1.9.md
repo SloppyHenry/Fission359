@@ -13,7 +13,7 @@ AP-1.2 (erledigt), AP-1.8 erledigt.
 
 ## Vorher lesen
 - [Handbuch](handbuch.md) §5, §7, §8; `docs/02-ux-konzept.md` §4 (Rezept), §9; `docs/08-gestaltung.md`; Mockup (linke Leiste)
-- `apps/fission3d/qml/LeftPanel.qml`, `TreeRow.qml`; `DocumentModel::recipe` (Aufbau der Liste), `selectStep`, `stepOfBody`
+- `apps/fission359/qml/LeftPanel.qml`, `TreeRow.qml`; `DocumentModel::recipe` (Aufbau der Liste), `selectStep`, `stepOfBody`
 - `src/core/include/fission/core/document.h` (`dependentsOf`, `removeFeature`, `setFeatureSuppressed`, `setFeatureLabel`),
   `commands.h` (`makeRemoveFeature`, `makeSetFeatureSuppressed`, `makeSetFeatureLabel` gibt es)
 

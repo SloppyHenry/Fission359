@@ -20,7 +20,7 @@ AP-0.3 (CI), AP-6.6 (Datenschutz-Entwurf).
 ## Schritte
 1. Diagnose-Paket (ohne neue Abhängigkeit): ZIP mit Protokolldateien, Systeminfo (OS, GPU-Backend, Qt, OCCT, App-Version – gibt es im Über-Fenster),
    optional aktuelles Modell (Häkchen, standardmäßig aus); Vorschau-Liste der Dateien vor dem Speichern; Menü Hilfe ▸ „Diagnose-Paket erstellen…“.
-2. Absturz-Erkennung beim nächsten Start (Marker aus AP-1.10 Autosave) → Karte „Fission3D wurde unerwartet beendet. [Diagnose-Paket erstellen] [Nein danke]“.
+2. Absturz-Erkennung beim nächsten Start (Marker aus AP-1.10 Autosave) → Karte „Fission359 wurde unerwartet beendet. [Diagnose-Paket erstellen] [Nein danke]“.
 3. Nach Haltepunkt 1/2: Crashpad-Handler (nur aktiv, wenn eingewilligt), Minidumps, Upload an den gewählten Dienst; Einwilligung jederzeit widerrufbar.
 4. Datenschutzerklärung (AP-6.6) verlinkt.
 

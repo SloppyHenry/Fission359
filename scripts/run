@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Baut Fission3D und startet es.
+# Baut Fission359 und startet es.
 #
 #   scripts/run              Debug-Version bauen und starten
 #   scripts/run --release    optimierte Version bauen und starten
@@ -37,7 +37,7 @@ need_command ninja
 apply_job_limit
 cd "$REPO_ROOT" || exit 1
 
-step "Baue Fission3D ($PRESET)"
+step "Baue Fission359 ($PRESET)"
 note "Beim ersten Mal werden die Bibliotheken gebaut (15-30 Minuten, bei vcpkg-Qt deutlich länger)."
 note "Fortschritt: tail -f build/$PRESET.log   (zweites Terminalfenster)"
 
@@ -55,8 +55,8 @@ if [ "$START" -eq 0 ]; then
     exit 0
 fi
 
-step "Starte Fission3D"
-APP="$BUILD_DIR/apps/fission3d/fission3d"
+step "Starte Fission359"
+APP="$BUILD_DIR/apps/fission359/fission359"
 # On macOS the program is an application bundle (needed for the icon, Info.plist and packaging).
-[ -x "$APP.app/Contents/MacOS/fission3d" ] && APP="$APP.app/Contents/MacOS/fission3d"
+[ -x "$APP.app/Contents/MacOS/fission359" ] && APP="$APP.app/Contents/MacOS/fission359"
 exec "$APP" "${APP_ARGS[@]+"${APP_ARGS[@]}"}"

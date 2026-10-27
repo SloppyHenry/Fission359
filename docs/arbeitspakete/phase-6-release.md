@@ -79,5 +79,5 @@
 - Projektlizenz GPL-3.0-or-later final bestätigen; Third-Party-Notices im Über-Dialog
 - Lizenzpflichten erfüllen: Quellcode-Angebot zu jedem Release (Git-Tag + Quell-Archiv), LGPL-Hinweise für Qt und OCCT
 - Beitragsregeln: Developer Certificate of Origin (DCO, `Signed-off-by`) statt CLA
-- Namens- und Markenprüfung „Fission3D“ (Verwechslungsgefahr mit „Fusion“ bewerten), Domain
+- Namens- und Markenprüfung „Fission359“ (Verwechslungsgefahr mit „Fusion“ bewerten), Domain
 - Impressum/Datenschutz für Website und Update-Server

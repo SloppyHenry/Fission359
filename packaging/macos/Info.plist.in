@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- SPDX-FileCopyrightText: Fission3D contributors -->
+<!-- SPDX-FileCopyrightText: Fission359 contributors -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!-- Filled in by CMake (configure_file, @ONLY); see cmake/FissionPackaging.cmake. -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -20,13 +20,13 @@
   <key>LSApplicationCategoryType</key><string>public.app-category.graphics-design</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSSupportsAutomaticGraphicsSwitching</key><true/>
-  <key>NSHumanReadableCopyright</key><string>Copyright © Fission3D contributors. GPL-3.0-or-later.</string>
+  <key>NSHumanReadableCopyright</key><string>Copyright © Fission359 contributors. GPL-3.0-or-later.</string>
 
   <!-- Project files (.fission): opened with a double-click, shown with the app icon. -->
   <key>CFBundleDocumentTypes</key>
   <array>
     <dict>
-      <key>CFBundleTypeName</key><string>Fission3D Project</string>
+      <key>CFBundleTypeName</key><string>Fission359 Project</string>
       <key>CFBundleTypeRole</key><string>Editor</string>
       <key>LSHandlerRank</key><string>Owner</string>
       <key>LSItemContentTypes</key>
@@ -37,7 +37,7 @@
   <array>
     <dict>
       <key>UTTypeIdentifier</key><string>@FISSION_PROJECT_UTI@</string>
-      <key>UTTypeDescription</key><string>Fission3D Project</string>
+      <key>UTTypeDescription</key><string>Fission359 Project</string>
       <key>UTTypeConformsTo</key>
       <array><string>public.data</string><string>public.content</string></array>
       <key>UTTypeTagSpecification</key>

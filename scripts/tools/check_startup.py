@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Measures the start time (process start to the first drawn frame) and fails above the budget.
 
-Usage: check_startup.py <fission3d> [--budget-ms 3000] [--runs 3] [-- extra program arguments]
+Usage: check_startup.py <fission359> [--budget-ms 3000] [--runs 3] [-- extra program arguments]
 
 The program is started `runs` times with --measure-startup; the best run counts (the first run
 after a build also pays for cold disk caches). FISSION_STARTUP_BUDGET_MS overrides the budget.

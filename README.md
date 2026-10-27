@@ -1,69 +1,48 @@
-# Fission3D
+# Fission359
 
-[![CI](https://github.com/SloppyHenry/Fission3D/actions/workflows/ci.yml/badge.svg)](https://github.com/SloppyHenry/Fission3D/actions/workflows/ci.yml)
+[![CI](https://github.com/SloppyHenry/Fission359/actions/workflows/ci.yml/badge.svg)](https://github.com/SloppyHenry/Fission359/actions/workflows/ci.yml)
 
-> A native 3D construction program for macOS and Linux: as easy as clay, as precise as a caliper.
-> Open source under GPL-3.0-or-later. (English summary; the project documentation is German.)
+**A native 3D construction program for macOS (Apple Silicon) and Linux: as easy as Tinkercad, as precise as Fusion.**
+Build functional parts and decorations, mainly for FDM 3D printing. No browser, no account, no cloud.
 
-Fission3D ist ein installierbares 3D-Konstruktionsprogramm für **macOS (Apple Silicon)** und **Linux**.
-Es soll sich so leicht anfühlen wie Tinkercad und so genau sein wie Fusion. Damit baust du
-funktionale Teile (Halterungen, Ersatzteile, Boxen mit passenden Deckeln) genauso wie
-verspielte Deko, vor allem für den FDM-3D-Druck. Keine Browser-App, kein Konto, keine Cloud-Pflicht.
+<p align="center">
+  <img src="docs/screenshots/readme-edit-light.png" alt="Fission359 with a keychain: shapes, handles and the recipe" width="49%">
+  <img src="docs/screenshots/readme-edit-dark.png" alt="The same keychain in the dark theme" width="49%">
+</p>
 
-**Stand:** Phase 1 (Der erste Körper): Grundformen platzieren, bemaßen, verschieben, drehen, mit Fangen. Kombinieren, Speichern und Export folgen.
-Den Fahrplan findest du in [docs/04-roadmap.md](docs/04-roadmap.md).
+- **Grab, don't fill in dialogs:** every operation has handles in the 3D view; every number can be typed instead.
+- **Everything stays editable:** each change is an undoable step in the recipe on the right.
+- **Holes just work:** a hole cuts live and stays grabbable as a ghost shape.
+- **Round stays round:** exact geometry (OpenCASCADE), export deviation of at most 0.01 mm.
+- **German and English** user interface, switchable without a restart.
 
-## Ausprobieren (ohne Programmierkenntnisse)
+**Status:** early alpha (phase 1: place, size, move, rotate and combine shapes, text, save, 3MF/STL export).
+Roadmap: [docs/04-roadmap.md](docs/04-roadmap.md) (German).
 
-1. **Voraussetzungen:** ein Mac mit Apple Silicon und macOS 14 oder neuer plus **Xcode**
-   (aus dem App Store), oder ein Linux-Rechner mit Ubuntu/Debian (x86_64).
-2. **Nur Mac:** Installiere [Homebrew](https://brew.sh) (einmalig, der Befehl steht auf der Webseite).
-3. **Projekt holen:** `git clone https://github.com/SloppyHenry/Fission3D.git` und dann `cd Fission3D`.
-4. **Voraussetzungen einrichten:** `scripts/setup`
-   Das Skript sagt dir genau, was fehlt, und installiert es nach Rückfrage.
-5. **Bauen und starten:** `scripts/run`
-   Beim ersten Mal werden alle Bibliotheken gebaut (rund 15–30 Minuten, bei Linux ohne passendes
-   Qt deutlich länger). Danach geht es schnell und das Fenster öffnet sich.
-6. **Alles prüfen:** `scripts/test`
-   Am Ende steht, ob alles in Ordnung ist, in einfachen Worten.
+## Try it
 
-Etwas klappt nicht? `scripts/setup --check` zeigt, was fehlt. Bauprotokolle liegen in `build/*.log`.
-Auf einem kleinen oder gleichzeitig genutzten Rechner hilft `FISSION_JOBS=2 scripts/run`.
+Download the latest build from [Releases](https://github.com/SloppyHenry/Fission359/releases): `.dmg` for macOS, `.AppImage`
+or `.flatpak` for Linux (Ubuntu 24.04 or newer). The builds are unsigned, so macOS asks once for permission:
+see [docs/paketierung.md](docs/paketierung.md).
 
-## Für Entwickler:innen
+## Build from source
 
 ```sh
-cmake --preset macos-debug            # oder: linux-debug
-cmake --build --preset macos-debug
-ctest --preset macos-debug
+git clone https://github.com/SloppyHenry/Fission359.git && cd Fission359
+scripts/setup          # checks and installs prerequisites (asks first)
+scripts/run --release  # builds (first time: 15-30 min) and starts
+scripts/test           # runs all tests
 ```
 
-Presets: `debug`, `release` und `asan` (Speicherfehler-Erkennung), je mit Präfix `macos-` bzw. `linux-`.
-Ändern kannst du das Programm nach den Regeln aus [CONTRIBUTING.md](CONTRIBUTING.md).
+Needs Xcode and [Homebrew](https://brew.sh) on macOS, or Ubuntu/Debian x86_64. Something fails? `scripts/setup --check`;
+build logs are in `build/*.log`.
 
-### Aufbau
+## Contributing
 
-```
-apps/fission3d/   Programmstart und QML-Einstieg
-src/core/         Dokument, Features, Commands (kein Qt!)
-src/geometry/     gal/ (Schnittstelle), occt/, mesh/, sketch/ (Kernel-Anbindung)
-src/features/ io/ analysis/ services/ render/ interaction/ ui/
-third_party/      PlaneGCS (aus FreeCAD übernommen)
-tests/            unit/, smoke/ (je Bibliothek), layering/, licenses/
-vcpkg.json        Bibliotheken mit festem Stand
-docs/             Vision, UX-Konzept, Architektur, Roadmap, Arbeitspakete, ADRs
-```
+C++20, Qt 6 (Qt Quick), OpenCASCADE, Manifold, PlaneGCS; CMake, Ninja and vcpkg. Layers: `src/core` (no Qt) → `geometry` →
+`features` → `ui`; violations fail the build. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Code of Conduct](CODE_OF_CONDUCT.md). The project documentation under [docs/](docs/README.md) is in German.
 
-Jede Schicht ist ein eigenes CMake-Ziel. Abhängigkeiten zeigen nur nach unten; wer gegen die
-Schichtregel verstößt, bekommt schon beim Bauen einen Fehler (Details in
-[docs/03-architektur.md](docs/03-architektur.md)).
+## License
 
-## Dokumentation
-
-Einstieg: [docs/README.md](docs/README.md) · Testumgebung: [docs/testumgebung.md](docs/testumgebung.md) ·
-Entscheidungen: [docs/adr/](docs/adr/)
-
-## Lizenz
-
-[GPL-3.0-or-later](LICENSE). Verwendete Bibliotheken: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-Mitmachen? Bitte lies [CONTRIBUTING.md](CONTRIBUTING.md) und den [Verhaltenskodex](CODE_OF_CONDUCT.md).
+[GPL-3.0-or-later](LICENSE). Third-party libraries: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

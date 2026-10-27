@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Rule 10: every tool and command has a hint, a tooltip sentence and synonyms.
 
-Checks apps/fission3d/qml/CommandCatalog.qml, ToolCatalog.qml and ShapeCatalog.qml: each command
+Checks apps/fission359/qml/CommandCatalog.qml, ToolCatalog.qml and ShapeCatalog.qml: each command
 has `name`, `tip` and `hint` (as qsTr), and at least three synonyms in German and in English.
 Usage: check_commands.py <repository root>
 """
@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parents[2]
-qml = root / "apps" / "fission3d" / "qml"
+qml = root / "apps" / "fission359" / "qml"
 problems = []
 
 

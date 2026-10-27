@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
@@ -519,7 +519,7 @@ private:
 
     // What was copied (also on the system clipboard, see clipboard_payload.h).
     using ClipboardEntry = ClipboardPart;
-    /// Takes over what another Fission3D (or an earlier copy) left on the system clipboard.
+    /// Takes over what another Fission359 (or an earlier copy) left on the system clipboard.
     void takeSystemClipboard();
     bool systemClipboardHasBodies() const;
     std::string m_publishedClipboard; ///< what this model put there last

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "fission/ui/viewport_3d.h"
@@ -1115,7 +1115,7 @@ void Viewport3D::reportRendered(const QString& backendName) {
 }
 
 void registerViewportTypes() {
-    qmlRegisterType<Viewport3D>("Fission3D.View", 1, 0, "Viewport3D");
+    qmlRegisterType<Viewport3D>("Fission359.View", 1, 0, "Viewport3D");
 }
 
 } // namespace fission::ui

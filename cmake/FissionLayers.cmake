@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Layer rules (docs/03-architektur.md, section 2): dependencies point only downwards.

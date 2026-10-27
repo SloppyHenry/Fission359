@@ -2,7 +2,7 @@
 
 ## In einem Satz
 
-**Fission3D ist ein installierbares 3D-Konstruktionsprogramm für macOS und Linux, mit dem Einsteiger in Minuten ihr erstes Teil bauen und mit dem Fortgeschrittene trotzdem funktionale Teile auf den Hundertstelmillimeter genau konstruieren können.**
+**Fission359 ist ein installierbares 3D-Konstruktionsprogramm für macOS und Linux, mit dem Einsteiger in Minuten ihr erstes Teil bauen und mit dem Fortgeschrittene trotzdem funktionale Teile auf den Hundertstelmillimeter genau konstruieren können.**
 
 Mit dem gleichen Werkzeug soll man eine Wandhalterung mit passgenauen Schraubenlöchern bauen können und genauso einen verspielten Weihnachtsstern mit weich verschmolzenen Zacken und eingraviertem Namen.
 

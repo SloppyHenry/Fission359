@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 // Stand-in for FreeCAD's src/Mod/Sketcher/SketcherGlobal.h, which PlaneGCS includes as

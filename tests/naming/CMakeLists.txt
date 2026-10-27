@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Persistent references prototype (AP-0.6): names for faces and edges that survive changes, and

@@ -5,7 +5,7 @@
 - **Arbeitspaket:** AP-0.1
 
 ## Kontext
-Fission3D soll ein installierbares 3D-Konstruktionsprogramm für macOS (Apple Silicon) und Linux
+Fission359 soll ein installierbares 3D-Konstruktionsprogramm für macOS (Apple Silicon) und Linux
 werden: so einfach wie Tinkercad, so präzise wie Fusion (docs/01-vision.md). Rahmenbedingungen:
 bewusst keine Browser-App, keine Cloud-Pflicht, Open Source unter GPL-3.0-or-later,
 Performance-Budgets laut docs/03-architektur.md §12. Der Product Owner programmiert nicht selbst.
@@ -42,7 +42,7 @@ Zusätzlich für AP-0.1 festgelegt:
   Compiler Qt in `core` ab (Test `layering_rejects_qt_in_core`) und `scripts/tools/check_layers.py`
   prüft Includes im Quelltext.
 - **Kernel-Implementierungen** (`occt`, `mesh`, `sketch`) implementieren nur die GAL und werden
-  ausschließlich von der App (`apps/fission3d`) zusammengeführt. Keine andere Schicht kann sie linken.
+  ausschließlich von der App (`apps/fission359`) zusammengeführt. Keine andere Schicht kann sie linken.
 - **Bezug der Bibliotheken:** in AP-0.1 vorläufig aus Systempaketen, seit AP-0.2 per vcpkg
   (Qt hybrid: System-Qt ≥ 6.8, sonst vcpkg). Siehe [ADR-0004](0004-abhaengigkeiten-vcpkg.md).
 - **Rendering** (eigener Renderer auf Qt RHI oder OCCT AIS) bleibt offen und wird per ADR-0002

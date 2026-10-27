@@ -47,7 +47,7 @@ Jede Frage hat eine **aktuelle Annahme**, auf der die Dokumente beruhen.
 > **Annahme:** Zurückgestellt (AP-4.10). „Weich verschmelzen“ und „Verformen“ decken die Deko-Fälle zuerst ab.
 
 ### R13 – Name
-„Fission3D“ bleibt Arbeitstitel; Verwechslungsgefahr mit „Fusion“ wird vor dem Release geprüft (AP-6.6).
+„Fission359“ bleibt Arbeitstitel; Verwechslungsgefahr mit „Fusion“ wird vor dem Release geprüft (AP-6.6).
 
 ### R14 – Zeithorizont und Ambition
 > **Annahme:** Ambitioniertes Open-Source-Projekt mit dem Ziel einer öffentlichen 1.0. Erster großer Meilenstein ist **M2** (Phasen 0–2).

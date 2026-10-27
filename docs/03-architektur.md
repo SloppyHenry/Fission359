@@ -220,10 +220,10 @@ projekt.fission
 ## 9. Projektstruktur
 
 ```
-fission3d/
+fission359/
 ├─ CMakeLists.txt · CMakePresets.json · vcpkg.json · .clang-format · .clang-tidy
 ├─ CLAUDE.md                     ← Projektanweisung für den Coding-Agenten
-├─ apps/fission3d/               main.cpp, QML-Einstieg, App-Icon
+├─ apps/fission359/               main.cpp, QML-Einstieg, App-Icon
 ├─ src/
 │  ├─ core/                      Dokument, Features, Recompute, Ausdrücke, Commands, Serialisierung
 │  ├─ geometry/
@@ -276,7 +276,7 @@ fission3d/
 **Linux**
 - x86_64; Vulkan, sonst OpenGL; Wayland und X11
 - **AppImage** (sofort startbar) und **Flatpak** (Flathub); optional `.deb`/`.rpm` später
-- `.desktop`-Datei, MIME-Typ `application/x-fission3d`, Icons in allen Größen, Thumbnailer
+- `.desktop`-Datei, MIME-Typ `application/x-fission359`, Icons in allen Größen, Thumbnailer
 
 ---
 

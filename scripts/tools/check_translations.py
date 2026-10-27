@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Checks that the interface is translated and that no text is hard-coded.
 
@@ -23,7 +23,7 @@ TEXT_PROPERTIES = ("text", "title", "placeholderText", "label", "tip", "hint", "
 LITERAL = re.compile(
     r'^\s*(?:' + "|".join(TEXT_PROPERTIES) + r')\s*:\s*"((?:[^"\\]|\\.)*)"\s*$', re.M)
 # Texts that are the same in every language (names, key labels, units).
-ALLOWED_LITERALS = {"Fission3D", "X", "Y", "Z", "⌘K", "⌘Z", "⌘", "–", "mm"}
+ALLOWED_LITERALS = {"Fission359", "X", "Y", "Z", "⌘K", "⌘Z", "⌘", "–", "mm"}
 QSTR = re.compile(r'qsTr\(\s*"((?:[^"\\]|\\.)*)"')
 
 
@@ -42,8 +42,8 @@ def ts_messages(path: Path):
 
 def main() -> int:
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
-    qml_dir = root / "apps" / "fission3d" / "qml"
-    i18n_dir = root / "apps" / "fission3d" / "i18n"
+    qml_dir = root / "apps" / "fission359" / "qml"
+    i18n_dir = root / "apps" / "fission359" / "i18n"
     problems = []
 
     sources = set()
@@ -58,7 +58,7 @@ def main() -> int:
             sources.add(unescape(match.group(1)))
 
     for language in ("de", "en"):
-        path = i18n_dir / f"fission3d_{language}.ts"
+        path = i18n_dir / f"fission359_{language}.ts"
         if not path.exists():
             problems.append(f"{path.name}: missing")
             continue

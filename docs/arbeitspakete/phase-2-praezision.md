@@ -1,6 +1,6 @@
 # Phase 2 – Präzision
 
-**Ziel:** Fission3D wird zum echten Konstruktionsprogramm: Skizzen mit Maßen und Regeln, Ziehen und Drehen, Abrunden, Aushöhlen, Bohrungen für echte Schrauben, benannte Maße. Alles bleibt über das Rezept änderbar.
+**Ziel:** Fission359 wird zum echten Konstruktionsprogramm: Skizzen mit Maßen und Regeln, Ziehen und Drehen, Abrunden, Aushöhlen, Bohrungen für echte Schrauben, benannte Maße. Alles bleibt über das Rezept änderbar.
 
 **Meilenstein M2 (Demo):** Ablauf B „Wandhalterung“ aus dem [UX-Konzept](../02-ux-konzept.md#b-wandhalterung-ziel--20-min-für-tinkercad-umsteiger) komplett, inkl. nachträglicher Maßänderung, bei der alles korrekt bleibt. STEP-Export öffnet sich in Fusion und FreeCAD mit exakter Geometrie.
 

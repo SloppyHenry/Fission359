@@ -23,7 +23,7 @@ AP-1.1 (erledigt). Sinnvoll nach AP-1.7 und AP-1.9 (dann sind `combine`, `split`
   (das ist keine neue Abhängigkeit nach außen, nur eine Schicht-Freigabe; im PR erwähnen).
 - Menü Datei hat Neu, Öffnen, Speichern, Speichern unter, Export, Schließen (alle aus).
 - `History::markClean/isClean` gibt es schon (für „ungespeichert“).
-- MIME-Typ `application/x-fission3d` und macOS-Dokumenttyp sind in `packaging/` angelegt (AP-0.7).
+- MIME-Typ `application/x-fission359` und macOS-Dokumenttyp sind in `packaging/` angelegt (AP-0.7).
 
 ## Aus AP-1.9 und AP-1.8 übernommen (in der Datei zu speichern)
 - **Zeitmarker:** `Document::rollback()` (Anzahl der zählenden Schritte, leer = alle) gehört in `document.json` als `rollback` (Zahl; fehlt = alle).
@@ -44,8 +44,8 @@ AP-1.1 (erledigt). Sinnvoll nach AP-1.7 und AP-1.9 (dann sind `combine`, `split`
    wandeln (OCCT „Sewing“) – langsam bei großen Dateien, Ergebnis nicht schön editierbar.
 2. **Schriften in der Datei:** Empfehlung: mitgelieferte Schriften (IBM Plex, OFL) **nicht** einbetten (sind überall da); Systemschriften
    **nicht** einbetten (Lizenz unklar), nur den Namen speichern; fehlt die Schrift beim Öffnen, meldet der Text-Schritt das (gibt es schon).
-3. **Wiederherstellungsordner:** Empfehlung: `QStandardPaths::AppDataLocation/recovery/` (macOS `~/Library/Application Support/Fission3D/recovery`,
-   Linux `~/.local/share/Fission3D/recovery`), höchstens 10 Dateien, älteste zuerst löschen.
+3. **Wiederherstellungsordner:** Empfehlung: `QStandardPaths::AppDataLocation/recovery/` (macOS `~/Library/Application Support/Fission359/recovery`,
+   Linux `~/.local/share/Fission359/recovery`), höchstens 10 Dateien, älteste zuerst löschen.
 4. **Ungespeichert schließen:** Ein Rückfrage-Dialog „Änderungen speichern?“ ist kein Geometrie-Dialog; Empfehlung: Standard-Dialog des
    Systems erlaubt. Bestätigen lassen.
 
@@ -90,7 +90,7 @@ AP-1.1 (erledigt). Sinnvoll nach AP-1.7 und AP-1.9 (dann sind `combine`, `split`
    vergleichen).
 3. Menü Datei aktivieren; Dialoge mit `FileDialog` aus `QtQuick.Dialogs` (nativ). Kürzel gibt es schon im Menü.
 4. Zuletzt geöffnet: `src/services` (`QSettings`, Liste der letzten 10 Pfade); Menü Datei ▸ „Zuletzt geöffnet ▸“.
-5. Öffnen per Doppelklick/Argument: `fission3d <datei.fission>`; macOS: `QFileOpenEvent` in `main.cpp` behandeln.
+5. Öffnen per Doppelklick/Argument: `fission359 <datei.fission>`; macOS: `QFileOpenEvent` in `main.cpp` behandeln.
 6. Mehrere Dokumente/Tabs: **nicht** hier (AP-1.11). Öffnen ersetzt das aktuelle Dokument (mit Rückfrage bei Ungespeichertem, Haltepunkt 4).
 7. Tests: `test_document_model.cpp` – speichern, ändern, `modified` true, öffnen, gleich wie gespeichert; Titel-Eigenschaft.
 

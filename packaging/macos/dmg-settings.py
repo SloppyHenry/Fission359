@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Layout of the disk image (read by dmgbuild; values come in with -D name=value)."""
 

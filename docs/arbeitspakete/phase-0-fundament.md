@@ -2,7 +2,7 @@
 
 **Ziel:** Ein Gerüst, auf dem sich zügig bauen lässt; die großen technischen Risiken (Viewport, Kernel-Robustheit, Topological Naming, Paketieren) sind früh geklärt.
 
-**Meilenstein-Demo:** Installierbares Fission3D (`.dmg`, AppImage) mit drehbarem, beleuchtetem 3D-Würfel auf einem Druckbett.
+**Meilenstein-Demo:** Installierbares Fission359 (`.dmg`, AppImage) mit drehbarem, beleuchtetem 3D-Würfel auf einem Druckbett.
 
 Ausführliche Abschlussvermerke dieser Phase stehen im Git-Verlauf (vor 2026-10-20).
 
@@ -77,7 +77,7 @@ Features wiederholen.
 ### AP-0.7 Paketierung: Hallo-Welt
 **Status:** erledigt (2026-10-14) · **Größe:** M · **Abhängigkeiten:** AP-0.3
 
-**Ergebnis:** ID `io.github.sloppyhenry.Fission3D`. `.dmg` ad hoc signiert (Gatekeeper-Umweg, vom Product Owner auf sauberem macOS 14
+**Ergebnis:** ID `io.github.sloppyhenry.Fission359`. `.dmg` ad hoc signiert (Gatekeeper-Umweg, vom Product Owner auf sauberem macOS 14
 geprüft), Notarisierung vorbereitet (aktiv mit Secrets, bezahltes Konto). AppImage und Flatpak (verpackt das fertige Programm, nicht
 Flathub-tauglich). `scripts/package`, CI-Job „Package“. Ubuntu 22.04 entfällt (Backlog B-15). Siehe ADR-0006, [paketierung.md](../paketierung.md).
 

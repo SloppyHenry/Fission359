@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 // Minimal stand-in for FreeCAD's Base::Console and Base::TimeElapsed, which PlaneGCS uses

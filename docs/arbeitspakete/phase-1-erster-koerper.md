@@ -1,6 +1,6 @@
 # Phase 1 – Der erste Körper
 
-**Ziel:** Alles, was man für ein erstes Erfolgserlebnis braucht: Formen platzieren, exakt bemaßen, bewegen, kombinieren, rückgängig machen, speichern, exportieren. Am Ende fühlt sich Fission3D schon besser an als Tinkercad.
+**Ziel:** Alles, was man für ein erstes Erfolgserlebnis braucht: Formen platzieren, exakt bemaßen, bewegen, kombinieren, rückgängig machen, speichern, exportieren. Am Ende fühlt sich Fission359 schon besser an als Tinkercad.
 
 **Meilenstein M1 (Demo):** Ablauf A „Schlüsselanhänger“ aus dem [UX-Konzept](../02-ux-konzept.md#15-beispielabläufe-referenz-für-tests) mit flachem Text (Prägen auf gekrümmte Flächen folgt in Phase 4) → STL/3MF-Export → druckbar.
 
@@ -42,7 +42,7 @@ Core-Abdeckung ≥ 94 % (`scripts/coverage`).
 ### AP-1.3 Viewport und Navigation
 **Status:** erledigt auf dem Mac (2026-10-16, PR #20) · **Größe:** L · **Abhängigkeiten:** AP-0.4, AP-1.1
 
-**Ergebnis:** Maus-Stile (Fission3D, Fusion, Tinkercad, Blender, SketchUp; `render/navigation.h`), Trackpad und Pinch, Ansichtswürfel mit
+**Ergebnis:** Maus-Stile (Fission359, Fusion, Tinkercad, Blender, SketchUp; `render/navigation.h`), Trackpad und Pinch, Ansichtswürfel mit
 Kanten/Ecken, eigene GPU-Puffer je Körper, adaptive Feinheit (5 Stufen, `render/detail.h`, Loch Ø 3 mm: 0,03 px Abweichung), SSAO
 „Weiche Schatten“ mit Selbst-Abschaltung, Druckerliste (`ui/printer_catalog.h`) für die Bettgröße, `--benchmark` (M1: 2 Mio. Dreiecke
 8,0 ms je Bild).
@@ -266,7 +266,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Speichern atomar (Temp-Datei, Flush, Umbenennen) und im Hintergrund; „gespeichert“ nur, wenn sich währenddessen nichts geändert hat. Fenstertitel „Name.fission •“, Zuletzt geöffnet (flache Liste im Datei-Menü, 10), Öffnen per Argument und macOS-Doppelklick.
 - Autosave alle 60 s und nach 20 Schritten in `AppDataLocation/recovery` (höchstens 10 Dateien); Karte „Wir haben deine Arbeit von … gerettet“ nach einem Absturz. Projekt mit Datei wird beim Beenden/Neu/Öffnen automatisch gespeichert; ein nie gespeichertes Projekt bleibt als Sicherung liegen und wird beim nächsten Start angeboten.
 - Export STL (binär) und 3MF (ein Objekt je Körper, Name, Farbe), Qualität Grob/Normal/Fein, im Hintergrund und abbrechbar; keine Löcher, keine verbrauchten oder versteckten Körper, nichts bei Körpern mit Rezept-Fehler. Lochkante ≤ 0,01 mm (Ablauf D Schritt 6, `test_export.cpp`).
-- System-Zwischenablage mit dem Dateiformat (aus AP-1.6): kopierte Körper liegen als `application/x-fission3d` bereit.
+- System-Zwischenablage mit dem Dateiformat (aus AP-1.6): kopierte Körper liegen als `application/x-fission359` bereit.
 - Festlegungen: Schriften werden nicht eingebettet (nur der Name); eine Datei aus einer neueren Version wird geöffnet, aber nur unter neuem Namen gespeichert; Palettenänderungen markieren „geändert“, haben aber kein Undo.
 - Offene Reste: 3MF in Bambu Studio / OrcaSlicer / PrusaSlicer von Hand öffnen (Product Owner); „Zuletzt geöffnet“ als Untermenü statt flacher Liste; Dateizuordnung unter Linux/macOS ist aus AP-0.7 vorhanden, aber nicht von Hand geprüft; Kernel-Abdeckung ≥ 85 % nicht neu gemessen; mehrere Dokumente (Tabs) = AP-1.11.
 

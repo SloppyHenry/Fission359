@@ -20,7 +20,7 @@ Phasen 1–5 weitgehend fertig.
 ## Schritte
 1. **Benchmark-Modelle** erzeugen (Skript `scripts/tools/make_bench_models.py` erzeugt `.fission` mit 500 Schritten, 200 Körpern, 5 Mio. Dreiecken über
    feine Tessellierung), in `tests/fixtures/bench/` (LFS).
-2. **Benchmark-Programm** `fission3d --bench-suite` misst: Kaltstart, Öffnen, Neuberechnung nach Maßänderung, Griff-Vorschau, Bildzeit, Picking, UI-Blockade
+2. **Benchmark-Programm** `fission359 --bench-suite` misst: Kaltstart, Öffnen, Neuberechnung nach Maßänderung, Griff-Vorschau, Bildzeit, Picking, UI-Blockade
    (längste Pause im UI-Thread über einen Watchdog-Timer); Ausgabe JSON; Vergleich mit Baseline-Datei.
 3. **Profiling** (Instruments/`perf`) der Ausreißer; Optimierungen je eigener PR mit Messung vorher/nachher.
 4. **Lecks:** ASan/LSan-Lauf aller Tests (gibt es in der CI) plus Langläufe; macOS `leaks`.

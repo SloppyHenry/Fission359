@@ -60,7 +60,7 @@ Heute weiß nur `GizmoController`, ob ⇧ gedrückt ist. Zieh das in eine gemein
   `snap_session.cpp`: true, wenn der Test-Schalter an ist **oder** eine `QGuiApplication` läuft und
   `QGuiApplication::queryKeyboardModifiers() & Qt::ShiftModifier` gesetzt ist (genau wie `GizmoController::snappingOff`).
 - `GizmoController::snappingOff()` ruft die neue Funktion (plus das eigene `m_snapSuppressed`, damit nichts bricht).
-- `--simulate "snap:off|on"` in `apps/fission3d/src/main.cpp` setzt künftig den gemeinsamen Schalter.
+- `--simulate "snap:off|on"` in `apps/fission359/src/main.cpp` setzt künftig den gemeinsamen Schalter.
 - Test: vorhandene `[snap]`-Tests bleiben grün.
 
 ### Schritt 2 – Fangpunkte einer einzelnen Fläche des Hüllquaders
@@ -155,7 +155,7 @@ Fenster-Tests (`tests/CMakeLists.txt`, Handbuch §9):
 ## Abnahme
 - Alle neuen und alten Tests grün auf dem Mac; CI grün (macOS und Ubuntu).
 - So probierst du es aus (für den PR):
-  1. `scripts/run --release` im Ordner `Fission3D-<deine Arbeitskopie>`.
+  1. `scripts/run --release` im Ordner `Fission359-<deine Arbeitskopie>`.
   2. Zwei Quader aufs Bett legen. Links **Größe** wählen, am Breiten-Punkt des einen zum anderen ziehen: kurz vor der Berührung
      rastet die Seite bündig ein, eine Marke zeigt die Stelle.
   3. Dasselbe mit gedrückter ⇧: kein Einrasten.

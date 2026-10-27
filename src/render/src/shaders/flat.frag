@@ -1,5 +1,5 @@
 #version 440
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 layout(location = 0) in vec4 vColor;

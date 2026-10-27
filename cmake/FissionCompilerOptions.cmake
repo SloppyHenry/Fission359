@@ -1,7 +1,7 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Compiler warnings and sanitizers shared by all Fission3D targets.
+# Compiler warnings and sanitizers shared by all Fission359 targets.
 
 function(fission_apply_compiler_options target)
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")

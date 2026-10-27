@@ -1,4 +1,4 @@
-# Fission3D – Projektdokumentation
+# Fission359 – Projektdokumentation
 
 Ein installierbares 3D-Konstruktionsprogramm für macOS und Linux: so leicht wie Knete, so genau wie ein Messschieber.
 

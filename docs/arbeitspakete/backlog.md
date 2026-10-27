@@ -21,7 +21,7 @@ Ideen und größere Themen, die bewusst nicht in 1.0 sind. Die Reihenfolge ist e
 | B-15 | **Selbst bauen auf älteren Systemen** | Wer ein Linux ohne passendes fertiges Paket hat (z. B. Ubuntu 22.04), kann das Programm selbst bauen. Dafür ein **dynamisches Installationsskript**, das die Distribution erkennt, die nötigen Pakete bzw. Qt/vcpkg beschafft, baut und installiert (Menüeintrag, Dateizuordnung). Baut auf `scripts/setup` und AP-0.7 auf | M |
 | B-16 | **Referenzbilder als Hintergrund** | 2–3 Bilder (PNG/JPG) in die Szene laden und als Vorlage zum Modellieren benutzen, z. B. Vorder-, Seiten- und Draufsicht eines Ersatzteils oder eine Zeichnung. Bild lässt sich auf eine Ebene legen, verschieben, drehen, **über ein bekanntes Maß auf Originalgröße bringen** („diese Strecke ist 42 mm“), in der Deckkraft ändern, ein- und ausblenden und sperren. Bilder gehören **nicht** zur Geometrie: kein Export, kein Druck, nie Teil von Prüfungen. Liegen als Asset in der `.fission`-Datei, Änderungen sind Undo/Redo-fähig | M |
 | B-17 | **Nachzeichnen (Tracing)** | Aus einem Referenzbild eine **Skizze** machen: Kontur per Klick als Linien/Kurven übernehmen oder automatisch erkennen (Vektorisieren, Schwelle und Glättung einstellbar), danach wie jede andere Skizze mit Maßen und Regeln bearbeitbar. Wichtig für technische Teile, bei denen man ein Foto oder eine Zeichnung als Vorlage hat. Setzt B-16 (Maßstab über bekanntes Maß) voraus; die Kontur-Erkennung teilt sich Bausteine mit B-11 | L |
-| B-18 | **MCP-Server (KI-Anbindung)** | Fission3D als lokaler MCP-Server, damit KI-Assistenten (z. B. Claude) Modelle lesen, ändern, prüfen und exportieren können. Nur auf Wunsch, ohne Cloud und ohne Konto. Jede Änderung läuft über dieselben Commands wie in der Oberfläche (Undo, Rezept). Skizze unten | L |
+| B-18 | **MCP-Server (KI-Anbindung)** | Fission359 als lokaler MCP-Server, damit KI-Assistenten (z. B. Claude) Modelle lesen, ändern, prüfen und exportieren können. Nur auf Wunsch, ohne Cloud und ohne Konto. Jede Änderung läuft über dieselben Commands wie in der Oberfläche (Undo, Rezept). Skizze unten | L |
 
 ---
 
@@ -29,10 +29,10 @@ Ideen und größere Themen, die bewusst nicht in 1.0 sind. Die Reihenfolge ist e
 
 **Status:** zurückgestellt (nach 1.0) · **Größe:** L · **Abhängigkeiten:** Release 1.0; teilt sich die Automations-Schnittstelle mit B-2 (Skript-API)
 
-**Idee:** Wer Fission3D zusammen mit einem KI-Assistenten nutzt, soll sagen können „Mach die Halterung 5 mm breiter und prüf, ob sie druckbar ist“. Der Assistent arbeitet dabei im selben Rezept wie der Mensch, nicht an einer Nebenwelt.
+**Idee:** Wer Fission359 zusammen mit einem KI-Assistenten nutzt, soll sagen können „Mach die Halterung 5 mm breiter und prüf, ob sie druckbar ist“. Der Assistent arbeitet dabei im selben Rezept wie der Mensch, nicht an einer Nebenwelt.
 
 **Umfang:**
-- Eigenes Programm `fission3d-mcp` (MCP über stdio) mit zwei Betriebsarten:
+- Eigenes Programm `fission359-mcp` (MCP über stdio) mit zwei Betriebsarten:
   - **Ohne Fenster:** lädt eine `.fission`-Datei direkt über Core und GAL, ändert, prüft, speichert und exportiert. Läuft auch per SSH auf dem Linux-Testrechner.
   - **Mit laufender App:** verbindet sich über einen lokalen Socket mit dem geöffneten Dokument. Änderungen erscheinen sofort in der 3D-Ansicht, der Mensch kann jederzeit eingreifen oder rückgängig machen.
 - **Werkzeuge (Tools):** Dokument beschreiben (Körper, Rezept, Parameter, in Alltagssprache) · Form oder Feature anlegen · Parameter und Maße ändern (Ausdrücke, Einheiten) · Passungen und Löcher · Druckcheck · Export (STL, 3MF, STEP) · Ansicht als Bild rendern.

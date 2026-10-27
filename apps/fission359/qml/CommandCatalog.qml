@@ -1,0 +1,303 @@
+// SPDX-FileCopyrightText: Fission359 contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+import QtQuick
+
+// Everything the command search (⌘K) can find, in one list: the tools of the palette, the shapes,
+// the commands of the menus and what comes in later versions ("soon"). The tools and the shapes
+// keep their own words in `ToolCatalog` and `ShapeCatalog`; this list adds the rest and joins
+// them. Rule 10: every command has a name, a sentence for its tooltip card, a hint for the hint
+// line and at least three synonyms in each language (German and English are searched at once, so
+// that "bohren" and "drill" both find the drilling). `scripts/tools/check_commands.py` checks that.
+//
+// run.kind is "tool" (switches the tool), "shape" (puts the shape on a free place), "menu" (the
+// command of the menu with that id) or "soon" (does not exist yet). `needs` says what the command
+// wants before it can run: "selection" (a body is chosen), "two" (two bodies), "one" (one body).
+QtObject {
+    id: root
+
+    property var tools: null    // ToolCatalog
+    property var shapes: null   // ShapeCatalog
+    property bool isMac: false
+    property string primaryKey: ""
+
+    readonly property var menuCommands: [
+        { id: "menu.new", group: "file", name: qsTr("New project"),
+          tip: qsTr("Starts an empty project in a tab of its own."),
+          hint: qsTr("An empty project opens next to the others."),
+          shortcut: primaryKey + "N",
+          synonyms: { de: ["neu", "neues projekt", "neue datei", "anlegen", "leer"],
+                      en: ["new", "new file", "create", "blank", "empty project"] },
+          run: { kind: "menu", id: "new" } },
+        { id: "menu.open", group: "file", name: qsTr("Open…"),
+          tip: qsTr("Opens a saved project."),
+          hint: qsTr("Choose a .fission file; it opens in a tab of its own."),
+          shortcut: primaryKey + "O",
+          synonyms: { de: ["öffnen", "laden", "datei öffnen", "projekt öffnen"],
+                      en: ["open", "load", "open file", "browse"] },
+          run: { kind: "menu", id: "open" } },
+        { id: "menu.save", group: "file", name: qsTr("Save"),
+          tip: qsTr("Saves the project. A new project asks for a name first."),
+          hint: qsTr("Your work is also saved in the background, but only a saved project has a file."),
+          shortcut: primaryKey + "S",
+          synonyms: { de: ["speichern", "sichern", "abspeichern", "ablegen"],
+                      en: ["save", "store", "keep", "write file"] },
+          run: { kind: "menu", id: "save" } },
+        { id: "menu.saveas", group: "file", name: qsTr("Save as…"),
+          tip: qsTr("Saves the project under another name."),
+          hint: qsTr("Choose a name and a folder."),
+          shortcut: isMac ? "⇧⌘S" : qsTr("Ctrl+Shift+S"),
+          synonyms: { de: ["speichern unter", "kopie speichern", "umbenennen", "neuer name"],
+                      en: ["save as", "save a copy", "rename file", "new name"] },
+          run: { kind: "menu", id: "saveas" } },
+        { id: "menu.export", group: "file", name: qsTr("Export…"),
+          tip: qsTr("Writes the bodies as a 3MF or STL file for the slicer."),
+          hint: qsTr("Choose the file type and how fine the surface should be."),
+          shortcut: primaryKey + "E",
+          synonyms: { de: ["exportieren", "stl", "3mf", "drucken", "slicer", "ausgeben"],
+                      en: ["export", "print", "stl", "3mf", "slicer", "output"] },
+          run: { kind: "menu", id: "export" } },
+        { id: "menu.close", group: "file", name: qsTr("Close"),
+          tip: qsTr("Closes the project in this tab."),
+          hint: qsTr("A project with a file is saved first; one without is kept as rescued work."),
+          shortcut: primaryKey + "W",
+          synonyms: { de: ["schließen", "zumachen", "tab schließen", "beenden"],
+                      en: ["close", "close tab", "shut", "end"] },
+          run: { kind: "menu", id: "close" } },
+        { id: "menu.undo", group: "edit", name: qsTr("Undo"),
+          tip: qsTr("Takes back the last change."),
+          hint: qsTr("Every change is a step that can be taken back, also with the arrow in the bar."),
+          shortcut: primaryKey + "Z",
+          synonyms: { de: ["rückgängig", "zurück", "zurücknehmen", "widerrufen"],
+                      en: ["undo", "back", "revert", "take back"] },
+          run: { kind: "menu", id: "undo" } },
+        { id: "menu.redo", group: "edit", name: qsTr("Redo"),
+          tip: qsTr("Does again what was just taken back."),
+          hint: qsTr("Only possible until you change something else."),
+          shortcut: isMac ? "⇧⌘Z" : qsTr("Ctrl+Shift+Z"),
+          synonyms: { de: ["wiederholen", "wiederherstellen", "vor", "nochmal"],
+                      en: ["redo", "again", "forward", "repeat"] },
+          run: { kind: "menu", id: "redo" } },
+        { id: "menu.copy", group: "edit", name: qsTr("Copy"),
+          tip: qsTr("Copies the chosen bodies."),
+          hint: qsTr("Paste puts them next to the originals; other projects can paste them too."),
+          shortcut: primaryKey + "C", needs: "selection",
+          synonyms: { de: ["kopieren", "vervielfältigen", "abschreiben"],
+                      en: ["copy", "clone", "duplicate to clipboard"] },
+          run: { kind: "menu", id: "copy" } },
+        { id: "menu.paste", group: "edit", name: qsTr("Paste"),
+          tip: qsTr("Puts the copied bodies into the project."),
+          hint: qsTr("Every paste moves the copy a little further."),
+          shortcut: primaryKey + "V",
+          synonyms: { de: ["einfügen", "einsetzen", "ablegen"],
+                      en: ["paste", "insert", "put in"] },
+          run: { kind: "menu", id: "paste" } },
+        { id: "menu.duplicate", group: "edit", name: qsTr("Duplicate"),
+          tip: qsTr("Makes a copy of the chosen bodies right next to them."),
+          hint: qsTr("The copy is chosen; press again for another one."),
+          shortcut: primaryKey + "D", needs: "selection",
+          synonyms: { de: ["duplizieren", "verdoppeln", "doppeln", "kopie"],
+                      en: ["duplicate", "double", "clone", "copy here"] },
+          run: { kind: "menu", id: "duplicate" } },
+        { id: "menu.delete", group: "edit", name: qsTr("Delete"),
+          tip: qsTr("Removes the chosen bodies and the steps that made them."),
+          hint: qsTr("Steps that use them are asked about first; undo brings everything back."),
+          shortcut: isMac ? "⌫" : qsTr("Del"), needs: "selection",
+          synonyms: { de: ["löschen", "entfernen", "wegmachen", "weg"],
+                      en: ["delete", "remove", "erase", "trash"] },
+          run: { kind: "menu", id: "delete" } },
+        { id: "menu.selectall", group: "edit", name: qsTr("Select all"),
+          tip: qsTr("Chooses all bodies."),
+          hint: qsTr("Esc chooses nothing again."),
+          shortcut: primaryKey + "A",
+          synonyms: { de: ["alles auswählen", "alles markieren", "alle körper", "alles wählen"],
+                      en: ["select all", "choose all", "all bodies", "mark all"] },
+          run: { kind: "menu", id: "selectall" } },
+        { id: "menu.settings", group: "edit", name: qsTr("Settings…"),
+          tip: qsTr("Language, look, mouse, printer and units."),
+          hint: qsTr("Everything changes at once and is remembered."),
+          shortcut: primaryKey + ",",
+          synonyms: { de: ["einstellungen", "optionen", "sprache", "design", "maus", "skalierung"],
+                      en: ["settings", "preferences", "options", "language", "theme", "mouse"] },
+          run: { kind: "menu", id: "settings" } },
+        { id: "menu.hole", group: "body", name: qsTr("As hole"),
+          tip: qsTr("Makes the chosen bodies holes: they cut out of the bodies they touch."),
+          hint: qsTr("The hole stays visible as a ghost; you can still move it and change its size."),
+          needs: "selection",
+          synonyms: { de: ["als loch", "loch machen", "ausschneiden", "negativ", "aussparung"],
+                      en: ["as hole", "make hole", "cut out", "negative", "cutout"] },
+          run: { kind: "menu", id: "hole" } },
+        { id: "menu.dropToBed", group: "body", name: qsTr("Drop to bed"),
+          tip: qsTr("Lets the chosen bodies fall onto the print bed."),
+          hint: qsTr("Useful after moving something up by mistake."),
+          shortcut: "D", needs: "selection",
+          synonyms: { de: ["aufs bett", "fallen lassen", "absetzen", "auf den boden", "runter"],
+                      en: ["drop to bed", "drop", "to bed", "on the floor", "lower"] },
+          run: { kind: "menu", id: "dropToBed" } },
+        { id: "menu.seatOnFace", group: "body", name: qsTr("Lay on face"),
+          tip: qsTr("Turns the chosen body so that a face you click lies on the bed or on another face."),
+          hint: qsTr("Click the face the body should lie on."),
+          needs: "selection",
+          synonyms: { de: ["auf fläche legen", "hinlegen", "drehen auf fläche", "flach legen"],
+                      en: ["lay on face", "lay flat", "put on side", "face down"] },
+          run: { kind: "menu", id: "seatOnFace" } },
+        { id: "menu.merge", group: "body", name: qsTr("Merge"),
+          tip: qsTr("Joins two or more bodies into one."),
+          hint: qsTr("Choose the bodies first (Shift+click)."),
+          needs: "two",
+          synonyms: { de: ["vereinen", "verschmelzen", "zusammenfügen", "verbinden", "kombinieren"],
+                      en: ["merge", "join", "union", "combine", "weld"] },
+          run: { kind: "menu", id: "merge" } },
+        { id: "menu.subtract", group: "body", name: qsTr("Subtract"),
+          tip: qsTr("Takes the other chosen bodies away from the first."),
+          hint: qsTr("Choose the body first, then the cutters."),
+          needs: "two",
+          synonyms: { de: ["abziehen", "subtrahieren", "ausschneiden", "differenz", "wegnehmen"],
+                      en: ["subtract", "difference", "cut away", "take away", "minus"] },
+          run: { kind: "menu", id: "subtract" } },
+        { id: "menu.overlap", group: "body", name: qsTr("Keep overlap"),
+          tip: qsTr("Keeps only what the chosen bodies have in common."),
+          hint: qsTr("Choose two or more bodies that overlap."),
+          needs: "two",
+          synonyms: { de: ["überlappung", "schnittmenge", "überschneidung", "gemeinsamer teil"],
+                      en: ["overlap", "intersect", "intersection", "common part"] },
+          run: { kind: "menu", id: "overlap" } },
+        { id: "menu.split", group: "body", name: qsTr("Split"),
+          tip: qsTr("Cuts one body in two at a plane."),
+          hint: qsTr("Choose one body, then place the plane."),
+          needs: "one",
+          synonyms: { de: ["teilen", "trennen", "durchschneiden", "zerschneiden", "halbieren"],
+                      en: ["split", "cut in two", "slice", "divide", "halve"] },
+          run: { kind: "menu", id: "split" } },
+        { id: "menu.view.frame", group: "view", name: qsTr("Show everything"),
+          tip: qsTr("Zooms so that everything is in view."),
+          hint: qsTr("The view turns and zooms; nothing in the project changes."),
+          shortcut: "F",
+          synonyms: { de: ["alles zeigen", "einpassen", "zoomen", "alles sehen", "ansicht anpassen"],
+                      en: ["show everything", "fit", "zoom to fit", "frame all", "see all"] },
+          run: { kind: "menu", id: "view.frame" } },
+        { id: "menu.view.home", group: "view", name: qsTr("Home view"),
+          tip: qsTr("Goes back to the starting view."),
+          hint: qsTr("The keys 1 to 6 show the sides."),
+          shortcut: isMac ? "Home" : qsTr("Pos1"),
+          synonyms: { de: ["startansicht", "grundansicht", "zurücksetzen", "ansicht zurück"],
+                      en: ["home view", "reset view", "default view", "start view"] },
+          run: { kind: "menu", id: "view.home" } },
+        { id: "menu.orthographic", group: "view", name: qsTr("Orthographic"),
+          tip: qsTr("Shows the model without perspective: parallel lines stay parallel."),
+          hint: qsTr("Good for comparing sizes."),
+          shortcut: "P",
+          synonyms: { de: ["orthogonal", "ohne perspektive", "parallel", "technisch"],
+                      en: ["orthographic", "no perspective", "parallel", "technical"] },
+          run: { kind: "menu", id: "orthographic" } },
+        { id: "menu.bed", group: "view", name: qsTr("Print bed"),
+          tip: qsTr("Shows or hides the print bed."),
+          hint: qsTr("The bed shows where your printer can print."),
+          synonyms: { de: ["druckbett", "bett", "platte", "bett zeigen"],
+                      en: ["print bed", "bed", "build plate", "plate"] },
+          run: { kind: "menu", id: "bed" } },
+        { id: "menu.softshadows", group: "view", name: qsTr("Soft shadows"),
+          tip: qsTr("Soft shadows in corners and crevices make shapes easier to read."),
+          hint: qsTr("Switched off by itself when the graphics card cannot keep up."),
+          synonyms: { de: ["weiche schatten", "schatten", "schattierung", "ambient occlusion"],
+                      en: ["soft shadows", "shadows", "shading", "ambient occlusion"] },
+          run: { kind: "menu", id: "softshadows" } },
+        { id: "menu.focus", group: "view", name: qsTr("Focus"),
+          tip: qsTr("Hides the panels so that only the model is left."),
+          hint: qsTr("Press the same key again to bring the panels back."),
+          shortcut: isMac ? "⇧F" : qsTr("Shift+F"),
+          synonyms: { de: ["fokus", "vollbild ansicht", "panels ausblenden", "ruhe"],
+                      en: ["focus", "hide panels", "clean view", "zen"] },
+          run: { kind: "menu", id: "focus" } },
+        { id: "menu.history", group: "view", name: qsTr("Recent actions"),
+          tip: qsTr("Lists what you did, newest last; click one to go back to it."),
+          hint: qsTr("Every change is a sentence here."),
+          synonyms: { de: ["verlauf", "letzte aktionen", "chronik", "protokoll"],
+                      en: ["recent actions", "history", "log", "timeline"] },
+          run: { kind: "menu", id: "history" } }
+    ]
+
+    // What the program will be able to do later. They are listed so that the search finds them
+    // and says so honestly (rule: no dead ends without a word).
+    readonly property var soonCommands: [
+        { id: "soon.fillet", group: "soon", name: qsTr("Round edges"),
+          tip: qsTr("Rounds the edges of a body with one radius."),
+          hint: qsTr("Choose edges, drag the dot."),
+          synonyms: { de: ["abrunden", "runde ecken", "kanten verrunden", "rundung", "verrunden", "ecken abrunden"],
+                      en: ["round edges", "fillet", "round corners", "rounded corners", "soften edges"] },
+          run: { kind: "soon" } },
+        { id: "soon.chamfer", group: "soon", name: qsTr("Bevel edges"),
+          tip: qsTr("Cuts the edges of a body at an angle."),
+          hint: qsTr("Choose edges, drag the dot."),
+          synonyms: { de: ["fase", "kanten brechen", "anschrägen", "abschrägen", "schräge kante"],
+                      en: ["bevel edges", "chamfer", "bevel", "slant edges", "angled edge"] },
+          run: { kind: "soon" } },
+        { id: "soon.drill", group: "soon", name: qsTr("Drilled hole"),
+          tip: qsTr("A round hole in a face with a chosen diameter and depth, also countersunk."),
+          hint: qsTr("Click a face, then drag the dot."),
+          synonyms: { de: ["bohrung", "bohren", "loch bohren", "senkung", "gewindeloch", "schraubenloch"],
+                      en: ["drilled hole", "drill", "bore", "countersink", "screw hole", "hole in face"] },
+          run: { kind: "soon" } },
+        { id: "soon.shell", group: "soon", name: qsTr("Hollow out"),
+          tip: qsTr("Makes a body hollow with a wall of a chosen thickness."),
+          hint: qsTr("Choose the body and the faces that stay open."),
+          synonyms: { de: ["aushöhlen", "hohl", "höhlen", "wand", "dünnwandig", "schale"],
+                      en: ["hollow out", "shell", "hollow", "thin wall", "empty inside"] },
+          run: { kind: "soon" } },
+        { id: "soon.extrude", group: "soon", name: qsTr("Pull up a sketch"),
+          tip: qsTr("Turns a sketch into a body by pulling it up."),
+          hint: qsTr("Draw a sketch, then drag it up."),
+          synonyms: { de: ["hochziehen", "extrudieren", "skizze ausziehen", "aus skizze", "ziehen"],
+                      en: ["pull up", "extrude", "pull sketch", "push pull", "lift sketch"] },
+          run: { kind: "soon" } },
+        { id: "soon.sketch", group: "soon", name: qsTr("Sketch"),
+          tip: qsTr("Draws lines, circles and rectangles with exact measures on a face."),
+          hint: qsTr("Choose a face to draw on."),
+          synonyms: { de: ["skizze", "zeichnen", "linie", "kreis", "umriss", "profil"],
+                      en: ["sketch", "draw", "line", "circle", "outline", "profile"] },
+          run: { kind: "soon" } },
+        { id: "soon.pattern", group: "soon", name: qsTr("Pattern"),
+          tip: qsTr("Repeats a body in a row, a grid or around a circle."),
+          hint: qsTr("Choose the body, then the number and the distance."),
+          synonyms: { de: ["muster", "reihe", "wiederholen", "kreisförmig", "anordnen", "vervielfachen"],
+                      en: ["pattern", "array", "repeat", "grid of copies", "circular pattern"] },
+          run: { kind: "soon" } },
+        { id: "soon.mirror", group: "soon", name: qsTr("Mirror"),
+          tip: qsTr("Makes a mirrored copy of a body."),
+          hint: qsTr("Choose the body and the plane to mirror at."),
+          synonyms: { de: ["spiegeln", "spiegel", "gespiegelt", "symmetrisch", "seitenverkehrt"],
+                      en: ["mirror", "flip copy", "symmetric", "reflect", "mirrored copy"] },
+          run: { kind: "soon" } }
+    ]
+
+    // The tools and shapes of the palette in the same form.
+    readonly property var toolCommands: tools === null ? [] : tools.tools.map(tool => ({
+        id: "tool." + tool.id, group: "tool", name: tool.name, tip: tool.tip, hint: tool.hint,
+        shortcut: "", synonyms: tool.synonyms, run: { kind: "tool", id: tool.id } }))
+
+    readonly property var shapeCommands: shapes === null ? [] : shapes.shapes.map(shape => ({
+        id: "shape." + shape.type, group: "shape", name: shape.name,
+        tip: qsTr("A %1 as the start of a shape. %2").arg(shape.name).arg(shapes.clickTip),
+        hint: shapes.dragTip, shortcut: "", synonyms: shape.synonyms,
+        run: { kind: "shape", id: shape.type } }))
+
+    readonly property var commands: toolCommands.concat(shapeCommands, menuCommands, soonCommands)
+
+    // The words to search by: the name and the synonyms of both languages.
+    function wordsOf(command) {
+        return command.synonyms.de.concat(command.synonyms.en)
+    }
+
+    function searchables() {
+        return commands.map(command => ({ id: command.id, name: command.name, words: wordsOf(command) }))
+    }
+
+    function find(id) {
+        for (let i = 0; i < commands.length; ++i) {
+            if (commands[i].id === id) {
+                return commands[i]
+            }
+        }
+        return null
+    }
+}

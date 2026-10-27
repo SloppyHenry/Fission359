@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Rule 5: every problem the core can report has an entry in the message catalogue.
 
 Reads the codes of `FeatureIssueCode` (src/core/include/fission/core/feature_type.h) and checks
-that apps/fission3d/qml/MessageCatalog.qml has an entry for each and that every entry lists its
+that apps/fission359/qml/MessageCatalog.qml has an entry for each and that every entry lists its
 actions. Usage: check_messages.py <repository root>
 """
 
@@ -16,7 +16,7 @@ root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().pare
 header = (root / "src/core/include/fission/core/feature_type.h").read_text(encoding="utf-8")
 enum = re.search(r"enum class FeatureIssueCode \{(.*?)\};", header, re.S)
 codes = re.findall(r"^\s*([a-zA-Z]+),", enum.group(1), re.M)
-catalogue = (root / "apps/fission3d/qml/MessageCatalog.qml").read_text(encoding="utf-8")
+catalogue = (root / "apps/fission359/qml/MessageCatalog.qml").read_text(encoding="utf-8")
 entries = dict(re.findall(r'"([a-zA-Z]+)":\s*\{\s*actions:\s*\[([^\]]*)\]', catalogue))
 
 problems = []

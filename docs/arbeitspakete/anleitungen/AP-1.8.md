@@ -15,7 +15,7 @@ AP-1.1 (erledigt). Sinnvoll nach AP-1.7 (dann hat die Kontextleiste Vereinen/Aus
 ## Vorher lesen
 - [Handbuch](handbuch.md) §5, §7, §8; `docs/02-ux-konzept.md` §1, §2.1, §2.3, §12; `docs/08-gestaltung.md` (Panel, Zahlenfeld,
   Abschnitte, Farben); Mockup `docs/mockups/oberflaeche.html` (rechtes Panel, Kontextleiste ansehen)
-- `apps/fission3d/qml/NumberField.qml`, `RightPanel.qml`, `Section.qml`
+- `apps/fission359/qml/NumberField.qml`, `RightPanel.qml`, `Section.qml`
 - `src/ui/include/fission/ui/numbers.h` (Formelauswertung für Felder), `src/core/include/fission/core/expression.h` (`ExpressionError`)
 - `src/core/include/fission/core/commands.h` (`makeSetBodyColor` gibt es schon)
 
@@ -51,7 +51,7 @@ AP-1.1 (erledigt). Sinnvoll nach AP-1.7 (dann hat die Kontextleiste Vereinen/Aus
    mean ‘%2’?”), ohne Vorschlag „‚%1‘ kenne ich nicht.“, weitere Arten (Klammer fehlt, Division durch null, Einheit passt nicht: „Hier
    gehört eine Länge hin, kein Winkel.“). Die fehlerhafte Stelle im Feld unterstreichen. Ein Klick auf den Vorschlag ersetzt das Wort.
 4. Unit-Tests (`tests/unit/ui/test_numbers.cpp`): Vorschlag für „Breitee“ = „Breite“; kein Vorschlag bei Abstand 3; Einheitenfehler.
-5. Audit: `grep -rn "TextField\|TextInput" apps/fission3d/qml` – jede Zahleneingabe außerhalb `NumberField` umstellen
+5. Audit: `grep -rn "TextField\|TextInput" apps/fission359/qml` – jede Zahleneingabe außerhalb `NumberField` umstellen
    (Akzeptanzkriterium 1). Ausnahme: `SnapControl.qml` benutzt hoffentlich schon `NumberField`; prüfen.
 
 ## Teil 1.8b – Panel nach Auswahl

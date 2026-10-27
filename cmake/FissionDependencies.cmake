@@ -1,10 +1,10 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # All third-party libraries come from vcpkg (vcpkg.json); Qt is found in FissionQt/find_package
 # in the root CMakeLists. Which layer may use which library is decided in FissionLayers.cmake.
 
-# OpenCASCADE: link only the modules Fission3D needs (modeling), not the whole kit.
+# OpenCASCADE: link only the modules Fission359 needs (modeling), not the whole kit.
 find_package(OpenCASCADE CONFIG REQUIRED)
 set(FISSION_OCCT_TARGETS
   ${OpenCASCADE_FoundationClasses_LIBRARIES}

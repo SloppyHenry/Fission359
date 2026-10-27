@@ -3,7 +3,7 @@
 **Größe:** M · **Phasendatei:** AP-5.6
 
 ## Ziel
-Fission3D ist vollständig per Tastatur bedienbar (sichtbarer Fokus, sinnvolle Tab-Reihenfolge), Bildschirmleser beschriften alle Bedienelemente, Status
+Fission359 ist vollständig per Tastatur bedienbar (sichtbarer Fokus, sinnvolle Tab-Reihenfolge), Bildschirmleser beschriften alle Bedienelemente, Status
 ist nie nur Farbe. Eine Tastenkürzel-Übersicht (`?`) und frei belegbare Kürzel. Ablauf A geht ohne Maus (Positionieren über Zahlen).
 
 ## Voraussetzungen

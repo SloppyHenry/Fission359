@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "fission/io/export.h"
@@ -54,7 +54,7 @@ bool exportStl(const std::vector<MeshForExport>& bodies, const std::filesystem::
     }
     Bytes out;
     out.reserve(84 + triangles * 50);
-    const char header[] = "Fission3D binary STL, millimetres";
+    const char header[] = "Fission359 binary STL, millimetres";
     out.insert(out.end(), header, header + sizeof header - 1);
     out.resize(80, ' ');
     putU32(out, static_cast<std::uint32_t>(triangles));

@@ -14,9 +14,9 @@ AP-1.11 erledigt.
 
 ## Vorher lesen
 - [Handbuch](handbuch.md) §7, §8; `docs/02-ux-konzept.md` §1 (Befehlssuche), §9 (Fehler), §11 (Tooltip-Karten, Synonyme), §12 (Glossar)
-- `apps/fission3d/qml/ToolCatalog.qml`, `ShapeCatalog.qml` (Synonyme gibt es schon für Werkzeuge und Formen), `MenuStrip.qml`
+- `apps/fission359/qml/ToolCatalog.qml`, `ShapeCatalog.qml` (Synonyme gibt es schon für Werkzeuge und Formen), `MenuStrip.qml`
   (Suchfeld „What do you want to do?“ ist da, ohne Funktion), `StatusBar.qml` (Hinweiszeile)
-- Stellen, an denen heute Fehlertexte entstehen: `grep -rn "parameterOutOfRange\|textGlyphsMissing\|fontNotFound" apps/fission3d/qml`
+- Stellen, an denen heute Fehlertexte entstehen: `grep -rn "parameterOutOfRange\|textGlyphsMissing\|fontNotFound" apps/fission359/qml`
 
 ## Ausgangslage im Code
 - Hinweiszeile: Texte kommen heute aus mehreren QML-Stellen (Werkzeug, Hover, Ablegen, Ziehen). Kein zentraler Ort.
@@ -32,7 +32,7 @@ AP-1.11 erledigt.
 ## Haltepunkte (am Anfang fragen)
 1. **Unscharfe Suche:** Empfehlung: eigene kleine Bewertung (Wortanfang > enthalten > Tippfehler mit Levenshtein ≤ 1 je Wort, Umlaute
    normalisiert ä→a, ß→ss), keine neue Bibliothek. Bestätigen.
-2. **Wo lebt der Katalog?** Empfehlung: **ein** Befehlskatalog als Datendatei `apps/fission3d/qml/CommandCatalog.js` (oder JSON in
+2. **Wo lebt der Katalog?** Empfehlung: **ein** Befehlskatalog als Datendatei `apps/fission359/qml/CommandCatalog.js` (oder JSON in
    `resources/commands.json`), der Werkzeuge, Formen und Menübefehle zusammenführt; `ToolCatalog`/`ShapeCatalog` werden daraus gespeist.
    Texte bleiben `qsTr` (also JS/QML, nicht JSON, sonst übersetzt lupdate sie nicht). Empfehlung: JS-Datei.
 

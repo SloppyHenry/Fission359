@@ -14,8 +14,8 @@ AP-0.8 (Review, gemergt), AP-1.10 erledigt (Zuletzt geöffnet, Öffnen).
 - [Handbuch](handbuch.md) §3, §7, §8; `docs/02-ux-konzept.md` §2.2 (Griff-Art), §10, §11 (erster Start), §13 (Akzentfarbe, Hell/Dunkel),
   §14 (UI-Skalierung); `docs/06-rueckfragen.md` R17–R21; `docs/08-gestaltung.md` (Einstellungen, Startseite, Tabs); Mockup (Einstellungen,
   Startseite, Dokument-Tabs)
-- `src/ui/include/fission/ui/theme.h`, `language.h`, `app_options.h`; `apps/fission3d/qml/DocTabs.qml`, `Main.qml` (Menüs),
-  `apps/fission3d/src/main.cpp` (Kommandozeile, Singletons)
+- `src/ui/include/fission/ui/theme.h`, `language.h`, `app_options.h`; `apps/fission359/qml/DocTabs.qml`, `Main.qml` (Menüs),
+  `apps/fission359/src/main.cpp` (Kommandozeile, Singletons)
 - `src/ui/include/fission/ui/printer_catalog.h` (Druckerliste bis AP-3.1)
 
 ## Ausgangslage im Code
@@ -102,7 +102,7 @@ So probierst du es aus: Einstellungsordner löschen (Pfad im PR nennen), starten
 öffnen, Akzent Grün → Hinweis. Skalierung 150 %. Programm neu starten: alles gemerkt. ⌘N: zweiter Tab.
 
 ## Stolperfallen
-- `QSettings` auf macOS schreibt nach `~/Library/Preferences/io.github.sloppyhenry.Fission3D.plist`: `QCoreApplication::setOrganizationDomain`
+- `QSettings` auf macOS schreibt nach `~/Library/Preferences/io.github.sloppyhenry.Fission359.plist`: `QCoreApplication::setOrganizationDomain`
   und `setApplicationName` müssen vor dem ersten Zugriff gesetzt sein (prüfen in `main.cpp`).
 - Tests dürfen nie die echten Einstellungen des Entwicklers ändern: immer eigener Pfad.
 - Sprachwechsel: QML-Texte erneuern sich über `qsTr` + `retranslate`; Texte, die in C++ zusammengesetzt werden, nicht (deshalb liefert C++

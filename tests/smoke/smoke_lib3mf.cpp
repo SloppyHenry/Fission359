@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <catch2/catch_test_macros.hpp>
@@ -18,7 +18,7 @@ TEST_CASE("lib3mf writes and reads back a 3MF file", "[smoke][lib3mf]") {
     const std::vector<Lib3MF::sTriangle> triangles = {
         {{0, 2, 1}}, {{0, 1, 3}}, {{1, 2, 3}}, {{2, 0, 3}}};
 
-    const auto path = std::filesystem::temp_directory_path() / "fission3d-smoke.3mf";
+    const auto path = std::filesystem::temp_directory_path() / "fission359-smoke.3mf";
 
     {
         auto model = wrapper->CreateModel();

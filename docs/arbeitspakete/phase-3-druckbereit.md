@@ -1,6 +1,6 @@
 # Phase 3 – Druckbereit
 
-**Ziel:** Fission3D denkt den 3D-Druck mit: Es warnt vor Problemen, *bevor* gedruckt wird, hilft bei Passungen und macht Mehrfarbdruck einfach.
+**Ziel:** Fission359 denkt den 3D-Druck mit: Es warnt vor Problemen, *bevor* gedruckt wird, hilft bei Passungen und macht Mehrfarbdruck einfach.
 
 **Meilenstein M3 (Demo):** Eine **Box mit Steckdeckel** (über Passungs-Assistent), zweifarbig, Druckcheck grün, „Im Slicer öffnen“. Gedruckt passt sie beim ersten Versuch.
 

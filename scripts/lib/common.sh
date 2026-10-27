@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Shared helpers for scripts/setup, scripts/run and scripts/test.

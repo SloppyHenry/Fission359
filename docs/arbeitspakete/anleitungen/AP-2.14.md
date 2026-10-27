@@ -15,7 +15,7 @@ parallel zu 2.4/2.5/2.6/2.7 (deren Fehlercodes).
 - `docs/02-ux-konzept.md` §9 (Regeln und drei Beispiele – genau dieser Ton), §12 (Glossar)
 - `docs/spikes/kernel-robustheit.md` „Bekannte Problemfälle“ (Tabelle = Pflichtumfang)
 - `src/core/include/fission/core/feature_type.h` (`FeatureIssueCode`, `FeatureIssue`), `src/geometry/gal/include/fission/geo/error.h`
-- `apps/fission3d/qml/MessageCatalog.js` (aus AP-1.12)
+- `apps/fission359/qml/MessageCatalog.js` (aus AP-1.12)
 
 ## Ausgangslage im Code
 - Fehler sind Codes + `subject` + `detail` (nur Protokoll). AP-1.12 hat sie im Katalog mit einfachen Texten und Aktionen „Wert ändern“,

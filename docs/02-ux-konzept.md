@@ -1,6 +1,6 @@
 # UX-Konzept
 
-Dieses Dokument beschreibt, **wie sich Fission3D anfühlt**. Es ist verbindlich für alle UI-Arbeitspakete. Wo dieses Dokument und eine technische Bequemlichkeit kollidieren, gewinnt dieses Dokument. Ausnahmen werden per ADR begründet.
+Dieses Dokument beschreibt, **wie sich Fission359 anfühlt**. Es ist verbindlich für alle UI-Arbeitspakete. Wo dieses Dokument und eine technische Bequemlichkeit kollidieren, gewinnt dieses Dokument. Ausnahmen werden per ADR begründet.
 
 ---
 
@@ -8,7 +8,7 @@ Dieses Dokument beschreibt, **wie sich Fission3D anfühlt**. Es ist verbindlich 
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│ Fission3D — Schlüsselanhänger.fission                       ⌘K  Was suchst du?│
+│ Fission359 — Schlüsselanhänger.fission                       ⌘K  Was suchst du?│
 ├───────────────────────────────────────────────────────────────────────────────┤
 │ Formen   Skizze   Ändern   Kombinieren   Muster   Deko   Prüfen   Export       │
 ├─────────────┬─────────────────────────────────────────────────┬───────────────┤
@@ -191,7 +191,7 @@ Diese Punkte sind **verbindlich**. Ablauf D (Abschnitt 15) prüft sie als Regres
 #### 7.1 Ausschneiden ist umständlich
 **Tinkercad:** Form als „Loch“ markieren, Loch und Körper zusammen auswählen, „Gruppieren“. Vorher sieht man keine Wirkung. Danach steckt das Loch in der Gruppe, und um es zu ändern, muss man die Gruppe wieder auflösen.
 
-**Fission3D:**
+**Fission359:**
 - **Sofort sichtbar:** Sobald eine Form „Als Loch“ markiert ist und einen Körper berührt, ist sie live ausgeschnitten. Es gibt **keinen Gruppieren-Schritt**.
 - **Klares Ziel:** Ein Etikett am Loch zeigt „schneidet aus: Anhänger“. Das Ziel ist automatisch der Körper, auf dem das Loch abgelegt wurde. Ein Klick auf das Etikett ändert das Ziel, auch auf mehrere Körper.
 - **Das Loch bleibt greifbar:** Es bleibt als halbtransparente Geisterform anklickbar. Verschieben, Größe ändern und Löschen gehen jederzeit, das Ergebnis aktualisiert sich live.
@@ -201,7 +201,7 @@ Diese Punkte sind **verbindlich**. Ablauf D (Abschnitt 15) prüft sie als Regres
 #### 7.2 Rundungen verziehen sich beim Größe-Ändern
 **Tinkercad:** Ändert man ein Objekt ungleichmäßig in der Größe, wird alles mitgestreckt. Aus einer runden Ecke wird eine Ellipse, aus einem runden Loch ein Oval.
 
-**Fission3D: „Maße ändern verzerrt nie.“**
+**Fission359: „Maße ändern verzerrt nie.“**
 - **Griffe ändern Maße, nicht die Skalierung.** Ein Quader mit 3-mm-Ecken wird breiter, die Ecken bleiben 3-mm-Viertelkreise. Löcher bleiben rund und behalten ihren Durchmesser.
 - **Das gilt auch für fertige, kombinierte Körper.** Zieht man an einer Seitenfläche, wird der Körper **gestreckt** (Fläche verschoben bzw. „Intelligentes Strecken“: Körper an einer Ebene teilen, Mittelstück verlängern), nicht skaliert. Rundungen, Löcher und Text bleiben unverändert.
 - **Echtes Verzerren gibt es nur auf ausdrücklichen Wunsch** (Ändern ▸ Mehr ▸ „Verzerren“), mit Hinweis: „Rundungen und Löcher werden dabei oval. Möchtest du stattdessen strecken?“
@@ -210,7 +210,7 @@ Diese Punkte sind **verbindlich**. Ablauf D (Abschnitt 15) prüft sie als Regres
 #### 7.3 Niedrige Auflösung
 **Tinkercad:** Rundungen bestehen aus wenigen Segmenten, und runde Löcher werden im Druck eckig.
 
-**Fission3D: „Rund ist rund.“**
+**Fission359: „Rund ist rund.“**
 - Präzise Körper sind mathematisch exakt, ein Kreis ist ein Kreis. Es gibt **keinen „Seiten“-Regler**.
 - Die Ansicht verfeinert die Darstellung automatisch beim Hineinzoomen. Auch aus der Nähe sind keine Facetten sichtbar.
 - Beim Export weicht das Modell standardmäßig höchstens 0,01 mm ab, das ist feiner als jede Düse. Der Wert ist einstellbar.
@@ -220,7 +220,7 @@ Diese Punkte sind **verbindlich**. Ablauf D (Abschnitt 15) prüft sie als Regres
 #### 7.4 Zu wenige Funktionen
 **Tinkercad:** Es gibt keine Skizzen, keine Maße mit Bezügen, kein Abrunden beliebiger Kanten, keine Parameter, keinen Verlauf und keine Gewinde.
 
-**Fission3D:** Das ist der Kern von Phase 2 (Präzision) und Phase 4 (Spielwiese). Alles ist so verpackt, dass man beim Einstieg nichts davon sehen muss (fortschreitende Tiefe).
+**Fission359:** Das ist der Kern von Phase 2 (Präzision) und Phase 4 (Spielwiese). Alles ist so verpackt, dass man beim Einstieg nichts davon sehen muss (fortschreitende Tiefe).
 
 **Außerdem besser:** exakte Abstände statt Augenmaß, präzise Bohrungen, kein Browser, offline, schnell.
 
@@ -303,7 +303,7 @@ Die Texte stammen aus einem **Meldungskatalog** (siehe AP-2.14). Technische Kern
 
 UI-Texte verwenden ausschließlich die Begriffe in der mittleren Spalte. Englische UI-Begriffe in Klammern sind für die englische Übersetzung.
 
-| Fachbegriff (Fusion) | Fission3D (DE) | Fission3D (EN) | Kurz-Erklärung im Tooltip |
+| Fachbegriff (Fusion) | Fission359 (DE) | Fission359 (EN) | Kurz-Erklärung im Tooltip |
 |---|---|---|---|
 | Extrude / Press Pull | Ziehen | Pull | Fläche oder Skizze in die Höhe ziehen |
 | Revolve | Drehkörper | Spin | Profil um eine Achse drehen (Vasen, Knöpfe) |

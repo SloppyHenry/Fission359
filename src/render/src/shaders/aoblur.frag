@@ -1,5 +1,5 @@
 #version 440
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Takes the per-pixel rotation of the ambient occlusion out: a 4 x 4 box blur in four taps.

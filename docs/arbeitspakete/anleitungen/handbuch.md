@@ -1,6 +1,6 @@
 # Handbuch für Umsetzer
 
-Wie man in Fission3D die wiederkehrenden Dinge richtig macht. Jede Bauanleitung verweist hierher („Handbuch §n“).
+Wie man in Fission359 die wiederkehrenden Dinge richtig macht. Jede Bauanleitung verweist hierher („Handbuch §n“).
 Stand: 2026-10-20 (nach AP-1.6c1). Wenn der Code anders aussieht als hier beschrieben, gilt der Code; korrigiere dann dieses
 Handbuch im selben PR.
 
@@ -24,13 +24,13 @@ Auf kleinen oder geteilten Rechnern: `FISSION_JOBS=2 nice -n 19 scripts/test`.
 
 ## §2 Arbeitskopie, Branch, Commits, PR
 
-1. Ablage: `~/Projekte/Fission3D/` ist der Projektordner. Darin liegt der Hauptordner `Fission3D/` (das Repo) und daneben je Arbeitspaket eine
-   Arbeitskopie `Fission3D-<ap>/`. Nie im Hauptordner arbeiten (dort laufen evtl. andere Sitzungen). Eigene Arbeitskopie:
+1. Ablage: `~/Projekte/Fission359/` ist der Projektordner. Darin liegt der Hauptordner `Fission359/` (das Repo) und daneben je Arbeitspaket eine
+   Arbeitskopie `Fission359-<ap>/`. Nie im Hauptordner arbeiten (dort laufen evtl. andere Sitzungen). Eigene Arbeitskopie:
    ```sh
-   cd ~/Projekte/Fission3D
-   git -C Fission3D fetch
-   git -C Fission3D worktree add ../Fission3D-<ap> -b <branch> origin/main   # landet in ~/Projekte/Fission3D/Fission3D-<ap>
-   git -C Fission3D-<ap> branch --show-current                               # muss <branch> sein
+   cd ~/Projekte/Fission359
+   git -C Fission359 fetch
+   git -C Fission359 worktree add ../Fission359-<ap> -b <branch> origin/main   # landet in ~/Projekte/Fission359/Fission359-<ap>
+   git -C Fission359-<ap> branch --show-current                               # muss <branch> sein
    ```
    Branch-Namen: `ap-1.6c2-fangen-griffe`, `ap-1.7a-ausschneiden` usw. Die Arbeitskopie nutzt die Bibliotheken des Hauptordners
    automatisch (`.vcpkg`), das erste Konfigurieren dauert trotzdem einige Minuten.
@@ -39,7 +39,7 @@ Auf kleinen oder geteilten Rechnern: `FISSION_JOBS=2 nice -n 19 scripts/test`.
 3. Je Teilpaket **ein PR** gegen `main`. PR-Beschreibung (Deutsch, Alltagssprache): Was kann man jetzt? · So probierst du es aus
    (3–6 Schritte, beginnend mit `scripts/run --release` **aus welchem Ordner**) · Wie getestet · Annahmen · Bekannte Einschränkungen.
 4. Gemergt wird erst, wenn die CI grün ist **und** der Product Owner es ausprobiert und freigegeben hat. Danach Arbeitskopie
-   entfernen: `git -C ~/Projekte/Fission3D/Fission3D worktree remove ../Fission3D-<ap>` und `git -C ~/Projekte/Fission3D/Fission3D branch -d <branch>`.
+   entfernen: `git -C ~/Projekte/Fission359/Fission359 worktree remove ../Fission359-<ap>` und `git -C ~/Projekte/Fission359/Fission359 branch -d <branch>`.
 
 ## §3 Wo was hingehört (Schichten)
 
@@ -57,11 +57,11 @@ Auf kleinen oder geteilten Rechnern: `FISSION_JOBS=2 nice -n 19 scripts/test`.
 | `src/render` | RHI-Renderer, Picking, Kamera, Griff-Grafik | core, GAL, Qt Gui |
 | `src/ui` | `DocumentModel`, Controller (Griffe, Gizmo, Drehen, Größe, Ablegen, Auswahl), `Viewport3D`, Theme | alles darunter, Qt Quick |
 | `src/services` | Protokoll, Startzeit, später Einstellungen, Autosave | core, Qt Core |
-| `apps/fission3d` | `main.cpp` (Verdrahtung, `--simulate`), QML-Oberfläche, Übersetzungen, Schriften | alles |
+| `apps/fission359` | `main.cpp` (Verdrahtung, `--simulate`), QML-Oberfläche, Übersetzungen, Schriften | alles |
 
 Die erlaubten Abhängigkeiten stehen in `cmake/FissionLayers.cmake`; ein Verstoß bricht den Build. Neue Quelldateien müssen in die
 `SOURCES`-Liste der jeweiligen `CMakeLists.txt` (es gibt kein automatisches Einsammeln). Neue QML-Dateien in `FISSION_QML_FILES`
-in `apps/fission3d/CMakeLists.txt`. Neue Testdateien in `tests/unit/CMakeLists.txt`.
+in `apps/fission359/CMakeLists.txt`. Neue Testdateien in `tests/unit/CMakeLists.txt`.
 
 ## §4 Rezept: neuer Feature-Typ (ein neuer Rezept-Schritt)
 
@@ -75,11 +75,11 @@ Vorbild: `src/features/src/cylinder.cpp` (einfach), `shapes.cpp` (mehrere), `tex
 2. In `src/features/src/builtin.cpp` registrieren; Datei in `src/features/CMakeLists.txt` eintragen.
 3. Braucht der Typ eine neue Kernel-Fähigkeit: §6.
 4. Oberfläche: Satz im Rezept (`describe`-Schlüssel) und Feldnamen in QML übersetzen (§8). Wo die Sätze gebaut werden:
-   `grep -rn '"cylinder"' apps/fission3d/qml` zeigt die Stellen, an denen ein neuer Typ ergänzt werden muss (Rezeptsatz, Feldnamen,
+   `grep -rn '"cylinder"' apps/fission359/qml` zeigt die Stellen, an denen ein neuer Typ ergänzt werden muss (Rezeptsatz, Feldnamen,
    Formen-Galerie, Symbol).
 5. Tests: Golden-Test (§10) für die Geometrie, Unit-Test für `validate`, `describe`, `handles`.
 6. Fehler eines Schritts sind `FeatureIssueCode`s. Ein neuer Code braucht einen Text in der Oberfläche (bis AP-1.12/2.14 dort,
-   wo die vorhandenen Codes übersetzt werden: `grep -rn "parameterOutOfRange" apps/fission3d/qml`).
+   wo die vorhandenen Codes übersetzt werden: `grep -rn "parameterOutOfRange" apps/fission359/qml`).
 
 ## §5 Rezept: neue Änderung am Dokument (Command)
 
@@ -93,7 +93,7 @@ Regel 3: Die Oberfläche ändert das Dokument **nur** über `core::History::exec
    (1000 Befehle) bekommt den neuen Befehl in seine Auswahl.
 4. In `DocumentModel` (`src/ui`) eine `Q_INVOKABLE`-Funktion, die den Command ausführt und danach `documentChanged()` aufruft.
 5. Für Ziehen: `beginChange(field)` … viele Änderungen … `commitChange()`; Esc = `cancelChange()`. Ein Zug ist **ein** Undo-Schritt.
-6. Den Text für „Letzte Aktionen“ und das Bearbeiten-Menü in QML ergänzen (Schlüssel aus `describe`): `grep -rn "setBodyHole" apps/fission3d/qml`.
+6. Den Text für „Letzte Aktionen“ und das Bearbeiten-Menü in QML ergänzen (Schlüssel aus `describe`): `grep -rn "setBodyHole" apps/fission359/qml`.
 
 ## §6 Rezept: neue Fähigkeit des Geometrie-Kerns
 
@@ -108,14 +108,14 @@ Regel 3: Die Oberfläche ändert das Dokument **nur** über `core::History::exec
 ## §7 Rezept: Oberfläche (QML) und Controller
 
 - C++-Logik für die Oberfläche lebt in Controllern unter `src/ui` (Vorbilder: `scale_controller.cpp`, `rotate_controller.cpp`).
-  Sie werden in `apps/fission3d/src/main.cpp` als Singleton angemeldet:
-  `qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "<Name>", &instanz);` und in QML mit `import Fission3D.Ui` benutzt.
+  Sie werden in `apps/fission359/src/main.cpp` als Singleton angemeldet:
+  `qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "<Name>", &instanz);` und in QML mit `import Fission359.Ui` benutzt.
 - Griffe, Pfeile, Marken zeichnet der Renderer (`render::HandleGraphics`), tiefenrichtig. QML liefert nur Beschriftungen,
   Eingabefelder und unsichtbare Anfassflächen. Vorbild: `ScaleLayer.qml` + `ScaleController`.
 - Farben und Größen nur aus `Theme` (`src/ui/include/fission/ui/theme.h`), nie feste Werte in QML. Gestaltung: `docs/08-gestaltung.md`,
   Vorlage `docs/mockups/oberflaeche.html` (im Browser öffnen und vergleichen).
 - Jeder Text über `qsTr("English source")` (§8). Fester Text ohne `qsTr` lässt den Test `translations_complete` scheitern.
-- **Regel 10:** Ein neues Werkzeug bekommt einen Eintrag im Katalog (`apps/fission3d/qml/ToolCatalog.qml` für Paletten-Werkzeuge,
+- **Regel 10:** Ein neues Werkzeug bekommt einen Eintrag im Katalog (`apps/fission359/qml/ToolCatalog.qml` für Paletten-Werkzeuge,
   `ShapeCatalog.qml` für Formen): `name`, `tip` (Tooltip-Satz), `hint` (Hinweiszeile), `synonyms` (de und en, Alltagswörter).
 - Lange Rechnungen nie im UI-Thread (Regel 9): über die Neuberechnung (`RecomputeEngine`) oder einen `QThreadPool` mit Ergebnis
   per `QMetaObject::invokeMethod(..., Qt::QueuedConnection)`.
@@ -128,8 +128,8 @@ Regel 3: Die Oberfläche ändert das Dokument **nur** über `core::History::exec
 1. Quelltext englisch in `qsTr("...")`. Begriffe nur aus dem Glossar (`docs/02-ux-konzept.md` §12), englische Begriffe aus der
    EN-Spalte.
 2. `cmake --build build/<preset> --target update_translations` (braucht Homebrew- oder apt-Qt, nicht das vcpkg-Qt).
-3. In `apps/fission3d/i18n/fission3d_de.ts` jede neue `<message>` mit `type="unfinished"` übersetzen: `<translation>` füllen und
-   `type="unfinished"` entfernen. In `fission3d_en.ts` die englische Quelle als Übersetzung eintragen. Von Hand oder mit einem
+3. In `apps/fission359/i18n/fission359_de.ts` jede neue `<message>` mit `type="unfinished"` übersetzen: `<translation>` füllen und
+   `type="unfinished"` entfernen. In `fission359_en.ts` die englische Quelle als Übersetzung eintragen. Von Hand oder mit einem
    kleinen Skript (Muster `<translation type="unfinished">[^<]*</translation>`; nie über Zeilen hinweg ersetzen).
 4. `ctest --preset <preset> -R translations` muss grün sein.
 5. Deutsch: Alltagssprache, Du-Form, kurze Sätze, keine Anglizismen, wo das Glossar ein deutsches Wort hat.
@@ -139,13 +139,13 @@ Regel 3: Die Oberfläche ändert das Dokument **nur** über `core::History::exec
 Das echte Programm spielt Eingaben ab und macht ein Bild. Registriert in `tests/CMakeLists.txt`, Vorbild `app_snap_catch`:
 ```cmake
 add_test(NAME app_<name>
-  COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+  COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
           --smoke-test "${CMAKE_BINARY_DIR}/window-<name>.png" --language en --size 1280x800
           --camera=0,30,160 --simulate "put:box;type:23.3,enter;gizmo:x,48,0,8;near:x,-21.65")
 set_tests_properties(app_<name> PROPERTIES
   ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
 ```
-Vorhandene Aktionen (Doku in `apps/fission3d/src/main.cpp`, Funktion `playActions`, und `fission3d --help`):
+Vorhandene Aktionen (Doku in `apps/fission359/src/main.cpp`, Funktion `playActions`, und `fission359 --help`):
 `hover:x,y` · `click:x,y` · `shiftclick:x,y` · `doubleclick:x,y` · `frame:x1,y1,x2,y2` · `drop:form,x,y[,alt]` · `drophole:…` ·
 `put:form` · `puthole:form` · `type:50,tab,20,enter` · `set:feld,wert` · `grab:parameter,dx,dy,schritte` · `point:parameter` ·
 `gizmo:teil,dx,dy,schritte[,halten]` · `ring:achse,…` · `corner:i,dx,dy,schritte[,halten]` · `drag:…` · `tool:select|move|rotate|size` ·
@@ -155,7 +155,7 @@ Eine **neue Aktion** kommt in `playActions` in `main.cpp` (gleiches Muster: Zeit
 eine Zeile in der `--simulate`-Hilfe. Fenster-Tests, die die Maus ziehen, bekommen `RUN_SERIAL TRUE` (macOS stiehlt sonst den Fokus).
 Ein Test, der scheitern **soll** (Gegenprobe), bekommt `WILL_FAIL TRUE` (Vorbild `app_snap_off_does_not_catch`).
 Bild für den PR: `build/<preset>/window-<name>.png`, oder manuell
-`build/macos-release/apps/fission3d/fission3d.app/Contents/MacOS/fission3d --smoke-test /tmp/x.png --simulate "..."`.
+`build/macos-release/apps/fission359/fission359.app/Contents/MacOS/fission359 --smoke-test /tmp/x.png --simulate "..."`.
 
 ## §10 Tests
 

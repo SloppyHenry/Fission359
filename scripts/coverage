@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Misst, wie viel vom Core-Code die Tests durchlaufen (Zeilenabdeckung), und meldet den Wert.
@@ -34,7 +34,7 @@ need_command python3
 apply_job_limit
 cd "$REPO_ROOT" || exit 1
 
-step "Baue Fission3D mit Messung ($PRESET)"
+step "Baue Fission359 mit Messung ($PRESET)"
 mkdir -p "$REPO_ROOT/build"
 if ! { cmake --preset "$PRESET" && cmake --build --preset "$PRESET" --target fission_unit_tests; } \
         >"$BUILD_LOG" 2>&1; then

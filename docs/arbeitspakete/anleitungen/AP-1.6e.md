@@ -18,8 +18,8 @@ AP-1.6d erledigt.
 - [Handbuch](handbuch.md) §5, §7, §9; `docs/adr/0010-lage-im-rezept.md` (ganz)
 - `src/geometry/gal/include/fission/geo/seat.h` (`turnOntoFace`, `seatOnFace`), `DocumentModel::placeOnFace` (`document_model.cpp`)
 - `src/core/include/fission/core/selection.h`, `src/ui/include/fission/ui/selection_controller.h` (mehrere gewählte Körper)
-- `apps/fission3d/qml/Main.qml`: Liste `menus` (Einträge `cut`, `copy`, `paste`, `delete` sind schon da, aber aus) und die Stelle,
-  die Menü-`id`s ausführt (`grep -n '"hole"' apps/fission3d/qml/*.qml`)
+- `apps/fission359/qml/Main.qml`: Liste `menus` (Einträge `cut`, `copy`, `paste`, `delete` sind schon da, aber aus) und die Stelle,
+  die Menü-`id`s ausführt (`grep -n '"hole"' apps/fission359/qml/*.qml`)
 - `src/core/include/fission/core/history.h` (Transaktionen)
 
 ## Ausgangslage im Code
@@ -39,7 +39,7 @@ AP-1.6d erledigt.
    wiederzufinden); jedes weitere Einfügen derselben Zwischenablage versetzt um weitere 10/10 mm. Alternative: an der gleichen
    Stelle (Tinkercad), dann sieht man die Kopie nicht.
 2. **Taste für „Aufs Bett legen“:** Empfehlung: **D** (wie Tinkercad), im Menü Körper. Prüfen, dass D nicht schon belegt ist
-   (`grep -n "Qt.Key_D" apps/fission3d/qml`).
+   (`grep -n "Qt.Key_D" apps/fission359/qml`).
 3. **Auf Fläche legen bei vorhandenen Körpern:** Empfehlung: Menü Körper ▸ „Auf Fläche legen“, danach sagt die Hinweiszeile
    „Klicke auf die Fläche, auf die der Körper soll“, ein Klick legt ihn ab, Esc bricht ab. Alternative: Körper mit gedrückter ⌥
    ziehen. (Empfehlung ist einfacher zu entdecken.)

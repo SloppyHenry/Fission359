@@ -45,7 +45,7 @@ eingehalten“); die Werkzeugpalette ist mit PR #30 behoben.
 3. Druckerliste (`src/ui/src/printer_catalog.cpp`): Bettmaße gegen die Herstellerdatenblätter prüfen, Quelle je Drucker als Kommentar.
 
 ## P5 AP-0.1: frischer Mac
-**Größe:** S · Offen aus AP-0.1 (Kriterium 4). Der virtuelle Mac `fission3d-mac14` (siehe `docs/testumgebung.md`) hat nur die
+**Größe:** S · Offen aus AP-0.1 (Kriterium 4). Der virtuelle Mac `fission359-mac14` (siehe `docs/testumgebung.md`) hat nur die
 Kommandozeilen-Werkzeuge, kein Homebrew, kein Xcode. Dort `git clone`, `scripts/setup`, `scripts/run` durchspielen; alles, was fehlt oder
 unklar ist, in `scripts/setup` verbessern. Ergebnis in AP-0.1 eintragen; Status nur nach OK des Product Owners auf „erledigt“.
 
@@ -84,8 +84,8 @@ Linux-Desktop prüfen (Product Owner oder Testrechner mit Desktop-Sitzung); wenn
 (z. B. Strg) und Hinweis in der Hinweiszeile.
 
 ## P12 `main.cpp` aufräumen
-**Größe:** S · `apps/fission3d/src/main.cpp` hat ~950 Zeilen; `playActions` (die `--simulate`-Aktionen) in eine eigene Datei
-`apps/fission3d/src/simulate.cpp` ziehen, ohne Verhaltensänderung. Alle Fenster-Tests müssen unverändert grün sein.
+**Größe:** S · `apps/fission359/src/main.cpp` hat ~950 Zeilen; `playActions` (die `--simulate`-Aktionen) in eine eigene Datei
+`apps/fission359/src/simulate.cpp` ziehen, ohne Verhaltensänderung. Alle Fenster-Tests müssen unverändert grün sein.
 
 ## P13 Löcher im Hintergrund prüfen (Regel 9)
 **Größe:** M · Offen aus AP-1.7. `core::reconcileCuts` rechnet die Berührung von Löchern und Körpern (Booleans) im Oberflächen-Thread: kalt

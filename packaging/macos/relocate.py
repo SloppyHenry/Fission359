@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Makes an application bundle self-contained after macdeployqt.
 
@@ -16,8 +16,8 @@ plugins and their dependencies. Anything still pointing outside the bundle after
 (and makes the exit code non-zero): that is a library macdeployqt could not find.
 
 Usage:
-  relocate.py Fission3D.app                      whole bundle (packaging)
-  relocate.py --plugin Fission3D.app plugin.dylib  one plugin that was copied in later (build)
+  relocate.py Fission359.app                      whole bundle (packaging)
+  relocate.py --plugin Fission359.app plugin.dylib  one plugin that was copied in later (build)
 """
 
 import subprocess

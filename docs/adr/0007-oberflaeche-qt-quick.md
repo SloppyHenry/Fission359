@@ -13,7 +13,7 @@ eine echte Menüleiste auf dem Mac und einen automatischen Kontrasttest über al
 1. **Theme als C++-Singleton** (`fission::ui::Theme`, Tokens in `theme_tokens.h`), nicht als QML-Datei. QML liest nur
    `Theme.panel`, `Theme.accentText` usw. Dadurch lassen sich Tokens, Akzent-Ableitung und Kontraste mit Catch2 prüfen
    (`tests/unit/ui/test_theme_tokens.cpp`), ohne Oberfläche.
-2. **Texte: `qsTr` mit englischen Quelltexten**, Übersetzungen als Qt-Linguist-Dateien (`apps/fission3d/i18n/*.ts`,
+2. **Texte: `qsTr` mit englischen Quelltexten**, Übersetzungen als Qt-Linguist-Dateien (`apps/fission359/i18n/*.ts`,
    Deutsch und Englisch). Englisch als Quelltext (statt Deutsch) ist Annahme des Agenten: Quelltext und Kommentare sind
    ohnehin englisch (CLAUDE.md), und neue Mitwirkende finden den Text so im Code wieder. Der Test
    `translations_complete` verlangt, dass jede Übersetzung fertig ist und kein Text fest eingebaut steht.

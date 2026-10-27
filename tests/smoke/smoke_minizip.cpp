@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <catch2/catch_test_macros.hpp>
@@ -14,7 +14,7 @@
 #include <vector>
 
 TEST_CASE("minizip-ng writes and reads back a zip file", "[smoke][minizip]") {
-    const auto path = (std::filesystem::temp_directory_path() / "fission3d-smoke.zip").string();
+    const auto path = (std::filesystem::temp_directory_path() / "fission359-smoke.zip").string();
     const std::string content = "document.json would be here";
 
     {

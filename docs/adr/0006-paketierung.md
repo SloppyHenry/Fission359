@@ -12,12 +12,12 @@ auf Entwicklerrechnern oft aus Homebrew oder apt.
 
 ## Entscheidungen
 
-### 1. App-Kennung: `io.github.sloppyhenry.Fission3D`  *(Product Owner)*
+### 1. App-Kennung: `io.github.sloppyhenry.Fission359`  *(Product Owner)*
 Eine umgekehrte Domain-Kennung wird für Bundle-ID, Flatpak-ID, `.desktop`-Datei, AppStream und
 Wayland-App-ID gebraucht. Die gewählte Form passt zum GitHub-Repository, wird von Flathub ohne eigene Domain
 akzeptiert und veröffentlicht keine weiteren Daten. Eine spätere Änderung würde Einstellungen und
 Dateizuordnungen verwaisen lassen, deshalb steht sie an genau einer Stelle (`cmake/FissionPackaging.cmake`).
-Projektdateien: Endung `.fission`, MIME-Typ `application/x-fission3d`, macOS-UTI `<Kennung>.project`.
+Projektdateien: Endung `.fission`, MIME-Typ `application/x-fission359`, macOS-UTI `<Kennung>.project`.
 
 ### 2. Mindestsystem: Ubuntu 24.04 und aktuelle Fedora, nicht 22.04  *(Product Owner)*
 Ein AppImage oder Flatpak läuft nur auf Systemen mit mindestens dem glibc des Bauplatzes. Die CI baut auf

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // The basic shapes beyond box and cylinder (AP-1.5): sphere, hemisphere, cone, torus, tube, prism,

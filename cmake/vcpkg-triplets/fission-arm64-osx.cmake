@@ -1,8 +1,8 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # macOS on Apple Silicon. Shared libraries (LGPL-friendly, simple to bundle later), release
-# only: Fission3D's own debug builds link the release builds of the dependencies, which
+# only: Fission359's own debug builds link the release builds of the dependencies, which
 # halves build time and disk use of vcpkg.
 set(VCPKG_TARGET_ARCHITECTURE arm64)
 set(VCPKG_CRT_LINKAGE dynamic)

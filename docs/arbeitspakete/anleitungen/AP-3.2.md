@@ -3,7 +3,7 @@
 **Größe:** L, Teile a–c · **Phasendatei:** AP-3.2
 
 ## Ziel
-Fission3D warnt, **bevor** gedruckt wird: nicht geschlossen, sich selbst schneidend, **Wand zu dünn** (mit Heatmap), **Überhänge** über 45°
+Fission359 warnt, **bevor** gedruckt wird: nicht geschlossen, sich selbst schneidend, **Wand zu dünn** (mit Heatmap), **Überhänge** über 45°
 (oder Profilwert, farbig), **Details kleiner als die Düse**, passt nicht aufs Bett, schwebende Teile, sehr dünne Spitzen. Eine Ampel fasst zusammen,
 eine Liste erklärt, „Stelle zeigen“ springt hin, Lösungen werden angeboten. Läuft im Hintergrund, aktualisiert sich nach Änderungen.
 500 000 Dreiecke in < 2 s.
