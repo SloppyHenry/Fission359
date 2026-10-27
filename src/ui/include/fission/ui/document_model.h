@@ -119,6 +119,17 @@ public:
     /// The one box the program starts with (replaces the demo body of AP-0.8).
     void addDemoBox();
 
+    /// A body as the export needs it: what the person sees as a body (visible, no hole, not part
+    /// of another body's result), with its geometry.
+    struct ExportBody {
+        core::BodyId id;
+        core::Color color;
+        geo::Solid solid;
+        bool stale = false; ///< its step has an error: the geometry shown is an old one
+    };
+    /// The bodies to export, in the order of the list of bodies; `onlyIds` empty = all of them.
+    std::vector<ExportBody> exportBodies(const QStringList& onlyIds) const;
+
     // --- files (AP-1.10c; the file handling itself is `FileController`) ---
     /// The document as it is written to a file: the steps as they are now plus the palette of
     /// the project in the settings (empty while it is the built-in one).

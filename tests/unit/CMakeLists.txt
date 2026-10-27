@@ -17,6 +17,7 @@ add_executable(fission_unit_tests
   features/test_split.cpp
   features/test_text_feature.cpp
   io/test_fission_file.cpp
+  io/test_export.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp
@@ -34,6 +35,7 @@ add_executable(fission_unit_tests
   ui/test_numbers.cpp
   ui/test_document_model.cpp
   ui/test_file_controller.cpp
+  ui/test_export_controller.cpp
   ui/test_selection_controller.cpp
   ui/test_placement.cpp
   ui/test_handles.cpp
@@ -52,8 +54,10 @@ add_executable(fission_unit_tests
   interaction/test_align.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
-  fission_core fission_io fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
+  fission_core fission_io lib3mf::lib3mf fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
 fission_apply_compiler_options(fission_unit_tests)
+
+target_include_directories(fission_unit_tests SYSTEM PRIVATE "${FISSION_LIB3MF_CPP_INCLUDE_DIR}")
 
 target_compile_definitions(fission_unit_tests PRIVATE
   FISSION_TEST_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures"

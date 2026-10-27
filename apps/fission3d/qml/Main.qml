@@ -81,7 +81,7 @@ Window {
             { id: "save", text: qsTr("Save"), shortcut: primaryKey + "S", nativeShortcut: "Ctrl+S", enabled: Files.modified || Files.fileName === "" },
             { id: "saveas", text: qsTr("Save as…"), shortcut: isMac ? "⇧⌘S" : qsTr("Ctrl+Shift+S"), nativeShortcut: "Ctrl+Shift+S" },
             { separator: true },
-            { id: "export", text: qsTr("Export…"), shortcut: primaryKey + "E", nativeShortcut: "Ctrl+E", enabled: false },
+            { id: "export", text: qsTr("Export…"), shortcut: primaryKey + "E", nativeShortcut: "Ctrl+E" },
             { separator: true },
             { id: "close", text: qsTr("Close"), shortcut: primaryKey + "W", nativeShortcut: "Ctrl+W", enabled: false },
             { id: "quit", text: qsTr("Quit Fission3D"), shortcut: primaryKey + "Q", nativeShortcut: "Ctrl+Q", role: "quit" }
@@ -157,6 +157,7 @@ Window {
     readonly property bool undoAvailable: DocumentModel.canUndo && !textHasHistory
     readonly property bool redoAvailable: DocumentModel.canRedo && !textHasHistory
     property bool historyOpen: false
+    property bool exportOpen: false
     // A text field has the keyboard: keys such as Esc and Ctrl+A are for the text then.
     readonly property bool typing: root.activeFocusItem !== null && root.activeFocusItem !== undefined
                                    && root.activeFocusItem.cursorPosition !== undefined
@@ -287,6 +288,7 @@ Window {
             }
             break
         case "saveas": saveDialog.open(); break
+        case "export": exportOpen = !exportOpen; break
         case "about": aboutWindow.show(); aboutWindow.raise(); break
         case "settings": showHint(qsTr("Settings arrive in a later version.")); break
         case "search": showHint(qsTr("Command search arrives in a later version.")); break
@@ -568,6 +570,7 @@ Window {
     Shortcut { sequence: "Ctrl+Q"; enabled: !root.isMac; onActivated: root.run("quit") }
     Shortcut { sequence: "Ctrl+N"; enabled: !root.isMac; onActivated: root.run("new") }
     Shortcut { sequence: "Ctrl+O"; enabled: !root.isMac; onActivated: root.run("open") }
+    Shortcut { sequence: "Ctrl+E"; enabled: !root.isMac; onActivated: root.run("export") }
     Shortcut { sequence: "Ctrl+S"; enabled: !root.isMac; onActivated: root.run("save") }
     Shortcut { sequence: "Ctrl+Shift+S"; enabled: !root.isMac; onActivated: root.run("saveas") }
     // Undo and redo: on macOS the menu of the system carries them.
@@ -615,6 +618,75 @@ Window {
         nameFilters: [qsTr("Fission3D files (*.fission)")]
         currentFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
         onAccepted: Files.saveTo(selectedFile)
+    }
+
+    // The file name for an export is asked after the choices on the card, by the system.
+    property string exportFormat: "3mf"
+    property string exportQuality: "normal"
+    property bool exportOnlyChosen: false
+
+    FileDialog {
+        id: exportDialog
+
+        title: qsTr("Export")
+        fileMode: FileDialog.SaveFile
+        defaultSuffix: root.exportFormat
+        nameFilters: root.exportFormat === "stl" ? [qsTr("STL files (*.stl)")] : [qsTr("3MF files (*.3mf)")]
+        currentFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+        onAccepted: {
+            const names = {}
+            for (let i = 0; i < DocumentModel.bodies.length; ++i) {
+                names[DocumentModel.bodyIdAt(i)] = root.bodyName(i)
+            }
+            Exporter.start(root.exportFormat, root.exportQuality,
+                           root.exportOnlyChosen ? root.chosenBodies : [], selectedFile, names)
+        }
+    }
+
+    Connections {
+        target: Exporter
+
+        function onFinished(code, path, bodies) {
+            switch (code) {
+            case "":
+                root.showHint(qsTr("%n body(ies) exported.", "", bodies))
+                root.exportOpen = false
+                break
+            case "cancelled":
+                root.showHint(qsTr("Export cancelled."))
+                break
+            case "nothing":
+                root.showHint(qsTr("There is nothing to export: no visible body."))
+                break
+            case "needsHelp":
+                fileCard.show(qsTr("A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first."),
+                              [{ id: "cancel", text: qsTr("OK"), primary: true }])
+                break
+            default:
+                fileCard.show(qsTr("The file could not be written. Is the folder writable and the disk not full?"),
+                              [{ id: "cancel", text: qsTr("OK"), primary: true }])
+                break
+            }
+        }
+    }
+
+    ExportCard {
+        id: exportCard
+
+        visible: root.exportOpen
+        anchors.top: docTabs.bottom
+        anchors.topMargin: 10
+        anchors.right: parent.right
+        anchors.rightMargin: 16
+        z: 19
+        anyChosen: root.chosenBodies.length > 0
+        onCloseRequested: root.exportOpen = false
+        onExportRequested: (format, quality, onlyChosen) => {
+            root.exportFormat = format
+            root.exportQuality = quality
+            root.exportOnlyChosen = onlyChosen
+            exportDialog.open()
+        }
     }
 
     // What happens to the 3D view when a file replaces the document: nothing chosen any more.
@@ -725,7 +797,7 @@ Window {
         onHomeRequested: root.showHint(qsTr("The start page arrives in a later version."))
         onNewDocumentRequested: root.showHint(qsTr("This arrives in a later version."))
         onCloseRequested: root.showHint(qsTr("Closing arrives together with saving."))
-        onExportRequested: root.showHint(qsTr("Export arrives in a later version."))
+        onExportRequested: root.run("export")
     }
 
     Item {

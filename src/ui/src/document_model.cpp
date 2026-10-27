@@ -374,6 +374,34 @@ void DocumentModel::addDemoBox() {
     requestRecompute();
 }
 
+std::vector<DocumentModel::ExportBody>
+DocumentModel::exportBodies(const QStringList& onlyIds) const {
+    std::vector<ExportBody> found;
+    const auto& bodies = m_history.document().bodies();
+    for (std::size_t i = 0; i < bodies.size() && i < static_cast<std::size_t>(m_bodies.size());
+         ++i) {
+        const core::Body& body = bodies[i];
+        const QVariantMap entry = m_bodies[static_cast<qsizetype>(i)].toMap();
+        // Holes are tools, and bodies that are part of another's result are not bodies of their
+        // own.
+        if (body.hole || !body.visible || entry.value(QStringLiteral("consumed")).toBool()) {
+            continue;
+        }
+        if (!onlyIds.isEmpty() && !onlyIds.contains(toQString(body.id.value))) {
+            continue;
+        }
+        if (m_result == nullptr) {
+            continue;
+        }
+        const auto result = m_result->bodies.find(body.id);
+        if (result == m_result->bodies.end()) {
+            continue; // no geometry (its step failed from the start)
+        }
+        found.push_back({body.id, body.color, result->second.solid, result->second.stale});
+    }
+    return found;
+}
+
 core::Document DocumentModel::documentForSaving() const {
     core::Document copy = m_history.document();
     core::DocumentSettings settings = copy.settings();

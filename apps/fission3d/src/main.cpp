@@ -53,6 +53,7 @@
 #include "fission/ui/app_options.h"
 #include "fission/ui/distance_controller.h"
 #include "fission/ui/document_model.h"
+#include "fission/ui/export_controller.h"
 #include "fission/ui/file_controller.h"
 #include "fission/ui/gizmo_controller.h"
 #include "fission/ui/handle_controller.h"
@@ -1139,6 +1140,8 @@ int main(int argc, char* argv[]) {
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &files,
                      [&files] { files.finishSession(); });
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Files", &files);
+    fission::ui::ExportController exporter(&documentModel, kernel);
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Exporter", &exporter);
     FileOpenFilter fileOpenFilter;
     app.installEventFilter(&fileOpenFilter);
     fission::ui::Language language(&engine);
