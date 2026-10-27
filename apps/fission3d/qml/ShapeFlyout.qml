@@ -215,41 +215,12 @@ Float {
                         }
                     }
 
-                    ToolTip {
-                        visible: area.containsMouse && !dragState.active
-                        delay: 800
+                    TooltipCard {
+                        visible: area.containsMouse && !area.pressed && !dragState.active
                         x: 0
                         y: tile.height + 6
-                        padding: 10
-
-                        contentItem: Column {
-                            spacing: 3
-                            width: 230
-
-                            Txt {
-                                width: parent.width
-                                text: tile.modelData.name
-                                color: Theme.fg
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideNone
-                            }
-
-                            Txt {
-                                width: parent.width
-                                text: shapeCatalog.dragTip + " " + shapeCatalog.clickTip
-                                color: Theme.fg3
-                                font.pixelSize: Theme.fontSizeSmall
-                                wrapMode: Text.WordWrap
-                                elide: Text.ElideNone
-                            }
-                        }
-
-                        background: Rectangle {
-                            radius: Theme.radiusFloat
-                            color: Theme.panel
-                            border.width: 1
-                            border.color: Theme.line2
-                        }
+                        title: tile.modelData.name
+                        sentence: shapeCatalog.dragTip + " " + shapeCatalog.clickTip
                     }
                 }
             }

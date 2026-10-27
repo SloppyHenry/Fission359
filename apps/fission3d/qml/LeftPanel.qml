@@ -541,6 +541,9 @@ Rectangle {
                             label: stepItem.modelData.label
                             state: stepItem.modelData.state
                             problem: stepItem.modelData.problem
+                            problemActions: stepItem.modelData.problemActions
+                            onEditRequested: root.stepRequested(stepItem.index)
+                            onHideRequested: root.stepHideRequested(stepItem.index, true)
                             selected: stepItem.index === root.currentStep
                             beyondMarker: root.marker >= 0 && stepItem.index >= root.marker
                             onClicked: root.stepRequested(stepItem.index)

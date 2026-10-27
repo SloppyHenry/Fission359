@@ -322,6 +322,623 @@
     </message>
 </context>
 <context>
+    <name>CommandCatalog</name>
+    <message>
+        <location filename="../qml/CommandCatalog.qml" line="+25"/>
+        <source>New project</source>
+        <translation>Neues Projekt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Starts an empty project in a tab of its own.</source>
+        <translation>Startet ein leeres Projekt in einem eigenen Tab.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An empty project opens next to the others.</source>
+        <translation>Ein leeres Projekt öffnet sich neben den anderen.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Open…</source>
+        <translation>Öffnen …</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Opens a saved project.</source>
+        <translation>Öffnet ein gespeichertes Projekt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a .fission file; it opens in a tab of its own.</source>
+        <translation>Wähle eine .fission-Datei; sie öffnet sich in einem eigenen Tab.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Save</source>
+        <translation>Speichern</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Saves the project. A new project asks for a name first.</source>
+        <translation>Speichert das Projekt. Ein neues Projekt fragt zuerst nach einem Namen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Your work is also saved in the background, but only a saved project has a file.</source>
+        <translation>Deine Arbeit wird auch im Hintergrund gesichert, aber nur ein gespeichertes Projekt hat eine Datei.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Save as…</source>
+        <translation>Speichern unter …</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Saves the project under another name.</source>
+        <translation>Speichert das Projekt unter einem anderen Namen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a name and a folder.</source>
+        <translation>Wähle einen Namen und einen Ordner.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+Shift+S</source>
+        <translation>Strg+Umschalt+S</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Export…</source>
+        <translation>Exportieren …</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Writes the bodies as a 3MF or STL file for the slicer.</source>
+        <translation>Schreibt die Körper als 3MF- oder STL-Datei für den Slicer.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the file type and how fine the surface should be.</source>
+        <translation>Wähle den Dateityp und wie fein die Oberfläche sein soll.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Close</source>
+        <translation>Schließen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Closes the project in this tab.</source>
+        <translation>Schließt das Projekt in diesem Tab.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A project with a file is saved first; one without is kept as rescued work.</source>
+        <translation>Ein Projekt mit Datei wird vorher gespeichert; eins ohne bleibt als gerettete Arbeit erhalten.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Undo</source>
+        <translation>Rückgängig</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Takes back the last change.</source>
+        <translation>Nimmt die letzte Änderung zurück.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Every change is a step that can be taken back, also with the arrow in the bar.</source>
+        <translation>Jede Änderung ist ein Schritt, den man zurücknehmen kann, auch mit dem Pfeil in der Leiste.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Redo</source>
+        <translation>Wiederholen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Does again what was just taken back.</source>
+        <translation>Macht noch einmal, was gerade zurückgenommen wurde.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Only possible until you change something else.</source>
+        <translation>Nur möglich, bis du etwas anderes änderst.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+Shift+Z</source>
+        <translation>Strg+Umschalt+Z</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Copy</source>
+        <translation>Kopieren</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copies the chosen bodies.</source>
+        <translation>Kopiert die gewählten Körper.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Paste puts them next to the originals; other projects can paste them too.</source>
+        <translation>Einfügen legt sie neben die Originale; andere Projekte können sie ebenfalls einfügen.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Paste</source>
+        <translation>Einfügen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Puts the copied bodies into the project.</source>
+        <translation>Legt die kopierten Körper ins Projekt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Every paste moves the copy a little further.</source>
+        <translation>Jedes Einfügen rückt die Kopie ein Stück weiter.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Duplicate</source>
+        <translation>Duplizieren</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a copy of the chosen bodies right next to them.</source>
+        <translation>Macht eine Kopie der gewählten Körper direkt daneben.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The copy is chosen; press again for another one.</source>
+        <translation>Die Kopie ist gewählt; noch einmal drücken für eine weitere.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Delete</source>
+        <translation>Löschen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Removes the chosen bodies and the steps that made them.</source>
+        <translation>Entfernt die gewählten Körper und die Schritte, die sie gemacht haben.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Steps that use them are asked about first; undo brings everything back.</source>
+        <translation>Schritte, die sie benutzen, werden vorher erfragt; Rückgängig bringt alles zurück.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Del</source>
+        <translation>Entf</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Select all</source>
+        <translation>Alles auswählen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Chooses all bodies.</source>
+        <translation>Wählt alle Körper.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Esc chooses nothing again.</source>
+        <translation>Esc wählt wieder nichts.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Settings…</source>
+        <translation>Einstellungen …</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Language, look, mouse, printer and units.</source>
+        <translation>Sprache, Aussehen, Maus, Drucker und Einheiten.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Everything changes at once and is remembered.</source>
+        <translation>Alles wirkt sofort und wird gemerkt.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>As hole</source>
+        <translation>Als Loch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the chosen bodies holes: they cut out of the bodies they touch.</source>
+        <translation>Macht die gewählten Körper zu Löchern: Sie schneiden aus den Körpern aus, die sie berühren.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The hole stays visible as a ghost; you can still move it and change its size.</source>
+        <translation>Das Loch bleibt als Geisterform sichtbar; du kannst es weiter verschieben und seine Größe ändern.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Drop to bed</source>
+        <translation>Aufs Bett legen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lets the chosen bodies fall onto the print bed.</source>
+        <translation>Lässt die gewählten Körper aufs Druckbett fallen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Useful after moving something up by mistake.</source>
+        <translation>Praktisch, wenn man etwas aus Versehen hochgeschoben hat.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Lay on face</source>
+        <translation>Auf Fläche legen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turns the chosen body so that a face you click lies on the bed or on another face.</source>
+        <translation>Dreht den gewählten Körper so, dass eine angeklickte Fläche auf dem Bett oder auf einer anderen Fläche liegt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click the face the body should lie on.</source>
+        <translation>Klicke die Fläche an, auf der der Körper liegen soll.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Merge</source>
+        <translation>Vereinen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Joins two or more bodies into one.</source>
+        <translation>Verbindet zwei oder mehr Körper zu einem.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the bodies first (Shift+click).</source>
+        <translation>Wähle zuerst die Körper (Umschalt+Klick).</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Subtract</source>
+        <translation>Abziehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Takes the other chosen bodies away from the first.</source>
+        <translation>Zieht die anderen gewählten Körper vom ersten ab.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the body first, then the cutters.</source>
+        <translation>Wähle zuerst den Körper, dann die Schneidenden.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Keep overlap</source>
+        <translation>Überlappung behalten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keeps only what the chosen bodies have in common.</source>
+        <translation>Behält nur, was die gewählten Körper gemeinsam haben.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose two or more bodies that overlap.</source>
+        <translation>Wähle zwei oder mehr Körper, die sich überlappen.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Split</source>
+        <translation>Teilen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cuts one body in two at a plane.</source>
+        <translation>Schneidet einen Körper an einer Ebene in zwei Teile.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose one body, then place the plane.</source>
+        <translation>Wähle einen Körper und setze dann die Ebene.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Show everything</source>
+        <translation>Alles zeigen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zooms so that everything is in view.</source>
+        <translation>Zoomt so, dass alles im Bild ist.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view turns and zooms; nothing in the project changes.</source>
+        <translation>Die Ansicht dreht und zoomt; am Projekt ändert sich nichts.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Home view</source>
+        <translation>Startansicht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Goes back to the starting view.</source>
+        <translation>Geht zurück zur Startansicht.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The keys 1 to 6 show the sides.</source>
+        <translation>Die Tasten 1 bis 6 zeigen die Seiten.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pos1</source>
+        <translation>Pos1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Orthographic</source>
+        <translation>Orthogonal</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the model without perspective: parallel lines stay parallel.</source>
+        <translation>Zeigt das Modell ohne Perspektive: Parallele Linien bleiben parallel.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Good for comparing sizes.</source>
+        <translation>Gut, um Größen zu vergleichen.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Print bed</source>
+        <translation>Druckbett</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows or hides the print bed.</source>
+        <translation>Zeigt oder verbirgt das Druckbett.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The bed shows where your printer can print.</source>
+        <translation>Das Bett zeigt, wo dein Drucker drucken kann.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Soft shadows</source>
+        <translation>Weiche Schatten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Soft shadows in corners and crevices make shapes easier to read.</source>
+        <translation>Weiche Schatten in Ecken und Spalten machen Formen leichter lesbar.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Switched off by itself when the graphics card cannot keep up.</source>
+        <translation>Schaltet sich von selbst aus, wenn die Grafikkarte nicht mitkommt.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Focus</source>
+        <translation>Fokus</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Hides the panels so that only the model is left.</source>
+        <translation>Blendet die Leisten aus, sodass nur das Modell bleibt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Press the same key again to bring the panels back.</source>
+        <translation>Dieselbe Taste noch einmal bringt die Leisten zurück.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shift+F</source>
+        <translation>Umschalt+F</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Recent actions</source>
+        <translation>Letzte Aktionen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lists what you did, newest last; click one to go back to it.</source>
+        <translation>Listet auf, was du getan hast, das Neueste zuletzt; ein Klick geht dorthin zurück.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Every change is a sentence here.</source>
+        <translation>Jede Änderung ist hier ein Satz.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Round edges</source>
+        <translation>Abrunden</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rounds the edges of a body with one radius.</source>
+        <translation>Rundet die Kanten eines Körpers mit einem Radius ab.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+6"/>
+        <source>Choose edges, drag the dot.</source>
+        <translation>Wähle Kanten, ziehe den Punkt.</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>Bevel edges</source>
+        <translation>Fase</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cuts the edges of a body at an angle.</source>
+        <translation>Schneidet die Kanten eines Körpers schräg ab.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Drilled hole</source>
+        <translation>Bohrung</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A round hole in a face with a chosen diameter and depth, also countersunk.</source>
+        <translation>Ein rundes Loch in einer Fläche mit gewähltem Durchmesser und gewählter Tiefe, auch mit Senkung.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click a face, then drag the dot.</source>
+        <translation>Klicke eine Fläche an, dann ziehe den Punkt.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Hollow out</source>
+        <translation>Aushöhlen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a body hollow with a wall of a chosen thickness.</source>
+        <translation>Macht einen Körper hohl, mit einer Wand in gewählter Dicke.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the body and the faces that stay open.</source>
+        <translation>Wähle den Körper und die Flächen, die offen bleiben.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Pull up a sketch</source>
+        <translation>Skizze hochziehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turns a sketch into a body by pulling it up.</source>
+        <translation>Macht aus einer Skizze einen Körper, indem man sie hochzieht.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Draw a sketch, then drag it up.</source>
+        <translation>Zeichne eine Skizze und ziehe sie dann hoch.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Sketch</source>
+        <translation>Skizze</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Draws lines, circles and rectangles with exact measures on a face.</source>
+        <translation>Zeichnet Linien, Kreise und Rechtecke mit exakten Maßen auf eine Fläche.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a face to draw on.</source>
+        <translation>Wähle eine Fläche zum Zeichnen.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Pattern</source>
+        <translation>Muster</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Repeats a body in a row, a grid or around a circle.</source>
+        <translation>Wiederholt einen Körper in einer Reihe, einem Raster oder rund um einen Kreis.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the body, then the number and the distance.</source>
+        <translation>Wähle den Körper, dann Anzahl und Abstand.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Mirror</source>
+        <translation>Spiegeln</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a mirrored copy of a body.</source>
+        <translation>Macht eine gespiegelte Kopie eines Körpers.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose the body and the plane to mirror at.</source>
+        <translation>Wähle den Körper und die Ebene, an der gespiegelt wird.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>A %1 as the start of a shape. %2</source>
+        <translation>Ein %1 als Anfang einer Form. %2</translation>
+    </message>
+</context>
+<context>
+    <name>CommandPalette</name>
+    <message>
+        <location filename="../qml/CommandPalette.qml" line="+24"/>
+        <source>Command search</source>
+        <translation>Befehlssuche</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Tool</source>
+        <translation>Werkzeug</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shape</source>
+        <translation>Form</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>File</source>
+        <translation>Datei</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Edit</source>
+        <translation>Bearbeiten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Body</source>
+        <translation>Körper</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>View</source>
+        <translation>Ansicht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Soon</source>
+        <translation>Bald</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>What do you want to do?</source>
+        <translation>Was möchtest du tun?</translation>
+    </message>
+</context>
+<context>
     <name>ContextBar</name>
     <message>
         <location filename="../qml/ContextBar.qml" line="+35"/>
@@ -812,7 +1429,7 @@
         <translation>Abbrechen</translation>
     </message>
     <message>
-        <location line="+95"/>
+        <location line="+98"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Jede Änderung landet hier als Satz.</translation>
     </message>
@@ -876,19 +1493,19 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+557"/>
+        <location line="+643"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location line="-556"/>
-        <location line="+668"/>
+        <location line="-642"/>
+        <location line="+754"/>
         <location line="+5"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
     <message>
-        <location line="-673"/>
+        <location line="-759"/>
         <source>Ctrl+Shift+S</source>
         <translation>Strg+Umschalt+S</translation>
     </message>
@@ -913,7 +1530,7 @@
         <translation>Bearbeiten</translation>
     </message>
     <message>
-        <location line="+79"/>
+        <location line="+99"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -923,7 +1540,7 @@
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-79"/>
+        <location line="-99"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Strg+Umschalt+Z</translation>
     </message>
@@ -1099,12 +1716,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1114"/>
+        <location line="+1206"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1113"/>
+        <location line="-1205"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -1135,12 +1752,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1102"/>
+        <location line="+1194"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1100"/>
+        <location line="-1192"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -1170,19 +1787,24 @@
         <translation>Über Fission3D</translation>
     </message>
     <message>
+        <location line="+20"/>
+        <source>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</source>
+        <translation>Fang mit einer Form an: Öffne „Formen“ in der Werkzeugleiste oder drücke %1 und sag, was du bauen willst.</translation>
+    </message>
+    <message>
         <location line="+23"/>
-        <location line="+699"/>
+        <location line="+782"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-697"/>
-        <location line="+698"/>
+        <location line="-780"/>
+        <location line="+781"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-692"/>
+        <location line="-775"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -1192,7 +1814,7 @@
         <translation>Mittlere Maustaste ziehen dreht die Ansicht, Umschalt + mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message numerus="yes">
-        <location line="+61"/>
+        <location line="+127"/>
         <source>%n step(s) use what you delete: %1. They will need help.</source>
         <translation>
             <numerusform>%n Schritt benutzt, was du löschst: %1. Er braucht dann Hilfe.</numerusform>
@@ -1208,12 +1830,7 @@
         </translation>
     </message>
     <message>
-        <location line="+56"/>
-        <source>Command search arrives in a later version.</source>
-        <translation>Die Befehlssuche kommt in einer späteren Version.</translation>
-    </message>
-    <message>
-        <location line="+31"/>
+        <location line="+87"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -1367,7 +1984,42 @@
         <translation>OK</translation>
     </message>
     <message>
-        <location line="-2"/>
+        <location line="-612"/>
+        <source>Arrives in a later version.</source>
+        <translation>Kommt in einer späteren Version.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Choose a body first.</source>
+        <translation>Wähle zuerst einen Körper.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Choose one body first.</source>
+        <translation>Wähle zuerst einen einzelnen Körper.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Choose two bodies first (Shift+click).</source>
+        <translation>Wähle zuerst zwei Körper (Umschalt+Klick).</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Nothing to undo.</source>
+        <translation>Nichts zum Zurücknehmen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nothing to redo.</source>
+        <translation>Nichts zum Wiederholen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy something first.</source>
+        <translation>Kopiere zuerst etwas.</translation>
+    </message>
+    <message>
+        <location line="+595"/>
         <source>This file was made with a newer Fission3D and is opened as far as this version understands it. To keep the original safe, save it under a new name.</source>
         <translation>Diese Datei stammt von einem neueren Fission3D und wird so weit geöffnet, wie diese Version sie versteht. Speichere sie unter einem neuen Namen, damit das Original unangetastet bleibt.</translation>
     </message>
@@ -1402,7 +2054,7 @@
         <translation>Die Datei konnte nicht gelesen werden.</translation>
     </message>
     <message>
-        <location line="+189"/>
+        <location line="+206"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
@@ -1417,7 +2069,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="-1112"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -1457,12 +2109,12 @@
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+1143"/>
         <source>Unit: mm</source>
         <translation>Einheit: mm</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+24"/>
         <source>Combine</source>
         <translation>Kombinieren</translation>
     </message>
@@ -1846,112 +2498,7 @@
         <translation>Mehrere Änderungen</translation>
     </message>
     <message>
-        <location line="+15"/>
-        <source>I don’t know “%1”.</source>
-        <translation>„%1“ kenne ich nicht.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>“%1” has a problem itself.</source>
-        <translation>Bei „%1“ gibt es selbst ein Problem.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>That divides by zero.</source>
-        <translation>Das teilt durch null.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>This font has no character for %1. Choose another font or remove it.</source>
-        <translation>Diese Schrift hat kein Zeichen für %1. Wähle eine andere Schrift oder lösche es.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>“%1” has no %2 style. Choose another font or style.</source>
-        <translation>„%1“ gibt es nicht in %2. Wähle eine andere Schrift oder einen anderen Stil.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>The font “%1” is not on this computer. Choose another font.</source>
-        <translation>Die Schrift „%1“ gibt es auf diesem Rechner nicht. Wähle eine andere Schrift.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Type some text.</source>
-        <translation>Gib einen Text ein.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The corners are too round for this size.</source>
-        <translation>Die Ecken sind zu rund für diese Größe.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Use a whole number from 3 to 64.</source>
-        <translation>Nimm eine ganze Zahl von 3 bis 64.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The wall must be thinner than the radius.</source>
-        <translation>Die Wand muss dünner sein als der Radius.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The tube must be thinner than the ring radius.</source>
-        <translation>Der Ring muss dünner sein als sein Radius.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The notches must lie closer to the middle than the tips.</source>
-        <translation>Die Einkerbungen müssen näher an der Mitte liegen als die Spitzen.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The top radius cannot be negative.</source>
-        <translation>Der Radius oben darf nicht negativ sein.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>%1 must be bigger than zero.</source>
-        <translation>%1 muss größer als null sein.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>The cutting plane does not touch the body. Move it into the body.</source>
-        <translation>Die Schnittebene berührt den Körper nicht. Schiebe sie in den Körper hinein.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>A cutter does not touch the body, so nothing is cut out. Move it onto the body.</source>
-        <translation>Ein Ausschneider berührt den Körper nicht, deshalb wird nichts ausgeschnitten. Schiebe ihn auf den Körper.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.</source>
-        <translation>Diese Körper lassen sich nicht sauber kombinieren. Schiebe einen ein kleines Stück oder schalte im Panel dieses Schritts „Bündig machen“ ein.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>The bodies do not overlap, so nothing is left. Move them so that they touch.</source>
-        <translation>Die Körper überlappen sich nicht, deshalb bleibt nichts übrig. Verschiebe sie so, dass sie sich berühren.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>An earlier step has a problem.</source>
-        <translation>Ein früherer Schritt hat ein Problem.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>%1 cannot be calculated.</source>
-        <translation>%1 lässt sich nicht berechnen.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>This shape could not be built.</source>
-        <translation>Diese Form ließ sich nicht bauen.</translation>
-    </message>
-    <message>
-        <location line="+53"/>
+        <location line="+72"/>
         <source>, part %1</source>
         <translation>, Teil %1</translation>
     </message>
@@ -2005,32 +2552,32 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-413"/>
+        <location line="-357"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1089"/>
+        <location line="-1192"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1124"/>
+        <location line="+1227"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-982"/>
+        <location line="-1065"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+434"/>
+        <location line="+500"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+587"/>
+        <location line="-547"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -2084,6 +2631,144 @@
         <location line="+0"/>
         <source>Settings (Ctrl+,)</source>
         <translation>Einstellungen (Strg+,)</translation>
+    </message>
+</context>
+<context>
+    <name>MessageCatalog</name>
+    <message>
+        <location filename="../qml/MessageCatalog.qml" line="+48"/>
+        <source>Change value</source>
+        <translation>Wert ändern</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Hide this step</source>
+        <translation>Diesen Schritt ausblenden</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>I don’t know “%1”.</source>
+        <translation>„%1“ kenne ich nicht.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>“%1” has a problem itself.</source>
+        <translation>Bei „%1“ gibt es selbst ein Problem.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>That divides by zero.</source>
+        <translation>Das teilt durch null.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>This font has no character for %1. Choose another font or remove it.</source>
+        <translation>Diese Schrift hat kein Zeichen für %1. Wähle eine andere Schrift oder lösche es.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>“%1” has no %2 style. Choose another font or style.</source>
+        <translation>„%1“ gibt es nicht in %2. Wähle eine andere Schrift oder einen anderen Stil.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The font “%1” is not on this computer. Choose another font.</source>
+        <translation>Die Schrift „%1“ gibt es auf diesem Rechner nicht. Wähle eine andere Schrift.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Type some text.</source>
+        <translation>Gib einen Text ein.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The corners are too round for this size.</source>
+        <translation>Die Ecken sind zu rund für diese Größe.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Use a whole number from 3 to 64.</source>
+        <translation>Nimm eine ganze Zahl von 3 bis 64.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The wall must be thinner than the radius.</source>
+        <translation>Die Wand muss dünner sein als der Radius.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The tube must be thinner than the ring radius.</source>
+        <translation>Der Ring muss dünner sein als sein Radius.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The notches must lie closer to the middle than the tips.</source>
+        <translation>Die Einkerbungen müssen näher an der Mitte liegen als die Spitzen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The top radius cannot be negative.</source>
+        <translation>Der Radius oben darf nicht negativ sein.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 must be bigger than zero.</source>
+        <translation>%1 muss größer als null sein.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The cutting plane does not touch the body. Move it into the body.</source>
+        <translation>Die Schnittebene berührt den Körper nicht. Schiebe sie in den Körper hinein.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The shape cannot be built with these values. Try changing a value a little.</source>
+        <translation>Die Form lässt sich mit diesen Werten nicht bauen. Ändere einen Wert ein wenig.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>A cutter does not touch the body, so nothing is cut out. Move it onto the body.</source>
+        <translation>Ein Ausschneider berührt den Körper nicht, deshalb wird nichts ausgeschnitten. Schiebe ihn auf den Körper.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>These bodies cannot be combined cleanly. Move one of them a little, or switch on “Make flush” in the panel of this step.</source>
+        <translation>Diese Körper lassen sich nicht sauber kombinieren. Schiebe einen ein kleines Stück oder schalte im Panel dieses Schritts „Bündig machen“ ein.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The result is not a clean solid. Try changing a value a little.</source>
+        <translation>Das Ergebnis ist kein sauberer Körper. Ändere einen Wert ein wenig.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The bodies do not overlap, so nothing is left. Move them so that they touch.</source>
+        <translation>Die Körper überlappen sich nicht, deshalb bleibt nichts übrig. Verschiebe sie so, dass sie sich berühren.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>An earlier step has a problem.</source>
+        <translation>Ein früherer Schritt hat ein Problem.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 cannot be calculated.</source>
+        <translation>%1 lässt sich nicht berechnen.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This kind of step is not known to this version of the program.</source>
+        <translation>Diese Art von Schritt kennt diese Version des Programms nicht.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The calculation was replaced by a newer change.</source>
+        <translation>Die Berechnung wurde durch eine neuere Änderung ersetzt.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This shape could not be built.</source>
+        <translation>Diese Form ließ sich nicht bauen.</translation>
     </message>
 </context>
 <context>
@@ -2202,7 +2887,7 @@
         <translation>Ausgeblendet</translation>
     </message>
     <message>
-        <location line="+105"/>
+        <location line="+109"/>
         <source>Name of the step</source>
         <translation>Name des Schritts</translation>
     </message>

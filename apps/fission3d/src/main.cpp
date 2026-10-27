@@ -55,6 +55,7 @@
 #include "fission/ui/align_controller.h"
 #include "fission/ui/app_info.h"
 #include "fission/ui/app_options.h"
+#include "fission/ui/command_search.h"
 #include "fission/ui/distance_controller.h"
 #include "fission/ui/document_model.h"
 #include "fission/ui/export_controller.h"
@@ -745,6 +746,62 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("expectmessage")) {
+            // expectmessage:parameterOutOfRange,width,bigger than zero - what the message
+            // catalogue says for that problem (a part of it).
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 400;
+            QTimer::singleShot(delay, viewport, [window, spec] {
+                const QVariantMap problem{{QStringLiteral("code"), spec.value(0)},
+                                          {QStringLiteral("field"), spec.value(1)}};
+                QVariant text;
+                QMetaObject::invokeMethod(window, "problemText", Q_RETURN_ARG(QVariant, text),
+                                          Q_ARG(QVariant, problem), Q_ARG(QVariant, QVariantMap{}));
+                if (!text.toString().contains(spec.value(2))) {
+                    qWarning().noquote()
+                        << QStringLiteral("the message for %1 says \"%2\", expected %3")
+                               .arg(spec.value(0), text.toString(), spec.value(2));
+                    g_simulationFailure = 10;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("expecthint")) {
+            // expecthint:Start with a shape - the hint line says this (a part of it).
+            const QString part = action.mid(colon + 1).trimmed();
+            delay += 400;
+            QTimer::singleShot(delay, viewport, [window, part] {
+                const QString hint = window->property("currentHint").toString();
+                if (!hint.contains(part)) {
+                    qWarning().noquote()
+                        << QStringLiteral("the hint line says \"%1\", expected %2").arg(hint, part);
+                    g_simulationFailure = 9;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("search") || kind == QLatin1String("runcommand")) {
+            // search:runde ecken,soon.fillet - the best match for the text is this command
+            // (looked up through the real catalogue of the program).
+            // runcommand:tool.rotate - does that command, as a click in the list would.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 400;
+            QTimer::singleShot(delay, viewport, [window, kind, spec] {
+                QVariant found;
+                const bool search = kind == QLatin1String("search");
+                QMetaObject::invokeMethod(window, search ? "topCommand" : "runCommand",
+                                          Q_RETURN_ARG(QVariant, found),
+                                          Q_ARG(QVariant, QVariant(spec.value(0))));
+                const bool ok = search ? found.toString() == spec.value(1) : true;
+                if (!ok) {
+                    qWarning().noquote()
+                        << QStringLiteral("the search %1 found %2, expected %3")
+                               .arg(spec.value(0), found.toString(), spec.value(1));
+                    g_simulationFailure = 8;
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("setpref") || kind == QLatin1String("expecttr")) {
             // setpref:language,de - a setting changed as the settings page does it (no restart).
             // expecttr:SettingsPage,Settings,Einstellungen - this text of the interface reads so
@@ -1281,6 +1338,8 @@ int main(int argc, char* argv[]) {
         theme.setMode(options.theme);
     }
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Preferences", &preferences);
+    fission::ui::CommandSearch commandSearch;
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "CommandSearch", &commandSearch);
     documentModel.setPrinter(preferences.printerId());
     files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
     QObject::connect(&preferences, &fission::ui::Preferences::unitsChanged, &files, [&] {

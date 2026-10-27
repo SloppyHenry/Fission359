@@ -38,6 +38,10 @@ Rectangle {
                                       : state === "fails" ? qsTr("Does not work")
                                       : state === "off" ? qsTr("Hidden") : ""
     property bool explained: false
+    /// The buttons under the explanation of a problem: [{ id: "editValue" | "hideStep", label }].
+    property var problemActions: []
+    signal editRequested
+    signal hideRequested
 
     width: parent ? parent.width : 260
     height: column.implicitHeight
@@ -236,6 +240,27 @@ Rectangle {
             font.pixelSize: Theme.fontSizeSmall
             wrapMode: Text.WordWrap
             elide: Text.ElideNone
+        }
+
+        // The way out in one click (rule 5).
+        Row {
+            visible: root.explained && root.problem !== "" && root.problemActions.length > 0
+            leftPadding: 34
+            bottomPadding: 8
+            spacing: 6
+
+            Repeater {
+                model: root.problemActions
+
+                Btn {
+                    required property var modelData
+
+                    objectName: "problemAction_" + modelData.id
+                    small: true
+                    text: modelData.label
+                    onClicked: modelData.id === "editValue" ? root.editRequested() : root.hideRequested()
+                }
+            }
         }
     }
 }

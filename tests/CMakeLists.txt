@@ -66,6 +66,16 @@ if(_fission_run_app_in_tree)
     TIMEOUT 60)
 endif()
 
+# Rule 10 (AP-1.12): every tool and command has a hint, a tooltip sentence and synonyms.
+add_test(NAME commands_complete
+  COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_commands.py"
+          "${CMAKE_SOURCE_DIR}")
+
+# Rule 5 (AP-1.12): every problem code of the core has a message in the catalogue.
+add_test(NAME messages_complete
+  COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_messages.py"
+          "${CMAKE_SOURCE_DIR}")
+
 # Texts: English in the source, German translation complete, nothing hard-coded (AP-0.8).
 add_test(NAME translations_complete
   COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_translations.py"
