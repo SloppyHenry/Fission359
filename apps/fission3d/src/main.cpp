@@ -83,7 +83,7 @@ QString toQString(std::string_view text) {
     return QString::fromUtf8(text.data(), static_cast<qsizetype>(text.size()));
 }
 
-// "0.0.1 (OpenCASCADE 8.0.1)": handy in bug reports. Asking for the kernel version calls into
+// "0.1.0 (OpenCASCADE 8.0.1)": handy in bug reports. Asking for the kernel version calls into
 // the library, so a broken library setup shows up right at startup.
 QString versionText() {
     return QStringLiteral("%1 (OpenCASCADE %2)")
