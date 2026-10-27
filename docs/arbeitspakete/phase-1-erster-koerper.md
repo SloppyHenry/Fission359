@@ -326,7 +326,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.13 Nutzertest 1
-**Status:** offen · **Größe:** S · **Abhängigkeiten:** alle APs der Phase 1
+**Status:** offen (Vorbereitung fertig: [Leitfaden](../nutzertests/2026-xx-phase1-leitfaden.md) und [Auswertungsvorlage](../nutzertests/2026-xx-phase1.md); die fünf Sitzungen macht der Product Owner) · **Größe:** S · **Abhängigkeiten:** alle APs der Phase 1
 **Bauanleitung:** [anleitungen/AP-1.13.md](anleitungen/AP-1.13.md)
 
 **Umfang:**
