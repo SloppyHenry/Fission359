@@ -1307,6 +1307,9 @@ int main(int argc, char* argv[]) {
     fission::ui::PlacementController placement(&documentModel);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Placement", &placement);
     fission::ui::HandleController handles(&documentModel);
+    handles.setStyle(preferences.handleStyle());
+    QObject::connect(&preferences, &fission::ui::Preferences::handleStyleChanged, &handles,
+                     [&] { handles.setStyle(preferences.handleStyle()); });
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Handles", &handles);
     fission::ui::GizmoController gizmo(&documentModel);
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Gizmo", &gizmo);
