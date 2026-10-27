@@ -420,6 +420,42 @@
     </message>
     <message>
         <location line="+5"/>
+        <source>Next tab</source>
+        <translation>Nächster Tab</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the next open project.</source>
+        <translation>Zeigt das nächste offene Projekt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+7"/>
+        <source>Every open project has its own tab at the top.</source>
+        <translation>Jedes offene Projekt hat oben seinen eigenen Tab.</translation>
+    </message>
+    <message>
+        <location line="-6"/>
+        <source>Ctrl+Tab</source>
+        <translation>Strg+Tab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Previous tab</source>
+        <translation>Vorheriger Tab</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the project before this one.</source>
+        <translation>Zeigt das Projekt vor diesem.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Ctrl+Shift+Tab</source>
+        <translation>Strg+Umschalt+Tab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -1493,19 +1529,19 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+643"/>
+        <location line="+660"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location line="-642"/>
-        <location line="+754"/>
+        <location line="-659"/>
+        <location line="+771"/>
         <location line="+5"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
     <message>
-        <location line="-759"/>
+        <location line="-776"/>
         <source>Ctrl+Shift+S</source>
         <translation>Strg+Umschalt+S</translation>
     </message>
@@ -1530,7 +1566,7 @@
         <translation>Bearbeiten</translation>
     </message>
     <message>
-        <location line="+99"/>
+        <location line="+102"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -1540,7 +1576,7 @@
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-99"/>
+        <location line="-102"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Strg+Umschalt+Z</translation>
     </message>
@@ -1716,12 +1752,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1206"/>
+        <location line="+1223"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1205"/>
+        <location line="-1222"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -1752,17 +1788,17 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1194"/>
+        <location line="+1211"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1192"/>
+        <location line="-1209"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+4"/>
         <source>Minimize</source>
         <translation>Minimieren</translation>
     </message>
@@ -1793,18 +1829,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+782"/>
+        <location line="+796"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-780"/>
-        <location line="+781"/>
+        <location line="-794"/>
+        <location line="+795"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-775"/>
+        <location line="-789"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -1830,7 +1866,7 @@
         </translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+89"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -1882,7 +1918,7 @@
         <translation>normal</translation>
     </message>
     <message>
-        <location line="+195"/>
+        <location line="+207"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
@@ -1984,7 +2020,7 @@
         <translation>OK</translation>
     </message>
     <message>
-        <location line="-612"/>
+        <location line="-626"/>
         <source>Arrives in a later version.</source>
         <translation>Kommt in einer späteren Version.</translation>
     </message>
@@ -2019,7 +2055,7 @@
         <translation>Kopiere zuerst etwas.</translation>
     </message>
     <message>
-        <location line="+595"/>
+        <location line="+609"/>
         <source>This file was made with a newer Fission3D and is opened as far as this version understands it. To keep the original safe, save it under a new name.</source>
         <translation>Diese Datei stammt von einem neueren Fission3D und wird so weit geöffnet, wie diese Version sie versteht. Speichere sie unter einem neuen Namen, damit das Original unangetastet bleibt.</translation>
     </message>
@@ -2069,12 +2105,32 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1112"/>
+        <location line="-1126"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-17"/>
+        <source>Next tab</source>
+        <translation>Nächster Tab</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Tab</source>
+        <translation>Strg+Tab</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Previous tab</source>
+        <translation>Vorheriger Tab</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Shift+Tab</source>
+        <translation>Strg+Umschalt+Tab</translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</source>
         <translation>Tippe einen Abstand, um genau zu verschieben (Tab für die nächste Richtung), Enter übernimmt, Esc setzt zurück.</translation>
     </message>
@@ -2109,7 +2165,7 @@
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
     <message>
-        <location line="+1143"/>
+        <location line="+1157"/>
         <source>Unit: mm</source>
         <translation>Einheit: mm</translation>
     </message>
@@ -2557,27 +2613,27 @@
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1192"/>
+        <location line="-1209"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1227"/>
+        <location line="+1244"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1065"/>
+        <location line="-1079"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+500"/>
+        <location line="+514"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-547"/>
+        <location line="-561"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>

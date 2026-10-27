@@ -201,6 +201,21 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=35,35,200 --simulate "tool:size;put:sphere;corner:1,50,30,10;least:radius,11;tool:rotate;put:box;ring:z,30,8;tool:size;corner:1,40,25,8;least:width,22;near:rotZ,30")
   set_tests_properties(app_corner_scale_round_turned PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # Pflege T7: two tabs; the keys for the next and the previous tab change the tab shown. (The
+  # keys Cmd+Shift+] and [ cannot be played back reliably as synthetic key events.)
+  if(APPLE)
+    set(_fission_next_tab_key "Meta+Tab")
+    set(_fission_prev_tab_key "Meta+Shift+Tab")
+  else()
+    set(_fission_next_tab_key "Ctrl+PgDown")
+    set(_fission_prev_tab_key "Ctrl+PgUp")
+  endif()
+  add_test(NAME app_tab_keys
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-tab-keys.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "put:box;menu:new;expecttab:1,2;key:${_fission_prev_tab_key};expecttab:0,2;key:${_fission_next_tab_key};expecttab:1,2;menu:prevtab;expecttab:0,2")
+  set_tests_properties(app_tab_keys PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_corner_scale_front
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-corner-front.png" --language en --size 1280x800

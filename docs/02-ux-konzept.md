@@ -280,6 +280,21 @@ Die Texte stammen aus einem **Meldungskatalog** (siehe AP-2.14). Technische Kern
 - `F` = alles zeigen, `⇧F` = Fokus-Modus (Seitenleisten aus und wieder an), `Pos1`/`Home` = Startansicht, `1–7` = Standardansichten, `P` = Perspektive/Orthografisch.
 - **3D-Maus (SpaceMouse):** später (Backlog).
 
+### Tastenkürzel für Projekte und Tabs
+
+Die Tabelle gilt für alle Arbeitspakete: Wer ein Kürzel braucht, nimmt das hier genannte oder trägt ein neues ein (und in die Befehlssuche, `CommandCatalog.qml`). Auf dem Mac heißt die Haupttaste ⌘, unter Linux Strg.
+
+| Aktion | macOS | Linux |
+|---|---|---|
+| Neu / Öffnen / Speichern | ⌘N / ⌘O / ⌘S | Strg+N / Strg+O / Strg+S |
+| Speichern unter | ⇧⌘S | Strg+⇧+S |
+| Tab (Projekt) schließen | ⌘W | Strg+W |
+| Nächster Tab | ⌃Tab oder ⇧⌘] | Strg+Tab oder Strg+Bild↓ |
+| Voriger Tab | ⌃⇧Tab oder ⇧⌘[ | Strg+⇧+Tab oder Strg+Bild↑ |
+| Rückgängig / Wiederholen | ⌘Z / ⇧⌘Z | Strg+Z / Strg+⇧+Z (auch Strg+Y) |
+| Befehlssuche | ⌘K | Strg+K |
+| Ansichten, Fokus, Löschen usw. | siehe oben (F, ⇧F, 1–6, P, Entf) | gleich |
+
 ---
 
 ## 11. Lernen im Programm

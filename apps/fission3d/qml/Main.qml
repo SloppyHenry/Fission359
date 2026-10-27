@@ -140,6 +140,9 @@ Window {
             { id: "split", text: qsTr("Split"), enabled: root.chosenBodies.length === 1 }
         ] },
         { title: qsTr("Window"), items: [
+            { id: "nexttab", text: qsTr("Next tab"), shortcut: isMac ? "⌃⇥" : qsTr("Ctrl+Tab"), enabled: Files.tabs.length > 1 },
+            { id: "prevtab", text: qsTr("Previous tab"), shortcut: isMac ? "⌃⇧⇥" : qsTr("Ctrl+Shift+Tab"), enabled: Files.tabs.length > 1 },
+            { separator: true },
             { id: "minimize", text: qsTr("Minimize"), shortcut: primaryKey + "M", nativeShortcut: "Ctrl+M" },
             { id: "fullscreen", text: qsTr("Full screen"), shortcut: isMac ? "⌃⌘F" : "F11", checked: root.visibility === Window.FullScreen }
         ] },
@@ -372,6 +375,8 @@ Window {
         case "quit": quitProgram(); break
         case "new": Files.newDocument(); break
         case "close": Files.closeTab(Files.currentTab); break
+        case "nexttab": Files.switchTab((Files.currentTab + 1) % Files.tabs.length); break
+        case "prevtab": Files.switchTab((Files.currentTab + Files.tabs.length - 1) % Files.tabs.length); break
         case "open": openDialog.open(); break
         case "save":
             if (Files.fileName === "") {
@@ -673,6 +678,18 @@ Window {
     Shortcut { sequence: "Ctrl+O"; enabled: !root.isMac; onActivated: root.run("open") }
     Shortcut { sequence: "Ctrl+E"; enabled: !root.isMac; onActivated: root.run("export") }
     Shortcut { sequence: "Ctrl+W"; enabled: !root.isMac; onActivated: root.run("close") }
+    // Between the tabs: ⌃Tab and ⌘⇧] on the Mac (Qt calls the Control key "Meta" there), Ctrl+Tab
+    // and Ctrl+Page down on Linux; with Shift, or Page up / ⌘⇧[, the other way round.
+    Shortcut {
+        sequences: root.isMac ? ["Meta+Tab", "Ctrl+Shift+]"] : ["Ctrl+Tab", "Ctrl+PgDown"]
+        enabled: Files.tabs.length > 1
+        onActivated: root.run("nexttab")
+    }
+    Shortcut {
+        sequences: root.isMac ? ["Meta+Shift+Tab", "Ctrl+Shift+["] : ["Ctrl+Shift+Tab", "Ctrl+PgUp"]
+        enabled: Files.tabs.length > 1
+        onActivated: root.run("prevtab")
+    }
     Shortcut { sequence: "Ctrl+S"; enabled: !root.isMac; onActivated: root.run("save") }
     Shortcut { sequence: "Ctrl+Shift+S"; enabled: !root.isMac; onActivated: root.run("saveas") }
     // Undo and redo: on macOS the menu of the system carries them.
