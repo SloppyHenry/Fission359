@@ -5,8 +5,11 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QMetaObject>
+#include <QTemporaryDir>
 
 #include <algorithm>
 #include <filesystem>
@@ -81,6 +84,65 @@ QString FileController::fileName() const {
 
 QStringList FileController::recentFiles() const {
     return m_recent != nullptr ? m_recent->paths() : QStringList();
+}
+
+QVariantList FileController::recentTiles() const {
+    QVariantList tiles;
+    for (const QString& path : recentFiles()) {
+        const std::vector<std::uint8_t> png = io::readPreview(toPath(path));
+        QString preview;
+        if (!png.empty()) {
+            const QByteArray bytes(reinterpret_cast<const char*>(png.data()),
+                                   static_cast<qsizetype>(png.size()));
+            preview =
+                QStringLiteral("data:image/png;base64,") + QString::fromLatin1(bytes.toBase64());
+        }
+        tiles.push_back(QVariantMap{{QStringLiteral("path"), path},
+                                    {QStringLiteral("name"), QFileInfo(path).completeBaseName()},
+                                    {QStringLiteral("preview"), preview}});
+    }
+    return tiles;
+}
+
+QStringList FileController::exampleNames() const {
+    QStringList names;
+    for (const QString& file :
+         QDir(QStringLiteral(":/fission/examples"))
+             .entryList({QStringLiteral("*.fission")}, QDir::Files, QDir::Name)) {
+        names.push_back(QFileInfo(file).completeBaseName());
+    }
+    return names;
+}
+
+bool FileController::openExample(const QString& name) {
+    // The io layer reads files, not program resources: the example goes to a temporary file.
+    QFile resource(QStringLiteral(":/fission/examples/%1.fission").arg(name));
+    QTemporaryDir folder;
+    if (!resource.open(QIODevice::ReadOnly) || !folder.isValid()) {
+        emit fileProblem(QStringLiteral("cannotRead"), name);
+        return false;
+    }
+    const QString copy = folder.filePath(QStringLiteral("example.fission"));
+    QFile out(copy);
+    if (!out.open(QIODevice::WriteOnly) || out.write(resource.readAll()) < 0) {
+        emit fileProblem(QStringLiteral("cannotRead"), name);
+        return false;
+    }
+    out.close();
+    io::OpenResult result = io::open(toPath(copy));
+    if (!result.document) {
+        emit fileProblem(QStringLiteral("documentUnreadable"), name);
+        return false;
+    }
+    if (!leave()) {
+        return false;
+    }
+    m_created.clear();
+    m_model->replaceDocument(std::move(*result.document));
+    setPath(QString()); // a copy of its own: saving asks for a name
+    refreshModified();
+    emit opened(QString());
+    return true;
 }
 
 QString FileController::baseName(const QString& path) const {

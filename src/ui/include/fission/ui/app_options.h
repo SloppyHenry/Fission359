@@ -23,6 +23,8 @@ class AppOptions : public QObject {
     Q_PROPERTY(bool parked MEMBER parked NOTIFY changed)
     /// The first-start assistant is to be shown (the person has not seen it yet).
     Q_PROPERTY(bool firstRun MEMBER firstRun NOTIFY changed)
+    /// The start page is shown when the program starts (no file was asked for).
+    Q_PROPERTY(bool startPage MEMBER startPage NOTIFY changed)
 
 public:
     explicit AppOptions(QObject* parent = nullptr) : QObject(parent) {}
@@ -45,6 +47,7 @@ public:
     /// the person who is working there
     bool parked = false;
     bool firstRun = false;
+    bool startPage = false;
 
 signals:
     void changed();

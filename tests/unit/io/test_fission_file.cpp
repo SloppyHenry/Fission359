@@ -328,3 +328,101 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
     }
     CHECK(count == world.registry.ids().size());
 }
+
+// --- the examples that come with the program (AP-1.11d) -------------------------------------
+
+namespace {
+
+FeatureId addStep(Document& document, World& world, const char* type,
+                  std::map<std::string, std::string> values = {}, std::vector<BodyId> inputs = {},
+                  std::map<std::string, std::string> words = {}) {
+    FeatureDraft draft = defaultDraft(*world.registry.find(type));
+    for (const auto& [name, expression] : values) {
+        draft.params.at(name).expression = expression;
+    }
+    for (const auto& [name, text] : words) {
+        draft.texts[name] = text;
+    }
+    draft.inputs = std::move(inputs);
+    return *document.addFeature(std::move(draft));
+}
+
+} // namespace
+
+TEST_CASE("write the example files", "[.generate-examples]") {
+    World world;
+    const fs::path folder = fs::path(FISSION_APP_EXAMPLES_DIR);
+    fs::create_directories(folder);
+    const SaveExtras fixed{{}, "0.1.0", "2026-10-27T12:00:00Z"};
+
+    Document dose(2001);
+    dose.title = "Box with a hole";
+    const FeatureId box =
+        addStep(dose, world, "box", {{"width", "40"}, {"depth", "40"}, {"height", "20"}});
+    const FeatureId hole =
+        addStep(dose, world, "cylinder", {{"radius", "8"}, {"height", "30"}, {"z", "-5"}});
+    addStep(dose, world, "combine", {},
+            {dose.findFeature(box)->outputs.at(0), dose.findFeature(hole)->outputs.at(0)},
+            {{"mode", "subtract"}});
+    dose.setBodyColor(dose.bodies().front().id, {60, 140, 220});
+    REQUIRE(save(dose, folder / "box-with-hole.fission", fixed).ok);
+
+    Document keychain(2002);
+    keychain.title = "Keychain";
+    const FeatureId plate =
+        addStep(keychain, world, "box",
+                {{"width", "60"}, {"depth", "25"}, {"height", "4"}, {"cornerRadius", "8"}});
+    const FeatureId eye = addStep(keychain, world, "cylinder",
+                                  {{"radius", "4"}, {"height", "10"}, {"x", "-22"}, {"z", "-3"}});
+    addStep(keychain, world, "combine", {},
+            {keychain.findFeature(plate)->outputs.at(0), keychain.findFeature(eye)->outputs.at(0)},
+            {{"mode", "subtract"}});
+    keychain.setBodyColor(keychain.bodies().front().id, {230, 90, 60});
+    REQUIRE(save(keychain, folder / "keychain.fission", fixed).ok);
+
+    Document star(2003);
+    star.title = "Star";
+    addStep(star, world, "star");
+    star.setBodyColor(star.bodies().front().id, {240, 190, 40});
+    REQUIRE(save(star, folder / "star.fission", fixed).ok);
+}
+
+TEST_CASE("the examples open, calculate and are valid solids", "[fission-file]") {
+    World world;
+    std::size_t count = 0;
+    for (const auto& entry : fs::directory_iterator(fs::path(FISSION_APP_EXAMPLES_DIR))) {
+        if (entry.path().extension() != ".fission") {
+            continue;
+        }
+        ++count;
+        INFO(entry.path().filename().string());
+        const OpenResult opened = open(entry.path());
+        REQUIRE(opened.document);
+        CHECK(opened.problems.empty());
+        RecomputeCache cache;
+        const auto result = recompute(*opened.document, world.registry, *world.kernel, cache);
+        REQUIRE(result.has_value());
+        bool anyShown = false;
+        for (const auto& [id, body] : result->bodies) {
+            const auto report = world.kernel->measure(body.solid);
+            CHECK(report.valid);
+            anyShown = anyShown || report.volume > 0.0;
+        }
+        CHECK(anyShown);
+        for (const FeatureState& state : result->features) {
+            CHECK(state.status == FeatureStatus::ok);
+        }
+    }
+    CHECK(count == 3);
+}
+
+TEST_CASE("the preview of a file can be read alone", "[fission-file]") {
+    World world;
+    TempFolder folder;
+    const fs::path file = folder.path / "a.fission";
+    REQUIRE(save(world.model(), file, extras()).ok);
+    CHECK(readPreview(file) == extras().previewPng);
+    REQUIRE(save(world.model(), file, SaveExtras{{}, "0.1.0", ""}).ok);
+    CHECK(readPreview(file).empty());
+    CHECK(readPreview(folder.path / "missing.fission").empty());
+}

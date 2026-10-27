@@ -11,6 +11,7 @@
 #include <QStringList>
 #include <QThreadPool>
 #include <QUrl>
+#include <QVariantList>
 
 #include <cstdint>
 #include <functional>
@@ -99,6 +100,13 @@ public:
     void finishSession();
     /// What a bare number means in a new project: 1 for millimetres, 25.4 for inches (setting).
     void setNewDocumentUnit(double millimetres) { m_newDocumentUnit = millimetres; }
+    /// The recent files as tiles for the start page: [{ path, name, preview }], `preview` is a
+    /// picture as a data URL ("" when the file has none).
+    Q_INVOKABLE QVariantList recentTiles() const;
+    /// The examples that come with the program (names without ending, in a fixed order).
+    Q_INVOKABLE QStringList exampleNames() const;
+    /// Opens an example as a new, not yet saved project (saving asks for a name).
+    Q_INVOKABLE bool openExample(const QString& name);
     Q_INVOKABLE QString baseName(const QString& path) const;
     Q_INVOKABLE void forgetRecent(const QString& path);
 

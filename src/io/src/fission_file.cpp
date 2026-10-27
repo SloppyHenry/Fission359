@@ -294,4 +294,17 @@ OpenResult open(const std::filesystem::path& path, const OpenOptions& options) {
     return result;
 }
 
+std::vector<std::uint8_t> readPreview(const std::filesystem::path& path) {
+    const auto file = readFile(path);
+    if (!file) {
+        return {};
+    }
+    const auto entries = readZip(*file);
+    if (!entries) {
+        return {};
+    }
+    const auto preview = entries->find(previewName);
+    return preview == entries->end() ? Bytes{} : preview->second;
+}
+
 } // namespace fission::io

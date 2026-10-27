@@ -19,12 +19,14 @@ APP = sys.argv[1]
 RUNNER = sys.argv[2:]  # e.g. xvfb-run ...; empty on macOS
 
 
-def run(data, actions, *extra, expect_killed=False, first_run=False):
+def run(data, actions, *extra, expect_killed=False, first_run=False, start_page=False):
     """One start of the program: a picture of the window is taken after the actions."""
     picture = os.path.join(data, "picture.png")
     env = dict(os.environ, FISSION_DATA_DIR=data, FISSION_PARK_WINDOW="1")
     if first_run:
         env["FISSION_FIRST_RUN"] = "1"
+    if start_page:
+        env["FISSION_START_PAGE"] = "1"
     command = RUNNER + [APP, *extra, "--smoke-test", picture, "--language", "en",
                         "--size", "1280x800", "--simulate", actions]
     result = subprocess.run(command, env=env, capture_output=True, text=True, timeout=120)
@@ -121,5 +123,14 @@ with tempfile.TemporaryDirectory() as data:
     skipped = os.path.join(data, "skipped")
     os.makedirs(skipped)
     run(skipped, "clickitem:firstRunLater;expectpref:firstRunDone,true", first_run=True)
+
+    # 9. The start page: an example opens as a new project, a recent file opens, "New" is empty.
+    run(data, "clickitem:startExample_keychain;recipe:box,cylinder,combine;expectmodified:0",
+        start_page=True)
+    run(data, "clickitem:startRecent_0;recipe:box,cylinder,sphere,cone;expectmodified:0",
+        start_page=True)
+    run(data, "clickitem:startNew;recipe:;expectmodified:0", start_page=True)
+    for example in ("box-with-hole", "star"):
+        run(data, "example:%s;expectmodified:0" % example)
 
 print("OK")
