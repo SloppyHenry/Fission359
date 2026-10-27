@@ -18,6 +18,7 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ["v*"]
   schedule:
     - cron: "17 3 * * 1"
   workflow_dispatch:
@@ -390,3 +391,30 @@ jobs:
             build/package/*.AppImage
             build/package/*.flatpak
             build/package/*-window.png
+
+  # A tag like v0.1.0-alpha.1 publishes the packages of this run as a GitHub pre-release
+  # (ADR-0006: unsigned, so macOS needs the Gatekeeper detour described in docs/paketierung.md).
+  release:
+    name: Publish pre-release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: package-*
+          path: release-files
+          merge-multiple: true
+
+      - name: Create the pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          rm -f release-files/*-window.png
+          ls -l release-files
+          gh release create "$TAG" release-files/* --repo "$GITHUB_REPOSITORY" \
+            --title "Fission3D ${TAG#v}" --prerelease --generate-notes

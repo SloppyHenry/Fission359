@@ -4,6 +4,18 @@ Stand: 2026-10-13 (AP-0.7, Entscheidungen in [ADR-0006](adr/0006-paketierung.md)
 Die fertigen Pakete baut die CI bei jedem Lauf (Reiter **Actions** → Lauf öffnen → Abschnitt **Artifacts**,
 14 Tage lang abrufbar). Lokal gebaute Pakete laufen nur auf dem Rechner, auf dem sie entstanden sind.
 
+## Vorab-Release veröffentlichen (Alpha, Beta)
+
+Ein Tag der Form `v<Version>-alpha.<n>` auf `main` lässt die CI nach den Paketen ein **GitHub-Vorabrelease** anlegen
+(Reiter **Releases**, mit .dmg, .AppImage und .flatpak). Beispiel für die erste Alpha:
+
+```sh
+git tag -a v0.1.0-alpha.1 -m "Fission3D 0.1.0 alpha 1" && git push origin v0.1.0-alpha.1
+```
+
+Die Version im Programm (`project(… VERSION …)` in `CMakeLists.txt`) bleibt `0.1.0`; „alpha.1“ steht nur im Tag und im Titel.
+Pakete sind nicht signiert (siehe unten): Der Gatekeeper-Umweg gilt auch für Alphas.
+
 ## Systemvoraussetzungen
 
 | System | Voraussetzung |

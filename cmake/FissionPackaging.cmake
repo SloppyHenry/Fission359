@@ -10,7 +10,7 @@ set(FISSION_MIME_TYPE "application/x-fission3d" CACHE INTERNAL "MIME type of .fi
 # macOS uniform type identifier of project files (UTI).
 set(FISSION_PROJECT_UTI "${FISSION_APP_ID}.project" CACHE INTERNAL "")
 # Release date in the AppStream metadata; set it when a version is released.
-set(FISSION_RELEASE_DATE "2026-10-13" CACHE INTERNAL "")
+set(FISSION_RELEASE_DATE "2026-10-27" CACHE INTERNAL "")
 
 set(FISSION_PACKAGING_DIR "${CMAKE_SOURCE_DIR}/packaging")
 set(FISSION_ICON_SIZES 16 32 48 64 128 256 512 1024)

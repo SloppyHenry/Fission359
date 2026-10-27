@@ -8,7 +8,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(FissionVcpkg)
 
 project(Fission3D
-  VERSION 0.0.1
+  VERSION 0.1.0
   DESCRIPTION "Easy-to-use, precise 3D construction program for makers"
   LANGUAGES CXX)
 

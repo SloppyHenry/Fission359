@@ -31,7 +31,7 @@ body:
     attributes:
       label: Version
       description: "Terminal: scripts/run -- --version"
-      placeholder: "0.0.1"
+      placeholder: "0.1.0"
   - type: dropdown
     id: system
     attributes:
