@@ -273,7 +273,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.11 App-Shell, Einstellungen, Sprachen
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-0.8
+**Status:** Review (2026-10-27; wartet auf Test durch den Product Owner, PRs #59–#64) · **Größe:** M · **Abhängigkeiten:** AP-0.8
 **Bauanleitung:** [anleitungen/AP-1.11.md](anleitungen/AP-1.11.md)
 
 **Umfang:**
@@ -284,12 +284,21 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Startbildschirm (Version 1): Neu, Zuletzt geöffnet, Beispiele
 
 **Akzeptanzkriterien:**
-- [ ] Sprachwechsel ohne Neustart
-- [ ] Keine hartkodierten UI-Texte (Prüfskript in der CI)
+- [x] Sprachwechsel ohne Neustart (Ende-zu-Ende-Test `expecttr`, Einstellungen-Seite)
+- [x] Keine hartkodierten UI-Texte (Prüfskript `translations_complete` in der CI)
 
 **Stand nach AP-0.8 (2026-10-14):**
 - *Schon da:* Fenster nach Mockup, Menüs (Mac: Systemmenüleiste, Linux: im Fenster), Deutsch und Englisch mit Umschalten zur Laufzeit (`--language`), `qsTr` mit Übersetzungstest in der CI, Hell/Dunkel und Akzentfarbe (Theme), Über-Fenster, Protokolldatei.
 - *Offen:* Erststart-Assistent, Einstellungen (Einheit, Nachkommastellen, Maus-Stil, UI-Skalierung, Autosave), Druckerprofile, Startbildschirm, Tastenkürzel-Konzept, **„Neu“ und mehrere Dokument-Tabs verdrahten** (aus AP-1.1 hierher verschoben; das Dokumentmodell kann mehrere Dokumente).
+
+**Abschlussvermerk (2026-10-27, Teile a–f; autonom gearbeitet, Haltepunkte nach Empfehlung):**
+- Einstellungen (`services::Settings`, `ui::Preferences`): Sprache, Design, Akzent (mit Hinweis bei Rot/Gelb/Grün), Oberflächen-Skalierung 80–200 % ohne Neustart, Maus-Stil, Griff-Art, Drucker, Raster, weiche Schatten, Einheit für neue Projekte, Nachkommastellen (Obergrenze der Anzeige), Autosave (ein/aus, Abstand). Seite ⌘, im Fenster, kein Dialog. Kommandozeile gewinnt, ohne gespeichert zu werden.
+- Erststart-Assistent (Sprache → Drucker → Maus) als Karte, „Später“ jederzeit; endet mit „Los geht's“ (Mission erst mit AP-5.1).
+- Startseite (`StartPage.qml`): Neu, Zuletzt geöffnet (mit Vorschaubild), 3 Beispiele (Resource, öffnen als neues Projekt).
+- Mehrere Dokumente: Tabs mit je eigenem Dokument, Undo-Liste, Datei, Palette und Sicherungsdatei; `DocumentModel` bleibt das eine Objekt und tauscht das Dokument (`exchange`). Ein unberührtes Projekt wird von Neu/Öffnen ersetzt.
+- Griff-Art „Klassisch“ (erste Stufe): weiße Quadrate, Maßband und -kästchen erst beim Zeigen; dieselben Werte und Commands (Test `app_handle_drag_classic`).
+- Festlegungen: Haltepunkt 1 ja (Tabs, schlicht), 2 nur erste Stufe von Klassisch, 3 Knopf „Mission“ erst mit AP-5.1.
+- Offene Reste: Klassisch: Eck-Griffe, die Breite und Tiefe zugleich ändern, und der schwarze Hebe-Pfeil (Lage z) fehlen; Kamera je Dokument merken; Einheit „Zoll“ gilt nur für neue Projekte (Anzeige der Statuszeile bleibt „mm“); Bildschirmfotos 80/100/150/200 % nur von mir angesehen, nicht in den PRs; Tastenkürzel-Konzept (Ctrl+Tab zum Wechseln der Tabs) fehlt.
 
 ---
 

@@ -118,6 +118,13 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=0,90,260 --simulate "tool:size;put:box;grab:width,120,0,12;expect:width,45")
   set_tests_properties(app_handle_drag PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.11f: the same drag with the classic style of handles (squares); same values, same commands.
+  add_test(NAME app_handle_drag_classic
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-handle-drag-classic.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "setpref:handleStyle,classic;tool:size;put:box;grab:width,120,0,12;expect:width,45")
+  set_tests_properties(app_handle_drag_classic PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # Pulled far beyond the edge of the view the handle must stay with the pointer: it once vanished
   # under it, the drag was thrown away and the handles were gone.
   add_test(NAME app_handle_drag_far

@@ -85,6 +85,12 @@ public:
     void setColours(const QVariantMap& colours);
     QString mode() const { return m_mode; }
     void setMode(const QString& mode);
+    /// "axes" (round dots, a measure band beside every size) or "classic" (white squares; a
+    /// measure band and its box appear when the pointer is on a square, as in Tinkercad). Both
+    /// drag the same values with the same commands (AP-1.11f).
+    Q_PROPERTY(QString style READ style WRITE setStyle NOTIFY styleChanged)
+    QString style() const { return m_style; }
+    void setStyle(const QString& style);
 
     /// The pointer is on handle `index` (`on`), or left it: its band, arrow and label show.
     Q_INVOKABLE void setPointed(int index, bool on);
@@ -133,6 +139,7 @@ signals:
     void compactChanged();
     void coloursChanged();
     void modeChanged();
+    void styleChanged();
 
 private:
     void setEditing(bool editing);
@@ -170,6 +177,7 @@ private:
     std::map<QString, int> m_chosen; ///< the place of each value while it is being changed
     bool m_keepChoice = false;       ///< after a drag: the places stay until the view turns
     QString m_mode{QStringLiteral("size")};
+    QString m_style{QStringLiteral("axes")};
     bool m_editing = false;
     bool m_armed = false;
     bool m_compact = false;

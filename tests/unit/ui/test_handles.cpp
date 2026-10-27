@@ -567,6 +567,41 @@ TEST_CASE("handles: a body small on screen shows its dots only", "[ui][handles]"
     CHECK(f.handles->compact());
 }
 
+TEST_CASE("handles: the classic style shows white squares and the bands only on hover",
+          "[ui][handles]") {
+    Fixture f;
+    roundedPlate(f);
+    f.viewport.setCamera(-35.0, 32.0, 260.0);
+    f.refresh();
+    REQUIRE(f.handles->style() == QStringLiteral("axes"));
+    CHECK_FALSE(f.handles->compact());
+    CHECK_FALSE(f.viewport.handleGraphics().dots[0].square);
+    const std::size_t axesLines = f.viewport.handleGraphics().lines.size();
+    REQUIRE(axesLines > 0);
+
+    f.handles->setStyle(QStringLiteral("nonsense")); // refused
+    CHECK(f.handles->style() == QStringLiteral("axes"));
+    f.handles->setStyle(QStringLiteral("classic"));
+    f.refresh();
+    const auto& classic = f.viewport.handleGraphics();
+    REQUIRE(classic.dots.size() == 4);
+    CHECK(f.handles->compact()); // squares only, the bands wait for the pointer
+    CHECK(classic.lines.empty());
+    for (const auto& dot : classic.dots) {
+        if (!dot.rounding) {
+            CHECK(dot.square);
+            CHECK(dot.fill == QColor(Qt::white));
+        }
+    }
+    // The same handles, the same values: only the look differs.
+    CHECK(f.handle("width")["value"].toDouble() > 0.0);
+    f.handles->setPointed(f.handle("width")["index"].toInt(), true);
+    CHECK(f.viewport.handleGraphics().lines.size() == 5); // its band and strokes appear
+    f.handles->setStyle(QStringLiteral("axes"));
+    f.refresh();
+    CHECK(f.viewport.handleGraphics().lines.size() == axesLines);
+}
+
 TEST_CASE("handles: a radius is taken at the outline, where it is seen from the side",
           "[ui][handles]") {
     Fixture f;

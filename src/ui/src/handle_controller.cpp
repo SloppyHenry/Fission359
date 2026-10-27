@@ -56,6 +56,15 @@ void HandleController::setArmed(bool armed) {
     }
 }
 
+void HandleController::setStyle(const QString& style) {
+    if ((style != QLatin1String("axes") && style != QLatin1String("classic")) || style == m_style) {
+        return;
+    }
+    m_style = style;
+    emit styleChanged();
+    refresh();
+}
+
 void HandleController::setMode(const QString& mode) {
     if (mode == m_mode) {
         return;
@@ -374,7 +383,9 @@ void HandleController::refresh() {
         };
         // A body this small on screen keeps only its dots; a band shows when the pointer is on
         // its dot. Everything at once would cover the body.
-        compact = !raws.empty() && lengthOf(screenHigh - screenLow) < kCompactPixels;
+        // The classic style always keeps to the squares: bands and boxes show on hover.
+        compact = !raws.empty() && (m_style == QLatin1String("classic") ||
+                                    lengthOf(screenHigh - screenLow) < kCompactPixels);
 
         struct Placed {
             bool band = false;
@@ -591,7 +602,7 @@ void HandleController::drawHandle(render::HandleGraphics& graphics, const QVecto
     const bool active = m_editing && m_current == index;
     const bool pointed = m_pointed == index;
     const bool detail = role != QLatin1String("size");
-    if (compact && detail && !active) {
+    if (compact && detail && !active && m_style != QLatin1String("classic")) {
         return; // on a small body the details step aside (typing and the panel reach them)
     }
     // With the tool "Move" only the bands are left; the gizmo moves the body.
@@ -636,6 +647,13 @@ void HandleController::drawHandle(render::HandleGraphics& graphics, const QVecto
     dot.radius = (dot.rounding ? 8.0F : detail ? 6.0F : 7.0F) + (pointed || active ? 2.0F : 0.0F);
     dot.fill = faded(active ? ink : m_colours.fill);
     dot.ring = faded(active ? m_colours.fill : ink);
+    if (m_style == QLatin1String("classic") && !dot.rounding) {
+        // White squares with a dark edge, whatever the axis (the colours of the axes belong to
+        // the other style).
+        dot.square = true;
+        dot.fill = faded(active ? m_colours.ink : QColor(Qt::white));
+        dot.ring = faded(active ? QColor(Qt::white) : m_colours.ink);
+    }
     graphics.dots.push_back(dot);
 }
 
