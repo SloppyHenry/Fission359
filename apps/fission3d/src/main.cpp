@@ -50,6 +50,7 @@
 #include "fission/services/log.h"
 #include "fission/services/recent_files.h"
 #include "fission/services/recovery_store.h"
+#include "fission/services/settings.h"
 #include "fission/services/startup_clock.h"
 #include "fission/ui/align_controller.h"
 #include "fission/ui/app_info.h"
@@ -63,6 +64,7 @@
 #include "fission/ui/language.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/placement_controller.h"
+#include "fission/ui/preferences.h"
 #include "fission/ui/rotate_controller.h"
 #include "fission/ui/scale_controller.h"
 #include "fission/ui/selection_controller.h"
@@ -313,8 +315,8 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                  fission::ui::RotateController* rotate, fission::ui::ScaleController* scale,
                  fission::ui::DistanceController* distances, fission::ui::AlignController* align,
                  fission::ui::SelectionController* selection, fission::ui::FileController* files,
-                 fission::ui::ExportController* exporter, const QString& actions,
-                 std::function<void()> done) {
+                 fission::ui::ExportController* exporter, fission::ui::Preferences* preferences,
+                 const QString& actions, std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
@@ -711,6 +713,21 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     qWarning().noquote()
                         << QStringLiteral("expected the time marker to be pulled back");
                     g_simulationFailure = 5;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("expectpref")) {
+            // expectpref:mouseStyle,blender - the setting has this value (settings are kept
+            // between starts: the next start must find them).
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [preferences, spec] {
+                const QString found = preferences->property(spec.value(0).toUtf8()).toString();
+                if (found != spec.value(1)) {
+                    qWarning().noquote() << QStringLiteral("expected the setting %1 = %2; found %3")
+                                                .arg(spec.value(0), spec.value(1), found);
+                    g_simulationFailure = 7;
                 }
             });
             continue;
@@ -1152,7 +1169,6 @@ int main(int argc, char* argv[]) {
     loadFonts();
 
     fission::ui::Theme theme;
-    theme.setMode(options.theme.isEmpty() ? QStringLiteral("dark") : options.theme);
     fission::ui::AppInfo info;
     info.setVersion(toQString(fission::core::versionString()));
     info.setQtVersion(QString::fromLatin1(qVersion()));
@@ -1168,6 +1184,17 @@ int main(int argc, char* argv[]) {
     appOptions.rightTab = options.rightTab;
     appOptions.softShadows = options.softShadows;
     appOptions.parked = qEnvironmentVariableIsSet("FISSION_PARK_WINDOW");
+    // Test runs (a picture of the window, a parked window) keep their rescue files in a folder
+    // of their own: they must not leave work behind that the next real start would offer.
+    // FISSION_DATA_DIR names that folder (tests that start the program twice share it).
+    std::unique_ptr<QTemporaryDir> testRescueFolder;
+    QString dataFolder = qEnvironmentVariable("FISSION_DATA_DIR");
+    if (dataFolder.isEmpty() && (!options.smokeTestPath.isEmpty() || appOptions.parked)) {
+        testRescueFolder = std::make_unique<QTemporaryDir>();
+        dataFolder = testRescueFolder->path();
+    }
+    fission::services::Settings settings(
+        dataFolder.isEmpty() ? QString() : dataFolder + QStringLiteral("/settings.ini"));
     fission::ui::Numbers numbers;
 
     // The document: the one box of the start, calculated before the first frame.
@@ -1181,15 +1208,6 @@ int main(int argc, char* argv[]) {
     documentModel.waitForCalculation();
 
     QQmlApplicationEngine engine;
-    // Test runs (a picture of the window, a parked window) keep their rescue files in a folder
-    // of their own: they must not leave work behind that the next real start would offer.
-    // FISSION_DATA_DIR names that folder (tests that start the program twice share it).
-    std::unique_ptr<QTemporaryDir> testRescueFolder;
-    QString dataFolder = qEnvironmentVariable("FISSION_DATA_DIR");
-    if (dataFolder.isEmpty() && (!options.smokeTestPath.isEmpty() || appOptions.parked)) {
-        testRescueFolder = std::make_unique<QTemporaryDir>();
-        dataFolder = testRescueFolder->path();
-    }
     fission::services::RecentFiles recentFiles(
         dataFolder.isEmpty() ? QString() : dataFolder + QStringLiteral("/recent.ini"));
     fission::services::RecoveryStore recovery(
@@ -1206,7 +1224,24 @@ int main(int argc, char* argv[]) {
     FileOpenFilter fileOpenFilter;
     app.installEventFilter(&fileOpenFilter);
     fission::ui::Language language(&engine);
-    language.setCode(options.language.isEmpty() ? QStringLiteral("system") : options.language);
+    // What the person set up is applied; the command line (for tests and pictures) wins over it
+    // without being written down.
+    fission::ui::Preferences preferences(&settings, &theme, &language);
+    preferences.applyToInterface(!options.language.isEmpty(), !options.theme.isEmpty());
+    if (!options.language.isEmpty()) {
+        language.setCode(options.language);
+    }
+    if (!options.theme.isEmpty()) {
+        theme.setMode(options.theme);
+    }
+    qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Preferences", &preferences);
+    documentModel.setPrinter(preferences.printerId());
+    autosave.setEnabled(preferences.autosave());
+    autosave.setIntervalMinutes(preferences.autosaveMinutes());
+    QObject::connect(&preferences, &fission::ui::Preferences::autosaveChanged, &autosave, [&] {
+        autosave.setEnabled(preferences.autosave());
+        autosave.setIntervalMinutes(preferences.autosaveMinutes());
+    });
 
     fission::ui::registerViewportTypes();
     qmlRegisterSingletonInstance("Fission3D.Ui", 1, 0, "Theme", &theme);
@@ -1329,6 +1364,7 @@ int main(int argc, char* argv[]) {
     fission::ui::AlignController* const alignController = &align;
     fission::ui::SelectionController* const selectionController = &selection;
     fission::ui::FileController* const filesController = &files;
+    fission::ui::Preferences* const preferencesPointer = &preferences;
     fission::ui::ExportController* const exporterPointer = &exporter;
     if (!options.smokeTestPath.isEmpty()) {
         // Wait for the first frame and a moment more (animations, fonts), then grab the window.
@@ -1339,8 +1375,8 @@ int main(int argc, char* argv[]) {
         const auto started = std::make_shared<bool>(false);
         auto grab = [window, viewport, placementController, &documentModel, handleController,
                      gizmoController, rotateController, scaleController, distanceController,
-                     alignController, selectionController, filesController, exporterPointer, path,
-                     simulate, started] {
+                     alignController, selectionController, filesController, exporterPointer,
+                     preferencesPointer, path, simulate, started] {
             if (*started) {
                 return; // the first frame can be reported more than once
             }
@@ -1356,7 +1392,7 @@ int main(int argc, char* argv[]) {
                 playActions(window, viewport, placementController, &documentModel, handleController,
                             gizmoController, rotateController, scaleController, distanceController,
                             alignController, selectionController, filesController, exporterPointer,
-                            simulate, shoot);
+                            preferencesPointer, simulate, shoot);
             } else {
                 shoot();
             }

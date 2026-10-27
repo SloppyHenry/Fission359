@@ -25,6 +25,10 @@ public:
     /// While stopped nothing becomes due (no project open, shutting down).
     void stop();
     void start();
+    /// Turns the autosave off or on (a setting of the person).
+    void setEnabled(bool enabled);
+    /// Every this many minutes (1 to 60).
+    void setIntervalMinutes(int minutes);
 
 signals:
     void due();
@@ -33,6 +37,7 @@ private:
     QTimer timer_;
     int commandsPerSave_;
     int commands_ = 0;
+    bool enabled_ = true;
 };
 
 } // namespace fission::services
