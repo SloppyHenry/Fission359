@@ -16,6 +16,7 @@ add_executable(fission_unit_tests
   features/test_combine.cpp
   features/test_split.cpp
   features/test_text_feature.cpp
+  io/test_fission_file.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp
@@ -50,11 +51,17 @@ add_executable(fission_unit_tests
   interaction/test_align.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
-  fission_core fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
+  fission_core fission_io fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
 fission_apply_compiler_options(fission_unit_tests)
 
 target_compile_definitions(fission_unit_tests PRIVATE
   FISSION_TEST_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures"
   FISSION_APP_FONTS_DIR="${CMAKE_SOURCE_DIR}/apps/fission3d/resources/fonts")
 
-catch_discover_tests(fission_unit_tests)
+# Under AddressSanitizer, known leaks of third-party libraries are listed in tests/lsan.supp.
+if(FISSION_SANITIZE MATCHES "address")
+  catch_discover_tests(fission_unit_tests
+    PROPERTIES ENVIRONMENT "LSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/tests/lsan.supp")
+else()
+  catch_discover_tests(fission_unit_tests)
+endif()
