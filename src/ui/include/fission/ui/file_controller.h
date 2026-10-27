@@ -15,8 +15,10 @@
 
 #include <cstdint>
 #include <functional>
+#include <vector>
 
 #include "fission/core/document.h"
+#include "fission/ui/document_model.h"
 
 namespace fission::services {
 class RecentFiles;
@@ -46,6 +48,10 @@ class FileController : public QObject {
     /// There is something not saved (the dot in the window title).
     Q_PROPERTY(bool modified READ modified NOTIFY modifiedChanged)
     Q_PROPERTY(bool saving READ saving NOTIFY savingChanged)
+    /// The open documents: [{ name, modified, current }]; `name` is empty for a project never
+    /// saved.
+    Q_PROPERTY(QVariantList tabs READ tabs NOTIFY tabsChanged)
+    Q_PROPERTY(int currentTab READ currentTab NOTIFY currentTabChanged)
     /// Full paths, newest first, files that are gone left out.
     Q_PROPERTY(QStringList recentFiles READ recentFiles NOTIFY recentFilesChanged)
 
@@ -56,7 +62,9 @@ public:
                    services::Autosave* autosave = nullptr, QObject* parent = nullptr);
     ~FileController() override;
 
-    QString filePath() const { return m_path; }
+    QString filePath() const { return m_tabs[static_cast<std::size_t>(m_current)].path; }
+    QVariantList tabs() const;
+    int currentTab() const noexcept { return m_current; }
     QString fileName() const;
     bool modified() const noexcept { return m_modified; }
     bool saving() const noexcept { return m_saving; }
@@ -81,8 +89,14 @@ public:
     Q_INVOKABLE bool openPath(const QString& path, bool openDamaged = false) {
         return openFrom(QUrl::fromLocalFile(QFileInfo(path).absoluteFilePath()), openDamaged);
     }
-    /// An empty project in place of the current one, after saving that one if it has a file.
+    /// A new, empty project in a tab of its own.
     Q_INVOKABLE bool newDocument();
+    /// Shows another open document (its undo list stays with it).
+    Q_INVOKABLE bool switchTab(int index);
+    /// Closes a document: a project with a file is saved first, one without is set aside as rescue
+    /// work. Closing the last one leaves an empty project. False when the work could not be
+    /// secured.
+    Q_INVOKABLE bool closeTab(int index);
     /// Makes the document safe to leave behind (new project, open, quit): a project with a file
     /// is saved, waiting for the write. False when work would be lost: a project that was never
     /// saved, or a file that could not be written.
@@ -115,6 +129,8 @@ public:
 
 signals:
     void fileChanged();
+    void tabsChanged();
+    void currentTabChanged();
     void modifiedChanged();
     void savingChanged();
     void recentFilesChanged();
@@ -137,17 +153,33 @@ private:
     void finishSave(bool ok, const QString& path, std::uint64_t stamp);
     void setPath(const QString& path);
 
+    /// One open document. The shown one lives in the model (its `slot` is empty); the others are
+    /// put aside in their slot.
+    struct Tab {
+        DocumentModel::DocumentSlot slot;
+        QString path;
+        QString created; ///< ISO time of the first save, handed on when saving over the file
+        int recoverySlot = 0;
+        std::uint64_t recoveryStamp = 0; ///< the state its rescue file was written from
+    };
+    Tab& cur();
+    const Tab& cur() const;
+    /// Puts a document on show: in place of an untouched empty one, or in a tab of its own (or
+    /// shows the tab where the file is open already). `changed`: it differs from the file.
+    bool placeDocument(core::Document document, const QString& path, const QString& created,
+                       bool changed);
+
     DocumentModel* m_model;
     services::RecentFiles* m_recent;
     PreviewGrabber m_previewGrabber;
     QThreadPool m_pool;
-    QString m_path;
-    QString m_created; ///< ISO time of the first save, handed on when saving over the file
+    std::vector<Tab> m_tabs;
+    int m_current = 0;
+    int m_nextRecoverySlot = 1;
     bool m_modified = false;
     bool m_saving = false;
     services::RecoveryStore* m_recovery;
     services::Autosave* m_autosave;
-    std::uint64_t m_recoveryStamp = 0; ///< the state the rescue file was written from
     bool m_recovering = false;
     int m_lastPosition = 0;
     double m_newDocumentUnit = 1.0;

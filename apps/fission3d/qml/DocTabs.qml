@@ -9,14 +9,15 @@ import Fission3D.Ui
 Rectangle {
     id: root
 
-    property string documentName: ""
+    property var tabs: []
     property string undoTip: ""
     property string redoTip: ""
     property bool canUndo: false
     property bool canRedo: false
     signal homeRequested
     signal newDocumentRequested
-    signal closeRequested
+    signal closeRequested(int index)
+    signal tabClicked(int index)
     signal undoRequested
     signal redoRequested
     signal exportRequested
@@ -44,64 +45,86 @@ Rectangle {
             onClicked: root.homeRequested()
         }
 
-        // The open document
-        Rectangle {
-            id: tab
+        // The open documents
+        Repeater {
+            model: root.tabs
 
-            anchors.verticalCenter: parent.verticalCenter
-            height: 36
-            width: tabRow.implicitWidth + 22
-            radius: 7
-            color: Theme.panel
-            border.width: 1
-            border.color: Theme.line
+            delegate: Rectangle {
+                id: tab
 
-            Row {
-                id: tabRow
+                required property var modelData
+                required property int index
 
-                anchors.left: parent.left
-                anchors.leftMargin: 12
+                objectName: "tab_" + index
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 8
+                height: 36
+                width: tabRow.implicitWidth + 22
+                radius: 7
+                color: modelData.current ? Theme.panel : (tabArea.containsMouse ? Theme.field : "transparent")
+                border.width: modelData.current ? 1 : 0
+                border.color: Theme.line
+                Accessible.role: Accessible.PageTab
+                Accessible.name: tabText.text
 
-                Icon {
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: "cube"
-                    color: Theme.fg3
-                }
+                MouseArea {
+                    id: tabArea
 
-                Txt {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.documentName
-                    color: Theme.fg
-                    font.weight: Font.Medium
-                    elide: Text.ElideNone
-                }
-
-                AbstractButton {
-                    id: closeButton
-
-                    anchors.verticalCenter: parent.verticalCenter
-                    implicitWidth: 16
-                    implicitHeight: 16
+                    anchors.fill: parent
                     hoverEnabled: true
-                    Accessible.name: qsTr("Close")
-                    onClicked: root.closeRequested()
+                    onClicked: root.tabClicked(tab.index)
+                }
 
-                    // Centred in a holder: the control stretches its content item, and the
-                    // icon draws from its top-left corner.
-                    contentItem: Item {
-                        Icon {
-                            anchors.centerIn: parent
-                            name: "close"
-                            size: 12
-                            color: closeButton.hovered ? Theme.fg : Theme.fg4
-                        }
+                Row {
+                    id: tabRow
+
+                    anchors.left: parent.left
+                    anchors.leftMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 8
+
+                    Icon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        name: "cube"
+                        color: Theme.fg3
                     }
 
-                    background: Rectangle {
-                        radius: 4
-                        color: closeButton.hovered ? Theme.field : "transparent"
+                    Txt {
+                        id: tabText
+
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: (tab.modelData.name !== "" ? tab.modelData.name : qsTr("Untitled"))
+                              + (tab.modelData.modified ? " •" : "")
+                        color: tab.modelData.current ? Theme.fg : Theme.fg3
+                        font.weight: Font.Medium
+                        elide: Text.ElideNone
+                    }
+
+                    AbstractButton {
+                        id: closeButton
+
+                        objectName: "tabClose_" + tab.index
+                        anchors.verticalCenter: parent.verticalCenter
+                        implicitWidth: 16
+                        implicitHeight: 16
+                        hoverEnabled: true
+                        Accessible.name: qsTr("Close")
+                        onClicked: root.closeRequested(tab.index)
+
+                        // Centred in a holder: the control stretches its content item, and the
+                        // icon draws from its top-left corner.
+                        contentItem: Item {
+                            Icon {
+                                anchors.centerIn: parent
+                                name: "close"
+                                size: 12
+                                color: closeButton.hovered ? Theme.fg : Theme.fg4
+                            }
+                        }
+
+                        background: Rectangle {
+                            radius: 4
+                            color: closeButton.hovered ? Theme.field : "transparent"
+                        }
                     }
                 }
             }
@@ -109,6 +132,7 @@ Rectangle {
 
         IconBtn {
             anchors.verticalCenter: parent.verticalCenter
+            objectName: "tabNew"
             iconName: "plus"
             tip: qsTr("New project")
             onClicked: root.newDocumentRequested()

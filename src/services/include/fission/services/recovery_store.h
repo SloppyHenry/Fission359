@@ -43,21 +43,23 @@ public:
     /// Removes the marker of this session. Files that were not kept are removed as well.
     void endSession();
 
-    /// Where this session's rescue file is written.
-    QString filePath() const { return pathOf(session_); }
+    /// Where the rescue file of a document of this session is written. Every open document (tab)
+    /// has a slot of its own: 0, 1, 2, ...
+    QString filePath(int slot = 0) const { return pathOf(idOf(slot)); }
     /// Notes what the file just written belongs to; also trims the folder to `maxFiles`.
-    void writeInfo(const QString& originalPath);
-    /// Removes this session's rescue file (the project was saved, so it is not needed).
-    void removeSessionFiles();
-    /// Makes this session's rescue file a keepsake that survives a clean exit (the project is
-    /// being left without a file). The session starts a fresh one. False when there was none.
-    bool keepSessionFiles();
+    void writeInfo(const QString& originalPath, int slot = 0);
+    /// Removes the rescue file of a document (it was saved, so it is not needed).
+    void removeSessionFiles(int slot = 0);
+    /// Makes the rescue file of a document a keepsake that survives a clean exit (the project is
+    /// being left without a file). False when there was none.
+    bool keepSessionFiles(int slot = 0);
 
     /// Rescue work of other sessions that ended badly or left something behind, newest first.
     std::vector<RescuedWork> rescued() const;
     void discard(const QString& id);
 
 private:
+    QString idOf(int slot) const;
     QString pathOf(const QString& id) const;
     QString infoPathOf(const QString& id) const;
     QString markerPathOf(const QString& id) const;

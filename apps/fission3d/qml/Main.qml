@@ -87,7 +87,7 @@ Window {
             { separator: true },
             { id: "export", text: qsTr("Export…"), shortcut: primaryKey + "E", nativeShortcut: "Ctrl+E" },
             { separator: true },
-            { id: "close", text: qsTr("Close"), shortcut: primaryKey + "W", nativeShortcut: "Ctrl+W", enabled: false },
+            { id: "close", text: qsTr("Close"), shortcut: primaryKey + "W", nativeShortcut: "Ctrl+W" },
             { id: "quit", text: qsTr("Quit Fission3D"), shortcut: primaryKey + "Q", nativeShortcut: "Ctrl+Q", role: "quit" }
         ]) },
         { title: qsTr("Edit"), items: [
@@ -285,6 +285,7 @@ Window {
         switch (id) {
         case "quit": quitProgram(); break
         case "new": Files.newDocument(); break
+        case "close": Files.closeTab(Files.currentTab); break
         case "open": openDialog.open(); break
         case "save":
             if (Files.fileName === "") {
@@ -585,6 +586,7 @@ Window {
     Shortcut { sequence: "Ctrl+N"; enabled: !root.isMac; onActivated: root.run("new") }
     Shortcut { sequence: "Ctrl+O"; enabled: !root.isMac; onActivated: root.run("open") }
     Shortcut { sequence: "Ctrl+E"; enabled: !root.isMac; onActivated: root.run("export") }
+    Shortcut { sequence: "Ctrl+W"; enabled: !root.isMac; onActivated: root.run("close") }
     Shortcut { sequence: "Ctrl+S"; enabled: !root.isMac; onActivated: root.run("save") }
     Shortcut { sequence: "Ctrl+Shift+S"; enabled: !root.isMac; onActivated: root.run("saveas") }
     // Undo and redo: on macOS the menu of the system carries them.
@@ -863,7 +865,7 @@ Window {
 
         anchors.top: menuStrip.bottom
         width: parent.width
-        documentName: root.documentName + (Files.modified ? " •" : "")
+        tabs: Files.tabs
         canUndo: DocumentModel.canUndo
         canRedo: DocumentModel.canRedo
         undoTip: DocumentModel.canUndo ? qsTr("Undo: %1").arg(root.historyText(DocumentModel.nextUndo)) : ""
@@ -871,8 +873,9 @@ Window {
         onUndoRequested: root.run("undo")
         onRedoRequested: root.run("redo")
         onHomeRequested: root.startOpen = !root.startOpen
-        onNewDocumentRequested: root.showHint(qsTr("This arrives in a later version."))
-        onCloseRequested: root.showHint(qsTr("Closing arrives together with saving."))
+        onNewDocumentRequested: root.run("new")
+        onTabClicked: index => Files.switchTab(index)
+        onCloseRequested: index => Files.closeTab(index)
         onExportRequested: root.run("export")
     }
 

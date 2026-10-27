@@ -402,6 +402,73 @@ DocumentModel::exportBodies(const QStringList& onlyIds) const {
     return found;
 }
 
+struct DocumentModel::DocumentSlot::Impl {
+    core::History history;
+    std::vector<PaletteEntry> palette;
+    bool paletteDirty = false;
+    std::uint64_t paletteStamp = 0;
+};
+
+DocumentModel::DocumentSlot::DocumentSlot() = default;
+DocumentModel::DocumentSlot::~DocumentSlot() = default;
+DocumentModel::DocumentSlot::DocumentSlot(DocumentSlot&&) noexcept = default;
+DocumentModel::DocumentSlot&
+DocumentModel::DocumentSlot::operator=(DocumentSlot&&) noexcept = default;
+
+bool DocumentModel::DocumentSlot::hasUnsavedChanges() const {
+    return d != nullptr && (!d->history.isClean() || d->paletteDirty);
+}
+
+std::size_t DocumentModel::DocumentSlot::stepCount() const {
+    return d != nullptr ? d->history.document().features().size() : 0;
+}
+
+DocumentModel::DocumentSlot DocumentModel::emptySlot(double unitMillimetres) const {
+    DocumentSlot slot;
+    slot.d = std::make_unique<DocumentSlot::Impl>();
+    core::Document fresh;
+    core::DocumentSettings settings = fresh.settings();
+    settings.defaultUnitMillimetres = unitMillimetres;
+    fresh.setSettings(settings);
+    slot.d->history.reset(std::move(fresh));
+    for (const auto& [key, color] : filamentPalette()) {
+        slot.d->palette.push_back({key, color, false});
+    }
+    return slot;
+}
+
+DocumentModel::DocumentSlot DocumentModel::exchange(DocumentSlot incoming) {
+    m_liveCutTimer.stop();
+    DocumentSlot outgoing;
+    outgoing.d = std::make_unique<DocumentSlot::Impl>();
+    const std::uint64_t floor = m_history.document().revision() + 1;
+    outgoing.d->history = std::move(m_history);
+    outgoing.d->palette = std::move(m_palette);
+    outgoing.d->paletteDirty = m_paletteDirty;
+    outgoing.d->paletteStamp = m_paletteStamp;
+    m_history = std::move(incoming.d->history);
+    m_palette = std::move(incoming.d->palette);
+    m_paletteDirty = incoming.d->paletteDirty;
+    m_paletteStamp = incoming.d->paletteStamp;
+    // Results of the other document are still on their way; its revisions are lower than this
+    // one's, so `applyResult` drops them.
+    m_history.raiseRevisionTo(floor);
+    m_placing = false;
+    m_placingFeature = {};
+    m_turnGroup.clear();
+    m_workplaneZ = 0.0;
+    m_workplaneBody.clear();
+    m_currentFeature = {};
+    m_currentStep = -1;
+    documentChanged();
+    emit paletteChanged();
+    emit placingChanged();
+    emit workplaneChanged();
+    emit currentStepChanged();
+    emit documentReplaced();
+    return outgoing;
+}
+
 core::Document DocumentModel::documentForSaving() const {
     core::Document copy = m_history.document();
     core::DocumentSettings settings = copy.settings();

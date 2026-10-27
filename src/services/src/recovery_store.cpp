@@ -41,6 +41,10 @@ QString RecoveryStore::newId() {
     return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
 
+QString RecoveryStore::idOf(int slot) const {
+    return slot == 0 ? session_ : session_ + QLatin1Char('_') + QString::number(slot);
+}
+
 QString RecoveryStore::pathOf(const QString& id) const {
     return folder_ + QLatin1Char('/') + id + QStringLiteral(".fission");
 }
@@ -63,16 +67,20 @@ void RecoveryStore::beginSession() {
 
 void RecoveryStore::endSession() {
     QFile::remove(markerPathOf(session_));
-    removeSessionFiles();
+    // Whatever of this session was not kept: all slots.
+    const QDir dir(folder_);
+    for (const QFileInfo& entry : dir.entryInfoList({session_ + QLatin1Char('*')}, QDir::Files)) {
+        QFile::remove(entry.filePath());
+    }
 }
 
-void RecoveryStore::removeSessionFiles() {
-    QFile::remove(pathOf(session_));
-    QFile::remove(infoPathOf(session_));
+void RecoveryStore::removeSessionFiles(int slot) {
+    QFile::remove(pathOf(idOf(slot)));
+    QFile::remove(infoPathOf(idOf(slot)));
 }
 
-void RecoveryStore::writeInfo(const QString& originalPath) {
-    QSaveFile info(infoPathOf(session_));
+void RecoveryStore::writeInfo(const QString& originalPath, int slot) {
+    QSaveFile info(infoPathOf(idOf(slot)));
     if (info.open(QIODevice::WriteOnly)) {
         const QJsonObject object{
             {QStringLiteral("originalPath"), originalPath},
@@ -83,13 +91,14 @@ void RecoveryStore::writeInfo(const QString& originalPath) {
     trim();
 }
 
-bool RecoveryStore::keepSessionFiles() {
-    if (!QFileInfo::exists(pathOf(session_)) || !QFileInfo::exists(infoPathOf(session_))) {
+bool RecoveryStore::keepSessionFiles(int slot) {
+    const QString own = idOf(slot);
+    if (!QFileInfo::exists(pathOf(own)) || !QFileInfo::exists(infoPathOf(own))) {
         return false;
     }
     const QString kept = newId();
-    const bool moved = QFile::rename(pathOf(session_), pathOf(kept)) &&
-                       QFile::rename(infoPathOf(session_), infoPathOf(kept));
+    const bool moved = QFile::rename(pathOf(own), pathOf(kept)) &&
+                       QFile::rename(infoPathOf(own), infoPathOf(kept));
     if (!moved) {
         return false;
     }
@@ -101,11 +110,12 @@ std::vector<RescuedWork> RecoveryStore::rescued() const {
     const QDir dir(folder_);
     for (const QFileInfo& entry : dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files)) {
         const QString id = entry.completeBaseName();
-        if (id == session_ || !QFileInfo::exists(pathOf(id))) {
-            continue;
+        if (id.startsWith(session_) || !QFileInfo::exists(pathOf(id))) {
+            continue; // ours (any slot), or no file behind the note
         }
-        // Another program that is still running owns its files.
-        QFile marker(markerPathOf(id));
+        // Another program that is still running owns its files (the marker is the session's:
+        // the part of the id before a slot number).
+        QFile marker(markerPathOf(id.section(QLatin1Char('_'), 0, 0)));
         if (marker.open(QIODevice::ReadOnly) &&
             processAlive(marker.readAll().trimmed().toLongLong())) {
             continue;
@@ -135,23 +145,25 @@ std::vector<RescuedWork> RecoveryStore::rescued() const {
 void RecoveryStore::discard(const QString& id) {
     QFile::remove(pathOf(id));
     QFile::remove(infoPathOf(id));
-    QFile::remove(markerPathOf(id)); // a stale marker of a session that died
+    QFile::remove(
+        markerPathOf(id.section(QLatin1Char('_'), 0, 0))); // a stale marker of a dead session
 }
 
 void RecoveryStore::trim() {
     std::vector<RescuedWork> all = rescued();
-    // This session's file counts as well.
-    const QFileInfo own(infoPathOf(session_));
-    if (own.exists()) {
+    // This session's files count as well.
+    const QDir dir(folder_);
+    for (const QFileInfo& own :
+         dir.entryInfoList({session_ + QStringLiteral("*.json")}, QDir::Files)) {
         RescuedWork mine;
-        mine.id = session_;
+        mine.id = own.completeBaseName();
         mine.savedAt = own.lastModified();
         all.push_back(mine);
-        std::sort(all.begin(), all.end(),
-                  [](const RescuedWork& a, const RescuedWork& b) { return a.savedAt > b.savedAt; });
     }
+    std::sort(all.begin(), all.end(),
+              [](const RescuedWork& a, const RescuedWork& b) { return a.savedAt > b.savedAt; });
     for (std::size_t i = maxFiles; i < all.size(); ++i) {
-        if (all[i].id != session_) {
+        if (!all[i].id.startsWith(session_)) {
             discard(all[i].id);
         }
     }
