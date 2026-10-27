@@ -27,7 +27,8 @@ def run(data, actions, *extra, expect_killed=False):
                         "--size", "1280x800", "--simulate", actions]
     result = subprocess.run(command, env=env, capture_output=True, text=True, timeout=120)
     if expect_killed:
-        if result.returncode != -9:
+        # kill -9 shows as -9, or as 137 when a wrapper (xvfb-run) reports it for the program
+        if result.returncode not in (-9, 137):
             fail("the program should have been killed (-9), exit code %s\n%s%s"
                  % (result.returncode, result.stdout, result.stderr))
     elif result.returncode != 0:
