@@ -88,6 +88,9 @@ Linux-Desktop prüfen (Product Owner oder Testrechner mit Desktop-Sitzung); wenn
 `apps/fission3d/src/simulate.cpp` ziehen, ohne Verhaltensänderung. Alle Fenster-Tests müssen unverändert grün sein.
 
 ## P13 Löcher im Hintergrund prüfen (Regel 9)
+**Messung 2026-10-27 (Release, Apple Silicon, Test `cuts: how long the check takes with 10 bodies and 20 holes`):** 1 Loch in 1 Platte kalt 2,2 ms /
+warm 3,5 ms; 10 Körper mit 20 Löchern kalt ≈ 38 ms / warm ≈ 75 ms (20 echte Schnitte, die Vorprüfung per Box greift). Über der 50-ms-Grenze nur im
+Grenzfall; für den Nutzertest 1 (wenige Löcher) unkritisch. **Haltepunkt:** Umbau (Schritte 2–3) nur nach Rückfrage beim Product Owner.
 **Größe:** M · Offen aus AP-1.7. `core::reconcileCuts` rechnet die Berührung von Löchern und Körpern (Booleans) im Oberflächen-Thread: kalt
 26 ms, warm 4 ms bei einem Loch in einer Platte, wächst mit der Zahl der Körper und Löcher. **Vor dem Nutzertest 1 (AP-1.13) erledigen.**
 1. Messung zuerst: ein Dokument mit 10 Körpern und 20 Löchern (Test in `tests/unit/core/test_cuts.cpp`, nur melden); ab etwa 50 ms ist es ein Fehler.

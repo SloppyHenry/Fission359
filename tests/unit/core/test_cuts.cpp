@@ -368,6 +368,31 @@ TEST_CASE("cuts: how long the check takes (reported, not a limit)", "[cuts][time
     CHECK(ms(cold, warm) < 500.0);
 }
 
+TEST_CASE("cuts: how long the check takes with 10 bodies and 20 holes (reported)", "[cuts][time]") {
+    // pflege.md P13: reconcileCuts runs in the UI thread; from about 50 ms (warm) it must move
+    // to the background. A row of 10 plates, every plate pierced by two pins.
+    World world;
+    for (int plate = 0; plate < 10; ++plate) {
+        const std::string x = std::to_string(plate * 50);
+        world.add("box", {{"width", "40"}, {"depth", "40"}, {"height", "10"}, {"x", x}});
+        for (int pin = 0; pin < 2; ++pin) {
+            const std::string px = std::to_string(plate * 50 + (pin == 0 ? -8 : 8));
+            world.asHole(world.pin(px.c_str()));
+        }
+    }
+    const auto ms = [](auto from, auto to) {
+        return std::chrono::duration<double, std::milli>(to - from).count();
+    };
+    const auto start = std::chrono::steady_clock::now();
+    world.reconcile(); // cold: everything is calculated
+    const auto cold = std::chrono::steady_clock::now();
+    world.reconcile(); // warm: nothing changed
+    const auto warm = std::chrono::steady_clock::now();
+    WARN("reconcileCuts, 10 bodies 20 holes: cold "
+         << ms(start, cold) << " ms, warm " << ms(cold, warm) << " ms, cuts " << world.cutSteps());
+    CHECK(world.cutSteps() == 20);
+}
+
 TEST_CASE("cuts: a hole as wide as the body, a hair above it, still cuts", "[cuts][through]") {
     World world;
     world.add("box", {{"width", "20"}, {"depth", "20"}, {"height", "20"}, {"x", "0"}});
