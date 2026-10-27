@@ -201,6 +201,14 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=35,35,200 --simulate "tool:size;put:sphere;corner:1,50,30,10;least:radius,11;tool:rotate;put:box;ring:z,30,8;tool:size;corner:1,40,25,8;least:width,22;near:rotZ,30")
   set_tests_properties(app_corner_scale_round_turned PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.8 criterion 1, rule 2: a wrong text in the value bubble is not taken, the bubble stays
+  # open and says why; Esc takes everything back: the value stays and no new step appears.
+  add_test(NAME app_bubble_wrong_input
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-bubble-wrong-input.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "put:box;tool:size;expectundo:addFeature;type:Breitee,enter;expectbubble:Breitee;type:esc;near:width,20;expectundo:addFeature")
+  set_tests_properties(app_bubble_wrong_input PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_corner_scale_front
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-corner-front.png" --language en --size 1280x800
