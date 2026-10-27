@@ -523,6 +523,79 @@
     </message>
 </context>
 <context>
+    <name>FirstRunCard</name>
+    <message>
+        <location filename="../qml/FirstRunCard.qml" line="+21"/>
+        <source>Welcome</source>
+        <translation>Willkommen</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Welcome to Fission3D! Which language do you prefer?</source>
+        <translation>Willkommen bei Fission3D! Welche Sprache magst du?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Which printer do you have?</source>
+        <translation>Welchen Drucker hast du?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>How do you like to move the view?</source>
+        <translation>Wie möchtest du die Ansicht bewegen?</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Language</source>
+        <translation>Sprache</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Like the computer</source>
+        <translation>Wie der Computer</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>My printer</source>
+        <translation>Mein Drucker</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Mouse</source>
+        <translation>Maus</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The middle mouse button moves or turns the view, the wheel zooms.</source>
+        <translation>Die mittlere Maustaste bewegt oder dreht die Ansicht, das Mausrad zoomt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The right mouse button turns the view, the middle button moves it, the wheel zooms.</source>
+        <translation>Die rechte Maustaste dreht die Ansicht, die mittlere verschiebt sie, das Mausrad zoomt.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>You can change all of this later in the settings.</source>
+        <translation>Das kannst du später alles in den Einstellungen ändern.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Let&apos;s go</source>
+        <translation>Los geht's</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Next</source>
+        <translation>Weiter</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Later</source>
+        <translation>Später</translation>
+    </message>
+</context>
+<context>
     <name>FontField</name>
     <message>
         <location filename="../qml/FontField.qml" line="+120"/>
@@ -1021,12 +1094,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1075"/>
+        <location line="+1085"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1074"/>
+        <location line="-1084"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -1057,12 +1130,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1063"/>
+        <location line="+1073"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1061"/>
+        <location line="-1071"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -1093,18 +1166,18 @@
     </message>
     <message>
         <location line="+22"/>
-        <location line="+662"/>
+        <location line="+672"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-660"/>
-        <location line="+661"/>
+        <location line="-670"/>
+        <location line="+671"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-655"/>
+        <location line="-665"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -1148,12 +1221,12 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+464"/>
+        <location line="+474"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-446"/>
+        <location line="-456"/>
         <source>This body cannot be split: it may be part of another body.</source>
         <translation>Dieser Körper lässt sich nicht teilen: Er ist vielleicht Teil eines anderen Körpers.</translation>
     </message>
@@ -1325,7 +1398,7 @@
         <translation>Die Datei konnte nicht gelesen werden.</translation>
     </message>
     <message>
-        <location line="+66"/>
+        <location line="+76"/>
         <source>The start page arrives in a later version.</source>
         <translation>Die Startseite kommt in einer späteren Version.</translation>
     </message>
@@ -1943,17 +2016,17 @@
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1050"/>
+        <location line="-1060"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1085"/>
+        <location line="+1095"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-944"/>
+        <location line="-954"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
@@ -1963,7 +2036,7 @@
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="+551"/>
+        <location line="+561"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>

@@ -19,10 +19,12 @@ APP = sys.argv[1]
 RUNNER = sys.argv[2:]  # e.g. xvfb-run ...; empty on macOS
 
 
-def run(data, actions, *extra, expect_killed=False):
+def run(data, actions, *extra, expect_killed=False, first_run=False):
     """One start of the program: a picture of the window is taken after the actions."""
     picture = os.path.join(data, "picture.png")
     env = dict(os.environ, FISSION_DATA_DIR=data, FISSION_PARK_WINDOW="1")
+    if first_run:
+        env["FISSION_FIRST_RUN"] = "1"
     command = RUNNER + [APP, *extra, "--smoke-test", picture, "--language", "en",
                         "--size", "1280x800", "--simulate", actions]
     result = subprocess.run(command, env=env, capture_output=True, text=True, timeout=120)
@@ -109,5 +111,15 @@ with tempfile.TemporaryDirectory() as data:
               "expecttr:SettingsPage,Settings,Einstellungen;setpref:language,en;"
               "expecttr:SettingsPage,Settings,Settings;menu:settings;setpref:uiScale,150;"
               "expectpref:uiScale,150;setpref:uiScale,100")
+
+    # 8. The first start asks language, printer, mouse; skipping or finishing is remembered.
+    first = os.path.join(data, "first")
+    os.makedirs(first)
+    run(first, "expectpref:firstRunDone,false;clickitem:firstRunNext;clickitem:firstRunNext;"
+               "clickitem:firstRunNext;expectpref:firstRunDone,true", first_run=True)
+    run(first, "expectpref:firstRunDone,true", first_run=True)
+    skipped = os.path.join(data, "skipped")
+    os.makedirs(skipped)
+    run(skipped, "clickitem:firstRunLater;expectpref:firstRunDone,true", first_run=True)
 
 print("OK")
