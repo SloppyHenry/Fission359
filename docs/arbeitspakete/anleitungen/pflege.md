@@ -87,6 +87,7 @@ Linux-Desktop prüfen (Product Owner oder Testrechner mit Desktop-Sitzung); wenn
 (z. B. Strg) und Hinweis in der Hinweiszeile.
 
 ## P12 `main.cpp` aufräumen
+**Erledigt 2026-10-28 (Pflege T10):** `playActions` und die `--simulate`-Aktionen liegen in `apps/fission3d/src/simulate.cpp`/`.h`; `main.cpp` hat 725 statt 1657 Zeilen. Dazu: `stepText` → `RecipeSentences.qml` (Prüfskript `check_sentences.py`, Test `recipe_sentences_complete`), die Datei-Karten → `FileNotices.qml`; `Main.qml` hat 1535 statt 1640 Zeilen.
 **Größe:** S · `apps/fission3d/src/main.cpp` hat ~950 Zeilen; `playActions` (die `--simulate`-Aktionen) in eine eigene Datei
 `apps/fission3d/src/simulate.cpp` ziehen, ohne Verhaltensänderung. Alle Fenster-Tests müssen unverändert grün sein.
 
