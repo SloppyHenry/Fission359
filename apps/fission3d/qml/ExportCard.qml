@@ -60,6 +60,17 @@ Float {
             onActivated: value => root.quality = value
         }
 
+        // "Coarse" lets curves deviate by up to 0.05 mm (rule 12 asks 0.01 mm of the others).
+        Txt {
+            visible: root.quality === "coarse"
+            width: parent.width
+            text: qsTr("Curves can be angular.")
+            color: Theme.fg3
+            font.pixelSize: Theme.fontSizeSmall
+            wrapMode: Text.WordWrap
+            elide: Text.ElideNone
+        }
+
         Toggle {
             enabled: root.anyChosen
             text: qsTr("Only chosen bodies")
