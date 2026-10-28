@@ -69,6 +69,9 @@ Item {
         }
     }
 
+    /// The explanation under the field of the value bubble while the typed text is wrong.
+    readonly property string bubbleProblem: bubble.typing ? input.problem : ""
+
     function currentHandle() {
         return bubble.index >= 0 && bubble.index < Handles.handles.length ? Handles.handles[bubble.index] : null
     }
@@ -285,6 +288,9 @@ Item {
 
         // Moves typing to another value: Tab goes on, Shift+Tab goes back.
         function step(by) {
+            if (!input.check()) {
+                return
+            }
             accept()
             const count = Handles.handles.length
             index = (index + by + count) % count
@@ -294,7 +300,8 @@ Item {
 
         // The typed value goes into the document at once (the shape follows what is typed).
         function accept() {
-            if (input.text.trim() !== "" && handle) {
+            // Only a number or formula goes into the document; the rest is explained by `finish`.
+            if (input.text.trim() !== "" && handle && !isNaN(Numbers.evaluate(input.text, input.kind))) {
                 Handles.setValue(index, input.text.trim())
             }
         }
@@ -341,25 +348,16 @@ Item {
                 elide: Text.ElideNone
             }
 
-            TextInput {
+            ValueInput {
                 id: input
 
                 visible: bubble.typing
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.max(40, contentWidth + 6)
-                color: Theme.fg
-                selectionColor: Theme.accent
-                selectedTextColor: Theme.accentFg
-                font.family: Theme.monoFamilies[0]
-                font.pixelSize: Theme.fontSize
-                font.weight: Font.Medium
-                inputMethodHints: Qt.ImhFormattedNumbersOnly
                 property bool pendingEdit: false
                 Accessible.name: bubble.handle ? root.labelFor(bubble.handle.parameter) : ""
 
                 onTextEdited: {
                     pendingEdit = true
-                    const kind = "length"
                     if (!isNaN(Numbers.evaluate(text, kind))) {
                         bubble.accept()
                     }
@@ -375,13 +373,19 @@ Item {
                 }
                 onActiveFocusChanged: {
                     if (!activeFocus && bubble.typing) {
-                        finish() // clicking elsewhere accepts what was typed
+                        // Clicking elsewhere accepts what was typed, if it is a number.
+                        if (check()) {
+                            finish()
+                        } else {
+                            Handles.cancelEdit()
+                            bubble.hide()
+                        }
                     }
                 }
 
                 function finish() {
-                    if (!bubble.typing) {
-                        return
+                    if (!bubble.typing || !check()) {
+                        return // a wrong text stays in the field, with the reason under it
                     }
                     bubble.accept()
                     Handles.commitEdit()

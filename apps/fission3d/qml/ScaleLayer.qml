@@ -121,6 +121,10 @@ Item {
             const text = input.text.replace("%", "").trim()
             const value = Numbers.evaluate(text, "plain")
             input.refused = text !== "" && (isNaN(value) || !Scale.setPercent(value))
+            if (text !== "" && isNaN(value)) {
+                input.errorInfo = Numbers.explain(text, "plain") // says why, under the bubble
+                input.invalid = true
+            }
         }
 
         visible: Scale.editing && Scale.bubbleAt.x !== undefined
@@ -170,21 +174,15 @@ Item {
                 elide: Text.ElideNone
             }
 
-            TextInput {
+            ValueInput {
                 id: input
 
+                kind: "plain"
                 property bool refused: false
 
                 visible: bubble.typing
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.max(40, contentWidth + 6)
-                color: Theme.fg
-                selectionColor: Theme.accent
-                selectedTextColor: Theme.accentFg
-                font.family: Theme.monoFamilies[0]
                 font.pixelSize: Theme.fontSize
-                font.weight: Font.Medium
-                inputMethodHints: Qt.ImhFormattedNumbersOnly
                 Accessible.name: qsTr("Size in percent")
 
                 onTextEdited: bubble.accept()
