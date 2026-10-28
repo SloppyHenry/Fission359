@@ -945,9 +945,13 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                 const QKeyCombination key = sequence[0];
                 QTimer::singleShot(delay, viewport, [window, viewport, key] {
                     // Shortcuts only answer in the window that is active; right after the start
-                    // it may not be yet, so it is asked to be, and given a moment.
-                    window->requestActivate();
-                    QTimer::singleShot(150, viewport, [window, key] {
+                    // it may not be yet, so it is asked to be, and given a moment. A window that
+                    // is active is left alone: asking again would move the focus out of a field.
+                    const bool wasActive = window->isActive();
+                    if (!wasActive) {
+                        window->requestActivate();
+                    }
+                    QTimer::singleShot(wasActive ? 0 : 150, viewport, [window, key] {
                         QKeyEvent press(QEvent::KeyPress, key.key(), key.keyboardModifiers());
                         QCoreApplication::sendEvent(window, &press);
                         QKeyEvent release(QEvent::KeyRelease, key.key(), key.keyboardModifiers());
