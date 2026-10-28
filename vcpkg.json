@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-  "name": "fission359",
+  "name": "fission3d",
   "version": "0.1.0",
   "description": "Easy-to-use, precise 3D construction program for makers",
   "license": "GPL-3.0-or-later",
