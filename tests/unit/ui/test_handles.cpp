@@ -713,6 +713,89 @@ TEST_CASE("handles: the radius dot of a sphere stays under the pointer as the sp
           6.0);
 }
 
+TEST_CASE("handles: a sphere radius drag is one step and undoes after other work",
+          "[ui][handles]") {
+    // Feedback 2026-10-18 ("could not be undone later", pflege.md P1): pulling the radius of a
+    // sphere, then doing something else, then Undo twice must bring the radius back to 10.
+    Fixture f;
+    f.model->addShape(QStringLiteral("sphere"), false); // radius 10
+    const int sphere = 1;
+    f.model->selectStep(sphere);
+    f.viewport.setCamera(-30.0, 30.0, 250.0);
+    f.refresh();
+    REQUIRE(f.value("radius") == Approx(10.0));
+
+    // Pulls the radius dot out in `steps` moves, to about `target` mm. Holds it when `release`
+    // is false. The dot is followed on screen after every move (it rises as the sphere grows).
+    const auto pullRadius = [&f](int steps, double target, bool release) {
+        QVariantMap dot = f.handle("radius");
+        REQUIRE(
+            f.handles->beginDrag(dot["index"].toInt(), dot["x"].toDouble(), dot["y"].toDouble()));
+        const double pixels = (target - 10.0) * dot["pixelsPerMillimetre"].toDouble();
+        const QPointF from(dot["x"].toDouble(), dot["y"].toDouble());
+        for (int i = 1; i <= steps; ++i) {
+            const double part = pixels * i / steps;
+            f.handles->dragTo(from.x() + dot["dirX"].toDouble() * part,
+                              from.y() + dot["dirY"].toDouble() * part);
+            f.refresh();
+        }
+        if (release) {
+            REQUIRE(f.handles->endDrag());
+            f.refresh();
+        }
+    };
+    const auto otherWorkThenUndoTwice = [&f]() {
+        f.model->addShape(QStringLiteral("box"), false);
+        f.refresh();
+        REQUIRE(f.model->undo());
+        REQUIRE(f.model->undo());
+        f.model->selectStep(sphere); // the choice does not survive an Undo
+        f.refresh();
+    };
+
+    SECTION("in 30 small steps") {
+        pullRadius(30, 40.0, true);
+        CHECK(f.value("radius") > 20.0);
+        CHECK(f.model->nextUndo()["field"].toString() == "radius");
+        otherWorkThenUndoTwice();
+        CHECK(f.value("radius") == Approx(10.0));
+    }
+    SECTION("in 3 fast steps") {
+        pullRadius(3, 40.0, true);
+        CHECK(f.value("radius") > 20.0);
+        otherWorkThenUndoTwice();
+        CHECK(f.value("radius") == Approx(10.0));
+    }
+    SECTION("far beyond the largest size") {
+        pullRadius(5, 50000.0, true);
+        CHECK(f.value("radius") <= HandleController::kLargestMillimetres);
+        otherWorkThenUndoTwice();
+        CHECK(f.value("radius") == Approx(10.0));
+    }
+    SECTION("Esc in the middle of the pull leaves no step behind") {
+        const QString before = f.model->nextUndo()["key"].toString();
+        pullRadius(10, 30.0, false);
+        f.handles->cancelDrag();
+        f.refresh();
+        CHECK(f.value("radius") == Approx(10.0));
+        CHECK(f.model->nextUndo()["key"].toString() == before);
+    }
+    SECTION("letting go while the sphere is still being calculated") {
+        QVariantMap dot = f.handle("radius");
+        REQUIRE(
+            f.handles->beginDrag(dot["index"].toInt(), dot["x"].toDouble(), dot["y"].toDouble()));
+        const double pixels = 20.0 * dot["pixelsPerMillimetre"].toDouble();
+        f.handles->dragTo(dot["x"].toDouble() + dot["dirX"].toDouble() * pixels,
+                          dot["y"].toDouble() + dot["dirY"].toDouble() * pixels);
+        // No refresh: the result of the pull has not arrived yet.
+        REQUIRE(f.handles->endDrag());
+        f.refresh();
+        CHECK(f.value("radius") > 15.0);
+        otherWorkThenUndoTwice();
+        CHECK(f.value("radius") == Approx(10.0));
+    }
+}
+
 // --- catching (AP-1.6c2) ---
 
 namespace {

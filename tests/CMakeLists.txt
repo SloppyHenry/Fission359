@@ -216,6 +216,14 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=35,35,200 --simulate "put:box;menu:new;expecttab:1,2;key:${_fission_prev_tab_key};expecttab:0,2;key:${_fission_next_tab_key};expecttab:1,2;menu:prevtab;expecttab:0,2")
   set_tests_properties(app_tab_keys PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # pflege.md P1: pull the radius of a sphere, do other work, undo twice (the menu entry Undo):
+  # the radius is 10 again. A wrong value in `near` must turn this red.
+  add_test(NAME app_sphere_radius_undo
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sphere-radius-undo.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "tool:size;put:sphere;grab:radius,60,0,30;least:radius,11;put:box;menu:undo;menu:undo;step:1;near:radius,10")
+  set_tests_properties(app_sphere_radius_undo PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_corner_scale_front
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-corner-front.png" --language en --size 1280x800
@@ -442,6 +450,12 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             $<TARGET_FILE:fission3d> ${_fission_gui_runner})
   set_tests_properties(app_files_end_to_end PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 600 RUN_SERIAL TRUE)
+  # Meilenstein M1, flow A (the keychain): plate, text, hole with a distance, red text, 3MF.
+  add_test(NAME app_flow_a_keychain
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/ui/e2e_keychain.py"
+            $<TARGET_FILE:fission3d> ${_fission_gui_runner})
+  set_tests_properties(app_flow_a_keychain PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 240 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)
