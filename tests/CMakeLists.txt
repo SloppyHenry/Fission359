@@ -201,6 +201,14 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=35,35,200 --simulate "tool:size;put:sphere;corner:1,50,30,10;least:radius,11;tool:rotate;put:box;ring:z,30,8;tool:size;corner:1,40,25,8;least:width,22;near:rotZ,30")
   set_tests_properties(app_corner_scale_round_turned PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # pflege.md P1: pull the radius of a sphere, do other work, undo twice (the menu entry Undo):
+  # the radius is 10 again. A wrong value in `near` must turn this red.
+  add_test(NAME app_sphere_radius_undo
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sphere-radius-undo.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "tool:size;put:sphere;grab:radius,60,0,30;least:radius,11;put:box;menu:undo;menu:undo;step:1;near:radius,10")
+  set_tests_properties(app_sphere_radius_undo PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_corner_scale_front
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
             --smoke-test "${CMAKE_BINARY_DIR}/window-corner-front.png" --language en --size 1280x800

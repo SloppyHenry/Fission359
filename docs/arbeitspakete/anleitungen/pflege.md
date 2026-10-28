@@ -6,6 +6,9 @@ Fehler mit Datenfolgen), dann nach Bedarf. Allgemeine Regeln: [README](README.md
 ---
 
 ## P1 Kugel-Radius-Griff: unsauber und nicht rückgängig? (Fehler prüfen)
+**Stand 2026-10-27:** Rückgängig-Teil **nicht nachstellbar**. Tests: `handles: a sphere radius drag is one step and undoes after other work`
+(5 Varianten) und Fenster-Test `app_sphere_radius_undo`, beide grün. Offen bleibt nur Punkt 4 („unsauber“, Haltepunkt, braucht Bild/Video
+des Product Owners). Tritt das Rückgängig-Problem wieder auf: Schritt-für-Schritt-Beschreibung erbitten.
 **Größe:** S · **Herkunft:** Rückmeldung Product Owner 2026-10-18 („fühlt sich wieder unsauber an“, „ließ sich später nicht rückgängig machen“).
 PR #28 hat am selben Tag mehrere Kugel-Probleme behoben (Griff mit Steigung, gehaltener Griff bleibt bei leerer Griffliste). Ob der Fehler
 danach noch besteht, ist **nicht geprüft**.
