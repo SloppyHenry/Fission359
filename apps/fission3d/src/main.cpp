@@ -969,6 +969,34 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("value")) {
+            // value:height,1.5 - a number or formula for a value of the chosen step, as if it had
+            // been typed into the field of the panel.
+            const QStringList pair = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [model, pair] {
+                if (pair.size() != 2 ||
+                    !model->setStepValue(model->currentStep(), pair[0], pair[1])) {
+                    qWarning().noquote()
+                        << QStringLiteral("value %1 not accepted").arg(pair.join(QLatin1Char('=')));
+                    g_simulationFailure = 4;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("color")) {
+            // color:#e53935 - the body of the chosen step gets this colour.
+            const QString color = action.mid(colon + 1).trimmed();
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [model, color] {
+                const int body = model->bodyIndexOf(model->bodyOfStep(model->currentStep()));
+                if (!model->setBodiesColor({body}, color)) {
+                    qWarning().noquote() << QStringLiteral("colour %1 not accepted").arg(color);
+                    g_simulationFailure = 4;
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("set")) { // set:style,boldItalic - words of the chosen step
             const QStringList pair = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;

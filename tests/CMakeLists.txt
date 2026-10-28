@@ -435,6 +435,12 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             $<TARGET_FILE:fission3d> ${_fission_gui_runner})
   set_tests_properties(app_files_end_to_end PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 600 RUN_SERIAL TRUE)
+  # Meilenstein M1, flow A (the keychain): plate, text, hole with a distance, red text, 3MF.
+  add_test(NAME app_flow_a_keychain
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/ui/e2e_keychain.py"
+            $<TARGET_FILE:fission3d> ${_fission_gui_runner})
+  set_tests_properties(app_flow_a_keychain PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 240 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission3d>)
