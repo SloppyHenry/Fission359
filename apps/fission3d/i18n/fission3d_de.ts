@@ -1119,7 +1119,12 @@
         <translation>Fein</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+8"/>
+        <source>Curves can be angular.</source>
+        <translation>Rundungen können kantig sein.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Only chosen bodies</source>
         <translation>Nur gewählte Körper</translation>
     </message>
@@ -1499,13 +1504,11 @@
     </message>
     <message>
         <location line="-642"/>
-        <location line="+754"/>
-        <location line="+5"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
     <message>
-        <location line="-759"/>
+        <location line="+0"/>
         <source>Ctrl+Shift+S</source>
         <translation>Strg+Umschalt+S</translation>
     </message>
@@ -1716,12 +1719,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1206"/>
+        <location line="+1172"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1205"/>
+        <location line="-1171"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -1752,12 +1755,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1194"/>
+        <location line="+1160"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1192"/>
+        <location line="-1158"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -1793,18 +1796,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+782"/>
+        <location line="+748"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-780"/>
-        <location line="+781"/>
+        <location line="-746"/>
+        <location line="+747"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-775"/>
+        <location line="-741"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -1908,7 +1911,7 @@
         <translation>3MF-Dateien (*.3mf)</translation>
     </message>
     <message numerus="yes">
-        <location line="+18"/>
+        <location line="+17"/>
         <source>%n body(ies) exported.</source>
         <translation>
             <numerusform>%n Körper exportiert.</numerusform>
@@ -1916,27 +1919,7 @@
         </translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Export cancelled.</source>
-        <translation>Export abgebrochen.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>There is nothing to export: no visible body.</source>
-        <translation>Es gibt nichts zu exportieren: kein sichtbarer Körper.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</source>
-        <translation>Ein Körper hat ein Problem im Rezept und wird deshalb nicht exportiert: Die Datei würde nicht zeigen, was du siehst. Behebe zuerst die Schritte mit Warnzeichen.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>The file could not be written. Is the folder writable and the disk not full?</source>
-        <translation>Die Datei konnte nicht geschrieben werden. Ist der Ordner beschreibbar und die Festplatte nicht voll?</translation>
-    </message>
-    <message>
-        <location line="+43"/>
+        <location line="+49"/>
         <source>We saved your work from %1.</source>
         <translation>Wir haben deine Arbeit von %1 gerettet.</translation>
     </message>
@@ -1956,35 +1939,7 @@
         <translation>Verwerfen</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>This file is damaged: it does not match what was saved. It can probably still be read.</source>
-        <translation>Diese Datei ist beschädigt: sie stimmt nicht mehr mit dem überein, was gespeichert wurde. Vermutlich lässt sie sich trotzdem lesen.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Open anyway</source>
-        <translation>Trotzdem öffnen</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Cancel</source>
-        <translation>Abbrechen</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>The project could not be saved. Your work is still open. Is the folder writable and the disk not full?</source>
-        <translation>Das Projekt konnte nicht gespeichert werden. Deine Arbeit ist noch offen. Ist der Ordner beschreibbar und die Festplatte nicht voll?</translation>
-    </message>
-    <message>
-        <location line="-63"/>
-        <location line="+4"/>
-        <location line="+61"/>
-        <location line="+5"/>
-        <source>OK</source>
-        <translation>OK</translation>
-    </message>
-    <message>
-        <location line="-612"/>
+        <location line="-585"/>
         <source>Arrives in a later version.</source>
         <translation>Kommt in einer späteren Version.</translation>
     </message>
@@ -2019,42 +1974,7 @@
         <translation>Kopiere zuerst etwas.</translation>
     </message>
     <message>
-        <location line="+595"/>
-        <source>This file was made with a newer Fission3D and is opened as far as this version understands it. To keep the original safe, save it under a new name.</source>
-        <translation>Diese Datei stammt von einem neueren Fission3D und wird so weit geöffnet, wie diese Version sie versteht. Speichere sie unter einem neuen Namen, damit das Original unangetastet bleibt.</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>This project has not been saved yet. Save it first, then your work is safe.</source>
-        <translation>Dieses Projekt ist noch nicht gespeichert. Speichere es zuerst, dann ist deine Arbeit sicher.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Save…</source>
-        <translation>Speichern…</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Not now</source>
-        <translation>Jetzt nicht</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>This is not a Fission3D file.</source>
-        <translation>Das ist keine Fission3D-Datei.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>This file is damaged and could not be opened.</source>
-        <translation>Diese Datei ist beschädigt und ließ sich nicht öffnen.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>The file could not be read.</source>
-        <translation>Die Datei konnte nicht gelesen werden.</translation>
-    </message>
-    <message>
-        <location line="+206"/>
+        <location line="+783"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
@@ -2069,7 +1989,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1112"/>
+        <location line="-1078"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -2109,7 +2029,7 @@
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
     <message>
-        <location line="+1143"/>
+        <location line="+1109"/>
         <source>Unit: mm</source>
         <translation>Einheit: mm</translation>
     </message>
@@ -2557,17 +2477,17 @@
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1192"/>
+        <location line="-1158"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1227"/>
+        <location line="+1193"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1065"/>
+        <location line="-1031"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
@@ -2636,7 +2556,92 @@
 <context>
     <name>MessageCatalog</name>
     <message>
-        <location filename="../qml/MessageCatalog.qml" line="+48"/>
+        <location filename="../qml/MessageCatalog.qml" line="+65"/>
+        <source>Open anyway</source>
+        <translation>Trotzdem öffnen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save as…</source>
+        <translation>Speichern unter …</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save…</source>
+        <translation>Speichern…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Not now</source>
+        <translation>Jetzt nicht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>This file is damaged: it does not match what was saved. It can probably still be read.</source>
+        <translation>Diese Datei ist beschädigt: sie stimmt nicht mehr mit dem überein, was gespeichert wurde. Vermutlich lässt sie sich trotzdem lesen.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The project could not be saved. Your work is still open. Is the folder writable and the disk not full?</source>
+        <translation>Das Projekt konnte nicht gespeichert werden. Deine Arbeit ist noch offen. Ist der Ordner beschreibbar und die Festplatte nicht voll?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This file was made with a newer Fission3D and is opened as far as this version understands it. To keep the original safe, save it under a new name.</source>
+        <translation>Diese Datei stammt von einem neueren Fission3D und wird so weit geöffnet, wie diese Version sie versteht. Speichere sie unter einem neuen Namen, damit das Original unangetastet bleibt.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This project has not been saved yet. Save it first, then your work is safe.</source>
+        <translation>Dieses Projekt ist noch nicht gespeichert. Speichere es zuerst, dann ist deine Arbeit sicher.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This is not a Fission3D file.</source>
+        <translation>Das ist keine Fission3D-Datei.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This file is damaged and could not be opened.</source>
+        <translation>Diese Datei ist beschädigt und ließ sich nicht öffnen.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The file could not be read.</source>
+        <translation>Die Datei konnte nicht gelesen werden.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Export cancelled.</source>
+        <translation>Export abgebrochen.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>There is nothing to export: no visible body.</source>
+        <translation>Es gibt nichts zu exportieren: kein sichtbarer Körper.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</source>
+        <translation>Ein Körper hat ein Problem im Rezept und wird deshalb nicht exportiert: Die Datei würde nicht zeigen, was du siehst. Behebe zuerst die Schritte mit Warnzeichen.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The file could not be written. Is the folder writable and the disk not full?</source>
+        <translation>Die Datei konnte nicht geschrieben werden. Ist der Ordner beschreibbar und die Festplatte nicht voll?</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Change value</source>
         <translation>Wert ändern</translation>
     </message>

@@ -760,25 +760,16 @@ Window {
         target: Exporter
 
         function onFinished(code, path, bodies) {
-            switch (code) {
-            case "":
+            if (code === "") {
                 root.showHint(qsTr("%n body(ies) exported.", "", bodies))
                 root.exportOpen = false
-                break
-            case "cancelled":
-                root.showHint(qsTr("Export cancelled."))
-                break
-            case "nothing":
-                root.showHint(qsTr("There is nothing to export: no visible body."))
-                break
-            case "needsHelp":
-                fileCard.show(qsTr("A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first."),
-                              [{ id: "cancel", text: qsTr("OK"), primary: true }])
-                break
-            default:
-                fileCard.show(qsTr("The file could not be written. Is the folder writable and the disk not full?"),
-                              [{ id: "cancel", text: qsTr("OK"), primary: true }])
-                break
+                return
+            }
+            const notice = messageCatalog.exportNotice(code)
+            if (notice.card) {
+                fileCard.show(notice.text, notice.buttons)
+            } else {
+                root.showHint(notice.text)
             }
         }
     }
@@ -829,36 +820,11 @@ Window {
         }
 
         function onFileProblem(code, path) {
-            switch (code) {
-            case "damaged":
-                fileCard.show(qsTr("This file is damaged: it does not match what was saved. It can probably still be read."),
-                              [{ id: "openanyway", text: qsTr("Open anyway"), primary: true },
-                               { id: "cancel", text: qsTr("Cancel") }], path)
-                break
-            case "cannotWrite":
-                fileCard.show(qsTr("The project could not be saved. Your work is still open. Is the folder writable and the disk not full?"),
-                              [{ id: "saveas", text: qsTr("Save as…"), primary: true },
-                               { id: "cancel", text: qsTr("OK") }])
-                break
-            case "newerFormat":
-                fileCard.show(qsTr("This file was made with a newer Fission3D and is opened as far as this version understands it. To keep the original safe, save it under a new name."),
-                              [{ id: "saveas", text: qsTr("Save as…"), primary: true },
-                               { id: "cancel", text: qsTr("OK") }])
-                break
-            case "unsavedWork":
-                fileCard.show(qsTr("This project has not been saved yet. Save it first, then your work is safe."),
-                              [{ id: "saveas", text: qsTr("Save…"), primary: true },
-                               { id: "cancel", text: qsTr("Not now") }])
-                break
-            case "notAFissionFile":
-                root.showHint(qsTr("This is not a Fission3D file."))
-                break
-            case "documentUnreadable":
-                root.showHint(qsTr("This file is damaged and could not be opened."))
-                break
-            default:
-                root.showHint(qsTr("The file could not be read."))
-                break
+            const notice = messageCatalog.fileNotice(code)
+            if (notice.card) {
+                fileCard.show(notice.text, notice.buttons, path)
+            } else {
+                root.showHint(notice.text)
             }
         }
     }

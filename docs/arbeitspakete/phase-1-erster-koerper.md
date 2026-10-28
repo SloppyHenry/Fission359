@@ -246,7 +246,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 ---
 
 ### AP-1.10 Dateien: Speichern, Laden, Autosave, Import und Export
-**Status:** erledigt (2026-10-27, gemergt mit PR #53–#58; Slicer-Prüfung des 3MF durch den Product Owner offen) · **Größe:** M · **Abhängigkeiten:** AP-1.1
+**Status:** Review – wartet auf die Slicer-Prüfung des 3MF (umgesetzt und gemergt 2026-10-27, PR #53–#58; Kriterium 3 offen, Entscheidung Product Owner 2026-10-27: erst „erledigt“, wenn das 3MF in einem echten Slicer geöffnet wurde) · **Größe:** M · **Abhängigkeiten:** AP-1.1
 **Bauanleitung:** [anleitungen/AP-1.10.md](anleitungen/AP-1.10.md)
 
 **Umfang:**
@@ -268,6 +268,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Export STL (binär) und 3MF (ein Objekt je Körper, Name, Farbe), Qualität Grob/Normal/Fein, im Hintergrund und abbrechbar; keine Löcher, keine verbrauchten oder versteckten Körper, nichts bei Körpern mit Rezept-Fehler. Lochkante ≤ 0,01 mm (Ablauf D Schritt 6, `test_export.cpp`).
 - System-Zwischenablage mit dem Dateiformat (aus AP-1.6): kopierte Körper liegen als `application/x-fission3d` bereit.
 - Festlegungen: Schriften werden nicht eingebettet (nur der Name); eine Datei aus einer neueren Version wird geöffnet, aber nur unter neuem Namen gespeichert; Palettenänderungen markieren „geändert“, haben aber kein Undo.
+- Festlegung (Product Owner 2026-10-27): Die Qualität „Grob“ (0,05 mm) bleibt, mit dem Hinweis „Rundungen können kantig sein“ in der Export-Karte; „Normal“ und „Fein“ halten Regel 12 (≤ 0,01 mm) ein.
 - Offene Reste: 3MF in Bambu Studio / OrcaSlicer / PrusaSlicer von Hand öffnen (Product Owner); „Zuletzt geöffnet“ als Untermenü statt flacher Liste; Dateizuordnung unter Linux/macOS ist aus AP-0.7 vorhanden, aber nicht von Hand geprüft; Kernel-Abdeckung ≥ 85 % nicht neu gemessen; mehrere Dokumente (Tabs) = AP-1.11.
 
 ---
@@ -298,7 +299,7 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Mehrere Dokumente: Tabs mit je eigenem Dokument, Undo-Liste, Datei, Palette und Sicherungsdatei; `DocumentModel` bleibt das eine Objekt und tauscht das Dokument (`exchange`). Ein unberührtes Projekt wird von Neu/Öffnen ersetzt.
 - Griff-Art „Klassisch“ (erste Stufe): weiße Quadrate, Maßband und -kästchen erst beim Zeigen; dieselben Werte und Commands (Test `app_handle_drag_classic`).
 - Festlegungen: Haltepunkt 1 ja (Tabs, schlicht), 2 nur erste Stufe von Klassisch, 3 Knopf „Mission“ erst mit AP-5.1.
-- Offene Reste: Klassisch: Eck-Griffe, die Breite und Tiefe zugleich ändern, und der schwarze Hebe-Pfeil (Lage z) fehlen; Kamera je Dokument merken; Einheit „Zoll“ gilt nur für neue Projekte (Anzeige der Statuszeile bleibt „mm“); Bildschirmfotos 80/100/150/200 % nur von mir angesehen, nicht in den PRs; Tastenkürzel-Konzept (Ctrl+Tab zum Wechseln der Tabs) fehlt.
+- Offene Reste: Klassisch: Eck-Griffe, die Breite und Tiefe zugleich ändern, und der schwarze Hebe-Pfeil (Lage z) fehlen; Kamera je Dokument merken; Einheit „Zoll“ gilt nur für neue Projekte (Anzeige der Statuszeile bleibt „mm“); Bildschirmfotos 80/100/150/200 % nur von mir angesehen, nicht in den PRs; Tastenkürzel-Konzept (Ctrl+Tab zum Wechseln der Tabs) fehlt (Pflege T7, Tabelle in `docs/02-ux-konzept.md` §10); Druckerprofile fehlen: Prusa Core One, Creality Ender-3 V3 (heißt noch „Ender-3“), Voron und „eigener Drucker“ mit eigenen Bettmaßen (Pflege T6, Pflege P4.3); Bettmaße aller Profile noch nicht gegen Datenblätter geprüft.
 
 ---
 

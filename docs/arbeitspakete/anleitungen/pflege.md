@@ -6,6 +6,9 @@ Fehler mit Datenfolgen), dann nach Bedarf. Allgemeine Regeln: [README](README.md
 ---
 
 ## P1 Kugel-Radius-Griff: unsauber und nicht rückgängig? (Fehler prüfen)
+**Stand 2026-10-27:** Rückgängig-Teil **nicht nachstellbar**. Tests: `handles: a sphere radius drag is one step and undoes after other work`
+(5 Varianten) und Fenster-Test `app_sphere_radius_undo`, beide grün. Offen bleibt nur Punkt 4 („unsauber“, Haltepunkt, braucht Bild/Video
+des Product Owners). Tritt das Rückgängig-Problem wieder auf: Schritt-für-Schritt-Beschreibung erbitten.
 **Größe:** S · **Herkunft:** Rückmeldung Product Owner 2026-10-18 („fühlt sich wieder unsauber an“, „ließ sich später nicht rückgängig machen“).
 PR #28 hat am selben Tag mehrere Kugel-Probleme behoben (Griff mit Steigung, gehaltener Griff bleibt bei leerer Griffliste). Ob der Fehler
 danach noch besteht, ist **nicht geprüft**.
@@ -88,6 +91,9 @@ Linux-Desktop prüfen (Product Owner oder Testrechner mit Desktop-Sitzung); wenn
 `apps/fission3d/src/simulate.cpp` ziehen, ohne Verhaltensänderung. Alle Fenster-Tests müssen unverändert grün sein.
 
 ## P13 Löcher im Hintergrund prüfen (Regel 9)
+**Messung 2026-10-27 (Release, Apple Silicon, Test `cuts: how long the check takes with 10 bodies and 20 holes`):** 1 Loch in 1 Platte kalt 2,2 ms /
+warm 3,5 ms; 10 Körper mit 20 Löchern kalt ≈ 38 ms / warm ≈ 75 ms (20 echte Schnitte, die Vorprüfung per Box greift). Über der 50-ms-Grenze nur im
+Grenzfall; für den Nutzertest 1 (wenige Löcher) unkritisch. **Haltepunkt:** Umbau (Schritte 2–3) nur nach Rückfrage beim Product Owner.
 **Größe:** M · Offen aus AP-1.7. `core::reconcileCuts` rechnet die Berührung von Löchern und Körpern (Booleans) im Oberflächen-Thread: kalt
 26 ms, warm 4 ms bei einem Loch in einer Platte, wächst mit der Zahl der Körper und Löcher. **Vor dem Nutzertest 1 (AP-1.13) erledigen.**
 1. Messung zuerst: ein Dokument mit 10 Körpern und 20 Löchern (Test in `tests/unit/core/test_cuts.cpp`, nur melden); ab etwa 50 ms ist es ein Fehler.
@@ -107,4 +113,4 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Product Owner klär
 **Größe:** S–M · **Herkunft:** Abschlussvermerke AP-1.8 und AP-1.9.
 - Kontextleiste: „Mehr ▾“ (Seltenes), Ausrichten bei mehreren Körpern; Kante bekommt Aktionen mit AP-2.5. Die Leiste kann Maßzahlen der Ansicht kurz verdecken.
 - Rezept: Sätze aus `Main.qml` (`stepText`) in eine Tabelle `RecipeSentences.js` ziehen, mit einem Test, dass jeder registrierte Feature-Typ einen Satz hat.
-- Fenster-Tests `app_ring_turn` und `app_snap_corner_handle` fallen unter Last gelegentlich durch (einzeln grün): Ursache suchen, nicht abschwächen (Ablauf D). Tipp aus `app_flow_d_hole` (PR #51): Eine Prüfung von `--simulate` muss auf das Ende der Aktion warten, nicht auf feste Zeiten; ein Diagnose-PR mit zusätzlichen Meldungen zeigt die Ursache direkt in der CI.
+- Fenster-Tests `app_ring_turn` und `app_snap_corner_handle` fallen unter Last gelegentlich durch (einzeln grün): Ursache suchen, nicht abschwächen (Ablauf D). **Stand 2026-10-28:** wahrscheinliche Ursache behoben (der Druck in `pressAndPull` fragte den Griff ab, bevor die Form berechnet war; Prüfungen sahen die Mitte eines Zugs). Auf dem Mac nie nachgestellt (20 von 20 grün, auch mit 8 Rechenprozessen daneben): ob es hilft, zeigt erst die CI, bei erneutem Ausfall die Meldung dort ansehen. Tipp aus `app_flow_d_hole` (PR #51): Eine Prüfung von `--simulate` muss auf das Ende der Aktion warten, nicht auf feste Zeiten; ein Diagnose-PR mit zusätzlichen Meldungen zeigt die Ursache direkt in der CI.
