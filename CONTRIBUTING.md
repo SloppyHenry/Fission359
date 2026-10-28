@@ -1,9 +1,9 @@
-# Contributing to Fission3D
+# Contributing to Fission359
 
 *Kurz auf Deutsch: Code und Kommentare sind Englisch, UI-Texte sind Deutsch UND Englisch.
 Jede Änderung braucht Tests. Die Schichtregeln werden vom Build erzwungen.*
 
-Thank you for helping! Fission3D aims to be **as easy as Tinkercad and as precise as Fusion**.
+Thank you for helping! Fission359 aims to be **as easy as Tinkercad and as precise as Fusion**.
 Please read [docs/01-vision.md](docs/01-vision.md) (design principles) before larger changes.
 
 ## Getting started
@@ -51,7 +51,7 @@ A violation makes the build or the tests fail (`tests/layering`, `scripts/tools/
 - **License header:** every source file starts with
 
   ```cpp
-  // SPDX-FileCopyrightText: Fission3D contributors
+  // SPDX-FileCopyrightText: Fission359 contributors
   // SPDX-License-Identifier: GPL-3.0-or-later
   ```
 
@@ -89,7 +89,7 @@ smoke-test screenshot are attached to the run as artifacts.
 
 - Every user-visible string exists in **German and English** and goes through `qsTr()` / `tr()`.
   No hard-coded strings. The source text is English; the translations are Qt Linguist files in
-  `apps/fission3d/i18n/` (`fission3d_de.ts`, `fission3d_en.ts`).
+  `apps/fission359/i18n/` (`fission359_de.ts`, `fission359_en.ts`).
 - After adding or changing a text, refresh the files with `cmake --build build/<preset> --target
   update_translations` (needs a Qt whose `lupdate` understands QML: Homebrew or apt Qt, not the vcpkg
   build), translate the new entries (Qt Linguist or by hand) and run `ctest -R translations`: it fails

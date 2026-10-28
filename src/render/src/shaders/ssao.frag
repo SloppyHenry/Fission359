@@ -1,5 +1,5 @@
 #version 440
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Ambient occlusion from the depth of the scene: how much of the surroundings of a point lies

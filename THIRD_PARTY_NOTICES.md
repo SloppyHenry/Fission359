@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-Fission3D is licensed under **GPL-3.0-or-later** (see [LICENSE](LICENSE)). It uses the libraries
+Fission359 is licensed under **GPL-3.0-or-later** (see [LICENSE](LICENSE)). It uses the libraries
 below. Only GPL-3-compatible licenses are allowed (docs/03-architektur.md §8). Every new
 dependency needs a justification in the pull request; the inventory is generated and checked:
 
@@ -24,8 +24,8 @@ license field are covered by `third_party/inventory.json` (with the reason for e
 | catch2 | 3.16.0 | Unit tests (test builds only) | BSL-1.0 |
 | dejavu-sans | 2.37 | Test font for the text cases of the geometry tests (test data, not shipped; tests/fixtures/fonts) | Bitstream-Vera |
 | eigen3 | 5.0.1 | Linear algebra (also used by PlaneGCS) | MPL-2.0 |
-| ibm-plex-mono | 2.005 | Font for numbers and measures (bundled in the program: apps/fission3d/resources/fonts) | OFL-1.1 |
-| ibm-plex-sans | 3.005 | Interface font (bundled in the program: apps/fission3d/resources/fonts) | OFL-1.1 |
+| ibm-plex-mono | 2.005 | Font for numbers and measures (bundled in the program: apps/fission359/resources/fonts) | OFL-1.1 |
+| ibm-plex-sans | 3.005 | Interface font (bundled in the program: apps/fission359/resources/fonts) | OFL-1.1 |
 | lib3mf | 2.5.0#1 | 3MF import and export | BSD-2-Clause |
 | manifold | 3.5.4 | Robust mesh booleans, level sets | Apache-2.0 |
 | minizip-ng | 4.1.0 | ZIP container of the .fission file format | Zlib |

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Kernel robustness catalog, group F: files. STEP round trip and export tessellation.
@@ -106,7 +106,7 @@ TEST_CASE("F1 STEP round trip keeps volume, faces and validity", "[geometry][io]
     const ShapeStats before = measure(part);
 
     const std::filesystem::path file =
-        std::filesystem::temp_directory_path() / "fission3d_geometry_roundtrip.step";
+        std::filesystem::temp_directory_path() / "fission359_geometry_roundtrip.step";
     STEPControl_Writer writer;
     REQUIRE(writer.Transfer(part, STEPControl_AsIs) == IFSelect_RetDone);
     REQUIRE(writer.Write(file.string().c_str()) == IFSelect_RetDone);

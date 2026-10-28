@@ -1,24 +1,24 @@
-Fission3D installieren / Installing Fission3D
+Fission359 installieren / Installing Fission359
 =============================================
 
 DEUTSCH
-1. Ziehe "Fission3D" auf den Ordner "Programme" (Applications).
-2. Öffne Fission3D aus dem Ordner "Programme". macOS meldet beim ersten Mal, dass das Programm
-   nicht überprüft werden kann. Das ist normal: Fission3D ist noch nicht bei Apple registriert.
+1. Ziehe "Fission359" auf den Ordner "Programme" (Applications).
+2. Öffne Fission359 aus dem Ordner "Programme". macOS meldet beim ersten Mal, dass das Programm
+   nicht überprüft werden kann. Das ist normal: Fission359 ist noch nicht bei Apple registriert.
 3. Klicke auf "Fertig". Öffne dann die Systemeinstellungen > Datenschutz & Sicherheit,
-   scrolle nach unten und klicke bei Fission3D auf "Trotzdem öffnen". Bestätige mit deinem Passwort.
+   scrolle nach unten und klicke bei Fission359 auf "Trotzdem öffnen". Bestätige mit deinem Passwort.
    (Auf macOS 14 und älter genügt: Rechtsklick auf das Programm > "Öffnen" > "Öffnen".)
-4. Ab jetzt startet Fission3D wie jedes andere Programm.
+4. Ab jetzt startet Fission359 wie jedes andere Programm.
 
-Alternativ im Terminal:  xattr -dr com.apple.quarantine /Applications/Fission3D.app
+Alternativ im Terminal:  xattr -dr com.apple.quarantine /Applications/Fission359.app
 
 ENGLISH
-1. Drag "Fission3D" onto the "Applications" folder.
-2. Open Fission3D from Applications. The first time, macOS says it cannot verify the app.
-   That is expected: Fission3D is not registered with Apple yet.
+1. Drag "Fission359" onto the "Applications" folder.
+2. Open Fission359 from Applications. The first time, macOS says it cannot verify the app.
+   That is expected: Fission359 is not registered with Apple yet.
 3. Click "Done". Then open System Settings > Privacy & Security, scroll down and click
-   "Open Anyway" next to Fission3D. Confirm with your password.
+   "Open Anyway" next to Fission359. Confirm with your password.
    (On macOS 14 and older: right-click the app > "Open" > "Open" is enough.)
-4. From then on Fission3D starts like any other app.
+4. From then on Fission359 starts like any other app.
 
-Or in Terminal:  xattr -dr com.apple.quarantine /Applications/Fission3D.app
+Or in Terminal:  xattr -dr com.apple.quarantine /Applications/Fission359.app

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Must be included BEFORE project(): it selects the vcpkg toolchain, the triplet and the

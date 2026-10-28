@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Builds the Linux packages from a finished build:
-#   Fission3D-<version>-x86_64.AppImage   (always)
+#   Fission359-<version>-x86_64.AppImage   (always)
 #   an AppDir that the Flatpak build reuses (<output-dir>/AppDir)
 #
 #   packaging/linux/package.sh <build-dir> <output-dir>
@@ -98,7 +98,7 @@ cd "$ARCH_DIR"
 rm -f ./*.AppImage
 "$TOOLS_DIR/linuxdeploy-x86_64.AppImage" \
     --appdir "$APPDIR" \
-    --executable "$APPDIR/usr/bin/fission3d" \
+    --executable "$APPDIR/usr/bin/fission359" \
     --desktop-file "$APPDIR/usr/share/applications/$FISSION_APP_ID.desktop" \
     --icon-file "$APPDIR/usr/share/icons/hicolor/512x512/apps/$FISSION_APP_ID.png" \
     "${DEPLOY_DEPS_ARGS[@]+"${DEPLOY_DEPS_ARGS[@]}"}" \

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "fission/ui/document_model.h"
@@ -160,7 +160,7 @@ DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel, 
         m_palette.push_back({key, color, false});
     }
     if (QClipboard* clipboard = systemClipboard()) {
-        // Another program (or another Fission3D) copied something: "Paste" may have changed.
+        // Another program (or another Fission359) copied something: "Paste" may have changed.
         connect(clipboard, &QClipboard::dataChanged, this, &DocumentModel::clipboardChanged);
     }
     m_detailPool.setMaxThreadCount(1);
@@ -2488,7 +2488,7 @@ bool DocumentModel::systemClipboardHasBodies() const {
            clipboard->mimeData()->hasFormat(QString::fromLatin1(clipboardMimeType));
 }
 
-// Something another Fission3D copied: pasted like our own copy. Our own copy is not read back.
+// Something another Fission359 copied: pasted like our own copy. Our own copy is not read back.
 void DocumentModel::takeSystemClipboard() {
     const QClipboard* clipboard = systemClipboard();
     if (clipboard == nullptr || !systemClipboardHasBodies()) {

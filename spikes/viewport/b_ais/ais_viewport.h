@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Spike AP-0.4, prototype B: OpenCASCADE's AIS/V3d viewer embedded in Qt Quick through a

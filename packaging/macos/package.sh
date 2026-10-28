@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Builds the macOS disk image from a finished build:  Fission3D.app -> Fission3D-<version>-macos-arm64.dmg
+# Builds the macOS disk image from a finished build:  Fission359.app -> Fission359-<version>-macos-arm64.dmg
 #
 #   packaging/macos/package.sh <build-dir> <output-dir>
 #
@@ -27,7 +27,7 @@ say()  { printf '%s\n' "$*"; }
 step() { printf '\n==> %s\n' "$*"; }
 die()  { printf 'Fehler / error: %s\n' "$*" >&2; exit 1; }
 
-SOURCE_APP="$BUILD_DIR/apps/fission3d/fission3d.app"
+SOURCE_APP="$BUILD_DIR/apps/fission359/fission359.app"
 [ -d "$SOURCE_APP" ] || die "App fehlt / missing: $SOURCE_APP (zuerst bauen / build first)"
 [ -x "$FISSION_MACDEPLOYQT" ] || die "macdeployqt nicht gefunden / not found: '$FISSION_MACDEPLOYQT'"
 

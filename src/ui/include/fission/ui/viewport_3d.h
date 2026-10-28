@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // The 3D view as a Qt Quick item: draws the print bed and the bodies with the RHI renderer and
@@ -414,7 +414,7 @@ private:
     QColor m_shadow{0, 0, 0, 153};
 };
 
-/// Makes the QML type "Viewport3D" (import Fission3D.View) available.
+/// Makes the QML type "Viewport3D" (import Fission359.View) available.
 void registerViewportTypes();
 
 } // namespace fission::ui

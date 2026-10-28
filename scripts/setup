@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Prüft, ob alles zum Bauen von Fission3D da ist, und installiert Fehlendes nach Rückfrage.
+# Prüft, ob alles zum Bauen von Fission359 da ist, und installiert Fehlendes nach Rückfrage.
 #
 #   scripts/setup            prüfen und nach Rückfrage installieren
 #   scripts/setup --yes      ohne Rückfragen installieren
@@ -252,7 +252,7 @@ setup_vcpkg() {
         MISSING_REQUIRED+=("vcpkg")
         return 0
     fi
-    ask_yes_no "vcpkg jetzt nach .vcpkg/ herunterladen (ca. 150 MB)?" || die "Ohne vcpkg kann Fission3D nicht gebaut werden."
+    ask_yes_no "vcpkg jetzt nach .vcpkg/ herunterladen (ca. 150 MB)?" || die "Ohne vcpkg kann Fission359 nicht gebaut werden."
 
     if [ ! -d "$root/.git" ]; then
         git clone --quiet --filter=blob:none https://github.com/microsoft/vcpkg "$root" \
@@ -287,7 +287,7 @@ if [ "${#MISSING_REQUIRED[@]}" -gt 0 ] || [ "${#MISSING_TOOLS[@]}" -gt 0 ]; then
         if [ "${#MISSING_REQUIRED[@]}" -gt 0 ]; then
             say ""
             if ! ask_yes_no "Fehlende Pakete jetzt installieren (${MISSING_REQUIRED[*]})?"; then
-                die "Ohne diese Pakete kann Fission3D nicht gebaut werden."
+                die "Ohne diese Pakete kann Fission359 nicht gebaut werden."
             fi
         fi
         case "$OS" in

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 cmake_minimum_required(VERSION 3.28)
@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.28)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(FissionVcpkg)
 
-project(Fission3D
+project(Fission359
   VERSION 0.1.0
   DESCRIPTION "Easy-to-use, precise 3D construction program for makers"
   LANGUAGES CXX)
@@ -55,7 +55,7 @@ add_subdirectory(src/services)
 add_subdirectory(src/render)
 add_subdirectory(src/interaction)
 add_subdirectory(src/ui)
-add_subdirectory(apps/fission3d)
+add_subdirectory(apps/fission359)
 
 # Throw-away prototypes of the spike work packages (AP-0.4). Off by default.
 option(FISSION_BUILD_SPIKES "Build the spike prototypes in spikes/" OFF)

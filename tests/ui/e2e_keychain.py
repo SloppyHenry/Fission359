@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 """End-to-end test of the keychain, flow A of docs/02-ux-konzept.md section 15 (milestone M1).
 
@@ -8,7 +8,7 @@ two objects, two colours, the hole cut out of the plate. Left out on purpose: st
 vertical edges, AP-2.5) and step 7 (print check, phase 3). Steps 4 and 5 use values for the
 place of the text and the hole instead of clicking on the top face (the placement tests cover
 that). The distance measure ("5 mm from the edge") is not used: it measures only to bodies
-beside the hole, and on the plate it shows the distance to the edge of the print bed. Usage: e2e_keychain.py <fission3d> [runner...]
+beside the hole, and on the plate it shows the distance to the edge of the print bed. Usage: e2e_keychain.py <fission359> [runner...]
 """
 
 import math

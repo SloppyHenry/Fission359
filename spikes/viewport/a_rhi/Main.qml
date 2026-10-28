@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
@@ -12,7 +12,7 @@ Window {
     // While measuring, stay in front: macOS pauses drawing of covered windows.
     flags: Qt.Window | (appBenchmark ? Qt.WindowStaysOnTopHint : 0)
     Component.onCompleted: if (appBenchmark) requestActivate()
-    title: "Fission3D viewport spike A (Qt RHI)"
+    title: "Fission359 viewport spike A (Qt RHI)"
     color: "#131519"
 
     RhiViewport {

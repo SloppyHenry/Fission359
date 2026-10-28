@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Draws the print bed and the bodies with Qt RHI (Metal, Vulkan, OpenGL, D3D). The class knows

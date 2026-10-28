@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # PlaneGCS: FreeCAD's 2D geometric constraint solver, vendored from FreeCAD 1.1.4.

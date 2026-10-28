@@ -1,12 +1,12 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Names and metadata that end up in installed packages (macOS .app/.dmg, Linux AppImage and
 # Flatpak). Decided in ADR-0006; changing the application ID later orphans users' settings.
 
-set(FISSION_APP_ID "io.github.sloppyhenry.Fission3D" CACHE INTERNAL "Reverse-DNS application ID")
-set(FISSION_APP_NAME "Fission3D" CACHE INTERNAL "Display name")
-set(FISSION_MIME_TYPE "application/x-fission3d" CACHE INTERNAL "MIME type of .fission files")
+set(FISSION_APP_ID "io.github.sloppyhenry.Fission359" CACHE INTERNAL "Reverse-DNS application ID")
+set(FISSION_APP_NAME "Fission359" CACHE INTERNAL "Display name")
+set(FISSION_MIME_TYPE "application/x-fission359" CACHE INTERNAL "MIME type of .fission files")
 # macOS uniform type identifier of project files (UTI).
 set(FISSION_PROJECT_UTI "${FISSION_APP_ID}.project" CACHE INTERNAL "")
 # Release date in the AppStream metadata; set it when a version is released.

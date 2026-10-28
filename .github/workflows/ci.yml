@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Continuous integration: format, license and layer checks, plus build and tests on
@@ -275,18 +275,18 @@ jobs:
           FISSION_NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
           FISSION_NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
           FISSION_NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
-        run: packaging/macos/notarize.sh build/package/Fission3D-*-macos-arm64.dmg
+        run: packaging/macos/notarize.sh build/package/Fission359-*-macos-arm64.dmg
 
       - name: Start the app from the .dmg (macOS)
         if: runner.os == 'macOS'
         run: |
-          dmg="$(ls build/package/Fission3D-*-macos-arm64.dmg)"
+          dmg="$(ls build/package/Fission359-*-macos-arm64.dmg)"
           mount_point="$RUNNER_TEMP/dmg"
           hdiutil attach "$dmg" -mountpoint "$mount_point" -nobrowse -readonly
-          app="$mount_point/Fission3D.app"
+          app="$mount_point/Fission359.app"
           codesign --verify --deep --strict "$app"
-          "$app/Contents/MacOS/fission3d" --version
-          QT_QPA_PLATFORM=offscreen "$app/Contents/MacOS/fission3d" --smoke-test "$RUNNER_TEMP/dmg-smoke.png"
+          "$app/Contents/MacOS/fission359" --version
+          QT_QPA_PLATFORM=offscreen "$app/Contents/MacOS/fission359" --smoke-test "$RUNNER_TEMP/dmg-smoke.png"
           test -s "$RUNNER_TEMP/dmg-smoke.png"
           hdiutil detach "$mount_point"
 
@@ -296,12 +296,12 @@ jobs:
         if: runner.os == 'macOS'
         continue-on-error: true
         run: |
-          dmg="$(ls build/package/Fission3D-*-macos-arm64.dmg)"
+          dmg="$(ls build/package/Fission359-*-macos-arm64.dmg)"
           mount_point="$RUNNER_TEMP/dmg2"
           hdiutil attach "$dmg" -mountpoint "$mount_point" -nobrowse -readonly
-          "$mount_point/Fission3D.app/Contents/MacOS/fission3d" --smoke-test "$RUNNER_TEMP/dmg-window.png" \
+          "$mount_point/Fission359.app/Contents/MacOS/fission359" --smoke-test "$RUNNER_TEMP/dmg-window.png" \
             --theme dark --language en --size 1280x800
-          "$mount_point/Fission3D.app/Contents/MacOS/fission3d" --measure-startup
+          "$mount_point/Fission359.app/Contents/MacOS/fission359" --measure-startup
           cp "$RUNNER_TEMP/dmg-window.png" build/package/ || true
           hdiutil detach "$mount_point"
 
@@ -330,7 +330,7 @@ jobs:
           APPIMAGE_EXTRACT_AND_RUN: "1"
           QT_QPA_PLATFORM: offscreen
         run: |
-          appimage="$(ls build/package/Fission3D-*-x86_64.AppImage)"
+          appimage="$(ls build/package/Fission359-*-x86_64.AppImage)"
           "$appimage" --version
           "$appimage" --smoke-test "$RUNNER_TEMP/appimage-smoke.png"
           test -s "$RUNNER_TEMP/appimage-smoke.png"
@@ -344,7 +344,7 @@ jobs:
           LIBGL_ALWAYS_SOFTWARE: "1"
         run: |
           sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0 libegl1
-          appimage="$(ls build/package/Fission3D-*-x86_64.AppImage)"
+          appimage="$(ls build/package/Fission359-*-x86_64.AppImage)"
           xvfb-run -a -s "-screen 0 1280x800x24" "$appimage" --smoke-test build/package/appimage-window.png \
             --theme dark --language en --size 1280x800
           xvfb-run -a -s "-screen 0 1280x800x24" "$appimage" --measure-startup
@@ -352,7 +352,7 @@ jobs:
       - name: Start the Flatpak (Linux)
         if: runner.os == 'Linux'
         run: |
-          flatpak run --env=QT_QPA_PLATFORM=offscreen io.github.sloppyhenry.Fission3D --version
+          flatpak run --env=QT_QPA_PLATFORM=offscreen io.github.sloppyhenry.Fission359 --version
 
       # Diagnostics when packaging fails (what Qt looks like on this runner, what was bundled).
       - name: Collect packaging diagnostics
@@ -417,4 +417,4 @@ jobs:
           rm -f release-files/*-window.png
           ls -l release-files
           gh release create "$TAG" release-files/* --repo "$GITHUB_REPOSITORY" \
-            --title "Fission3D ${TAG#v}" --prerelease --generate-notes
+            --title "Fission359 ${TAG#v}" --prerelease --generate-notes

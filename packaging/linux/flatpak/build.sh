@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: Fission3D contributors
+# SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Builds the Flatpak from the AppDir of packaging/linux/package.sh and installs it for the
@@ -9,7 +9,7 @@ set -euo pipefail
 
 OUT_DIR="$(cd "${1:?output directory (build/package)}" && pwd)"
 HERE="$(cd "$(dirname "$0")" && pwd)"
-APP_ID="io.github.sloppyhenry.Fission3D"
+APP_ID="io.github.sloppyhenry.Fission359"
 
 die() { printf 'Fehler / error: %s\n' "$*" >&2; exit 1; }
 
@@ -28,5 +28,5 @@ cp "$HERE/$APP_ID.yml" "$OUT_DIR/flatpak/"
 cd "$OUT_DIR/flatpak"
 flatpak-builder --user --force-clean --install --disable-rofiles-fuse \
     --repo=repo --state-dir=.flatpak-builder build "$APP_ID.yml"
-flatpak build-bundle repo "$OUT_DIR/Fission3D.flatpak" "$APP_ID"
-echo "Fertig / done: $OUT_DIR/Fission3D.flatpak"
+flatpak build-bundle repo "$OUT_DIR/Fission359.flatpak" "$APP_ID"
+echo "Fertig / done: $OUT_DIR/Fission359.flatpak"

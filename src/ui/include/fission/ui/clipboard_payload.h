@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
@@ -12,7 +12,7 @@
 namespace fission::ui {
 
 /// The MIME type under which copied bodies lie on the system clipboard.
-inline constexpr const char* clipboardMimeType = "application/x-fission3d";
+inline constexpr const char* clipboardMimeType = "application/x-fission359";
 
 /// What was copied of one body: the step that makes it and what the person did to the body itself
 /// (name, colour, hole).
@@ -24,7 +24,7 @@ struct ClipboardPart {
 };
 
 /// The copied bodies in the format of the file: the text of a `document.json` that holds just
-/// these steps and bodies. Another Fission3D (or this one, later) can paste it.
+/// these steps and bodies. Another Fission359 (or this one, later) can paste it.
 std::string clipboardToJson(const std::vector<ClipboardPart>& parts);
 
 /// Reads what `clipboardToJson` wrote; empty for anything else (never throws).

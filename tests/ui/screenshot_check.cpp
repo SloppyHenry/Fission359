@@ -1,7 +1,7 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// Checks a screenshot of the main window (written by `fission3d --smoke-test`):
+// Checks a screenshot of the main window (written by `fission359 --smoke-test`):
 //   screenshot_check <file.png> <dark|light> [--expect-3d] [--reference mockup.png]
 // The surfaces of the window must have the colours of the design tokens (docs/08-gestaltung.md
 // §1 and §2), and with --expect-3d the cube must be there: bright pixels on the print bed in

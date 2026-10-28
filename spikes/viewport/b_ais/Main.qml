@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Fission3D contributors
+// SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
@@ -10,7 +10,7 @@ Window {
     height: 800
     visible: true
     // While measuring, stay in front: macOS pauses drawing of covered windows.
-    title: "Fission3D viewport spike B (OpenCASCADE AIS)"
+    title: "Fission359 viewport spike B (OpenCASCADE AIS)"
     color: "#131519"
 
     AisViewport {

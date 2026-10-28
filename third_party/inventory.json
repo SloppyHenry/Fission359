@@ -10,13 +10,13 @@
       "name": "ibm-plex-sans",
       "version": "3.005",
       "license": "OFL-1.1",
-      "purpose": "Interface font (bundled in the program: apps/fission3d/resources/fonts)"
+      "purpose": "Interface font (bundled in the program: apps/fission359/resources/fonts)"
     },
     {
       "name": "ibm-plex-mono",
       "version": "2.005",
       "license": "OFL-1.1",
-      "purpose": "Font for numbers and measures (bundled in the program: apps/fission3d/resources/fonts)"
+      "purpose": "Font for numbers and measures (bundled in the program: apps/fission359/resources/fonts)"
     },
     {
       "name": "dejavu-sans",
