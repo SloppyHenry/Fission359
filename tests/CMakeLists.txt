@@ -76,6 +76,11 @@ add_test(NAME messages_complete
   COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_messages.py"
           "${CMAKE_SOURCE_DIR}")
 
+# Pflege P15: every kind of step has a sentence in the recipe.
+add_test(NAME recipe_sentences_complete
+  COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_sentences.py"
+          "${CMAKE_SOURCE_DIR}")
+
 # Texts: English in the source, German translation complete, nothing hard-coded (AP-0.8).
 add_test(NAME translations_complete
   COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_translations.py"
@@ -200,6 +205,37 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --smoke-test "${CMAKE_BINARY_DIR}/window-corner-round.png" --language en --size 1280x800
             --camera=35,35,200 --simulate "tool:size;put:sphere;corner:1,50,30,10;least:radius,11;tool:rotate;put:box;ring:z,30,8;tool:size;corner:1,40,25,8;least:width,22;near:rotZ,30")
   set_tests_properties(app_corner_scale_round_turned PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # Pflege T7: two tabs; the keys for the next and the previous tab change the tab shown. (The
+  # keys Cmd+Shift+] and [ cannot be played back reliably as synthetic key events.)
+  if(APPLE)
+    set(_fission_next_tab_key "Meta+Tab")
+    set(_fission_prev_tab_key "Meta+Shift+Tab")
+  else()
+    set(_fission_next_tab_key "Ctrl+PgDown")
+    set(_fission_prev_tab_key "Ctrl+PgUp")
+  endif()
+  add_test(NAME app_tab_keys
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-tab-keys.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "put:box;menu:new;expecttab:1,2;key:${_fission_prev_tab_key};expecttab:0,2;key:${_fission_next_tab_key};expecttab:1,2;menu:prevtab;expecttab:0,2")
+  set_tests_properties(app_tab_keys PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.8 criterion 1, rule 2: a wrong text in the value bubble is not taken, the bubble stays
+  # open and says why; Esc takes everything back: the value stays and no new step appears.
+  add_test(NAME app_bubble_wrong_input
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-bubble-wrong-input.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "put:box;tool:size;expectundo:addFeature;type:Breitee,enter;expectbubble:Breitee;type:esc;near:width,20;expectundo:addFeature")
+  set_tests_properties(app_bubble_wrong_input PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # pflege.md P1: pull the radius of a sphere, do other work, undo twice (the menu entry Undo):
+  # the radius is 10 again. A wrong value in `near` must turn this red.
+  add_test(NAME app_sphere_radius_undo
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sphere-radius-undo.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "tool:size;put:sphere;grab:radius,60,0,30;least:radius,11;put:box;menu:undo;menu:undo;step:1;near:radius,10")
+  set_tests_properties(app_sphere_radius_undo PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_corner_scale_front
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
@@ -427,6 +463,12 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             $<TARGET_FILE:fission359> ${_fission_gui_runner})
   set_tests_properties(app_files_end_to_end PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 600 RUN_SERIAL TRUE)
+  # Meilenstein M1, flow A (the keychain): plate, text, hole with a distance, red text, 3MF.
+  add_test(NAME app_flow_a_keychain
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/ui/e2e_keychain.py"
+            $<TARGET_FILE:fission359> ${_fission_gui_runner})
+  set_tests_properties(app_flow_a_keychain PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 240 RUN_SERIAL TRUE)
   add_test(NAME app_start_time
     COMMAND ${_fission_gui_runner} ${Python3_EXECUTABLE}
             "${CMAKE_SOURCE_DIR}/scripts/tools/check_startup.py" $<TARGET_FILE:fission359>)

@@ -177,20 +177,15 @@ Row {
             anchors.rightMargin: 8
             spacing: 4
 
-            TextInput {
+            ValueInput {
                 id: input
 
+                kind: "length"
+                compact: true
+                problemAbove: true
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - unit.width - 4
-                clip: true
                 selectByMouse: true
-                color: Theme.fg
-                selectionColor: Theme.accent
-                selectedTextColor: Theme.accentFg
-                font.family: Theme.monoFamilies[0]
-                font.pixelSize: Theme.fontSizeSmall
-                font.weight: Font.Medium
-                inputMethodHints: Qt.ImhFormattedNumbersOnly
                 text: root.stepText(root.step)
                 Accessible.name: qsTr("Grid step in millimetres")
 
@@ -213,6 +208,9 @@ Row {
                     }
                 }
                 onAccepted: {
+                    if (!check()) {
+                        return // stays in the field, the reason is shown above it
+                    }
                     commit()
                     focus = false
                 }

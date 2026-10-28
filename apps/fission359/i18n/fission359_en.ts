@@ -420,6 +420,42 @@
     </message>
     <message>
         <location line="+5"/>
+        <source>Next tab</source>
+        <translation>Next tab</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the next open project.</source>
+        <translation>Shows the next open project.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+7"/>
+        <source>Every open project has its own tab at the top.</source>
+        <translation>Every open project has its own tab at the top.</translation>
+    </message>
+    <message>
+        <location line="-6"/>
+        <source>Ctrl+Tab</source>
+        <translation>Ctrl+Tab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Previous tab</source>
+        <translation>Previous tab</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the project before this one.</source>
+        <translation>Shows the project before this one.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Ctrl+Shift+Tab</source>
+        <translation>Ctrl+Shift+Tab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -1004,8 +1040,8 @@
 <context>
     <name>DistanceLayer</name>
     <message>
-        <location filename="../qml/DistanceLayer.qml" line="+142"/>
-        <location line="+64"/>
+        <location filename="../qml/DistanceLayer.qml" line="+136"/>
+        <location line="+66"/>
         <source>Distance</source>
         <translation>Distance</translation>
     </message>
@@ -1119,7 +1155,12 @@
         <translation>Fine</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+8"/>
+        <source>Curves can be angular.</source>
+        <translation>Curves can be angular.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Only chosen bodies</source>
         <translation>Only chosen bodies</translation>
     </message>
@@ -1142,6 +1183,29 @@
         <location line="+5"/>
         <source>Cancel</source>
         <translation>Cancel</translation>
+    </message>
+</context>
+<context>
+    <name>FileNotices</name>
+    <message>
+        <location filename="../qml/FileNotices.qml" line="+36"/>
+        <source>We saved your work from %1.</source>
+        <translation>We saved your work from %1.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>It belongs to “%1”.</source>
+        <translation>It belongs to “%1”.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Restore</source>
+        <translation>Restore</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Discard</source>
+        <translation>Discard</translation>
     </message>
 </context>
 <context>
@@ -1254,7 +1318,7 @@
         <translation>Move along %1</translation>
     </message>
     <message>
-        <location line="+146"/>
+        <location line="+142"/>
         <source>Distance along %1</source>
         <translation>Distance along %1</translation>
     </message>
@@ -1493,19 +1557,17 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+643"/>
+        <location line="+660"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-642"/>
-        <location line="+754"/>
-        <location line="+5"/>
+        <location line="-659"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
     <message>
-        <location line="-759"/>
+        <location line="+0"/>
         <source>Ctrl+Shift+S</source>
         <translation>Ctrl+Shift+S</translation>
     </message>
@@ -1530,7 +1592,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+99"/>
+        <location line="+102"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -1540,7 +1602,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-99"/>
+        <location line="-102"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -1716,12 +1778,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1206"/>
+        <location line="+1136"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1205"/>
+        <location line="-1135"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1752,17 +1814,17 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1194"/>
+        <location line="+1124"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1192"/>
+        <location line="-1122"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+4"/>
         <source>Minimize</source>
         <translation>Minimize</translation>
     </message>
@@ -1793,18 +1855,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+782"/>
+        <location line="+709"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-780"/>
-        <location line="+781"/>
+        <location line="-707"/>
+        <location line="+708"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-775"/>
+        <location line="-702"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -1830,7 +1892,7 @@
         </translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+89"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -1882,7 +1944,7 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+195"/>
+        <location line="+207"/>
         <source>Open</source>
         <translation>Open</translation>
     </message>
@@ -1908,7 +1970,7 @@
         <translation>3MF files (*.3mf)</translation>
     </message>
     <message numerus="yes">
-        <location line="+18"/>
+        <location line="+17"/>
         <source>%n body(ies) exported.</source>
         <translation>
             <numerusform>%n body exported.</numerusform>
@@ -1916,75 +1978,7 @@
         </translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Export cancelled.</source>
-        <translation>Export cancelled.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>There is nothing to export: no visible body.</source>
-        <translation>There is nothing to export: no visible body.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</source>
-        <translation>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>The file could not be written. Is the folder writable and the disk not full?</source>
-        <translation>The file could not be written. Is the folder writable and the disk not full?</translation>
-    </message>
-    <message>
-        <location line="+43"/>
-        <source>We saved your work from %1.</source>
-        <translation>We saved your work from %1.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>It belongs to “%1”.</source>
-        <translation>It belongs to “%1”.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Restore</source>
-        <translation>Restore</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Discard</source>
-        <translation>Discard</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>This file is damaged: it does not match what was saved. It can probably still be read.</source>
-        <translation>This file is damaged: it does not match what was saved. It can probably still be read.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Open anyway</source>
-        <translation>Open anyway</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Cancel</source>
-        <translation>Cancel</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>The project could not be saved. Your work is still open. Is the folder writable and the disk not full?</source>
-        <translation>The project could not be saved. Your work is still open. Is the folder writable and the disk not full?</translation>
-    </message>
-    <message>
-        <location line="-63"/>
-        <location line="+4"/>
-        <location line="+61"/>
-        <location line="+5"/>
-        <source>OK</source>
-        <translation>OK</translation>
-    </message>
-    <message>
-        <location line="-612"/>
+        <location line="-544"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2019,42 +2013,7 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+595"/>
-        <source>This file was made with a newer Fission359 and is opened as far as this version understands it. To keep the original safe, save it under a new name.</source>
-        <translation>This file was made with a newer Fission359 and is opened as far as this version understands it. To keep the original safe, save it under a new name.</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>This project has not been saved yet. Save it first, then your work is safe.</source>
-        <translation>This project has not been saved yet. Save it first, then your work is safe.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Save…</source>
-        <translation>Save…</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Not now</source>
-        <translation>Not now</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>This is not a Fission359 file.</source>
-        <translation>This is not a Fission359 file.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>This file is damaged and could not be opened.</source>
-        <translation>This file is damaged and could not be opened.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>The file could not be read.</source>
-        <translation>The file could not be read.</translation>
-    </message>
-    <message>
-        <location line="+206"/>
+        <location line="+744"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -2069,12 +2028,32 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1112"/>
+        <location line="-1039"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-17"/>
+        <source>Next tab</source>
+        <translation>Next tab</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Tab</source>
+        <translation>Ctrl+Tab</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Previous tab</source>
+        <translation>Previous tab</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Shift+Tab</source>
+        <translation>Ctrl+Shift+Tab</translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</source>
         <translation>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</translation>
     </message>
@@ -2109,7 +2088,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1143"/>
+        <location line="+1070"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2198,118 +2177,16 @@
         <source>Position</source>
         <translation>Position</translation>
     </message>
-    <message>
-        <location line="+9"/>
-        <source>Box %1 × %2 × %3 mm</source>
-        <translation>Box %1 × %2 × %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Cylinder, radius %1 mm, height %2 mm</source>
-        <translation>Cylinder, radius %1 mm, height %2 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Sphere, radius %1 mm</source>
-        <translation>Sphere, radius %1 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Hemisphere, radius %1 mm</source>
-        <translation>Hemisphere, radius %1 mm</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm</source>
-        <translation>Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Cone, radius %1 mm, height %2 mm</source>
-        <translation>Cone, radius %1 mm, height %2 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Torus, ring radius %1 mm, tube radius %2 mm</source>
-        <translation>Torus, ring radius %1 mm, tube radius %2 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Tube, radius %1 mm, wall %2 mm, height %3 mm</source>
-        <translation>Tube, radius %1 mm, wall %2 mm, height %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Prism with %1 sides, radius %2 mm, height %3 mm</source>
-        <translation>Prism with %1 sides, radius %2 mm, height %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Pyramid %1 × %2 × %3 mm</source>
-        <translation>Pyramid %1 × %2 × %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Wedge %1 × %2 × %3 mm</source>
-        <translation>Wedge %1 × %2 × %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Star with %1 points, radius %2 mm, height %3 mm</source>
-        <translation>Star with %1 points, radius %2 mm, height %3 mm</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Text “%1” (%2), letters %3 mm, height %4 mm</source>
-        <translation>Text “%1” (%2), letters %3 mm, height %4 mm</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Text “%1”, letters %2 mm, height %3 mm</source>
-        <translation>Text “%1”, letters %2 mm, height %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Split across %1 at %2 mm</source>
-        <translation>Split across %1 at %2 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Part placed, moved by %1, %2, %3 mm</source>
-        <translation>Part placed, moved by %1, %2, %3 mm</translation>
-    </message>
     <message numerus="yes">
-        <location line="+4"/>
-        <location line="+36"/>
+        <location line="+33"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>Cut out %n body</numerusform>
             <numerusform>Cut out %n bodies</numerusform>
         </translation>
     </message>
-    <message numerus="yes">
-        <location line="-35"/>
-        <source>Overlap kept with %n body(ies)</source>
-        <translation>
-            <numerusform>Overlap kept with %n body</numerusform>
-            <numerusform>Overlap kept with %n bodies</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <location line="+1"/>
-        <source>Merged with %n body(ies)</source>
-        <translation>
-            <numerusform>Merged with %n body</numerusform>
-            <numerusform>Merged with %n bodies</numerusform>
-        </translation>
-    </message>
     <message>
-        <location line="+5"/>
-        <source>Step %1 (unknown kind)</source>
-        <translation>Step %1 (unknown kind)</translation>
-    </message>
-    <message>
-        <location line="+12"/>
+        <location line="-17"/>
         <source>%1 added</source>
         <translation>%1 added</translation>
     </message>
@@ -2498,7 +2375,7 @@
         <translation>Several changes</translation>
     </message>
     <message>
-        <location line="+72"/>
+        <location line="+80"/>
         <source>, part %1</source>
         <translation>, part %1</translation>
     </message>
@@ -2552,32 +2429,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-357"/>
+        <location line="-305"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1192"/>
+        <location line="-1122"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1227"/>
+        <location line="+1157"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1065"/>
+        <location line="-992"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+500"/>
+        <location line="+514"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-547"/>
+        <location line="-561"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -2636,7 +2513,92 @@
 <context>
     <name>MessageCatalog</name>
     <message>
-        <location filename="../qml/MessageCatalog.qml" line="+48"/>
+        <location filename="../qml/MessageCatalog.qml" line="+65"/>
+        <source>Open anyway</source>
+        <translation>Open anyway</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save as…</source>
+        <translation>Save as…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save…</source>
+        <translation>Save…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Not now</source>
+        <translation>Not now</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>This file is damaged: it does not match what was saved. It can probably still be read.</source>
+        <translation>This file is damaged: it does not match what was saved. It can probably still be read.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The project could not be saved. Your work is still open. Is the folder writable and the disk not full?</source>
+        <translation>The project could not be saved. Your work is still open. Is the folder writable and the disk not full?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This file was made with a newer Fission359 and is opened as far as this version understands it. To keep the original safe, save it under a new name.</source>
+        <translation>This file was made with a newer Fission359 and is opened as far as this version understands it. To keep the original safe, save it under a new name.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This project has not been saved yet. Save it first, then your work is safe.</source>
+        <translation>This project has not been saved yet. Save it first, then your work is safe.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This is not a Fission359 file.</source>
+        <translation>This is not a Fission359 file.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This file is damaged and could not be opened.</source>
+        <translation>This file is damaged and could not be opened.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The file could not be read.</source>
+        <translation>The file could not be read.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Export cancelled.</source>
+        <translation>Export cancelled.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>There is nothing to export: no visible body.</source>
+        <translation>There is nothing to export: no visible body.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</source>
+        <translation>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The file could not be written. Is the folder writable and the disk not full?</source>
+        <translation>The file could not be written. Is the folder writable and the disk not full?</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Change value</source>
         <translation>Change value</translation>
     </message>
@@ -2772,104 +2734,6 @@
     </message>
 </context>
 <context>
-    <name>NumberField</name>
-    <message>
-        <location filename="../qml/NumberField.qml" line="+323"/>
-        <source>I don&apos;t know “%1”. Did you mean “%2”?</source>
-        <translation>I don&apos;t know “%1”. Did you mean “%2”?</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>I don&apos;t know “%1”.</source>
-        <translation>I don&apos;t know “%1”.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>I don&apos;t know the function “%1”. Did you mean “%2”?</source>
-        <translation>I don&apos;t know the function “%1”. Did you mean “%2”?</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>I don&apos;t know the function “%1”.</source>
-        <translation>I don&apos;t know the function “%1”.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>I don&apos;t know the unit “%1”. Did you mean “%2”?</source>
-        <translation>I don&apos;t know the unit “%1”. Did you mean “%2”?</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>I don&apos;t know the unit “%1”.</source>
-        <translation>I don&apos;t know the unit “%1”.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>A closing bracket is missing.</source>
-        <translation>A closing bracket is missing.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>The formula ends too early.</source>
-        <translation>The formula ends too early.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>This character does not belong here.</source>
-        <translation>This character does not belong here.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Dividing by zero is not possible.</source>
-        <translation>Dividing by zero is not possible.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Lengths and angles cannot be added.</source>
-        <translation>Lengths and angles cannot be added.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>An angle belongs here, not a length.</source>
-        <translation>An angle belongs here, not a length.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>A plain number belongs here.</source>
-        <translation>A plain number belongs here.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>A length belongs here, not an angle.</source>
-        <translation>A length belongs here, not an angle.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>This number already has a unit.</source>
-        <translation>This number already has a unit.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>This function has the wrong number of values.</source>
-        <translation>This function has the wrong number of values.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>This cannot be calculated (for example the root of a negative number).</source>
-        <translation>This cannot be calculated (for example the root of a negative number).</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>The result is too large.</source>
-        <translation>The result is too large.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>That is not a number or formula.</source>
-        <translation>That is not a number or formula.</translation>
-    </message>
-</context>
-<context>
     <name>RecipeRow</name>
     <message>
         <location filename="../qml/RecipeRow.qml" line="+37"/>
@@ -2895,6 +2759,118 @@
         <location line="+69"/>
         <source>(hidden)</source>
         <translation>(hidden)</translation>
+    </message>
+</context>
+<context>
+    <name>RecipeSentences</name>
+    <message>
+        <location filename="../qml/RecipeSentences.qml" line="+25"/>
+        <source>Box %1 × %2 × %3 mm</source>
+        <translation>Box %1 × %2 × %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Cylinder, radius %1 mm, height %2 mm</source>
+        <translation>Cylinder, radius %1 mm, height %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Sphere, radius %1 mm</source>
+        <translation>Sphere, radius %1 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Hemisphere, radius %1 mm</source>
+        <translation>Hemisphere, radius %1 mm</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm</source>
+        <translation>Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cone, radius %1 mm, height %2 mm</source>
+        <translation>Cone, radius %1 mm, height %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Torus, ring radius %1 mm, tube radius %2 mm</source>
+        <translation>Torus, ring radius %1 mm, tube radius %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Tube, radius %1 mm, wall %2 mm, height %3 mm</source>
+        <translation>Tube, radius %1 mm, wall %2 mm, height %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Prism with %1 sides, radius %2 mm, height %3 mm</source>
+        <translation>Prism with %1 sides, radius %2 mm, height %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Pyramid %1 × %2 × %3 mm</source>
+        <translation>Pyramid %1 × %2 × %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Wedge %1 × %2 × %3 mm</source>
+        <translation>Wedge %1 × %2 × %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Star with %1 points, radius %2 mm, height %3 mm</source>
+        <translation>Star with %1 points, radius %2 mm, height %3 mm</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Text “%1” (%2), letters %3 mm, height %4 mm</source>
+        <translation>Text “%1” (%2), letters %3 mm, height %4 mm</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text “%1”, letters %2 mm, height %3 mm</source>
+        <translation>Text “%1”, letters %2 mm, height %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Split across %1 at %2 mm</source>
+        <translation>Split across %1 at %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Part placed, moved by %1, %2, %3 mm</source>
+        <translation>Part placed, moved by %1, %2, %3 mm</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+4"/>
+        <source>Cut out %n body(ies)</source>
+        <translation>
+            <numerusform>Cut out %n body</numerusform>
+            <numerusform>Cut out %n bodies</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>Overlap kept with %n body(ies)</source>
+        <translation>
+            <numerusform>Overlap kept with %n body</numerusform>
+            <numerusform>Overlap kept with %n bodies</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>Merged with %n body(ies)</source>
+        <translation>
+            <numerusform>Merged with %n body</numerusform>
+            <numerusform>Merged with %n bodies</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Step %1 (unknown kind)</source>
+        <translation>Step %1 (unknown kind)</translation>
     </message>
 </context>
 <context>
@@ -3115,7 +3091,7 @@
         <translation>Turn around %1</translation>
     </message>
     <message>
-        <location line="+141"/>
+        <location line="+137"/>
         <source>Angle around %1</source>
         <translation>Angle around %1</translation>
     </message>
@@ -3128,12 +3104,12 @@
         <translation>Scale evenly</translation>
     </message>
     <message>
-        <location line="+88"/>
+        <location line="+92"/>
         <source>%1 %</source>
         <translation>%1%</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+16"/>
         <source>Size in percent</source>
         <translation>Size in percent</translation>
     </message>
@@ -3448,7 +3424,7 @@
         <translation>Precision of snapping</translation>
     </message>
     <message>
-        <location line="+96"/>
+        <location line="+91"/>
         <source>Grid step in millimetres</source>
         <translation>Grid step in millimetres</translation>
     </message>
@@ -3579,6 +3555,104 @@
         <location line="+44"/>
         <source>Name</source>
         <translation>Name</translation>
+    </message>
+</context>
+<context>
+    <name>ValueExplanation</name>
+    <message>
+        <location filename="../qml/ValueExplanation.qml" line="+17"/>
+        <source>I don&apos;t know “%1”. Did you mean “%2”?</source>
+        <translation>I don&apos;t know “%1”. Did you mean “%2”?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I don&apos;t know “%1”.</source>
+        <translation>I don&apos;t know “%1”.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>I don&apos;t know the function “%1”. Did you mean “%2”?</source>
+        <translation>I don&apos;t know the function “%1”. Did you mean “%2”?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I don&apos;t know the function “%1”.</source>
+        <translation>I don&apos;t know the function “%1”.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>I don&apos;t know the unit “%1”. Did you mean “%2”?</source>
+        <translation>I don&apos;t know the unit “%1”. Did you mean “%2”?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I don&apos;t know the unit “%1”.</source>
+        <translation>I don&apos;t know the unit “%1”.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>A closing bracket is missing.</source>
+        <translation>A closing bracket is missing.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The formula ends too early.</source>
+        <translation>The formula ends too early.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This character does not belong here.</source>
+        <translation>This character does not belong here.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Dividing by zero is not possible.</source>
+        <translation>Dividing by zero is not possible.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lengths and angles cannot be added.</source>
+        <translation>Lengths and angles cannot be added.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>An angle belongs here, not a length.</source>
+        <translation>An angle belongs here, not a length.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A plain number belongs here.</source>
+        <translation>A plain number belongs here.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A length belongs here, not an angle.</source>
+        <translation>A length belongs here, not an angle.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This number already has a unit.</source>
+        <translation>This number already has a unit.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This function has the wrong number of values.</source>
+        <translation>This function has the wrong number of values.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This cannot be calculated (for example the root of a negative number).</source>
+        <translation>This cannot be calculated (for example the root of a negative number).</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The result is too large.</source>
+        <translation>The result is too large.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>That is not a number or formula.</source>
+        <translation>That is not a number or formula.</translation>
     </message>
 </context>
 <context>

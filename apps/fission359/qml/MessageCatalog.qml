@@ -8,6 +8,10 @@ import QtQuick
 // about it in one click. No raw kernel text ever reaches the person. `scripts/tools/
 // check_messages.py` checks that every code has an entry; AP-2.14 grows the catalogue.
 //
+// The same goes for problems with files and with exporting (`fileEntries`, `exportEntries`, the
+// codes of `FileController::fileProblem` and `ExportController::finished`): `fileNotice` and
+// `exportNotice` give the sentence and the buttons of the card, or only the sentence for a hint.
+//
 // `actions` are the buttons under the explanation: "editValue" (shows the values of the step so
 // that the wrong one can be changed) and "hideStep" (switches the step off, the rest goes on).
 QtObject {
@@ -35,6 +39,95 @@ QtObject {
         "combineEmpty": { actions: ["hideStep"] },
         "combineNoOverlap": { actions: ["hideStep"] }
     })
+
+    /// Problems with files: "card" is shown as a card with buttons, else as a hint line. The
+    /// buttons are ids of `buttonLabel`; the first is the main one.
+    readonly property var fileEntries: ({
+        "damaged": { card: true, buttons: ["openanyway", "cancel"] },
+        "cannotWrite": { card: true, buttons: ["saveas", "ok"] },
+        "newerFormat": { card: true, buttons: ["saveas", "ok"] },
+        "unsavedWork": { card: true, buttons: ["save", "notnow"] },
+        "notAFissionFile": { card: false, buttons: [] },
+        "documentUnreadable": { card: false, buttons: [] },
+        "cannotRead": { card: false, buttons: [] }
+    })
+
+    /// What the export says when it did not end well (the code "" is success, no problem).
+    readonly property var exportEntries: ({
+        "cancelled": { card: false, buttons: [] },
+        "nothing": { card: false, buttons: [] },
+        "needsHelp": { card: true, buttons: ["ok"] },
+        "cannotWrite": { card: true, buttons: ["ok"] }
+    })
+
+    function buttonLabel(id) {
+        switch (id) {
+        case "openanyway": return qsTr("Open anyway")
+        case "cancel": return qsTr("Cancel")
+        case "saveas": return qsTr("Save as…")
+        case "save": return qsTr("Save…")
+        case "notnow": return qsTr("Not now")
+        default: return qsTr("OK")
+        }
+    }
+
+    // The id of a button is what the card reports back: "ok" and "notnow" only close it, "save"
+    // asks for a name like "saveas".
+    function buttonsOf(entry) {
+        return entry.buttons.map((id, i) => ({
+            id: id === "ok" || id === "notnow" ? "cancel" : id === "save" ? "saveas" : id,
+            text: buttonLabel(id),
+            primary: i === 0
+        }))
+    }
+
+    /// { card, text, buttons } for a problem with a file; an unknown code reads like cannotRead.
+    function fileNotice(code) {
+        const known = fileEntries[code] !== undefined
+        const entry = known ? fileEntries[code] : fileEntries["cannotRead"]
+        return { card: entry.card, text: fileText(known ? code : "cannotRead"), buttons: buttonsOf(entry) }
+    }
+
+    function fileText(code) {
+        switch (code) {
+        case "damaged":
+            return qsTr("This file is damaged: it does not match what was saved. It can probably still be read.")
+        case "cannotWrite":
+            return qsTr("The project could not be saved. Your work is still open. Is the folder writable and the disk not full?")
+        case "newerFormat":
+            return qsTr("This file was made with a newer Fission359 and is opened as far as this version understands it. To keep the original safe, save it under a new name.")
+        case "unsavedWork":
+            return qsTr("This project has not been saved yet. Save it first, then your work is safe.")
+        case "notAFissionFile":
+            return qsTr("This is not a Fission359 file.")
+        case "documentUnreadable":
+            return qsTr("This file is damaged and could not be opened.")
+        case "cannotRead":
+        default:
+            return qsTr("The file could not be read.")
+        }
+    }
+
+    /// { card, text, buttons } for an export that did not end well (not for the code "").
+    function exportNotice(code) {
+        const known = exportEntries[code] !== undefined
+        const entry = known ? exportEntries[code] : exportEntries["cannotWrite"]
+        return { card: entry.card, text: exportText(known ? code : "cannotWrite"), buttons: buttonsOf(entry) }
+    }
+
+    function exportText(code) {
+        switch (code) {
+        case "cancelled":
+            return qsTr("Export cancelled.")
+        case "nothing":
+            return qsTr("There is nothing to export: no visible body.")
+        case "needsHelp":
+            return qsTr("A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.")
+        case "cannotWrite":
+        default:
+            return qsTr("The file could not be written. Is the folder writable and the disk not full?")
+        }
+    }
 
     /// The buttons for a problem: [{ id, label }].
     function actionsFor(problem) {

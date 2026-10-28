@@ -199,6 +199,9 @@ Item {
 
         // Tab: the next axis, X → Y → Z.
         function step(by) {
+            if (!input.check()) {
+                return
+            }
             accept()
             axis = (axis + by + 3) % 3
             input.text = ""
@@ -274,21 +277,14 @@ Item {
                 elide: Text.ElideNone
             }
 
-            TextInput {
+            ValueInput {
                 id: input
 
+                kind: "length"
                 property bool pendingEdit: false
 
                 visible: bubble.typing
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.max(40, contentWidth + 6)
-                color: Theme.fg
-                selectionColor: Theme.accent
-                selectedTextColor: Theme.accentFg
-                font.family: Theme.monoFamilies[0]
-                font.pixelSize: Theme.fontSize
-                font.weight: Font.Medium
-                inputMethodHints: Qt.ImhFormattedNumbersOnly
                 Accessible.name: qsTr("Distance along %1").arg(bubble.names[bubble.axis])
 
                 onTextEdited: {
@@ -304,13 +300,18 @@ Item {
                 Keys.onEscapePressed: cancel()
                 onActiveFocusChanged: {
                     if (!activeFocus && bubble.typing) {
-                        finish() // clicking elsewhere accepts what was typed
+                        // Clicking elsewhere accepts what was typed, if it is a number.
+                        if (check()) {
+                            finish()
+                        } else {
+                            cancel()
+                        }
                     }
                 }
 
                 function finish() {
-                    if (!bubble.typing) {
-                        return
+                    if (!bubble.typing || !check()) {
+                        return // a wrong text stays in the field, with the reason under it
                     }
                     bubble.accept()
                     bubble.typing = false

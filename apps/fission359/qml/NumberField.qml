@@ -314,45 +314,10 @@ Item {
         commit()
     }
 
+    ValueExplanation { id: explainer }
+
     function explanation() {
-        const info = root.errorInfo
-        const word = info.subject === undefined ? "" : info.subject
-        const guess = suggestion()
-        switch (info.code) {
-        case "unknownName":
-            return guess !== "" ? qsTr("I don't know “%1”. Did you mean “%2”?").arg(word).arg(guess)
-                                : qsTr("I don't know “%1”.").arg(word)
-        case "unknownFunction":
-            return guess !== "" ? qsTr("I don't know the function “%1”. Did you mean “%2”?").arg(word).arg(guess)
-                                : qsTr("I don't know the function “%1”.").arg(word)
-        case "unknownUnit":
-            return guess !== "" ? qsTr("I don't know the unit “%1”. Did you mean “%2”?").arg(word).arg(guess)
-                                : qsTr("I don't know the unit “%1”.").arg(word)
-        case "missingClosingBracket":
-            return qsTr("A closing bracket is missing.")
-        case "unexpectedEnd":
-            return qsTr("The formula ends too early.")
-        case "unexpectedCharacter":
-            return qsTr("This character does not belong here.")
-        case "divisionByZero":
-            return qsTr("Dividing by zero is not possible.")
-        case "incompatibleQuantities":
-            return qsTr("Lengths and angles cannot be added.")
-        case "wrongKind":
-            return root.kind === "angle" ? qsTr("An angle belongs here, not a length.")
-                 : root.kind === "plain" ? qsTr("A plain number belongs here.")
-                 : qsTr("A length belongs here, not an angle.")
-        case "unitNotAllowed":
-            return qsTr("This number already has a unit.")
-        case "wrongArgumentCount":
-            return qsTr("This function has the wrong number of values.")
-        case "outOfRange":
-            return qsTr("This cannot be calculated (for example the root of a negative number).")
-        case "notFinite":
-            return qsTr("The result is too large.")
-        default:
-            return qsTr("That is not a number or formula.")
-        }
+        return explainer.text(root.errorInfo, root.kind)
     }
 
     function commit() {

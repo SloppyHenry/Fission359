@@ -140,6 +140,9 @@ Window {
             { id: "split", text: qsTr("Split"), enabled: root.chosenBodies.length === 1 }
         ] },
         { title: qsTr("Window"), items: [
+            { id: "nexttab", text: qsTr("Next tab"), shortcut: isMac ? "⌃⇥" : qsTr("Ctrl+Tab"), enabled: Files.tabs.length > 1 },
+            { id: "prevtab", text: qsTr("Previous tab"), shortcut: isMac ? "⌃⇧⇥" : qsTr("Ctrl+Shift+Tab"), enabled: Files.tabs.length > 1 },
+            { separator: true },
             { id: "minimize", text: qsTr("Minimize"), shortcut: primaryKey + "M", nativeShortcut: "Ctrl+M" },
             { id: "fullscreen", text: qsTr("Full screen"), shortcut: isMac ? "⌃⌘F" : "F11", checked: root.visibility === Window.FullScreen }
         ] },
@@ -372,6 +375,8 @@ Window {
         case "quit": quitProgram(); break
         case "new": Files.newDocument(); break
         case "close": Files.closeTab(Files.currentTab); break
+        case "nexttab": Files.switchTab((Files.currentTab + 1) % Files.tabs.length); break
+        case "prevtab": Files.switchTab((Files.currentTab + Files.tabs.length - 1) % Files.tabs.length); break
         case "open": openDialog.open(); break
         case "save":
             if (Files.fileName === "") {
@@ -673,6 +678,18 @@ Window {
     Shortcut { sequence: "Ctrl+O"; enabled: !root.isMac; onActivated: root.run("open") }
     Shortcut { sequence: "Ctrl+E"; enabled: !root.isMac; onActivated: root.run("export") }
     Shortcut { sequence: "Ctrl+W"; enabled: !root.isMac; onActivated: root.run("close") }
+    // Between the tabs: ⌃Tab and ⌘⇧] on the Mac (Qt calls the Control key "Meta" there), Ctrl+Tab
+    // and Ctrl+Page down on Linux; with Shift, or Page up / ⌘⇧[, the other way round.
+    Shortcut {
+        sequences: root.isMac ? ["Meta+Tab", "Ctrl+Shift+]"] : ["Ctrl+Tab", "Ctrl+PgDown"]
+        enabled: Files.tabs.length > 1
+        onActivated: root.run("nexttab")
+    }
+    Shortcut {
+        sequences: root.isMac ? ["Meta+Shift+Tab", "Ctrl+Shift+["] : ["Ctrl+Shift+Tab", "Ctrl+PgUp"]
+        enabled: Files.tabs.length > 1
+        onActivated: root.run("prevtab")
+    }
     Shortcut { sequence: "Ctrl+S"; enabled: !root.isMac; onActivated: root.run("save") }
     Shortcut { sequence: "Ctrl+Shift+S"; enabled: !root.isMac; onActivated: root.run("saveas") }
     // Undo and redo: on macOS the menu of the system carries them.
@@ -760,25 +777,9 @@ Window {
         target: Exporter
 
         function onFinished(code, path, bodies) {
-            switch (code) {
-            case "":
+            if (code === "") {
                 root.showHint(qsTr("%n body(ies) exported.", "", bodies))
                 root.exportOpen = false
-                break
-            case "cancelled":
-                root.showHint(qsTr("Export cancelled."))
-                break
-            case "nothing":
-                root.showHint(qsTr("There is nothing to export: no visible body."))
-                break
-            case "needsHelp":
-                fileCard.show(qsTr("A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first."),
-                              [{ id: "cancel", text: qsTr("OK"), primary: true }])
-                break
-            default:
-                fileCard.show(qsTr("The file could not be written. Is the folder writable and the disk not full?"),
-                              [{ id: "cancel", text: qsTr("OK"), primary: true }])
-                break
             }
         }
     }
@@ -809,57 +810,6 @@ Window {
         function onDocumentReplaced() {
             Selection.clear()
             Handles.armed = false
-        }
-    }
-
-    // Problems with files are a card with the way on, never a dialog (rule 5).
-    Connections {
-        target: Files
-
-        function onRescuedWork(id, savedAt, originalPath) {
-            const when = new Date(savedAt)
-            const today = when.toDateString() === new Date().toDateString()
-            let text = qsTr("We saved your work from %1.")
-                .arg(today ? Qt.formatTime(when, "HH:mm") : Qt.formatDateTime(when, Locale.ShortFormat))
-            if (originalPath !== "") {
-                text += " " + qsTr("It belongs to “%1”.").arg(Files.baseName(originalPath))
-            }
-            rescueCard.show(text, [{ id: "restore", text: qsTr("Restore"), primary: true },
-                                   { id: "discard", text: qsTr("Discard") }], id)
-        }
-
-        function onFileProblem(code, path) {
-            switch (code) {
-            case "damaged":
-                fileCard.show(qsTr("This file is damaged: it does not match what was saved. It can probably still be read."),
-                              [{ id: "openanyway", text: qsTr("Open anyway"), primary: true },
-                               { id: "cancel", text: qsTr("Cancel") }], path)
-                break
-            case "cannotWrite":
-                fileCard.show(qsTr("The project could not be saved. Your work is still open. Is the folder writable and the disk not full?"),
-                              [{ id: "saveas", text: qsTr("Save as…"), primary: true },
-                               { id: "cancel", text: qsTr("OK") }])
-                break
-            case "newerFormat":
-                fileCard.show(qsTr("This file was made with a newer Fission359 and is opened as far as this version understands it. To keep the original safe, save it under a new name."),
-                              [{ id: "saveas", text: qsTr("Save as…"), primary: true },
-                               { id: "cancel", text: qsTr("OK") }])
-                break
-            case "unsavedWork":
-                fileCard.show(qsTr("This project has not been saved yet. Save it first, then your work is safe."),
-                              [{ id: "saveas", text: qsTr("Save…"), primary: true },
-                               { id: "cancel", text: qsTr("Not now") }])
-                break
-            case "notAFissionFile":
-                root.showHint(qsTr("This is not a Fission359 file."))
-                break
-            case "documentUnreadable":
-                root.showHint(qsTr("This file is damaged and could not be opened."))
-                break
-            default:
-                root.showHint(qsTr("The file could not be read."))
-                break
-            }
         }
     }
 
@@ -931,36 +881,16 @@ Window {
         }
     }
 
-    NoticeCard {
-        id: fileCard
+    // The cards for problems with files, rescued work and failed exports (rule 5).
+    FileNotices {
+        id: fileNotices
 
-        anchors.top: docTabs.bottom
-        anchors.topMargin: 10
-        anchors.horizontalCenter: parent.horizontalCenter
-        z: 20
-        onChosen: (id, payload) => {
-            if (id === "openanyway") {
-                Files.openPath(payload, true)
-            } else if (id === "saveas") {
-                saveDialog.open()
-            }
-        }
-    }
-
-    NoticeCard {
-        id: rescueCard
-
-        anchors.top: docTabs.bottom
-        anchors.topMargin: 10
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.fill: parent
+        catalog: messageCatalog
+        below: docTabs
         z: 21
-        onChosen: (id, payload) => {
-            if (id === "restore") {
-                Files.restoreRescued(payload)
-            } else {
-                Files.discardRescued(payload)
-            }
-        }
+        onHintRequested: text => root.showHint(text)
+        onSaveAsRequested: saveDialog.open()
     }
 
     DocTabs {
@@ -1359,67 +1289,7 @@ Window {
     }
 
     function stepText(step) {
-        const n = value => Numbers.format(value, 2)
-        const v = step.values
-        if (step.type === "box" && v.length === 3) {
-            return qsTr("Box %1 × %2 × %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
-        }
-        if (step.type === "cylinder" && v.length === 2) {
-            return qsTr("Cylinder, radius %1 mm, height %2 mm").arg(n(v[0])).arg(n(v[1]))
-        }
-        if (step.type === "sphere" && v.length === 1) {
-            return qsTr("Sphere, radius %1 mm").arg(n(v[0]))
-        }
-        if (step.type === "hemisphere" && v.length === 1) {
-            return qsTr("Hemisphere, radius %1 mm").arg(n(v[0]))
-        }
-        if (step.type === "cone" && v.length === 3) {
-            return v[1] > 0
-                ? qsTr("Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
-                : qsTr("Cone, radius %1 mm, height %2 mm").arg(n(v[0])).arg(n(v[2]))
-        }
-        if (step.type === "torus" && v.length === 2) {
-            return qsTr("Torus, ring radius %1 mm, tube radius %2 mm").arg(n(v[0])).arg(n(v[1]))
-        }
-        if (step.type === "tube" && v.length === 3) {
-            return qsTr("Tube, radius %1 mm, wall %2 mm, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
-        }
-        if (step.type === "prism" && v.length === 3) {
-            return qsTr("Prism with %1 sides, radius %2 mm, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
-        }
-        if (step.type === "pyramid" && v.length === 3) {
-            return qsTr("Pyramid %1 × %2 × %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
-        }
-        if (step.type === "wedge" && v.length === 3) {
-            return qsTr("Wedge %1 × %2 × %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
-        }
-        if (step.type === "star" && v.length === 3) {
-            return qsTr("Star with %1 points, radius %2 mm, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
-        }
-        if (step.type === "text" && v.length === 2) {
-            const style = step.texts.style
-            return style !== undefined && style !== "regular"
-                ? qsTr("Text “%1” (%2), letters %3 mm, height %4 mm").arg(step.texts.text).arg(styleLabel(style)).arg(n(v[0])).arg(n(v[1]))
-                : qsTr("Text “%1”, letters %2 mm, height %3 mm").arg(step.texts.text).arg(n(v[0])).arg(n(v[1]))
-        }
-        if (step.type === "split" && v.length === 2) {
-            return qsTr("Split across %1 at %2 mm").arg(["X", "Y", "Z"][Math.round(v[0])]).arg(n(v[1]))
-        }
-        if (step.type === "place" && v.length === 3) {
-            return qsTr("Part placed, moved by %1, %2, %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
-        }
-        if (step.type === "combine" && v.length === 1) {
-            switch (step.texts.mode) {
-            case "subtract": return qsTr("Cut out %n body(ies)", "", v[0])
-            case "intersect": return qsTr("Overlap kept with %n body(ies)", "", v[0])
-            default: return qsTr("Merged with %n body(ies)", "", v[0])
-            }
-        }
-        // A kind of step this version does not know (a file from a later version).
-        if (shapeCatalog.nameOf(step.type) === "" && ["combine", "split", "place"].indexOf(step.type) < 0) {
-            return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
-        }
-        return typeLabel(step.type)
+        return recipeSentences.text(step)
     }
 
     // One short sentence for a step of the history ("Width changed to 35").
@@ -1476,6 +1346,14 @@ Window {
         text: historyText(step),
         done: step.done
     }))
+
+    RecipeSentences {
+        id: recipeSentences
+
+        styleLabel: root.styleLabel
+        typeLabel: root.typeLabel
+        knownShape: type => shapeCatalog.nameOf(type) !== ""
+    }
 
     // One short sentence for what went wrong (the full message catalogue comes later).
     MessageCatalog {
