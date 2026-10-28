@@ -207,8 +207,8 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - Kontextleiste an der Auswahl in der 3D-Ansicht (die 4–6 wahrscheinlichsten Aktionen)
 
 **Akzeptanzkriterien:**
-- [ ] Zahlenfeld-Komponente ist einheitlich überall verwendet (keine Sonderfelder)
-- [ ] Ungültige Eingabe wird erklärt („‚Breitee‘ kenne ich nicht. Meintest du ‚Breite‘?“)
+- [x] Zahlenfeld-Komponente ist einheitlich überall verwendet (keine Sonderfelder) – Panel: `NumberField.qml`; 3D-Ansicht: alle sechs Wertblasen/Felder über `ValueInput.qml` (2026-10-27, Pflege T3)
+- [x] Ungültige Eingabe wird erklärt („‚Breitee‘ kenne ich nicht. Meintest du ‚Breite‘?“) – Panel und Blasen teilen `ValueExplanation.qml`; Nachweis Blase: Fenster-Test `app_bubble_wrong_input` (2026-10-27)
 
 **Abschlussvermerk (2026-10-25, Teile b–d):**
 - Panel nach Auswahl (Körper, mehrere, Fläche/Kante), umbenennbarer Körpername, „Mehr“ für Seltenes (`ParamSpec::advanced`).

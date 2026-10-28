@@ -823,6 +823,38 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("expectbubble")) {
+            // expectbubble:Breitee - the value bubble is still open and explains the typed text
+            // (the line under it says this, a part of it).
+            const QString part = action.mid(colon + 1).trimmed();
+            delay += 400;
+            QTimer::singleShot(delay, viewport, [window, part] {
+                const QObject* layer = window->findChild<QObject*>(QStringLiteral("handleLayer"));
+                const QString shown =
+                    layer != nullptr ? layer->property("bubbleProblem").toString() : QString();
+                if (!shown.contains(part)) {
+                    qWarning().noquote()
+                        << QStringLiteral("the bubble says \"%1\", expected %2").arg(shown, part);
+                    g_simulationFailure = 10;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("expectundo")) {
+            // expectundo:addFeature - the next step to undo is of this kind (the list "Recent
+            // actions"): a refused input must not have added one.
+            const QString key = action.mid(colon + 1).trimmed();
+            delay += 400;
+            QTimer::singleShot(delay, viewport, [model, key] {
+                const QString found = model->nextUndo()[QStringLiteral("key")].toString();
+                if (found != key) {
+                    qWarning().noquote()
+                        << QStringLiteral("the next undo is \"%1\", expected %2").arg(found, key);
+                    g_simulationFailure = 10;
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("expecthint")) {
             // expecthint:Start with a shape - the hint line says this (a part of it).
             const QString part = action.mid(colon + 1).trimmed();

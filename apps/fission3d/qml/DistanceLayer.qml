@@ -123,22 +123,16 @@ Item {
                         elide: Text.ElideNone
                     }
 
-                    TextInput {
+                    ValueInput {
                         id: input
 
+                        kind: "length"
+                        compact: true
                         property bool refused: false
                         property bool pendingEdit: false
 
                         visible: part.open
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(36, contentWidth + 6)
-                        color: Theme.fg
-                        selectionColor: Theme.accent
-                        selectedTextColor: Theme.accentFg
-                        font.family: Theme.monoFamilies[0]
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.weight: Font.Medium
-                        inputMethodHints: Qt.ImhFormattedNumbersOnly
                         Accessible.name: qsTr("Distance")
 
                         onTextEdited: {
@@ -168,6 +162,7 @@ Item {
                                 root.close()
                             } else {
                                 refused = true // not a number, or one that cannot be a distance
+                                check() // says why, under the label
                             }
                         }
 
@@ -178,6 +173,7 @@ Item {
                             }
                             if (pendingEdit && !root.apply()) {
                                 refused = true
+                                check()
                                 return
                             }
                             root.open((root.editing + by + count) % count)

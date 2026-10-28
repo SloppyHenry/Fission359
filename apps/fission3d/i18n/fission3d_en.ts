@@ -1040,8 +1040,8 @@
 <context>
     <name>DistanceLayer</name>
     <message>
-        <location filename="../qml/DistanceLayer.qml" line="+142"/>
-        <location line="+64"/>
+        <location filename="../qml/DistanceLayer.qml" line="+136"/>
+        <location line="+66"/>
         <source>Distance</source>
         <translation>Distance</translation>
     </message>
@@ -1295,7 +1295,7 @@
         <translation>Move along %1</translation>
     </message>
     <message>
-        <location line="+146"/>
+        <location line="+142"/>
         <source>Distance along %1</source>
         <translation>Distance along %1</translation>
     </message>
@@ -2833,104 +2833,6 @@
     </message>
 </context>
 <context>
-    <name>NumberField</name>
-    <message>
-        <location filename="../qml/NumberField.qml" line="+323"/>
-        <source>I don&apos;t know “%1”. Did you mean “%2”?</source>
-        <translation>I don&apos;t know “%1”. Did you mean “%2”?</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>I don&apos;t know “%1”.</source>
-        <translation>I don&apos;t know “%1”.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>I don&apos;t know the function “%1”. Did you mean “%2”?</source>
-        <translation>I don&apos;t know the function “%1”. Did you mean “%2”?</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>I don&apos;t know the function “%1”.</source>
-        <translation>I don&apos;t know the function “%1”.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>I don&apos;t know the unit “%1”. Did you mean “%2”?</source>
-        <translation>I don&apos;t know the unit “%1”. Did you mean “%2”?</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>I don&apos;t know the unit “%1”.</source>
-        <translation>I don&apos;t know the unit “%1”.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>A closing bracket is missing.</source>
-        <translation>A closing bracket is missing.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>The formula ends too early.</source>
-        <translation>The formula ends too early.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>This character does not belong here.</source>
-        <translation>This character does not belong here.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Dividing by zero is not possible.</source>
-        <translation>Dividing by zero is not possible.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Lengths and angles cannot be added.</source>
-        <translation>Lengths and angles cannot be added.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>An angle belongs here, not a length.</source>
-        <translation>An angle belongs here, not a length.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>A plain number belongs here.</source>
-        <translation>A plain number belongs here.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>A length belongs here, not an angle.</source>
-        <translation>A length belongs here, not an angle.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>This number already has a unit.</source>
-        <translation>This number already has a unit.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>This function has the wrong number of values.</source>
-        <translation>This function has the wrong number of values.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>This cannot be calculated (for example the root of a negative number).</source>
-        <translation>This cannot be calculated (for example the root of a negative number).</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>The result is too large.</source>
-        <translation>The result is too large.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>That is not a number or formula.</source>
-        <translation>That is not a number or formula.</translation>
-    </message>
-</context>
-<context>
     <name>RecipeRow</name>
     <message>
         <location filename="../qml/RecipeRow.qml" line="+37"/>
@@ -3176,7 +3078,7 @@
         <translation>Turn around %1</translation>
     </message>
     <message>
-        <location line="+141"/>
+        <location line="+137"/>
         <source>Angle around %1</source>
         <translation>Angle around %1</translation>
     </message>
@@ -3189,12 +3091,12 @@
         <translation>Scale evenly</translation>
     </message>
     <message>
-        <location line="+88"/>
+        <location line="+92"/>
         <source>%1 %</source>
         <translation>%1%</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+16"/>
         <source>Size in percent</source>
         <translation>Size in percent</translation>
     </message>
@@ -3509,7 +3411,7 @@
         <translation>Precision of snapping</translation>
     </message>
     <message>
-        <location line="+96"/>
+        <location line="+91"/>
         <source>Grid step in millimetres</source>
         <translation>Grid step in millimetres</translation>
     </message>
@@ -3640,6 +3542,104 @@
         <location line="+44"/>
         <source>Name</source>
         <translation>Name</translation>
+    </message>
+</context>
+<context>
+    <name>ValueExplanation</name>
+    <message>
+        <location filename="../qml/ValueExplanation.qml" line="+17"/>
+        <source>I don&apos;t know “%1”. Did you mean “%2”?</source>
+        <translation>I don&apos;t know “%1”. Did you mean “%2”?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I don&apos;t know “%1”.</source>
+        <translation>I don&apos;t know “%1”.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>I don&apos;t know the function “%1”. Did you mean “%2”?</source>
+        <translation>I don&apos;t know the function “%1”. Did you mean “%2”?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I don&apos;t know the function “%1”.</source>
+        <translation>I don&apos;t know the function “%1”.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>I don&apos;t know the unit “%1”. Did you mean “%2”?</source>
+        <translation>I don&apos;t know the unit “%1”. Did you mean “%2”?</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I don&apos;t know the unit “%1”.</source>
+        <translation>I don&apos;t know the unit “%1”.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>A closing bracket is missing.</source>
+        <translation>A closing bracket is missing.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The formula ends too early.</source>
+        <translation>The formula ends too early.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This character does not belong here.</source>
+        <translation>This character does not belong here.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Dividing by zero is not possible.</source>
+        <translation>Dividing by zero is not possible.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lengths and angles cannot be added.</source>
+        <translation>Lengths and angles cannot be added.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>An angle belongs here, not a length.</source>
+        <translation>An angle belongs here, not a length.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A plain number belongs here.</source>
+        <translation>A plain number belongs here.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A length belongs here, not an angle.</source>
+        <translation>A length belongs here, not an angle.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This number already has a unit.</source>
+        <translation>This number already has a unit.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This function has the wrong number of values.</source>
+        <translation>This function has the wrong number of values.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This cannot be calculated (for example the root of a negative number).</source>
+        <translation>This cannot be calculated (for example the root of a negative number).</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The result is too large.</source>
+        <translation>The result is too large.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>That is not a number or formula.</source>
+        <translation>That is not a number or formula.</translation>
     </message>
 </context>
 <context>

@@ -216,6 +216,14 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=35,35,200 --simulate "put:box;menu:new;expecttab:1,2;key:${_fission_prev_tab_key};expecttab:0,2;key:${_fission_next_tab_key};expecttab:1,2;menu:prevtab;expecttab:0,2")
   set_tests_properties(app_tab_keys PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-1.8 criterion 1, rule 2: a wrong text in the value bubble is not taken, the bubble stays
+  # open and says why; Esc takes everything back: the value stays and no new step appears.
+  add_test(NAME app_bubble_wrong_input
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission3d>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-bubble-wrong-input.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "put:box;tool:size;expectundo:addFeature;type:Breitee,enter;expectbubble:Breitee;type:esc;near:width,20;expectundo:addFeature")
+  set_tests_properties(app_bubble_wrong_input PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # pflege.md P1: pull the radius of a sphere, do other work, undo twice (the menu entry Undo):
   # the radius is 10 again. A wrong value in `near` must turn this red.
   add_test(NAME app_sphere_radius_undo
