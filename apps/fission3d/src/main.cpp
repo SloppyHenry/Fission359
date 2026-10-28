@@ -256,6 +256,10 @@ void sendMouse(QQuickWindow* window, fission::ui::Viewport3D* viewport, QEvent::
     QCoreApplication::sendEvent(window, &event);
 }
 
+// Pulls that have been started and are not let go yet. A check waits for them, so that it never
+// sees the middle of a pull (a loaded machine may fire the timer of a check before the last move).
+int g_pullsRunning = 0;
+
 // Press at `start()` (asked when the press happens), pull by `pull` view pixels in `steps`
 // moves, let go. Returns the delay after the last event.
 // Runs `check` once the model has worked out the last change, so that a check sees the values of
@@ -267,8 +271,8 @@ void whenCalculated(QObject* context, fission::ui::DocumentModel* model,
                     std::function<void()> check, int patience = 5000) {
     // Also not while a shape is still being put down: on a slow machine (CI with the memory
     // checker) the check came before the shape was let go, and a hole cuts only then.
-    const bool done = !model->placing() && !model->calculating() && model->result() &&
-                      model->result()->revision == model->document().revision();
+    const bool done = g_pullsRunning == 0 && !model->placing() && !model->calculating() &&
+                      model->result() && model->result()->revision == model->document().revision();
     if (done || patience <= 0) {
         check();
         return;
@@ -285,29 +289,65 @@ void checkAfter(int delay, QObject* context, fission::ui::DocumentModel* model,
     });
 }
 
-int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int delay,
-                 std::function<QPointF()> start, QPointF pull, int steps, bool hold = false) {
-    auto from = std::make_shared<QPointF>();
-    delay += 350;
-    QTimer::singleShot(delay, viewport, [window, viewport, from, start] {
-        *from = start();
-        sendMouse(window, viewport, QEvent::MouseButtonPress, *from, Qt::LeftButton);
-    });
-    for (int step = 1; step <= steps; ++step) {
-        delay += 90;
-        QTimer::singleShot(delay, viewport, [window, viewport, from, pull, step, steps] {
-            sendMouse(window, viewport, QEvent::MouseMove, *from + pull * step / steps,
-                      Qt::LeftButton);
+// One pull of the pointer. Every timer holds the pull, so it lives until its last move.
+struct Pull : std::enable_shared_from_this<Pull> {
+    QQuickWindow* window = nullptr;
+    fission::ui::Viewport3D* viewport = nullptr;
+    std::function<QPointF()> start;
+    QPointF pull;
+    int steps = 1;
+    bool hold = false;
+    QPointF from;
+
+    // The press waits for what it presses on: `start()` finds nothing (a null point) while the
+    // shape that carries the handle is not calculated yet, which a loaded machine makes likely.
+    // The moves follow the press, whenever it happens, so the pull is never begun on nothing.
+    void press(int patience) {
+        from = start();
+        if (from.isNull() && patience > 0) {
+            QTimer::singleShot(50, viewport, [self = shared_from_this(), patience] {
+                self->press(patience - 50);
+            });
+            return;
+        }
+        sendMouse(window, viewport, QEvent::MouseButtonPress, from, Qt::LeftButton);
+        next(1);
+    }
+
+    void next(int step) {
+        QTimer::singleShot(90, viewport, [self = shared_from_this(), step] {
+            if (step > self->steps) {
+                if (!self->hold) {
+                    sendMouse(self->window, self->viewport, QEvent::MouseButtonRelease,
+                              self->from + self->pull, Qt::NoButton);
+                }
+                --g_pullsRunning;
+                return;
+            }
+            sendMouse(self->window, self->viewport, QEvent::MouseMove,
+                      self->from + self->pull * step / self->steps, Qt::LeftButton);
+            self->next(step + 1);
         });
     }
-    if (hold) {
-        return delay; // the button stays down (a picture in the middle of a drag)
-    }
-    delay += 90;
-    QTimer::singleShot(delay, viewport, [window, viewport, from, pull] {
-        sendMouse(window, viewport, QEvent::MouseButtonRelease, *from + pull, Qt::NoButton);
+};
+
+int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int delay,
+                 std::function<QPointF()> start, QPointF pull, int steps, bool hold = false) {
+    auto action = std::make_shared<Pull>();
+    action->window = window;
+    action->viewport = viewport;
+    action->start = std::move(start);
+    action->pull = pull;
+    action->steps = steps;
+    action->hold = hold;
+    delay += 350;
+    QTimer::singleShot(delay, viewport, [action] {
+        ++g_pullsRunning;
+        action->press(5000);
     });
-    return delay;
+    // The planned end of the pull; a check after it waits for the real one (`g_pullsRunning`).
+    delay += 90 * steps;
+    return hold ? delay : delay + 90;
 }
 
 void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
