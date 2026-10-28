@@ -420,6 +420,42 @@
     </message>
     <message>
         <location line="+5"/>
+        <source>Next tab</source>
+        <translation>Next tab</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the next open project.</source>
+        <translation>Shows the next open project.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+7"/>
+        <source>Every open project has its own tab at the top.</source>
+        <translation>Every open project has its own tab at the top.</translation>
+    </message>
+    <message>
+        <location line="-6"/>
+        <source>Ctrl+Tab</source>
+        <translation>Ctrl+Tab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Previous tab</source>
+        <translation>Previous tab</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the project before this one.</source>
+        <translation>Shows the project before this one.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Ctrl+Shift+Tab</source>
+        <translation>Ctrl+Shift+Tab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -1498,12 +1534,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+643"/>
+        <location line="+660"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-642"/>
+        <location line="-659"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
@@ -1533,7 +1569,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+99"/>
+        <location line="+102"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -1543,7 +1579,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-99"/>
+        <location line="-102"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -1719,12 +1755,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1172"/>
+        <location line="+1189"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1171"/>
+        <location line="-1188"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1755,17 +1791,17 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1160"/>
+        <location line="+1177"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1158"/>
+        <location line="-1175"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+4"/>
         <source>Minimize</source>
         <translation>Minimize</translation>
     </message>
@@ -1796,18 +1832,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+748"/>
+        <location line="+762"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-746"/>
-        <location line="+747"/>
+        <location line="-760"/>
+        <location line="+761"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-741"/>
+        <location line="-755"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -1833,7 +1869,7 @@
         </translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+89"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -1885,7 +1921,7 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+195"/>
+        <location line="+207"/>
         <source>Open</source>
         <translation>Open</translation>
     </message>
@@ -1939,7 +1975,7 @@
         <translation>Discard</translation>
     </message>
     <message>
-        <location line="-585"/>
+        <location line="-599"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -1974,7 +2010,7 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+783"/>
+        <location line="+797"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -1989,12 +2025,32 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1078"/>
+        <location line="-1092"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-17"/>
+        <source>Next tab</source>
+        <translation>Next tab</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Tab</source>
+        <translation>Ctrl+Tab</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Previous tab</source>
+        <translation>Previous tab</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Shift+Tab</source>
+        <translation>Ctrl+Shift+Tab</translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</source>
         <translation>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</translation>
     </message>
@@ -2029,7 +2085,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1109"/>
+        <location line="+1123"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2477,27 +2533,27 @@
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1158"/>
+        <location line="-1175"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1193"/>
+        <location line="+1210"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1031"/>
+        <location line="-1045"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+500"/>
+        <location line="+514"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-547"/>
+        <location line="-561"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>

@@ -806,6 +806,23 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("expecttab")) {
+            // expecttab:0,2 - the tab shown is number 0 (counted from 0) of 2 open tabs.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 600;
+            QTimer::singleShot(delay, viewport, [files, spec] {
+                if (files->currentTab() != spec.value(0).toInt() ||
+                    files->tabs().size() != spec.value(1).toInt()) {
+                    qWarning().noquote()
+                        << QStringLiteral("expected tab %1 of %2; found tab %3 of %4")
+                               .arg(spec.value(0), spec.value(1))
+                               .arg(files->currentTab())
+                               .arg(files->tabs().size());
+                    g_simulationFailure = 10;
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("expectbubble")) {
             // expectbubble:Breitee - the value bubble is still open and explains the typed text
             // (the line under it says this, a part of it).
@@ -958,11 +975,20 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             delay += 350;
             if (!sequence.isEmpty()) {
                 const QKeyCombination key = sequence[0];
-                QTimer::singleShot(delay, viewport, [window, key] {
-                    QKeyEvent press(QEvent::KeyPress, key.key(), key.keyboardModifiers());
-                    QCoreApplication::sendEvent(window, &press);
-                    QKeyEvent release(QEvent::KeyRelease, key.key(), key.keyboardModifiers());
-                    QCoreApplication::sendEvent(window, &release);
+                QTimer::singleShot(delay, viewport, [window, viewport, key] {
+                    // Shortcuts only answer in the window that is active; right after the start
+                    // it may not be yet, so it is asked to be, and given a moment. A window that
+                    // is active is left alone: asking again would move the focus out of a field.
+                    const bool wasActive = window->isActive();
+                    if (!wasActive) {
+                        window->requestActivate();
+                    }
+                    QTimer::singleShot(wasActive ? 0 : 150, viewport, [window, key] {
+                        QKeyEvent press(QEvent::KeyPress, key.key(), key.keyboardModifiers());
+                        QCoreApplication::sendEvent(window, &press);
+                        QKeyEvent release(QEvent::KeyRelease, key.key(), key.keyboardModifiers());
+                        QCoreApplication::sendEvent(window, &release);
+                    });
                 });
             }
             continue;
