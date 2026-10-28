@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Fission359 contributors
+# SPDX-FileCopyrightText: Fission3D contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Linux on x86_64. Shared libraries, release only (see fission-arm64-osx.cmake).
