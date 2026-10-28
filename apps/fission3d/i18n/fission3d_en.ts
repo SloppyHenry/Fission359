@@ -1186,6 +1186,29 @@
     </message>
 </context>
 <context>
+    <name>FileNotices</name>
+    <message>
+        <location filename="../qml/FileNotices.qml" line="+36"/>
+        <source>We saved your work from %1.</source>
+        <translation>We saved your work from %1.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>It belongs to “%1”.</source>
+        <translation>It belongs to “%1”.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Restore</source>
+        <translation>Restore</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Discard</source>
+        <translation>Discard</translation>
+    </message>
+</context>
+<context>
     <name>FirstRunCard</name>
     <message>
         <location filename="../qml/FirstRunCard.qml" line="+21"/>
@@ -1755,12 +1778,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1189"/>
+        <location line="+1136"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1188"/>
+        <location line="-1135"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1791,12 +1814,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1177"/>
+        <location line="+1124"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1175"/>
+        <location line="-1122"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1832,18 +1855,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+762"/>
+        <location line="+709"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-760"/>
-        <location line="+761"/>
+        <location line="-707"/>
+        <location line="+708"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-755"/>
+        <location line="-702"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -1955,27 +1978,7 @@
         </translation>
     </message>
     <message>
-        <location line="+49"/>
-        <source>We saved your work from %1.</source>
-        <translation>We saved your work from %1.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>It belongs to “%1”.</source>
-        <translation>It belongs to “%1”.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Restore</source>
-        <translation>Restore</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Discard</source>
-        <translation>Discard</translation>
-    </message>
-    <message>
-        <location line="-599"/>
+        <location line="-544"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2010,7 +2013,7 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+797"/>
+        <location line="+744"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -2025,7 +2028,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1092"/>
+        <location line="-1039"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -2085,7 +2088,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1123"/>
+        <location line="+1070"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2174,118 +2177,16 @@
         <source>Position</source>
         <translation>Position</translation>
     </message>
-    <message>
-        <location line="+9"/>
-        <source>Box %1 × %2 × %3 mm</source>
-        <translation>Box %1 × %2 × %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Cylinder, radius %1 mm, height %2 mm</source>
-        <translation>Cylinder, radius %1 mm, height %2 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Sphere, radius %1 mm</source>
-        <translation>Sphere, radius %1 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Hemisphere, radius %1 mm</source>
-        <translation>Hemisphere, radius %1 mm</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm</source>
-        <translation>Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Cone, radius %1 mm, height %2 mm</source>
-        <translation>Cone, radius %1 mm, height %2 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Torus, ring radius %1 mm, tube radius %2 mm</source>
-        <translation>Torus, ring radius %1 mm, tube radius %2 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Tube, radius %1 mm, wall %2 mm, height %3 mm</source>
-        <translation>Tube, radius %1 mm, wall %2 mm, height %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Prism with %1 sides, radius %2 mm, height %3 mm</source>
-        <translation>Prism with %1 sides, radius %2 mm, height %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Pyramid %1 × %2 × %3 mm</source>
-        <translation>Pyramid %1 × %2 × %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Wedge %1 × %2 × %3 mm</source>
-        <translation>Wedge %1 × %2 × %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Star with %1 points, radius %2 mm, height %3 mm</source>
-        <translation>Star with %1 points, radius %2 mm, height %3 mm</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Text “%1” (%2), letters %3 mm, height %4 mm</source>
-        <translation>Text “%1” (%2), letters %3 mm, height %4 mm</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Text “%1”, letters %2 mm, height %3 mm</source>
-        <translation>Text “%1”, letters %2 mm, height %3 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Split across %1 at %2 mm</source>
-        <translation>Split across %1 at %2 mm</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Part placed, moved by %1, %2, %3 mm</source>
-        <translation>Part placed, moved by %1, %2, %3 mm</translation>
-    </message>
     <message numerus="yes">
-        <location line="+4"/>
-        <location line="+36"/>
+        <location line="+33"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>Cut out %n body</numerusform>
             <numerusform>Cut out %n bodies</numerusform>
         </translation>
     </message>
-    <message numerus="yes">
-        <location line="-35"/>
-        <source>Overlap kept with %n body(ies)</source>
-        <translation>
-            <numerusform>Overlap kept with %n body</numerusform>
-            <numerusform>Overlap kept with %n bodies</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <location line="+1"/>
-        <source>Merged with %n body(ies)</source>
-        <translation>
-            <numerusform>Merged with %n body</numerusform>
-            <numerusform>Merged with %n bodies</numerusform>
-        </translation>
-    </message>
     <message>
-        <location line="+5"/>
-        <source>Step %1 (unknown kind)</source>
-        <translation>Step %1 (unknown kind)</translation>
-    </message>
-    <message>
-        <location line="+12"/>
+        <location line="-17"/>
         <source>%1 added</source>
         <translation>%1 added</translation>
     </message>
@@ -2474,7 +2375,7 @@
         <translation>Several changes</translation>
     </message>
     <message>
-        <location line="+72"/>
+        <location line="+80"/>
         <source>, part %1</source>
         <translation>, part %1</translation>
     </message>
@@ -2528,22 +2429,22 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-357"/>
+        <location line="-305"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1175"/>
+        <location line="-1122"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1210"/>
+        <location line="+1157"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1045"/>
+        <location line="-992"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
@@ -2858,6 +2759,118 @@
         <location line="+69"/>
         <source>(hidden)</source>
         <translation>(hidden)</translation>
+    </message>
+</context>
+<context>
+    <name>RecipeSentences</name>
+    <message>
+        <location filename="../qml/RecipeSentences.qml" line="+25"/>
+        <source>Box %1 × %2 × %3 mm</source>
+        <translation>Box %1 × %2 × %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Cylinder, radius %1 mm, height %2 mm</source>
+        <translation>Cylinder, radius %1 mm, height %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Sphere, radius %1 mm</source>
+        <translation>Sphere, radius %1 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Hemisphere, radius %1 mm</source>
+        <translation>Hemisphere, radius %1 mm</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm</source>
+        <translation>Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cone, radius %1 mm, height %2 mm</source>
+        <translation>Cone, radius %1 mm, height %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Torus, ring radius %1 mm, tube radius %2 mm</source>
+        <translation>Torus, ring radius %1 mm, tube radius %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Tube, radius %1 mm, wall %2 mm, height %3 mm</source>
+        <translation>Tube, radius %1 mm, wall %2 mm, height %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Prism with %1 sides, radius %2 mm, height %3 mm</source>
+        <translation>Prism with %1 sides, radius %2 mm, height %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Pyramid %1 × %2 × %3 mm</source>
+        <translation>Pyramid %1 × %2 × %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Wedge %1 × %2 × %3 mm</source>
+        <translation>Wedge %1 × %2 × %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Star with %1 points, radius %2 mm, height %3 mm</source>
+        <translation>Star with %1 points, radius %2 mm, height %3 mm</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Text “%1” (%2), letters %3 mm, height %4 mm</source>
+        <translation>Text “%1” (%2), letters %3 mm, height %4 mm</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text “%1”, letters %2 mm, height %3 mm</source>
+        <translation>Text “%1”, letters %2 mm, height %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Split across %1 at %2 mm</source>
+        <translation>Split across %1 at %2 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Part placed, moved by %1, %2, %3 mm</source>
+        <translation>Part placed, moved by %1, %2, %3 mm</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+4"/>
+        <source>Cut out %n body(ies)</source>
+        <translation>
+            <numerusform>Cut out %n body</numerusform>
+            <numerusform>Cut out %n bodies</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>Overlap kept with %n body(ies)</source>
+        <translation>
+            <numerusform>Overlap kept with %n body</numerusform>
+            <numerusform>Overlap kept with %n bodies</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>Merged with %n body(ies)</source>
+        <translation>
+            <numerusform>Merged with %n body</numerusform>
+            <numerusform>Merged with %n bodies</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Step %1 (unknown kind)</source>
+        <translation>Step %1 (unknown kind)</translation>
     </message>
 </context>
 <context>
