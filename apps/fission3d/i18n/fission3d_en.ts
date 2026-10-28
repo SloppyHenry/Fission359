@@ -1119,7 +1119,12 @@
         <translation>Fine</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+8"/>
+        <source>Curves can be angular.</source>
+        <translation>Curves can be angular.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Only chosen bodies</source>
         <translation>Only chosen bodies</translation>
     </message>

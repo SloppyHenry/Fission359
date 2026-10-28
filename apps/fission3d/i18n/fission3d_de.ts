@@ -1119,7 +1119,12 @@
         <translation>Fein</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+8"/>
+        <source>Curves can be angular.</source>
+        <translation>Rundungen können kantig sein.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Only chosen bodies</source>
         <translation>Nur gewählte Körper</translation>
     </message>
