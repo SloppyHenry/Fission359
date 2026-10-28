@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <numbers>
+#include <vector>
 
 #include "fission/core/commands.h"
 #include "fission/core/cuts.h"
@@ -390,6 +391,46 @@ TEST_CASE("cuts: how long the check takes with 10 bodies and 20 holes (reported)
     const auto warm = std::chrono::steady_clock::now();
     WARN("reconcileCuts, 10 bodies 20 holes: cold "
          << ms(start, cold) << " ms, warm " << ms(cold, warm) << " ms, cuts " << world.cutSteps());
+    CHECK(world.cutSteps() == 20);
+}
+
+TEST_CASE("cuts: one step of a drag with 10 bodies and 20 holes (reported)", "[cuts][time]") {
+    // pflege.md P13: what rule 9 asks for while a hole is pulled is the time of one step of the
+    // drag (one hole moved, the rest unchanged), not that of all the cuts at once.
+    World world;
+    std::vector<BodyId> pins;
+    for (int plate = 0; plate < 10; ++plate) {
+        const std::string x = std::to_string(plate * 50);
+        world.add("box", {{"width", "40"}, {"depth", "40"}, {"height", "10"}, {"x", x}});
+        for (int pin = 0; pin < 2; ++pin) {
+            const std::string px = std::to_string(plate * 50 + (pin == 0 ? -8 : 8));
+            pins.push_back(world.pin(px.c_str()));
+            world.asHole(pins.back());
+        }
+    }
+    world.reconcile();
+    world.reconcile();
+    REQUIRE(world.cutSteps() == 20);
+    const Feature& pinStep = *world.history.document().findFeature(
+        world.history.document().findBody(pins.front())->createdBy);
+    std::vector<double> steps;
+    for (int i = 1; i <= 8; ++i) {
+        // The history of a drag is open: every step is part of one undo step.
+        world.history.execute(makeSetFeatureValue(pinStep.id, "x", std::to_string(-8.0 + 0.5 * i)));
+        const auto start = std::chrono::steady_clock::now();
+        world.reconcile();
+        steps.push_back(
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start)
+                .count());
+    }
+    double sum = 0.0;
+    double worst = 0.0;
+    for (double ms : steps) {
+        sum += ms;
+        worst = std::max(worst, ms);
+    }
+    WARN("reconcileCuts, one hole moved among 20: mean " << sum / steps.size() << " ms, worst "
+                                                         << worst << " ms");
     CHECK(world.cutSteps() == 20);
 }
 

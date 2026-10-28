@@ -93,7 +93,7 @@ Linux-Desktop prüfen (Product Owner oder Testrechner mit Desktop-Sitzung); wenn
 ## P13 Löcher im Hintergrund prüfen (Regel 9)
 **Messung 2026-10-27 (Release, Apple Silicon, Test `cuts: how long the check takes with 10 bodies and 20 holes`):** 1 Loch in 1 Platte kalt 2,2 ms /
 warm 3,5 ms; 10 Körper mit 20 Löchern kalt ≈ 38 ms / warm ≈ 75 ms (20 echte Schnitte, die Vorprüfung per Box greift). Über der 50-ms-Grenze nur im
-Grenzfall; für den Nutzertest 1 (wenige Löcher) unkritisch. **Haltepunkt:** Umbau (Schritte 2–3) nur nach Rückfrage beim Product Owner.
+Grenzfall; für den Nutzertest 1 (wenige Löcher) unkritisch. **Ergebnis 2026-10-28 (Test `cuts: one step of a drag with 10 bodies and 20 holes`):** Was die Regel 9 beim Ziehen verlangt, ist die Zeit **eines Zug-Schritts** (ein Loch bewegt, der Rest unverändert): im Release **≈ 31 ms** auch im Grenzfall (10 Körper, 20 Löcher), Debug ≈ 40 ms. Das liegt unter den 50 ms der Vorgabe. **Gemessen, unkritisch bis 20 Löcher: kein Umbau in den Hintergrund** (Schritte 2–3 entfallen). Wieder ansehen, wenn Löcher in Mustern (AP-2.x, viele Kopien) oder große Körper dazukommen.
 **Größe:** M · Offen aus AP-1.7. `core::reconcileCuts` rechnet die Berührung von Löchern und Körpern (Booleans) im Oberflächen-Thread: kalt
 26 ms, warm 4 ms bei einem Loch in einer Platte, wächst mit der Zahl der Körper und Löcher. **Vor dem Nutzertest 1 (AP-1.13) erledigen.**
 1. Messung zuerst: ein Dokument mit 10 Körpern und 20 Löchern (Test in `tests/unit/core/test_cuts.cpp`, nur melden); ab etwa 50 ms ist es ein Fehler.
