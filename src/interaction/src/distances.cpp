@@ -36,6 +36,27 @@ double overlap(double lowA, double highA, double lowB, double highB) {
     return std::min(highA, highB) - std::max(lowA, lowB);
 }
 
+// The smallest of `others` whose footprint holds the footprint of `mover` (a hole in a plate, a
+// body standing on one); null when there is none.
+const std::pair<std::string, Box3>*
+carrierOf(const Box3& mover, const std::vector<std::pair<std::string, Box3>>& others) {
+    const std::pair<std::string, Box3>* best = nullptr;
+    double bestArea = 0.0;
+    for (const auto& candidate : others) {
+        const Box3& box = candidate.second;
+        bool holds = true;
+        for (std::size_t c = 0; c < 2; ++c) {
+            holds = holds && box.low[c] <= mover.low[c] && box.high[c] >= mover.high[c];
+        }
+        const double area = (box.high[0] - box.low[0]) * (box.high[1] - box.low[1]);
+        if (holds && (best == nullptr || area < bestArea)) {
+            best = &candidate;
+            bestArea = area;
+        }
+    }
+    return best;
+}
+
 } // namespace
 
 std::vector<Gap> nearestGaps(const Box3& mover,
@@ -43,6 +64,7 @@ std::vector<Gap> nearestGaps(const Box3& mover,
                              double bedSizeX, double bedSizeY) {
     std::vector<Gap> gaps;
     const double bedHalf[2] = {bedSizeX / 2.0, bedSizeY / 2.0};
+    const auto* carrier = carrierOf(mover, others);
     for (const Side side : {Side::left, Side::right, Side::front, Side::back}) {
         const SideInfo info = infoOf(side);
         const std::size_t a = info.axis;
@@ -85,6 +107,17 @@ std::vector<Gap> nearestGaps(const Box3& mover,
             to[a] = info.upper ? box.low[a] : box.high[a];
             from[c] = to[c] = across;
             from[2] = to[2] = height;
+        } else if (carrier != nullptr) {
+            // Nothing beside it: the edge of the body it lies on (a plate), not the bed.
+            const Box3& box = carrier->second;
+            const double edge = info.upper ? box.high[a] : box.low[a];
+            gap.distance = info.upper ? edge - mover.high[a] : mover.low[a] - edge;
+            gap.otherBody = carrier->first;
+            from[a] = info.upper ? mover.high[a] : mover.low[a];
+            to[a] = edge;
+            from[c] = to[c] = (mover.low[c] + mover.high[c]) / 2.0;
+            from[2] = to[2] =
+                (std::max(mover.low[2], box.low[2]) + std::min(mover.high[2], box.high[2])) / 2.0;
         } else {
             // The edge of the bed; the body must be inside it.
             const double edge = info.upper ? bedHalf[a] : -bedHalf[a];

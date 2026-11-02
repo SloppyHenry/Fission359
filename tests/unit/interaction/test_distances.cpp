@@ -94,7 +94,7 @@ TEST_CASE("distances: with no neighbour all four measures go to the edge of the 
 }
 
 TEST_CASE("distances: bodies that overlap are no gap", "[distance]") {
-    const Others others{{"inside", cube(-5, 0)}, {"above", cube(0, 0)}};
+    const Others others{{"inside", cube(-5, 0)}, {"above", cube(0, 0, 10)}};
     const auto gaps = nearestGaps(cube(0, 0), others, 256, 256);
     for (const Gap& gap : gaps) {
         CHECK(gap.toBed); // nothing counts as a neighbour
@@ -178,4 +178,54 @@ TEST_CASE("distances: a negative number or no number moves nothing", "[distance]
     CHECK_FALSE(offsetForDistance(*gap, -1.0).has_value());
     CHECK_FALSE(offsetForDistance(*gap, std::nan("")).has_value());
     CHECK(offsetForDistance(*gap, 0.0).has_value());
+}
+
+TEST_CASE("distances: a body on a plate measures to the edge of the plate, not of the bed",
+          "[distance]") {
+    const Box3 plate{{-25, -10, 0}, {25, 10, 4}};
+    const Box3 hole{{-20, -2.5, -1}, {-15, 2.5, 4}}; // 5 mm wide, 5 mm from the left edge
+    const Others others{{"plate", plate}};
+    const auto gaps = nearestGaps(hole, others, 256, 256);
+    const auto left = find(gaps, Side::left);
+    REQUIRE(left.has_value());
+    CHECK_FALSE(left->toBed);
+    CHECK(left->otherBody == "plate");
+    CHECK(left->distance == Approx(5.0));
+    CHECK(left->to[0] == Approx(-25.0));
+    CHECK(find(gaps, Side::right)->distance == Approx(40.0));
+    CHECK(find(gaps, Side::front)->distance == Approx(7.5));
+    CHECK(find(gaps, Side::back)->distance == Approx(7.5));
+    // Typing 3 moves the body so that it measures 3 mm from the edge of the plate.
+    const auto offset = offsetForDistance(*left, 3.0);
+    REQUIRE(offset.has_value());
+    CHECK((*offset)[0] == Approx(-2.0));
+}
+
+TEST_CASE("distances: a neighbour on the plate still counts before the plate", "[distance]") {
+    const Box3 plate{{-25, -10, 0}, {25, 10, 4}};
+    const Box3 hole{{-20, -2.5, -1}, {-15, 2.5, 4}};
+    const Others others{{"plate", plate}, {"text", {{-10, -3, 4}, {10, 3, 5.5}}}};
+    const auto right = find(nearestGaps(hole, others, 256, 256), Side::right);
+    REQUIRE(right.has_value());
+    CHECK(right->otherBody == "text");
+    CHECK(right->distance == Approx(5.0));
+}
+
+TEST_CASE("distances: of two plates the smaller one carries the body", "[distance]") {
+    const Box3 big{{-50, -50, 0}, {50, 50, 2}};
+    const Box3 small{{-25, -10, 2}, {25, 10, 4}};
+    const Box3 hole{{-20, -2.5, 2}, {-15, 2.5, 6}};
+    const auto left =
+        find(nearestGaps(hole, {{"big", big}, {"small", small}}, 256, 256), Side::left);
+    REQUIRE(left.has_value());
+    CHECK(left->otherBody == "small");
+    CHECK(left->distance == Approx(5.0));
+}
+
+TEST_CASE("distances: a body wider than the plate under it measures to the bed", "[distance]") {
+    const Box3 plate{{-5, -5, 0}, {5, 5, 2}};
+    const Box3 wide{{-10, -2, 2}, {10, 2, 6}};
+    const auto left = find(nearestGaps(wide, {{"plate", plate}}, 256, 256), Side::left);
+    REQUIRE(left.has_value());
+    CHECK(left->toBed);
 }
