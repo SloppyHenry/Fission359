@@ -68,6 +68,8 @@ signals:
     void changed();
     void filterChanged();
     void hoverChanged();
+    /// A plain click on nothing (the bed, the background): the view lets go of what is open.
+    void emptyClicked();
 
 private:
     void onPicked(int intent, bool extend, const QString& body, int kind, int number);

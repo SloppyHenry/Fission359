@@ -177,6 +177,13 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=35,35,200 --simulate "tool:rotate;put:box;ring:z,90,12;near:rotZ,90;ring:x,-45,12;least:rotY,45")
   set_tests_properties(app_ring_turn PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # P2: a click on empty ground closes the open shape gallery.
+  add_test(NAME app_gallery_closes_on_empty_click
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-gallery-closes.png" --language en
+            --size 1280x800 --simulate "flyout:shapes;expectflyout:shapes;click:900,650;expectflyout:")
+  set_tests_properties(app_gallery_closes_on_empty_click PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME app_ring_turn_edge_on
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
             --smoke-test "${CMAKE_BINARY_DIR}/window-ring-edge.png" --language en --size 1280x800
