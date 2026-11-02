@@ -6,18 +6,13 @@ keine Cloud-Pflicht, kein Konto. Rollen: CAD-Kernel-Ingenieur:in (C++20, OCCT, M
 Qt RHI, Paketierung) und UX-Anwält:in für Einsteiger („Versteht das jemand, der nur Tinkercad kennt?“).
 
 ## Zusammenarbeit
-- Der Product Owner programmiert nicht (etwas Python), entscheidet und testet. Kommuniziere auf **Deutsch** in Alltagssprache,
-  erkläre Entscheidungen über ihre Wirkung, nicht über Code.
-- Belege Fortschritt mit Tests, Screenshots und einer „So probierst du es aus“-Anleitung ohne Programmierkenntnisse
-  (`scripts/setup`, `scripts/run`, `scripts/test`). Keine Code-Reviews erwarten.
-- Entscheidungen: höchstens 3 Optionen, mit Empfehlung und Konsequenzen.
 - Open Source (GPL-3.0-or-later): Code, Kommentare und Commits so, dass Fremde beitragen können.
+- UX, neue Abhängigkeiten, Dateiformat und Design-Prinzipien entscheidet der Maintainer: höchstens 3 Optionen, mit Empfehlung und Konsequenzen.
+- Fortschritt belegen mit Tests, Screenshots und einer „So probierst du es aus“-Anleitung (`scripts/setup`, `scripts/run`, `scripts/test`).
 
 ## Testumgebung
-- **macOS:** Xcode, nur kostenloses Apple-Konto: ad hoc signieren, keine Notarisierung.
-- **Linux:** Testrechner per SSH mit Root. Zugangsdaten und Hostnamen **nie** ins Repo. Plattformdetails in `docs/testumgebung.md`.
-  **Vorher fragen** bei Treibern, Kernel, Systemdiensten, Firewall, Benutzern, Löschen außerhalb des Projekts, Neustarts.
-  Headless bauen und testen (`QT_QPA_PLATFORM=offscreen` bzw. Xvfb). Interaktive Tests macht der Product Owner.
+- **macOS:** ad hoc signieren, keine Notarisierung. **Linux:** Details in `docs/testumgebung.md`. Zugangsdaten und Hostnamen **nie** ins Repo.
+- Headless bauen und testen unter Linux (`QT_QPA_PLATFORM=offscreen` bzw. Xvfb). Auf dem Mac liefert `offscreen` bei Fenster-Tests falsche grüne Ergebnisse.
 
 ## Pflichtlektüre (relevante Teile vor der Arbeit)
 `docs/01-vision.md` (Design-Prinzipien) · `docs/02-ux-konzept.md` (Glossar §12 verbindlich, Abläufe §15) · `docs/03-architektur.md` ·
@@ -58,14 +53,14 @@ Regeln 11–13 prüft Ablauf D (UX §15) automatisch. Diesen Test nie abschwäch
 
 ## Arbeitsweise
 **Jedes offene AP hat eine Bauanleitung** in `docs/arbeitspakete/anleitungen/` (Einstieg: `README.md`, Handgriffe: `handbuch.md`). Vor Beginn die
-Anleitung des APs ganz lesen; ihre Haltepunkte sind Pflichtfragen an den Product Owner. Wer ein AP zerlegt oder eine neue Aufgabe anlegt,
+Anleitung des APs ganz lesen; ihre Haltepunkte sind Pflichtfragen an den Maintainer. Wer ein AP zerlegt oder eine neue Aufgabe anlegt,
 schreibt die Anleitung im selben Aufbau; wer ein AP abschließt, überträgt Folgearbeiten in die passende Anleitung.
 
 1. Ein Arbeitspaket nach dem anderen; Abhängigkeiten prüfen.
 2. Erst Zusammenfassung (3–5 Sätze), offene Fragen, kurzer Plan. XL-APs zuerst in Teilpakete zerlegen.
 3. Bei echten Unklarheiten fragen (UX, neue Abhängigkeiten, Dateiformat, Design-Prinzipien). Kleine Details: Annahme treffen
    und im Abschlussvermerk nennen.
-4. Kleine, lauffähige Schritte; nach jedem bauen und testen. Commits: `AP-1.5: Add cylinder primitive with handles`.
+4. Kleine, lauffähige Schritte; nach jedem bauen, neue Tests sofort mitschreiben. Der komplette Testlauf kommt am Ende der Arbeitssitzung (`docs/arbeitspakete/anleitungen/handbuch.md` §10). Commits: `AP-1.5: Add cylinder primitive with handles`.
    Je Teilpaket ein PR mit grüner CI (`main` ist geschützt).
 5. Architekturentscheidungen als ADR (`docs/adr/0000-vorlage.md`).
 6. Gegen Definition of Done und Akzeptanzkriterien prüfen. Nichts als erledigt markieren, was nicht nachweislich funktioniert.
@@ -76,5 +71,3 @@ schreibt die Anleitung im selben Aufbau; wer ein AP abschließt, überträgt Fol
 ## Bei Zielkonflikten
 (1) Daten- und Ergebnis-Korrektheit, (2) Verständlichkeit für Einsteiger, (3) Präzision, (4) UI-Reaktion, (5) Wartbarkeit,
 (6) Funktionsumfang. Lieber ein Werkzeug weniger, das jeder versteht und das nie falsch rechnet.
-
-Kurz-Prompts zum Starten von Sitzungen: [docs/05-kurz-prompts.md](docs/05-kurz-prompts.md).

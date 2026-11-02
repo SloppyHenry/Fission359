@@ -34,4 +34,3 @@ __pycache__/
 .env
 .env.*
 local/
-/docs/
