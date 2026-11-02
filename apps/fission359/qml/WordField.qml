@@ -35,7 +35,7 @@ Item {
         id: column
 
         width: parent.width
-        spacing: 5
+        spacing: Theme.space1
 
         Txt {
             visible: root.label !== ""
@@ -57,8 +57,8 @@ Item {
                 id: input
 
                 anchors.fill: parent
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
+                anchors.leftMargin: Theme.space2
+                anchors.rightMargin: Theme.space2
                 verticalAlignment: TextInput.AlignVCenter
                 clip: true
                 selectByMouse: true

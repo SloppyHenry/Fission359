@@ -21,7 +21,7 @@ Item {
         id: column
 
         width: parent.width
-        spacing: 5
+        spacing: Theme.space1
 
         Txt {
             visible: root.label !== ""
@@ -41,9 +41,9 @@ Item {
             onClicked: popup.opened ? popup.close() : popup.open()
 
             contentItem: Row {
-                spacing: 6
-                leftPadding: 8
-                rightPadding: 8
+                spacing: Theme.space2
+                leftPadding: Theme.space2
+                rightPadding: Theme.space2
 
                 Txt {
                     anchors.verticalCenter: parent.verticalCenter
@@ -76,10 +76,10 @@ Item {
     Popup {
         id: popup
 
-        y: column.height + 4
+        y: column.height + Theme.space1
         width: root.width
-        height: Math.min(300, list.contentHeight + search.height + 20)
-        padding: 6
+        height: Math.min(300, list.contentHeight + search.height + Theme.space5)
+        padding: Theme.space2
         modal: false
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -96,7 +96,7 @@ Item {
         }
 
         contentItem: Column {
-            spacing: 6
+            spacing: Theme.space2
 
             Rectangle {
                 width: parent.width
@@ -110,8 +110,8 @@ Item {
                     id: search
 
                     anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 8
+                    anchors.leftMargin: Theme.space2
+                    anchors.rightMargin: Theme.space2
                     verticalAlignment: TextInput.AlignVCenter
                     clip: true
                     color: Theme.fg
@@ -153,7 +153,7 @@ Item {
 
                     contentItem: Txt {
                         text: row.modelData
-                        leftPadding: 8
+                        leftPadding: Theme.space2
                         verticalAlignment: Text.AlignVCenter
                         color: row.modelData === root.value ? Theme.accentText : Theme.fg
                         font.weight: row.modelData === root.value ? Font.DemiBold : Font.Normal

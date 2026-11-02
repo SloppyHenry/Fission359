@@ -61,7 +61,7 @@ Item {
         id: column
 
         width: parent.width
-        spacing: 5
+        spacing: Theme.space1
 
         Txt {
             id: labelText
@@ -108,9 +108,9 @@ Item {
 
             Row {
                 anchors.fill: parent
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
-                spacing: 6
+                anchors.leftMargin: Theme.space2
+                anchors.rightMargin: Theme.space2
+                spacing: Theme.space2
 
                 Rectangle {
                     visible: root.axis !== ""

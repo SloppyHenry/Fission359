@@ -13,7 +13,7 @@ Item {
     property string aside: ""
 
     width: parent ? parent.width : 300
-    implicitHeight: (visible ? column.implicitHeight + 28 : 0)
+    implicitHeight: (visible ? column.implicitHeight + Theme.space6 : 0)
     height: implicitHeight
 
     Rectangle {
@@ -29,7 +29,7 @@ Item {
         x: 14
         y: 14
         width: parent.width - 28
-        spacing: 10
+        spacing: Theme.space2
 
         Item {
             visible: root.heading !== ""
@@ -59,7 +59,7 @@ Item {
             id: body
 
             width: parent.width
-            spacing: 9
+            spacing: Theme.space2
         }
     }
 }

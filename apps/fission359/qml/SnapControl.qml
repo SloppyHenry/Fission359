@@ -20,7 +20,7 @@ Row {
     signal stepChosen(real step)
     signal automaticChosen()
 
-    spacing: 8
+    spacing: Theme.space2
 
     // Where on the slider (0 to 9) a step lies: three notches to a power of ten (1, 2, 5).
     function positionOf(value) {
@@ -53,7 +53,7 @@ Row {
         id: auto
 
         anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: autoText.implicitWidth + 14
+        implicitWidth: autoText.implicitWidth + Theme.space4
         implicitHeight: 20
         hoverEnabled: true
         checkable: false
@@ -173,8 +173,8 @@ Row {
 
         Row {
             anchors.fill: parent
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
+            anchors.leftMargin: Theme.space2
+            anchors.rightMargin: Theme.space2
             spacing: 4
 
             ValueInput {

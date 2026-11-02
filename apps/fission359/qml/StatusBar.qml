@@ -31,11 +31,11 @@ Rectangle {
         id: leftRow
 
         anchors.left: parent.left
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.space3
         anchors.right: rightRow.left
-        anchors.rightMargin: 16
+        anchors.rightMargin: Theme.space4
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 16
+        spacing: Theme.space4
         clip: true
 
         Txt {
@@ -54,10 +54,12 @@ Rectangle {
         }
 
         Txt {
+            // The hint is the long one: it gives way with "…" before the clip cuts it.
+            width: Math.min(implicitWidth, Math.max(0, leftRow.width - x))
             text: root.hint
             color: Theme.fg3
             font.pixelSize: Theme.fontSizeSmall
-            elide: Text.ElideNone
+            elide: Text.ElideRight
             Accessible.role: Accessible.StaticText
             Accessible.name: root.hint
         }
@@ -67,9 +69,9 @@ Rectangle {
         id: rightRow
 
         anchors.right: parent.right
-        anchors.rightMargin: 12
+        anchors.rightMargin: Theme.space3
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 14
+        spacing: Theme.space4
 
         Txt {
             anchors.verticalCenter: parent.verticalCenter

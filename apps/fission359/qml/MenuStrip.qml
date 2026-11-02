@@ -40,7 +40,7 @@ Rectangle {
         id: left
 
         anchors.left: parent.left
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.space3
         anchors.verticalCenter: parent.verticalCenter
         spacing: 4
 
@@ -49,7 +49,7 @@ Rectangle {
 
             anchors.verticalCenter: parent.verticalCenter
             spacing: 8
-            rightPadding: 10
+            rightPadding: Theme.space3
 
             Logo {
                 anchors.verticalCenter: parent.verticalCenter
@@ -76,11 +76,11 @@ Rectangle {
                 property bool open: popup.visible
 
                 implicitHeight: 28
-                implicitWidth: label.implicitWidth + 18
+                implicitWidth: label.implicitWidth + Theme.space4
                 hoverEnabled: true
                 Accessible.name: modelData.title
                 function openPopup() {
-                    popup.popup(0, height + 2)
+                    popup.popup(0, height + Theme.space1)
                 }
 
                 onClicked: popup.visible ? popup.close() : openPopup()
@@ -122,7 +122,7 @@ Rectangle {
         // the search in the middle of it, up to 440 px wide
         readonly property real free: root.width - 24 - left.width - right.width - 24
         width: Math.max(160, Math.min(440, free))
-        x: 12 + left.width + 12 + Math.max(0, (free - width) / 2)
+        x: Theme.space3 + left.width + Theme.space3 + Math.max(0, (free - width) / 2)
         visible: free >= 140 // very narrow windows: the search moves to the keyboard (Ctrl+K)
         anchors.verticalCenter: parent.verticalCenter
         height: 28
@@ -142,9 +142,9 @@ Rectangle {
         }
 
         contentItem: Row {
-            spacing: 10
-            leftPadding: 11
-            rightPadding: 6
+            spacing: Theme.space2
+            leftPadding: Theme.space3
+            rightPadding: Theme.space2
 
             Icon {
                 anchors.verticalCenter: parent.verticalCenter
@@ -163,7 +163,7 @@ Rectangle {
                 id: kbd
 
                 anchors.verticalCenter: parent.verticalCenter
-                width: kbdText.implicitWidth + 12
+                width: kbdText.implicitWidth + Theme.space3
                 height: 20
                 radius: 4
                 color: Theme.field
@@ -188,7 +188,7 @@ Rectangle {
         id: right
 
         anchors.right: parent.right
-        anchors.rightMargin: 12
+        anchors.rightMargin: Theme.space3
         anchors.verticalCenter: parent.verticalCenter
         spacing: 8
 
@@ -204,7 +204,7 @@ Rectangle {
 
             anchors.verticalCenter: parent.verticalCenter
             implicitHeight: 28
-            implicitWidth: printerRow.implicitWidth + 18
+            implicitWidth: printerRow.implicitWidth + Theme.space4
             hoverEnabled: true
             Accessible.name: root.printerText
             onClicked: root.printerRequested()

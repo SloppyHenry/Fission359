@@ -45,6 +45,13 @@ class Theme : public QObject {
     Q_PROPERTY(int rightPanelWidthNarrow MEMBER kRightPanelWidthNarrow CONSTANT)
     Q_PROPERTY(int narrowBreakpoint MEMBER kNarrowBreakpoint CONSTANT)
     Q_PROPERTY(int veryNarrowBreakpoint MEMBER kVeryNarrowBreakpoint CONSTANT)
+    Q_PROPERTY(
+        int space1 MEMBER kSpace1 CONSTANT) // spacing steps of 4 px (design system, section 4)
+    Q_PROPERTY(int space2 MEMBER kSpace2 CONSTANT)
+    Q_PROPERTY(int space3 MEMBER kSpace3 CONSTANT)
+    Q_PROPERTY(int space4 MEMBER kSpace4 CONSTANT)
+    Q_PROPERTY(int space5 MEMBER kSpace5 CONSTANT)
+    Q_PROPERTY(int space6 MEMBER kSpace6 CONSTANT)
     Q_PROPERTY(int duration MEMBER kDuration CONSTANT)
     Q_PROPERTY(int fontSize MEMBER kFontSize CONSTANT)
     Q_PROPERTY(int fontSizeSmall MEMBER kFontSizeSmall CONSTANT)
@@ -95,6 +102,12 @@ private:
     static constexpr int kRightPanelWidthNarrow = 264;
     static constexpr int kNarrowBreakpoint = 1100;
     static constexpr int kVeryNarrowBreakpoint = 760;
+    static constexpr int kSpace1 = 4;
+    static constexpr int kSpace2 = 8;
+    static constexpr int kSpace3 = 12;
+    static constexpr int kSpace4 = 16;
+    static constexpr int kSpace5 = 20;
+    static constexpr int kSpace6 = 24;
     static constexpr int kDuration = 180;
     // Font sizes are whole pixels (Qt Quick); the 12.5 and 14.5 px of the mockup are rounded.
     static constexpr int kFontSize = 13;

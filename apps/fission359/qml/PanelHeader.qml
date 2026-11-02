@@ -41,9 +41,9 @@ Item {
 
     Column {
         anchors.left: iconBox.right
-        anchors.leftMargin: 10
+        anchors.leftMargin: Theme.space3
         anchors.right: parent.right
-        anchors.rightMargin: 14
+        anchors.rightMargin: Theme.space4
         anchors.verticalCenter: parent.verticalCenter
 
         Txt {
