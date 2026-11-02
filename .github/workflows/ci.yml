@@ -11,6 +11,9 @@
 # system builds them and fills the GitHub Actions cache; the build jobs then restore it.
 # The first run on a fresh repository builds everything and takes hours; later runs only
 # restore. A weekly run keeps the cache alive (GitHub deletes entries unused for 7 days).
+# The key holds the version of the runner image (RUNNER_IMAGE, from ImageVersion): vcpkg's package hashes include
+# the compiler, so a new image makes the old archives useless, and a key that stayed the same
+# would be a hit that is never saved again (every job would then rebuild Qt, for hours).
 
 name: CI
 
@@ -81,14 +84,18 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # The runner's image version is no workflow variable; make it one for the cache keys.
+      - name: Note the runner image
+        run: echo "RUNNER_IMAGE=${ImageVersion:-unknown}" >> "$GITHUB_ENV"
+
       - name: Restore vcpkg binary cache
         id: vcpkg-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/vcpkg/archives
-          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_IMAGE }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-${{ runner.arch }}-
+            vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_IMAGE }}-
 
       - name: Prerequisites (scripts/setup)
         run: scripts/setup --yes --no-dev-tools
@@ -104,7 +111,7 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/vcpkg/archives
-          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_IMAGE }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
 
       - name: Upload vcpkg log
         if: failure()
@@ -147,13 +154,17 @@ jobs:
           lfs: true
           fetch-depth: 0
 
+      # The runner's image version is no workflow variable; make it one for the cache keys.
+      - name: Note the runner image
+        run: echo "RUNNER_IMAGE=${ImageVersion:-unknown}" >> "$GITHUB_ENV"
+
       - name: Restore vcpkg binary cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/vcpkg/archives
-          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_IMAGE }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-${{ runner.arch }}-
+            vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_IMAGE }}-
 
       - name: Restore ccache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -229,13 +240,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # The runner's image version is no workflow variable; make it one for the cache keys.
+      - name: Note the runner image
+        run: echo "RUNNER_IMAGE=${ImageVersion:-unknown}" >> "$GITHUB_ENV"
+
       - name: Restore vcpkg binary cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/vcpkg/archives
-          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_IMAGE }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-${{ runner.arch }}-
+            vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_IMAGE }}-
 
       - name: Prerequisites (scripts/setup)
         run: scripts/setup --yes --no-dev-tools
