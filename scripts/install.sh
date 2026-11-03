@@ -139,7 +139,10 @@ else
     rm -rf "$LINUX_APP"
     mkdir -p "$(dirname "$LINUX_APP")" "$(dirname "$LINUX_BIN")"
     mv "$work/squashfs-root" "$LINUX_APP"
-    ln -sf "$LINUX_APP/AppRun" "$LINUX_BIN"
+    # A small starter, not a link: AppRun finds its files next to the path it was started from.
+    rm -f "$LINUX_BIN"
+    printf '#!/bin/sh\nexec "%s/AppRun" "$@"\n' "$LINUX_APP" > "$LINUX_BIN"
+    chmod +x "$LINUX_BIN"
 
     desktop="$(first_file "$LINUX_APP"/usr/share/applications/*.desktop)"
     if [ -n "$desktop" ]; then
