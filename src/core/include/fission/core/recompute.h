@@ -69,6 +69,18 @@ struct BodyResult {
     std::size_t outputIndex = 0; ///< ... together with the number of the output.
 };
 
+/// A reference that was found again safely and now looks different from what is saved: the
+/// refreshed copy ("heals" the reference, ADR-0003 point 3). The recompute runs in a worker
+/// thread and must not write the document, so it reports; `applyHealedRefs` writes (technical
+/// upkeep, not a command of the person: no undo step).
+struct HealedRef {
+    FeatureId feature;
+    std::string slot;
+    std::size_t index = 0; ///< Position in `Feature::refs[slot]`.
+    PersistentRef before;  ///< What was saved: only applied if it still is.
+    PersistentRef after;
+};
+
 struct RecomputeResult {
     std::uint64_t revision = 0; ///< Revision of the document this was calculated from.
     MeasureResolution measures;
@@ -76,6 +88,7 @@ struct RecomputeResult {
     std::map<BodyId, BodyResult> bodies; ///< Only bodies that have geometry.
     std::size_t executed = 0;            ///< Steps the kernel was asked for.
     std::size_t remembered = 0;          ///< Steps taken from the memory.
+    std::vector<HealedRef> healed;       ///< References whose saved look is out of date.
 
     const FeatureState* state(const FeatureId& id) const;
 };
@@ -129,6 +142,10 @@ private:
 std::optional<RecomputeResult> recompute(const Document& document, const FeatureRegistry& registry,
                                          const geo::GeometryKernel& kernel, RecomputeCache& cache,
                                          CancelToken cancel = {});
+
+/// Writes the refreshed references of `result` into `document`, as far as they still are what
+/// the recompute started from. No command, no undo step. Returns how many were written.
+std::size_t applyHealedRefs(Document& document, const RecomputeResult& result);
 
 // --- the worker --------------------------------------------------------------------------
 

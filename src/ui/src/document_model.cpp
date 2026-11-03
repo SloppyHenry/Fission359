@@ -94,6 +94,8 @@ const char* issueCodeName(core::FeatureIssueCode code) {
         return "combineEmpty";
     case core::FeatureIssueCode::combineNoOverlap:
         return "combineNoOverlap";
+    case core::FeatureIssueCode::referenceNeedsHelp:
+        return "referenceNeedsHelp";
     }
     return "kernelFailed";
 }
@@ -602,6 +604,11 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
         return;
     }
     m_result = std::move(result);
+    // References that were found again with a new look are refreshed in the document (no undo
+    // step, ADR-0003); the changed document is calculated once more.
+    if (m_history.mendRefs(*m_result) > 0) {
+        requestRecompute();
+    }
     {
         std::set<std::uint64_t> alive;
         for (const auto& [id, body] : m_result->bodies) {

@@ -4,11 +4,16 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "fission/core/body_looks.h"
+#include "fission/core/document.h"
+#include "fission/core/feature_type.h"
+#include "fission/core/help_reason.h"
 #include "fission/core/persistent_ref.h"
+#include "fission/core/recompute.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/types.h"
 
@@ -25,6 +30,19 @@ struct Placement {
 
     bool operator==(const Placement&) const = default;
 };
+
+/// The place of the step that made the element called `elementName` ("F5/box/top",
+/// "edge[F5/box/top|...]"): its turn about the middle of its body (ADR-0010 point 4). Identity
+/// when the step is not found, was not calculated or does not turn. References are saved in and
+/// compared in the coordinates of that step.
+Placement placementOf(const Document& document, const FeatureRegistry& registry,
+                      const std::vector<FeatureState>& states, const std::string& elementName);
+
+/// A reference to the face or edge `id` of a body that looks like `looks` now: what the person
+/// picked. Saved in the coordinates of the creating step (see `placementOf`). Nothing for a
+/// number the body does not have or an element without a name (it could not be found again).
+std::optional<PersistentRef> makeRef(const BodyLooks& looks, ElementKind kind, std::uint32_t id,
+                                     const Placement& placement);
 
 /// `looks` as seen from the step's own coordinates: the placement taken out again.
 BodyLooks toBodyFrame(const BodyLooks& looks, const Placement& placement);
@@ -56,16 +74,6 @@ struct ResolveSwitches {
     bool checkSwap = true;           ///< "Places swapped" check on name hits.
     bool checkTurn = true;           ///< 45° rule on name hits.
     bool recogniseNeighbours = true; ///< Neighbours whose name is gone are matched by their look.
-};
-
-/// Why a reference could not be resolved safely (codes for the message catalogue, AP-2.14).
-enum class HelpReason {
-    none,
-    split,    ///< The face was cut into pieces.
-    consumed, ///< A step used the element up.
-    turned,   ///< The name points to an element that turned by more than 45°.
-    swapped,  ///< Two equal elements probably changed places.
-    notFound  ///< Nothing is clearly the element any more.
 };
 
 /// How a found element was recognised.

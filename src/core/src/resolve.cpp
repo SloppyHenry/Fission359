@@ -294,6 +294,69 @@ ResolveOutcome bySimilarity(const PersistentRef& ref, const BodyLooks& now,
 
 } // namespace
 
+namespace {
+
+// The number of the step in the first face of a name: 5 for "F5/box/top" and
+// "edge[F5/box/top|...]".
+std::optional<int> stepNumberOf(const std::string& name) {
+    const std::vector<std::string> faces = facesInName(name);
+    if (faces.empty() || faces.front().size() < 3 || faces.front()[0] != 'F') {
+        return std::nullopt;
+    }
+    const std::string& face = faces.front();
+    std::size_t end = 1;
+    int number = 0;
+    while (end < face.size() && face[end] >= '0' && face[end] <= '9' && number < 100000000) {
+        number = number * 10 + (face[end] - '0');
+        ++end;
+    }
+    if (end == 1 || end >= face.size() || face[end] != '/') {
+        return std::nullopt;
+    }
+    return number;
+}
+
+} // namespace
+
+Placement placementOf(const Document& document, const FeatureRegistry& registry,
+                      const std::vector<FeatureState>& states, const std::string& elementName) {
+    const std::optional<int> number = stepNumberOf(elementName);
+    if (!number) {
+        return {};
+    }
+    for (const Feature& feature : document.features()) {
+        if (feature.number != *number) {
+            continue;
+        }
+        const FeatureType* type = registry.find(feature.type);
+        const auto state = std::find_if(states.begin(), states.end(),
+                                        [&](const FeatureState& s) { return s.id == feature.id; });
+        if (type == nullptr || state == states.end() || !state->description) {
+            return {};
+        }
+        Placement placement;
+        placement.angles = FeatureType::turnOf(state->params);
+        if (!placement.angles.isZero()) {
+            placement.centre = type->bodyCentre(state->params);
+        }
+        return placement;
+    }
+    return {};
+}
+
+std::optional<PersistentRef> makeRef(const BodyLooks& looks, ElementKind kind, std::uint32_t id,
+                                     const Placement& placement) {
+    for (const NamedLook& entry : listOf(looks, kind)) {
+        if (entry.id == id) {
+            if (entry.name.empty()) {
+                return std::nullopt;
+            }
+            return PersistentRef{kind, entry.name, toBodyFrame(entry.look, placement)};
+        }
+    }
+    return std::nullopt;
+}
+
 ElementLook toBodyFrame(const ElementLook& look, const Placement& placement) {
     const geo::Matrix3 back = transposed(geo::rotationOf(placement.angles));
     const auto point = [&](const geo::Point3d& world) {

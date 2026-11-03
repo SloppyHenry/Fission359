@@ -26,8 +26,7 @@ AP-0.6 (Prototyp und ADR-0003), AP-1.1, AP-1.7 (Booleans mit Namensweitergabe), 
 - Flächen haben Namen (`F1/box/top`) über den Namens-Vertrag; Kanten/Ecken heißen in der Auswahl nach ihren Flächen
   (`core::ElementNames`, ADR-0009).
 - Booleans (AP-1.7) geben Namen über die Kernel-Historie weiter.
-- Kein Feature hat bisher `refs`: weder `Feature::refs` noch `FeatureDraft::refs` noch ein Command `makeSetFeatureRefs` gibt es
-  (Stand 2.10b). Das Feld legt Teil 2.10c zusammen mit dem Dateiformat an.
+- Kein Feature hat bisher `refs`.
 
 ## Festlegungen (ADR-0003, nicht neu verhandeln)
 Name + Aussehen; Kanten nach ihren zwei Flächen; drei Stufen der Auflösung mit Plausibilität (gleiche Art, Drehung ≤ 45° **in
@@ -60,10 +59,10 @@ Gedächtnis für verbrauchte Elemente; nur strenger Modus.
    `HelpReason { split, consumed, turned, swapped, notFound }` (Codes für den Meldungskatalog).
 2. Algorithmus **1:1 aus dem Prototyp übernehmen** (`tests/naming/naming.cpp`), mit den Schwellen aus ADR-0003 als benannte Konstanten.
    Vergleiche in Körper-Koordinaten (ADR-0010 Punkt 4): Lage/Drehung des erzeugenden Schritts herausrechnen.
-3. *(Verschoben nach 2.10c, weil `Feature::refs` erst dort entsteht.)* Aufruf in der Neuberechnung **vor** `execute` eines Schritts mit `refs`: aufgelöste Elemente gehen als `ExecuteInput::refs`
+3. Aufruf in der Neuberechnung **vor** `execute` eines Schritts mit `refs`: aufgelöste Elemente gehen als `ExecuteInput::refs`
    (neues Feld: Name → aktueller Elementname) an den Feature-Typ. `needsHelp` → Status `warning` mit `FeatureIssueCode::referenceNeedsHelp`
    (neu) und Grund; der Schritt rechnet **nicht** mit geratener Geometrie, sondern behält sein letztes gültiges Ergebnis (gibt es schon).
-4. *(Verschoben nach 2.10c.)* Heilen: Nach sicherer Auflösung wird das Aussehen im Verweis aufgefrischt. Das ändert das Dokument → **nicht** im Hintergrund-Thread
+4. Heilen: Nach sicherer Auflösung wird das Aussehen im Verweis aufgefrischt. Das ändert das Dokument → **nicht** im Hintergrund-Thread
    schreiben; Ergebnis meldet „Verweis X hat jetzt Aussehen Y“, die Oberfläche übernimmt es ohne Undo-Schritt (technische Pflege, kein
    Nutzerbefehl). Haltepunkt, falls das unsauber wirkt; Alternative: Aussehen nicht speichern, sondern bei jedem Laden neu.
 5. Tests: alle Szenarien aus `tests/naming/test_scenarios.cpp` und `test_evil.cpp` gegen den Produktcode portieren
@@ -72,11 +71,6 @@ Gedächtnis für verbrauchte Elemente; nur strenger Modus.
    Die Szenarien mit Abrunden, Bohren und Skizzen folgen in 2.10d, sobald es diese Werkzeuge gibt.
 
 ## Teil 2.10c – Verweise anlegen und speichern
-0. **Aus 2.10b übernommen:** `Feature::refs` und `FeatureDraft::refs` anlegen, Command `makeSetFeatureRefs`, `ExecuteInput::refs`,
-   `FeatureIssueCode::referenceNeedsHelp`; in der Neuberechnung vor `execute` mit `core::resolve` (Lage des erzeugenden Schritts als
-   `Placement`) auflösen. Beim Einbau beachten: `ConsumedElement` hält Aussehen in Welt-Koordinaten zum Zeitpunkt des Verbrauchs;
-   wird ein Körper danach verschoben oder gedreht, stimmt die Lage im Gedächtnis nicht mehr (Folgeschritte mit Lage-Änderung müssen
-   das Gedächtnis mittransformieren, oder es wird in Körper-Koordinaten des erzeugenden Schritts abgelegt).
 1. `core::makeRef(elementName, looks)`: aus einer Auswahl (ADR-0009) einen `PersistentRef` bauen.
 2. Feature-Typen bekommen `refs` über `FeatureDraft::refs` (gibt es) – noch nutzt sie keiner; ein **Test-Feature** `markFace` (nur in Tests
    registriert, färbt nichts, prüft nur, dass der Verweis aufgelöst wird) dient der Suite, bis 2.5/2.4/2.7 echte Nutzer bringen.

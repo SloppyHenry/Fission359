@@ -13,6 +13,7 @@
 #include "fission/core/cancel.h"
 #include "fission/core/document.h"
 #include "fission/core/expression.h"
+#include "fission/core/help_reason.h"
 #include "fission/geo/kernel.h"
 #include "fission/geo/rotation.h"
 
@@ -36,11 +37,13 @@ enum class FeatureIssueCode {
     fontStyleMissing,       ///< The font has no such style (bold, italic); `subject` is its name.
     combineEmpty,           ///< Combining left nothing (an overlap of bodies that do not overlap).
     combineNoOverlap,       ///< A tool does not touch the body it was to cut.
+    referenceNeedsHelp,     ///< A face or edge the step points to cannot be found safely again.
 };
 
 struct FeatureIssue {
     FeatureIssueCode code = FeatureIssueCode::kernelFailed;
-    std::string subject; ///< The parameter concerned, if any.
+    std::string subject; ///< The parameter concerned, if any (for a reference: its slot).
+    HelpReason helpReason = HelpReason::none; ///< For `referenceNeedsHelp`: why.
     std::optional<ExpressionError> expression;
     std::string detail; ///< For the log only, never shown.
 };
@@ -126,6 +129,15 @@ struct InputStep {
     ResolvedParams params; ///< As worked out.
 };
 
+/// A reference of a step as the recompute found it again in the first input body.
+struct ResolvedRef {
+    ElementKind kind = ElementKind::face;
+    std::string element;  ///< Current name of the face or edge (may be empty for an unnamed one).
+    std::uint32_t id = 0; ///< Its number in the body (as in the tessellation).
+
+    bool operator==(const ResolvedRef&) const = default;
+};
+
 struct ExecuteInput {
     const Feature& feature;
     const ResolvedParams& params;
@@ -134,6 +146,10 @@ struct ExecuteInput {
     const std::vector<FeatureOutput>& inputs;
     /// The steps that made `inputs`, in the same order (empty where the recompute had none).
     std::vector<InputStep> producers = {};
+    /// The step's references (`Feature::refs`), resolved against the first input body: slot name
+    /// to the elements found, in the order of the references. Only safely found elements are
+    /// here; a step with a reference that needs help is not calculated at all.
+    std::map<std::string, std::vector<ResolvedRef>> refs = {};
 };
 
 struct ExecuteContext {

@@ -37,7 +37,8 @@ QtObject {
         "fontNotFound": { actions: ["editValue", "hideStep"] },
         "fontStyleMissing": { actions: ["editValue", "hideStep"] },
         "combineEmpty": { actions: ["hideStep"] },
-        "combineNoOverlap": { actions: ["hideStep"] }
+        "combineNoOverlap": { actions: ["hideStep"] },
+        "referenceNeedsHelp": { actions: ["hideStep"] }
     })
 
     /// Problems with files: "card" is shown as a card with buttons, else as a hint line. The
