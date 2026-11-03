@@ -26,6 +26,27 @@ Pakete sind nicht signiert (siehe unten): Der Gatekeeper-Umweg gilt auch für Al
 
 ## Installieren (für Nutzer)
 
+### Mit einem Befehl (macOS und Linux)
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/SloppyHenry/Fission359/main/scripts/install.sh | bash
+```
+
+`scripts/install.sh` holt das neueste Release (auch Vorabversionen) von GitHub. **macOS:** kopiert `Fission359.app` nach
+`/Applications` (oder `~/Applications`, wenn das nicht beschreibbar ist). Mit `curl` geladene Dateien tragen keine
+Quarantäne-Markierung, deshalb entfällt der Gatekeeper-Umweg unten. **Linux:** entpackt das AppImage nach
+`~/.local/share/fission359` (kein FUSE und kein `sudo` nötig), legt den Befehl `~/.local/bin/fission359`, den Menüeintrag,
+das Symbol und den Dateityp `.fission` an. Noch einmal ausführen = aktualisieren.
+
+Entfernen, Projekte und Einstellungen bleiben:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/SloppyHenry/Fission359/main/scripts/install.sh | bash -s -- --uninstall
+```
+
+Zum Prüfen mit einem Paket aus der CI statt eines Releases: `FISSION_INSTALL_FROM=<Datei> bash scripts/install.sh`
+(so testet es auch der CI-Job **Package**).
+
 ### macOS (.dmg)
 
 Fission359 ist noch nicht bei Apple registriert (das kostet 99 €/Jahr). macOS warnt deshalb beim ersten Start. Das ist
