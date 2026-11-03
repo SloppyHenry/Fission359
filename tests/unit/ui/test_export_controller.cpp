@@ -104,7 +104,11 @@ TEST_CASE("only the chosen bodies, and never holes or hidden bodies", "[export-u
 TEST_CASE("the body a subtract takes away is a tool and is not exported", "[export-ui]") {
     application();
     Session session;
-    REQUIRE(session.model.addShape(QStringLiteral("cylinder"), false) >= 0);
+    REQUIRE(session.model.addShape(QStringLiteral("cylinder"), false) == 1);
+    // In the box, so that the subtract cuts something.
+    session.model.setStepValue(1, QStringLiteral("radius"), QStringLiteral("4"));
+    session.model.setStepValue(1, QStringLiteral("x"), QStringLiteral("0"));
+    session.model.setStepValue(1, QStringLiteral("y"), QStringLiteral("0"));
     session.model.waitForCalculation();
     const QString box = session.model.bodyIdAt(0);
     const QString pin = session.model.bodyIdAt(1);
