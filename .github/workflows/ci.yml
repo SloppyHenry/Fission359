@@ -369,6 +369,32 @@ jobs:
         run: |
           flatpak run --env=QT_QPA_PLATFORM=offscreen io.github.sloppyhenry.Fission359 --version
 
+      # The one-command installer of the README, with the package of this run instead of a release.
+      - name: Install and uninstall with scripts/install.sh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          if [ "$RUNNER_OS" = macOS ]; then
+            package="$(ls build/package/Fission359-*-macos-arm64.dmg)"
+          else
+            package="$(ls build/package/Fission359-*-x86_64.AppImage)"
+          fi
+          FISSION_INSTALL_FROM="$package" bash scripts/install.sh
+          if [ "$RUNNER_OS" = macOS ]; then
+            app="$(ls -d /Applications/Fission359.app "$HOME/Applications/Fission359.app" 2>/dev/null | head -n 1)"
+            "$app/Contents/MacOS/fission359" --version
+          else
+            "$HOME/.local/bin/fission359" --version
+            test -f "$HOME/.local/share/applications/io.github.sloppyhenry.Fission359.desktop"
+            desktop-file-validate "$HOME/.local/share/applications/io.github.sloppyhenry.Fission359.desktop"
+          fi
+          bash scripts/install.sh --uninstall
+          test ! -e /Applications/Fission359.app
+          test ! -e "$HOME/Applications/Fission359.app"
+          test ! -e "$HOME/.local/bin/fission359"
+          test ! -e "$HOME/.local/share/fission359"
+          test ! -e "$HOME/.local/share/applications/io.github.sloppyhenry.Fission359.desktop"
+
       # Diagnostics when packaging fails (what Qt looks like on this runner, what was bundled).
       - name: Collect packaging diagnostics
         if: failure()
