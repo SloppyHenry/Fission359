@@ -382,9 +382,10 @@ DocumentModel::exportBodies(const QStringList& onlyIds) const {
          ++i) {
         const core::Body& body = bodies[i];
         const QVariantMap entry = m_bodies[static_cast<qsizetype>(i)].toMap();
-        // Holes are tools, and bodies that are part of another's result are not bodies of their
-        // own.
-        if (body.hole || !body.visible || entry.value(QStringLiteral("consumed")).toBool()) {
+        // Holes are tools, and so are the bodies a subtract takes away (they stay as ghosts);
+        // bodies that are part of another's result are not bodies of their own.
+        if (body.hole || !body.visible || entry.value(QStringLiteral("consumed")).toBool() ||
+            partOf(m_history.document(), m_result.get(), body).toolGhost) {
             continue;
         }
         if (!onlyIds.isEmpty() && !onlyIds.contains(toQString(body.id.value))) {
