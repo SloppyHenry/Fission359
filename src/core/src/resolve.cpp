@@ -344,6 +344,70 @@ Placement placementOf(const Document& document, const FeatureRegistry& registry,
     return {};
 }
 
+namespace {
+
+geo::Point3d toWorldPoint(const geo::Point3d& local, const Placement& placement) {
+    const geo::Point3d turned = geo::rotatedAbout(local, placement.centre, placement.angles);
+    return {turned.x + placement.offset.x, turned.y + placement.offset.y,
+            turned.z + placement.offset.z};
+}
+
+geo::Point3d unit(const geo::Point3d& v) {
+    const double length = std::hypot(v.x, v.y, v.z);
+    return length < 1e-12 ? geo::Point3d{0, 0, 1}
+                          : geo::Point3d{v.x / length, v.y / length, v.z / length};
+}
+
+geo::Point3d cross(const geo::Point3d& a, const geo::Point3d& b) {
+    return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+}
+
+// Any unit vector at right angles to `n` (unit).
+geo::Point3d anyPerpendicular(const geo::Point3d& n) {
+    const geo::Point3d helper = std::abs(n.x) < 0.9 ? geo::Point3d{1, 0, 0} : geo::Point3d{0, 1, 0};
+    return unit(cross(n, helper));
+}
+
+} // namespace
+
+RefGhost ghostOf(const PersistentRef& ref, const Placement& placement) {
+    const ElementLook& look = ref.look;
+    RefGhost ghost;
+    ghost.kind = ref.kind;
+    const geo::Point3d direction = look.hasDirection ? unit(look.direction) : geo::Point3d{0, 0, 1};
+    if (ref.kind == ElementKind::edge) {
+        const double half = std::max(look.size, 1.0) / 2.0;
+        // An edge without a direction (a free-form curve) is shown as a short upright mark.
+        for (const double side : {-1.0, 1.0}) {
+            ghost.points.push_back(toWorldPoint({look.centroid.x + side * half * direction.x,
+                                                 look.centroid.y + side * half * direction.y,
+                                                 look.centroid.z + side * half * direction.z},
+                                                placement));
+        }
+        return ghost;
+    }
+    // A face: a square of the same area. In its plane for a flat face, along its axis for a
+    // round one (the axis is one of the square's sides).
+    const double half = std::sqrt(std::max(look.size, 1.0)) / 2.0;
+    geo::Point3d u;
+    geo::Point3d v;
+    if (look.shape == ElementShape::plane) {
+        u = anyPerpendicular(direction);
+        v = unit(cross(direction, u));
+    } else {
+        v = direction;
+        u = anyPerpendicular(direction);
+    }
+    for (const auto& [a, b] :
+         {std::pair{-1.0, -1.0}, std::pair{1.0, -1.0}, std::pair{1.0, 1.0}, std::pair{-1.0, 1.0}}) {
+        ghost.points.push_back(toWorldPoint({look.centroid.x + half * (a * u.x + b * v.x),
+                                             look.centroid.y + half * (a * u.y + b * v.y),
+                                             look.centroid.z + half * (a * u.z + b * v.z)},
+                                            placement));
+    }
+    return ghost;
+}
+
 std::optional<PersistentRef> makeRef(const BodyLooks& looks, ElementKind kind, std::uint32_t id,
                                      const Placement& placement) {
     for (const NamedLook& entry : listOf(looks, kind)) {

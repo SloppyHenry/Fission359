@@ -58,6 +58,7 @@ add_executable(fission_unit_tests
   ui/test_distances.cpp
   ui/test_body_edits.cpp
   ui/test_align.cpp
+  ui/test_repair.cpp
   interaction/test_drag.cpp
   interaction/test_snap.cpp
   interaction/test_distances.cpp

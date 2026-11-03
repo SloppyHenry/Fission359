@@ -363,11 +363,13 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         std::map<std::string, std::vector<ResolvedRef>> resolvedRefs;
         if (!feature.refs.empty()) {
             std::optional<FeatureIssue> help;
-            const auto needHelp = [&](const std::string& slot, HelpReason reason,
-                                      std::string detail) {
+            const auto needHelp = [&](const std::string& slot, std::size_t index, ElementKind kind,
+                                      HelpReason reason, std::string detail) {
                 if (!help) {
                     help = issueOf(FeatureIssueCode::referenceNeedsHelp, slot, std::move(detail));
                     help->helpReason = reason;
+                    help->refIndex = index;
+                    help->refKind = kind;
                 }
             };
             const BodyResult* target = inputBodies.empty() ? nullptr : inputBodies.front();
@@ -378,7 +380,10 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                     looks = describeBody(target->faces, kernel.signatures(target->solid));
                     described = true;
                 } catch (const geo::GeometryError& error) {
-                    needHelp(feature.refs.begin()->first, HelpReason::notFound, error.what());
+                    const auto& first = *feature.refs.begin();
+                    needHelp(first.first, 0,
+                             first.second.empty() ? ElementKind::face : first.second.front().kind,
+                             HelpReason::notFound, error.what());
                 }
             }
             // The place of the step that made an element, worked out once per step.
@@ -395,12 +400,12 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                 for (std::size_t index = 0; index < list.size(); ++index) {
                     const PersistentRef& ref = list[index];
                     if (!described) {
-                        needHelp(slot, HelpReason::notFound, "no body to look in");
+                        needHelp(slot, index, ref.kind, HelpReason::notFound, "no body to look in");
                         continue;
                     }
                     const ResolveOutcome outcome = resolve(ref, looks, target->consumed, placement);
                     if (outcome.state != ResolveOutcome::State::found) {
-                        needHelp(slot, outcome.reason, outcome.detail);
+                        needHelp(slot, index, ref.kind, outcome.reason, outcome.detail);
                         continue;
                     }
                     resolvedRefs[slot].push_back({ref.kind, outcome.element, outcome.id});

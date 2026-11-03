@@ -39,6 +39,16 @@ struct Placement {
 Placement placementOf(const Document& document, const FeatureRegistry& registry,
                       const std::vector<FeatureState>& states, const std::string& elementName);
 
+/// Where a reference used to point, to be drawn as a ghost: four corners of a square of the same
+/// area as the old face (round about its centre, in its plane or along its axis), or the two ends
+/// of the old edge. World coordinates (mm), the place of the creating step put back.
+struct RefGhost {
+    ElementKind kind = ElementKind::face;
+    std::vector<geo::Point3d> points; ///< 4 for a face, 2 for an edge.
+};
+
+RefGhost ghostOf(const PersistentRef& ref, const Placement& placement);
+
 /// A reference to the face or edge `id` of a body that looks like `looks` now: what the person
 /// picked. Saved in the coordinates of the creating step (see `placementOf`). Nothing for a
 /// number the body does not have or an element without a name (it could not be found again).

@@ -44,6 +44,8 @@ struct FeatureIssue {
     FeatureIssueCode code = FeatureIssueCode::kernelFailed;
     std::string subject; ///< The parameter concerned, if any (for a reference: its slot).
     HelpReason helpReason = HelpReason::none; ///< For `referenceNeedsHelp`: why.
+    std::size_t refIndex = 0;                 ///< For `referenceNeedsHelp`: position in the slot.
+    ElementKind refKind = ElementKind::face;  ///< For `referenceNeedsHelp`: face or edge.
     std::optional<ExpressionError> expression;
     std::string detail; ///< For the log only, never shown.
 };

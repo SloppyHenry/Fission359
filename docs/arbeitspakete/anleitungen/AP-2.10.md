@@ -121,3 +121,14 @@ Teilen, Überdecken, Verschmelzen), `test_random.cpp` (10 Ketten à 12 Änderung
 Zufallsprobe um Teilen und Vereinen erweitern. Jeder Element wird in den Koordinaten des eigenen Schritts verglichen (`PlacementFn`):
 Verschieben des Körpers über `x/y/z` wird dabei nicht herausgerechnet (nur die Drehung), Positionsvergleiche in der Ähnlichkeitssuche
 nach einem Verschieben können deshalb zu Recht um Hilfe bitten.
+
+## Stand 2.10e (Reparatur-Oberfläche)
+Rezept-Zeile mit ⚠: Karte mit Grund (geteilt, verbraucht, gedreht, Plätze getauscht, nicht gefunden) und Knopf „Neu wählen“
+(`MessageCatalog.qml`). Klick: `DocumentModel.startRepair` schaltet die Auswahl auf Flächen bzw. Kanten, die Hinweiszeile sagt „Klicke die
+Fläche, die gemeint ist“, `RepairGhostLayer.qml` zeichnet das alte Element gestrichelt (Quadrat gleicher Fläche bzw. Linie, aus dem
+gespeicherten Aussehen; die letzte gültige Geometrie des Elements wird nicht benutzt). Ein Klick auf den Körper des Schritts ruft
+`completeRepair` auf: ein Command `makeSetFeatureRefs`, ein Undo-Schritt. Esc bricht ab; verschwindet das Problem von selbst, endet die
+Reparatur. Tests: `tests/unit/ui/test_repair.cpp`. Mockup: `docs/mockups/reparatur-verweis.html`.
+**Noch offen:** Nachrichtentext „Die Kante gibt es nach Schritt ③ nicht mehr“ nennt den Schritt nicht (das Wissen, welcher Schritt das Element
+verbraucht hat, liegt in `ConsumedElement::step`, ist aber noch nicht in der Meldung); das Fenster-Verhalten (Klick im 3D-Fenster)
+ist nur über `DocumentModel` getestet, nicht mit einem Fenster-Test; sichtbar im Programm erst, wenn ein Werkzeug Verweise nutzt (AP-2.5).
