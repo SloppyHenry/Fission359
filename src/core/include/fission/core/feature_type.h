@@ -107,6 +107,9 @@ struct FeatureOutput {
     BodyId body;
     geo::Solid solid;
     std::vector<geo::NamedFace> faces; ///< Roles, as the feature type reports them.
+    /// What the step did to the names of its inputs' faces (empty for steps that do not change
+    /// faces). The recompute uses it to decide whether elements were used up.
+    geo::ElementHistory history = {};
 };
 
 struct FeatureResult {

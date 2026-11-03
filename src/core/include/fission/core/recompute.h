@@ -19,6 +19,7 @@
 #include "fission/core/document.h"
 #include "fission/core/feature_type.h"
 #include "fission/core/measures.h"
+#include "fission/core/persistent_ref.h"
 
 namespace fission::core {
 
@@ -45,12 +46,24 @@ struct BodyFace {
     std::string name;         ///< "F1/box/top"
 };
 
+/// An element that a step used up (a covered face, a rounded edge): the body remembers what it
+/// looked like so a reference to it is not mistaken for a look-alike (ADR-0003 point 5).
+struct ConsumedElement {
+    ElementKind kind = ElementKind::face;
+    std::string name;
+    ElementLook look;
+    FeatureId step; ///< The step after which it was gone.
+};
+
 /// The geometry of one body after the last step that made or changed it.
 struct BodyResult {
     BodyId id;
     FeatureId producer;
     geo::Solid solid;
     std::vector<BodyFace> faces;
+    /// Faces and edges that steps up to here used up, with what they looked like. Only steps that
+    /// combine bodies fill it (they are the ones that can use elements up).
+    std::vector<ConsumedElement> consumed;
     bool stale = false;
     std::uint64_t token = 0;     ///< Identity of the result in the memory (for cache keys) ...
     std::size_t outputIndex = 0; ///< ... together with the number of the output.
@@ -88,6 +101,7 @@ private:
     struct Output {
         geo::Solid solid;
         std::vector<geo::NamedFace> roles;
+        std::vector<ConsumedElement> consumed;
     };
     struct Entry {
         std::uint64_t token = 0;

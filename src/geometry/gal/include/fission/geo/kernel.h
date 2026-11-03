@@ -11,6 +11,7 @@
 #include "fission/geo/mesh.h"
 #include "fission/geo/primitives.h"
 #include "fission/geo/rotation.h"
+#include "fission/geo/signature.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
 
@@ -25,9 +26,13 @@ struct NamedFace {
 
 /// A body and the roles of its faces. The naming contract (ADR-0003): an operation names **every**
 /// face it creates, so `faces` has exactly one entry per face of `solid`.
+///
+/// `history` tells what the operation did to the names of its inputs' faces. It is empty for
+/// operations that make a body from nothing and for pure moves (every face stays as it was).
 struct NamedSolid {
     Solid solid;
     std::vector<NamedFace> faces;
+    ElementHistory history = {};
 };
 
 /// How bodies are combined (AP-1.7, ADR-0011).
@@ -135,6 +140,14 @@ public:
     }
 
     virtual TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const = 0;
+
+    /// What every face and edge of a body looks like (ADR-0003, the base of persistent
+    /// references). Costs about as much as a tessellation of the body's topology: ask only for
+    /// bodies a reference points to. The default refuses.
+    virtual BodySignatures signatures(const Solid& solid) const {
+        (void)solid;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot describe bodies");
+    }
 };
 
 } // namespace fission::geo

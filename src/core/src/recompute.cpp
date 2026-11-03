@@ -7,6 +7,7 @@
 #include <bit>
 #include <exception>
 
+#include "fission/core/body_looks.h"
 #include "fission/geo/error.h"
 
 namespace fission::core {
@@ -184,6 +185,39 @@ void RecomputeCache::trim() {
     }
 }
 
+// What the step used up: the faces and edges of its inputs that are not in a result any more,
+// together with what earlier steps used up. Only steps that report a change to face names can
+// have used something up; for the others the inherited list is all there is.
+std::vector<ConsumedElement> consumedBy(const Feature& feature, const FeatureType& type,
+                                        const FeatureOutput& output,
+                                        const std::vector<const BodyResult*>& inputBodies,
+                                        const geo::GeometryKernel& kernel) {
+    std::vector<ConsumedElement> consumed;
+    for (const BodyResult* input : inputBodies) {
+        mergeConsumed(consumed, input->consumed);
+    }
+    if (output.history.empty()) {
+        return consumed;
+    }
+    try {
+        std::vector<BodyFace> names;
+        for (const geo::NamedFace& face : output.faces) {
+            names.push_back(
+                {face.faceId, type.passesOnNames() ? face.role : elementName(feature, face.role)});
+        }
+        const BodyLooks after = describeBody(names, kernel.signatures(output.solid));
+        for (const BodyResult* input : inputBodies) {
+            mergeConsumed(consumed, consumedBetween(
+                                        describeBody(input->faces, kernel.signatures(input->solid)),
+                                        after, feature.id));
+        }
+    } catch (const geo::GeometryError&) {
+        // A kernel that cannot describe bodies (a test double) cannot tell what was used up; the
+        // OpenCASCADE kernel always can.
+    }
+    return consumed;
+}
+
 std::optional<RecomputeResult> recompute(const Document& document, const FeatureRegistry& registry,
                                          const geo::GeometryKernel& kernel, RecomputeCache& cache,
                                          CancelToken cancel) {
@@ -207,6 +241,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             body.producer = feature.id;
             body.solid = entry.outputs[i].solid;
             body.stale = stale;
+            body.consumed = entry.outputs[i].consumed;
             body.token = entry.token;
             body.outputIndex = i;
             for (const geo::NamedFace& role : entry.outputs[i].roles) {
@@ -338,7 +373,10 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                         violated = true;
                         break;
                     }
-                    outputs.push_back({std::move(output.solid), std::move(output.faces)});
+                    std::vector<ConsumedElement> consumed =
+                        consumedBy(feature, *type, output, inputBodies, kernel);
+                    outputs.push_back(
+                        {std::move(output.solid), std::move(output.faces), std::move(consumed)});
                 }
                 if (violated) {
                     continue;

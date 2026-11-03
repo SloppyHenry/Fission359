@@ -8,6 +8,7 @@
 #include <cmath>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -133,6 +134,36 @@ std::vector<std::pair<int, std::string>> decide(const Lineage& lineage, const ch
         decided.emplace_back(best->rank, best->role);
     }
     return decided;
+}
+
+// What happened to the names of the inputs: the pieces a name was split into, and the names that
+// are not in the result any more (cut away, covered, or joined into a face with another name).
+ElementHistory historyOf(const std::vector<const NamedSolid*>& inputs,
+                         const std::vector<NamedFace>& resultFaces) {
+    ElementHistory history;
+    std::set<std::string> seen;
+    for (const NamedSolid* input : inputs) {
+        for (const NamedFace& face : input->faces) {
+            if (!seen.insert(face.role).second) {
+                continue;
+            }
+            std::vector<std::string> became;
+            for (const NamedFace& made : resultFaces) {
+                const bool piece = made.role.size() > face.role.size() &&
+                                   made.role.compare(0, face.role.size(), face.role) == 0 &&
+                                   made.role[face.role.size()] == '#';
+                if (made.role == face.role || piece) {
+                    became.push_back(made.role);
+                }
+            }
+            if (became.empty()) {
+                history.deleted.push_back(face.role);
+            } else if (became.size() != 1 || became.front() != face.role) {
+                history.modified.emplace_back(face.role, std::move(became));
+            }
+        }
+    }
+    return history;
 }
 
 } // namespace
@@ -264,6 +295,7 @@ NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,
             }
             named.faces.push_back({faceNumber(result, finalFaces(static_cast<int>(i) + 1)), name});
         }
+        named.history = historyOf(inputs, named.faces);
         return named;
     } catch (const Standard_Failure&) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "boolean: the kernel failed");
