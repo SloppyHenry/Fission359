@@ -101,6 +101,26 @@ TEST_CASE("only the chosen bodies, and never holes or hidden bodies", "[export-u
     CHECK_FALSE(QFile::exists(folder.filePath(QStringLiteral("x.stl"))));
 }
 
+TEST_CASE("the body a subtract takes away is a tool and is not exported", "[export-ui]") {
+    application();
+    Session session;
+    REQUIRE(session.model.addShape(QStringLiteral("cylinder"), false) == 1);
+    // In the box, so that the subtract cuts something.
+    session.model.setStepValue(1, QStringLiteral("radius"), QStringLiteral("4"));
+    session.model.setStepValue(1, QStringLiteral("x"), QStringLiteral("0"));
+    session.model.setStepValue(1, QStringLiteral("y"), QStringLiteral("0"));
+    session.model.waitForCalculation();
+    const QString box = session.model.bodyIdAt(0);
+    const QString pin = session.model.bodyIdAt(1);
+    const QString cut = session.model.combineBodies({box, pin}, QStringLiteral("subtract"));
+    REQUIRE_FALSE(cut.isEmpty());
+    session.model.waitForCalculation();
+    // Only the box with the cut: the cylinder stays a ghost, but it is no part to print.
+    CHECK(session.exporter.exportableCount({}) == 1);
+    CHECK(session.exporter.exportableCount({pin}) == 0);
+    CHECK(session.exporter.exportableCount({cut}) == 1);
+}
+
 TEST_CASE("an export into a missing folder says so and leaves nothing", "[export-ui]") {
     application();
     QTemporaryDir folder;
