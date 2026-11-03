@@ -34,7 +34,7 @@ Rectangle {
 
     Row {
         anchors.left: parent.left
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.space3
         anchors.verticalCenter: parent.verticalCenter
         spacing: 8
 
@@ -58,7 +58,7 @@ Rectangle {
                 objectName: "tab_" + index
                 anchors.verticalCenter: parent.verticalCenter
                 height: 36
-                width: tabRow.implicitWidth + 22
+                width: tabRow.implicitWidth + Theme.space6
                 radius: 7
                 color: modelData.current ? Theme.panel : (tabArea.containsMouse ? Theme.field : "transparent")
                 border.width: modelData.current ? 1 : 0
@@ -78,7 +78,7 @@ Rectangle {
                     id: tabRow
 
                     anchors.left: parent.left
-                    anchors.leftMargin: 12
+                    anchors.leftMargin: Theme.space3
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 8
 
@@ -96,7 +96,8 @@ Rectangle {
                               + (tab.modelData.modified ? " •" : "")
                         color: tab.modelData.current ? Theme.fg : Theme.fg3
                         font.weight: Font.Medium
-                        elide: Text.ElideNone
+                        width: Math.min(implicitWidth, 12 * Theme.space2) // a long title ends in "…"
+                        elide: Text.ElideRight
                     }
 
                     AbstractButton {
@@ -141,7 +142,7 @@ Rectangle {
 
     Row {
         anchors.right: parent.right
-        anchors.rightMargin: 12
+        anchors.rightMargin: Theme.space3
         anchors.verticalCenter: parent.verticalCenter
         spacing: 8
 

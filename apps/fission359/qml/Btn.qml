@@ -28,7 +28,7 @@ Button {
     contentItem: Row {
         id: contentRow
 
-        spacing: 7
+        spacing: Theme.space2
 
         Icon {
             visible: control.iconName !== ""

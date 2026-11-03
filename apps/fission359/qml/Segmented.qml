@@ -14,7 +14,7 @@ Rectangle {
     property string accessibleName: ""
     signal activated(var value)
 
-    implicitWidth: row.implicitWidth + 6
+    implicitWidth: row.implicitWidth + Theme.space2
     implicitHeight: 38
     radius: 8
     color: Theme.chrome
@@ -39,8 +39,8 @@ Rectangle {
                 readonly property bool selected: root.current === modelData.value
 
                 implicitHeight: 30
-                implicitWidth: content.implicitWidth + 20
-                horizontalPadding: 10 // the label sits in the middle of its segment
+                implicitWidth: content.implicitWidth + 2 * Theme.space3
+                horizontalPadding: Theme.space3 // the label sits in the middle of its segment
                 hoverEnabled: true
                 Accessible.name: modelData.text
                 Accessible.checkable: true
@@ -50,7 +50,7 @@ Rectangle {
                 contentItem: Row {
                     id: content
 
-                    spacing: 6
+                    spacing: Theme.space2
 
                     Icon {
                         visible: segment.modelData.icon !== undefined && segment.modelData.icon !== ""

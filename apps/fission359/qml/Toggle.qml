@@ -11,7 +11,7 @@ AbstractButton {
 
     checkable: true
     implicitHeight: 28
-    implicitWidth: row.implicitWidth + 8
+    implicitWidth: row.implicitWidth + Theme.space2
     hoverEnabled: true
     Accessible.role: Accessible.CheckBox
     Accessible.name: text
@@ -21,11 +21,11 @@ AbstractButton {
         id: row
 
         spacing: 8
-        leftPadding: 4
+        leftPadding: Theme.space1
 
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
-            width: 30
+            width: 32
             height: 18
             radius: 9
             color: control.checked ? Theme.accent : Theme.field2
