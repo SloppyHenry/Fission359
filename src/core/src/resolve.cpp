@@ -273,7 +273,8 @@ ResolveOutcome bySimilarity(const PersistentRef& ref, const BodyLooks& now,
         dead >= best.score - limits.consumedSlack) {
         return help(HelpReason::consumed,
                     "name not found: looks like an element that was used up (" + deadElement->name +
-                        ")" + scores);
+                        ")" + scores,
+                    deadElement->step);
     }
 
     // The winner may also be clear by place: it sits exactly where the original was and the

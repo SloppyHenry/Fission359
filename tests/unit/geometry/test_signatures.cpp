@@ -56,7 +56,7 @@ TEST_CASE("signatures: golden values of a box", "[signatures][golden]") {
     CHECK(sigs.edges.size() == 12);
     CHECK(sigs.diagonal == Approx(std::sqrt(40.0 * 40.0 * 2.0 + 100.0)).epsilon(1e-6));
 
-    const ElementSignature& top = faceOf(box, sigs, "top");
+    const ElementSignature& top = faceOf(box, sigs, "F1/box/top");
     CHECK(top.kind == SignatureKind::face);
     CHECK(top.shape == SignatureShape::plane);
     CHECK(top.centroid.x == Approx(0.0).margin(1e-9));
@@ -69,9 +69,9 @@ TEST_CASE("signatures: golden values of a box", "[signatures][golden]") {
     CHECK(top.radius == 0.0);
     CHECK(top.faces.size() == 4); // all four sides, not the bottom
 
-    const ElementSignature& bottom = faceOf(box, sigs, "bottom");
+    const ElementSignature& bottom = faceOf(box, sigs, "F1/box/bottom");
     CHECK(bottom.direction.z == Approx(-1.0));
-    const ElementSignature& right = faceOf(box, sigs, "right");
+    const ElementSignature& right = faceOf(box, sigs, "F1/box/right");
     CHECK(right.direction.x == Approx(1.0));
     CHECK(right.size == Approx(400.0));
     CHECK(right.centroid.x == Approx(20.0));
