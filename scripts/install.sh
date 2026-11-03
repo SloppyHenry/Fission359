@@ -116,7 +116,14 @@ url="$(printf '%s\n' "$releases" | grep -o '"browser_download_url": *"[^"]*"' \
 file="${url##*/}"
 note "$file"
 say "Lade herunter / downloading"
-curl -fL --progress-bar -o "$work/$file" "$url" || die "Download fehlgeschlagen / download failed"
+# Slow lines drop now and then: go on where it stopped (-C -), up to five times.
+attempt=1
+until curl -fL -C - --progress-bar -o "$work/$file" "$url"; do
+    [ "$attempt" -lt 5 ] || die "Download fehlgeschlagen / download failed. Später noch einmal versuchen / try again later."
+    attempt=$((attempt + 1))
+    note "Abgebrochen, setze fort / interrupted, resuming ($attempt/5)"
+    sleep 3
+done
 fi
 
 if [ "$PLATFORM" = macos ]; then
