@@ -1012,6 +1012,17 @@ Window {
                 border.color: Theme.accentLine
             }
 
+            // A click on empty ground closes an open gallery, unless a shape is being put down.
+            Connections {
+                target: Selection
+
+                function onEmptyClicked() {
+                    if (!Placement.active) {
+                        root.flyout = ""
+                    }
+                }
+            }
+
             Connections {
                 target: viewport
 

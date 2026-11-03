@@ -93,6 +93,24 @@ TEST_CASE("a click on a face chooses it and the recipe shows its step", "[select
     CHECK(world.model.currentStep() == -1);
 }
 
+TEST_CASE("a click on nothing says so, a click on a body or with Shift does not",
+          "[selection][ui]") {
+    World world;
+    int told = 0;
+    QObject::connect(&world.selection, &SelectionController::emptyClicked, [&told] { ++told; });
+
+    world.click(SelectableKind::face, world.faceNumber("F1/box/top"));
+    CHECK(told == 0);
+    world.clickBackground();
+    CHECK(told == 1);
+    emit world.viewport.picked(static_cast<int>(Viewport3D::PickIntent::click), true, QString(), 0,
+                               0);
+    CHECK(told == 1); // Shift + click on nothing keeps the choice, and the gallery
+    emit world.viewport.picked(static_cast<int>(Viewport3D::PickIntent::doubleClick), false,
+                               QString(), 0, 0);
+    CHECK(told == 1);
+}
+
 TEST_CASE("a double click chooses the whole body", "[selection][ui]") {
     World world;
     world.doubleClick(SelectableKind::face, world.faceNumber("F1/box/top"));

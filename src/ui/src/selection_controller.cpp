@@ -148,6 +148,9 @@ void SelectionController::onPicked(int intent, bool extend, const QString& body,
     if (different) {
         choiceChanged();
     }
+    if (what == Viewport3D::PickIntent::click && !hit && !extend) {
+        emit emptyClicked();
+    }
 }
 
 void SelectionController::onHover(const QString& body, int kind, int number) {

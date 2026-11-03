@@ -398,6 +398,22 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                                [window, group] { window->setProperty("flyout", group); });
             continue;
         }
+        if (kind == QLatin1String("expectflyout")) {
+            // expectflyout:shapes - that group of the palette is open; expectflyout: (empty) -
+            // none.
+            const QString group = action.mid(colon + 1).trimmed();
+            delay += 400;
+            QTimer::singleShot(delay, viewport, [window, group] {
+                const QString open = window->property("flyout").toString();
+                if (open != group) {
+                    qWarning().noquote()
+                        << QStringLiteral("the open group is \"%1\", expected \"%2\"")
+                               .arg(open, group);
+                    g_simulationFailure = 11;
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("grid")) { // grid:0.1 - the step of snapping (0: automatic)
             const double step = action.mid(colon + 1).trimmed().toDouble();
             delay += 350;
