@@ -188,7 +188,10 @@ QtObject {
             const what = problem.kind === "edge" ? qsTr("edge") : qsTr("face")
             switch (problem.reason) {
             case "split": return qsTr("The %1 was split into pieces, so I cannot tell which one you meant. Choose it again.").arg(what)
-            case "consumed": return qsTr("An earlier step used up this %1. Choose another one.").arg(what)
+            case "consumed":
+                return problem.step !== undefined
+                    ? qsTr("This %1 does not exist any more after step %2. Choose another one.").arg(what).arg(problem.step)
+                    : qsTr("An earlier step used up this %1. Choose another one.").arg(what)
             case "turned": return qsTr("This %1 has turned a lot. Choose it again to be sure.").arg(what)
             case "swapped": return qsTr("Two equal ones seem to have changed places. Choose the %1 you meant.").arg(what)
             default: return qsTr("I cannot find this %1 any more. Choose it again.").arg(what)

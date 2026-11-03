@@ -205,7 +205,8 @@ void RecomputeCache::trim() {
 std::vector<ConsumedElement> consumedBy(const Feature& feature, const FeatureType& type,
                                         const FeatureOutput& output,
                                         const std::vector<const BodyResult*>& inputBodies,
-                                        const geo::GeometryKernel& kernel) {
+                                        const geo::GeometryKernel& kernel,
+                                        const PlacementFn& placement) {
     std::vector<ConsumedElement> consumed;
     for (const BodyResult* input : inputBodies) {
         mergeConsumed(consumed, input->consumed);
@@ -221,9 +222,10 @@ std::vector<ConsumedElement> consumedBy(const Feature& feature, const FeatureTyp
         }
         const BodyLooks after = describeBody(names, kernel.signatures(output.solid));
         for (const BodyResult* input : inputBodies) {
-            mergeConsumed(consumed, consumedBetween(
-                                        describeBody(input->faces, kernel.signatures(input->solid)),
-                                        after, feature.id));
+            // Saved in the coordinates of the steps that made the elements, like references are.
+            const BodyLooks before =
+                toBodyFrame(describeBody(input->faces, kernel.signatures(input->solid)), placement);
+            mergeConsumed(consumed, consumedBetween(before, after, feature.id));
         }
     } catch (const geo::GeometryError&) {
         // A kernel that cannot describe bodies (a test double) cannot tell what was used up; the
@@ -363,13 +365,17 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         std::map<std::string, std::vector<ResolvedRef>> resolvedRefs;
         if (!feature.refs.empty()) {
             std::optional<FeatureIssue> help;
+            FeatureId consumedStep;
             const auto needHelp = [&](const std::string& slot, std::size_t index, ElementKind kind,
-                                      HelpReason reason, std::string detail) {
+                                      HelpReason reason, std::string detail,
+                                      FeatureId consumedBy = {}) {
                 if (!help) {
+                    consumedStep = std::move(consumedBy);
                     help = issueOf(FeatureIssueCode::referenceNeedsHelp, slot, std::move(detail));
                     help->helpReason = reason;
                     help->refIndex = index;
                     help->refKind = kind;
+                    help->consumedBy = consumedStep;
                 }
             };
             const BodyResult* target = inputBodies.empty() ? nullptr : inputBodies.front();
@@ -405,7 +411,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                     }
                     const ResolveOutcome outcome = resolve(ref, looks, target->consumed, placement);
                     if (outcome.state != ResolveOutcome::State::found) {
-                        needHelp(slot, index, ref.kind, outcome.reason, outcome.detail);
+                        needHelp(slot, index, ref.kind, outcome.reason, outcome.detail,
+                                 outcome.consumedBy);
                         continue;
                     }
                     resolvedRefs[slot].push_back({ref.kind, outcome.element, outcome.id});
@@ -420,6 +427,17 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                 continue;
             }
         }
+
+        // The place of the step that made an element (for the memory of used-up elements).
+        std::map<std::string, Placement> hereCache;
+        const PlacementFn placementHere = [&](const std::string& name) {
+            const auto known = hereCache.find(name);
+            if (known != hereCache.end()) {
+                return known->second;
+            }
+            return hereCache.emplace(name, placementOf(document, registry, result.features, name))
+                .first->second;
+        };
 
         // Remembered, or ask the kernel.
         const std::string key = cacheKey(feature, *type, state.params, inputBodies, resolvedRefs);
@@ -451,7 +469,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                         break;
                     }
                     std::vector<ConsumedElement> consumed =
-                        consumedBy(feature, *type, output, inputBodies, kernel);
+                        consumedBy(feature, *type, output, inputBodies, kernel, placementHere);
                     outputs.push_back(
                         {std::move(output.solid), std::move(output.faces), std::move(consumed)});
                 }

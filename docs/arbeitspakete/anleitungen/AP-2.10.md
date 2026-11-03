@@ -118,9 +118,11 @@ Teilen, Überdecken, Verschmelzen), `test_random.cpp` (10 Ketten à 12 Änderung
 `test_sensitivity.cpp` (Gedächtnis, Plätze-getauscht-Prüfung, 45°-Regel: je ein Fall, der ohne den Baustein still falsch wäre).
 `scripts/test` zählt die Szenarien und fällt durch bei einem stillen Fehler oder unter 90 % automatisch richtig.
 **Noch offen:** Szenarien mit Abrunden, Bohren, Skizzen (mit AP-2.5, 2.7, 2.3 nachziehen); Bohrungen verschieben/vergrößern;
-Zufallsprobe um Teilen und Vereinen erweitern. Jeder Element wird in den Koordinaten des eigenen Schritts verglichen (`PlacementFn`):
-Verschieben des Körpers über `x/y/z` wird dabei nicht herausgerechnet (nur die Drehung), Positionsvergleiche in der Ähnlichkeitssuche
-nach einem Verschieben können deshalb zu Recht um Hilfe bitten.
+Zufallsprobe um Teilen und Vereinen erweitern. Jedes Element wird in den Koordinaten des eigenen Schritts verglichen (`PlacementFn`,
+nur Drehung). Die Position wird bewusst nicht herausgerechnet (siehe ADR-0003, Nachtrag 2026-11-03): nach einem Verschieben kann die
+Ähnlichkeitssuche zu Recht um Hilfe bitten. Das Gedächtnis für verbrauchte Elemente liegt ebenfalls in den Koordinaten der Schritte.
+**Noch offen für die Abnahme:** Laufzeit der Auflösung bei 50 Schritten messen (< 50 ms), Zwischenspeicher der Aussehen je Körper, falls
+die Messung ihn verlangt.
 
 ## Stand 2.10e (Reparatur-Oberfläche)
 Rezept-Zeile mit ⚠: Karte mit Grund (geteilt, verbraucht, gedreht, Plätze getauscht, nicht gefunden) und Knopf „Neu wählen“
@@ -129,6 +131,6 @@ Fläche, die gemeint ist“, `RepairGhostLayer.qml` zeichnet das alte Element ge
 gespeicherten Aussehen; die letzte gültige Geometrie des Elements wird nicht benutzt). Ein Klick auf den Körper des Schritts ruft
 `completeRepair` auf: ein Command `makeSetFeatureRefs`, ein Undo-Schritt. Esc bricht ab; verschwindet das Problem von selbst, endet die
 Reparatur. Tests: `tests/unit/ui/test_repair.cpp`. Mockup: `docs/mockups/reparatur-verweis.html`.
-**Noch offen:** Nachrichtentext „Die Kante gibt es nach Schritt ③ nicht mehr“ nennt den Schritt nicht (das Wissen, welcher Schritt das Element
-verbraucht hat, liegt in `ConsumedElement::step`, ist aber noch nicht in der Meldung); das Fenster-Verhalten (Klick im 3D-Fenster)
-ist nur über `DocumentModel` getestet, nicht mit einem Fenster-Test; sichtbar im Programm erst, wenn ein Werkzeug Verweise nutzt (AP-2.5).
+**Noch offen:** das Fenster-Verhalten (Klick im 3D-Fenster) ist nur über `DocumentModel` getestet, nicht mit einem Fenster-Test;
+sichtbar im Programm erst, wenn ein Werkzeug Verweise nutzt (AP-2.5). Die Meldung „Diese Kante gibt es nach Schritt ③ nicht mehr“ nennt den
+Schritt (`ConsumedElement::step`).

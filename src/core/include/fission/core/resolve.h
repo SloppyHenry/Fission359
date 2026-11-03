@@ -106,7 +106,8 @@ struct ResolveOutcome {
     std::uint32_t id = 0;                     ///< Its number in the body (face / edge).
     std::size_t index = 0;                    ///< Its position in `BodyLooks::faces` / `edges`.
     double score = 0.0;                       ///< Similarity (1 for a name hit).
-    std::string detail; ///< Short English explanation for tests and logs, never for the UI.
+    FeatureId consumedBy; ///< For `HelpReason::consumed`: the step that used the element up.
+    std::string detail;   ///< Short English explanation for tests and logs, never for the UI.
 };
 
 /// Finds the element a reference points to in `now` (the body as it is, in world coordinates)

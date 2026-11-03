@@ -158,7 +158,7 @@
 ---
 
 ### AP-2.10 Persistente Referenzen (produktiv) und Reparatur-UI
-**Status:** offen · **Größe:** XL · **Abhängigkeiten:** AP-0.6, AP-1.1, AP-1.7, AP-1.10
+**Status:** gebaut (2026-11-03), Abnahme offen: Testlauf und PR stehen aus · **Größe:** XL · **Abhängigkeiten:** AP-0.6, AP-1.1, AP-1.7, AP-1.10
 **Bauanleitung:** [anleitungen/AP-2.10.md](anleitungen/AP-2.10.md)
 
 > Vor dem Start in Teilpakete zerlegen (Naming für jede Feature-Art, Signatur-Matching, Reparatur-UI).
@@ -171,6 +171,17 @@
 **Akzeptanzkriterien:**
 - [ ] 0 stille Fehlzuordnungen in der Testsuite
 - [ ] ≥ 90 % der Szenarien lösen sich automatisch korrekt auf
+
+**Vorläufiger Vermerk 2026-11-03 (Teile a–e gebaut, noch nicht getestet):**
+- Ergebnis: Kernel beschreibt Flächen und Kanten (`geo::ElementSignature`), Booleans melden die Namens-Historie, Körper merken verbrauchte
+  Elemente; `core::resolve` (strenger Modus, Schwellen benannt); Einbau in die Neuberechnung (Warnung `referenceNeedsHelp` mit Grund, letztes
+  gültiges Ergebnis bleibt); Heilen ohne Undo-Schritt; `makeRef`, `makeSetFeatureRefs`; Produkt-Suite (70 Szenarien, Zufallsprobe, drei
+  Baustein-Gegenproben, Zeile in `scripts/test`); Reparatur-Oberfläche mit Geist und „Neu wählen“.
+- Festlegungen: [ADR-0003](../adr/0003-persistente-referenzen.md) Nachtrag 2026-11-03 (Namen geteilter Flächen, Koordinaten je Schritt,
+  Position wird nicht herausgerechnet). Heilen ohne Undo-Schritt (Entscheidung 2026-11-03).
+- Offene Reste: Szenarien mit Abrunden, Bohren, Skizzen (mit AP-2.5, 2.7, 2.3); Fenster-Test der Reparatur (sichtbar erst mit AP-2.5);
+  Laufzeit der Auflösung bei 50 Schritten noch nicht gemessen (Abnahme verlangt < 50 ms); Zwischenspeicher der Aussehen je Körper fehlt
+  (Aussehen werden je Schritt mit Verweis neu berechnet). Details: [anleitungen/AP-2.10.md](anleitungen/AP-2.10.md), Abschnitte „Stand“.
 
 ---
 

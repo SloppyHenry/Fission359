@@ -121,6 +121,35 @@ TEST_CASE("repair: a split face shows the reason and can be chosen again", "[ui]
     CHECK(f.state(3) == "warning");
 }
 
+TEST_CASE("repair: a covered face names the step that covered it", "[ui][repair]") {
+    // A box with a thin cover that is first far away, then put on the top: the old top is used up
+    // by the combine (step 3 in the recipe).
+    application();
+    const std::shared_ptr<const fission::geo::GeometryKernel> kernel =
+        fission::geo::occt::makeKernel();
+    std::vector<std::unique_ptr<const core::FeatureType>> extra;
+    extra.push_back(std::make_unique<MarkFaceType>());
+    DocumentModel model(kernel, std::move(extra));
+
+    RefWorld world;
+    const core::FeatureId plate = world.plate("40", "30", "10");
+    const core::FeatureId cover = world.add(
+        "box", {{"width", "40"}, {"depth", "30"}, {"height", "0.5"}, {"x", "0"}, {"z", "100"}});
+    const core::FeatureId merged =
+        world.add("combine", {}, {world.bodyOf(plate), world.bodyOf(cover)}, {{"mode", "merge"}});
+    const core::RecomputeResult first = world.run();
+    world.mark_(merged, world.pick(first, merged, core::ElementKind::face, "F1/box/top"));
+    model.replaceDocument(world.document);
+    model.waitForCalculation();
+    REQUIRE(model.recipe().at(3).toMap().value("state").toString() == "ok");
+
+    REQUIRE(model.setStepValue(1, QStringLiteral("z"), QStringLiteral("10")));
+    model.waitForCalculation();
+    const QVariantMap problem = model.recipe().at(3).toMap().value("problem").toMap();
+    CHECK(problem.value("reason").toString() == "consumed");
+    CHECK(problem.value("step").toInt() == 3);
+}
+
 TEST_CASE("repair: cancelling and a problem that goes away end the repair", "[ui][repair]") {
     Repair f;
     f.breakIt();

@@ -2733,6 +2733,11 @@
         <translation>Die %1 wurde geteilt, ich weiß nicht, welches Stück du meinst. Wähle sie neu.</translation>
     </message>
     <message>
+        <location line="+3"/>
+        <source>This %1 does not exist any more after step %2. Choose another one.</source>
+        <translation>Diese %1 gibt es nach Schritt %2 nicht mehr. Wähle eine andere.</translation>
+    </message>
+    <message>
         <location line="+1"/>
         <source>An earlier step used up this %1. Choose another one.</source>
         <translation>Ein früherer Schritt hat diese %1 aufgebraucht. Wähle eine andere.</translation>

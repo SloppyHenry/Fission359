@@ -772,6 +772,12 @@ void DocumentModel::rebuildLists() {
             problem[QStringLiteral("field")] = toQString(state->issue->subject);
             if (state->issue->code == core::FeatureIssueCode::referenceNeedsHelp) {
                 problem[QStringLiteral("reason")] = helpReasonName(state->issue->helpReason);
+                // The recipe number (1-based) of the step that used the element up.
+                for (std::size_t at = 0; at < features.size(); ++at) {
+                    if (features[at].id == state->issue->consumedBy) {
+                        problem[QStringLiteral("step")] = static_cast<int>(at) + 1;
+                    }
+                }
                 problem[QStringLiteral("kind")] = state->issue->refKind == core::ElementKind::edge
                                                       ? QStringLiteral("edge")
                                                       : QStringLiteral("face");

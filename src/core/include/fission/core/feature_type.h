@@ -46,6 +46,7 @@ struct FeatureIssue {
     HelpReason helpReason = HelpReason::none; ///< For `referenceNeedsHelp`: why.
     std::size_t refIndex = 0;                 ///< For `referenceNeedsHelp`: position in the slot.
     ElementKind refKind = ElementKind::face;  ///< For `referenceNeedsHelp`: face or edge.
+    FeatureId consumedBy; ///< For `referenceNeedsHelp` with reason `consumed`: the step that did.
     std::optional<ExpressionError> expression;
     std::string detail; ///< For the log only, never shown.
 };

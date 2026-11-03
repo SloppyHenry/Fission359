@@ -2733,6 +2733,11 @@
         <translation>The %1 was split into pieces, so I cannot tell which one you meant. Choose it again.</translation>
     </message>
     <message>
+        <location line="+3"/>
+        <source>This %1 does not exist any more after step %2. Choose another one.</source>
+        <translation>This %1 does not exist any more after step %2. Choose another one.</translation>
+    </message>
+    <message>
         <location line="+1"/>
         <source>An earlier step used up this %1. Choose another one.</source>
         <translation>An earlier step used up this %1. Choose another one.</translation>

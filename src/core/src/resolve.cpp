@@ -160,10 +160,11 @@ double placeLook(const ElementLook& ref, const ElementLook& cand, double diagona
            0.3 * ((ref.radius > 0.0 && cand.radius > 0.0) ? ratio(ref.radius, cand.radius) : 1.0);
 }
 
-ResolveOutcome help(HelpReason reason, std::string detail) {
+ResolveOutcome help(HelpReason reason, std::string detail, FeatureId consumedBy = {}) {
     ResolveOutcome outcome;
     outcome.state = ResolveOutcome::State::needsHelp;
     outcome.reason = reason;
+    outcome.consumedBy = std::move(consumedBy);
     outcome.detail = std::move(detail);
     return outcome;
 }
@@ -472,10 +473,8 @@ ResolveOutcome resolve(const PersistentRef& ref, const BodyLooks& worldNow,
                        const PlacementFn& placement, const ResolveLimits& limits,
                        const ResolveSwitches& switches) {
     const BodyLooks now = toBodyFrame(worldNow, placement);
-    std::vector<ConsumedElement> consumed = worldConsumed;
-    for (ConsumedElement& gone : consumed) {
-        gone.look = toBodyFrame(gone.look, placement(gone.name));
-    }
+    // The memory of used-up elements is saved in the coordinates of their steps already.
+    const std::vector<ConsumedElement>& consumed = worldConsumed;
     const std::vector<NamedLook>& list = listOf(now, ref.kind);
     if (list.empty()) {
         return help(HelpReason::notFound, "no body");
