@@ -86,6 +86,7 @@ BodyLooks describeBody(const std::vector<BodyFace>& faces, const geo::BodySignat
     };
     const auto fill = [&](const geo::ElementSignature& sig, const std::string& name) {
         NamedLook entry;
+        entry.id = sig.id;
         entry.name = name;
         entry.look = baseLook(sig);
         std::set<std::string> around;

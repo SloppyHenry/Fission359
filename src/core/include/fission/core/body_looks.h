@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -14,6 +15,7 @@ namespace fission::core {
 
 /// A face or edge of a body: its name (empty if it has none, see `ElementNames`) and its look.
 struct NamedLook {
+    std::uint32_t id = 0; ///< Number of the face / edge in the body (as in the mesh).
     std::string name;
     ElementLook look;
 };
