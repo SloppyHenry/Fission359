@@ -443,7 +443,10 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // front | back) of the chosen body, as a click on the number and Enter would.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;
-            QTimer::singleShot(delay, viewport, [distances, spec] {
+            QTimer::singleShot(delay, viewport, [distances, model, spec] {
+                // A person types the number they see: measure what is calculated, not what is
+                // still being calculated (slow builds, e.g. with the address sanitizer).
+                model->waitForCalculation();
                 const int index = distances->indexOfSide(spec.value(0).trimmed());
                 if (index < 0 || !distances->setDistance(index, spec.value(1).toDouble())) {
                     qWarning().noquote() << QStringLiteral("no distance %1 to set to %2")

@@ -5,10 +5,10 @@
 
 Plays the steps through the real program and reads the exported 3MF with the eyes of a slicer:
 two objects, two colours, the hole cut out of the plate. Left out on purpose: step 3 (round the
-vertical edges, AP-2.5) and step 7 (print check, phase 3). Steps 4 and 5 use values for the
-place of the text and the hole instead of clicking on the top face (the placement tests cover
-that). The distance measure ("5 mm from the edge") is not used: it measures only to bodies
-beside the hole, and on the plate it shows the distance to the edge of the print bed. Usage: e2e_keychain.py <fission359> [runner...]
+vertical edges, AP-2.5) and step 7 (print check, phase 3). Step 4 uses values for the
+place of the text instead of clicking on the top face (the placement tests cover that). Step 5
+types the distance measure: the hole lies on the plate, so "5 mm from the edge" counts from the
+edge of the plate. Usage: e2e_keychain.py <fission359> [runner...]
 """
 
 import math
@@ -29,8 +29,8 @@ ACTIONS = ";".join([
     "step:0", "type:50,tab,20,tab,4,enter", "value:x,0", "value:y,0",
     "put:text", "set:text,LENA", "value:size,6", "value:height,1.5", "value:x,0", "value:y,0", "value:z,4",
     "color:#e53935",
-    "puthole:cylinder", "value:radius,2.5", "value:x,-17.5", "value:y,0", "value:z,-1",
-    "value:height,5",
+    "puthole:cylinder", "value:radius,2.5", "value:x,0", "value:y,0", "value:z,-1",
+    "value:height,5", "distance:left,5",
     "recipe:box,text,cylinder,combine",
 ])
 
