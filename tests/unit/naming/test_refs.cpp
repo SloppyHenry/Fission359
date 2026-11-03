@@ -8,6 +8,8 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <chrono>
+
 #include "fission/core/commands.h"
 #include "fission/core/history.h"
 
@@ -223,4 +225,29 @@ TEST_CASE("refs: the place of a step comes from its turn", "[refs][placement]") 
     CHECK(placementOf(world.document, world.registry, result.features, "other") == Placement{});
     CHECK(placementOf(world.document, world.registry, result.features, "F77/box/top") ==
           Placement{});
+}
+
+TEST_CASE("refs: resolving the references of 50 steps is fast", "[refs][perf]") {
+    RefWorld world;
+    const FeatureId plate = world.plate();
+    const RecomputeResult first = world.run();
+    const PersistentRef top = world.pick(first, plate, ElementKind::face, "F1/box/top");
+    for (int i = 0; i < 49; ++i) {
+        world.mark_(plate, top);
+    }
+    world.run(); // everything is calculated and remembered once
+
+    // Nothing changes, so the kernel is not asked: what is left is resolving 49 references.
+    const auto started = std::chrono::steady_clock::now();
+    const RecomputeResult again = world.run();
+    const auto elapsed = std::chrono::steady_clock::now() - started;
+    CHECK(again.executed == 0);
+    CHECK(again.healed.empty());
+    const double milliseconds = std::chrono::duration<double, std::milli>(elapsed).count();
+    INFO("resolving 49 references took " << milliseconds << " ms");
+#ifdef NDEBUG
+    CHECK(milliseconds < 50.0); // the budget of AP-2.10
+#else
+    CHECK(milliseconds < 500.0); // an unoptimised build is several times slower
+#endif
 }

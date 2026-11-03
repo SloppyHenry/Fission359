@@ -243,6 +243,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         resolveMeasures(document.measureDefinitions(), document.settings().defaultUnitMillimetres);
     const MeasureLookup lookup = result.measures.lookup();
     ++cache.clock_;
+    // What the bodies look like, for steps that hold references (by result token and output).
+    std::map<std::pair<std::uint64_t, std::size_t>, BodyLooks> looksOfBody;
 
     using Entry = RecomputeCache::Entry;
     using Output = RecomputeCache::Output;
@@ -379,11 +381,20 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                 }
             };
             const BodyResult* target = inputBodies.empty() ? nullptr : inputBodies.front();
-            BodyLooks looks;
+            const BodyLooks* looksPtr = nullptr;
             bool described = false;
             if (target != nullptr) {
                 try {
-                    looks = describeBody(target->faces, kernel.signatures(target->solid));
+                    // Many steps point into the same body: describe it once per run.
+                    const auto key = std::make_pair(target->token, target->outputIndex);
+                    auto known = looksOfBody.find(key);
+                    if (known == looksOfBody.end()) {
+                        known = looksOfBody
+                                    .emplace(key, describeBody(target->faces,
+                                                               kernel.signatures(target->solid)))
+                                    .first;
+                    }
+                    looksPtr = &known->second;
                     described = true;
                 } catch (const geo::GeometryError& error) {
                     const auto& first = *feature.refs.begin();
@@ -409,14 +420,15 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                         needHelp(slot, index, ref.kind, HelpReason::notFound, "no body to look in");
                         continue;
                     }
-                    const ResolveOutcome outcome = resolve(ref, looks, target->consumed, placement);
+                    const ResolveOutcome outcome =
+                        resolve(ref, *looksPtr, target->consumed, placement);
                     if (outcome.state != ResolveOutcome::State::found) {
                         needHelp(slot, index, ref.kind, outcome.reason, outcome.detail,
                                  outcome.consumedBy);
                         continue;
                     }
                     resolvedRefs[slot].push_back({ref.kind, outcome.element, outcome.id});
-                    PersistentRef healed = refreshed(ref, looks, outcome, placement);
+                    PersistentRef healed = refreshed(ref, *looksPtr, outcome, placement);
                     if (!(healed == ref)) {
                         result.healed.push_back({feature.id, slot, index, ref, std::move(healed)});
                     }

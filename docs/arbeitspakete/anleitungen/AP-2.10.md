@@ -121,8 +121,8 @@ Teilen, Überdecken, Verschmelzen), `test_random.cpp` (10 Ketten à 12 Änderung
 Zufallsprobe um Teilen und Vereinen erweitern. Jedes Element wird in den Koordinaten des eigenen Schritts verglichen (`PlacementFn`,
 nur Drehung). Die Position wird bewusst nicht herausgerechnet (siehe ADR-0003, Nachtrag 2026-11-03): nach einem Verschieben kann die
 Ähnlichkeitssuche zu Recht um Hilfe bitten. Das Gedächtnis für verbrauchte Elemente liegt ebenfalls in den Koordinaten der Schritte.
-**Noch offen für die Abnahme:** Laufzeit der Auflösung bei 50 Schritten messen (< 50 ms), Zwischenspeicher der Aussehen je Körper, falls
-die Messung ihn verlangt.
+**Noch offen für die Abnahme:** Messwert der Auflösung bei 50 Schritten eintragen (Test `[perf]` in `test_refs.cpp`, Budget < 50 ms im
+Release); ein Zwischenspeicher der Aussehen über Läufe hinweg nur, falls die Messung ihn verlangt (je Lauf wird ein Körper einmal beschrieben).
 
 ## Stand 2.10e (Reparatur-Oberfläche)
 Rezept-Zeile mit ⚠: Karte mit Grund (geteilt, verbraucht, gedreht, Plätze getauscht, nicht gefunden) und Knopf „Neu wählen“

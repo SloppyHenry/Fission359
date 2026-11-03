@@ -180,8 +180,8 @@
 - Festlegungen: [ADR-0003](../adr/0003-persistente-referenzen.md) Nachtrag 2026-11-03 (Namen geteilter Flächen, Koordinaten je Schritt,
   Position wird nicht herausgerechnet). Heilen ohne Undo-Schritt (Entscheidung 2026-11-03).
 - Offene Reste: Szenarien mit Abrunden, Bohren, Skizzen (mit AP-2.5, 2.7, 2.3); Fenster-Test der Reparatur (sichtbar erst mit AP-2.5);
-  Laufzeit der Auflösung bei 50 Schritten noch nicht gemessen (Abnahme verlangt < 50 ms); Zwischenspeicher der Aussehen je Körper fehlt
-  (Aussehen werden je Schritt mit Verweis neu berechnet). Details: [anleitungen/AP-2.10.md](anleitungen/AP-2.10.md), Abschnitte „Stand“.
+  Laufzeit der Auflösung bei 50 Schritten: Test `[perf]` in `tests/unit/naming/test_refs.cpp` (Abnahme verlangt < 50 ms, im Release geprüft),
+  Messwert noch nicht erhoben; die Aussehen eines Körpers werden je Lauf einmal berechnet, nicht über Läufe hinweg gespeichert. Details: [anleitungen/AP-2.10.md](anleitungen/AP-2.10.md), Abschnitte „Stand“.
 
 ---
 
