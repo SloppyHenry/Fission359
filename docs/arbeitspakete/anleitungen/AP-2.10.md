@@ -68,7 +68,7 @@ Gedächtnis für verbrauchte Elemente; nur strenger Modus.
 5. Tests: alle Szenarien aus `tests/naming/test_scenarios.cpp` und `test_evil.cpp` gegen den Produktcode portieren
    (`tests/unit/core/test_resolve.cpp`), gleiche Erwartungen. **Stand:** portiert sind die Szenarien, die Quader, Zylinder und
    Zusammenfügen bauen können (Maße ändern, Schritt ersetzt, Fläche geteilt, Fläche überdeckt, Plätze getauscht, Drehung, Lage).
-   Die Szenarien mit Abrunden, Bohren und Skizzen folgen in 2.10d, sobald es diese Werkzeuge gibt.
+   Die Szenarien mit Abrunden, Bohren und Skizzen folgen, sobald es diese Werkzeuge gibt.
 
 ## Teil 2.10c – Verweise anlegen und speichern
 1. `core::makeRef(elementName, looks)`: aus einer Auswahl (ADR-0009) einen `PersistentRef` bauen.
@@ -111,3 +111,13 @@ Gedächtnis für verbrauchte Elemente; nur strenger Modus.
 - Keine großzügige „bitte prüfen“-Stufe (ADR-0003 Punkt 6).
 - Kein OCAF.
 - Schwellen nicht „mal eben“ lockern, um mehr Treffer zu bekommen: Änderung nur mit neuer Messung und ADR-Nachtrag.
+
+## Stand 2.10d (Produkt-Suite)
+`tests/unit/naming/`: `test_scenarios.cpp` (70 Szenarien: Maße, Einfügen davor, Ausblenden, Verschieben, Drehen, Schritt ersetzt, Zylinder,
+Teilen, Überdecken, Verschmelzen), `test_random.cpp` (10 Ketten à 12 Änderungen, eigener Zufallsgenerator, Wahrheit aus der Geometrie),
+`test_sensitivity.cpp` (Gedächtnis, Plätze-getauscht-Prüfung, 45°-Regel: je ein Fall, der ohne den Baustein still falsch wäre).
+`scripts/test` zählt die Szenarien und fällt durch bei einem stillen Fehler oder unter 90 % automatisch richtig.
+**Noch offen:** Szenarien mit Abrunden, Bohren, Skizzen (mit AP-2.5, 2.7, 2.3 nachziehen); Bohrungen verschieben/vergrößern;
+Zufallsprobe um Teilen und Vereinen erweitern. Jeder Element wird in den Koordinaten des eigenen Schritts verglichen (`PlacementFn`):
+Verschieben des Körpers über `x/y/z` wird dabei nicht herausgerechnet (nur die Drehung), Positionsvergleiche in der Ähnlichkeitssuche
+nach einem Verschieben können deshalb zu Recht um Hilfe bitten.

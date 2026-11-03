@@ -31,7 +31,11 @@ class MarkFaceType final : public core::FeatureType {
 public:
     std::string_view id() const override { return "markFace"; }
     int version() const override { return 1; }
-    std::vector<core::ParamSpec> parameters() const override { return {}; }
+    // `tag` makes every step different for the memory of the recompute (it is not used): two steps
+    // that point at the same element would otherwise share one result and only one would run.
+    std::vector<core::ParamSpec> parameters() const override {
+        return {{"tag", core::QuantityKind::length, "0"}};
+    }
     std::optional<core::FeatureIssue> validate(const core::ResolvedParams&) const override {
         return std::nullopt;
     }
@@ -43,6 +47,7 @@ public:
                                      "markFace: needs a body and the reference 'target'");
         }
         seen = found->second;
+        seenBy[input.feature.id.value] = found->second;
         const core::FeatureOutput& body = input.inputs.front();
         core::FeatureResult result;
         result.outputs.push_back({input.feature.outputs.at(0), body.solid, body.faces});
@@ -55,6 +60,8 @@ public:
     std::vector<core::HandleSpec> handles(const core::ResolvedParams&) const override { return {}; }
 
     mutable std::vector<core::ResolvedRef> seen;
+    /// What each step found when it last ran, by the id of the step.
+    mutable std::map<std::string, std::vector<core::ResolvedRef>> seenBy;
 };
 
 struct RefWorld {
@@ -63,6 +70,7 @@ struct RefWorld {
     std::unique_ptr<geo::GeometryKernel> kernel = geo::occt::makeKernel();
     core::RecomputeCache cache;
     const MarkFaceType* mark = nullptr;
+    int marks_ = 0;
 
     RefWorld() {
         features::registerBuiltinFeatures(registry);
@@ -129,6 +137,7 @@ struct RefWorld {
         core::FeatureDraft draft = core::defaultDraft(*registry.find("markFace"));
         draft.inputs = {bodyOf(target)};
         draft.refs["target"] = {std::move(ref)};
+        draft.params.at("tag").expression = std::to_string(++marks_);
         return *document.addFeature(std::move(draft));
     }
 };

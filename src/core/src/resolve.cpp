@@ -380,25 +380,37 @@ ElementLook toBodyFrame(const ElementLook& look, const Placement& placement) {
     return out;
 }
 
-BodyLooks toBodyFrame(const BodyLooks& looks, const Placement& placement) {
+BodyLooks toBodyFrame(const BodyLooks& looks, const PlacementFn& placementOf) {
     BodyLooks out = looks;
     for (NamedLook& entry : out.faces) {
-        entry.look = toBodyFrame(entry.look, placement);
+        entry.look = toBodyFrame(entry.look, placementOf(entry.name));
     }
     for (NamedLook& entry : out.edges) {
-        entry.look = toBodyFrame(entry.look, placement);
+        entry.look = toBodyFrame(entry.look, placementOf(entry.name));
     }
     return out;
+}
+
+BodyLooks toBodyFrame(const BodyLooks& looks, const Placement& placement) {
+    return toBodyFrame(looks, PlacementFn([&](const std::string&) { return placement; }));
 }
 
 ResolveOutcome resolve(const PersistentRef& ref, const BodyLooks& worldNow,
                        const std::vector<ConsumedElement>& worldConsumed,
                        const Placement& placement, const ResolveLimits& limits,
                        const ResolveSwitches& switches) {
+    return resolve(ref, worldNow, worldConsumed,
+                   PlacementFn([&](const std::string&) { return placement; }), limits, switches);
+}
+
+ResolveOutcome resolve(const PersistentRef& ref, const BodyLooks& worldNow,
+                       const std::vector<ConsumedElement>& worldConsumed,
+                       const PlacementFn& placement, const ResolveLimits& limits,
+                       const ResolveSwitches& switches) {
     const BodyLooks now = toBodyFrame(worldNow, placement);
     std::vector<ConsumedElement> consumed = worldConsumed;
     for (ConsumedElement& gone : consumed) {
-        gone.look = toBodyFrame(gone.look, placement);
+        gone.look = toBodyFrame(gone.look, placement(gone.name));
     }
     const std::vector<NamedLook>& list = listOf(now, ref.kind);
     if (list.empty()) {
@@ -466,6 +478,11 @@ ResolveOutcome resolve(const PersistentRef& ref, const BodyLooks& worldNow,
 
 PersistentRef refreshed(const PersistentRef& ref, const BodyLooks& now,
                         const ResolveOutcome& outcome, const Placement& placement) {
+    return refreshed(ref, now, outcome, PlacementFn([&](const std::string&) { return placement; }));
+}
+
+PersistentRef refreshed(const PersistentRef& ref, const BodyLooks& now,
+                        const ResolveOutcome& outcome, const PlacementFn& placement) {
     if (outcome.state != ResolveOutcome::State::found) {
         return ref;
     }
@@ -475,7 +492,7 @@ PersistentRef refreshed(const PersistentRef& ref, const BodyLooks& now,
     }
     PersistentRef out = ref;
     out.name = list[outcome.index].name;
-    out.look = toBodyFrame(list[outcome.index].look, placement);
+    out.look = toBodyFrame(list[outcome.index].look, placement(out.name));
     return out;
 }
 

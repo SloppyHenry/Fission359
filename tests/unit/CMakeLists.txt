@@ -15,6 +15,9 @@ add_executable(fission_unit_tests
   core/test_body_looks.cpp
   core/test_resolve.cpp
   naming/test_refs.cpp
+  naming/test_scenarios.cpp
+  naming/test_random.cpp
+  naming/test_sensitivity.cpp
   features/test_primitives.cpp
   features/test_combine.cpp
   features/test_split.cpp

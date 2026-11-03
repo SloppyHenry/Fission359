@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -44,7 +45,13 @@ Placement placementOf(const Document& document, const FeatureRegistry& registry,
 std::optional<PersistentRef> makeRef(const BodyLooks& looks, ElementKind kind, std::uint32_t id,
                                      const Placement& placement);
 
-/// `looks` as seen from the step's own coordinates: the placement taken out again.
+/// The place of the step that made the element with this name (see `placementOf`). Every
+/// element is compared in the coordinates of its own step, so elements of different steps (the
+/// old and the new box after a step was replaced) can be compared at all.
+using PlacementFn = std::function<Placement(const std::string& elementName)>;
+
+/// `looks` as seen from the steps' own coordinates: each element with the placement taken out.
+BodyLooks toBodyFrame(const BodyLooks& looks, const PlacementFn& placementOf);
 BodyLooks toBodyFrame(const BodyLooks& looks, const Placement& placement);
 ElementLook toBodyFrame(const ElementLook& look, const Placement& placement);
 
@@ -94,14 +101,21 @@ struct ResolveOutcome {
 
 /// Finds the element a reference points to in `now` (the body as it is, in world coordinates)
 /// or says honestly that it cannot (rule 6). `consumed` is the body's memory of used-up
-/// elements; `placement` tells how `now` sits compared with the step's own coordinates, in which
-/// the reference was saved. Only the strict mode exists (ADR-0003 point 6).
+/// elements; `placement` tells how each element of `now` sits compared with the coordinates of the
+/// step that made it, in which the references were saved. Only the strict mode exists (ADR-0003
+/// point 6).
+ResolveOutcome resolve(const PersistentRef& ref, const BodyLooks& now,
+                       const std::vector<ConsumedElement>& consumed, const PlacementFn& placement,
+                       const ResolveLimits& limits = {}, const ResolveSwitches& switches = {});
+/// The same with one place for every element (a body that was moved or turned as a whole).
 ResolveOutcome resolve(const PersistentRef& ref, const BodyLooks& now,
                        const std::vector<ConsumedElement>& consumed, const Placement& placement,
                        const ResolveLimits& limits = {}, const ResolveSwitches& switches = {});
 
 /// The reference after a safe resolution: it points to the current name and look (in the step's
 /// own coordinates). Unchanged unless the outcome is `found`.
+PersistentRef refreshed(const PersistentRef& ref, const BodyLooks& now,
+                        const ResolveOutcome& outcome, const PlacementFn& placement);
 PersistentRef refreshed(const PersistentRef& ref, const BodyLooks& now,
                         const ResolveOutcome& outcome, const Placement& placement);
 

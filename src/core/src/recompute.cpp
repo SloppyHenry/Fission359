@@ -381,6 +381,16 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                     needHelp(feature.refs.begin()->first, HelpReason::notFound, error.what());
                 }
             }
+            // The place of the step that made an element, worked out once per step.
+            std::map<std::string, Placement> places;
+            const PlacementFn placement = [&](const std::string& name) {
+                const auto known = places.find(name);
+                if (known != places.end()) {
+                    return known->second;
+                }
+                return places.emplace(name, placementOf(document, registry, result.features, name))
+                    .first->second;
+            };
             for (const auto& [slot, list] : feature.refs) {
                 for (std::size_t index = 0; index < list.size(); ++index) {
                     const PersistentRef& ref = list[index];
@@ -388,8 +398,6 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                         needHelp(slot, HelpReason::notFound, "no body to look in");
                         continue;
                     }
-                    const Placement placement =
-                        placementOf(document, registry, result.features, ref.name);
                     const ResolveOutcome outcome = resolve(ref, looks, target->consumed, placement);
                     if (outcome.state != ResolveOutcome::State::found) {
                         needHelp(slot, outcome.reason, outcome.detail);
