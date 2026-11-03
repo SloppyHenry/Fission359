@@ -36,15 +36,18 @@ double overlap(double lowA, double highA, double lowB, double highB) {
     return std::min(highA, highB) - std::max(lowA, lowB);
 }
 
-// The smallest of `others` whose footprint holds the footprint of `mover` (a hole in a plate, a
-// body standing on one); null when there is none.
+// The smallest of `others` whose footprint holds the footprint of `mover` and that carries it: the
+// mover sits in it (a hole in a plate) or stands on it. A body lying on top of the mover (text
+// over a hole) does not carry it. Null when there is none.
 const std::pair<std::string, Box3>*
 carrierOf(const Box3& mover, const std::vector<std::pair<std::string, Box3>>& others) {
+    constexpr double tolerance = 1e-6;
     const std::pair<std::string, Box3>* best = nullptr;
     double bestArea = 0.0;
     for (const auto& candidate : others) {
         const Box3& box = candidate.second;
-        bool holds = true;
+        bool holds =
+            box.low[2] < mover.high[2] - tolerance && box.high[2] >= mover.low[2] - tolerance;
         for (std::size_t c = 0; c < 2; ++c) {
             holds = holds && box.low[c] <= mover.low[c] && box.high[c] >= mover.high[c];
         }

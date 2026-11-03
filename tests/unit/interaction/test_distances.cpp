@@ -211,6 +211,20 @@ TEST_CASE("distances: a neighbour on the plate still counts before the plate", "
     CHECK(right->distance == Approx(5.0));
 }
 
+TEST_CASE("distances: text lying over a hole does not carry the hole, the plate does",
+          "[distance]") {
+    // The keychain: the hole stands in the plate right under the text, the text holds its
+    // footprint but lies on top of it.
+    const Box3 plate{{-25, -10, 0}, {25, 10, 4}};
+    const Box3 text{{-10, -3, 4}, {10, 3, 5.5}};
+    const Box3 hole{{-2.5, -2.5, -1}, {2.5, 2.5, 4}};
+    const auto left =
+        find(nearestGaps(hole, {{"plate", plate}, {"text", text}}, 256, 256), Side::left);
+    REQUIRE(left.has_value());
+    CHECK(left->otherBody == "plate");
+    CHECK(left->distance == Approx(22.5));
+}
+
 TEST_CASE("distances: of two plates the smaller one carries the body", "[distance]") {
     const Box3 big{{-50, -50, 0}, {50, 50, 2}};
     const Box3 small{{-25, -10, 2}, {25, 10, 4}};
