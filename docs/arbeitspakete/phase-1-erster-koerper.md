@@ -268,7 +268,8 @@ Je Teilpaket ein Pull Request mit grüner CI. Keine neuen Abhängigkeiten. Gizmo
 - System-Zwischenablage mit dem Dateiformat (aus AP-1.6): kopierte Körper liegen als `application/x-fission359` bereit.
 - Festlegungen: Schriften werden nicht eingebettet (nur der Name); eine Datei aus einer neueren Version wird geöffnet, aber nur unter neuem Namen gespeichert; Palettenänderungen markieren „geändert“, haben aber kein Undo.
 - Festlegung (2026-10-27): Die Qualität „Grob“ (0,05 mm) bleibt, mit dem Hinweis „Rundungen können kantig sein“ in der Export-Karte; „Normal“ und „Fein“ halten Regel 12 (≤ 0,01 mm) ein.
-- Offene Reste: 3MF in Bambu Studio / OrcaSlicer / PrusaSlicer von Hand öffnen; „Zuletzt geöffnet“ als Untermenü = P20; Dateizuordnung unter Linux/macOS ist aus AP-0.7 vorhanden, aber nicht von Hand geprüft; Kernel-Abdeckung ≥ 85 % nicht neu gemessen.
+- Slicer-Prüfung, erster Teil (2026-11-03): Die drei Beispiele als 3MF exportiert und mit der Kommandozeile von Bambu Studio eingelesen (je ein geschlossenes Objekt, Maße stimmen); der Schlüsselanhänger ließ sich slicen. Dabei gefunden und behoben (PR #86): Werkzeug-Körper von „Abziehen“ wurden als massive Objekte mitexportiert.
+- Offene Reste: 3MF in Bambu Studio / OrcaSlicer / PrusaSlicer von Hand öffnen und Bildschirmfotos ablegen (Kriterium 3); „Zuletzt geöffnet“ als Untermenü = P20; Dateizuordnung unter Linux/macOS ist aus AP-0.7 vorhanden, aber nicht von Hand geprüft; Kernel-Abdeckung ≥ 85 % nicht neu gemessen.
 
 ---
 
