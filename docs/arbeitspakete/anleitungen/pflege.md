@@ -1,34 +1,16 @@
 # Pflege: Fehler, Politur und Folgearbeiten
 
 Kleine Aufgaben außerhalb der APs. Jede ist für sich ein PR (Branch `pflege-<nummer>-<stichwort>`). Allgemeine Regeln: [README](README.md), [Handbuch](handbuch.md).
-Stand: 2026-11-02, gegen den Code auf `main` geprüft.
+Stand: 2026-11-03, gegen den Code auf `main` geprüft.
 
 ## Reihenfolge
-**Vor dem Nutzertest 1 (AP-1.13):** P18 (trifft genau die Testaufgabe), P2, P3. **Danach nach Bedarf**, der Nutzertest kann die Reihenfolge ändern.
+**Nach Bedarf**, der Nutzertest 1 (AP-1.13) kann die Reihenfolge ändern. P18, P2 und P3 sind vor dem Nutzertest erledigt worden.
 **Braucht eine Entscheidung oder ein Testsystem:** P1 (Bild oder Video), P5, P8, P10, P11, P14 (Entscheidung oder Rechner).
 
 ---
 
 ## P1 Kugel-Radius-Griff fühlt sich unsauber an
 **Größe:** S ·
-
-## P2 Formen-Galerie schließt bei Klick aufs Bett
-**Größe:** S ·
-Nach dem Hinzufügen einer Form soll ein Klick auf leeren Grund (Bett, Hintergrund) die geöffnete Galerie (`ShapeFlyout.qml`) schließen.
-1. In der Ansicht gibt es einen Klick auf leeren Grund schon (hebt die Auswahl auf, `SelectionController`). Dort zusätzlich ein Signal
-   `emptyClicked()` ausgeben; `Main.qml` schließt darauf die Galerie.
-2. Nicht schließen, wenn gerade eine Form abgelegt wird oder der Klick auf einen Körper geht.
-3. Fenster-Test: Galerie öffnen (`--simulate`-Aktion für das Öffnen der Galerie prüfen/ergänzen), `click:` auf leeres Bett, Prüfung, dass
-   die Galerie zu ist (eigene Prüf-Aktion `expectclosed:shapes` oder Eigenschaft abfragen).
-
-## P3 Politurdurchgang: Abstände und Beschriftungen
-**Größe:** S–M ·
-eingehalten“); die Werkzeugpalette ist mit PR #30 behoben.
-1. Alle QML-Bausteine mit Text (Btn, Segmented, Toggle, NumberField, WordField, FontField, Section, PanelHeader, StatusBar, SnapControl,
-   MenuStrip, DocTabs) gegen `docs/08-gestaltung.md` (Abstände, Schriftgrößen) prüfen. Bildschirmfotos vorher/nachher (Hell, Dunkel,
-   Deutsch – deutsche Wörter sind länger).
-2. Feste Abstände durch `Theme`-Werte ersetzen. Kein Text darf den Rand berühren; lange deutsche Wörter: Elide oder Umbruch nach Mockup.
-3. Fenster-Vergleichstest `app_window_*_matches_design` muss grün bleiben; Abweichungen vom Mockup in `08-gestaltung.md` vermerken.
 
 ## P4 AP-1.3-Reste: Linux-Messung, Optik auf Linux, Bettmaße
 **Größe:** S · Offen aus AP-1.3.
@@ -39,6 +21,8 @@ eingehalten“); die Werkzeugpalette ist mit PR #30 behoben.
 ## P5 AP-0.1: frischer Mac
 **Größe:** S · Offen aus AP-0.1 (Kriterium 4). Ein virtueller Mac (siehe `docs/testumgebung.md`) nur mit den Kommandozeilen-Werkzeugen, ohne Homebrew und Xcode. Dort `git clone`, `scripts/setup`, `scripts/run` durchspielen; alles, was fehlt oder
 unklar ist, in `scripts/setup` verbessern. Ergebnis in AP-0.1 eintragen.
+
+**Stand 2026-11-03:** Durchgespielt bis Homebrew. Ohne Homebrew bricht `scripts/setup` mit klarer Anleitung ab (gewollt); ohne Terminal fragt es nicht und bricht ab, dann `scripts/setup --yes`. Der virtuelle Mac hat macOS 14: Homebrew liefert dafür keine fertigen Pakete mehr und baut alles aus dem Quelltext (auch Qt, viele Stunden). Für den Nachweis einen virtuellen Mac mit aktuellem macOS anlegen. Prüfen, ob `scripts/setup` bei zu altem macOS davor warnen soll.
 
 ## P6 Maß-Punkte und Bänder an gedrehten Körpern
 **Größe:** M · Folgearbeit seit AP-1.6b1.
@@ -86,9 +70,6 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 ## P17 Kamera je Tab merken
 **Größe:** S · Offen aus AP-1.11. Beim Tab-Wechsel bleibt heute die Kamera des vorigen Projekts. Test: zwei Tabs, Ansicht ändern, wechseln, Ansicht stimmt.
 
-## P18 Abstandsmaß auf einer Platte misst bis zum Bettrand
-**Größe:** S–M · Gefunden in Pflege T8 (2026-10-28). Ablauf A Schritt 5 verlangt „5 mm vom linken Rand der Platte“, das Abstandsmaß bezieht sich aber auf den Bettrand. Der Test `app_flow_a_keychain` umgeht das und setzt die Lage direkt (`value:x`). **Haltepunkt:** kurz zeigen, wie der Bezug gewählt wird (nächster Körper zuerst oder umschaltbar). Danach misst der Test über das Abstandsmaß.
-
 ## P19 Kontextleiste und Hinweise: Reste
 **Größe:** S–M · Aus AP-1.8 und AP-1.12. Tooltip-Karten für Menübefehle der Kontextleiste; „Wert ändern“ wählt den Schritt, soll auch das Feld fokussieren; „Mehr ▾“ und Ausrichten bei mehreren Körpern; die Leiste kann Maßzahlen der Ansicht kurz verdecken.
 
@@ -101,6 +82,10 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 ---
 
 ## Erledigt
+- **P18** Abstandsmaß auf einer Platte (2026-11-03, PR #83): Ohne Nachbarn misst das Maß bis zum Rand des kleinsten Körpers, der die Grundfläche umfasst und auf dem der Körper steht oder in dem er steckt (nicht ein Körper darüber, z. B. Schrift über dem Loch); danach bis zum Bettrand. Festlegung ohne Umschalter. `app_flow_a_keychain` tippt den Abstand.
+- **P2** Formen-Galerie schließt bei Klick auf leeren Grund (2026-11-03, PR #84), Simulations-Prüfung `expectflyout:`.
+- **P3** Abstände der Grundbausteine aus `Theme.space1..6`, Elide in Statuszeile und Tabs (2026-11-03, PR #85). Bildschirmfotos vorher/nachher fehlen; nachholen mit P20.
+- **Export ohne Werkzeug-Körper** (2026-11-03, PR #86): Die Werkzeuge von „Kombinieren ▸ Abziehen“ (Geisterformen) wurden als massive Objekte exportiert; gefunden bei der Slicer-Prüfung.
 - **P12** `main.cpp` und `Main.qml` verkleinert (2026-10-28): `simulate.cpp`, `RecipeSentences.qml`, `FileNotices.qml`.
 - **P13** Löcher im Hintergrund prüfen: gemessen, ein Zug-Schritt ≈ 31 ms bei 10 Körpern und 20 Löchern, unter der 50-ms-Grenze; kein Umbau. Wieder ansehen bei Loch-Mustern (AP-2.8) oder großen Körpern.
 - **P15** Rezept-Sätze ausgelagert (Rest nach P19 und P21).

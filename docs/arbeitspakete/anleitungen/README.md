@@ -61,7 +61,7 @@ Abgeschlossene Anleitungen (AP-1.6c2 bis AP-1.12) liegen zum Nachschlagen in [er
 | – | [Pflege: Fehler, Politur und Folgearbeiten](pflege.md) | je S |
 
 ### Phase 2 – Präzision
-Start erst nach der Auswertung von AP-1.13 (Top-3-Probleme zuerst), Einstieg ist AP-2.10.
+Einstieg ist AP-2.10. Festlegung 2026-11-03: Phase 2 beginnt, während der Nutzertest 1 (AP-1.13) noch aussteht; AP-2.10 betrifft vor allem den Kern. Liegt die Auswertung vor, gehen ihre Top-3-Probleme jedem weiteren AP vor.
 | AP | Anleitung | Größe |
 |---|---|---|
 | 2.10 | [Persistente Referenzen produktiv, Reparatur-UI](AP-2.10.md) | XL |
