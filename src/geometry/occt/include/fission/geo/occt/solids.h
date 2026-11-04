@@ -61,6 +61,13 @@ NamedSolid offsetFaceNamed(const NamedSolid& solid, std::uint32_t faceId, double
 /// Where the grip of a face stands (see `GeometryKernel::faceAnchor`). Throws GeometryError.
 FaceAnchor faceAnchorOf(const Solid& solid, std::uint32_t faceId);
 
+/// Removes faces and heals the body (see `GeometryKernel::removeFaces`). Throws GeometryError.
+NamedSolid removeFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds);
+
+/// Moves several faces (see `GeometryKernel::offsetFaces`). Throws GeometryError.
+NamedSolid offsetFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
+                            double distance);
+
 /// A place to cut for stretching (see `GeometryKernel::plainCut`).
 std::optional<double> plainCutOf(const Solid& solid, Point3d way, double near);
 

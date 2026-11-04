@@ -45,6 +45,14 @@ public:
     FaceAnchor faceAnchor(const Solid& solid, std::uint32_t faceId) const override {
         return faceAnchorOf(solid, faceId);
     }
+    NamedSolid removeFaces(const NamedSolid& solid,
+                           const std::vector<std::uint32_t>& faceIds) const override {
+        return removeFacesNamed(solid, faceIds);
+    }
+    NamedSolid offsetFaces(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
+                           double distance) const override {
+        return offsetFacesNamed(solid, faceIds, distance);
+    }
     std::optional<double> plainCut(const Solid& solid, Point3d way, double near) const override {
         return plainCutOf(solid, way, near);
     }

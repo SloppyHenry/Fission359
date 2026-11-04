@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -17,6 +18,7 @@
 #include "occt_build.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
+#include <BRepAlgoAPI_Defeaturing.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepTools.hxx>
@@ -210,6 +212,143 @@ NamedSolid offsetFaceNamed(const NamedSolid& solid, std::uint32_t faceId, double
         }
     } catch (const Standard_Failure&) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "offsetFace: the kernel failed");
+    }
+}
+
+NamedSolid offsetFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
+                            double distance) {
+    if (faceIds.empty()) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "offsetFaces: no face given");
+    }
+    // The faces are found again by their roles: a number would shift with every step.
+    std::vector<std::string> roles;
+    for (const std::uint32_t id : faceIds) {
+        const auto found = std::find_if(solid.faces.begin(), solid.faces.end(),
+                                        [&](const NamedFace& f) { return f.faceId == id; });
+        if (found == solid.faces.end() || found->role.empty()) {
+            throw GeometryError(GeometryErrorCode::invalidInput,
+                                "offsetFaces: a face is not there or has no role");
+        }
+        roles.push_back(found->role);
+    }
+    NamedSolid current = solid;
+    ElementHistory history;
+    for (const std::string& role : roles) {
+        const auto found = std::find_if(current.faces.begin(), current.faces.end(),
+                                        [&](const NamedFace& f) { return f.role == role; });
+        if (found == current.faces.end()) {
+            throw GeometryError(GeometryErrorCode::kernelFailure,
+                                "offsetFaces: a face was lost on the way");
+        }
+        NamedSolid next = offsetFaceNamed(current, found->faceId, distance);
+        history.modified.insert(history.modified.end(), next.history.modified.begin(),
+                                next.history.modified.end());
+        history.deleted.insert(history.deleted.end(), next.history.deleted.begin(),
+                               next.history.deleted.end());
+        current = std::move(next);
+    }
+    current.history = std::move(history);
+    return current;
+}
+
+NamedSolid removeFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds) {
+    if (faceIds.empty()) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "removeFaces: no face given");
+    }
+    const TopoDS_Shape& shape = shapeOf(solid.solid);
+    ShapeMap faces;
+    TopExp::MapShapes(shape, TopAbs_FACE, faces);
+    std::vector<std::string> roles(static_cast<std::size_t>(faces.Extent()));
+    for (const NamedFace& face : solid.faces) {
+        if (face.faceId >= 1 && face.faceId <= roles.size()) {
+            roles[face.faceId - 1] = face.role;
+        }
+    }
+    if (std::any_of(roles.begin(), roles.end(),
+                    [](const std::string& role) { return role.empty(); })) {
+        throw GeometryError(GeometryErrorCode::invalidInput,
+                            "removeFaces: an input face has no role");
+    }
+    try {
+        BRepAlgoAPI_Defeaturing remover;
+        remover.SetShape(shape);
+        for (const std::uint32_t id : faceIds) {
+            if (id < 1 || static_cast<int>(id) > faces.Extent()) {
+                throw GeometryError(GeometryErrorCode::invalidInput,
+                                    "removeFaces: a face is not there");
+            }
+            remover.AddFaceToRemove(faces(static_cast<int>(id)));
+        }
+        remover.SetRunParallel(false);
+        remover.Build();
+        if (!remover.IsDone() || remover.HasErrors() || remover.Shape().IsNull()) {
+            throw GeometryError(GeometryErrorCode::kernelFailure,
+                                "removeFaces: the body could not heal");
+        }
+        const TopoDS_Shape result = remover.Shape();
+
+        NamedSolid made;
+        made.solid = validated(result, "removeFaces");
+        ShapeMap finalFaces;
+        TopExp::MapShapes(result, TopAbs_FACE, finalFaces);
+        std::vector<std::string> finalRoles(static_cast<std::size_t>(finalFaces.Extent()));
+        const auto claim = [&](const TopoDS_Shape& piece, const std::string& role) {
+            const int index = finalFaces.FindIndex(piece);
+            if (index > 0 && finalRoles[static_cast<std::size_t>(index - 1)].empty()) {
+                finalRoles[static_cast<std::size_t>(index - 1)] = role;
+            }
+        };
+        const std::set<std::uint32_t> removed(faceIds.begin(), faceIds.end());
+        for (int i = 1; i <= faces.Extent(); ++i) {
+            const TopoDS_Shape& face = faces(i);
+            const std::string& role = roles[static_cast<std::size_t>(i - 1)];
+            if (removed.contains(static_cast<std::uint32_t>(i)) || remover.IsDeleted(face)) {
+                made.history.deleted.push_back(role);
+                continue;
+            }
+            const auto& changed = remover.Modified(face);
+            if (changed.IsEmpty()) {
+                claim(face, role);
+            } else {
+                for (const TopoDS_Shape& piece : changed) {
+                    claim(piece, role);
+                }
+            }
+        }
+        // A face cut into pieces gives its role to each: the pieces are told apart (#2, #3 ...).
+        {
+            std::set<std::string> seen;
+            for (std::string& role : finalRoles) {
+                if (role.empty() || seen.insert(role).second) {
+                    continue;
+                }
+                std::string candidate;
+                for (int n = 2; seen.contains(candidate = role + "#" + std::to_string(n)); ++n) {
+                }
+                seen.insert(candidate);
+                role = candidate;
+            }
+        }
+        int healed = 0;
+        std::set<std::string> taken(finalRoles.begin(), finalRoles.end());
+        for (std::string& role : finalRoles) {
+            if (role.empty()) { // a face the kernel made that no input face explains
+                std::string candidate;
+                do {
+                    candidate = "healed#" + std::to_string(++healed);
+                } while (taken.contains(candidate));
+                taken.insert(candidate);
+                role = candidate;
+            }
+        }
+        for (std::size_t i = 0; i < finalRoles.size(); ++i) {
+            made.faces.push_back(
+                {faceNumber(result, finalFaces(static_cast<int>(i) + 1)), finalRoles[i]});
+        }
+        return made;
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure,
+                            "removeFaces: the kernel failed on these faces");
     }
 }
 

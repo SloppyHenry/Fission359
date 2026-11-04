@@ -186,6 +186,29 @@ public:
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
     }
 
+    /// Removes faces and lets the body heal: the neighbours grow until they meet (a hole closes,
+    /// a rounding becomes a sharp edge again). Faces keep their roles; the removed ones are listed
+    /// as deleted in the history. Throws `GeometryError`: `invalidInput` for a face that is not
+    /// there or a list without faces, `kernelFailure` when the body cannot heal (the kernel's
+    /// answer is not used then). The default refuses.
+    virtual NamedSolid removeFaces(const NamedSolid& solid,
+                                   const std::vector<std::uint32_t>& faceIds) const {
+        (void)solid;
+        (void)faceIds;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot remove faces");
+    }
+
+    /// Moves all of the given faces by `distance`, each as `offsetFace` does (outward: the body
+    /// gets larger). Faces keep their roles. Throws what `offsetFace` throws. The default refuses.
+    virtual NamedSolid offsetFaces(const NamedSolid& solid,
+                                   const std::vector<std::uint32_t>& faceIds,
+                                   double distance) const {
+        (void)solid;
+        (void)faceIds;
+        (void)distance;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
+    }
+
     /// A place to cut `solid` for `stretch`: a coordinate along `way` (an axis direction, as for
     /// `stretch`) where the cut crosses nothing but flat faces along the way and round walls around
     /// it (no rounding, no hole across, no step). Of the free stretches the one closest to `near`

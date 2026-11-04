@@ -184,3 +184,61 @@ TEST_CASE("faceAnchor: a flat face looks out, a hole looks into itself, a pin ou
         kernel->faceAnchor(cylinder.solid, roundFace(*kernel, cylinder, 5.0));
     CHECK(pin.point.x * pin.way.x + pin.point.y * pin.way.y == Approx(5.0).epsilon(1e-9));
 }
+
+TEST_CASE("removeFaces: the wall of a hole is removed and the hole closes", "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid plate = plateWithHole(*kernel);
+    const geo::NamedSolid made = kernel->removeFaces(plate, {roundFace(*kernel, plate, 3.0)});
+    const geo::SolidReport report = kernel->measure(made.solid);
+    CHECK(report.valid);
+    CHECK(report.volume == Approx(40.0 * 40.0 * 20.0).epsilon(1e-9));
+    CHECK(report.faces == 6);
+    // The six faces of the plate keep their names; the wall is listed as gone.
+    std::set<std::string> roles = rolesOf(made);
+    CHECK(roles.size() == 6);
+    CHECK(roles.count("side") == 0);
+    CHECK(made.history.deleted.size() == 1);
+    CHECK(made.history.deleted[0] == "side");
+}
+
+TEST_CASE("removeFaces: rounded corners become sharp again", "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid rounded = kernel->makeBox(40, 40, 20, {0, 0, 0}, 4.0);
+    std::vector<std::uint32_t> corners;
+    const geo::BodySignatures looks = kernel->signatures(rounded.solid);
+    for (const geo::ElementSignature& face : looks.faces) {
+        if (face.shape == geo::SignatureShape::cylinder) {
+            corners.push_back(face.id);
+        }
+    }
+    REQUIRE(corners.size() == 4);
+    const geo::NamedSolid made = kernel->removeFaces(rounded, corners);
+    const geo::SolidReport report = kernel->measure(made.solid);
+    CHECK(report.valid);
+    CHECK(report.volume == Approx(40.0 * 40.0 * 20.0).epsilon(1e-9));
+    CHECK(report.faces == 6);
+    CHECK(rolesOf(made).size() == 6);
+
+    CHECK_THROWS_AS(kernel->removeFaces(rounded, {}), geo::GeometryError);
+    CHECK_THROWS_AS(kernel->removeFaces(rounded, {999}), geo::GeometryError);
+}
+
+TEST_CASE("offsetFaces: all faces of a box moved in make it smaller on every side",
+          "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid box = kernel->makeBox(20, 30, 10, {0, 0, 0}, 0.0);
+    const geo::NamedSolid inner = kernel->offsetFaces(box, {1, 2, 3, 4, 5, 6}, -0.2);
+    const geo::SolidReport report = kernel->measure(inner.solid);
+    CHECK(report.valid);
+    CHECK(report.volume == Approx(19.6 * 29.6 * 9.6).epsilon(1e-9));
+    CHECK(report.faces == 6);
+    CHECK(report.boxMin.x == Approx(0.2).margin(1e-9));
+    CHECK(report.boxMax.x == Approx(19.8).margin(1e-9));
+    CHECK(rolesOf(inner) == rolesOf(box));
+
+    const geo::NamedSolid outer = kernel->offsetFaces(box, {1, 2, 3, 4, 5, 6}, 0.2);
+    CHECK(kernel->measure(outer.solid).valid);
+    CHECK(kernel->measure(outer.solid).volume == Approx(20.4 * 30.4 * 10.4).epsilon(1e-9));
+    CHECK(kernel->measure(outer.solid).faces == 6);
+    CHECK_THROWS_AS(kernel->offsetFaces(box, {}, 0.2), geo::GeometryError);
+}

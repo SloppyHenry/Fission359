@@ -152,7 +152,8 @@ TopoDS_Shape sideBox(int axis, double sign, double position, bool beyond, double
 }
 
 NamedSolid toolOf(const TopoDS_Shape& shape) {
-    return nameFaces(shape, "stretch", [](const TopoDS_Face&) { return std::string("stretch[cut]"); });
+    return nameFaces(shape, "stretch",
+                     [](const TopoDS_Face&) { return std::string("stretch[cut]"); });
 }
 
 } // namespace
@@ -228,14 +229,13 @@ NamedSolid stretchNamed(const NamedSolid& solid, Point3d way, double position, d
         // The part that stays and the part that moves. When shrinking, the stretch between the
         // two planes is taken out.
         const double stayEnd = distance < 0.0 ? position + distance : position;
-        const NamedSolid fixed =
-            booleanNamed(BooleanOp::subtract, solid,
-                         {toolOf(sideBox(axis, sign, stayEnd, true, reach))});
+        const NamedSolid fixed = booleanNamed(BooleanOp::subtract, solid,
+                                              {toolOf(sideBox(axis, sign, stayEnd, true, reach))});
         const NamedSolid moving = booleanNamed(
             BooleanOp::subtract, solid, {toolOf(sideBox(axis, sign, position, false, reach))});
         const gp_Dir unit = unitAlong(axis, sign);
-        const NamedSolid moved = translateNamed(
-            moving, {unit.X() * distance, unit.Y() * distance, unit.Z() * distance});
+        const NamedSolid moved =
+            translateNamed(moving, {unit.X() * distance, unit.Y() * distance, unit.Z() * distance});
 
         std::vector<NamedSolid> tools{moved};
         if (distance > 0.0) {
