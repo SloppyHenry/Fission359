@@ -45,6 +45,13 @@ public:
     FaceAnchor faceAnchor(const Solid& solid, std::uint32_t faceId) const override {
         return faceAnchorOf(solid, faceId);
     }
+    std::optional<double> plainCut(const Solid& solid, Point3d way, double near) const override {
+        return plainCutOf(solid, way, near);
+    }
+    NamedSolid stretch(const NamedSolid& solid, Point3d way, double position,
+                       double distance) const override {
+        return stretchNamed(solid, way, position, distance);
+    }
     std::vector<std::uint32_t> tangentChain(const Solid& solid, std::uint32_t edge) const override {
         return tangentChainOf(solid, edge);
     }

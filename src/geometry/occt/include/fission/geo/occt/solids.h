@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include "fission/geo/kernel.h"
@@ -59,6 +60,12 @@ NamedSolid offsetFaceNamed(const NamedSolid& solid, std::uint32_t faceId, double
 
 /// Where the grip of a face stands (see `GeometryKernel::faceAnchor`). Throws GeometryError.
 FaceAnchor faceAnchorOf(const Solid& solid, std::uint32_t faceId);
+
+/// A place to cut for stretching (see `GeometryKernel::plainCut`).
+std::optional<double> plainCutOf(const Solid& solid, Point3d way, double near);
+
+/// Stretches a body (see `GeometryKernel::stretch`). Throws GeometryError.
+NamedSolid stretchNamed(const NamedSolid& solid, Point3d way, double position, double distance);
 
 /// The edges rounded together with `edge` (see `GeometryKernel::tangentChain`).
 std::vector<std::uint32_t> tangentChainOf(const Solid& solid, std::uint32_t edge);

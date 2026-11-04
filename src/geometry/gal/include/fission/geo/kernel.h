@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -183,6 +184,33 @@ public:
         (void)solid;
         (void)faceId;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
+    }
+
+    /// A place to cut `solid` for `stretch`: a coordinate along `way` (an axis direction, as for
+    /// `stretch`) where the cut crosses nothing but flat faces along the way and round walls around
+    /// it (no rounding, no hole across, no step). Of the free stretches the one closest to `near`
+    /// wins, the place is its middle. None when `way` is no axis direction or there is no place.
+    virtual std::optional<double> plainCut(const Solid& solid, Point3d way, double near) const {
+        (void)solid;
+        (void)way;
+        (void)near;
+        return std::nullopt;
+    }
+
+    /// Stretches the body: cut at `position` (a coordinate along `way`, a unit vector along x, y
+    /// or z), the part beyond it moved by `distance` along `way` (negative: the stretch between
+    /// the planes is taken out), the gap filled with the cross-section. Everything else stays
+    /// exactly as it is. Faces keep their roles. Throws `GeometryError`: `invalidInput` with
+    /// subject "position" when the cut would cross a rounding, a hole or a step (the person
+    /// chooses the place), "distance" for zero or a body that would vanish, "face" for a way that
+    /// is not an axis. The default refuses.
+    virtual NamedSolid stretch(const NamedSolid& solid, Point3d way, double position,
+                               double distance) const {
+        (void)solid;
+        (void)way;
+        (void)position;
+        (void)distance;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot stretch bodies");
     }
 
     /// The names of the fonts lettering can use (bundled and installed), sorted. Takes a moment
