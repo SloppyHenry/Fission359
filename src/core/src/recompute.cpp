@@ -119,6 +119,8 @@ FeatureIssue issueFromKernelCode(const geo::GeometryError& error) {
     switch (error.code()) {
     case geo::GeometryErrorCode::invalidInput:
         return issueOf(FeatureIssueCode::kernelRejected, error.subject(), error.what());
+    case geo::GeometryErrorCode::blendTooLarge:
+        return issueOf(FeatureIssueCode::kernelRejected, error.subject(), error.what());
     case geo::GeometryErrorCode::invalidResult:
         return issueOf(FeatureIssueCode::kernelResultInvalid, {}, error.what());
     case geo::GeometryErrorCode::textEmpty:

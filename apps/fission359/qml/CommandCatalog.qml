@@ -12,7 +12,8 @@ import QtQuick
 //
 // run.kind is "tool" (switches the tool), "shape" (puts the shape on a free place), "menu" (the
 // command of the menu with that id) or "soon" (does not exist yet). `needs` says what the command
-// wants before it can run: "selection" (a body is chosen), "two" (two bodies), "one" (one body).
+// wants before it can run: "selection" (a body is chosen), "two" (two bodies), "one" (one body),
+// "edges" (edges of one body are chosen).
 QtObject {
     id: root
 
@@ -183,6 +184,27 @@ QtObject {
           synonyms: { de: ["teilen", "trennen", "durchschneiden", "zerschneiden", "halbieren"],
                       en: ["split", "cut in two", "slice", "divide", "halve"] },
           run: { kind: "menu", id: "split" } },
+        { id: "menu.round", group: "body", name: qsTr("Round edges"),
+          tip: qsTr("Rounds the chosen edges. Edges that run on without a corner are rounded together."),
+          hint: qsTr("Choose one or more edges, then type a radius or change it in the panel."),
+          needs: "edges",
+          synonyms: { de: ["abrunden", "runden", "verrunden", "kante runden", "rundung", "fillet"],
+                      en: ["round", "round edges", "fillet", "smooth edge", "soften"] },
+          run: { kind: "menu", id: "round" } },
+        { id: "menu.bevel", group: "body", name: qsTr("Bevel edges"),
+          tip: qsTr("Cuts the chosen edges off flat."),
+          hint: qsTr("Choose one or more edges, then type a distance or change it in the panel."),
+          needs: "edges",
+          synonyms: { de: ["abschrägen", "fase", "anfasen", "kante abschrägen", "schräge kante"],
+                      en: ["bevel", "chamfer", "bevel edges", "cut corner", "slant edge"] },
+          run: { kind: "menu", id: "bevel" } },
+        { id: "menu.roundVertical", group: "body", name: qsTr("Round vertical edges"),
+          tip: qsTr("Rounds all upright edges of the chosen body, like the corners of a box."),
+          hint: qsTr("Choose one body; its upright edges are rounded."),
+          needs: "one",
+          synonyms: { de: ["senkrechte kanten runden", "ecken runden", "ecken abrunden", "kanten oben runden"],
+                      en: ["round vertical edges", "round corners", "round upright edges", "soften corners"] },
+          run: { kind: "menu", id: "roundVertical" } },
         { id: "menu.view.frame", group: "view", name: qsTr("Show everything"),
           tip: qsTr("Zooms so that everything is in view."),
           hint: qsTr("The view turns and zooms; nothing in the project changes."),

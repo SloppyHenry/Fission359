@@ -19,6 +19,8 @@ Item {
     property string kind: "none"
     property var bodyIds: []
     property bool allHoles: false
+    // The one chosen body has vertical edges: "Round vertical edges" is offered.
+    property bool verticalEdges: false
     // Colour of the chosen bodies ("#rrggbb"; empty if they differ).
     property string bodyColor: ""
     // True while a handle is pulled, a number is typed or a shape is put down.
@@ -36,6 +38,11 @@ Item {
                 { id: "color", text: qsTr("Colour"), icon: "palette" },
                 { id: "duplicate", text: qsTr("Duplicate"), icon: "pattern" },
                 { id: "dropToBed", text: qsTr("To the bed"), icon: "ground" }
+            ].concat(verticalEdges ? [{ id: "roundVertical", text: qsTr("Round vertical edges"), icon: "round" }] : [])
+        case "edge":
+            return [
+                { id: "round", text: qsTr("Round"), icon: "round" },
+                { id: "bevel", text: qsTr("Bevel"), icon: "bevel" }
             ]
         case "bodies":
             return [

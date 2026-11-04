@@ -42,6 +42,26 @@ enum class BooleanOp {
     intersect ///< Only what target and tools have in common.
 };
 
+/// An edge of a body to round or bevel: its number in the body (as in the tessellation) and the
+/// name it is known by, which goes into the name of the face made there (may be empty).
+struct BlendEdge {
+    std::uint32_t id = 0;
+    std::string name;
+};
+
+enum class BlendKind {
+    round,  ///< A quarter-circle strip (Abrunden).
+    chamfer ///< A flat cut (Abschrägen).
+};
+
+/// How big the rounding or bevel is (mm). A chamfer with `size2` > 0 is cut `size` into the one
+/// face and `size2` into the other; 0 means the same on both.
+struct BlendSpec {
+    BlendKind kind = BlendKind::round;
+    double size = 1.0;
+    double size2 = 0.0;
+};
+
 /// What features may ask of the geometry kernel (docs/03-architektur.md §4). The core and the
 /// feature types only know this interface; the OpenCASCADE implementation is handed in by the
 /// application, tests may hand in another one.
@@ -109,6 +129,29 @@ public:
     NamedSolid boolean(BooleanOp op, const NamedSolid& target,
                        const std::vector<NamedSolid>& tools) const {
         return boolean(op, target, tools, 0.0);
+    }
+
+    /// Rounds or bevels `edges` of `solid`. Edges that run on tangentially are taken along. Faces
+    /// keep their roles; each face made along an edge is named `rolePrefix` + "[" + the edge's
+    /// name + "]" ("e" + number for an edge without a name), faces at corners get "#corner" and
+    /// a number. Throws `GeometryError` with `blendTooLarge` (and the failed result as a preview,
+    /// if there is one) when it does not work with that size, `invalidInput` for a size that is
+    /// not a positive number or an edge that is not there. The default refuses.
+    virtual NamedSolid blendEdges(const NamedSolid& solid, const std::vector<BlendEdge>& edges,
+                                  const BlendSpec& spec, const std::string& rolePrefix) const {
+        (void)solid;
+        (void)edges;
+        (void)spec;
+        (void)rolePrefix;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot round edges");
+    }
+
+    /// The numbers of the edges that are rounded together with `edge`: the ones that run on from
+    /// it without a corner (always includes `edge`). The default refuses.
+    virtual std::vector<std::uint32_t> tangentChain(const Solid& solid, std::uint32_t edge) const {
+        (void)solid;
+        (void)edge;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot follow edges");
     }
 
     /// The names of the fonts lettering can use (bundled and installed), sorted. Takes a moment
