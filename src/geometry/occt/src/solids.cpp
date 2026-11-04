@@ -380,6 +380,7 @@ SolidReport measure(const Solid& solid) {
             return map.Extent();
         };
         report.solids = count(TopAbs_SOLID);
+        report.shells = count(TopAbs_SHELL);
         report.faces = count(TopAbs_FACE);
         report.edges = count(TopAbs_EDGE);
         report.vertices = count(TopAbs_VERTEX);

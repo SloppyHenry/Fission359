@@ -72,6 +72,14 @@ NamedSolid offsetFacesNamed(const NamedSolid& solid, const std::vector<std::uint
 NamedSolid tiltFaceNamed(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot, Point3d axis,
                          double degrees);
 
+/// Hollows a body (see `GeometryKernel::hollow`). Throws GeometryError.
+NamedSolid hollowNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& openFaces,
+                       double wall, bool outside, const std::string& rolePrefix);
+
+/// Drafts faces (see `GeometryKernel::draftFaces`). Throws GeometryError.
+NamedSolid draftFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
+                           Point3d neutralPoint, Point3d pull, double degrees);
+
 /// A place to cut for stretching (see `GeometryKernel::plainCut`).
 std::optional<double> plainCutOf(const Solid& solid, Point3d way, double near);
 

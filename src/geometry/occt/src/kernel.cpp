@@ -57,6 +57,14 @@ public:
                         double degrees) const override {
         return tiltFaceNamed(solid, faceId, pivot, axis, degrees);
     }
+    NamedSolid hollow(const NamedSolid& solid, const std::vector<std::uint32_t>& openFaces,
+                      double wall, bool outside, const std::string& rolePrefix) const override {
+        return hollowNamed(solid, openFaces, wall, outside, rolePrefix);
+    }
+    NamedSolid draftFaces(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
+                          Point3d neutralPoint, Point3d pull, double degrees) const override {
+        return draftFacesNamed(solid, faceIds, neutralPoint, pull, degrees);
+    }
     std::optional<double> plainCut(const Solid& solid, Point3d way, double near) const override {
         return plainCutOf(solid, way, near);
     }

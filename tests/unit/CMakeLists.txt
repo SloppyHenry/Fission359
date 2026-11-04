@@ -37,6 +37,9 @@ add_executable(fission_unit_tests
   geometry/test_blends.cpp
   geometry/test_faces.cpp
   geometry/test_stretch.cpp
+  geometry/test_plausibility.cpp
+  geometry/test_hollow.cpp
+  geometry/test_draft.cpp
   geometry/test_seat.cpp
   geometry/test_text.cpp
   render/test_camera.cpp

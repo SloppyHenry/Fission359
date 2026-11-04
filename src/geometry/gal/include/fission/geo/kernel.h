@@ -226,6 +226,45 @@ public:
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot turn faces");
     }
 
+    /// Makes the body hollow with walls `wall` thick, inside the body or (`outside`) around it. The
+    /// faces in `openFaces` are left open (a lid taken off); none gives a closed hollow body with
+    /// two shells. Faces of the body keep their roles; the faces of the cavity are named
+    /// `rolePrefix` + "[" + the place + "]". A box (with round vertical corners) and a cylinder are
+    /// built anew from the formula (a rounding r becomes r - wall); every other body goes through
+    /// the kernel's own offset, and its result is believed only when a plausibility check passes
+    /// (the kernel can return valid but wrong bodies for this). Throws `GeometryError`:
+    /// `invalidInput` with subject "thickness" when the wall is too thick (numbers: "thinnest",
+    /// and "maxValue" for the largest that works), "unsure" when the result could not be made sure
+    /// of (nothing is returned then), "face" for an open face that cannot be left open. The
+    /// default refuses.
+    virtual NamedSolid hollow(const NamedSolid& solid, const std::vector<std::uint32_t>& openFaces,
+                              double wall, bool outside, const std::string& rolePrefix) const {
+        (void)solid;
+        (void)openFaces;
+        (void)wall;
+        (void)outside;
+        (void)rolePrefix;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot hollow bodies");
+    }
+
+    /// Tilts faces by `degrees` about the neutral plane through `neutralPoint` that stands square
+    /// to `pull` (a draft: a mould lets go of the body when pulled along `pull`). Positive angles
+    /// make the body narrower along `pull`, away from the neutral plane. Faces keep their roles.
+    /// Throws `GeometryError`: `invalidInput` for an angle that is zero or not below 45 degrees
+    /// (subject "angle") and a face that cannot be tilted (subject "face"; one that stands square
+    /// to the pull cannot), `kernelFailure` / `invalidResult` when the kernel cannot do it. The
+    /// default refuses.
+    virtual NamedSolid draftFaces(const NamedSolid& solid,
+                                  const std::vector<std::uint32_t>& faceIds, Point3d neutralPoint,
+                                  Point3d pull, double degrees) const {
+        (void)solid;
+        (void)faceIds;
+        (void)neutralPoint;
+        (void)pull;
+        (void)degrees;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot draft faces");
+    }
+
     /// A place to cut `solid` for `stretch`: a coordinate along `way` (an axis direction, as for
     /// `stretch`) where the cut crosses nothing but flat faces along the way and round walls around
     /// it (no rounding, no hole across, no step). Of the free stretches the one closest to `near`
