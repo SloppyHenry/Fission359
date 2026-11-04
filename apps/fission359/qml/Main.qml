@@ -1288,6 +1288,18 @@ Window {
                                                     || Scale.editing || Placement.active || root.seating
             }
 
+            // The arrow on the chosen face of a body that has no measure dots of its own: a click
+            // pulls the face.
+            FaceArrowLayer {
+                anchors.fill: parent
+                viewport: viewport
+                face: Selection.singleFaceChosen ? Selection.items[0] : ({})
+                active: root.tool === "size" && Selection.singleFaceChosen && !busyForArrow
+                onRequested: root.pushFaceChosen()
+                readonly property bool busyForArrow: Handles.editing || Gizmo.editing || Rotate.editing
+                                                     || Scale.editing || Placement.active || root.seating
+            }
+
             // Where the problem of the chosen step is, with its message (AP-2.14).
             ProblemPlaceLayer {
                 anchors.fill: parent

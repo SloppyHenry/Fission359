@@ -62,7 +62,7 @@
 ---
 
 ### AP-2.4 Direktes Bearbeiten von Flächen
-**Status:** in Arbeit (Teil a: Fläche ziehen im Kernel, als Schritt, mit Griff und Befehl gebaut; Pfeil auf gewählter Fläche, Strecken, Verschieben/Drehen, Entfernen, Versetzen offen) · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-2.10 (Basis)
+**Status:** in Arbeit (Teile a–e gebaut: Fläche ziehen, intelligentes Strecken, Fläche drehen, entfernen, versetzen, mit Befehlen und Pfeil; Tests aus dem Kern und der Oberfläche; Bogen-Griff zum Drehen, Fenster-Test, Körper ohne Verlauf offen) · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-2.10 (Basis)
 **Bauanleitung:** [anleitungen/AP-2.4.md](anleitungen/AP-2.4.md)
 
 **Umfang:**

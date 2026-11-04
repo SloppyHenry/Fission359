@@ -413,6 +413,10 @@ public:
     /// the body that shows the result (empty when the body has no vertical edges or cannot be
     /// changed).
     Q_INVOKABLE QString roundVerticalEdges(const QString& bodyId);
+    /// Where the arrow of a face stands: `valid`, a point on the face `x y z` (mm), the way it
+    /// looks out of the body `dx dy dz` (unit) and `arrow`: the arrow is offered (the body is not a
+    /// basic shape that has measure dots of its own). Not valid for a face that cannot be pulled.
+    Q_INVOKABLE QVariantMap faceAnchor(const QString& bodyId, int number) const;
     /// Where the grip of an edge stands: `valid`, the middle of the edge `x y z` (mm) and the way
     /// into the body `dx dy dz` (unit). Not valid for an edge between faces that are not flat.
     Q_INVOKABLE QVariantMap edgeAnchor(const QString& bodyId, int number) const;

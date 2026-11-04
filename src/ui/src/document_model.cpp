@@ -3482,6 +3482,41 @@ QString DocumentModel::roundVerticalEdges(const QString& bodyId) {
     return blendEdges(bodyId, vertical, QStringLiteral("fillet"));
 }
 
+QVariantMap DocumentModel::faceAnchor(const QString& bodyId, int number) const {
+    QVariantMap anchor;
+    anchor[QStringLiteral("valid")] = false;
+    const core::Body* body = findBody(bodyId);
+    if (body == nullptr || !m_result || number < 1) {
+        return anchor;
+    }
+    const auto made = m_result->bodies.find(body->id);
+    if (made == m_result->bodies.end()) {
+        return anchor;
+    }
+    try {
+        const geo::FaceAnchor spot =
+            m_kernel->faceAnchor(made->second.solid, static_cast<std::uint32_t>(number));
+        anchor[QStringLiteral("valid")] = true;
+        anchor[QStringLiteral("x")] = spot.point.x;
+        anchor[QStringLiteral("y")] = spot.point.y;
+        anchor[QStringLiteral("z")] = spot.point.z;
+        anchor[QStringLiteral("dx")] = spot.way.x;
+        anchor[QStringLiteral("dy")] = spot.way.y;
+        anchor[QStringLiteral("dz")] = spot.way.z;
+        // A basic shape keeps its measure dots; the arrow is for every other body.
+        const core::Feature* maker = m_history.document().findFeature(body->createdBy);
+        const std::string type = maker != nullptr ? maker->type : std::string();
+        const bool combined = type == "combine" || type == "place" || type == "split" ||
+                              type == "fillet" || type == "chamfer" || type == "pushFace" ||
+                              type == "stretch" || type == "removeFaces" || type == "offsetFaces" ||
+                              type == "tiltFace";
+        anchor[QStringLiteral("arrow")] = combined && !m_history.document().consumerOf(body->id);
+    } catch (const geo::GeometryError&) {
+        anchor[QStringLiteral("valid")] = false;
+    }
+    return anchor;
+}
+
 QVariantMap DocumentModel::edgeAnchor(const QString& bodyId, int number) const {
     QVariantMap anchor;
     anchor[QStringLiteral("valid")] = false;

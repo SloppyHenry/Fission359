@@ -726,6 +726,51 @@
     </message>
     <message>
         <location line="+5"/>
+        <source>Tilt face</source>
+        <translation>Fläche kippen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turns a flat face about its lowest edge, like a wedge. Material is cut or added where the face moves.</source>
+        <translation>Dreht eine ebene Fläche um ihre unterste Kante, wie bei einem Keil. Wo sich die Fläche bewegt, wird Material abgeschnitten oder dazugegeben.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose one flat face, then type an angle in the panel.</source>
+        <translation>Wähle eine ebene Fläche und tippe dann einen Winkel in der Leiste.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Remove face</source>
+        <translation>Fläche entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Takes faces away and lets the body close up: a hole disappears, a rounding becomes a sharp edge again.</source>
+        <translation>Nimmt Flächen weg und lässt den Körper sich schließen: Ein Loch verschwindet, eine Rundung wird wieder zur scharfen Kante.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose one or more faces; on a hole or a rounding the whole feature goes.</source>
+        <translation>Wähle eine oder mehrere Flächen; bei einem Loch oder einer Rundung geht das ganze Merkmal weg.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Offset faces</source>
+        <translation>Flächen versetzen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves faces in or out by the same distance. With a body chosen all faces move: a fit for parts that must slide together.</source>
+        <translation>Verschiebt Flächen um denselben Abstand nach innen oder außen. Bei einem gewählten Körper bewegen sich alle Flächen: eine Passung für Teile, die ineinander gleiten sollen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose faces or one body, then type the distance in the panel.</source>
+        <translation>Wähle Flächen oder einen Körper und tippe dann den Abstand in der Leiste.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Round vertical edges</source>
         <translation>Senkrechte Kanten abrunden</translation>
     </message>
@@ -855,8 +900,8 @@
         <translation>Jede Änderung ist hier ein Satz.</translation>
     </message>
     <message>
-        <location line="-70"/>
-        <location line="+79"/>
+        <location line="-91"/>
+        <location line="+100"/>
         <source>Round edges</source>
         <translation>Abrunden</translation>
     </message>
@@ -872,8 +917,8 @@
         <translation>Wähle Kanten, ziehe den Punkt.</translation>
     </message>
     <message>
-        <location line="-80"/>
-        <location line="+78"/>
+        <location line="-101"/>
+        <location line="+99"/>
         <source>Bevel edges</source>
         <translation>Fase</translation>
     </message>
@@ -1084,6 +1129,11 @@
         <location line="+6"/>
         <source>Pull</source>
         <translation>Ziehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1629,12 +1679,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+757"/>
+        <location line="+825"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location line="-756"/>
+        <location line="-824"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
@@ -1664,7 +1714,7 @@
         <translation>Bearbeiten</translation>
     </message>
     <message>
-        <location line="+110"/>
+        <location line="+113"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -1674,7 +1724,7 @@
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-110"/>
+        <location line="-113"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Strg+Umschalt+Z</translation>
     </message>
@@ -1850,12 +1900,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1293"/>
+        <location line="+1365"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1292"/>
+        <location line="-1364"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -1886,12 +1936,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1278"/>
+        <location line="+1346"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1276"/>
+        <location line="-1344"/>
         <source>Round edges</source>
         <translation>Kanten abrunden</translation>
     </message>
@@ -1909,6 +1959,21 @@
         <location line="+1"/>
         <source>Pull face</source>
         <translation>Fläche ziehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Tilt face</source>
+        <translation>Fläche kippen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove face</source>
+        <translation>Fläche entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Offset faces</source>
+        <translation>Flächen versetzen</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -1957,18 +2022,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+798"/>
+        <location line="+863"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-796"/>
-        <location line="+797"/>
+        <location line="-861"/>
+        <location line="+862"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-791"/>
+        <location line="-856"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -1986,6 +2051,16 @@
         <location line="+3"/>
         <source>Choose one face first.</source>
         <translation>Wähle zuerst eine Fläche.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Choose one or more faces first.</source>
+        <translation>Wähle zuerst eine oder mehrere Flächen.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Choose faces or one body first.</source>
+        <translation>Wähle zuerst Flächen oder einen Körper.</translation>
     </message>
     <message numerus="yes">
         <location line="+86"/>
@@ -2016,7 +2091,7 @@
         <translation>Nichts zu tun: Die Körper stehen schon auf dem Bett.</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+28"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
@@ -2046,9 +2121,44 @@
         <translation>Diese Fläche lässt sich nicht ziehen: Sie gehört vielleicht zu einem anderen Körper oder ist auf eine Art gekrümmt, die noch nicht geht.</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+8"/>
+        <source>Stretching: rounds and holes stay as they are. Drag the grip or type a distance.</source>
+        <translation>Strecken: Rundungen und Löcher bleiben, wie sie sind. Ziehe am Griff oder tippe einen Abstand.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Face pulled. Drag the grip or type a distance.</source>
         <translation>Fläche gezogen. Ziehe am Griff oder tippe einen Abstand.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>This face cannot be removed: it may be part of another body, or the body cannot close up without it.</source>
+        <translation>Diese Fläche lässt sich nicht entfernen: Sie gehört vielleicht zu einem anderen Körper, oder der Körper kann sich ohne sie nicht schließen.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Face removed. The body closed up around it.</source>
+        <translation>Fläche entfernt. Der Körper hat sich darum geschlossen.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>These faces cannot be moved: they may be part of another body, or curved in a way that is not supported yet.</source>
+        <translation>Diese Flächen lassen sich nicht versetzen: Sie gehören vielleicht zu einem anderen Körper oder sind auf eine Art gekrümmt, die noch nicht geht.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Faces moved by 0.2 mm. Type another distance in the panel.</source>
+        <translation>Flächen um 0,2 mm versetzt. Tippe in der Leiste einen anderen Abstand.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>This face cannot be tilted: only flat faces of a body that is not part of another body yet.</source>
+        <translation>Diese Fläche lässt sich nicht kippen: Nur ebene Flächen eines Körpers, der noch nicht zu einem anderen gehört.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Face tilted. Type an angle in the panel: plus leans it out, minus leans it in.</source>
+        <translation>Fläche gekippt. Tippe einen Winkel in der Leiste: Plus lehnt sie nach außen, Minus nach innen.</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -2130,7 +2240,7 @@
         </translation>
     </message>
     <message>
-        <location line="-633"/>
+        <location line="-698"/>
         <source>Arrives in a later version.</source>
         <translation>Kommt in einer späteren Version.</translation>
     </message>
@@ -2150,7 +2260,7 @@
         <translation>Wähle zuerst zwei Körper (Umschalt+Klick).</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+15"/>
         <source>Nothing to undo.</source>
         <translation>Nichts zum Zurücknehmen.</translation>
     </message>
@@ -2165,7 +2275,7 @@
         <translation>Kopiere zuerst etwas.</translation>
     </message>
     <message>
-        <location line="+837"/>
+        <location line="+896"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
@@ -2180,7 +2290,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1185"/>
+        <location line="-1250"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -2240,7 +2350,7 @@
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
     <message>
-        <location line="+1216"/>
+        <location line="+1281"/>
         <source>Unit: mm</source>
         <translation>Einheit: mm</translation>
     </message>
@@ -2255,7 +2365,7 @@
         <translation>Abschrägung</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+6"/>
         <source>Placing</source>
         <translation>Platzierung</translation>
     </message>
@@ -2335,7 +2445,7 @@
         <translation>Position</translation>
     </message>
     <message numerus="yes">
-        <location line="+36"/>
+        <location line="+40"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>%n Körper ausgeschnitten</numerusform>
@@ -2343,12 +2453,12 @@
         </translation>
     </message>
     <message>
-        <location line="-20"/>
+        <location line="-24"/>
         <source>%1 added</source>
         <translation>%1 hinzugefügt</translation>
     </message>
     <message>
-        <location line="-246"/>
+        <location line="-250"/>
         <source>Bevelled. Drag the grip or type a distance.</source>
         <translation>Abgeschrägt. Ziehe am Griff oder tippe einen Abstand.</translation>
     </message>
@@ -2366,6 +2476,26 @@
         <location line="+2"/>
         <source>Pulling a face</source>
         <translation>Fläche ziehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Stretching</source>
+        <translation>Strecken</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Removing faces</source>
+        <translation>Flächen entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moving faces</source>
+        <translation>Flächen versetzen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Tilting a face</source>
+        <translation>Fläche kippen</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -2462,6 +2592,32 @@
         <location line="+1"/>
         <source>Face pulled</source>
         <translation>Fläche gezogen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Body stretched</source>
+        <translation>Körper gestreckt</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n face(s) removed</source>
+        <translation>
+            <numerusform>%n Fläche entfernt</numerusform>
+            <numerusform>%n Flächen entfernt</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n face(s) moved</source>
+        <translation>
+            <numerusform>%n Fläche versetzt</numerusform>
+            <numerusform>%n Flächen versetzt</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Face tilted</source>
+        <translation>Fläche gekippt</translation>
     </message>
     <message numerus="yes">
         <location line="+4"/>
@@ -2588,7 +2744,7 @@
         <translation>Mehrere Änderungen</translation>
     </message>
     <message>
-        <location line="+89"/>
+        <location line="+93"/>
         <source>, part %1</source>
         <translation>, Teil %1</translation>
     </message>
@@ -2642,32 +2798,32 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-323"/>
+        <location line="-335"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1276"/>
+        <location line="-1344"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1311"/>
+        <location line="+1379"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1138"/>
+        <location line="-1203"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+603"/>
+        <location line="+668"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-650"/>
+        <location line="-715"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -2996,14 +3152,29 @@
         <translation>Der Radius oben darf nicht negativ sein.</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>Type a value that is not zero.</source>
+        <translation>Tippe einen Wert, der nicht null ist.</translation>
+    </message>
+    <message>
         <location line="+1"/>
         <source>%1 must be bigger than zero.</source>
         <translation>%1 muss größer als null sein.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
+        <source>There is no place here without a rounding or a hole. Choose the place yourself: move the cutting plane to a flat stretch.</source>
+        <translation>Hier gibt es keine Stelle ohne Rundung oder Loch. Wähle die Stelle selbst: Schiebe die Schnittebene auf ein ebenes Stück.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>The cutting plane does not touch the body. Move it into the body.</source>
         <translation>Die Schnittebene berührt den Körper nicht. Schiebe sie in den Körper hinein.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>This face cannot be moved this way. Choose another face or another tool.</source>
+        <translation>Diese Fläche lässt sich so nicht bewegen. Wähle eine andere Fläche oder ein anderes Werkzeug.</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -3076,8 +3247,8 @@
         <translation>Das ist ein Fehler im Programm, nicht deiner. Wenn du die Details kopierst, kannst du ihn melden.</translation>
     </message>
     <message>
-        <location line="-93"/>
-        <location line="+83"/>
+        <location line="-100"/>
+        <location line="+90"/>
         <source>An earlier step has a problem.</source>
         <translation>Ein früherer Schritt hat ein Problem.</translation>
     </message>
@@ -3227,6 +3398,45 @@
         <location line="+1"/>
         <source>Face pushed in by %1 mm</source>
         <translation>Fläche um %1 mm hineingedrückt</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Stretched by %1 mm</source>
+        <translation>Um %1 mm gestreckt</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Shortened by %1 mm</source>
+        <translation>Um %1 mm gekürzt</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>Removed %n face(s)</source>
+        <translation>
+            <numerusform>%n Fläche entfernt</numerusform>
+            <numerusform>%n Flächen entfernt</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>Moved %n face(s) out by %1 mm</source>
+        <translation>
+            <numerusform>%n Fläche um %1 mm nach außen versetzt</numerusform>
+            <numerusform>%n Flächen um %1 mm nach außen versetzt</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>Moved %n face(s) in by %1 mm</source>
+        <translation>
+            <numerusform>%n Fläche um %1 mm nach innen versetzt</numerusform>
+            <numerusform>%n Flächen um %1 mm nach innen versetzt</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Face tilted by %1°</source>
+        <translation>Fläche um %1° gekippt</translation>
     </message>
     <message>
         <location line="+3"/>

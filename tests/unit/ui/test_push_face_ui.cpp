@@ -74,3 +74,60 @@ TEST_CASE("push face: a bad request is refused and changes nothing", "[ui][faces
     CHECK(f.model->pushFace(QStringLiteral("nobody"), 1).isEmpty());
     CHECK(f.model->historyPosition() == before);
 }
+
+TEST_CASE("push face: a body with rounded corners is stretched, its corners stay", "[ui][faces]") {
+    Pull f;
+    REQUIRE(f.model->roundVerticalEdges(f.body) == f.body); // the box gets a corner radius
+    f.model->waitForCalculation();
+
+    // Some flat face of it: the first one that can be pulled makes a stretching step.
+    QString made;
+    for (int number = 1; number <= 12 && made.isEmpty(); ++number) {
+        made = f.model->pushFace(f.body, number);
+    }
+    REQUIRE_FALSE(made.isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.step(1).value("type").toString() == "stretch");
+    CHECK(f.step(1).value("state").toString() == "ok");
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 1);
+}
+
+TEST_CASE("offset faces: no face given moves all faces of the body", "[ui][faces]") {
+    Pull f;
+    const QString made = f.model->offsetFaces(f.body, {});
+    REQUIRE_FALSE(made.isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.step(1).value("type").toString() == "offsetFaces");
+    CHECK(f.step(1).value("state").toString() == "ok");
+    CHECK(f.model->offsetFaces(QStringLiteral("nobody"), {}).isEmpty());
+}
+
+TEST_CASE("tilt face: a flat face turns about its lowest edge", "[ui][faces]") {
+    Pull f;
+    QString made;
+    for (int number = 1; number <= 6 && made.isEmpty(); ++number) {
+        made = f.model->tiltFace(f.body, number);
+    }
+    REQUIRE_FALSE(made.isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.step(1).value("type").toString() == "tiltFace");
+    CHECK(f.step(1).value("state").toString() == "ok");
+    CHECK(f.model->tiltFace(f.body, 0).isEmpty());
+    CHECK(f.model->tiltFace(QStringLiteral("nobody"), 1).isEmpty());
+}
+
+TEST_CASE("remove faces: a bad request is refused, a flat face is its own feature", "[ui][faces]") {
+    Pull f;
+    const int before = f.model->historyPosition();
+    CHECK(f.model->removeFaces(f.body, {}).isEmpty());
+    CHECK(f.model->removeFaces(f.body, QVariantList{4242}).isEmpty());
+    CHECK(f.model->removeFaces(QStringLiteral("nobody"), QVariantList{1}).isEmpty());
+    CHECK(f.model->historyPosition() == before);
+
+    const QVariantList feature = f.model->faceFeature(f.body, 1);
+    REQUIRE(feature.size() == 1);
+    CHECK(feature.first().toInt() == 1);
+    CHECK(f.model->faceFeature(f.body, 999).isEmpty());
+}
