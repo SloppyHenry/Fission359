@@ -53,6 +53,10 @@ public:
                            double distance) const override {
         return offsetFacesNamed(solid, faceIds, distance);
     }
+    NamedSolid tiltFace(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot, Point3d axis,
+                        double degrees) const override {
+        return tiltFaceNamed(solid, faceId, pivot, axis, degrees);
+    }
     std::optional<double> plainCut(const Solid& solid, Point3d way, double near) const override {
         return plainCutOf(solid, way, near);
     }

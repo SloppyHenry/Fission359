@@ -395,6 +395,18 @@ public:
     /// the id of the new body, empty when the body is part of another one, the face cannot be
     /// named again after a change, or the kernel cannot move this kind of face.
     Q_INVOKABLE QString pushFace(const QString& bodyId, int faceNumber);
+    /// Removes faces and lets the body heal (a hole closes, a rounding goes sharp): a new step.
+    /// Returns the id of the new body, empty when nothing can be done.
+    Q_INVOKABLE QString removeFaces(const QString& bodyId, const QVariantList& faceNumbers);
+    /// Moves faces by 0.2 mm to start with (a fit): a new step; no faces given means all faces of
+    /// the body. Returns the id of the new body, empty when nothing can be done.
+    Q_INVOKABLE QString offsetFaces(const QString& bodyId, const QVariantList& faceNumbers);
+    /// Turns a flat face about its lowest edge, 10 degrees to start with (positive leans it out):
+    /// a new step. Returns the id of the new body, empty when nothing can be done.
+    Q_INVOKABLE QString tiltFace(const QString& bodyId, int faceNumber);
+    /// The faces that belong to the one at `faceNumber` as a feature: for a curved face the curved
+    /// faces it runs into and the floor of a blind hole, for a flat face just itself.
+    Q_INVOKABLE QVariantList faceFeature(const QString& bodyId, int faceNumber) const;
     /// "Round all vertical edges" of a body. A fresh box (made by a box step, not turned, with
     /// square corners) gets its corner radius set, which keeps it a basic shape; any other body
     /// gets a rounding step on its vertical edges. One undo step either way. Returns the id of
@@ -515,6 +527,13 @@ private:
     /// unless `geometryChanged` is false (only a look changed).
     void documentChanged(bool geometryChanged = true);
     int stepIndexOf(const core::FeatureId& id) const;
+    /// A step that works on faces of one body (AP-2.4): the faces become references in `slot`,
+    /// `values` set parameters (as plain digits), the result takes over name and colour of the
+    /// body. One transaction, one undo step. Empty when the body or a face cannot be used.
+    QString addFaceStep(const QString& bodyId, const std::string& type,
+                        const std::vector<std::uint32_t>& faceNumbers, const char* slot,
+                        const std::map<std::string, double>& values,
+                        const std::string& transaction);
     void setCalculating(bool calculating);
     /// Ends the open transaction. Cuts that holes need are updated first, so that they are part
     /// of the same step (ADR-0011).

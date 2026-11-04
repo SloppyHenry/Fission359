@@ -209,6 +209,23 @@ public:
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
     }
 
+    /// Turns a flat face by `degrees` around the line through `pivot` along `axis` (both in the
+    /// face's plane; a hinge, like an edge of the face). Material is cut where the face dips into
+    /// the body and added where it swings out; the walls beside the face stand square on it and
+    /// are extended or shortened. The face keeps its role. Positive angles turn right-handed
+    /// around `axis`. Throws `GeometryError`: `invalidInput` (subject "pivot") when the line is not
+    /// in the face's plane, "distance" for an angle that is zero or not a number, `kernelFailure`
+    /// for a face that is not flat or has slanted neighbours. The default refuses.
+    virtual NamedSolid tiltFace(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot,
+                                Point3d axis, double degrees) const {
+        (void)solid;
+        (void)faceId;
+        (void)pivot;
+        (void)axis;
+        (void)degrees;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot turn faces");
+    }
+
     /// A place to cut `solid` for `stretch`: a coordinate along `way` (an axis direction, as for
     /// `stretch`) where the cut crosses nothing but flat faces along the way and round walls around
     /// it (no rounding, no hole across, no step). Of the free stretches the one closest to `near`

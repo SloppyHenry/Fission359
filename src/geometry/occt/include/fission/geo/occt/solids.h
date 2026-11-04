@@ -68,6 +68,10 @@ NamedSolid removeFacesNamed(const NamedSolid& solid, const std::vector<std::uint
 NamedSolid offsetFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
                             double distance);
 
+/// Turns a flat face about a hinge line (see `GeometryKernel::tiltFace`). Throws GeometryError.
+NamedSolid tiltFaceNamed(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot, Point3d axis,
+                         double degrees);
+
 /// A place to cut for stretching (see `GeometryKernel::plainCut`).
 std::optional<double> plainCutOf(const Solid& solid, Point3d way, double near);
 

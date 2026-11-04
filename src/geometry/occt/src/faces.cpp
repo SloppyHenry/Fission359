@@ -17,15 +17,21 @@
 
 #include "occt_build.h"
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Defeaturing.hxx>
+#include <BRepBndLib.hxx>
+#include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepTools.hxx>
+#include <Bnd_Box.hxx>
 #include <Standard_Failure.hxx>
 #include <TopExp_Explorer.hxx>
+#include <gp_Ax1.hxx>
 #include <gp_Ax2.hxx>
 #include <gp_Cylinder.hxx>
+#include <gp_Trsf.hxx>
 #include <gp_Vec.hxx>
 
 namespace fission::geo::occt {
@@ -212,6 +218,112 @@ NamedSolid offsetFaceNamed(const NamedSolid& solid, std::uint32_t faceId, double
         }
     } catch (const Standard_Failure&) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "offsetFace: the kernel failed");
+    }
+}
+
+namespace {
+
+// One side of the plane through `point` with normal `normal`: a big box that reaches `reach` into
+// the way `normal` points.
+TopoDS_Shape sideOfPlane(const gp_Pnt& point, const gp_Dir& normal, double reach) {
+    const gp_Ax2 frame(point, normal);
+    const gp_Pnt corner(point.XYZ() - frame.XDirection().XYZ() * reach -
+                        frame.YDirection().XYZ() * reach);
+    return BRepPrimAPI_MakeBox(gp_Ax2(corner, normal, frame.XDirection()), 2.0 * reach, 2.0 * reach,
+                               reach)
+        .Shape();
+}
+
+// The common part of two shapes, or a null shape when nothing is common.
+TopoDS_Shape commonOf(const TopoDS_Shape& a, const TopoDS_Shape& b) {
+    BRepAlgoAPI_Common common(a, b);
+    if (!common.IsDone() || common.HasErrors() || common.Shape().IsNull()) {
+        return {};
+    }
+    for (TopExp_Explorer solids(common.Shape(), TopAbs_SOLID); solids.More(); solids.Next()) {
+        return common.Shape();
+    }
+    return {};
+}
+
+} // namespace
+
+NamedSolid tiltFaceNamed(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot, Point3d axis,
+                         double degrees) {
+    const double length = std::hypot(axis.x, axis.y, axis.z);
+    if (!std::isfinite(degrees) || degrees == 0.0 || std::abs(degrees) >= 90.0) {
+        throw GeometryError(GeometryErrorCode::invalidInput,
+                            "tiltFace: needs an angle that is not zero and below 90 degrees",
+                            "angle");
+    }
+    if (!isFinite(pivot) || !isFinite(axis) || !(length > 1e-9)) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "tiltFace: no hinge given", "pivot");
+    }
+    const TopoDS_Shape& shape = shapeOf(solid.solid);
+    ShapeMap faces;
+    TopExp::MapShapes(shape, TopAbs_FACE, faces);
+    if (faceId < 1 || static_cast<int>(faceId) > faces.Extent()) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "tiltFace: the face is not there");
+    }
+    const auto own = std::find_if(solid.faces.begin(), solid.faces.end(),
+                                  [&](const NamedFace& f) { return f.faceId == faceId; });
+    if (own == solid.faces.end() || own->role.empty()) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "tiltFace: the face has no role");
+    }
+    const TopoDS_Face face = TopoDS::Face(faces(static_cast<int>(faceId)));
+    if (!isFlat(face)) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "tiltFace: only flat faces turn");
+    }
+    const gp_Dir normal = outwardNormal(face);
+    const gp_Pnt hinge(pivot.x, pivot.y, pivot.z);
+    const gp_Dir line(axis.x / length, axis.y / length, axis.z / length);
+    const gp_Pln plane = BRepAdaptor_Surface(face).Plane();
+    if (std::abs(plane.Distance(hinge)) > 1e-6 || std::abs(line.Dot(normal)) > 1e-6) {
+        throw GeometryError(GeometryErrorCode::invalidInput,
+                            "tiltFace: the hinge does not lie in the face", "pivot");
+    }
+    if (!neighboursSquare(shape, face, normal)) {
+        throw GeometryError(GeometryErrorCode::kernelFailure,
+                            "tiltFace: a slanted neighbour of the face would have to stretch");
+    }
+    try {
+        gp_Trsf turn;
+        turn.SetRotation(gp_Ax1(hinge, line), degrees * M_PI / 180.0);
+        const gp_Dir tilted = normal.Transformed(turn);
+
+        Bnd_Box box;
+        BRepBndLib::AddOptimal(shape, box, false);
+        const double reach = 4.0 * std::sqrt(box.SquareExtent()) + 100.0;
+        const gp_Vec out(normal.XYZ() * reach);
+        const TopoDS_Shape columnOut = BRepPrimAPI_MakePrism(face, out).Shape();
+        const TopoDS_Shape columnIn = BRepPrimAPI_MakePrism(face, -out).Shape();
+        // Where the new plane dips into the body, and where it swings out of it.
+        const TopoDS_Shape cut = commonOf(columnIn, sideOfPlane(hinge, tilted, reach));
+        const TopoDS_Shape added =
+            commonOf(columnOut, sideOfPlane(hinge, tilted.Reversed(), reach));
+
+        const auto isWall = [&](const TopoDS_Face& candidate) {
+            if (!isFlat(candidate)) {
+                return false;
+            }
+            const gp_Pln plane2 = BRepAdaptor_Surface(candidate).Plane();
+            return std::abs(plane2.Distance(hinge)) < 1e-6 &&
+                   std::abs(std::abs(plane2.Axis().Direction().Dot(tilted)) - 1.0) < 1e-6;
+        };
+        NamedSolid current = solid;
+        if (!cut.IsNull()) {
+            current = booleanNamed(BooleanOp::subtract, current, {tool(cut, own->role, isWall)});
+        }
+        if (!added.IsNull()) {
+            current = booleanNamed(BooleanOp::merge, current, {tool(added, own->role, isWall)});
+        }
+        if (cut.IsNull() && added.IsNull()) {
+            throw GeometryError(GeometryErrorCode::kernelFailure,
+                                "tiltFace: the turned face does not change the body");
+        }
+        return current;
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "tiltFace: the kernel failed");
     }
 }
 

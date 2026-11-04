@@ -8,6 +8,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <numbers>
 #include <set>
@@ -241,4 +242,55 @@ TEST_CASE("offsetFaces: all faces of a box moved in make it smaller on every sid
     CHECK(kernel->measure(outer.solid).volume == Approx(20.4 * 30.4 * 10.4).epsilon(1e-9));
     CHECK(kernel->measure(outer.solid).faces == 6);
     CHECK_THROWS_AS(kernel->offsetFaces(box, {}, 0.2), geo::GeometryError);
+}
+
+TEST_CASE("tiltFace: a wall turned about its bottom edge makes a wedge", "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid cube = kernel->makeBox(20, 20, 20, {0, 0, 0}, 0.0);
+    const std::uint32_t right = flatFace(*kernel, cube, {1, 0, 0});
+    const geo::Point3d hinge{20, 0, 0};
+    const geo::Point3d along{0, 1, 0};
+
+    // Turned right-handed about +y the face leans out at the top (x = 20 + z for 45 degrees).
+    const geo::NamedSolid out = kernel->tiltFace(cube, right, hinge, along, 45.0);
+    const geo::SolidReport outReport = kernel->measure(out.solid);
+    CHECK(outReport.valid);
+    CHECK(outReport.volume == Approx(8000.0 + 0.5 * 20.0 * 20.0 * 20.0).epsilon(1e-9));
+    CHECK(outReport.boxMax.x == Approx(40.0));
+    CHECK(rolesOf(out) == rolesOf(cube));
+
+    // The other way it leans in: a piece the size of the wedge is cut off.
+    const geo::NamedSolid in = kernel->tiltFace(cube, right, hinge, along, -45.0);
+    const geo::SolidReport inReport = kernel->measure(in.solid);
+    CHECK(inReport.valid);
+    CHECK(inReport.volume == Approx(8000.0 - 0.5 * 20.0 * 20.0 * 20.0).epsilon(1e-9));
+    // At 45 degrees the leaning wall runs through the top edge: the top is gone, a triangle
+    // remains.
+    CHECK(inReport.faces == 5);
+    CHECK(std::count(in.history.deleted.begin(), in.history.deleted.end(), "top") == 1);
+
+    // A smaller angle, a different wedge: tan(30 degrees) * 20 * 20 / 2 * 20; all six faces stay.
+    const geo::NamedSolid slight = kernel->tiltFace(cube, right, hinge, along, -30.0);
+    CHECK(kernel->measure(slight.solid).valid);
+    CHECK(kernel->measure(slight.solid).faces == 6);
+    CHECK(kernel->measure(slight.solid).volume ==
+          Approx(8000.0 - 0.5 * 20.0 * 20.0 * std::tan(30.0 * kPi / 180.0) * 20.0).epsilon(1e-9));
+    CHECK(rolesOf(slight) == rolesOf(cube));
+}
+
+TEST_CASE("tiltFace: a hinge off the face, no angle or a face that is not flat are refused",
+          "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid cube = kernel->makeBox(20, 20, 20, {0, 0, 0}, 0.0);
+    const std::uint32_t right = flatFace(*kernel, cube, {1, 0, 0});
+    CHECK_THROWS_AS(kernel->tiltFace(cube, right, {20, 0, 0}, {0, 1, 0}, 0.0), geo::GeometryError);
+    CHECK_THROWS_AS(kernel->tiltFace(cube, right, {20, 0, 0}, {0, 1, 0}, 90.0), geo::GeometryError);
+    CHECK_THROWS_AS(kernel->tiltFace(cube, right, {5, 0, 0}, {0, 1, 0}, 10.0), geo::GeometryError);
+    CHECK_THROWS_AS(kernel->tiltFace(cube, right, {20, 0, 0}, {1, 0, 0}, 10.0), geo::GeometryError);
+    CHECK_THROWS_AS(kernel->tiltFace(cube, 99, {20, 0, 0}, {0, 1, 0}, 10.0), geo::GeometryError);
+
+    const geo::NamedSolid cylinder = kernel->makeCylinder(5.0, 10.0, {0, 0, 0});
+    CHECK_THROWS_AS(
+        kernel->tiltFace(cylinder, roundFace(*kernel, cylinder, 5.0), {5, 0, 0}, {0, 1, 0}, 10.0),
+        geo::GeometryError);
 }

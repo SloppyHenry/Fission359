@@ -265,11 +265,18 @@ QtObject {
             case "tubeRadius": return qsTr("The tube must be thinner than the ring radius.")
             case "innerRadius": return qsTr("The notches must lie closer to the middle than the tips.")
             case "topRadius": return qsTr("The top radius cannot be negative.")
+            case "distance":
+            case "angle": return qsTr("Type a value that is not zero.")
             default: return qsTr("%1 must be bigger than zero.").arg(valueLabel(problem.field))
             }
         case "kernelRejected":
             if (problem.field === "position") {
-                return qsTr("The cutting plane does not touch the body. Move it into the body.")
+                return step && step.type === "stretch"
+                    ? qsTr("There is no place here without a rounding or a hole. Choose the place yourself: move the cutting plane to a flat stretch.")
+                    : qsTr("The cutting plane does not touch the body. Move it into the body.")
+            }
+            if (problem.field === "face") {
+                return qsTr("This face cannot be moved this way. Choose another face or another tool.")
             }
             return qsTr("The shape cannot be built with these values. Try changing a value a little.")
         case "referenceNeedsHelp": {

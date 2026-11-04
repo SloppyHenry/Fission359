@@ -18,6 +18,10 @@ std::unique_ptr<const core::FeatureType> makeSplitType();
 std::unique_ptr<const core::FeatureType> makeFilletType();
 std::unique_ptr<const core::FeatureType> makeChamferType();
 std::unique_ptr<const core::FeatureType> makePushFaceType();
+std::unique_ptr<const core::FeatureType> makeStretchType();
+std::unique_ptr<const core::FeatureType> makeRemoveFacesType();
+std::unique_ptr<const core::FeatureType> makeOffsetFacesType();
+std::unique_ptr<const core::FeatureType> makeTiltFaceType();
 } // namespace detail
 
 void registerBuiltinFeatures(core::FeatureRegistry& registry) {
@@ -31,6 +35,10 @@ void registerBuiltinFeatures(core::FeatureRegistry& registry) {
     registry.add(detail::makeFilletType());
     registry.add(detail::makeChamferType());
     registry.add(detail::makePushFaceType());
+    registry.add(detail::makeStretchType());
+    registry.add(detail::makeRemoveFacesType());
+    registry.add(detail::makeOffsetFacesType());
+    registry.add(detail::makeTiltFaceType());
 }
 
 } // namespace fission::features

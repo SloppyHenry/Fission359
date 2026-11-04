@@ -54,6 +54,7 @@ Item {
         case "face":
             return [
                 { id: "pushFace", text: qsTr("Pull"), icon: "move" },
+                { id: "removeFaces", text: qsTr("Remove"), icon: "scissors" },
                 { id: "view.lookat", text: qsTr("Look at face"), icon: "eye" }
             ]
         default:

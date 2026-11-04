@@ -142,7 +142,10 @@ Window {
             { id: "round", text: qsTr("Round edges"), enabled: root.edgesChosen },
             { id: "bevel", text: qsTr("Bevel edges"), enabled: root.edgesChosen },
             { id: "roundVertical", text: qsTr("Round vertical edges"), enabled: root.contextKind === "body" && root.chosenBodyHasVerticalEdges },
-            { id: "pushFace", text: qsTr("Pull face"), enabled: Selection.singleFaceChosen }
+            { id: "pushFace", text: qsTr("Pull face"), enabled: Selection.singleFaceChosen },
+            { id: "tiltFace", text: qsTr("Tilt face"), enabled: Selection.singleFaceChosen },
+            { id: "removeFaces", text: qsTr("Remove face"), enabled: root.facesChosen },
+            { id: "offsetFaces", text: qsTr("Offset faces"), enabled: root.facesChosen || root.chosenBodies.length === 1 }
         ] },
         { title: qsTr("Window"), items: [
             { id: "nexttab", text: qsTr("Next tab"), shortcut: isMac ? "⌃⇥" : qsTr("Ctrl+Tab"), enabled: Files.tabs.length > 1 },
@@ -259,6 +262,12 @@ Window {
             break
         case "face":
             if (!Selection.singleFaceChosen) { return qsTr("Choose one face first.") }
+            break
+        case "faces":
+            if (!facesChosen) { return qsTr("Choose one or more faces first.") }
+            break
+        case "facesOrBody":
+            if (!facesChosen && chosenBodies.length !== 1) { return qsTr("Choose faces or one body first.") }
             break
         }
         if (command.id === "menu.undo" && !undoAvailable) { return qsTr("Nothing to undo.") }
@@ -466,6 +475,9 @@ Window {
         case "bevel": blendChosen("chamfer"); break
         case "roundVertical": roundVerticalChosen(); break
         case "pushFace": pushFaceChosen(); break
+        case "tiltFace": tiltFaceChosen(); break
+        case "removeFaces": removeFacesChosen(); break
+        case "offsetFaces": offsetFacesChosen(); break
         case "merge":
         case "subtract":
         case "overlap": combine(id); break
@@ -534,7 +546,63 @@ Window {
         root.flyout = ""
         Selection.chooseBodies([made])
         root.tool = "size" // the grip on the face is shown by this tool
-        showHint(qsTr("Face pulled. Drag the grip or type a distance."))
+        const steps = DocumentModel.recipe
+        const stretched = steps.length > 0 && steps[steps.length - 1].type === "stretch"
+        showHint(stretched ? qsTr("Stretching: rounds and holes stay as they are. Drag the grip or type a distance.")
+                           : qsTr("Face pulled. Drag the grip or type a distance."))
+    }
+
+    // The faces chosen, all of one body (empty if there are none or they differ).
+    function chosenFaceItems() {
+        const faces = Selection.items.filter(item => item.kind === "face")
+        return faces.length > 0 && faces.length === Selection.items.length
+               && faces.every(item => item.body === faces[0].body) ? faces : []
+    }
+
+    // Takes away the chosen faces; one curved face brings the faces that belong to it (the whole
+    // hole, the whole rounding).
+    function removeFacesChosen() {
+        const faces = chosenFaceItems()
+        if (faces.length === 0) { return }
+        let numbers = faces.map(item => item.number)
+        if (faces.length === 1) {
+            numbers = DocumentModel.faceFeature(faces[0].body, faces[0].number)
+        }
+        const made = DocumentModel.removeFaces(faces[0].body, numbers)
+        if (made === "") {
+            showHint(qsTr("This face cannot be removed: it may be part of another body, or the body cannot close up without it."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        showHint(qsTr("Face removed. The body closed up around it."))
+    }
+
+    // Moves the chosen faces (all faces of a chosen body): a fit of 0.2 mm to start with.
+    function offsetFacesChosen() {
+        const faces = chosenFaceItems()
+        const body = faces.length > 0 ? faces[0].body : (root.chosenBodies.length === 1 ? root.chosenBodies[0] : "")
+        const made = body !== "" ? DocumentModel.offsetFaces(body, faces.map(item => item.number)) : ""
+        if (made === "") {
+            showHint(qsTr("These faces cannot be moved: they may be part of another body, or curved in a way that is not supported yet."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        showHint(qsTr("Faces moved by 0.2 mm. Type another distance in the panel."))
+    }
+
+    // Turns the chosen flat face about its lowest edge: 10° to start with.
+    function tiltFaceChosen() {
+        const item = Selection.singleFaceChosen ? Selection.items[0] : undefined
+        const made = item !== undefined ? DocumentModel.tiltFace(item.body, item.number) : ""
+        if (made === "") {
+            showHint(qsTr("This face cannot be tilted: only flat faces of a body that is not part of another body yet."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        showHint(qsTr("Face tilted. Type an angle in the panel: plus leans it out, minus leans it in."))
     }
 
     function roundVerticalChosen() {
@@ -1419,6 +1487,10 @@ Window {
         if (type === "fillet") { return qsTr("Rounding") }
         if (type === "chamfer") { return qsTr("Bevelling") }
         if (type === "pushFace") { return qsTr("Pulling a face") }
+        if (type === "stretch") { return qsTr("Stretching") }
+        if (type === "removeFaces") { return qsTr("Removing faces") }
+        if (type === "offsetFaces") { return qsTr("Moving faces") }
+        if (type === "tiltFace") { return qsTr("Tilting a face") }
         if (type === "place") { return qsTr("Placing") }
         const name = shapeCatalog.nameOf(type)
         return name !== "" ? name : qsTr("Body")
@@ -1476,6 +1548,10 @@ Window {
         case "roundEdges": return qsTr("%n edge(s) rounded", "", Number(step.count))
         case "bevelEdges": return qsTr("%n edge(s) bevelled", "", Number(step.count))
         case "pushFace": return qsTr("Face pulled")
+        case "stretchBody": return qsTr("Body stretched")
+        case "removeFaces": return qsTr("%n face(s) removed", "", Number(step.count))
+        case "offsetFaces": return qsTr("%n face(s) moved", "", Number(step.count))
+        case "tiltFace": return qsTr("Face tilted")
         case "combineBodies":
             switch (step.mode) {
             case "subtract": return qsTr("Cut out %n body(ies)", "", Number(step.count) - 1)
@@ -1536,7 +1612,11 @@ Window {
         case "split": return "scissors"
         case "fillet": return "round"
         case "chamfer": return "bevel"
-        case "pushFace": return "move"
+        case "pushFace":
+        case "stretch":
+        case "offsetFaces":
+        case "tiltFace": return "move"
+        case "removeFaces": return "scissors"
         case "place": return "move"
         case "text": return "text"
         default: return "cube"
@@ -1656,6 +1736,8 @@ Window {
     }
     // What the context bar next to the selection is for: body | bodies | face | none.
     // Edges are chosen, all of one body.
+    // One or more faces are chosen, all of one body.
+    readonly property bool facesChosen: chosenFaceItems().length > 0
     readonly property bool edgesChosen: {
         const edges = Selection.items.filter(item => item.kind === "edge")
         return edges.length > 0 && edges.every(item => item.body === edges[0].body)
