@@ -172,3 +172,15 @@ TEST_CASE("blend edges: the step has a grip at its edge that changes the size", 
         }
     }
 }
+
+TEST_CASE("blend edges: the grip over an edge says where it stands", "[ui][blend]") {
+    Blend f;
+    const QVariantList edges = f.model->edgesOf(f.body, QStringLiteral("vertical"), 0);
+    const QVariantMap anchor = f.model->edgeAnchor(f.body, edges.first().toInt());
+    CHECK(anchor.value("valid").toBool());
+    CHECK(std::abs(anchor.value("dz").toDouble()) < 1e-6);
+    CHECK(std::hypot(anchor.value("dx").toDouble(), anchor.value("dy").toDouble()) == Approx(1.0));
+    CHECK_FALSE(f.model->edgeAnchor(f.body, 0).value("valid").toBool());
+    CHECK_FALSE(f.model->edgeAnchor(f.body, 9999).value("valid").toBool());
+    CHECK_FALSE(f.model->edgeAnchor(QStringLiteral("nobody"), 1).value("valid").toBool());
+}

@@ -395,6 +395,9 @@ public:
     /// the body that shows the result (empty when the body has no vertical edges or cannot be
     /// changed).
     Q_INVOKABLE QString roundVerticalEdges(const QString& bodyId);
+    /// Where the grip of an edge stands: `valid`, the middle of the edge `x y z` (mm) and the way
+    /// into the body `dx dy dz` (unit). Not valid for an edge between faces that are not flat.
+    Q_INVOKABLE QVariantMap edgeAnchor(const QString& bodyId, int number) const;
     /// The edges to add to a click on edge `number` of a body so that a whole run is taken:
     /// "chain" (the edges that run on tangentially from it), "face" (all edges of the face
     /// `number`), "vertical" (all vertical edges of the body, `number` unused). Numbers as in the

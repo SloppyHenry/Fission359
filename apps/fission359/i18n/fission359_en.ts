@@ -1609,12 +1609,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+737"/>
+        <location line="+738"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-736"/>
+        <location line="-737"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
@@ -1830,12 +1830,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1244"/>
+        <location line="+1273"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1243"/>
+        <location line="-1272"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1866,12 +1866,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1230"/>
+        <location line="+1259"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1228"/>
+        <location line="-1257"/>
         <source>Round edges</source>
         <translation>Round edges</translation>
     </message>
@@ -1932,18 +1932,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+779"/>
+        <location line="+780"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-777"/>
-        <location line="+778"/>
+        <location line="-778"/>
+        <location line="+779"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-772"/>
+        <location line="-773"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -2001,7 +2001,7 @@
         <translation>Choose edges of one body that is not part of another body yet.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
         <source>Rounded. Type a radius, or change it in the panel.</source>
         <translation>Rounded. Type a radius, or change it in the panel.</translation>
     </message>
@@ -2090,7 +2090,7 @@
         </translation>
     </message>
     <message>
-        <location line="-614"/>
+        <location line="-615"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2125,12 +2125,12 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+821"/>
+        <location line="+822"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
     <message>
-        <location line="+121"/>
+        <location line="+149"/>
         <source>Click a face of the print bed or of another body.</source>
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
@@ -2140,7 +2140,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1138"/>
+        <location line="-1167"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -2200,7 +2200,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1169"/>
+        <location line="+1198"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2308,7 +2308,17 @@
         <translation>%1 added</translation>
     </message>
     <message>
-        <location line="-41"/>
+        <location line="-245"/>
+        <source>Bevelled. Drag the grip or type a distance.</source>
+        <translation>Bevelled. Drag the grip or type a distance.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rounded. Drag the grip or type a radius.</source>
+        <translation>Rounded. Drag the grip or type a radius.</translation>
+    </message>
+    <message>
+        <location line="+203"/>
         <source>Rounding</source>
         <translation>Rounding</translation>
     </message>
@@ -2528,7 +2538,7 @@
         <translation>Several changes</translation>
     </message>
     <message>
-        <location line="+83"/>
+        <location line="+88"/>
         <source>, part %1</source>
         <translation>, part %1</translation>
     </message>
@@ -2582,32 +2592,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-315"/>
+        <location line="-320"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1228"/>
+        <location line="-1257"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1263"/>
+        <location line="+1292"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1091"/>
+        <location line="-1120"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+584"/>
+        <location line="+585"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-631"/>
+        <location line="-632"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>

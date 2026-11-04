@@ -139,3 +139,54 @@ TEST_CASE("blend: edges that run on tangentially are taken along", "[geometry][b
     const geo::BlendEdge edge = verticalEdgeAtOrigin(*kernel, cube);
     CHECK(kernel->tangentChain(cube.solid, edge.id) == std::vector<std::uint32_t>{edge.id});
 }
+
+TEST_CASE("blend: the top circle of a cylinder takes the volume of a rounded rim",
+          "[geometry][blend]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid can = kernel->makeCylinder(10.0, 20.0, {0, 0, 0});
+    const geo::BodySignatures looks = kernel->signatures(can.solid);
+    geo::BlendEdge rim;
+    for (const geo::ElementSignature& edge : looks.edges) {
+        if (edge.id != 0 && edge.shape == geo::SignatureShape::circle &&
+            std::abs(edge.centroid.z - 20.0) < 1e-6) {
+            rim = {edge.id, "rim"};
+        }
+    }
+    REQUIRE(rim.id != 0);
+    const double r = 2.0;
+    const double outer = 10.0;
+    // The ring that is cut away: the corner profile r²(1 - π/4) turned about the axis.
+    const double moment =
+        r * r * (outer - r / 2.0) - (kPi * r * r / 4.0) * ((outer - r) + 4.0 * r / (3.0 * kPi));
+    const geo::NamedSolid made =
+        kernel->blendEdges(can, {rim}, {geo::BlendKind::round, r, 0.0}, "F2/fillet/round");
+    const geo::SolidReport report = kernel->measure(made.solid);
+    CHECK(report.valid);
+    CHECK(report.volume == Approx(kPi * 100.0 * 20.0 - 2.0 * kPi * moment).epsilon(1e-6));
+    CHECK(made.faces.size() == static_cast<std::size_t>(report.faces));
+}
+
+TEST_CASE("blend: all twelve edges of a cube, rounded or bevelled, stay valid and named",
+          "[geometry][blend]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid cube = kernel->makeBox(20, 20, 20, {0, 0, 0}, 0.0);
+    std::vector<geo::BlendEdge> all;
+    for (const geo::ElementSignature& edge : kernel->signatures(cube.solid).edges) {
+        if (edge.id != 0) {
+            all.push_back({edge.id, "e" + std::to_string(edge.id)});
+        }
+    }
+    REQUIRE(all.size() == 12);
+    for (const geo::BlendKind kind : {geo::BlendKind::round, geo::BlendKind::chamfer}) {
+        const geo::NamedSolid made = kernel->blendEdges(cube, all, {kind, 2.0, 0.0}, "F2/blend");
+        const geo::SolidReport report = kernel->measure(made.solid);
+        CHECK(report.valid);
+        CHECK(report.faces == 26); // 6 sides, 12 strips, 8 corner patches
+        CHECK(made.faces.size() == 26);
+        std::set<std::string> roles;
+        for (const geo::NamedFace& face : made.faces) {
+            roles.insert(face.role);
+        }
+        CHECK(roles.size() == 26);
+    }
+}

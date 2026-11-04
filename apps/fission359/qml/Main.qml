@@ -1182,6 +1182,25 @@ Window {
                 ghost: DocumentModel.repairing ? DocumentModel.repairGhost() : ({ valid: false })
             }
 
+            // The quarter-circle grip over an edge: a click rounds it, Alt/⌥ bevels it.
+            EdgeGripLayer {
+                anchors.fill: parent
+                viewport: viewport
+                hover: Selection.hover
+                active: Selection.filter === "edge" && !busyForGrip
+                onRequested: (bodyId, number, bevel) => {
+                    const made = DocumentModel.blendEdges(bodyId, [number], bevel ? "chamfer" : "fillet")
+                    if (made !== "") {
+                        Selection.chooseBodies([made])
+                        root.tool = "size"
+                        showHint(bevel ? qsTr("Bevelled. Drag the grip or type a distance.")
+                                       : qsTr("Rounded. Drag the grip or type a radius."))
+                    }
+                }
+                readonly property bool busyForGrip: Handles.editing || Gizmo.editing || Rotate.editing
+                                                    || Scale.editing || Placement.active || root.seating
+            }
+
             // Where the problem of the chosen step is, with its message (AP-2.14).
             ProblemPlaceLayer {
                 anchors.fill: parent

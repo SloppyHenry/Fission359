@@ -3058,6 +3058,39 @@ QString DocumentModel::combineBodies(const QStringList& bodyIds, const QString& 
     return toQString(result.value);
 }
 
+namespace {
+// A point on an edge and the way from it into the body, between its two faces (against the sum
+// of their normals; all 0 when the faces are not flat or cancel out).
+struct EdgeAnchor {
+    geo::Point3d point;
+    geo::Point3d way;
+};
+
+EdgeAnchor edgeAnchorOf(const geo::BodySignatures& signs, std::uint32_t id) {
+    EdgeAnchor result;
+    if (id < 1 || id > signs.edges.size()) {
+        return result;
+    }
+    const geo::ElementSignature& edge = signs.edges[id - 1];
+    geo::Point3d sum;
+    for (const std::uint32_t face : edge.faces) {
+        if (face < 1 || face > signs.faces.size()) {
+            continue;
+        }
+        const geo::ElementSignature& side = signs.faces[face - 1];
+        if (side.shape == geo::SignatureShape::plane && side.hasDirection) {
+            sum = {sum.x - side.direction.x, sum.y - side.direction.y, sum.z - side.direction.z};
+        }
+    }
+    const double length = std::hypot(sum.x, sum.y, sum.z);
+    result.point = edge.centroid;
+    if (length > 1e-9) {
+        result.way = {sum.x / length, sum.y / length, sum.z / length};
+    }
+    return result;
+}
+} // namespace
+
 QString DocumentModel::blendEdges(const QString& bodyId, const QVariantList& edgeNumbers,
                                   const QString& kind) {
     const std::string type = kind.toStdString();
@@ -3093,21 +3126,10 @@ QString DocumentModel::blendEdges(const QString& bodyId, const QVariantList& edg
                 return {}; // without a name it could not be found again after the next change
             }
             if (!anchored) {
-                // The two faces of the edge give the way in: against the sum of their normals.
-                const geo::BodySignatures signs = m_kernel->signatures(made->second.solid);
-                const geo::ElementSignature& edge = signs.edges.at(found->id - 1);
-                geo::Point3d sum;
-                for (const std::uint32_t face : edge.faces) {
-                    const geo::ElementSignature& side = signs.faces.at(face - 1);
-                    if (side.shape == geo::SignatureShape::plane && side.hasDirection) {
-                        sum = {sum.x - side.direction.x, sum.y - side.direction.y,
-                               sum.z - side.direction.z};
-                    }
-                }
-                const double length = std::hypot(sum.x, sum.y, sum.z);
-                anchor = edge.centroid;
-                way = length > 1e-9 ? geo::Point3d{sum.x / length, sum.y / length, sum.z / length}
-                                    : geo::Point3d{};
+                const EdgeAnchor spot =
+                    edgeAnchorOf(m_kernel->signatures(made->second.solid), found->id);
+                anchor = spot.point;
+                way = spot.way;
                 anchored = true;
             }
             refs.push_back(std::move(*ref));
@@ -3186,6 +3208,33 @@ QString DocumentModel::roundVerticalEdges(const QString& bodyId) {
         }
     }
     return blendEdges(bodyId, vertical, QStringLiteral("fillet"));
+}
+
+QVariantMap DocumentModel::edgeAnchor(const QString& bodyId, int number) const {
+    QVariantMap anchor;
+    anchor[QStringLiteral("valid")] = false;
+    const core::Body* body = findBody(bodyId);
+    if (body == nullptr || !m_result || number < 1) {
+        return anchor;
+    }
+    const auto made = m_result->bodies.find(body->id);
+    if (made == m_result->bodies.end()) {
+        return anchor;
+    }
+    try {
+        const EdgeAnchor spot = edgeAnchorOf(m_kernel->signatures(made->second.solid),
+                                             static_cast<std::uint32_t>(number));
+        const bool known = std::hypot(spot.way.x, spot.way.y, spot.way.z) > 0.5;
+        anchor[QStringLiteral("valid")] = known;
+        anchor[QStringLiteral("x")] = spot.point.x;
+        anchor[QStringLiteral("y")] = spot.point.y;
+        anchor[QStringLiteral("z")] = spot.point.z;
+        anchor[QStringLiteral("dx")] = spot.way.x;
+        anchor[QStringLiteral("dy")] = spot.way.y;
+        anchor[QStringLiteral("dz")] = spot.way.z;
+    } catch (const geo::GeometryError&) {
+    }
+    return anchor;
 }
 
 QVariantList DocumentModel::edgesOf(const QString& bodyId, const QString& which, int number) const {
