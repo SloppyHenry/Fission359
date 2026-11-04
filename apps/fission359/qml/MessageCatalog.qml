@@ -12,8 +12,14 @@ import QtQuick
 // codes of `FileController::fileProblem` and `ExportController::finished`): `fileNotice` and
 // `exportNotice` give the sentence and the buttons of the card, or only the sentence for a hint.
 //
-// `actions` are the buttons under the explanation: "editValue" (shows the values of the step so
-// that the wrong one can be changed) and "hideStep" (switches the step off, the rest goes on).
+// Every message answers three questions (UX §9): what happened (`title`), why and where (`text`,
+// with the numbers of `problem.numbers` in it), and what to do (`actionsFor`). The buttons:
+// "editValue" (shows the values of the step so that the wrong one can be changed), "hideStep"
+// (switches the step off, the rest goes on), "pickAgain" (choose the face or edge again),
+// "useMaximum" (the largest value that works), "makeFlush" (closes tiny gaps when combining) and
+// "copyDetails" (for a bug report: only for faults of the program, never sent anywhere).
+// The raw `detail` of a problem is used nowhere here but in "copyDetails" (checked by
+// tests/unit/ui/test_messages.cpp).
 QtObject {
     id: root
 
@@ -60,6 +66,13 @@ QtObject {
         "needsHelp": { card: true, buttons: ["ok"] },
         "cannotWrite": { card: true, buttons: ["ok"] }
     })
+
+    /// A length in mm as people write it: "3,1" in German, "3.1" in English, no needless zeros.
+    function mm(value) {
+        const text = Number(value).toLocaleString(Qt.locale(), "f", 2)
+        const point = Qt.locale().decimalPoint
+        return text.indexOf(point) < 0 ? text : text.replace(new RegExp("0+$"), "").replace(new RegExp("\\" + point + "$"), "")
+    }
 
     function buttonLabel(id) {
         switch (id) {
@@ -130,18 +143,84 @@ QtObject {
         }
     }
 
-    /// The buttons for a problem: [{ id, label }].
-    function actionsFor(problem) {
+    /// The buttons for a problem of `step`: [{ id, label }].
+    function actionsFor(problem, step) {
         if (!problem) {
             return []
         }
         const entry = entries[problem.code]
         const ids = entry ? entry.actions : ["hideStep"]
-        return ids.map(id => ({
+        const largest = problem.numbers ? problem.numbers.maxValue : undefined
+        const extra = []
+        if (largest !== undefined && largest > 0 && problem.field !== "") {
+            extra.push("useMaximum")
+        }
+        if (problem.code === "kernelResultInvalid" && step && step.type === "combine"
+                && !(step.texts && step.texts.fuzzy === "yes")) {
+            extra.push("makeFlush")
+        }
+        if (isFault(problem)) {
+            extra.push("copyDetails")
+        }
+        return extra.concat(ids).map(id => ({
             id: id,
-            label: id === "editValue" ? qsTr("Change value")
-                 : id === "pickAgain" ? qsTr("Choose again") : qsTr("Hide this step")
+            label: actionLabel(id, largest)
         }))
+    }
+
+    function actionLabel(id, largest) {
+        switch (id) {
+        case "editValue": return qsTr("Change value")
+        case "pickAgain": return qsTr("Choose again")
+        case "useMaximum": return qsTr("Use the largest value (%1 mm)").arg(mm(Math.floor(largest * 100) / 100))
+        case "makeFlush": return qsTr("Make flush")
+        case "copyDetails": return qsTr("Copy details for a bug report")
+        default: return qsTr("Hide this step")
+        }
+    }
+
+    /// A fault of the program rather than of the person: the code is one nobody can fix by
+    /// changing a value, or one this catalogue does not know.
+    function isFault(problem) {
+        return !problem || entries[problem.code] === undefined
+            || problem.code === "kernelFailed" || problem.code === "namingContractViolated"
+    }
+
+    /// What happened, in one short line.
+    function title(problem, step) {
+        if (!problem) {
+            return ""
+        }
+        switch (problem.code) {
+        case "referenceNeedsHelp":
+            switch (problem.reason) {
+            case "consumed":
+                return problem.step !== undefined
+                    ? qsTr("This does not exist after step %1.").arg(problem.step)
+                    : qsTr("This was used up by an earlier step.")
+            case "split": return qsTr("The surface was split.")
+            case "turned": return qsTr("This has turned a lot.")
+            case "swapped": return qsTr("Two equal ones changed places.")
+            default: return qsTr("This has lost its reference.")
+            }
+        case "parameterOutOfRange":
+        case "kernelRejected":
+            return problem.numbers && problem.numbers.maxValue !== undefined && problem.field !== ""
+                ? qsTr("%1 does not work here.").arg(valueLabel(problem.field))
+                : qsTr("These values do not work.")
+        case "parameterInvalid": return qsTr("A value cannot be calculated.")
+        case "kernelResultInvalid": return qsTr("The result is not clean.")
+        case "combineEmpty": return qsTr("Nothing is left.")
+        case "combineNoOverlap": return qsTr("The cutter misses the body.")
+        case "inputFailed":
+        case "inputMissing": return qsTr("An earlier step has a problem.")
+        case "textGlyphsMissing":
+        case "fontNotFound":
+        case "fontStyleMissing": return qsTr("The font does not fit.")
+        case "unknownType": return qsTr("This step is not known here.")
+        case "cancelled": return qsTr("Calculation replaced.")
+        default: return qsTr("That did not work.")
+        }
     }
 
     /// The sentence for a problem of a step: what happened, and what to do.
@@ -158,6 +237,15 @@ QtObject {
         }
         if (problem.detail === "divisionByZero") {
             return qsTr("That divides by zero.")
+        }
+        const largest = problem.numbers ? problem.numbers.maxValue : undefined
+        if (largest !== undefined && problem.field !== ""
+                && (problem.code === "parameterOutOfRange" || problem.code === "kernelRejected")) {
+            const given = problem.numbers.given
+            return given !== undefined
+                ? qsTr("%1 with %2 mm does not work here. The largest value that works is %3 mm.")
+                      .arg(valueLabel(problem.field)).arg(mm(given)).arg(mm(largest))
+                : qsTr("This value does not work here. The largest value that works is %1 mm.").arg(mm(largest))
         }
         switch (problem.code) {
         case "textGlyphsMissing":
@@ -215,8 +303,10 @@ QtObject {
             return qsTr("This kind of step is not known to this version of the program.")
         case "cancelled":
             return qsTr("The calculation was replaced by a newer change.")
+        case "kernelFailed":
+        case "namingContractViolated":
         default:
-            return qsTr("This shape could not be built.")
+            return qsTr("This is a fault in the program, not yours. If you copy the details, you can report it.")
         }
     }
 }

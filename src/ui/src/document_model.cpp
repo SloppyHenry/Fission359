@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <set>
 #include <vector>
 
@@ -24,6 +25,7 @@
 #include "fission/core/cuts.h"
 #include "fission/core/resolve.h"
 #include "fission/core/scaling.h"
+#include "fission/core/version.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
 #include "fission/geo/seat.h"
@@ -730,6 +732,18 @@ void DocumentModel::rebuildScene() {
             }
             scene->bodies.push_back(std::move(drawn));
         }
+        // What a step could not make: red and see-through next to the last good result.
+        for (const core::FeatureState& state : m_result->features) {
+            if (state.failedPreview == nullptr || state.status != core::FeatureStatus::error) {
+                continue;
+            }
+            render::RenderBody failed;
+            failed.id = "failed:" + state.id.value;
+            failed.mesh = state.failedPreview;
+            failed.meshVersion = reinterpret_cast<std::uintptr_t>(state.failedPreview.get());
+            failed.color = QColor(226, 85, 85, kHoleAlpha);
+            scene->bodies.push_back(std::move(failed));
+        }
     }
     scene->bed.sizeX = static_cast<float>(bedX());
     scene->bed.sizeY = static_cast<float>(bedY());
@@ -782,6 +796,23 @@ void DocumentModel::rebuildLists() {
                                                       ? QStringLiteral("edge")
                                                       : QStringLiteral("face");
             }
+            QVariantMap numbers;
+            for (const auto& [name, value] : state->issue->numbers) {
+                numbers[toQString(name)] = value;
+            }
+            problem[QStringLiteral("numbers")] = numbers;
+            if (state->issue->where) {
+                problem[QStringLiteral("where")] =
+                    QVariantMap{{QStringLiteral("x"), state->issue->where->x},
+                                {QStringLiteral("y"), state->issue->where->y},
+                                {QStringLiteral("z"), state->issue->where->z}};
+            }
+            QStringList elements;
+            for (const std::string& name : state->issue->elements) {
+                elements.push_back(toQString(name));
+            }
+            problem[QStringLiteral("elements")] = elements;
+            problem[QStringLiteral("preview")] = state->failedPreview != nullptr;
             if (state->issue->expression) {
                 problem[QStringLiteral("detail")] =
                     QString::fromLatin1(expressionCodeName(state->issue->expression->code));
@@ -1445,6 +1476,63 @@ bool DocumentModel::setStepSuppressed(int index, bool suppressed) {
     }
     documentChanged();
     return true;
+}
+
+bool DocumentModel::useMaximum(int stepIndex) {
+    const auto& features = m_history.document().features();
+    if (!m_result || stepIndex < 0 || stepIndex >= static_cast<int>(features.size())) {
+        return false;
+    }
+    const core::FeatureState* state =
+        m_result->state(features[static_cast<std::size_t>(stepIndex)].id);
+    if (state == nullptr || !state->issue) {
+        return false;
+    }
+    const auto largest = state->issue->numbers.find("maxValue");
+    if (largest == state->issue->numbers.end() || state->issue->subject.empty() ||
+        !(largest->second > 0.0)) {
+        return false;
+    }
+    // Round down, so that the value surely works; "3.1" and not "3.1000000001".
+    const double value = std::floor(largest->second * 100.0) / 100.0;
+    return setStepValue(stepIndex, toQString(state->issue->subject),
+                        QString::number(value, 'f', 2));
+}
+
+QString DocumentModel::problemReport(int stepIndex) const {
+    const auto& features = m_history.document().features();
+    if (!m_result || stepIndex < 0 || stepIndex >= static_cast<int>(features.size())) {
+        return {};
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(stepIndex)];
+    const core::FeatureState* state = m_result->state(step.id);
+    if (state == nullptr || !state->issue) {
+        return {};
+    }
+    const core::FeatureIssue& issue = *state->issue;
+    QString text;
+    text += QStringLiteral("Fission359 %1\n")
+                .arg(QString::fromUtf8(core::versionString().data(),
+                                       static_cast<qsizetype>(core::versionString().size())));
+    text += QStringLiteral("step: %1\n").arg(toQString(step.type));
+    text += QStringLiteral("code: %1\n").arg(QString::fromLatin1(issueCodeName(issue.code)));
+    if (!issue.subject.empty()) {
+        text += QStringLiteral("subject: %1\n").arg(toQString(issue.subject));
+    }
+    for (const auto& [name, value] : issue.numbers) {
+        text += QStringLiteral("%1: %2\n").arg(toQString(name)).arg(value);
+    }
+    if (!issue.detail.empty()) {
+        text += QStringLiteral("detail: %1\n").arg(toQString(issue.detail));
+    }
+    return text;
+}
+
+void DocumentModel::copyProblemDetails(int stepIndex) {
+    const QString text = problemReport(stepIndex);
+    if (QClipboard* clipboard = systemClipboard(); clipboard != nullptr && !text.isEmpty()) {
+        clipboard->setText(text);
+    }
 }
 
 bool DocumentModel::setStepLabel(int index, const QString& label) {

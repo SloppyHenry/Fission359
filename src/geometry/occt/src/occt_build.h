@@ -7,13 +7,16 @@
 
 #include <cmath>
 #include <cstdint>
+#include <exception>
 #include <functional>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "fission/geo/error.h"
 #include "fission/geo/kernel.h"
+#include "fission/geo/occt/solids.h"
 #include "fission/geo/types.h"
 
 #include "occt_solid.h"
@@ -48,8 +51,17 @@ inline bool isFinite(const Point3d& point) {
 // (master prompt, rule 8).
 inline Solid validated(const TopoDS_Shape& shape, const char* what) {
     if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid()) {
-        throw GeometryError(GeometryErrorCode::invalidResult,
+        GeometryError error(GeometryErrorCode::invalidResult,
                             std::string(what) + ": the kernel returned an invalid body");
+        if (!shape.IsNull()) {
+            // For showing the failure only: a rough mesh, and none if even that does not work.
+            try {
+                error.withPreview(std::make_shared<const TriangleMesh>(
+                    tessellate(wrap(shape), TessellationParams{0.2, 0.5})));
+            } catch (const std::exception&) {
+            }
+        }
+        throw error;
     }
     return wrap(shape);
 }

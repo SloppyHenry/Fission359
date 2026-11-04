@@ -225,7 +225,7 @@
 ---
 
 ### AP-2.14 Meldungskatalog und Fehler-UX
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.12, AP-0.5
+**Status:** in Arbeit (Grundlage gebaut, Rest hängt an AP-2.4/2.5) · **Größe:** M · **Abhängigkeiten:** AP-1.12, AP-0.5
 **Bauanleitung:** [anleitungen/AP-2.14.md](anleitungen/AP-2.14.md)
 
 **Umfang:**

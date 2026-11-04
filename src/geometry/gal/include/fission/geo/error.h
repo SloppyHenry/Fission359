@@ -3,9 +3,16 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
+
+#include "fission/geo/mesh.h"
+#include "fission/geo/types.h"
 
 namespace fission::geo {
 
@@ -33,9 +40,38 @@ public:
     GeometryErrorCode code() const noexcept { return code_; }
     const std::string& subject() const noexcept { return subject_; }
 
+    /// What the message can say besides words: named numbers in mm ("maxRadius"), the place the
+    /// problem is at, the faces or edges it concerns, and a mesh of the failed result.
+    GeometryError& withNumber(std::string name, double value) {
+        numbers_[std::move(name)] = value;
+        return *this;
+    }
+    GeometryError& at(Point3d point) {
+        where_ = point;
+        return *this;
+    }
+    GeometryError& concerning(std::vector<std::string> elements) {
+        elements_ = std::move(elements);
+        return *this;
+    }
+    /// A rough mesh of the result that failed the check, for showing it, never for computing.
+    GeometryError& withPreview(std::shared_ptr<const TriangleMesh> mesh) {
+        preview_ = std::move(mesh);
+        return *this;
+    }
+
+    const std::map<std::string, double>& numbers() const noexcept { return numbers_; }
+    const std::optional<Point3d>& where() const noexcept { return where_; }
+    const std::vector<std::string>& elements() const noexcept { return elements_; }
+    const std::shared_ptr<const TriangleMesh>& preview() const noexcept { return preview_; }
+
 private:
     GeometryErrorCode code_;
     std::string subject_;
+    std::map<std::string, double> numbers_;
+    std::optional<Point3d> where_;
+    std::vector<std::string> elements_;
+    std::shared_ptr<const TriangleMesh> preview_;
 };
 
 } // namespace fission::geo

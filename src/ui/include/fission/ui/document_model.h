@@ -374,6 +374,14 @@ public:
     /// Where the reference used to point, to be drawn as a dashed ghost: `valid`, `kind`, and
     /// `points` (4 corners of a face, 2 ends of an edge) as `{x, y, z}` in mm.
     Q_INVOKABLE QVariantMap repairGhost() const;
+    /// "Use the largest value": sets the value named by the step's problem (`subject`) to the
+    /// largest that works (`numbers.maxValue`, rounded down to 0.01 mm) as one undo step. False
+    /// when the problem names none.
+    Q_INVOKABLE bool useMaximum(int stepIndex);
+    /// What "Copy details for a bug report" puts on the clipboard: code, the details for the log,
+    /// version and kind of step. Empty when the step has no problem. Never sent anywhere.
+    Q_INVOKABLE QString problemReport(int stepIndex) const;
+    Q_INVOKABLE void copyProblemDetails(int stepIndex);
     Q_INVOKABLE int splitBody(const QString& bodyId);
     Q_INVOKABLE QString combineBodies(const QStringList& bodyIds, const QString& mode);
     bool canPaste() const { return !m_clipboard.empty() || systemClipboardHasBodies(); }

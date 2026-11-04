@@ -115,7 +115,7 @@ std::string cacheKey(const Feature& feature, const FeatureType& type, const Reso
     return key;
 }
 
-FeatureIssue issueFromKernel(const geo::GeometryError& error) {
+FeatureIssue issueFromKernelCode(const geo::GeometryError& error) {
     switch (error.code()) {
     case geo::GeometryErrorCode::invalidInput:
         return issueOf(FeatureIssueCode::kernelRejected, error.subject(), error.what());
@@ -137,6 +137,14 @@ FeatureIssue issueFromKernel(const geo::GeometryError& error) {
         break;
     }
     return issueOf(FeatureIssueCode::kernelFailed, {}, error.what());
+}
+
+FeatureIssue issueFromKernel(const geo::GeometryError& error) {
+    FeatureIssue issue = issueFromKernelCode(error);
+    issue.numbers = error.numbers();
+    issue.where = error.where();
+    issue.elements = error.elements();
+    return issue;
 }
 
 bool sameState(const FeatureState& a, const FeatureState& b) {
@@ -492,6 +500,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                 if (cancel.stop_requested()) {
                     return std::nullopt;
                 }
+                state.failedPreview = error.preview();
                 fail(issueFromKernel(error));
                 continue;
             } catch (const std::exception& error) {

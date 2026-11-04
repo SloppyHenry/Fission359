@@ -16,7 +16,8 @@ Rectangle {
     property string sentence: ""
     property string label: ""          // the name the person gave the step, may be empty
     property string state: "ok"        // ok | warning | fails | off | pending
-    property string problem: ""        // what went wrong, in words
+    property string problemTitle: ""   // what went wrong, in one line
+    property string problem: ""        // why, where and what to do, in words
     property bool selected: false
     property bool beyondMarker: false  // after the time marker: not calculated
     readonly property bool editing: nameInput.visible
@@ -42,6 +43,8 @@ Rectangle {
     property var problemActions: []
     signal editRequested
     signal hideRequested
+    /// A button of the problem that has no signal of its own: "useMaximum", "makeFlush", "copyDetails".
+    signal problemActionRequested(string id)
     signal pickAgainRequested
 
     width: parent ? parent.width : 260
@@ -231,6 +234,20 @@ Rectangle {
 
         // What went wrong, right under the step (docs/02-ux-konzept.md §14).
         Txt {
+            visible: root.explained && root.problemTitle !== ""
+            width: parent.width
+            leftPadding: 34
+            rightPadding: 10
+            bottomPadding: 2
+            text: root.problemTitle
+            color: Theme.fg
+            font.pixelSize: Theme.fontSizeSmall
+            font.weight: Font.DemiBold
+            wrapMode: Text.WordWrap
+            elide: Text.ElideNone
+        }
+
+        Txt {
             visible: root.explained && root.problem !== ""
             width: parent.width
             leftPadding: 34
@@ -261,7 +278,8 @@ Rectangle {
                     text: modelData.label
                     onClicked: modelData.id === "editValue" ? root.editRequested()
                              : modelData.id === "pickAgain" ? root.pickAgainRequested()
-                             : root.hideRequested()
+                             : modelData.id === "hideStep" ? root.hideRequested()
+                             : root.problemActionRequested(modelData.id)
                 }
             }
         }

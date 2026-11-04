@@ -1344,7 +1344,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+97"/>
+        <location filename="../qml/LeftPanel.qml" line="+98"/>
         <source>Bodies</source>
         <translation>Bodies</translation>
     </message>
@@ -1493,7 +1493,7 @@
         <translation>Cancel</translation>
     </message>
     <message>
-        <location line="+99"/>
+        <location line="+101"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Every change appears here as a sentence.</translation>
     </message>
@@ -1778,12 +1778,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1198"/>
+        <location line="+1207"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1197"/>
+        <location line="-1206"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1814,12 +1814,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1186"/>
+        <location line="+1195"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1184"/>
+        <location line="-1193"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -2033,7 +2033,7 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+785"/>
+        <location line="+794"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -2048,7 +2048,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1098"/>
+        <location line="-1107"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -2108,7 +2108,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1129"/>
+        <location line="+1138"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2400,7 +2400,7 @@
         <translation>Several changes</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+81"/>
         <source>, part %1</source>
         <translation>, part %1</translation>
     </message>
@@ -2454,22 +2454,22 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-306"/>
+        <location line="-307"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1184"/>
+        <location line="-1193"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1219"/>
+        <location line="+1228"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1051"/>
+        <location line="-1060"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
@@ -2538,7 +2538,7 @@
 <context>
     <name>MessageCatalog</name>
     <message>
-        <location filename="../qml/MessageCatalog.qml" line="+66"/>
+        <location filename="../qml/MessageCatalog.qml" line="+79"/>
         <source>Open anyway</source>
         <translation>Open anyway</translation>
     </message>
@@ -2623,19 +2623,114 @@
         <translation>The file could not be written. Is the folder writable and the disk not full?</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+31"/>
         <source>Change value</source>
         <translation>Change value</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+5"/>
         <source>Hide this step</source>
         <translation>Hide this step</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-4"/>
         <source>Choose again</source>
         <translation>Choose again</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Use the largest value (%1 mm)</source>
+        <translation>Use the largest value (%1 mm)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Make flush</source>
+        <translation>Make flush</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy details for a bug report</source>
+        <translation>Copy details for a bug report</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>This does not exist after step %1.</source>
+        <translation>This does not exist after step %1.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This was used up by an earlier step.</source>
+        <translation>This was used up by an earlier step.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The surface was split.</source>
+        <translation>The surface was split.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This has turned a lot.</source>
+        <translation>This has turned a lot.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Two equal ones changed places.</source>
+        <translation>Two equal ones changed places.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This has lost its reference.</source>
+        <translation>This has lost its reference.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 does not work here.</source>
+        <translation>%1 does not work here.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>These values do not work.</source>
+        <translation>These values do not work.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A value cannot be calculated.</source>
+        <translation>A value cannot be calculated.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The result is not clean.</source>
+        <translation>The result is not clean.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nothing is left.</source>
+        <translation>Nothing is left.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The cutter misses the body.</source>
+        <translation>The cutter misses the body.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The font does not fit.</source>
+        <translation>The font does not fit.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This step is not known here.</source>
+        <translation>This step is not known here.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Calculation replaced.</source>
+        <translation>Calculation replaced.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>That did not work.</source>
+        <translation>That did not work.</translation>
     </message>
     <message>
         <location line="+11"/>
@@ -2651,6 +2746,16 @@
         <location line="+3"/>
         <source>That divides by zero.</source>
         <translation>That divides by zero.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1 with %2 mm does not work here. The largest value that works is %3 mm.</source>
+        <translation>%1 with %2 mm does not work here. The largest value that works is %3 mm.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This value does not work here. The largest value that works is %1 mm.</source>
+        <translation>This value does not work here. The largest value that works is %1 mm.</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -2778,7 +2883,13 @@
         <translation>The bodies do not overlap, so nothing is left. Move them so that they touch.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+13"/>
+        <source>This is a fault in the program, not yours. If you copy the details, you can report it.</source>
+        <translation>This is a fault in the program, not yours. If you copy the details, you can report it.</translation>
+    </message>
+    <message>
+        <location line="-93"/>
+        <location line="+83"/>
         <source>An earlier step has a problem.</source>
         <translation>An earlier step has a problem.</translation>
     </message>
@@ -2797,16 +2908,11 @@
         <source>The calculation was replaced by a newer change.</source>
         <translation>The calculation was replaced by a newer change.</translation>
     </message>
-    <message>
-        <location line="+2"/>
-        <source>This shape could not be built.</source>
-        <translation>This shape could not be built.</translation>
-    </message>
 </context>
 <context>
     <name>RecipeRow</name>
     <message>
-        <location filename="../qml/RecipeRow.qml" line="+37"/>
+        <location filename="../qml/RecipeRow.qml" line="+38"/>
         <source>Needs help</source>
         <translation>Needs help</translation>
     </message>
@@ -2821,7 +2927,7 @@
         <translation>Hidden</translation>
     </message>
     <message>
-        <location line="+110"/>
+        <location line="+112"/>
         <source>Name of the step</source>
         <translation>Name of the step</translation>
     </message>
