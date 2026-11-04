@@ -36,6 +36,15 @@ public:
             // 0: the same distance on both sides.
             own.push_back({"distance2", QuantityKind::length, "0", true});
         }
+        // Where the handle stands: a point on the first edge and the way into the body between
+        // its two faces (a unit vector, all 0 = no handle). Set when the step is made; the
+        // person does not edit them (they are not shown).
+        for (const char* name : {"anchorX", "anchorY", "anchorZ"}) {
+            own.push_back({name, QuantityKind::length, "0"});
+        }
+        for (const char* name : {"anchorDx", "anchorDy", "anchorDz"}) {
+            own.push_back({name, QuantityKind::plain, "0"});
+        }
         return own;
     }
 
@@ -98,8 +107,25 @@ public:
 
     bool passesOnNames() const override { return true; }
 
-    // No handle of its own yet: the size is typed or taken at the edge in the view (AP-2.5).
-    std::vector<HandleSpec> handles(const ResolvedParams&) const override { return {}; }
+    // The grip sits as far from the first edge as the size, on the way into the body: dragging
+    // it along that way makes the rounding or the bevel larger (rule 1).
+    std::vector<HandleSpec> handles(const ResolvedParams& params) const override {
+        const geo::Point3d way{valueOf(params, "anchorDx"), valueOf(params, "anchorDy"),
+                               valueOf(params, "anchorDz")};
+        const double length = std::hypot(way.x, way.y, way.z);
+        if (!(length > 0.5)) {
+            return {};
+        }
+        const double size = valueOf(params, sizeName_.c_str());
+        const geo::Point3d unit{way.x / length, way.y / length, way.z / length};
+        const geo::Point3d edge{valueOf(params, "anchorX"), valueOf(params, "anchorY"),
+                                valueOf(params, "anchorZ")};
+        std::vector<HandleSpec> out{makeHandle(
+            sizeName_.c_str(), HandleKind::distance,
+            {edge.x + unit.x * size, edge.y + unit.y * size, edge.z + unit.z * size}, unit, size)};
+        markRole(out, 0, HandleRole::rounding);
+        return out;
+    }
 
     std::vector<std::string> sizeParameters() const override { return {sizeName_}; }
 

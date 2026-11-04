@@ -931,7 +931,7 @@ QVariantList DocumentModel::buildStepValues() const {
             : spec.name == "through"                                   ? QStringLiteral("through")
             : spec.name == "axis"                                      ? QStringLiteral("axis")
             : spec.name == "position"                                  ? QStringLiteral("cut")
-            : spec.name == "anchorU" || spec.name == "anchorV"         ? QStringLiteral("hidden")
+            : spec.name.rfind("anchor", 0) == 0                        ? QStringLiteral("hidden")
                                                                        : QStringLiteral("size");
         // The coloured letter in front of a place or a turn: x, y, z (empty for sizes).
         entry[QStringLiteral("axis")] = turn ? toQString(spec.name.substr(3, 1)).toLower()
@@ -3073,6 +3073,9 @@ QString DocumentModel::blendEdges(const QString& bodyId, const QVariantList& edg
     }
     std::vector<core::PersistentRef> refs;
     double shortest = 1e30;
+    geo::Point3d anchor;
+    geo::Point3d way; // from the first edge into the body, between its two faces
+    bool anchored = false;
     try {
         const core::BodyLooks looks =
             core::describeBody(made->second.faces, m_kernel->signatures(made->second.solid));
@@ -3089,6 +3092,24 @@ QString DocumentModel::blendEdges(const QString& bodyId, const QVariantList& edg
             if (!ref) {
                 return {}; // without a name it could not be found again after the next change
             }
+            if (!anchored) {
+                // The two faces of the edge give the way in: against the sum of their normals.
+                const geo::BodySignatures signs = m_kernel->signatures(made->second.solid);
+                const geo::ElementSignature& edge = signs.edges.at(found->id - 1);
+                geo::Point3d sum;
+                for (const std::uint32_t face : edge.faces) {
+                    const geo::ElementSignature& side = signs.faces.at(face - 1);
+                    if (side.shape == geo::SignatureShape::plane && side.hasDirection) {
+                        sum = {sum.x - side.direction.x, sum.y - side.direction.y,
+                               sum.z - side.direction.z};
+                    }
+                }
+                const double length = std::hypot(sum.x, sum.y, sum.z);
+                anchor = edge.centroid;
+                way = length > 1e-9 ? geo::Point3d{sum.x / length, sum.y / length, sum.z / length}
+                                    : geo::Point3d{};
+                anchored = true;
+            }
             refs.push_back(std::move(*ref));
             shortest = std::min(shortest, found->look.size);
         }
@@ -3101,6 +3122,15 @@ QString DocumentModel::blendEdges(const QString& bodyId, const QVariantList& edg
     core::FeatureDraft draft = core::defaultDraft(*stepType);
     draft.params.at(type == "fillet" ? "radius" : "distance").expression =
         QString::number(size, 'f', 1).toStdString();
+    const auto setValue = [&](const char* name, double number) {
+        draft.params.at(name).expression = QString::number(number, 'g', 12).toStdString();
+    };
+    setValue("anchorX", anchor.x);
+    setValue("anchorY", anchor.y);
+    setValue("anchorZ", anchor.z);
+    setValue("anchorDx", way.x);
+    setValue("anchorDy", way.y);
+    setValue("anchorDz", way.z);
     draft.inputs = {target->id};
     draft.refs["edges"] = std::move(refs);
     draft.newBodies = 1;

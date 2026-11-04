@@ -81,7 +81,7 @@
 ---
 
 ### AP-2.5 Abrunden und Abschrägen
-**Status:** in Arbeit (Kernel, Schritte, Meldung, Befehle gebaut; Griff in der Ansicht offen) · **Größe:** L · **Abhängigkeiten:** AP-2.10 (Basis)
+**Status:** in Arbeit (Kernel, Schritte, Meldung, Befehle, Griff am Schritt gebaut; Hover-Griff, ⌥ und Tests aus AP-0.5 offen) · **Größe:** L · **Abhängigkeiten:** AP-2.10 (Basis)
 **Bauanleitung:** [anleitungen/AP-2.5.md](anleitungen/AP-2.5.md)
 
 **Umfang:**

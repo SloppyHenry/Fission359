@@ -11,6 +11,7 @@
 #include <QCoreApplication>
 #include <QVariantMap>
 
+#include <cmath>
 #include <memory>
 
 #include "fission/geo/occt/kernel.h"
@@ -143,4 +144,31 @@ TEST_CASE("blend edges: a size that is too large shows the number, the place and
     f.model->waitForCalculation();
     CHECK(f.model->historyPosition() == before + 1);
     CHECK(f.step(1).value("state").toString() == "ok");
+}
+
+TEST_CASE("blend edges: the step has a grip at its edge that changes the size", "[ui][blend]") {
+    Blend f;
+    const QVariantList edges = f.model->edgesOf(f.body, QStringLiteral("vertical"), 0);
+    REQUIRE_FALSE(f.model->blendEdges(f.body, edges, QStringLiteral("chamfer")).isEmpty());
+    f.model->waitForCalculation();
+    f.model->selectStep(1);
+
+    const QVariantList handles = f.model->stepHandles();
+    REQUIRE(handles.size() == 1);
+    const QVariantMap grip = handles.first().toMap();
+    CHECK(grip.value("parameter").toString() == "distance");
+    CHECK(grip.value("role").toString() == "rounding");
+    CHECK(grip.value("value").toDouble() == Approx(2.0));
+    // It points into the body: the edge is at a corner of the cube, so every part of the way
+    // is towards the middle (x and y both grow or both shrink, z stays).
+    CHECK(std::abs(grip.value("dz").toDouble()) < 1e-6);
+    CHECK(std::hypot(grip.value("dx").toDouble(), grip.value("dy").toDouble()) == Approx(1.0));
+
+    // The anchor values are not shown in the panel's values.
+    for (const QVariant& entry : f.model->stepValues()) {
+        const QVariantMap value = entry.toMap();
+        if (value.value("name").toString().startsWith(QLatin1String("anchor"))) {
+            CHECK(value.value("group").toString() == "hidden");
+        }
+    }
 }

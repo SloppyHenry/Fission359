@@ -513,6 +513,7 @@ Window {
         }
         root.flyout = ""
         Selection.chooseBodies([made])
+        root.tool = "size" // the grip at the edge is shown by this tool
         showHint(kind === "fillet" ? qsTr("Rounded. Type a radius, or change it in the panel.")
                                    : qsTr("Bevelled. Type a distance, or change it in the panel."))
     }

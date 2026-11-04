@@ -50,7 +50,7 @@ Gebaut:
 - Tests: `tests/unit/geometry/test_blends.cpp`, `tests/unit/features/test_blend.cpp`, `tests/unit/ui/test_blend_edges.cpp`.
 
 Offen:
-- **Griff in der Ansicht:** Viertelkreis über der Kante beim Hover, Ziehen = Radius, ⌥ = Abschrägen, Kanten hinzufügen/entfernen mit ⇧ am bestehenden Schritt. Heute: Kanten wählen, „Abrunden“, Wert tippen oder im Panel ändern. `handles()` der Typen ist leer; der Griff braucht eine Anker-Stelle (Kantenmitte und Richtung nach innen) im Schritt.
+- **Griff in der Ansicht:** gebaut ist der Griff am Schritt: Nach „Abrunden“/„Abschrägen“ sitzt am ersten Rand ein Viertelkreis-Griff, Ziehen ändert den Wert (Werkzeug „Größe“ wird gewählt). Der Anker (Kantenmitte, Richtung nach innen) steht in den versteckten Werten `anchorX…anchorDz` des Schritts; ändert sich der Körper, bleibt er an der alten Stelle (nur die Anzeige, nie das Ergebnis). Offen: Viertelkreis schon beim Darüberfahren über eine ungewählte Kante, ⌥ beim Ziehen = Abschrägen, Kanten hinzufügen/entfernen mit ⇧ am bestehenden Schritt, Anker nachführen.
 - Die 20 Fälle aus AP-0.5 (`tests/geometry/test_fillets.cpp`) über die GAL und Szenarien in der Namens-Produkt-Suite (`tests/unit/naming/`, `markFace` ersetzen).
 - Winkelvariante der Fase (Abstand + Winkel), variabler Radius.
 - Cache des größtmöglichen Wertes (heute neu gesucht bei jeder Neuberechnung eines fehlschlagenden Schritts).
