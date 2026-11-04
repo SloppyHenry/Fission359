@@ -68,3 +68,20 @@ Loch bleibt rund und an seinem Platz. Lochwand wählen, Pfeil → Loch größer.
 ## Nicht tun
 Kein ungleichmäßiges Skalieren als Ersatz für Strecken (Regel 11). „Verzerren“ (UX §7.2) ist ein eigenes Werkzeug mit Warnung (Ablauf D Schritt 7) –
 gehört hierher als Teil f nur, wenn der Maintainer es will (Haltepunkt); sonst Phase 4 (Verformen).
+
+## Stand 2026-11-04
+Haltepunkte vom Maintainer bestätigt: Pfeil nur im Werkzeug „Größe“ (bei Grundformen bleibt der Maß-Punkt), Schnittebene beim Strecken automatisch, sichtbar und verschiebbar, „Verzerren“ nicht hier (Phase 4).
+
+Teil 2.4a gebaut:
+- GAL: `GeometryKernel::offsetFace(solid, faceId, distance)` und `faceAnchor(solid, faceId)`; OCCT in `src/geometry/occt/src/faces.cpp`. Der Abstand zählt entlang der Richtung, in die die Fläche aus dem Körper schaut (positiv = mehr Material; die Wand eines Lochs schaut ins Loch, dort macht plus das Loch enger). Ebene Fläche: Prisma, vereinen oder abziehen. Ganze Zylinderwand (Loch oder Zapfen): neuer Radius mit Zylinder oder Rohr, Mittelpunkt bleibt. Die Fläche behält ihren Namen.
+- Abgelehnt (Fehler, nie falsches Ergebnis): Abstand 0 oder keine Zahl, Radius würde 0, Nachbarflächen einer ebenen Fläche stehen nicht im rechten Winkel, andere Flächenarten (Kugel, Kegel …), Teilstück einer Zylinderwand.
+- Schritt `pushFace` (Verweis `face`, Wert `distance`, versteckte `anchor*`) in `src/features/src/face_offset.cpp`; `DocumentModel::pushFace`; Menü „Körper ▸ Fläche ziehen“, Kontextleiste „Ziehen“ bei gewählter Fläche, Befehlssuche, Rezeptsatz. Danach zieht man am Griff des Schritts (Werkzeug „Größe“).
+- Ankerzahlen werden als einfache Ziffern geschrieben (kein `1e-15`): das Zahlenfeld liest keinen Exponenten, der Schritt schlug sonst mit „parameterInvalid“ fehl. Gilt auch für Abrunden/Abschrägen. Andere Stellen in `document_model.cpp` schreiben noch mit `'g', 12`; prüfen, ob dort derselbe Fehler möglich ist.
+- Tests: `tests/unit/geometry/test_faces.cpp`, `tests/unit/features/test_push_face.cpp`, `tests/unit/ui/test_push_face_ui.cpp`.
+
+Offen in Teil a:
+- **Pfeil auf der gewählten Fläche** (Haltepunkt 1): heute legt der Befehl den Schritt an und der Griff sitzt am Schritt. Der Pfeil, der schon vor dem ersten Zug an der gewählten Fläche steht und beim Ziehen den Schritt anlegt (nur bei Nicht-Grundformen), fehlt.
+- Schräge Nachbarflächen (Fläche mitsamt schrägen Wänden verschieben) und Zylinder-Teilstücke.
+- Naming-Szenarien in `tests/unit/naming/`, Fenster-Test des Griffs, Akzeptanzkriterium 1 mit einem Körper ohne Verlauf (wartet auf AP-2.13 oder ein `importedSolid`-Testfeature).
+- Eigener Meldungstext für „diese Fläche lässt sich nicht ziehen“ (heute die allgemeine Meldung und ein Hinweis beim Befehl).
+Teile b–e (Strecken, Verschieben/Drehen, Entfernen, Versetzen) sind nicht begonnen.
