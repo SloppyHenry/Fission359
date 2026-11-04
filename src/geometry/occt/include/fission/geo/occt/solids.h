@@ -57,6 +57,9 @@ NamedSolid blendEdgesNamed(const NamedSolid& solid, const std::vector<BlendEdge>
 /// Moves a face along its normal (see `GeometryKernel::offsetFace`). Throws GeometryError.
 NamedSolid offsetFaceNamed(const NamedSolid& solid, std::uint32_t faceId, double distance);
 
+/// Where the grip of a face stands (see `GeometryKernel::faceAnchor`). Throws GeometryError.
+FaceAnchor faceAnchorOf(const Solid& solid, std::uint32_t faceId);
+
 /// The edges rounded together with `edge` (see `GeometryKernel::tangentChain`).
 std::vector<std::uint32_t> tangentChainOf(const Solid& solid, std::uint32_t edge);
 

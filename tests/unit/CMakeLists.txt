@@ -22,6 +22,7 @@ add_executable(fission_unit_tests
   features/test_combine.cpp
   features/test_split.cpp
   features/test_blend.cpp
+  features/test_push_face.cpp
   features/test_text_feature.cpp
   services/test_settings.cpp
   io/test_fission_file.cpp
@@ -64,6 +65,7 @@ add_executable(fission_unit_tests
   ui/test_repair.cpp
   ui/test_messages.cpp
   ui/test_blend_edges.cpp
+  ui/test_push_face_ui.cpp
   interaction/test_drag.cpp
   interaction/test_snap.cpp
   interaction/test_distances.cpp

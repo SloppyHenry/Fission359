@@ -71,6 +71,10 @@ QtObject {
         if (step.type === "chamfer" && v.length === 2) {
             return qsTr("Bevelled %n edge(s), distance %1 mm", "", v[0]).arg(n(v[1]))
         }
+        if (step.type === "pushFace" && v.length === 1) {
+            return v[0] >= 0 ? qsTr("Face pulled out by %1 mm").arg(n(v[0]))
+                             : qsTr("Face pushed in by %1 mm").arg(n(-v[0]))
+        }
         if (step.type === "place" && v.length === 3) {
             return qsTr("Part placed, moved by %1, %2, %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
         }
@@ -82,7 +86,7 @@ QtObject {
             }
         }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "fillet", "chamfer"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "fillet", "chamfer", "pushFace"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)

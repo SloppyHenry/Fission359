@@ -162,3 +162,25 @@ TEST_CASE("offsetFace: faces that cannot be moved are refused, not made wrong",
     const geo::NamedSolid ball = kernel->makePrimitive(geo::SphereSpec{}, {0, 0, 0});
     CHECK_THROWS_AS(kernel->offsetFace(ball, 1, 1.0), geo::GeometryError);
 }
+
+TEST_CASE("faceAnchor: a flat face looks out, a hole looks into itself, a pin out",
+          "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid box = kernel->makeBox(20, 20, 10, {0, 0, 0}, 0.0);
+    const geo::FaceAnchor right = kernel->faceAnchor(box.solid, flatFace(*kernel, box, {1, 0, 0}));
+    CHECK(right.point.x == Approx(20.0));
+    CHECK(right.way.x == Approx(1.0));
+
+    // The wall of a hole looks towards the axis: from the point on the wall the axis lies along
+    // the way.
+    const geo::NamedSolid plate = plateWithHole(*kernel);
+    const geo::FaceAnchor hole = kernel->faceAnchor(plate.solid, roundFace(*kernel, plate, 3.0));
+    const double toAxisX = 20.0 - hole.point.x;
+    const double toAxisY = 20.0 - hole.point.y;
+    CHECK(toAxisX * hole.way.x + toAxisY * hole.way.y == Approx(3.0).epsilon(1e-9));
+
+    const geo::NamedSolid cylinder = kernel->makeCylinder(5.0, 10.0, {0, 0, 0});
+    const geo::FaceAnchor pin =
+        kernel->faceAnchor(cylinder.solid, roundFace(*kernel, cylinder, 5.0));
+    CHECK(pin.point.x * pin.way.x + pin.point.y * pin.way.y == Approx(5.0).epsilon(1e-9));
+}

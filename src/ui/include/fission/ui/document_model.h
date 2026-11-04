@@ -389,6 +389,12 @@ public:
     /// unknown. A size that does not work is not refused here: the step shows the problem.
     Q_INVOKABLE QString blendEdges(const QString& bodyId, const QVariantList& edgeNumbers,
                                    const QString& kind);
+    /// Pulls a face of one body out (a flat wall) or changes the radius of a round wall (hole or
+    /// pin): a new step that takes the body and carries the face as a reference, 5 mm to start
+    /// with, with a grip on the face. The result keeps the name and colour of the body. Returns
+    /// the id of the new body, empty when the body is part of another one, the face cannot be
+    /// named again after a change, or the kernel cannot move this kind of face.
+    Q_INVOKABLE QString pushFace(const QString& bodyId, int faceNumber);
     /// "Round all vertical edges" of a body. A fresh box (made by a box step, not turned, with
     /// square corners) gets its corner radius set, which keeps it a basic shape; any other body
     /// gets a rounding step on its vertical edges. One undo step either way. Returns the id of

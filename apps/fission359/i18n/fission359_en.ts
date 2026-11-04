@@ -711,6 +711,21 @@
     </message>
     <message>
         <location line="+5"/>
+        <source>Pull face</source>
+        <translation>Pull face</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulls a flat face out or pushes it in. On the wall of a hole or a pin it makes the hole or pin wider or narrower.</source>
+        <translation>Pulls a flat face out or pushes it in. On the wall of a hole or a pin it makes the hole or pin wider or narrower.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose one face, then drag the grip or type a distance.</source>
+        <translation>Choose one face, then drag the grip or type a distance.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Round vertical edges</source>
         <translation>Round vertical edges</translation>
     </message>
@@ -840,8 +855,8 @@
         <translation>Every change is a sentence here.</translation>
     </message>
     <message>
-        <location line="-63"/>
-        <location line="+72"/>
+        <location line="-70"/>
+        <location line="+79"/>
         <source>Round edges</source>
         <translation>Round edges</translation>
     </message>
@@ -857,8 +872,8 @@
         <translation>Choose edges, drag the dot.</translation>
     </message>
     <message>
-        <location line="-73"/>
-        <location line="+71"/>
+        <location line="-80"/>
+        <location line="+78"/>
         <source>Bevel edges</source>
         <translation>Bevel edges</translation>
     </message>
@@ -1066,7 +1081,12 @@
         <translation>Cut out</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
+        <source>Pull</source>
+        <translation>Pull</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Look at face</source>
         <translation>Look at face</translation>
     </message>
@@ -1609,12 +1629,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+738"/>
+        <location line="+757"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-737"/>
+        <location line="-756"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
@@ -1644,7 +1664,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+109"/>
+        <location line="+110"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -1654,7 +1674,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-109"/>
+        <location line="-110"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -1830,12 +1850,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1273"/>
+        <location line="+1293"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1272"/>
+        <location line="-1292"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1866,12 +1886,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1259"/>
+        <location line="+1278"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1257"/>
+        <location line="-1276"/>
         <source>Round edges</source>
         <translation>Round edges</translation>
     </message>
@@ -1884,6 +1904,11 @@
         <location line="+1"/>
         <source>Round vertical edges</source>
         <translation>Round vertical edges</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pull face</source>
+        <translation>Pull face</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -1932,18 +1957,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+780"/>
+        <location line="+798"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-778"/>
-        <location line="+779"/>
+        <location line="-796"/>
+        <location line="+797"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-773"/>
+        <location line="-791"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -1956,6 +1981,11 @@
         <location line="+44"/>
         <source>Choose one or more edges first.</source>
         <translation>Choose one or more edges first.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Choose one face first.</source>
+        <translation>Choose one face first.</translation>
     </message>
     <message numerus="yes">
         <location line="+86"/>
@@ -1986,7 +2016,7 @@
         <translation>Nothing to drop: the bodies already stand on the bed.</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+25"/>
         <source>This arrives in a later version.</source>
         <translation>This arrives in a later version.</translation>
     </message>
@@ -2009,6 +2039,16 @@
         <location line="+1"/>
         <source>Bevelled. Type a distance, or change it in the panel.</source>
         <translation>Bevelled. Type a distance, or change it in the panel.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>This face cannot be pulled: it may be part of another body, or curved in a way that is not supported yet.</source>
+        <translation>This face cannot be pulled: it may be part of another body, or curved in a way that is not supported yet.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Face pulled. Drag the grip or type a distance.</source>
+        <translation>Face pulled. Drag the grip or type a distance.</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -2090,7 +2130,7 @@
         </translation>
     </message>
     <message>
-        <location line="-615"/>
+        <location line="-633"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2110,7 +2150,7 @@
         <translation>Choose two bodies first (Shift+click).</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+9"/>
         <source>Nothing to undo.</source>
         <translation>Nothing to undo.</translation>
     </message>
@@ -2125,7 +2165,7 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+822"/>
+        <location line="+837"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -2140,7 +2180,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1167"/>
+        <location line="-1185"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -2200,7 +2240,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1198"/>
+        <location line="+1216"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2215,7 +2255,7 @@
         <translation>Bevelling</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>Placing</source>
         <translation>Placing</translation>
     </message>
@@ -2295,7 +2335,7 @@
         <translation>Position</translation>
     </message>
     <message numerus="yes">
-        <location line="+35"/>
+        <location line="+36"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>Cut out %n body</numerusform>
@@ -2303,12 +2343,12 @@
         </translation>
     </message>
     <message>
-        <location line="-19"/>
+        <location line="-20"/>
         <source>%1 added</source>
         <translation>%1 added</translation>
     </message>
     <message>
-        <location line="-245"/>
+        <location line="-246"/>
         <source>Bevelled. Drag the grip or type a distance.</source>
         <translation>Bevelled. Drag the grip or type a distance.</translation>
     </message>
@@ -2323,7 +2363,12 @@
         <translation>Rounding</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+2"/>
+        <source>Pulling a face</source>
+        <translation>Pulling a face</translation>
+    </message>
+    <message>
+        <location line="+12"/>
         <source>Distance</source>
         <translation>Distance</translation>
     </message>
@@ -2412,6 +2457,11 @@
             <numerusform>%n edge bevelled</numerusform>
             <numerusform>%n edges bevelled</numerusform>
         </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Face pulled</source>
+        <translation>Face pulled</translation>
     </message>
     <message numerus="yes">
         <location line="+4"/>
@@ -2538,7 +2588,7 @@
         <translation>Several changes</translation>
     </message>
     <message>
-        <location line="+88"/>
+        <location line="+89"/>
         <source>, part %1</source>
         <translation>, part %1</translation>
     </message>
@@ -2592,32 +2642,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-320"/>
+        <location line="-323"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1257"/>
+        <location line="-1276"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1292"/>
+        <location line="+1311"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1120"/>
+        <location line="-1138"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+585"/>
+        <location line="+603"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-632"/>
+        <location line="-650"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -3167,6 +3217,16 @@
             <numerusform>Bevelled %n edge, distance %1 mm</numerusform>
             <numerusform>Bevelled %n edges, distance %1 mm</numerusform>
         </translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Face pulled out by %1 mm</source>
+        <translation>Face pulled out by %1 mm</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Face pushed in by %1 mm</source>
+        <translation>Face pushed in by %1 mm</translation>
     </message>
     <message>
         <location line="+3"/>

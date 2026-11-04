@@ -62,6 +62,13 @@ struct BlendSpec {
     double size2 = 0.0;
 };
 
+/// A place on a face and the way the face looks out of the body there (unit vector): where the
+/// grip for pushing the face stands (AP-2.4a).
+struct FaceAnchor {
+    Point3d point;
+    Point3d way;
+};
+
 /// What features may ask of the geometry kernel (docs/03-architektur.md §4). The core and the
 /// feature types only know this interface; the OpenCASCADE implementation is handed in by the
 /// application, tests may hand in another one.
@@ -166,6 +173,15 @@ public:
         (void)solid;
         (void)faceId;
         (void)distance;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
+    }
+
+    /// Where to put the grip for `offsetFace`: a point on the face (its middle for a flat one, a
+    /// point of the wall for a round one) and the way it looks out of the body. Throws
+    /// `GeometryError` for a face that `offsetFace` cannot move. The default refuses.
+    virtual FaceAnchor faceAnchor(const Solid& solid, std::uint32_t faceId) const {
+        (void)solid;
+        (void)faceId;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
     }
 

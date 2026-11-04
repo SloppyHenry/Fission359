@@ -844,7 +844,7 @@ void DocumentModel::rebuildLists() {
         std::string name = body.name;
         const bool continues = maker != nullptr &&
                                (type == "combine" || type == "place" || type == "split" ||
-                                type == "fillet" || type == "chamfer") &&
+                                type == "fillet" || type == "chamfer" || type == "pushFace") &&
                                !maker->inputs.empty() &&
                                origin.contains(maker->inputs.front().value);
         if (continues) {
@@ -3145,7 +3145,9 @@ QString DocumentModel::blendEdges(const QString& bodyId, const QVariantList& edg
     draft.params.at(type == "fillet" ? "radius" : "distance").expression =
         QString::number(size, 'f', 1).toStdString();
     const auto setValue = [&](const char* name, double number) {
-        draft.params.at(name).expression = QString::number(number, 'g', 12).toStdString();
+        // Plain digits (no exponent, no "-0"): the number field reads these everywhere.
+        const double rounded = std::abs(number) < 5e-7 ? 0.0 : number;
+        draft.params.at(name).expression = QString::number(rounded, 'f', 6).toStdString();
     };
     setValue("anchorX", anchor.x);
     setValue("anchorY", anchor.y);
@@ -3160,6 +3162,76 @@ QString DocumentModel::blendEdges(const QString& bodyId, const QVariantList& edg
 
     m_history.beginTransaction({type == "fillet" ? "roundEdges" : "bevelEdges",
                                 {{"count", std::to_string(edgeNumbers.size())}}});
+    const auto id = m_history.addFeature(std::move(draft));
+    const core::Feature* feature = id ? m_history.document().findFeature(*id) : nullptr;
+    if (feature == nullptr || feature->outputs.empty()) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    const core::BodyId result = feature->outputs.front();
+    if (!before.name.empty()) {
+        m_history.execute(core::makeSetBodyName(result, before.name));
+    }
+    m_history.execute(core::makeSetBodyColor(result, before.color));
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return toQString(result.value);
+}
+
+QString DocumentModel::pushFace(const QString& bodyId, int faceNumber) {
+    const core::FeatureType* stepType = m_registry.find("pushFace");
+    const core::Body* target = findBody(bodyId);
+    if (stepType == nullptr || target == nullptr || faceNumber < 1 || !m_result ||
+        m_history.document().consumerOf(target->id)) {
+        return {};
+    }
+    const auto made = m_result->bodies.find(target->id);
+    if (made == m_result->bodies.end()) {
+        return {};
+    }
+    core::PersistentRef ref;
+    geo::FaceAnchor anchor;
+    try {
+        const core::BodyLooks looks =
+            core::describeBody(made->second.faces, m_kernel->signatures(made->second.solid));
+        const auto found =
+            std::find_if(looks.faces.begin(), looks.faces.end(), [&](const core::NamedLook& face) {
+                return face.id == static_cast<std::uint32_t>(faceNumber);
+            });
+        if (found == looks.faces.end()) {
+            return {};
+        }
+        auto named = core::makeRef(
+            looks, core::ElementKind::face, found->id,
+            core::placementOf(m_history.document(), m_registry, m_result->features, found->name));
+        if (!named) {
+            return {}; // without a name it could not be found again after the next change
+        }
+        ref = std::move(*named);
+        anchor = m_kernel->faceAnchor(made->second.solid, found->id);
+    } catch (const geo::GeometryError&) {
+        return {}; // the kernel cannot move this kind of face
+    }
+
+    core::FeatureDraft draft = core::defaultDraft(*stepType);
+    const auto setValue = [&](const char* name, double number) {
+        // Plain digits (no exponent, no "-0"): the number field reads these everywhere.
+        const double rounded = std::abs(number) < 5e-7 ? 0.0 : number;
+        draft.params.at(name).expression = QString::number(rounded, 'f', 6).toStdString();
+    };
+    setValue("anchorX", anchor.point.x);
+    setValue("anchorY", anchor.point.y);
+    setValue("anchorZ", anchor.point.z);
+    setValue("anchorDx", anchor.way.x);
+    setValue("anchorDy", anchor.way.y);
+    setValue("anchorDz", anchor.way.z);
+    draft.inputs = {target->id};
+    draft.refs["face"] = {std::move(ref)};
+    draft.newBodies = 1;
+    const core::Body before = *target;
+
+    m_history.beginTransaction({"pushFace", {}});
     const auto id = m_history.addFeature(std::move(draft));
     const core::Feature* feature = id ? m_history.document().findFeature(*id) : nullptr;
     if (feature == nullptr || feature->outputs.empty()) {

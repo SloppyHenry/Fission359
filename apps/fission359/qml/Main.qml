@@ -141,7 +141,8 @@ Window {
             { separator: true },
             { id: "round", text: qsTr("Round edges"), enabled: root.edgesChosen },
             { id: "bevel", text: qsTr("Bevel edges"), enabled: root.edgesChosen },
-            { id: "roundVertical", text: qsTr("Round vertical edges"), enabled: root.contextKind === "body" && root.chosenBodyHasVerticalEdges }
+            { id: "roundVertical", text: qsTr("Round vertical edges"), enabled: root.contextKind === "body" && root.chosenBodyHasVerticalEdges },
+            { id: "pushFace", text: qsTr("Pull face"), enabled: Selection.singleFaceChosen }
         ] },
         { title: qsTr("Window"), items: [
             { id: "nexttab", text: qsTr("Next tab"), shortcut: isMac ? "⌃⇥" : qsTr("Ctrl+Tab"), enabled: Files.tabs.length > 1 },
@@ -255,6 +256,9 @@ Window {
             break
         case "edges":
             if (!edgesChosen) { return qsTr("Choose one or more edges first.") }
+            break
+        case "face":
+            if (!Selection.singleFaceChosen) { return qsTr("Choose one face first.") }
             break
         }
         if (command.id === "menu.undo" && !undoAvailable) { return qsTr("Nothing to undo.") }
@@ -461,6 +465,7 @@ Window {
         case "round": blendChosen("fillet"); break
         case "bevel": blendChosen("chamfer"); break
         case "roundVertical": roundVerticalChosen(); break
+        case "pushFace": pushFaceChosen(); break
         case "merge":
         case "subtract":
         case "overlap": combine(id); break
@@ -516,6 +521,20 @@ Window {
         root.tool = "size" // the grip at the edge is shown by this tool
         showHint(kind === "fillet" ? qsTr("Rounded. Type a radius, or change it in the panel.")
                                    : qsTr("Bevelled. Type a distance, or change it in the panel."))
+    }
+
+    // Pulls the chosen face: a new step with a grip on the face, shown with the size tool.
+    function pushFaceChosen() {
+        const item = Selection.singleFaceChosen ? Selection.items[0] : undefined
+        const made = item !== undefined ? DocumentModel.pushFace(item.body, item.number) : ""
+        if (made === "") {
+            showHint(qsTr("This face cannot be pulled: it may be part of another body, or curved in a way that is not supported yet."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        root.tool = "size" // the grip on the face is shown by this tool
+        showHint(qsTr("Face pulled. Drag the grip or type a distance."))
     }
 
     function roundVerticalChosen() {
@@ -1399,6 +1418,7 @@ Window {
         if (type === "split") { return qsTr("Split") }
         if (type === "fillet") { return qsTr("Rounding") }
         if (type === "chamfer") { return qsTr("Bevelling") }
+        if (type === "pushFace") { return qsTr("Pulling a face") }
         if (type === "place") { return qsTr("Placing") }
         const name = shapeCatalog.nameOf(type)
         return name !== "" ? name : qsTr("Body")
@@ -1455,6 +1475,7 @@ Window {
         case "splitBody": return qsTr("%1 split in two").arg(body)
         case "roundEdges": return qsTr("%n edge(s) rounded", "", Number(step.count))
         case "bevelEdges": return qsTr("%n edge(s) bevelled", "", Number(step.count))
+        case "pushFace": return qsTr("Face pulled")
         case "combineBodies":
             switch (step.mode) {
             case "subtract": return qsTr("Cut out %n body(ies)", "", Number(step.count) - 1)
@@ -1515,6 +1536,7 @@ Window {
         case "split": return "scissors"
         case "fillet": return "round"
         case "chamfer": return "bevel"
+        case "pushFace": return "move"
         case "place": return "move"
         case "text": return "text"
         default: return "cube"

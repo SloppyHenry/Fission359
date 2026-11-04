@@ -42,6 +42,9 @@ public:
                           double distance) const override {
         return offsetFaceNamed(solid, faceId, distance);
     }
+    FaceAnchor faceAnchor(const Solid& solid, std::uint32_t faceId) const override {
+        return faceAnchorOf(solid, faceId);
+    }
     std::vector<std::uint32_t> tangentChain(const Solid& solid, std::uint32_t edge) const override {
         return tangentChainOf(solid, edge);
     }

@@ -103,29 +103,45 @@ NamedSolid pushFlat(const NamedSolid& solid, const TopoDS_Shape& shape, const To
     return booleanNamed(op, solid, {tool(prism.Shape(), role, isWall)});
 }
 
-NamedSolid pushRound(const NamedSolid& solid, const TopoDS_Face& face, const std::string& role,
-                     double distance) {
-    const BRepAdaptor_Surface surface(face);
-    const gp_Cylinder cylinder = surface.Cylinder();
+// Where a round wall is looked at from and whether it is a pin (looks away from the axis) or a
+// hole (looks towards it).
+struct RoundWall {
+    gp_Cylinder cylinder;
     double u0 = 0.0, u1 = 0.0, v0 = 0.0, v1 = 0.0;
-    BRepTools::UVBounds(face, u0, u1, v0, v1);
-    if (std::abs((u1 - u0) - 2.0 * M_PI) > 1e-6) {
+    gp_Pnt point; // on the wall, half way round and along
+    gp_Vec radial;
+    bool pin = false;
+};
+
+RoundWall roundWallOf(const TopoDS_Face& face) {
+    RoundWall wall;
+    const BRepAdaptor_Surface surface(face);
+    wall.cylinder = surface.Cylinder();
+    BRepTools::UVBounds(face, wall.u0, wall.u1, wall.v0, wall.v1);
+    if (std::abs((wall.u1 - wall.u0) - 2.0 * M_PI) > 1e-6) {
         throw GeometryError(GeometryErrorCode::kernelFailure,
                             "offsetFace: only a whole round wall can change its radius");
     }
-    // A pin looks away from the axis, a hole towards it.
-    gp_Pnt middle;
     gp_Vec du, dv;
-    surface.D1(0.5 * (u0 + u1), 0.5 * (v0 + v1), middle, du, dv);
+    surface.D1(0.5 * (wall.u0 + wall.u1), 0.5 * (wall.v0 + wall.v1), wall.point, du, dv);
     gp_Vec out = du.Crossed(dv);
     if (face.Orientation() == TopAbs_REVERSED) {
         out.Reverse();
     }
-    const gp_Vec axis(cylinder.Axis().Direction());
-    const gp_Vec fromBase(cylinder.Location(), middle);
-    const gp_Vec radial = fromBase - axis * fromBase.Dot(axis);
-    const bool pin = out.Dot(radial) > 0.0;
+    const gp_Vec axis(wall.cylinder.Axis().Direction());
+    const gp_Vec fromBase(wall.cylinder.Location(), wall.point);
+    wall.radial = fromBase - axis * fromBase.Dot(axis);
+    wall.pin = out.Dot(wall.radial) > 0.0;
+    return wall;
+}
 
+NamedSolid pushRound(const NamedSolid& solid, const TopoDS_Face& face, const std::string& role,
+                     double distance) {
+    const RoundWall wall = roundWallOf(face);
+    const gp_Cylinder& cylinder = wall.cylinder;
+    const double v0 = wall.v0;
+    const double v1 = wall.v1;
+    const bool pin = wall.pin;
     const double radius = cylinder.Radius();
     const double wanted = pin ? radius + distance : radius - distance;
     if (!(wanted > 1e-6)) {
@@ -194,6 +210,42 @@ NamedSolid offsetFaceNamed(const NamedSolid& solid, std::uint32_t faceId, double
         }
     } catch (const Standard_Failure&) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "offsetFace: the kernel failed");
+    }
+}
+
+FaceAnchor faceAnchorOf(const Solid& solid, std::uint32_t faceId) {
+    ShapeMap faces;
+    TopExp::MapShapes(shapeOf(solid), TopAbs_FACE, faces);
+    if (faceId < 1 || static_cast<int>(faceId) > faces.Extent()) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "faceAnchor: the face is not there");
+    }
+    const TopoDS_Face face = TopoDS::Face(faces(static_cast<int>(faceId)));
+    try {
+        switch (BRepAdaptor_Surface(face).GetType()) {
+        case GeomAbs_Plane: {
+            const gp_Pnt middle = faceCentre(face);
+            const gp_Dir normal = outwardNormal(face);
+            return {{middle.X(), middle.Y(), middle.Z()}, {normal.X(), normal.Y(), normal.Z()}};
+        }
+        case GeomAbs_Cylinder: {
+            const RoundWall wall = roundWallOf(face);
+            gp_Vec way = wall.radial;
+            if (way.Magnitude() < 1e-12) {
+                throw GeometryError(GeometryErrorCode::kernelFailure,
+                                    "faceAnchor: a round wall without a radius");
+            }
+            way.Normalize();
+            if (!wall.pin) {
+                way.Reverse(); // a hole looks towards its axis
+            }
+            return {{wall.point.X(), wall.point.Y(), wall.point.Z()}, {way.X(), way.Y(), way.Z()}};
+        }
+        default:
+            throw GeometryError(GeometryErrorCode::kernelFailure,
+                                "faceAnchor: only flat and cylindrical faces can be moved");
+        }
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "faceAnchor: the kernel failed");
     }
 }
 
