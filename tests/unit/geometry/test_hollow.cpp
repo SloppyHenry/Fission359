@@ -184,3 +184,39 @@ TEST_CASE("hollow: a body that cannot be rebuilt is hollowed with a check, or re
         CHECK(error.subject() == "unsure");
     }
 }
+
+// The known problem of the kernel report (case C2): hollowing a box with all edges rounded. The
+// kernel's own call can return a body that is valid and wrong. Whatever this returns must have
+// passed the plausibility check; otherwise the answer is "not sure" and nothing is made.
+TEST_CASE("hollow: a box with all edges rounded never gives a valid but wrong body",
+          "[geometry][hollow]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid box = kernel->makeBox(40, 40, 20, {0, 0, 0}, 0.0);
+    std::vector<geo::BlendEdge> edges;
+    for (const geo::ElementSignature& edge : kernel->signatures(box.solid).edges) {
+        if (edge.id != 0) {
+            edges.push_back({edge.id, "e" + std::to_string(edge.id)});
+        }
+    }
+    const geo::NamedSolid rounded =
+        kernel->blendEdges(box, edges, {geo::BlendKind::round, 4.0, 0.0}, "F2/fillet/round");
+    const geo::SolidReport before = kernel->measure(rounded.solid);
+    const std::uint32_t top = flatFace(*kernel, rounded, {0, 0, 1});
+
+    for (const double wall : {2.0, 3.0}) {
+        try {
+            const geo::NamedSolid made =
+                kernel->hollow(rounded, {top}, wall, false, "F3/shell/inner");
+            const geo::SolidReport report = kernel->measure(made.solid);
+            CHECK(report.valid);
+            CHECK(report.solids == 1);
+            CHECK(report.shells == 1);
+            CHECK(report.volume < before.volume);
+            // The wall is about as large as its area times its thickness (the check's own claim).
+            CHECK(report.volume > 0.5 * (before.area - 40.0 * 40.0) * wall * 0.5);
+        } catch (const geo::GeometryError& error) {
+            CHECK(error.code() == geo::GeometryErrorCode::invalidInput);
+            CHECK(error.subject() == "unsure");
+        }
+    }
+}

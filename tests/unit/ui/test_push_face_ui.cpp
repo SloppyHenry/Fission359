@@ -131,3 +131,28 @@ TEST_CASE("remove faces: a bad request is refused, a flat face is its own featur
     CHECK(feature.first().toInt() == 1);
     CHECK(f.model->faceFeature(f.body, 999).isEmpty());
 }
+
+TEST_CASE("shell: a body is hollowed with the top open, one step and one undo", "[ui][hollow]") {
+    Pull f;
+    const int before = f.model->historyPosition();
+    const QString made = f.model->shellBody(f.body, {});
+    REQUIRE_FALSE(made.isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.model->historyPosition() == before + 1);
+    CHECK(f.step(1).value("type").toString() == "shell");
+    CHECK(f.step(1).value("state").toString() == "ok");
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().size() == 1);
+    CHECK(f.model->shellBody(QStringLiteral("nobody"), {}).isEmpty());
+}
+
+TEST_CASE("draft: no faces given drafts the sides of the body", "[ui][draft]") {
+    Pull f;
+    const QString made = f.model->draftFaces(f.body, {});
+    REQUIRE_FALSE(made.isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.step(1).value("type").toString() == "draft");
+    CHECK(f.step(1).value("state").toString() == "ok");
+    CHECK(f.model->draftFaces(QStringLiteral("nobody"), {}).isEmpty());
+}

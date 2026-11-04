@@ -97,7 +97,7 @@
 ---
 
 ### AP-2.6 Aushöhlen und Schräge
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-2.4, AP-2.10
+**Status:** in Arbeit (Kern mit Plausibilitätsprüfung, Schritte, Befehle, Meldungen gebaut; Rezept-Neubau des Innenkörpers, Wand je Fläche, Winkel-Griff, Fenster-Test offen) · **Größe:** M · **Abhängigkeiten:** AP-2.4, AP-2.10
 **Bauanleitung:** [anleitungen/AP-2.6.md](anleitungen/AP-2.6.md)
 
 **Umfang:**

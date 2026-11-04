@@ -145,7 +145,10 @@ Window {
             { id: "pushFace", text: qsTr("Pull face"), enabled: Selection.singleFaceChosen },
             { id: "tiltFace", text: qsTr("Tilt face"), enabled: Selection.singleFaceChosen },
             { id: "removeFaces", text: qsTr("Remove face"), enabled: root.facesChosen },
-            { id: "offsetFaces", text: qsTr("Offset faces"), enabled: root.facesChosen || root.chosenBodies.length === 1 }
+            { id: "offsetFaces", text: qsTr("Offset faces"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
+            { separator: true },
+            { id: "shell", text: qsTr("Hollow out"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
+            { id: "draft", text: qsTr("Draft"), enabled: root.facesChosen || root.chosenBodies.length === 1 }
         ] },
         { title: qsTr("Window"), items: [
             { id: "nexttab", text: qsTr("Next tab"), shortcut: isMac ? "⌃⇥" : qsTr("Ctrl+Tab"), enabled: Files.tabs.length > 1 },
@@ -478,6 +481,8 @@ Window {
         case "tiltFace": tiltFaceChosen(); break
         case "removeFaces": removeFacesChosen(); break
         case "offsetFaces": offsetFacesChosen(); break
+        case "shell": shellChosen(); break
+        case "draft": draftChosen(); break
         case "merge":
         case "subtract":
         case "overlap": combine(id); break
@@ -590,6 +595,42 @@ Window {
         root.flyout = ""
         Selection.chooseBodies([made])
         showHint(qsTr("Faces moved by 0.2 mm. Type another distance in the panel."))
+    }
+
+    // The body to work on: the one the chosen faces belong to, or the one chosen body ("" if none).
+    function bodyOfChoice() {
+        const faces = chosenFaceItems()
+        return faces.length > 0 ? faces[0].body : (root.chosenBodies.length === 1 ? root.chosenBodies[0] : "")
+    }
+
+    // Hollows the body: the chosen faces are left open, with only a body chosen the top is.
+    function shellChosen() {
+        const faces = chosenFaceItems()
+        const body = bodyOfChoice()
+        const made = body !== "" ? DocumentModel.shellBody(body, faces.map(item => item.number)) : ""
+        if (made === "") {
+            showHint(qsTr("This body cannot be hollowed: it may already be part of another body."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        root.tool = "size" // the grip on the wall is shown by this tool
+        showHint(faces.length > 0 ? qsTr("Hollowed. Drag the grip or type a wall thickness.")
+                                  : qsTr("Hollowed with the top open. Drag the grip or type a wall thickness. To leave another face open, choose it first."))
+    }
+
+    // Tilts the chosen faces (the sides of a chosen body) a little, 3° to start with.
+    function draftChosen() {
+        const faces = chosenFaceItems()
+        const body = bodyOfChoice()
+        const made = body !== "" ? DocumentModel.draftFaces(body, faces.map(item => item.number)) : ""
+        if (made === "") {
+            showHint(qsTr("These faces cannot be tilted this way: they may be part of another body, or stand square to the pull."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        showHint(qsTr("Draft added. Type an angle in the panel: plus makes the body narrower going up."))
     }
 
     // Turns the chosen flat face about its lowest edge: 10° to start with.
@@ -1503,6 +1544,8 @@ Window {
         if (type === "removeFaces") { return qsTr("Removing faces") }
         if (type === "offsetFaces") { return qsTr("Moving faces") }
         if (type === "tiltFace") { return qsTr("Tilting a face") }
+        if (type === "shell") { return qsTr("Hollowing out") }
+        if (type === "draft") { return qsTr("Draft") }
         if (type === "place") { return qsTr("Placing") }
         const name = shapeCatalog.nameOf(type)
         return name !== "" ? name : qsTr("Body")
@@ -1527,6 +1570,8 @@ Window {
         case "points": return qsTr("Points")
         case "size": return qsTr("Letter size")
         case "position": return qsTr("Position")
+        case "thickness": return qsTr("Wall thickness")
+        case "angle": return qsTr("Angle")
         default: return name
         }
     }
@@ -1564,6 +1609,8 @@ Window {
         case "removeFaces": return qsTr("%n face(s) removed", "", Number(step.count))
         case "offsetFaces": return qsTr("%n face(s) moved", "", Number(step.count))
         case "tiltFace": return qsTr("Face tilted")
+        case "shellBody": return qsTr("Body hollowed out")
+        case "draftFaces": return qsTr("Draft added")
         case "combineBodies":
             switch (step.mode) {
             case "subtract": return qsTr("Cut out %n body(ies)", "", Number(step.count) - 1)
@@ -1629,6 +1676,8 @@ Window {
         case "offsetFaces":
         case "tiltFace": return "move"
         case "removeFaces": return "scissors"
+        case "shell":
+        case "draft": return "cube"
         case "place": return "move"
         case "text": return "text"
         default: return "cube"

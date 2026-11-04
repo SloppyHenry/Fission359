@@ -848,7 +848,8 @@ void DocumentModel::rebuildLists() {
             maker != nullptr &&
             (type == "combine" || type == "place" || type == "split" || type == "fillet" ||
              type == "chamfer" || type == "pushFace" || type == "stretch" ||
-             type == "removeFaces" || type == "offsetFaces" || type == "tiltFace") &&
+             type == "removeFaces" || type == "offsetFaces" || type == "tiltFace" ||
+             type == "shell" || type == "draft") &&
             !maker->inputs.empty() && origin.contains(maker->inputs.front().value);
         if (continues) {
             const Origin& started = origin.at(maker->inputs.front().value);
@@ -3200,11 +3201,11 @@ bool alongAnAxis(const geo::Point3d& way) {
 QString DocumentModel::addFaceStep(const QString& bodyId, const std::string& type,
                                    const std::vector<std::uint32_t>& faceNumbers, const char* slot,
                                    const std::map<std::string, double>& values,
-                                   const std::string& transaction) {
+                                   const std::string& transaction, bool allowNone) {
     const core::FeatureType* stepType = m_registry.find(type);
     const core::Body* target = findBody(bodyId);
-    if (stepType == nullptr || target == nullptr || faceNumbers.empty() || !m_result ||
-        m_history.document().consumerOf(target->id)) {
+    if (stepType == nullptr || target == nullptr || (faceNumbers.empty() && !allowNone) ||
+        !m_result || m_history.document().consumerOf(target->id)) {
         return {};
     }
     const auto made = m_result->bodies.find(target->id);
@@ -3239,7 +3240,9 @@ QString DocumentModel::addFaceStep(const QString& bodyId, const std::string& typ
         draft.params.at(name).expression = digits(number);
     }
     draft.inputs = {target->id};
-    draft.refs[slot] = std::move(refs);
+    if (!refs.empty()) {
+        draft.refs[slot] = std::move(refs);
+    }
     draft.newBodies = 1;
     const core::Body before = *target;
 
@@ -3398,6 +3401,86 @@ QString DocumentModel::tiltFace(const QString& bodyId, int faceNumber) {
                        "tiltFace");
 }
 
+QString DocumentModel::shellBody(const QString& bodyId, const QVariantList& openFaces) {
+    const core::Body* target = findBody(bodyId);
+    if (target == nullptr || !m_result) {
+        return {};
+    }
+    const auto made = m_result->bodies.find(target->id);
+    if (made == m_result->bodies.end()) {
+        return {};
+    }
+    std::vector<std::uint32_t> open;
+    for (const QVariant& number : openFaces) {
+        open.push_back(number.toUInt());
+    }
+    std::map<std::string, double> values;
+    try {
+        if (open.empty()) {
+            // The top: the flat face that looks up and lies highest.
+            const geo::BodySignatures looks = m_kernel->signatures(made->second.solid);
+            double highest = -1e300;
+            for (const geo::ElementSignature& face : looks.faces) {
+                if (face.shape == geo::SignatureShape::plane && face.direction.z > 0.9 &&
+                    face.centroid.z > highest) {
+                    highest = face.centroid.z;
+                    open = {face.id};
+                }
+            }
+        }
+        if (!open.empty()) {
+            // The grip stands on the first open face and points into the body.
+            const geo::FaceAnchor anchor = m_kernel->faceAnchor(made->second.solid, open.front());
+            values = {{"anchorX", anchor.point.x}, {"anchorY", anchor.point.y},
+                      {"anchorZ", anchor.point.z}, {"anchorDx", -anchor.way.x},
+                      {"anchorDy", -anchor.way.y}, {"anchorDz", -anchor.way.z}};
+        }
+    } catch (const geo::GeometryError&) {
+        values.clear(); // no grip, the wall can still be typed
+    }
+    return addFaceStep(bodyId, "shell", open, "openFaces", values, "shellBody", true);
+}
+
+QString DocumentModel::draftFaces(const QString& bodyId, const QVariantList& faceNumbers) {
+    const core::Body* target = findBody(bodyId);
+    if (target == nullptr || !m_result) {
+        return {};
+    }
+    const auto made = m_result->bodies.find(target->id);
+    if (made == m_result->bodies.end()) {
+        return {};
+    }
+    std::vector<std::uint32_t> faces;
+    for (const QVariant& number : faceNumbers) {
+        faces.push_back(number.toUInt());
+    }
+    std::map<std::string, double> values;
+    try {
+        const geo::BodySignatures looks = m_kernel->signatures(made->second.solid);
+        if (faces.empty()) {
+            for (const geo::ElementSignature& face : looks.faces) {
+                const bool upright =
+                    face.shape == geo::SignatureShape::plane && std::abs(face.direction.z) < 0.5;
+                const bool around = face.shape == geo::SignatureShape::cylinder &&
+                                    std::abs(face.direction.z) > 0.99;
+                if (upright || around) {
+                    faces.push_back(face.id);
+                }
+            }
+        }
+        const geo::SolidReport report = m_kernel->measure(made->second.solid);
+        values = {{"neutralX", 0.5 * (report.boxMin.x + report.boxMax.x)},
+                  {"neutralY", 0.5 * (report.boxMin.y + report.boxMax.y)},
+                  {"neutralZ", report.boxMin.z},
+                  {"pullX", 0.0},
+                  {"pullY", 0.0},
+                  {"pullZ", 1.0}};
+    } catch (const geo::GeometryError&) {
+        return {};
+    }
+    return addFaceStep(bodyId, "draft", faces, "faces", values, "draftFaces");
+}
+
 QVariantList DocumentModel::faceFeature(const QString& bodyId, int faceNumber) const {
     QVariantList list;
     const core::Body* body = findBody(bodyId);
@@ -3509,7 +3592,7 @@ QVariantMap DocumentModel::faceAnchor(const QString& bodyId, int number) const {
         const bool combined = type == "combine" || type == "place" || type == "split" ||
                               type == "fillet" || type == "chamfer" || type == "pushFace" ||
                               type == "stretch" || type == "removeFaces" || type == "offsetFaces" ||
-                              type == "tiltFace";
+                              type == "tiltFace" || type == "shell" || type == "draft";
         anchor[QStringLiteral("arrow")] = combined && !m_history.document().consumerOf(body->id);
     } catch (const geo::GeometryError&) {
         anchor[QStringLiteral("valid")] = false;

@@ -24,6 +24,7 @@ add_executable(fission_unit_tests
   features/test_blend.cpp
   features/test_push_face.cpp
   features/test_face_ops.cpp
+  features/test_shell_draft.cpp
   features/test_text_feature.cpp
   services/test_settings.cpp
   io/test_fission_file.cpp

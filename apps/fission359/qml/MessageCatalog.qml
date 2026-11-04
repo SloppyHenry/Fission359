@@ -205,6 +205,9 @@ QtObject {
             }
         case "parameterOutOfRange":
         case "kernelRejected":
+            if (problem.field === "unsure") {
+                return qsTr("Hollowing did not work for sure.")
+            }
             return problem.numbers && problem.numbers.maxValue !== undefined && problem.field !== ""
                 ? qsTr("%1 does not work here.").arg(valueLabel(problem.field))
                 : qsTr("These values do not work.")
@@ -239,6 +242,16 @@ QtObject {
             return qsTr("That divides by zero.")
         }
         const largest = problem.numbers ? problem.numbers.maxValue : undefined
+        if (problem.code === "kernelRejected" && problem.field === "thickness"
+                && problem.numbers && problem.numbers.thinnest !== undefined) {
+            const thin = qsTr("The wall is thicker than the body at its thinnest place (%1 mm).").arg(mm(problem.numbers.thinnest))
+            return largest !== undefined
+                ? thin + " " + qsTr("The largest wall that works is %1 mm.").arg(mm(largest))
+                : thin
+        }
+        if (problem.code === "kernelRejected" && problem.field === "unsure") {
+            return qsTr("Hollowing did not work here for sure, so nothing was made. Try another wall thickness or leave other faces open.")
+        }
         if (largest !== undefined && problem.field !== ""
                 && (problem.code === "parameterOutOfRange" || problem.code === "kernelRejected")) {
             const given = problem.numbers.given

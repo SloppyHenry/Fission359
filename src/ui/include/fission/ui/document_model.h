@@ -407,6 +407,15 @@ public:
     /// The faces that belong to the one at `faceNumber` as a feature: for a curved face the curved
     /// faces it runs into and the floor of a blind hole, for a flat face just itself.
     Q_INVOKABLE QVariantList faceFeature(const QString& bodyId, int faceNumber) const;
+    /// Hollows a body, 2 mm of wall to start with, inside it: a new step. The faces in `openFaces`
+    /// are left open; none given leaves the top open (the most common wish; a body without a flat
+    /// top is hollowed closed). Returns the id of the new body, empty when nothing can be done.
+    Q_INVOKABLE QString shellBody(const QString& bodyId, const QVariantList& openFaces);
+    /// Drafts faces by 3 degrees about a neutral plane at the bottom of the body, the mould pulled
+    /// upwards: a new step. No faces given means the sides (flat faces that stand upright and
+    /// round walls around the vertical). Returns the id of the new body, empty when nothing can be
+    /// done.
+    Q_INVOKABLE QString draftFaces(const QString& bodyId, const QVariantList& faceNumbers);
     /// "Round all vertical edges" of a body. A fresh box (made by a box step, not turned, with
     /// square corners) gets its corner radius set, which keeps it a basic shape; any other body
     /// gets a rounding step on its vertical edges. One undo step either way. Returns the id of
@@ -536,8 +545,8 @@ private:
     /// body. One transaction, one undo step. Empty when the body or a face cannot be used.
     QString addFaceStep(const QString& bodyId, const std::string& type,
                         const std::vector<std::uint32_t>& faceNumbers, const char* slot,
-                        const std::map<std::string, double>& values,
-                        const std::string& transaction);
+                        const std::map<std::string, double>& values, const std::string& transaction,
+                        bool allowNone = false);
     void setCalculating(bool calculating);
     /// Ends the open transaction. Cuts that holes need are updated first, so that they are part
     /// of the same step (ADR-0011).
