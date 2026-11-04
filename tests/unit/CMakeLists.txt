@@ -33,6 +33,7 @@ add_executable(fission_unit_tests
   geometry/test_booleans_gal.cpp
   geometry/test_signatures.cpp
   geometry/test_blends.cpp
+  geometry/test_faces.cpp
   geometry/test_seat.cpp
   geometry/test_text.cpp
   render/test_camera.cpp

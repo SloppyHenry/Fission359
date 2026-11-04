@@ -154,6 +154,21 @@ public:
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot follow edges");
     }
 
+    /// Moves one face by `distance` (mm) along the way it looks out of the body: positive makes
+    /// the body larger there, negative smaller. A flat face moves flat (its neighbours must stand
+    /// square on it), the wall of a round hole or pin gets a new radius (a hole's wall looks into
+    /// the hole, so positive makes the hole narrower). The face keeps its role; faces that
+    /// have to be made are named after it (`role` + "[push]"). Throws `GeometryError`:
+    /// `invalidInput` for a distance that is zero or not a number or a radius that would drop to
+    /// zero, `kernelFailure` for a face that cannot be moved. The default refuses.
+    virtual NamedSolid offsetFace(const NamedSolid& solid, std::uint32_t faceId,
+                                  double distance) const {
+        (void)solid;
+        (void)faceId;
+        (void)distance;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
+    }
+
     /// The names of the fonts lettering can use (bundled and installed), sorted. Takes a moment
     /// the first time (the computer's fonts are read): ask from a background thread.
     virtual std::vector<std::string> fontFamilies() const { return {}; }

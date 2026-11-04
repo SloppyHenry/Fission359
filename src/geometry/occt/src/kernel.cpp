@@ -38,6 +38,10 @@ public:
                           const BlendSpec& spec, const std::string& rolePrefix) const override {
         return blendEdgesNamed(solid, edges, spec, rolePrefix);
     }
+    NamedSolid offsetFace(const NamedSolid& solid, std::uint32_t faceId,
+                          double distance) const override {
+        return offsetFaceNamed(solid, faceId, distance);
+    }
     std::vector<std::uint32_t> tangentChain(const Solid& solid, std::uint32_t edge) const override {
         return tangentChainOf(solid, edge);
     }

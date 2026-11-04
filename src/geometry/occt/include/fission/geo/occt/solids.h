@@ -54,6 +54,9 @@ NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,
 NamedSolid blendEdgesNamed(const NamedSolid& solid, const std::vector<BlendEdge>& edges,
                            const BlendSpec& spec, const std::string& rolePrefix);
 
+/// Moves a face along its normal (see `GeometryKernel::offsetFace`). Throws GeometryError.
+NamedSolid offsetFaceNamed(const NamedSolid& solid, std::uint32_t faceId, double distance);
+
 /// The edges rounded together with `edge` (see `GeometryKernel::tangentChain`).
 std::vector<std::uint32_t> tangentChainOf(const Solid& solid, std::uint32_t edge);
 
