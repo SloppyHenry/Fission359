@@ -68,11 +68,23 @@ std::mutex& exchangeLock() {
     return lock;
 }
 
-occ::handle<TDocStd_Document> newDocument() {
-    occ::handle<TDocStd_Document> document = new TDocStd_Document("MDTV-XCAF");
-    XCAFDoc_DocumentTool::Set(document->Main());
-    return document;
-}
+// An XCAF document for one import or export. The document and its attributes point at each other
+// (the owner attribute on the root label holds the document), so the handles alone never free it;
+// the destructor drops the attributes and breaks that cycle.
+class XcafDocument {
+public:
+    XcafDocument() : document_(new TDocStd_Document("MDTV-XCAF")) {
+        XCAFDoc_DocumentTool::Set(document_->Main());
+    }
+    ~XcafDocument() { document_->Main().Root().ForgetAllAttributes(true); }
+    XcafDocument(const XcafDocument&) = delete;
+    XcafDocument& operator=(const XcafDocument&) = delete;
+
+    const occ::handle<TDocStd_Document>& handle() const { return document_; }
+
+private:
+    occ::handle<TDocStd_Document> document_;
+};
 
 std::string nameOf(const TDF_Label& label) {
     occ::handle<TDataStd_Name> name;
@@ -208,7 +220,8 @@ ImportResult importFile(ImportFormat format, const std::vector<std::uint8_t>& by
     ImportResult result;
     try {
         std::istringstream stream(std::string(bytes.begin(), bytes.end()));
-        const occ::handle<TDocStd_Document> document = newDocument();
+        const XcafDocument owned;
+        const occ::handle<TDocStd_Document>& document = owned.handle();
         if (format == ImportFormat::step) {
             STEPCAFControl_Reader reader;
             reader.SetColorMode(true);
@@ -350,7 +363,8 @@ ImportResult importFile(ImportFormat format, const std::vector<std::uint8_t>& by
 std::string exportStep(const std::vector<ExportBody>& bodies) {
     const std::lock_guard<std::mutex> guard(exchangeLock());
     try {
-        const occ::handle<TDocStd_Document> document = newDocument();
+        const XcafDocument owned;
+        const occ::handle<TDocStd_Document>& document = owned.handle();
         const occ::handle<XCAFDoc_ShapeTool> shapes =
             XCAFDoc_DocumentTool::ShapeTool(document->Main());
         const occ::handle<XCAFDoc_ColorTool> colors =
