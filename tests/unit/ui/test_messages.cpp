@@ -135,7 +135,7 @@ TEST_CASE("messages: the largest value is one undo step and the raw text stays i
     model.waitForCalculation();
 
     const QVariantMap step = model.recipe().at(0).toMap();
-    CHECK(step.value("state").toString() == "error");
+    CHECK(step.value("state").toString() == "fails");
     const QVariantMap problem = step.value("problem").toMap();
     CHECK(problem.value("code").toString() == "kernelRejected");
     CHECK(problem.value("field").toString() == "size");
@@ -168,5 +168,5 @@ TEST_CASE("messages: the largest value is one undo step and the raw text stays i
 
     REQUIRE(model.undo());
     model.waitForCalculation();
-    CHECK(model.recipe().at(0).toMap().value("state").toString() == "error");
+    CHECK(model.recipe().at(0).toMap().value("state").toString() == "fails");
 }
