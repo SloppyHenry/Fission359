@@ -11,7 +11,7 @@ Dieses Dokument regelt, wer was tut. Wie gebaut, getestet und formatiert wird, s
 | **Orchestrierung** | eine leitende Sitzung mit dem stärksten Modell | Reihenfolge, Haltepunkte entscheiden, Anleitungen nachschärfen, Aufträge schreiben, Ergebnisse prüfen, PRs öffnen und mergen, Status und Abschlussvermerke, Projektstand pflegen |
 | **Umsetzer** | Unter-Sitzung (Sonnet, Aufwand *medium*) | ein AP-Teilpaket oder eine Pflege-Aufgabe in eigener Arbeitskopie bauen, Tests schreiben und laufen lassen, committen, Bericht abgeben |
 | **Helfer** | Unter-Sitzung (Sonnet, Aufwand *low*) | Mechanisches: Übersetzungen füllen, Formatieren, CI-Logs lesen und zusammenfassen, Doku nachziehen, Suchen im Code |
-| **Maintainer** | Mensch | hat die Entscheidungen delegiert; wird nur bei den Punkten unter „Was weiter gefragt wird“ gefragt; testet, wann er will |
+| **Maintainer** | Mensch | hat die Entscheidungen delegiert; wird nur bei den Punkten unter „Was weiter gefragt wird“ gefragt; testet nach eigenem Zeitplan |
 
 Unter-Sitzungen starten keine weiteren Unter-Sitzungen. Sie entscheiden keine Haltepunkte.
 
