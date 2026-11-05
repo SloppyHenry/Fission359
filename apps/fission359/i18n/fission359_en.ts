@@ -120,6 +120,20 @@
     </message>
 </context>
 <context>
+    <name>CheckFlyout</name>
+    <message>
+        <location filename="../qml/CheckFlyout.qml" line="+27"/>
+        <location line="+3"/>
+        <source>Measure</source>
+        <translation>Measure</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click faces, edges or corners to see their length, area, radius, distance or angle. The number can be copied.</source>
+        <translation>Click faces, edges or corners to see their length, area, radius, distance or angle. The number can be copied.</translation>
+    </message>
+</context>
+<context>
     <name>ColorField</name>
     <message>
         <location filename="../qml/ColorField.qml" line="+20"/>
@@ -387,6 +401,21 @@
         <location line="+1"/>
         <source>Ctrl+Shift+S</source>
         <translation>Ctrl+Shift+S</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Measure</source>
+        <translation>Measure</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the length, area, radius, distance or angle of faces, edges and corners. The number can be copied.</source>
+        <translation>Shows the length, area, radius, distance or angle of faces, edges and corners. The number can be copied.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click a face, an edge or a corner; Shift+click adds a second one for the distance and the angle.</source>
+        <translation>Click a face, an edge or a corner; Shift+click adds a second one for the distance and the angle.</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -977,6 +1006,11 @@
         <location line="+1"/>
         <source>View</source>
         <translation>View</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Check</source>
+        <translation>Check</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1611,12 +1645,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+689"/>
+        <location line="+704"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-688"/>
+        <location line="-703"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
@@ -1646,7 +1680,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+102"/>
+        <location line="+105"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -1656,7 +1690,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-102"/>
+        <location line="-105"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -1729,6 +1763,11 @@
         <location line="+2"/>
         <source>View</source>
         <translation>View</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Measure</source>
+        <translation>Measure</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1837,12 +1876,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1196"/>
+        <location line="+1232"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1195"/>
+        <location line="-1231"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1873,12 +1912,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1183"/>
+        <location line="+1219"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1181"/>
+        <location line="-1217"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1908,24 +1947,34 @@
         <translation>About Fission359</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+17"/>
+        <source>Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.</source>
+        <translation>Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Check: measure faces, edges and corners.</source>
+        <translation>Check: measure faces, edges and corners.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</source>
         <translation>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</translation>
     </message>
     <message>
         <location line="+23"/>
-        <location line="+757"/>
+        <location line="+781"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-755"/>
-        <location line="+756"/>
+        <location line="-779"/>
+        <location line="+780"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-750"/>
+        <location line="-774"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -1951,7 +2000,7 @@
         </translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+97"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -2003,7 +2052,7 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+207"/>
+        <location line="+212"/>
         <source>Open</source>
         <translation>Open</translation>
     </message>
@@ -2067,7 +2116,7 @@
         </translation>
     </message>
     <message>
-        <location line="-588"/>
+        <location line="-600"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2102,22 +2151,22 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+792"/>
+        <location line="+816"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+119"/>
         <source>Click a face of the print bed or of another body.</source>
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
     <message>
-        <location line="+100"/>
+        <location line="+104"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1098"/>
+        <location line="-1133"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -2172,12 +2221,12 @@
         <translation>Choose two or more bodies (Shift+click), then merge them, subtract the others from the first or keep only what they share. One body can be split in two.</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</source>
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1129"/>
+        <location line="+1163"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2280,12 +2329,12 @@
         <translation>%1 added</translation>
     </message>
     <message>
-        <location line="-534"/>
+        <location line="-556"/>
         <source>Outline exported.</source>
         <translation>Outline exported.</translation>
     </message>
     <message>
-        <location line="+497"/>
+        <location line="+519"/>
         <source>Imported body</source>
         <translation>Imported body</translation>
     </message>
@@ -2543,32 +2592,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-308"/>
+        <location line="-309"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1182"/>
+        <location line="-1218"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1217"/>
+        <location line="+1253"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1051"/>
+        <location line="-1084"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+515"/>
+        <location line="+527"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-562"/>
+        <location line="-576"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -2594,6 +2643,70 @@
         <location line="+0"/>
         <source>now (earlier state)</source>
         <translation>now (earlier state)</translation>
+    </message>
+</context>
+<context>
+    <name>MeasureCard</name>
+    <message>
+        <location filename="../qml/MeasureCard.qml" line="+27"/>
+        <source>Position</source>
+        <translation>Position</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Distance</source>
+        <translation>Distance</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Angle</source>
+        <translation>Angle</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Length</source>
+        <translation>Length</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Area</source>
+        <translation>Area</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Diameter</source>
+        <translation>Diameter</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Click a face, an edge or a corner. A second one (Shift+click) gives the distance and the angle between them.</source>
+        <translation>Click a face, an edge or a corner. A second one (Shift+click) gives the distance and the angle between them.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shift+click adds the next one. Esc ends measuring.</source>
+        <translation>Shift+click adds the next one. Esc ends measuring.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+11"/>
+        <source>Measure</source>
+        <translation>Measure</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>Copy</source>
+        <translation>Copy</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Done</source>
+        <translation>Done</translation>
     </message>
 </context>
 <context>
@@ -3061,7 +3174,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+123"/>
+        <location filename="../qml/RightPanel.qml" line="+149"/>
         <source>Object</source>
         <translation>Object</translation>
     </message>
@@ -3086,7 +3199,7 @@
         <translation>Change a value or type a formula.</translation>
     </message>
     <message>
-        <location line="+47"/>
+        <location line="+115"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
@@ -3126,7 +3239,7 @@
         <translation>Text</translation>
     </message>
     <message numerus="yes">
-        <location line="-86"/>
+        <location line="-154"/>
         <source>%n body(ies) selected</source>
         <translation>
             <numerusform>%n body selected</numerusform>
@@ -3149,7 +3262,7 @@
         <translation>Colour</translation>
     </message>
     <message>
-        <location line="+68"/>
+        <location line="+136"/>
         <source>Words</source>
         <translation>Words</translation>
     </message>
@@ -3169,12 +3282,74 @@
         <translation>Italic</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-150"/>
+        <location line="+160"/>
         <source>Size</source>
         <translation>Size</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="-173"/>
+        <source>Facts</source>
+        <translation>Facts</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Volume</source>
+        <translation>Volume</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Surface</source>
+        <translation>Surface</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Material</source>
+        <translation>Material</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+27"/>
+        <source>Filament</source>
+        <translation>Filament</translation>
+    </message>
+    <message>
+        <location line="-25"/>
+        <source>1.75 mm</source>
+        <translation>1.75 mm</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>2.85 mm</source>
+        <translation>2.85 mm</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Density</source>
+        <translation>Density</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Weight</source>
+        <translation>Weight</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>up to %1 g</source>
+        <translation>up to %1 g</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>up to %1 m</source>
+        <translation>up to %1 m</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The slicer uses less: infill and walls decide the real weight.</source>
+        <translation>The slicer uses less: infill and walls decide the real weight.</translation>
+    </message>
+    <message>
+        <location line="+154"/>
         <source>Position</source>
         <translation>Position</translation>
     </message>
@@ -3876,7 +4051,7 @@
 <context>
     <name>ViewOverlay</name>
     <message>
-        <location filename="../qml/ViewOverlay.qml" line="+93"/>
+        <location filename="../qml/ViewOverlay.qml" line="+95"/>
         <location line="+10"/>
         <source>Orthographic</source>
         <translation>Orthographic</translation>
@@ -4004,7 +4179,7 @@
         <translation>Measure, section, print check, weight.</translation>
     </message>
     <message>
-        <location line="+69"/>
+        <location line="+84"/>
         <source>Home view (Home)</source>
         <translation>Home view (Home)</translation>
     </message>
@@ -4029,17 +4204,17 @@
         <translation>Orbit</translation>
     </message>
     <message>
-        <location line="-384"/>
+        <location line="-399"/>
         <source>Orbit: drag with the right mouse button – or drag this button</source>
         <translation>Orbit: drag with the right mouse button – or drag this button</translation>
     </message>
     <message>
-        <location line="+392"/>
+        <location line="+407"/>
         <source>Pan</source>
         <translation>Pan</translation>
     </message>
     <message>
-        <location line="-385"/>
+        <location line="-400"/>
         <source>Pan: drag with the middle mouse button – or drag this button</source>
         <translation>Pan: drag with the middle mouse button – or drag this button</translation>
     </message>
@@ -4059,7 +4234,7 @@
         <translation>Pan: Shift + middle mouse button – or drag this button</translation>
     </message>
     <message>
-        <location line="+394"/>
+        <location line="+409"/>
         <source>Zoom</source>
         <translation>Zoom</translation>
     </message>

@@ -16,6 +16,32 @@ Rectangle {
     property string bodyName: ""
     property bool renamable: false
     property string partText: ""        // "Face of Box 1"
+    // The body whose facts are shown (one body chosen), or "".
+    property string factsBodyId: ""
+    // What the weight is worked out with (kept while the program runs).
+    property string material: "pla"
+    property real filamentDiameter: 1.75
+    property real density: 1.24
+    property var facts: ({ valid: false })
+    function refreshFacts() {
+        facts = factsBodyId !== "" ? Measure.bodyFacts(factsBodyId) : ({ valid: false })
+    }
+    onFactsBodyIdChanged: refreshFacts()
+    Connections {
+        target: DocumentModel
+        function onSceneReady() { root.refreshFacts() }
+    }
+    readonly property var weight: facts.valid ? Measure.weightOf(facts.volume, density, filamentDiameter)
+                                              : ({ grams: 0, filamentMetres: 0 })
+    function chooseMaterial(id) {
+        material = id
+        const all = Measure.materials()
+        for (let i = 0; i < all.length; ++i) {
+            if (all[i].id === id) {
+                density = all[i].density
+            }
+        }
+    }
     property int bodyCount: 0
     property bool canCombine: false
     signal nameCommitted(string name)
@@ -242,6 +268,74 @@ Rectangle {
                     objectName: "bodyColor"
                     current: root.bodyColor
                     onChosen: color => root.colorChosen(color)
+                }
+            }
+
+            Section {
+                visible: root.tab === "object" && root.mode === "body" && root.facts.valid === true
+                heading: qsTr("Facts")
+
+                InfoRow {
+                    label: qsTr("Volume")
+                    value: Numbers.format(root.facts.volume / 1000.0, 2) + " cm³"
+                }
+
+                InfoRow {
+                    label: qsTr("Surface")
+                    value: Numbers.format(root.facts.area / 100.0, 2) + " cm²"
+                }
+
+                InfoRow {
+                    label: qsTr("Size")
+                    value: Numbers.format(root.facts.sizeX, 2) + " × " + Numbers.format(root.facts.sizeY, 2) + " × " + Numbers.format(root.facts.sizeZ, 2) + " mm"
+                }
+
+                Segmented {
+                    accessibleName: qsTr("Material")
+                    current: root.material
+                    model: [{ value: "pla", text: "PLA" }, { value: "petg", text: "PETG" }, { value: "abs", text: "ABS" }, { value: "asa", text: "ASA" }, { value: "tpu", text: "TPU" }]
+                    onActivated: value => root.chooseMaterial(value)
+                }
+
+                Segmented {
+                    accessibleName: qsTr("Filament")
+                    current: root.filamentDiameter
+                    model: [{ value: 1.75, text: qsTr("1.75 mm") }, { value: 2.85, text: qsTr("2.85 mm") }]
+                    onActivated: value => root.filamentDiameter = value
+                }
+
+                NumberField {
+                    width: parent.width
+                    label: qsTr("Density")
+                    kind: "plain"
+                    unit: "g/cm³"
+                    decimals: 2
+                    value: root.density
+                    onTextCommitted: text => {
+                        const typed = Numbers.evaluate(text, "plain")
+                        if (!isNaN(typed) && typed > 0) {
+                            root.density = typed
+                        }
+                    }
+                }
+
+                InfoRow {
+                    label: qsTr("Weight")
+                    value: qsTr("up to %1 g").arg(Numbers.format(root.weight.grams, 1))
+                }
+
+                InfoRow {
+                    label: qsTr("Filament")
+                    value: qsTr("up to %1 m").arg(Numbers.format(root.weight.filamentMetres, 2))
+                }
+
+                Txt {
+                    width: parent.width
+                    text: qsTr("The slicer uses less: infill and walls decide the real weight.")
+                    color: Theme.fg3
+                    font.pixelSize: Theme.fontSizeSmall
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideNone
                 }
             }
 

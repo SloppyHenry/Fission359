@@ -45,6 +45,7 @@ add_executable(fission_unit_tests
   ui/test_command_search.cpp
   ui/test_export_controller.cpp
   ui/test_import_controller.cpp
+  ui/test_measure_controller.cpp
   ui/test_selection_controller.cpp
   ui/test_placement.cpp
   ui/test_handles.cpp
