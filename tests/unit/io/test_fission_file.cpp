@@ -276,22 +276,34 @@ Document fixtureDocument(World& world, const std::string& type) {
         REQUIRE(made);
         return document.findFeature(*made)->outputs;
     };
-    if (type == "fillet" || type == "chamfer") { // work on an edge of a body
+    // Steps that work on a face or an edge of a body: the slot of their reference.
+    static const std::map<std::string, std::pair<std::string, ElementKind>> onElement{
+        {"fillet", {"edges", ElementKind::edge}},
+        {"chamfer", {"edges", ElementKind::edge}},
+        {"pushFace", {"face", ElementKind::face}},
+        {"stretch", {"face", ElementKind::face}},
+        {"tiltFace", {"face", ElementKind::face}},
+        {"removeFaces", {"faces", ElementKind::face}},
+        {"offsetFaces", {"faces", ElementKind::face}},
+        {"draft", {"faces", ElementKind::face}},
+        {"shell", {"openFaces", ElementKind::face}}};
+    if (const auto slot = onElement.find(type); slot != onElement.end()) {
         bodies = add("box", {});
         RecomputeCache cache;
         const auto result = recompute(document, world.registry, *world.kernel, cache);
         REQUIRE(result.has_value());
         const BodyResult& box = result->bodies.at(bodies.front());
         const BodyLooks looks = describeBody(box.faces, world.kernel->signatures(box.solid));
-        REQUIRE_FALSE(looks.edges.empty());
-        const NamedLook& edge = looks.edges.front();
+        const ElementKind kind = slot->second.second;
+        const auto& list = kind == ElementKind::edge ? looks.edges : looks.faces;
+        REQUIRE_FALSE(list.empty());
         const auto ref =
-            makeRef(looks, ElementKind::edge, edge.id,
-                    placementOf(document, world.registry, result->features, edge.name));
+            makeRef(looks, kind, list.front().id,
+                    placementOf(document, world.registry, result->features, list.front().name));
         REQUIRE(ref.has_value());
         FeatureDraft draft = defaultDraft(*world.registry.find(type));
         draft.inputs = {bodies.front()};
-        draft.refs["edges"] = {*ref};
+        draft.refs[slot->second.first] = {*ref};
         REQUIRE(document.addFeature(std::move(draft)));
     } else if (type == "combine" || type == "split" || type == "place") {
         bodies = add("box", {});
