@@ -9,4 +9,4 @@ fission_add_library(fission_ui
     include/fission/ui/document_model.h include/fission/ui/printer_catalog.h
     include/fission/ui/selection_controller.h include/fission/ui/placement_controller.h include/fission/ui/shape_previews.h include/fission/ui/handle_controller.h include/fission/ui/gizmo_controller.h include/fission/ui/rotate_controller.h include/fission/ui/scale_controller.h include/fission/ui/snap_session.h include/fission/ui/distance_controller.h include/fission/ui/align_controller.h include/fission/ui/file_controller.h include/fission/ui/clipboard_payload.h include/fission/ui/export_controller.h include/fission/ui/import_controller.h include/fission/ui/preferences.h include/fission/ui/command_search.h
   PUBLIC fission_interaction fission_services fission_render Qt6::Quick
-  PRIVATE fission_core fission_features fission_io Qt6::Qml Qt6::GuiPrivate)
+  PRIVATE fission_core fission_features fission_io fission_analysis Qt6::Qml Qt6::GuiPrivate)
