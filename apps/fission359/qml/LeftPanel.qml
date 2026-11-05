@@ -59,6 +59,10 @@ Rectangle {
         root.markerRequested(gap >= root.recipe.length ? -1 : gap)
     }
     signal tabRequested(string tab)
+    // The named measures under the recipe: folded out or not, and the words for their mistakes.
+    property bool measuresOpen: false
+    property var catalog
+    signal measuresOpenRequested(bool open)
     signal addRequested
     signal bodyVisibilityRequested(int index, bool visible)
     signal bodyChosen(int index, bool extend)
@@ -355,7 +359,8 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: Math.min(parent.height * 0.46, recipeHeader.height + recipeBody.implicitHeight)
+        height: Math.min(parent.height * (measuresPanel.open ? 0.3 : 0.46),
+                         recipeHeader.height + recipeBody.implicitHeight) + measuresPanel.height
 
         Rectangle {
             width: parent.width
@@ -416,6 +421,21 @@ Rectangle {
             }
         }
 
+        // The named measures: a fold-out area under the recipe (AP-2.9).
+        MeasuresPanel {
+            id: measuresPanel
+
+            visible: root.tab === "bodies"
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            open: root.measuresOpen
+            maxHeight: root.height * 0.4
+            catalog: root.catalog
+            onOpenRequested: open => root.measuresOpenRequested(open)
+            onStepRequested: index => root.stepRequested(index)
+        }
+
         // The steps scroll when there are more than fit; the header stays.
         Flickable {
             id: recipeScroll
@@ -423,7 +443,7 @@ Rectangle {
             anchors.top: recipeHeader.bottom
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.bottom: parent.bottom
+            anchors.bottom: measuresPanel.top
             contentHeight: recipeBody.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds

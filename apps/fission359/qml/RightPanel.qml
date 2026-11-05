@@ -68,6 +68,8 @@ Rectangle {
         return bold ? (italic ? "boldItalic" : "bold") : (italic ? "italic" : "regular")
     }
     signal valueCommitted(string name, string text)
+    // "Save as named measure" at the field `name` of the step.
+    signal saveMeasureRequested(string name, string suggestedName)
     // Dragging the name of a field changes its value as one step of the history.
     signal dragStarted(string name)
     signal dragFinished(bool accepted)
@@ -366,6 +368,8 @@ Rectangle {
                         unit: "mm"
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
+                        saveName: entry.label
+                        onSaveAsMeasureRequested: name => root.saveMeasureRequested(modelData, name)
                         draggable: true
                         onDragStarted: root.dragStarted(modelData)
                         onDragFinished: accepted => root.dragFinished(accepted)
@@ -464,6 +468,8 @@ Rectangle {
                         unit: entry.kind === "angle" ? "°" : entry.kind === "plain" ? "" : "mm"
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
+                        saveName: entry.label
+                        onSaveAsMeasureRequested: name => root.saveMeasureRequested(modelData, name)
                         draggable: true
                         onDragStarted: root.dragStarted(modelData)
                         onDragFinished: accepted => root.dragFinished(accepted)
@@ -507,6 +513,8 @@ Rectangle {
                             unit: ""
                             invalid: entry.error
                             onTextCommitted: text => root.valueCommitted(modelData, text)
+                        saveName: entry.label
+                        onSaveAsMeasureRequested: name => root.saveMeasureRequested(modelData, name)
                             draggable: true
                             onDragStarted: root.dragStarted(modelData)
                             onDragFinished: accepted => root.dragFinished(accepted)
@@ -551,6 +559,8 @@ Rectangle {
                             unit: "°"
                             invalid: entry.error
                             onTextCommitted: text => root.valueCommitted(modelData, text)
+                        saveName: entry.label
+                        onSaveAsMeasureRequested: name => root.saveMeasureRequested(modelData, name)
                             draggable: true
                             onDragStarted: root.dragStarted(modelData)
                             onDragFinished: accepted => root.dragFinished(accepted)
@@ -630,6 +640,8 @@ Rectangle {
                         unit: entry.kind === "angle" ? "°" : entry.kind === "plain" ? "" : "mm"
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
+                        saveName: entry.label
+                        onSaveAsMeasureRequested: name => root.saveMeasureRequested(modelData, name)
                         draggable: true
                         onDragStarted: root.dragStarted(modelData)
                         onDragFinished: accepted => root.dragFinished(accepted)

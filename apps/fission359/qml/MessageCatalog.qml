@@ -112,6 +112,26 @@ QtObject {
         }
     }
 
+    /// The words for a mistake in the formula of a named measure: { code, subject, path }.
+    function measureErrorText(error) {
+        switch (error.code) {
+        case "cycle":
+            return qsTr("These measures use each other: %1.").arg(error.path.join(" → "))
+        case "unknownName":
+            return qsTr("I don’t know “%1”.").arg(error.subject)
+        case "brokenDependency":
+            return qsTr("“%1” has a problem itself.").arg(error.subject)
+        case "divisionByZero":
+            return qsTr("That divides by zero.")
+        case "unknownUnit":
+            return qsTr("I don’t know the unit “%1”.").arg(error.subject)
+        case "wrongKind":
+            return qsTr("The result is not the right kind of value (a length, an angle or a plain number).")
+        default:
+            return qsTr("This formula cannot be calculated.")
+        }
+    }
+
     /// What an import says when it did not work.
     readonly property var importEntries: ({
         "unsupported": { card: false, buttons: [] },

@@ -108,6 +108,7 @@ Window {
         ] },
         { title: qsTr("View"), items: [
             { id: "measure", text: qsTr("Measure"), checked: Measure.enabled },
+            { id: "measures", text: qsTr("Named measures"), shortcut: primaryKey + "M", nativeShortcut: "Ctrl+M", checked: root.measuresOpen },
             { id: "orthographic", text: qsTr("Orthographic"), shortcut: "P", checked: root.orthographic },
             { id: "bed", text: qsTr("Print bed"), checked: root.bedVisible },
             { id: "softshadows", text: qsTr("Soft shadows"), checked: viewport.ambientOcclusion },
@@ -188,6 +189,7 @@ Window {
     readonly property bool redoAvailable: DocumentModel.canRedo && !textHasHistory
     property bool historyOpen: false
     property bool exportOpen: false
+    property bool measuresOpen: false      // the named measures under the recipe (⌘M)
     property bool settingsOpen: false
     property bool startOpen: AppOptions.startPage
     property bool searchOpen: false
@@ -392,6 +394,13 @@ Window {
         case "saveas": saveDialog.open(); break
         case "import": importDialog.open(); break
         case "export": exportOpen = !exportOpen; break
+        case "measures":
+            if (root.leftWidth <= 0) {
+                root.focusMode = false
+            }
+            root.leftTab = "bodies"
+            root.measuresOpen = !root.measuresOpen
+            break
         case "measure":
             Measure.enabled = !Measure.enabled
             root.flyout = ""
@@ -635,6 +644,7 @@ Window {
                  && !Rotate.editing && !Scale.editing && !root.seating
         onActivated: root.run("selectnone")
     }
+    Shortcut { sequence: "Ctrl+M"; enabled: !root.isMac && !root.typing; onActivated: root.run("measures") }
     Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
     Shortcut { sequence: "Home"; onActivated: root.run("view.home") }
     Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.front") }
@@ -1008,6 +1018,9 @@ Window {
             bedText: root.bedText
             recipe: root.recipeList
             currentStep: DocumentModel.currentStep
+            measuresOpen: root.measuresOpen
+            catalog: messageCatalog
+            onMeasuresOpenRequested: open => root.measuresOpen = open
             onTabRequested: tab => root.leftTab = tab
             onAddRequested: root.flyout = "shapes"
             deletion: root.pendingDeletion
@@ -1310,6 +1323,11 @@ Window {
             bodyColor: root.chosenColor
             onColorChosen: color => DocumentModel.setBodiesColor(root.colorTargets, color)
             onNameCommitted: name => DocumentModel.setBodyName(root.panelBodyIndex, name)
+            onSaveMeasureRequested: (field, name) => {
+                if (DocumentModel.saveStepValueAsMeasure(DocumentModel.currentStep, field, name) !== "") {
+                    root.measuresOpen = true
+                }
+            }
             onCombineRequested: way => root.combine(way)
             stepValues: root.stepValueList
             isHole: root.currentStepIsHole
