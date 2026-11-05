@@ -20,6 +20,7 @@ add_executable(fission_unit_tests
   services/test_settings.cpp
   io/test_fission_file.cpp
   io/test_export.cpp
+  io/test_formats.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp

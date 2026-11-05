@@ -19,7 +19,11 @@
 #include "fission/geo/error.h"
 
 #include "occt_build.h"
+#include <BRepAdaptor_Curve.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
+#include <BRep_Tool.hxx>
+#include <GCPnts_QuasiUniformDeflection.hxx>
+#include <GeomAbs_CurveType.hxx>
 #include <IFSelect_ReturnStatus.hxx>
 #include <IGESCAFControl_Reader.hxx>
 #include <IGESData_GlobalSection.hxx>
@@ -36,12 +40,15 @@
 #include <TDocStd_Document.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopLoc_Location.hxx>
+#include <TopoDS_Edge.hxx>
 #include <XCAFDoc_ColorTool.hxx>
 #include <XCAFDoc_ColorType.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
+#include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Trsf.hxx>
+#include <gp_Vec.hxx>
 
 namespace fission::geo::occt {
 
@@ -333,6 +340,113 @@ std::string exportStep(const std::vector<ExportBody>& bodies) {
         throw GeometryError(GeometryErrorCode::kernelFailure,
                             std::string("OCCT failed writing STEP: ") + failure.what());
     }
+}
+
+namespace {
+
+constexpr double kRadiansToDegrees = 57.29577951308232;
+
+// The plane a face is drawn in: looking at the face from outside, y up.
+struct DrawingPlane {
+    gp_Pnt origin;
+    gp_Dir x;
+    gp_Dir y;
+
+    Point2d project(const gp_Pnt& point) const {
+        const gp_Vec offset(origin, point);
+        return {offset.Dot(gp_Vec(x)), offset.Dot(gp_Vec(y))};
+    }
+};
+
+double wrapDegrees(double angle) {
+    angle = std::fmod(angle, 360.0);
+    return angle < 0.0 ? angle + 360.0 : angle;
+}
+
+double angleAround(const Point2d& centre, const Point2d& point) {
+    return wrapDegrees(std::atan2(point.y - centre.y, point.x - centre.x) * kRadiansToDegrees);
+}
+
+OutlineShape arcThrough(const Point2d& centre, double radius, const Point2d& from,
+                        const Point2d& middle, const Point2d& to) {
+    // Counter-clockwise from `a` to `b`, the one that holds `middle`.
+    const double a = angleAround(centre, from);
+    const double b = angleAround(centre, to);
+    const double m = angleAround(centre, middle);
+    const bool forward = wrapDegrees(m - a) < wrapDegrees(b - a);
+    const double start = forward ? a : b;
+    const double span = wrapDegrees((forward ? b : a) - start);
+    return OutlineArc{centre, radius, start, start + (span > 0.0 ? span : 360.0)};
+}
+
+} // namespace
+
+Outline faceOutline(const Solid& solid, std::uint32_t faceId) {
+    const auto* data = dynamic_cast<const OcctSolidData*>(solid.data());
+    if (data == nullptr) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "not a body of this kernel");
+    }
+    ShapeMap faces;
+    TopExp::MapShapes(data->shape(), TopAbs_FACE, faces);
+    if (faceId < 1 || faceId > static_cast<std::uint32_t>(faces.Extent())) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "no such face");
+    }
+    const TopoDS_Face face = TopoDS::Face(faces(static_cast<int>(faceId)));
+    if (!isFlat(face)) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "the face is not flat");
+    }
+
+    // Looking at the face from outside: the first plane axis is x, the normal points at us.
+    const BRepAdaptor_Surface surface(face);
+    const gp_Pln plane = surface.Plane();
+    const gp_Dir normal = outwardNormal(face);
+    const gp_Dir xDirection = plane.Position().XDirection();
+    const gp_Dir yDirection(gp_Vec(normal).Crossed(gp_Vec(xDirection)));
+    DrawingPlane drawing{plane.Location(), xDirection, yDirection};
+
+    Outline outline;
+    for (TopExp_Explorer edges(face, TopAbs_EDGE); edges.More(); edges.Next()) {
+        const TopoDS_Edge edge = TopoDS::Edge(edges.Current());
+        if (BRep_Tool::Degenerated(edge)) {
+            continue;
+        }
+        const BRepAdaptor_Curve curve(edge);
+        const double first = curve.FirstParameter();
+        const double last = curve.LastParameter();
+        const Point2d from = drawing.project(curve.Value(first));
+        const Point2d to = drawing.project(curve.Value(last));
+        switch (curve.GetType()) {
+        case GeomAbs_Line:
+            outline.shapes.push_back(OutlineLine{from, to});
+            continue;
+        case GeomAbs_Circle: {
+            const Point2d centre = drawing.project(curve.Circle().Location());
+            const double radius = curve.Circle().Radius();
+            const bool whole = curve.IsClosed() || std::abs((last - first) - 2.0 * M_PI) < 1e-9;
+            if (whole) {
+                outline.shapes.push_back(OutlineCircle{centre, radius});
+            } else {
+                const Point2d middle = drawing.project(curve.Value(0.5 * (first + last)));
+                outline.shapes.push_back(arcThrough(centre, radius, from, middle, to));
+            }
+            continue;
+        }
+        default:
+            break;
+        }
+        // A spline, an ellipse ...: short lines within 0.005 mm.
+        GCPnts_QuasiUniformDeflection sampler(curve, 0.005);
+        OutlinePolyline line;
+        if (sampler.IsDone()) {
+            for (int i = 1; i <= sampler.NbPoints(); ++i) {
+                line.points.push_back(drawing.project(sampler.Value(i)));
+            }
+        } else {
+            line.points = {from, to};
+        }
+        outline.shapes.push_back(std::move(line));
+    }
+    return outline;
 }
 
 } // namespace fission::geo::occt

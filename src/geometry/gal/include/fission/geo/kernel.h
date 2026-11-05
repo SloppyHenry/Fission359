@@ -11,6 +11,7 @@
 #include "fission/geo/exchange.h"
 #include "fission/geo/mesh.h"
 #include "fission/geo/named_solid.h"
+#include "fission/geo/outline.h"
 #include "fission/geo/primitives.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/solid.h"
@@ -123,6 +124,17 @@ public:
     virtual std::string exportStep(const std::vector<ExportBody>& bodies) const {
         (void)bodies;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot write STEP");
+    }
+
+    /// The edges of one flat face as a drawing (AP-2.13): seen from outside the body, with the
+    /// origin at a corner point of the face's plane and x along the plane's first axis. Lines,
+    /// circles and arcs stay exact, other curves become short lines. `faceId` counts like
+    /// `NamedFace::faceId`. Throws `GeometryError` with `invalidInput` for a number that is not a
+    /// face of the body or a face that is not flat. The default refuses.
+    virtual Outline faceOutline(const Solid& solid, std::uint32_t faceId) const {
+        (void)solid;
+        (void)faceId;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot draw outlines");
     }
 
     virtual SolidReport measure(const Solid& solid) const = 0;

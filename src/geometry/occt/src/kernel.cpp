@@ -46,6 +46,9 @@ public:
     std::string exportStep(const std::vector<ExportBody>& bodies) const override {
         return occt::exportStep(bodies);
     }
+    Outline faceOutline(const Solid& solid, std::uint32_t faceId) const override {
+        return occt::faceOutline(solid, faceId);
+    }
     SolidReport measure(const Solid& solid) const override { return occt::measure(solid); }
     Bounds bounds(const Solid& solid) const override { return occt::bounds(solid); }
     Bounds exactBounds(const Solid& solid) const override { return occt::exactBounds(solid); }
