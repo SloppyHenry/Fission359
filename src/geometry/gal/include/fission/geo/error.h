@@ -21,6 +21,8 @@ enum class GeometryErrorCode {
     glyphsMissing,    ///< The font has no character for some of the text; `subject()` lists them.
     fontNotFound,     ///< No font of that name on this computer; `subject()` is the name.
     fontStyleMissing, ///< The font exists, but not in the wanted style; `subject()` is its name.
+    importUnreadable, ///< The bytes are not a STEP or IGES file this kernel can read.
+    importEmpty,      ///< The file holds no solid body that could be used.
 };
 
 class GeometryError : public std::runtime_error {

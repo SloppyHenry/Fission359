@@ -26,6 +26,7 @@ add_executable(fission_unit_tests
   geometry/test_booleans_gal.cpp
   geometry/test_seat.cpp
   geometry/test_text.cpp
+  geometry/test_exchange.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
   render/test_picking.cpp

@@ -37,7 +37,9 @@ QtObject {
         "fontNotFound": { actions: ["editValue", "hideStep"] },
         "fontStyleMissing": { actions: ["editValue", "hideStep"] },
         "combineEmpty": { actions: ["hideStep"] },
-        "combineNoOverlap": { actions: ["hideStep"] }
+        "combineNoOverlap": { actions: ["hideStep"] },
+        "importFileUnreadable": { actions: ["hideStep"] },
+        "importFileEmpty": { actions: ["hideStep"] }
     })
 
     /// Problems with files: "card" is shown as a card with buttons, else as a hint line. The
@@ -191,6 +193,10 @@ QtObject {
             return qsTr("The result is not a clean solid. Try changing a value a little.")
         case "combineEmpty":
             return qsTr("The bodies do not overlap, so nothing is left. Move them so that they touch.")
+        case "importFileUnreadable":
+            return qsTr("This file could not be read. Is it a STEP or IGES file that is not damaged?")
+        case "importFileEmpty":
+            return qsTr("This file has no solid body in it, only surfaces or lines. Fission can only use solid bodies.")
         case "inputFailed":
         case "inputMissing":
             return qsTr("An earlier step has a problem.")

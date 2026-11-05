@@ -118,6 +118,10 @@ FeatureIssue issueFromKernel(const geo::GeometryError& error) {
         return issueOf(FeatureIssueCode::combineEmpty, {}, error.what());
     case geo::GeometryErrorCode::noOverlap:
         return issueOf(FeatureIssueCode::combineNoOverlap, {}, error.what());
+    case geo::GeometryErrorCode::importUnreadable:
+        return issueOf(FeatureIssueCode::importFileUnreadable, {}, error.what());
+    case geo::GeometryErrorCode::importEmpty:
+        return issueOf(FeatureIssueCode::importFileEmpty, {}, error.what());
     case geo::GeometryErrorCode::kernelFailure:
         break;
     }

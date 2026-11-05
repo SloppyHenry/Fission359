@@ -36,6 +36,8 @@ enum class FeatureIssueCode {
     fontStyleMissing,       ///< The font has no such style (bold, italic); `subject` is its name.
     combineEmpty,           ///< Combining left nothing (an overlap of bodies that do not overlap).
     combineNoOverlap,       ///< A tool does not touch the body it was to cut.
+    importFileUnreadable,   ///< The embedded file is not a STEP or IGES file.
+    importFileEmpty,        ///< The embedded file holds no usable solid body.
 };
 
 struct FeatureIssue {

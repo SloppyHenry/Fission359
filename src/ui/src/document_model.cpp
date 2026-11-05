@@ -94,6 +94,10 @@ const char* issueCodeName(core::FeatureIssueCode code) {
         return "combineEmpty";
     case core::FeatureIssueCode::combineNoOverlap:
         return "combineNoOverlap";
+    case core::FeatureIssueCode::importFileUnreadable:
+        return "importFileUnreadable";
+    case core::FeatureIssueCode::importFileEmpty:
+        return "importFileEmpty";
     }
     return "kernelFailed";
 }
