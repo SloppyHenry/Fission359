@@ -40,6 +40,20 @@ private:
     int number_ = 0;
 };
 
+/// One body of an imported file: the step that reads it, and what the body is called and how it
+/// looks (taken from the file).
+struct ImportedPart {
+    FeatureDraft draft;
+    std::string bodyName;
+    std::optional<Color> color;
+};
+
+/// Embeds a file and adds one step per body in it, as **one** step of the history (AP-2.13).
+/// The steps name the embedded file in their word `asset`; the command fills that in.
+/// Description key `importFile`, values `file` and `count`.
+std::unique_ptr<Command> makeImportFile(std::string fileName, Bytes bytes,
+                                        std::vector<ImportedPart> parts);
+
 /// Removes a step and the bodies it made.
 std::unique_ptr<Command> makeRemoveFeature(FeatureId id);
 

@@ -15,6 +15,7 @@ std::unique_ptr<const core::FeatureType> makeTextType();
 std::unique_ptr<const core::FeatureType> makeCombineType();
 std::unique_ptr<const core::FeatureType> makePlaceType();
 std::unique_ptr<const core::FeatureType> makeSplitType();
+std::unique_ptr<const core::FeatureType> makeImportType();
 } // namespace detail
 
 void registerBuiltinFeatures(core::FeatureRegistry& registry) {
@@ -25,6 +26,7 @@ void registerBuiltinFeatures(core::FeatureRegistry& registry) {
     registry.add(detail::makeCombineType());
     registry.add(detail::makePlaceType());
     registry.add(detail::makeSplitType());
+    registry.add(detail::makeImportType());
 }
 
 } // namespace fission::features

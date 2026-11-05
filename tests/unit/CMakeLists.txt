@@ -16,6 +16,7 @@ add_executable(fission_unit_tests
   features/test_combine.cpp
   features/test_split.cpp
   features/test_text_feature.cpp
+  features/test_import.cpp
   services/test_settings.cpp
   io/test_fission_file.cpp
   io/test_export.cpp

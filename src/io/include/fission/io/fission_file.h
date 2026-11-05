@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <map>
 #include <optional>
 #include <string>
 #include <vector>
@@ -41,13 +40,12 @@ struct SaveExtras {
     /// When the file was first saved (ISO 8601, UTC); empty = now. Saving over a file passes the
     /// old value on so that it stays.
     std::string created;
-    /// Embedded files (an imported STEP file, a font, ...): name -> content. Stored as
-    /// `assets/<name>` with a checksum each. A name is a plain file name: no `/`, `\\` or
-    /// leading `.`, not empty. Saving with any other name fails with `cannotWrite`.
-    std::map<std::string, std::vector<std::uint8_t>> assets;
 };
 
-/// True when `name` may be used as the name of an embedded file (see `SaveExtras::assets`).
+/// True when `name` may be used as the name of an embedded file: a plain file name, not empty,
+/// without `/`, `\\` or a leading `.`. The embedded files are those of the document that a step
+/// still names (`core::Document::usedAssetNames`); saving a name that is not valid fails with
+/// `cannotWrite`.
 bool isValidAssetName(const std::string& name);
 
 /// Switches for tests.
@@ -93,8 +91,6 @@ struct OpenResult {
     std::vector<core::LoadProblem> documentProblems; ///< From reading `document.json`.
     FileInfo info;
     std::vector<std::uint8_t> previewPng;
-    /// The embedded files of `assets/`, by name. Entries with an unusable name are left out.
-    std::map<std::string, std::vector<std::uint8_t>> assets;
 };
 
 OpenResult open(const std::filesystem::path& path, const OpenOptions& options = {});

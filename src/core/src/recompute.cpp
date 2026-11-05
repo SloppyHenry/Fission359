@@ -321,7 +321,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         } else {
             std::vector<Output> outputs;
             try {
-                const ExecuteContext context{kernel, cancel};
+                const ExecuteContext context{kernel, cancel, &document.assets()};
                 FeatureResult made =
                     type->execute({feature, state.params, inputs, std::move(producers)}, context);
                 if (cancel.stop_requested()) {

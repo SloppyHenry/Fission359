@@ -138,6 +138,8 @@ struct ExecuteInput {
 struct ExecuteContext {
     const geo::GeometryKernel& kernel;
     CancelToken cancel; ///< Long steps look at it and give up when asked to.
+    /// The files embedded in the document (a step that reads one names it in its word `asset`).
+    const AssetMap* assets = nullptr;
 };
 
 /// A kind of step (box, cylinder, later extrude, fillet ...). Feature types are plug-ins: a new
