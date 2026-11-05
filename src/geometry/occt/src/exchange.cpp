@@ -14,6 +14,7 @@
 #include <functional>
 #include <mutex>
 #include <sstream>
+#include <string_view>
 #include <utility>
 
 #include "fission/geo/error.h"
@@ -66,6 +67,18 @@ namespace {
 std::mutex& exchangeLock() {
     static std::mutex lock;
     return lock;
+}
+
+// A STEP file (ISO 10303-21) opens with "ISO-10303-21;" and closes with "END-ISO-10303-21;". Bytes
+// without both never reach the OCCT parser: it leaks on its error path, and a file cut off before
+// its end is no complete model anyway.
+bool looksLikeStep(const std::vector<std::uint8_t>& bytes) {
+    const std::string_view text(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    constexpr std::size_t kWindow = 1024;
+    const std::string_view head = text.substr(0, kWindow);
+    const std::string_view tail = text.size() > kWindow ? text.substr(text.size() - kWindow) : text;
+    return head.find("ISO-10303-21;") != std::string_view::npos &&
+           tail.find("END-ISO-10303-21;") != std::string_view::npos;
 }
 
 // An XCAF document for one import or export. The document and its attributes point at each other
@@ -223,6 +236,10 @@ ImportResult importFile(ImportFormat format, const std::vector<std::uint8_t>& by
         const XcafDocument owned;
         const occ::handle<TDocStd_Document>& document = owned.handle();
         if (format == ImportFormat::step) {
+            if (!looksLikeStep(bytes)) {
+                throw GeometryError(GeometryErrorCode::importUnreadable,
+                                    "not a complete STEP file");
+            }
             STEPCAFControl_Reader reader;
             reader.SetColorMode(true);
             reader.SetNameMode(true);
