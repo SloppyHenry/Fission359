@@ -57,14 +57,14 @@ public:
     }
 
     FeatureResult execute(const ExecuteInput& input, const ExecuteContext& context) const override {
-        const std::string& name = textOf(input.feature, "asset", "");
+        const std::string name = textOf(input.feature, "asset", "");
         const auto file =
             context.assets != nullptr ? context.assets->find(name) : AssetMap::const_iterator();
         if (context.assets == nullptr || file == context.assets->end()) {
             throw geo::GeometryError(geo::GeometryErrorCode::importUnreadable,
                                      "import: the embedded file " + name + " is missing");
         }
-        const std::string& format = textOf(input.feature, "format", kStep);
+        const std::string format = textOf(input.feature, "format", kStep);
         if (format != kStep && format != kIges) {
             throw geo::GeometryError(geo::GeometryErrorCode::importUnreadable,
                                      "import: unknown file format " + format);
