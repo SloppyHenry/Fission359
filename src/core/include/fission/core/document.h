@@ -36,12 +36,25 @@ struct Value {
     bool operator==(const Value&) const = default;
 };
 
+/// The range of the slider that turns a model into a configurator (AP-2.9).
+struct SliderRange {
+    double min = 0.0;
+    double max = 100.0;
+    double step = 1.0;
+
+    /// min < max, step > 0, all finite.
+    bool valid() const;
+    bool operator==(const SliderRange&) const = default;
+};
+
 /// A named measure (benanntes Maß).
 struct Parameter {
     std::string name;
     std::string expression;
     QuantityKind kind = QuantityKind::length;
     std::string comment;
+    /// Set when the measure is a slider in the configurator view.
+    std::optional<SliderRange> slider = std::nullopt;
 
     bool operator==(const Parameter&) const = default;
 };
@@ -198,6 +211,27 @@ public:
     /// Puts a measure back at a given place (undo of removing it).
     void insertParameter(std::size_t index, Parameter parameter);
     std::vector<MeasureDefinition> measureDefinitions() const;
+    /// Changes the comment of the measure at a position.
+    bool setParameterCommentAt(std::size_t index, std::string comment);
+    /// Sets or takes away the slider of the measure at a position.
+    bool setParameterSliderAt(std::size_t index, std::optional<SliderRange> slider);
+    /// The steps (by number in the recipe, 0-based) and the other measures (by position) whose
+    /// formulas use the measure `name`.
+    struct MeasureUse {
+        std::vector<std::size_t> steps;
+        std::vector<std::size_t> measures;
+    };
+    MeasureUse usesOfParameter(std::string_view name) const;
+    /// Rewrites every formula of steps and measures that uses `oldName` to use `newName`; returns
+    /// what was rewritten, to undo it with `restoreFormulas`.
+    struct FormulaEdit {
+        bool inMeasure = false;
+        std::size_t index = 0; ///< Position of the step or of the measure.
+        std::string field;     ///< The value of a step.
+        std::string before;
+    };
+    std::vector<FormulaEdit> renameInFormulas(std::string_view oldName, std::string_view newName);
+    void restoreFormulas(const std::vector<FormulaEdit>& edits);
 
     // --- recipe --------------------------------------------------------------------------
     const std::vector<Feature>& features() const noexcept { return features_; }

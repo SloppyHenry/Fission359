@@ -50,6 +50,10 @@ class DocumentModel : public QObject {
     /// [{ index, type, state, values: [number], problem: { code, subject, field, detail } }]
     /// `state` is ok | warning | fails | off | pending.
     Q_PROPERTY(QVariantList recipe READ recipe NOTIFY recipeChanged)
+    /// The named measures: [{ index, name, expression, comment, kind (length | angle | plain),
+    /// unit ("mm" | "°" | ""), valid, value, error: { code, subject, path }, usedIn: [step index],
+    /// usedInNumbers: [step number], usedByMeasures: [name], slider: { min, max, step } }].
+    Q_PROPERTY(QVariantList measures READ measures NOTIFY measuresChanged)
     /// [{ index, type, number, name, color, visible, hole }]; `name` is empty unless the person
     /// named it. `hole` is true for a body marked "As hole".
     Q_PROPERTY(QVariantList bodies READ bodies NOTIFY bodiesChanged)
@@ -129,6 +133,32 @@ public:
     };
     /// The bodies to export, in the order of the list of bodies; `onlyIds` empty = all of them.
     std::vector<ExportBody> exportBodies(const QStringList& onlyIds) const;
+
+    QVariantList measures() const { return m_measureList; }
+    /// Adds a named measure at the end. "" when it was added, else why not: "invalidName" (letters,
+    /// digits and _ only, starting with a letter) or "duplicateName". `kind`: length | angle |
+    /// plain.
+    Q_INVOKABLE QString addMeasure(const QString& name, const QString& expression,
+                                   const QString& kind);
+    /// A name for a new measure that no measure has yet: `base` made into a valid name, numbered
+    /// ("Breite2") when taken.
+    Q_INVOKABLE QString suggestMeasureName(const QString& base) const;
+    /// Who uses a measure: { steps: [step index], numbers: [step number], measures: [name] }.
+    Q_INVOKABLE QVariantMap measureUses(const QString& name) const;
+    Q_INVOKABLE bool removeMeasure(const QString& name);
+    Q_INVOKABLE bool setMeasureExpression(const QString& name, const QString& expression);
+    Q_INVOKABLE bool setMeasureComment(const QString& name, const QString& comment);
+    /// Renames a measure and every formula that uses it, as one step of the history. "" when it
+    /// worked, else why not: "invalidName" or "duplicateName".
+    Q_INVOKABLE QString renameMeasure(const QString& name, const QString& newName);
+    /// The slider of a measure (min < max, step > 0); `clearMeasureSlider` takes it away.
+    Q_INVOKABLE bool setMeasureSlider(const QString& name, double min, double max, double step);
+    Q_INVOKABLE bool clearMeasureSlider(const QString& name);
+    /// "Save as named measure" at a number field of a step: a measure with the field's formula (or
+    /// value) is made and the field uses its name, as one step of the history. Returns the name,
+    /// "" when it did not work.
+    Q_INVOKABLE QString saveStepValueAsMeasure(int stepIndex, const QString& field,
+                                               const QString& suggestedName);
 
     /// What the file said about one of its bodies.
     struct ImportedBodyInfo {
@@ -440,6 +470,7 @@ public:
 
 signals:
     void recipeChanged();
+    void measuresChanged();
     void bodiesChanged();
     void currentStepChanged();
     void stepValuesChanged();
@@ -478,6 +509,7 @@ private:
     /// Runs one command and the cuts it needs as one step, described by `label`.
     bool executeWithCuts(std::unique_ptr<core::Command> command, core::CommandDescription label);
     void rebuildLists();
+    void rebuildMeasures();
     void rebuildScene();
     QVariantList buildStepValues() const;
     QVariantList buildStepTexts() const;
@@ -544,6 +576,7 @@ private:
     Numbers* m_numbers = nullptr;
 
     QVariantList m_recipe;
+    QVariantList m_measureList;
     QVariantList m_bodies;
     QVariantList m_stepValues;
     QVariantList m_stepTexts;

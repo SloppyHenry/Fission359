@@ -541,6 +541,106 @@ std::unique_ptr<Command> makeSetParameterExpression(std::string name, std::strin
         });
 }
 
+namespace {
+
+class RenameMeasureEverywhereCommand final : public Command {
+public:
+    RenameMeasureEverywhereCommand(std::string name, std::string newName)
+        : name_(std::move(name)), newName_(std::move(newName)) {}
+
+    ApplyResult apply(Document& document) override {
+        const auto index = document.indexOfParameter(name_);
+        if (!index || !isValidMeasureName(newName_)) {
+            return ApplyResult::refused;
+        }
+        index_ = *index;
+        oldName_ = document.parameters()[index_].name;
+        if (oldName_ == newName_) {
+            return ApplyResult::unchanged;
+        }
+        // Another measure with this name (case and umlauts do not matter) would be mixed up
+        // with it; the measure itself may change its spelling.
+        const auto other = document.indexOfParameter(newName_);
+        if (other && *other != index_) {
+            return ApplyResult::refused;
+        }
+        edits_ = document.renameInFormulas(oldName_, newName_);
+        document.setParameterNameAt(index_, newName_);
+        return ApplyResult::applied;
+    }
+    void revert(Document& document) override {
+        document.setParameterNameAt(index_, oldName_);
+        document.restoreFormulas(edits_);
+    }
+    CommandDescription describe() const override {
+        return {"renameMeasure", {{"name", oldName_}, {"value", newName_}}};
+    }
+
+private:
+    std::string name_;
+    std::string newName_;
+    std::string oldName_;
+    std::size_t index_ = 0;
+    std::vector<Document::FormulaEdit> edits_;
+};
+
+class SetParameterSliderCommand final : public Command {
+public:
+    SetParameterSliderCommand(std::string name, std::optional<SliderRange> slider)
+        : name_(std::move(name)), slider_(slider) {}
+
+    ApplyResult apply(Document& document) override {
+        const auto index = document.indexOfParameter(name_);
+        if (!index || (slider_ && !slider_->valid())) {
+            return ApplyResult::refused;
+        }
+        index_ = *index;
+        old_ = document.parameters()[index_].slider;
+        if (old_ == slider_) {
+            return ApplyResult::unchanged;
+        }
+        return document.setParameterSliderAt(index_, slider_) ? ApplyResult::applied
+                                                              : ApplyResult::refused;
+    }
+    void revert(Document& document) override { document.setParameterSliderAt(index_, old_); }
+    CommandDescription describe() const override { return {"setMeasureSlider", {{"name", name_}}}; }
+
+private:
+    std::string name_;
+    std::optional<SliderRange> slider_;
+    std::optional<SliderRange> old_;
+    std::size_t index_ = 0;
+};
+
+} // namespace
+
+std::unique_ptr<Command> makeRenameMeasureEverywhere(std::string name, std::string newName) {
+    return std::make_unique<RenameMeasureEverywhereCommand>(std::move(name), std::move(newName));
+}
+
+std::unique_ptr<Command> makeSetParameterComment(std::string name, std::string comment) {
+    std::string key = "measureComment/" + name;
+    return std::make_unique<SetCommand<std::string>>(
+        std::move(key), std::move(comment),
+        [name](const Document& document) -> std::optional<std::string> {
+            const Parameter* parameter = document.findParameter(name);
+            return parameter != nullptr ? std::optional<std::string>(parameter->comment)
+                                        : std::nullopt;
+        },
+        [name](Document& document, const std::string& value) {
+            const auto index = document.indexOfParameter(name);
+            return index && document.setParameterCommentAt(*index, value);
+        },
+        [name](const Document&, const std::string&) {
+            return CommandDescription{"setMeasureComment", {{"name", name}}};
+        });
+}
+
+std::unique_ptr<Command> makeSetParameterSlider(std::string name,
+                                                std::optional<SliderRange> slider) {
+    return std::make_unique<SetParameterSliderCommand>(std::move(name), slider);
+}
+
 std::unique_ptr<Command> makeRenameParameter(std::string name, std::string newName) {
     return std::make_unique<RenameParameterCommand>(std::move(name), std::move(newName));
 }

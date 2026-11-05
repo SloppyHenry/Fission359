@@ -4,6 +4,7 @@
 #include "fission/core/document.h"
 
 #include <algorithm>
+#include <cmath>
 #include <utility>
 
 namespace fission::core {
@@ -209,6 +210,111 @@ std::vector<MeasureDefinition> Document::measureDefinitions() const {
         definitions.push_back({parameter.name, parameter.expression, parameter.kind});
     }
     return definitions;
+}
+
+bool SliderRange::valid() const {
+    return std::isfinite(min) && std::isfinite(max) && std::isfinite(step) && min < max &&
+           step > 0.0;
+}
+
+bool Document::setParameterCommentAt(std::size_t index, std::string comment) {
+    if (index >= parameters_.size()) {
+        return false;
+    }
+    if (parameters_[index].comment != comment) {
+        parameters_[index].comment = std::move(comment);
+        touch();
+    }
+    return true;
+}
+
+bool Document::setParameterSliderAt(std::size_t index, std::optional<SliderRange> slider) {
+    if (index >= parameters_.size() || (slider && !slider->valid())) {
+        return false;
+    }
+    if (parameters_[index].slider == slider) {
+        return true;
+    }
+    parameters_[index].slider = slider;
+    touch();
+    return true;
+}
+
+namespace {
+
+bool usesName(const std::string& formula, const std::string& foldedName) {
+    const Outcome<Expression> parsed = Expression::parse(formula);
+    if (!parsed) {
+        return false;
+    }
+    const auto& references = parsed.value().references();
+    return std::any_of(references.begin(), references.end(), [&](const NameReference& reference) {
+        return foldMeasureName(reference.name) == foldedName;
+    });
+}
+
+} // namespace
+
+Document::MeasureUse Document::usesOfParameter(std::string_view name) const {
+    MeasureUse use;
+    const std::string folded = foldMeasureName(name);
+    for (std::size_t i = 0; i < features_.size(); ++i) {
+        const bool used = std::any_of(
+            features_[i].params.begin(), features_[i].params.end(),
+            [&](const auto& entry) { return usesName(entry.second.expression, folded); });
+        if (used) {
+            use.steps.push_back(i);
+        }
+    }
+    for (std::size_t i = 0; i < parameters_.size(); ++i) {
+        if (usesName(parameters_[i].expression, folded)) {
+            use.measures.push_back(i);
+        }
+    }
+    return use;
+}
+
+std::vector<Document::FormulaEdit> Document::renameInFormulas(std::string_view oldName,
+                                                              std::string_view newName) {
+    std::vector<FormulaEdit> edits;
+    for (std::size_t i = 0; i < features_.size(); ++i) {
+        for (auto& [field, value] : features_[i].params) {
+            std::string changed = renameInExpression(value.expression, oldName, newName);
+            if (changed != value.expression) {
+                edits.push_back({false, i, field, value.expression});
+                value.expression = std::move(changed);
+            }
+        }
+    }
+    for (std::size_t i = 0; i < parameters_.size(); ++i) {
+        std::string changed = renameInExpression(parameters_[i].expression, oldName, newName);
+        if (changed != parameters_[i].expression) {
+            edits.push_back({true, i, {}, parameters_[i].expression});
+            parameters_[i].expression = std::move(changed);
+        }
+    }
+    if (!edits.empty()) {
+        touch();
+    }
+    return edits;
+}
+
+void Document::restoreFormulas(const std::vector<FormulaEdit>& edits) {
+    for (const FormulaEdit& edit : edits) {
+        if (edit.inMeasure) {
+            if (edit.index < parameters_.size()) {
+                parameters_[edit.index].expression = edit.before;
+            }
+        } else if (edit.index < features_.size()) {
+            const auto found = features_[edit.index].params.find(edit.field);
+            if (found != features_[edit.index].params.end()) {
+                found->second.expression = edit.before;
+            }
+        }
+    }
+    if (!edits.empty()) {
+        touch();
+    }
 }
 
 // --- recipe -------------------------------------------------------------------------------

@@ -4,6 +4,7 @@
 add_executable(fission_unit_tests
   core/test_version.cpp
   core/test_expression.cpp
+  core/test_measure_names.cpp
   core/test_measures.cpp
   core/test_document.cpp
   core/test_recompute.cpp
@@ -46,6 +47,7 @@ add_executable(fission_unit_tests
   ui/test_export_controller.cpp
   ui/test_import_controller.cpp
   ui/test_measure_controller.cpp
+  ui/test_measures_model.cpp
   ui/test_selection_controller.cpp
   ui/test_placement.cpp
   ui/test_handles.cpp
