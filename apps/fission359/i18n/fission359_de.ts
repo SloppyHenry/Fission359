@@ -2708,22 +2708,30 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+120"/>
+        <location line="+123"/>
         <source>This file has no solid body in it, only surfaces or lines. Fission359 can only use solid bodies.</source>
         <translation>In dieser Datei ist kein fester Körper, nur Flächen oder Linien. Fission359 kann nur feste Körper benutzen.</translation>
     </message>
     <message>
-        <location line="-117"/>
-        <location line="+115"/>
+        <location line="-120"/>
+        <location line="+118"/>
         <source>This file could not be read. Is it a STEP or IGES file that is not damaged?</source>
         <translation>Diese Datei konnte nicht gelesen werden. Ist es eine STEP- oder IGES-Datei, die nicht beschädigt ist?</translation>
     </message>
     <message numerus="yes">
-        <location line="-106"/>
+        <location line="-109"/>
         <source>%n body(ies) had small flaws in the file and was repaired.</source>
         <translation>
             <numerusform>%n Körper hatte kleine Fehler in der Datei und wurde repariert.</numerusform>
             <numerusform>%n Körper hatten kleine Fehler in der Datei und wurden repariert.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>%n body(ies) was put together from loose surfaces.</source>
+        <translation>
+            <numerusform>%n Körper wurde aus losen Flächen zusammengesetzt.</numerusform>
+            <numerusform>%n Körper wurden aus losen Flächen zusammengesetzt.</numerusform>
         </translation>
     </message>
     <message numerus="yes">

@@ -20,9 +20,13 @@
 
 #include "occt_build.h"
 #include <BRepAdaptor_Curve.hxx>
+#include <BRepBuilderAPI_MakeSolid.hxx>
+#include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
+#include <BRepGProp.hxx>
 #include <BRep_Tool.hxx>
 #include <GCPnts_QuasiUniformDeflection.hxx>
+#include <GProp_GProps.hxx>
 #include <GeomAbs_CurveType.hxx>
 #include <IFSelect_ReturnStatus.hxx>
 #include <IGESCAFControl_Reader.hxx>
@@ -41,6 +45,8 @@
 #include <TopExp_Explorer.hxx>
 #include <TopLoc_Location.hxx>
 #include <TopoDS_Edge.hxx>
+#include <TopoDS_Shell.hxx>
+#include <TopoDS_Solid.hxx>
 #include <XCAFDoc_ColorTool.hxx>
 #include <XCAFDoc_ColorType.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
@@ -117,6 +123,35 @@ std::optional<TopoDS_Shape> usable(const TopoDS_Shape& shape, bool& repaired) {
         return fixed;
     }
     return std::nullopt;
+}
+
+// Loose faces that close up into a watertight shell: a solid made of them (IGES is mostly
+// surfaces). Only closed shells count, and only when the solid is valid; the rest stays out.
+std::vector<TopoDS_Shape> solidsFromSurfaces(const TopoDS_Shape& shape) {
+    std::vector<TopoDS_Shape> solids;
+    BRepBuilderAPI_Sewing sewing(1e-4);
+    sewing.Add(shape);
+    sewing.Perform();
+    const TopoDS_Shape sewn = sewing.SewedShape();
+    if (sewn.IsNull()) {
+        return solids;
+    }
+    for (TopExp_Explorer shells(sewn, TopAbs_SHELL); shells.More(); shells.Next()) {
+        const TopoDS_Shell shell = TopoDS::Shell(shells.Current());
+        if (!BRep_Tool::IsClosed(shell)) {
+            continue;
+        }
+        TopoDS_Solid solid = BRepBuilderAPI_MakeSolid(shell).Solid();
+        GProp_GProps properties;
+        BRepGProp::VolumeProperties(solid, properties);
+        if (properties.Mass() < 0.0) { // the faces looked inwards: turn the solid inside out
+            solid.Reverse();
+        }
+        if (BRepCheck_Analyzer(solid).IsValid()) {
+            solids.push_back(solid);
+        }
+    }
+    return solids;
 }
 
 NamedSolid namedAsImported(const TopoDS_Shape& shape) {
@@ -245,13 +280,22 @@ ImportResult importFile(ImportFormat format, const std::vector<std::uint8_t>& by
                     ++result.skipped;
                     return;
                 }
-                // Loose faces, shells and curves are not bodies.
-                if (TopExp_Explorer(shape, TopAbs_FACE, TopAbs_SOLID).More()) {
-                    ++result.skipped;
-                }
                 std::vector<TopoDS_Shape> solids;
                 for (TopExp_Explorer found(shape, TopAbs_SOLID); found.More(); found.Next()) {
                     solids.push_back(found.Current());
+                }
+                // Loose faces next to solids are not bodies.
+                bool joined = false;
+                if (!solids.empty()) {
+                    if (TopExp_Explorer(shape, TopAbs_FACE, TopAbs_SOLID).More()) {
+                        ++result.skipped;
+                    }
+                } else if (TopExp_Explorer(shape, TopAbs_FACE).More()) {
+                    solids = solidsFromSurfaces(shape);
+                    joined = !solids.empty();
+                    if (!joined) {
+                        ++result.skipped; // surfaces that do not close up
+                    }
                 }
                 int index = 0;
                 for (const TopoDS_Shape& solid : solids) {
@@ -281,6 +325,7 @@ ImportResult importFile(ImportFormat format, const std::vector<std::uint8_t>& by
                         body.color = color;
                     }
                     body.repaired = repaired;
+                    body.joined = joined;
                     result.bodies.push_back(std::move(body));
                 }
             };
@@ -315,7 +360,17 @@ std::string exportStep(const std::vector<ExportBody>& bodies) {
             if (data == nullptr) {
                 throw GeometryError(GeometryErrorCode::invalidInput, "not a body of this kernel");
             }
-            const TDF_Label label = shapes->AddShape(data->shape(), /*makeAssembly=*/false);
+            // Bodies of equal shape (four bolts, a body and its copy) share their geometry; XCAF
+            // would give them one entry, with the name and colour of the last. A copy of its own
+            // keeps each body as it is.
+            // The place the body was given goes into the geometry (a body that is only a moved
+            // copy would become a reference to the original).
+            const TopoDS_Shape& shape = data->shape();
+            const TopoDS_Shape own =
+                BRepBuilderAPI_Transform(shape.Located(TopLoc_Location()),
+                                         shape.Location().Transformation(), /*copy=*/true)
+                    .Shape();
+            const TDF_Label label = shapes->AddShape(own, /*makeAssembly=*/false);
             if (!body.name.empty()) {
                 TDataStd_Name::Set(label, TCollection_ExtendedString(body.name.c_str(), true));
             }

@@ -119,6 +119,7 @@ bool ImportController::importFrom(const QUrl& url) {
                 const QString base = QFileInfo(path).completeBaseName();
                 std::vector<DocumentModel::ImportedBodyInfo> infos;
                 int repaired = 0;
+                int joined = 0;
                 for (std::size_t i = 0; i < read.bodies.size(); ++i) {
                     const geo::ImportedBody& body = read.bodies[i];
                     DocumentModel::ImportedBodyInfo info;
@@ -131,6 +132,7 @@ bool ImportController::importFrom(const QUrl& url) {
                             core::Color{body.color->red, body.color->green, body.color->blue};
                     }
                     repaired += body.repaired ? 1 : 0;
+                    joined += body.joined ? 1 : 0;
                     infos.push_back(std::move(info));
                 }
                 const QString asset = m_model->addImportedFile(name, bytes, iges, infos);
@@ -143,6 +145,7 @@ bool ImportController::importFrom(const QUrl& url) {
                 QVariantMap notes;
                 notes[QStringLiteral("asset")] = asset;
                 notes[QStringLiteral("repaired")] = repaired;
+                notes[QStringLiteral("joined")] = joined;
                 notes[QStringLiteral("skipped")] = read.skipped;
                 notes[QStringLiteral("assembly")] = read.assembly;
                 notes[QStringLiteral("unitAssumed")] = read.unitAssumed;

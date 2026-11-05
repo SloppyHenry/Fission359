@@ -147,6 +147,9 @@ QtObject {
         if (notes.repaired > 0) {
             lines.push(qsTr("%n body(ies) had small flaws in the file and was repaired.", "", notes.repaired))
         }
+        if (notes.joined > 0) {
+            lines.push(qsTr("%n body(ies) was put together from loose surfaces.", "", notes.joined))
+        }
         if (notes.skipped > 0) {
             lines.push(qsTr("%n thing(s) in the file are no solid bodies and were left out.", "", notes.skipped))
         }

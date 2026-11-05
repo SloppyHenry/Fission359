@@ -43,8 +43,8 @@ public:
 signals:
     void importingChanged();
     /// `code`: "" (done) | "unsupported" | "cannotRead" | "unreadable" (not a usable STEP/IGES
-    /// file) | "empty" (no solid body in it). `notes` (only for ""): { asset, repaired, skipped,
-    /// assembly, unitAssumed }.
+    /// file) | "empty" (no solid body in it). `notes` (only for ""): { asset, repaired, joined,
+    /// skipped, assembly, unitAssumed }.
     void finished(const QString& code, const QString& fileName, int bodies,
                   const QVariantMap& notes);
 

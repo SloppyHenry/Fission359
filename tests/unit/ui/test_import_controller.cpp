@@ -173,6 +173,16 @@ TEST_CASE("import: an IGES file works, and the ending may be wrong", "[import-ui
     CHECK_FALSE(session.importer.canImport(QUrl::fromLocalFile("/x/part.stl")));
 }
 
+TEST_CASE("import: surfaces that close up come in as a body and say so", "[import-ui]") {
+    application();
+    Session session;
+    REQUIRE(session.import("block-faces-only.iges"));
+    CHECK(session.code.isEmpty());
+    CHECK(session.bodies == 1);
+    CHECK(session.notes.value(QStringLiteral("joined")).toInt() == 1);
+    CHECK(session.notes.value(QStringLiteral("repaired")).toInt() == 0);
+}
+
 TEST_CASE("import: 'it was inches' makes the whole file larger, in one step", "[import-ui]") {
     application();
     Session session;

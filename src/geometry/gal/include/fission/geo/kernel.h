@@ -110,8 +110,9 @@ public:
     /// body, an assembly is read flat (`ImportResult::assembly`). Faces are named `face<i>` in
     /// the order of the body's faces. Bodies that fail the validity check are repaired, and
     /// say so (`ImportedBody::repaired`); those that cannot be repaired, and loose faces or
-    /// curves, are counted in `skipped`. Throws `GeometryError`: `importUnreadable` for bytes
-    /// that are not such a file, `importEmpty` when no body is left. The default refuses.
+    /// curves, are counted in `skipped`. Loose surfaces that close up into a watertight shell are
+    /// sewn into a body (`ImportedBody::joined`). Throws `GeometryError`: `importUnreadable` for
+    /// bytes that are not such a file, `importEmpty` when no body is left. The default refuses.
     virtual ImportResult importFile(ImportFormat format, const std::vector<std::uint8_t>& bytes,
                                     const ImportOptions& options) const {
         (void)format;

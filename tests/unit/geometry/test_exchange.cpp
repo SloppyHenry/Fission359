@@ -197,13 +197,103 @@ TEST_CASE("an IGES file gives the same body", "[exchange]") {
     checkNamedCompletely(*k.kernel, result.bodies.front());
 }
 
-TEST_CASE("an IGES file with only surfaces has no body and says so", "[exchange]") {
+TEST_CASE("IGES surfaces that close up are sewn into a body and say so", "[exchange]") {
     Kernel k;
-    try {
+    const ImportResult result =
         k.kernel->importFile(ImportFormat::iges, fixture("block-faces-only.iges"), {});
-        FAIL("expected an error");
-    } catch (const GeometryError& error) {
-        CHECK(error.code() == GeometryErrorCode::importEmpty);
+    REQUIRE(result.bodies.size() == 1);
+    const ImportedBody& body = result.bodies.front();
+    CHECK(body.joined);
+    CHECK_FALSE(body.repaired);
+    const SolidReport report = k.kernel->measure(body.body.solid);
+    CHECK(report.valid);
+    CHECK(report.volume == exactly(20.0 * 10.0 * 5.0 - kPi * 2.0 * 2.0 * 5.0)); // not inside out
+    CHECK(report.faces == 7);
+    checkNamedCompletely(*k.kernel, body);
+}
+
+TEST_CASE("surfaces that do not close up are no body and the file says so", "[exchange]") {
+    Kernel k;
+    for (const char* file : {"foreign/testfile.igs", "foreign/example_45_faces.iges"}) {
+        CAPTURE(file);
+        try {
+            k.kernel->importFile(ImportFormat::iges, fixture(file), {});
+            FAIL("expected an error");
+        } catch (const GeometryError& error) {
+            CHECK(error.code() == GeometryErrorCode::importEmpty);
+        }
+    }
+}
+
+namespace {
+
+struct ForeignFile {
+    const char* file;
+    std::size_t bodies;
+    bool assembly;
+    double volume; ///< Of all bodies together (mm³); recorded, not from a formula
+};
+
+} // namespace
+
+// Files from other programs (tests/fixtures/step/foreign, sources in the README there): every
+// body is valid, completely named and, written out and read again, the same.
+TEST_CASE("foreign STEP files import, are valid and survive a round trip", "[exchange]") {
+    Kernel k;
+    const ForeignFile files[] = {
+        {"foreign/as1-ac-214.stp", 18, true, 765931.746197},
+        {"foreign/screw.step", 1, false, 3788.270593},
+        {"foreign/eight_cyl.stp", 8, true, 8 * 147262.155637},
+        {"foreign/io1-ug-214.stp", 1, false, 78179.580383},
+        {"foreign/nema-17-bracket.step", 1, false, 7061.155302},
+        {"foreign/red_cube_blue_cylinder.step", 2, false, 1785.398163},
+    };
+    for (const ForeignFile& expected : files) {
+        CAPTURE(expected.file);
+        const ImportResult first =
+            k.kernel->importFile(ImportFormat::step, fixture(expected.file), {});
+        REQUIRE(first.bodies.size() == expected.bodies);
+        CHECK(first.assembly == expected.assembly);
+        CHECK(first.skipped == 0);
+        double volume = 0.0;
+        std::vector<ExportBody> out;
+        for (const ImportedBody& body : first.bodies) {
+            checkNamedCompletely(*k.kernel, body);
+            volume += k.kernel->measure(body.body.solid).volume;
+            out.push_back({body.body.solid, body.name, body.color});
+        }
+        CHECK(volume == Approx(expected.volume).epsilon(1e-6));
+
+        const std::string text = k.kernel->exportStep(out);
+        const ImportResult again = k.kernel->importFile(
+            ImportFormat::step, std::vector<std::uint8_t>(text.begin(), text.end()), {});
+        REQUIRE(again.bodies.size() == first.bodies.size());
+        for (std::size_t i = 0; i < first.bodies.size(); ++i) {
+            const SolidReport a = k.kernel->measure(first.bodies[i].body.solid);
+            const SolidReport b = k.kernel->measure(again.bodies[i].body.solid);
+            CHECK(b.valid);
+            CHECK(b.volume == Approx(a.volume).epsilon(1e-9));
+            CHECK(b.faces == a.faces);
+            CHECK(b.boxMax.x == Approx(a.boxMax.x).margin(1e-6));
+            CHECK(again.bodies[i].name == first.bodies[i].name);
+            CHECK(again.bodies[i].color.has_value() == first.bodies[i].color.has_value());
+        }
+    }
+}
+
+TEST_CASE("the foreign file with colours keeps its two colours", "[exchange]") {
+    Kernel k;
+    const ImportResult result = k.kernel->importFile(
+        ImportFormat::step, fixture("foreign/red_cube_blue_cylinder.step"), {});
+    REQUIRE(result.bodies.size() == 2);
+    for (const ImportedBody& body : result.bodies) {
+        REQUIRE(body.color);
+        if (body.name == "red_cube") {
+            CHECK(closeTo(*body.color, 221, 82, 40)); // COLOUR_RGB 0.867 0.322 0.157 in the file
+        } else {
+            CHECK(body.name == "blue_cylinder");
+            CHECK(closeTo(*body.color, 59, 97, 180)); // COLOUR_RGB 0.231 0.380 0.706
+        }
     }
 }
 

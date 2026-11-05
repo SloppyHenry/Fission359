@@ -38,11 +38,12 @@ struct ImportedBody {
     std::string name;               ///< As in the file; empty if it has none.
     std::optional<FileColor> color; ///< The colour of the body, or of its first coloured face.
     bool repaired = false;          ///< Was invalid and had to be repaired: say so.
+    bool joined = false;            ///< Loose surfaces that close up, sewn into a body: say so.
 };
 
 struct ImportResult {
     std::vector<ImportedBody> bodies;
-    int skipped = 0;       ///< Things that are not solids, or could not be repaired.
+    int skipped = 0;       ///< Things that are not solids, or could not be repaired or joined.
     bool assembly = false; ///< The file was an assembly; its parts were read flat.
     /// The file does not say which unit it uses, millimetres were assumed (IGES only; every
     /// STEP file states its unit).
