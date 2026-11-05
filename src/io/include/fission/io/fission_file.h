@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <map>
 #include <optional>
 #include <string>
 #include <vector>
@@ -40,7 +41,14 @@ struct SaveExtras {
     /// When the file was first saved (ISO 8601, UTC); empty = now. Saving over a file passes the
     /// old value on so that it stays.
     std::string created;
+    /// Embedded files (an imported STEP file, a font, ...): name -> content. Stored as
+    /// `assets/<name>` with a checksum each. A name is a plain file name: no `/`, `\\` or
+    /// leading `.`, not empty. Saving with any other name fails with `cannotWrite`.
+    std::map<std::string, std::vector<std::uint8_t>> assets;
 };
+
+/// True when `name` may be used as the name of an embedded file (see `SaveExtras::assets`).
+bool isValidAssetName(const std::string& name);
 
 /// Switches for tests.
 struct SaveOptions {
@@ -57,10 +65,11 @@ struct SaveResult {
     std::optional<FileProblem> problem;
 };
 
-/// Writes the document as a `.fission` file: a ZIP with `manifest.json`, `document.json` and
-/// `preview.png` (docs/03-architektur.md §7). Atomic: everything goes to a temporary file in the
-/// same folder, which is flushed to disk and then renamed over the target. Whatever fails on the
-/// way, the old file is untouched and no temporary file stays behind.
+/// Writes the document as a `.fission` file: a ZIP with `manifest.json`, `document.json`,
+/// `preview.png` and the embedded files in `assets/` (docs/03-architektur.md §7). Atomic:
+/// everything goes to a temporary file in the same folder, which is flushed to disk and then
+/// renamed over the target. Whatever fails on the way, the old file is untouched and no temporary
+/// file stays behind.
 SaveResult save(const core::Document& document, const std::filesystem::path& path,
                 const SaveExtras& extras, const SaveOptions& options = {});
 
@@ -84,6 +93,8 @@ struct OpenResult {
     std::vector<core::LoadProblem> documentProblems; ///< From reading `document.json`.
     FileInfo info;
     std::vector<std::uint8_t> previewPng;
+    /// The embedded files of `assets/`, by name. Entries with an unusable name are left out.
+    std::map<std::string, std::vector<std::uint8_t>> assets;
 };
 
 OpenResult open(const std::filesystem::path& path, const OpenOptions& options = {});

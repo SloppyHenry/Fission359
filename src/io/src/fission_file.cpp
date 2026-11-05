@@ -36,6 +36,7 @@ using Json = nlohmann::json;
 constexpr const char* manifestName = "manifest.json";
 constexpr const char* documentName = "document.json";
 constexpr const char* previewName = "preview.png";
+constexpr std::string_view assetsFolder = "assets/";
 
 // --- small RAII wrappers around minizip-ng's C handles -------------------------------------
 
@@ -197,12 +198,25 @@ SaveResult refused(FileProblemCode code) {
 
 } // namespace
 
+bool isValidAssetName(const std::string& name) {
+    return !name.empty() && name.front() != '.' && name.find_first_of("/\\") == std::string::npos &&
+           name.find('\0') == std::string::npos;
+}
+
 SaveResult save(const core::Document& document, const std::filesystem::path& path,
                 const SaveExtras& extras, const SaveOptions& options) {
+    for (const auto& [name, data] : extras.assets) {
+        if (!isValidAssetName(name)) {
+            return refused(FileProblemCode::cannotWrite);
+        }
+    }
     const Bytes documentBytes = bytesOf(core::toJson(document));
     Json checksums = {{documentName, sha256Hex(options.wrongChecksum ? Bytes{0} : documentBytes)}};
     if (!extras.previewPng.empty()) {
         checksums[previewName] = sha256Hex(extras.previewPng);
+    }
+    for (const auto& [name, data] : extras.assets) {
+        checksums[std::string(assetsFolder) + name] = sha256Hex(data);
     }
     const std::string now = nowIso();
     const Json manifest = {{"formatVersion", core::currentFormatVersion},
@@ -216,6 +230,9 @@ SaveResult save(const core::Document& document, const std::filesystem::path& pat
     entries.emplace_back(documentName, documentBytes);
     if (!extras.previewPng.empty()) {
         entries.emplace_back(previewName, extras.previewPng);
+    }
+    for (const auto& [name, data] : extras.assets) {
+        entries.emplace_back(std::string(assetsFolder) + name, data);
     }
     const auto zip = buildZip(entries);
     if (!zip || !writeFileAtomically(path, *zip, options.failAfterBytes)) {
@@ -265,6 +282,21 @@ OpenResult open(const std::filesystem::path& path, const OpenOptions& options) {
             sum.get<std::string>() != sha256Hex(found->second)) {
             damaged = true;
         }
+    }
+
+    // Embedded files: only those with a usable name; one without a checksum counts as damaged.
+    for (const auto& [name, data] : *entries) {
+        if (!name.starts_with(assetsFolder)) {
+            continue;
+        }
+        const std::string assetName = name.substr(assetsFolder.size());
+        if (!isValidAssetName(assetName)) {
+            continue;
+        }
+        if (!manifest["checksums"].contains(name)) {
+            damaged = true;
+        }
+        result.assets[assetName] = data;
     }
 
     const Bytes& documentBytes = entries->at(documentName);
