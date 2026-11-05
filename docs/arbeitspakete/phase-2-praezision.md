@@ -142,7 +142,7 @@
 ---
 
 ### AP-2.9 Benannte Maße und Konfigurator
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.8
+**Status:** umgesetzt, wartet auf Abnahme (2026-11-05) · **Größe:** M · **Abhängigkeiten:** AP-1.8
 **Bauanleitung:** [anleitungen/AP-2.9.md](anleitungen/AP-2.9.md)
 
 **Umfang:**
@@ -152,8 +152,16 @@
 - Schieberegler-Ansicht (min/max/Schritt je Maß) als **Konfigurator**
 
 **Akzeptanzkriterien:**
-- [ ] Ablauf B Schritt 7 (Breite ändern) funktioniert vollständig
-- [ ] Umbenennen eines Maßes, das in 10 Ausdrücken steckt, ist ein einziger Undo-Schritt
+- [x] Ablauf B Schritt 7 (Breite ändern) funktioniert vollständig (Unit-Test am Dokumentmodell; Ausprobieren im Programm steht aus)
+- [x] Umbenennen eines Maßes, das in 10 Ausdrücken steckt, ist ein einziger Undo-Schritt (Test `rename everywhere: ten formulas at once`)
+
+**Abschlussvermerk 2026-11-05:**
+- Ergebnis: Bereich „Maße“ unter dem Rezept (⌘M, Ansicht ▸ Benannte Maße) mit Tabelle (Name, Formel, Ergebnis, „Benutzt in“ mit Klick auf den Schritt, Kommentar, Fehler je Zeile mit Zyklus-Pfad) und Regler-Ansicht
+  (Ziehen = ein Undo-Schritt, Live-Vorschau); Umbenennen schreibt alle Formeln in Schritten und Maßen um (`makeRenameMeasureEverywhere`, nur ganze Namen);
+  Rechtsklick am Zahlenfeld „Als benanntes Maß speichern“; Autovervollständigung im Zahlenfeld (`Numbers::completions`).
+- Festlegungen: Dateiformat **2** (neues Feld `slider` {min, max, step} je Maß, sonst null; Migration 1→2 gebaut, alte Dateien öffnen weiter), Bereich unter dem Rezept.
+  Maßnamen bestehen aus Buchstaben, Ziffern und `_` (Kollision: `Breite2`, nicht „Breite 2“, weil Formeln keine Leerzeichen in Namen lesen).
+- Offene Reste: Tabelle und Regler sind nur per Unit-Tests belegt, nicht im Fenster angesehen; Maße vom Typ „Winkel“ nehmen im Regler Grad ohne Einheitenzusatz.
 
 ---
 
