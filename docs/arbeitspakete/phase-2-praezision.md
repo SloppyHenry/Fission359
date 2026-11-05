@@ -175,7 +175,7 @@
 ---
 
 ### AP-2.11 Messen und Analysieren
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.4
+**Status:** teilweise umgesetzt (2026-11-05), Schnittansicht offen · **Größe:** M · **Abhängigkeiten:** AP-1.4
 **Bauanleitung:** [anleitungen/AP-2.11.md](anleitungen/AP-2.11.md)
 
 **Umfang:**
@@ -184,7 +184,17 @@
 - **Schnittansicht:** Ebene ziehen, Schnittfläche schraffiert
 
 **Akzeptanzkriterien:**
-- [ ] Messwerte stimmen mit analytischen Werten überein (1e-6)
+- [x] Messwerte stimmen mit analytischen Werten überein (1e-6): Golden-Tests für Abstand, Winkel (90°, 45° am Keil), Länge, Radius, Fläche; Gewicht PLA 20-mm-Würfel 9,92 g
+- [ ] Schnittansicht (Ebene ziehen, Schnittfläche schraffiert): **nicht gebaut**
+
+**Abschlussvermerk 2026-11-05 (ohne Schnittansicht):**
+- Ergebnis: Kernel misst Ecke, Kante, Fläche und je zwei davon (`measureElements`: Position, Länge, Fläche, Radius, kürzester Abstand, Winkel). Werkzeug „Messen“ (Prüfen ▸ Messen, Ansicht ▸ Messen):
+  Auswahl von ein bis zwei Elementen, Maßlinie mit Pfeilen und Zahl in der Ansicht, Karte mit Zeilen und „Kopieren“ (Hauptzahl, z. B. „12,50 mm“), Esc beendet.
+  Eckdaten im Panel bei einem gewählten Körper: Volumen, Oberfläche, Maße, Material (PLA, PETG, ABS, ASA, TPU), Filament 1,75/2,85 mm, Dichte änderbar,
+  „Gewicht bis zu … g“ und Filamentlänge „bis zu … m“ (Maximalwert, Hinweis auf Füllung und Wände).
+- Festlegungen: Gewicht wird als Höchstwert angezeigt; Schnittansicht soll nur Anzeige sein (Clip-Ebene, Deckfläche aus dem exakten Schnitt), nicht das Modell ändern.
+- Offene Reste: **Schnittansicht** (Clip-Ebene in allen Zeichen-Durchläufen des Renderers: Körper, Schatten, Umgebungsverdeckung, Auswahl; Deckfläche mit Schraffur); Messen mit Körpern als Ganzes und Punkt im Raum;
+  Materialwahl wird nicht mit dem Projekt gespeichert.
 
 ---
 
