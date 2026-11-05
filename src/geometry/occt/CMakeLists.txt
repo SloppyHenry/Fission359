@@ -5,4 +5,4 @@ fission_add_library(fission_geometry_occt
   SOURCES src/layer.cpp src/solids.cpp src/primitives.cpp src/booleans.cpp src/fonts.cpp src/text.cpp src/exchange.cpp src/kernel.cpp
   PUBLIC fission_geometry
   PRIVATE ${FISSION_OCCT_TARGETS} TKService TKV3d # fonts and text outlines
-          ${OpenCASCADE_DataExchange_LIBRARIES}) # STEP / IGES (AP-2.13)
+          TKDESTEP TKDEIGES TKXCAF TKXSBase TKDE) # STEP / IGES with colours and names (AP-2.13)

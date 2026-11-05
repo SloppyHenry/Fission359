@@ -51,7 +51,7 @@ Auf kleinen oder geteilten Rechnern: `FISSION_JOBS=2 nice -n 19 scripts/test`.
 | `src/geometry/mesh` | Manifold-/SDF-Umsetzung (ab Phase 4) | Manifold |
 | `src/geometry/sketch` | PlaneGCS-Anbindung (ab AP-2.2) | PlaneGCS, Eigen |
 | `src/features` | Feature-Typen (Box, Zylinder, …, später Extrude, Fillet) | core, GAL |
-| `src/io` | Dateiformate (`.fission`, 3MF, STL, STEP) | core, GAL, lib3mf, minizip, json |
+| `src/io` | Dateiformate (`.fission` mit `assets/`, 3MF, STL, OBJ, SVG, DXF; STEP/IGES liest und schreibt der Kernel über die GAL) | core, GAL, lib3mf, minizip, json |
 | `src/analysis` | Messen, Druckcheck | core, GAL |
 | `src/interaction` | reine Zieh-/Fang-Mathematik ohne Fenster (`drag.h`, `snap.h`) | core, GAL, render |
 | `src/render` | RHI-Renderer, Picking, Kamera, Griff-Grafik | core, GAL, Qt Gui |
@@ -101,8 +101,9 @@ Regel 3: Die Oberfläche ändert das Dokument **nur** über `core::History::exec
    (mm, Grad), welche Flächen-Rollen das Ergebnis hat, welche `GeometryError`-Codes sie wirft. Nur GAL-Typen in der Signatur.
 2. Umsetzung in `src/geometry/occt/src/` (neue Datei oder `solids.cpp`), eingehängt in `occt/src/kernel.cpp`. Jedes Ergebnis mit
    `BRepCheck_Analyzer` prüfen (Hilfen in `occt_build.h`); ungültig → `GeometryError(kernelResultInvalid)`, nie durchreichen.
-3. Fehlt ein OCCT-Modul (z. B. `TKOffset`, `TKFillet` stecken in `ModelingAlgorithms` und sind schon gelinkt; `DataExchange` für
-   STEP nicht): in `src/geometry/occt/CMakeLists.txt` ergänzen, nicht global.
+3. Fehlt ein OCCT-Modul (z. B. `TKOffset`, `TKFillet` stecken in `ModelingAlgorithms` und sind schon gelinkt; für STEP/IGES sind seit AP-2.13
+   `TKDESTEP TKDEIGES TKXCAF TKXSBase TKDE` gelinkt): in `src/geometry/occt/CMakeLists.txt` ergänzen, nicht global, und nur die Module, die gebraucht
+   werden (Paketgröße im PR nennen).
 4. Golden-Tests in `tests/unit/geometry/` (§10). Der Kern muss mehrere Aufrufe gleichzeitig vertragen (keine statischen Variablen).
 
 ## §7 Rezept: Oberfläche (QML) und Controller
