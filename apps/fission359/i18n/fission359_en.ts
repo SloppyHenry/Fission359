@@ -390,13 +390,28 @@
     </message>
     <message>
         <location line="+4"/>
+        <source>Import…</source>
+        <translation>Import…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Brings in a STEP or IGES file from another CAD program.</source>
+        <translation>Brings in a STEP or IGES file from another CAD program.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a file; its bodies appear in the project with their colours and names.</source>
+        <translation>Choose a file; its bodies appear in the project with their colours and names.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Export…</source>
         <translation>Export…</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Writes the bodies as a 3MF or STL file for the slicer.</source>
-        <translation>Writes the bodies as a 3MF or STL file for the slicer.</translation>
+        <source>Writes the bodies as a 3MF, STL, OBJ or STEP file, or the outline of a flat face as SVG or DXF.</source>
+        <translation>Writes the bodies as a 3MF, STL, OBJ or STEP file, or the outline of a flat face as SVG or DXF.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1059,7 +1074,7 @@
         <translation>Untitled</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+16"/>
         <source>Close</source>
         <translation>Close</translation>
     </message>
@@ -1117,7 +1132,7 @@
 <context>
     <name>ExportCard</name>
     <message>
-        <location filename="../qml/ExportCard.qml" line="+23"/>
+        <location filename="../qml/ExportCard.qml" line="+26"/>
         <location line="+11"/>
         <source>Export</source>
         <translation>Export</translation>
@@ -1129,13 +1144,44 @@
         <translation>File type</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>3MF (colours, for slicers)</source>
-        <translation>3MF (colours, for slicers)</translation>
+        <location line="+9"/>
+        <source>Shape and colours, for slicers.</source>
+        <translation>Shape and colours, for slicers.</translation>
     </message>
     <message>
-        <location line="+5"/>
-        <location line="+5"/>
+        <location line="+1"/>
+        <source>Shape only. Every program can read it.</source>
+        <translation>Shape only. Every program can read it.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shape and colours, for 3D programs. The colours go into a second file.</source>
+        <translation>Shape and colours, for 3D programs. The colours go into a second file.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The exact shape with names and colours, for other CAD programs.</source>
+        <translation>The exact shape with names and colours, for other CAD programs.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <location line="+6"/>
+        <source>Outline for a laser cutter</source>
+        <translation>Outline for a laser cutter</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>The edges of the chosen face, as seen from outside.</source>
+        <translation>The edges of the chosen face, as seen from outside.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a flat face to export its outline.</source>
+        <translation>Choose a flat face to export its outline.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+6"/>
         <source>Quality</source>
         <translation>Quality</translation>
     </message>
@@ -1160,7 +1206,7 @@
         <translation>Curves can be angular.</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Only chosen bodies</source>
         <translation>Only chosen bodies</translation>
     </message>
@@ -1188,7 +1234,7 @@
 <context>
     <name>FileNotices</name>
     <message>
-        <location filename="../qml/FileNotices.qml" line="+36"/>
+        <location filename="../qml/FileNotices.qml" line="+39"/>
         <source>We saved your work from %1.</source>
         <translation>We saved your work from %1.</translation>
     </message>
@@ -1206,6 +1252,14 @@
         <location line="+1"/>
         <source>Discard</source>
         <translation>Discard</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+30"/>
+        <source>%n body(ies) imported.</source>
+        <translation>
+            <numerusform>%n body imported.</numerusform>
+            <numerusform>%n bodies imported.</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -1557,12 +1611,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+660"/>
+        <location line="+689"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-659"/>
+        <location line="-688"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
@@ -1572,7 +1626,7 @@
         <translation>Ctrl+Shift+S</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Export…</source>
         <translation>Export…</translation>
     </message>
@@ -1607,12 +1661,17 @@
         <translation>Ctrl+Shift+Z</translation>
     </message>
     <message>
-        <location line="-24"/>
+        <location line="-25"/>
         <source>Open recent</source>
         <translation>Open recent</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+17"/>
+        <source>Import…</source>
+        <translation>Import…</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Recent actions</source>
         <translation>Recent actions</translation>
     </message>
@@ -1778,12 +1837,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1136"/>
+        <location line="+1196"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1135"/>
+        <location line="-1195"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1814,12 +1873,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1124"/>
+        <location line="+1183"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1122"/>
+        <location line="-1181"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1855,18 +1914,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+709"/>
+        <location line="+757"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-707"/>
-        <location line="+708"/>
+        <location line="-755"/>
+        <location line="+756"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-702"/>
+        <location line="-750"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -1892,7 +1951,7 @@
         </translation>
     </message>
     <message>
-        <location line="+89"/>
+        <location line="+90"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -1950,27 +2009,57 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+11"/>
+        <location line="+38"/>
         <source>Fission359 files (*.fission)</source>
         <translation>Fission359 files (*.fission)</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="-30"/>
+        <source>Import</source>
+        <translation>Import</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>STEP and IGES files (*.step *.stp *.iges *.igs)</source>
+        <translation>STEP and IGES files (*.step *.stp *.iges *.igs)</translation>
+    </message>
+    <message>
+        <location line="+41"/>
         <source>Export</source>
         <translation>Export</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
         <source>STL files (*.stl)</source>
         <translation>STL files (*.stl)</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="+1"/>
+        <source>OBJ files (*.obj)</source>
+        <translation>OBJ files (*.obj)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>STEP files (*.step *.stp)</source>
+        <translation>STEP files (*.step *.stp)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>SVG files (*.svg)</source>
+        <translation>SVG files (*.svg)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>DXF files (*.dxf)</source>
+        <translation>DXF files (*.dxf)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>3MF files (*.3mf)</source>
         <translation>3MF files (*.3mf)</translation>
     </message>
     <message numerus="yes">
-        <location line="+17"/>
+        <location line="+26"/>
         <source>%n body(ies) exported.</source>
         <translation>
             <numerusform>%n body exported.</numerusform>
@@ -1978,7 +2067,7 @@
         </translation>
     </message>
     <message>
-        <location line="-544"/>
+        <location line="-588"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2013,12 +2102,12 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+744"/>
+        <location line="+792"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="+114"/>
         <source>Click a face of the print bed or of another body.</source>
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
@@ -2028,7 +2117,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1039"/>
+        <location line="-1098"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -2088,7 +2177,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1070"/>
+        <location line="+1129"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2103,7 +2192,7 @@
         <translation>Placing</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <source>Width</source>
         <translation>Width</translation>
     </message>
@@ -2191,7 +2280,17 @@
         <translation>%1 added</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-534"/>
+        <source>Outline exported.</source>
+        <translation>Outline exported.</translation>
+    </message>
+    <message>
+        <location line="+497"/>
+        <source>Imported body</source>
+        <translation>Imported body</translation>
+    </message>
+    <message>
+        <location line="+38"/>
         <source>%1 removed</source>
         <translation>%1 removed</translation>
     </message>
@@ -2295,6 +2394,21 @@
         <location line="+1"/>
         <source>%1 made a part again</source>
         <translation>%1 made a part again</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>“%1” imported</source>
+        <translation>“%1” imported</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>“%1” imported with %2 bodies</source>
+        <translation>“%1” imported with %2 bodies</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Unit of “%1” put right</source>
+        <translation>Unit of “%1” put right</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2429,32 +2543,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-305"/>
+        <location line="-308"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1122"/>
+        <location line="-1182"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1157"/>
+        <location line="+1217"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-992"/>
+        <location line="-1051"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+514"/>
+        <location line="+515"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-561"/>
+        <location line="-562"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -2513,7 +2627,12 @@
 <context>
     <name>MessageCatalog</name>
     <message>
-        <location filename="../qml/MessageCatalog.qml" line="+65"/>
+        <location filename="../qml/MessageCatalog.qml" line="+68"/>
+        <source>It was inches</source>
+        <translation>It was inches</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Open anyway</source>
         <translation>Open anyway</translation>
     </message>
@@ -2578,7 +2697,55 @@
         <translation>The file could not be read.</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+21"/>
+        <source>This kind of file cannot be imported. Fission359 reads STEP and IGES files.</source>
+        <translation>This kind of file cannot be imported. Fission359 reads STEP and IGES files.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The file could not be read. Is it still there?</source>
+        <translation>The file could not be read. Is it still there?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+120"/>
+        <source>This file has no solid body in it, only surfaces or lines. Fission359 can only use solid bodies.</source>
+        <translation>This file has no solid body in it, only surfaces or lines. Fission359 can only use solid bodies.</translation>
+    </message>
+    <message>
+        <location line="-117"/>
+        <location line="+115"/>
+        <source>This file could not be read. Is it a STEP or IGES file that is not damaged?</source>
+        <translation>This file could not be read. Is it a STEP or IGES file that is not damaged?</translation>
+    </message>
+    <message numerus="yes">
+        <location line="-106"/>
+        <source>%n body(ies) had small flaws in the file and was repaired.</source>
+        <translation>
+            <numerusform>%n body had small flaws in the file and was repaired.</numerusform>
+            <numerusform>%n bodies had small flaws in the file and were repaired.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>%n thing(s) in the file are no solid bodies and were left out.</source>
+        <translation>
+            <numerusform>%n thing in the file is no solid body and was left out.</numerusform>
+            <numerusform>%n things in the file are no solid bodies and were left out.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The file is an assembly. Its parts came in as separate bodies.</source>
+        <translation>The file is an assembly. Its parts came in as separate bodies.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The file does not say which unit it uses. Millimetres were assumed.</source>
+        <translation>The file does not say which unit it uses. Millimetres were assumed.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
         <source>Export cancelled.</source>
         <translation>Export cancelled.</translation>
     </message>
@@ -2591,6 +2758,11 @@
         <location line="+2"/>
         <source>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</source>
         <translation>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This face is curved, so it has no flat outline. Choose a flat face.</source>
+        <translation>This face is curved, so it has no flat outline. Choose a flat face.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -2708,7 +2880,7 @@
         <translation>The bodies do not overlap, so nothing is left. Move them so that they touch.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+7"/>
         <source>An earlier step has a problem.</source>
         <translation>An earlier step has a problem.</translation>
     </message>
@@ -2842,6 +3014,11 @@
         <location line="+3"/>
         <source>Part placed, moved by %1, %2, %3 mm</source>
         <translation>Part placed, moved by %1, %2, %3 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Imported from “%1”, part %2</source>
+        <translation>Imported from “%1”, part %2</translation>
     </message>
     <message numerus="yes">
         <location line="+4"/>

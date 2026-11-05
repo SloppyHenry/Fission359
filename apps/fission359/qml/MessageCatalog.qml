@@ -59,11 +59,13 @@ QtObject {
         "cancelled": { card: false, buttons: [] },
         "nothing": { card: false, buttons: [] },
         "needsHelp": { card: true, buttons: ["ok"] },
+        "notFlat": { card: false, buttons: [] },
         "cannotWrite": { card: true, buttons: ["ok"] }
     })
 
     function buttonLabel(id) {
         switch (id) {
+        case "inches": return qsTr("It was inches")
         case "openanyway": return qsTr("Open anyway")
         case "cancel": return qsTr("Cancel")
         case "saveas": return qsTr("Save as…")
@@ -110,6 +112,59 @@ QtObject {
         }
     }
 
+    /// What an import says when it did not work.
+    readonly property var importEntries: ({
+        "unsupported": { card: false, buttons: [] },
+        "cannotRead": { card: false, buttons: [] },
+        "unreadable": { card: false, buttons: [] },
+        "empty": { card: false, buttons: [] }
+    })
+
+    /// { card, text, buttons } for an import that did not work (not for the code "").
+    function importNotice(code) {
+        const known = importEntries[code] !== undefined
+        return { card: false, text: importText(known ? code : "unreadable"), buttons: [] }
+    }
+
+    function importText(code) {
+        switch (code) {
+        case "unsupported":
+            return qsTr("This kind of file cannot be imported. Fission359 reads STEP and IGES files.")
+        case "cannotRead":
+            return qsTr("The file could not be read. Is it still there?")
+        case "empty":
+            return qsTr("This file has no solid body in it, only surfaces or lines. Fission359 can only use solid bodies.")
+        case "unreadable":
+        default:
+            return qsTr("This file could not be read. Is it a STEP or IGES file that is not damaged?")
+        }
+    }
+
+    /// { card, text, buttons } for a good import that has something to say (a repair, parts
+    /// left out, an assembly, an unknown unit); `card` is false when it has nothing to say.
+    function importedNotice(notes) {
+        const lines = []
+        if (notes.repaired > 0) {
+            lines.push(qsTr("%n body(ies) had small flaws in the file and was repaired.", "", notes.repaired))
+        }
+        if (notes.skipped > 0) {
+            lines.push(qsTr("%n thing(s) in the file are no solid bodies and were left out.", "", notes.skipped))
+        }
+        if (notes.assembly) {
+            lines.push(qsTr("The file is an assembly. Its parts came in as separate bodies."))
+        }
+        if (notes.unitAssumed) {
+            lines.push(qsTr("The file does not say which unit it uses. Millimetres were assumed."))
+        }
+        return {
+            card: lines.length > 0,
+            text: lines.join(" "),
+            buttons: notes.unitAssumed
+                ? [{ id: "inches", text: buttonLabel("inches"), primary: true }, { id: "cancel", text: buttonLabel("ok") }]
+                : [{ id: "cancel", text: buttonLabel("ok"), primary: true }]
+        }
+    }
+
     /// { card, text, buttons } for an export that did not end well (not for the code "").
     function exportNotice(code) {
         const known = exportEntries[code] !== undefined
@@ -125,6 +180,8 @@ QtObject {
             return qsTr("There is nothing to export: no visible body.")
         case "needsHelp":
             return qsTr("A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.")
+        case "notFlat":
+            return qsTr("This face is curved, so it has no flat outline. Choose a flat face.")
         case "cannotWrite":
         default:
             return qsTr("The file could not be written. Is the folder writable and the disk not full?")
@@ -196,7 +253,7 @@ QtObject {
         case "importFileUnreadable":
             return qsTr("This file could not be read. Is it a STEP or IGES file that is not damaged?")
         case "importFileEmpty":
-            return qsTr("This file has no solid body in it, only surfaces or lines. Fission can only use solid bodies.")
+            return qsTr("This file has no solid body in it, only surfaces or lines. Fission359 can only use solid bodies.")
         case "inputFailed":
         case "inputMissing":
             return qsTr("An earlier step has a problem.")

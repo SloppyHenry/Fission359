@@ -2555,6 +2555,61 @@ QStringList DocumentModel::pasteBodies() {
     return created;
 }
 
+QString DocumentModel::addImportedFile(const QString& fileName, std::vector<std::uint8_t> bytes,
+                                       bool iges, const std::vector<ImportedBodyInfo>& bodies) {
+    if (bodies.empty() || m_registry.find("import") == nullptr) {
+        return {};
+    }
+    std::vector<core::ImportedPart> parts;
+    for (std::size_t i = 0; i < bodies.size(); ++i) {
+        core::FeatureDraft draft = core::defaultDraft(*m_registry.find("import"));
+        draft.params["part"].expression = std::to_string(i + 1);
+        draft.texts["format"] = iges ? "iges" : "step";
+        parts.push_back({std::move(draft), bodies[i].name, bodies[i].color});
+    }
+    const std::uint64_t before = m_history.document().revision();
+    const std::size_t steps = m_history.document().features().size();
+    if (!m_history.execute(
+            core::makeImportFile(fileName.toStdString(), std::move(bytes), std::move(parts)))) {
+        return {};
+    }
+    QString asset;
+    const auto& features = m_history.document().features();
+    if (features.size() > steps) {
+        asset = toQString(features[steps].texts.at("asset"));
+    }
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+    emit historyChanged();
+    return asset;
+}
+
+bool DocumentModel::setImportUnitFactor(const QString& asset, double factor) {
+    const std::string name = asset.toStdString();
+    std::vector<core::FeatureId> steps;
+    for (const core::Feature& feature : m_history.document().features()) {
+        const auto found = feature.texts.find("asset");
+        if (feature.type == "import" && found != feature.texts.end() && found->second == name) {
+            steps.push_back(feature.id);
+        }
+    }
+    if (steps.empty()) {
+        return false;
+    }
+    const std::uint64_t before = m_history.document().revision();
+    m_history.beginTransaction({"importUnit", {{"file", name}}});
+    for (const core::FeatureId& id : steps) {
+        m_history.execute(core::makeSetFeatureValue(id, "unitFactor", std::to_string(factor)));
+    }
+    finishTransaction();
+    if (m_history.document().revision() != before) {
+        documentChanged();
+    }
+    emit historyChanged();
+    return true;
+}
+
 QVariantMap DocumentModel::cutLabel(int bodyIndex) const {
     QVariantMap label;
     label[QStringLiteral("valid")] = false;

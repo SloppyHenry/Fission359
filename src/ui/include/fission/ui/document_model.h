@@ -130,6 +130,20 @@ public:
     /// The bodies to export, in the order of the list of bodies; `onlyIds` empty = all of them.
     std::vector<ExportBody> exportBodies(const QStringList& onlyIds) const;
 
+    /// What the file said about one of its bodies.
+    struct ImportedBodyInfo {
+        std::string name; ///< Empty = the interface shows the default name.
+        std::optional<core::Color> color;
+    };
+    /// Embeds a STEP or IGES file that was read (AP-2.13) and adds one step per body, as one step
+    /// of the history. Returns the name the file got inside the project, empty when nothing was
+    /// added.
+    QString addImportedFile(const QString& fileName, std::vector<std::uint8_t> bytes, bool iges,
+                            const std::vector<ImportedBodyInfo>& bodies);
+    /// Puts right the unit of an embedded file (25.4 for "it was inches"): every step that reads
+    /// it gets the factor, as one step of the history. False when no step reads that file.
+    bool setImportUnitFactor(const QString& asset, double factor);
+
     /// A whole document as it can be put aside while another one is shown: its steps and undo
     /// list, the palette and what it had chosen (AP-1.11e, tabs). Opaque; only the model looks in.
     class DocumentSlot {
