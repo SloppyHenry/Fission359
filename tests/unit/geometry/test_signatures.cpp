@@ -32,8 +32,10 @@ NamedSolid plate() {
 }
 
 // The face the creator called `role`.
+// Takes the role as a plain pointer: with a std::string parameter, GCC 13 flags every call with a
+// literal as a dangling reference (-Wdangling-reference), although the result lives in `sigs`.
 const ElementSignature& faceOf(const NamedSolid& solid, const BodySignatures& sigs,
-                               const std::string& role) {
+                               const char* role) {
     for (const NamedFace& face : solid.faces) {
         if (face.role == role) {
             return sigs.faces.at(face.faceId - 1);
