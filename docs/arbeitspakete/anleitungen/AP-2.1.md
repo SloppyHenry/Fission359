@@ -37,6 +37,29 @@ Die Haltepunkte von Teil a sind entschieden; die Begründungen stehen in [ADR-00
 5. **Elemente sind Punkte** (Teil a, im ADR): Kreis = {Mitte, Punkt auf dem Kreis}, Bogen = {Mitte, Anfang, Ende} gegen den Uhrzeigersinn,
    Spline = durch alle Punkte. Radius und Winkel sind abgeleitet.
 6. **Ebene aus einer Fläche** rechnet erst Teil 2.1b aus; bis dahin hat das Ergebnis der Skizze dann keine Ebene (nie raten, Regel 6).
+7. **Einstieg (Teil 2.1b):** Knopf „Skizze“ in der Werkzeugleiste an der Stelle, die das Mockup zeigt; Befehlssuche mit Synonymen
+   (DE: Skizze, zeichnen, 2D, Profil, Umriss; EN: sketch, draw, 2D, profile, outline); Hinweiszeile „Klicke eine ebene Fläche oder die
+   Grundebene an“ und Tooltip-Karte (Produktregel 10). Texte DE+EN über den vorhandenen Übersetzungsweg, Glossar §12.
+8. **Grundebene und Ebene aus einer Fläche:** Grundebene = Druckbett-Ebene z=0 (XY, Ursprung im Weltursprung, u=X, v=Y). Klick auf eine
+   ebene Körperfläche: Der Schritt bekommt `refs["plane"]` auf die Fläche und den Körper als Eingang (`inputs`); die Ebene wird beim
+   Neuberechnen aus der Fläche bestimmt und folgt dem Körper (ADR-0010). u-Achse: entlang der längsten geraden Kante der Fläche, sonst
+   Projektion der Welt-X-Achse, sonst Welt-Y; v = Normale × u; Ursprung = Projektion des Flächenschwerpunkts. Ist der Verweis nicht
+   auflösbar, ist der Schritt „braucht Hilfe“ (Regel 6), nie geraten. Ein Schritt `sketch` mit Eingang zählt nicht als Verbraucher des
+   Körpers (`Document::consumerOf`): der Körper bleibt ein ganzer Körper mit Griffen.
+9. **Gekrümmte Fläche angeklickt:** kein Schritt, nicht-modaler Hinweis aus dem Meldungskatalog: „Skizzen gehen nur auf ebenen Flächen.
+   Tipp: Hilfsebenen kommen später.“ (EN entsprechend).
+10. **Beenden:** Knopf „Fertig“ oben in der Ansicht und Esc (Esc beendet erst ein aktives Werkzeug, dann die Skizze; die Esc-Kurzbefehle
+    in `Main.qml` schließen sich gegenseitig aus, denn zwei aktive Kurzbefehle mit derselben Taste feuern in Qt beide nicht). Eine Skizze
+    ohne Elemente wird beim Beenden wieder entfernt (über einen normalen Command, sodass Undo konsistent bleibt); die Kamera kehrt
+    animiert zur vorigen Ansicht zurück.
+11. **Wieder öffnen:** Doppelklick auf den Skizzen-Schritt im Rezept öffnet den Skizzen-Modus erneut. Während des Skizzierens sind andere
+    Körper blass (ca. 35 % Deckkraft), die Skizze kräftig, der Skizzen-Schritt im Rezept ist als aktiv markiert. Das Skizzenraster liegt
+    auf der Ebene und hat den Rasterabstand der vorhandenen Bett-Raster-Einstellung (gröber, wenn es sonst enger als 6 Bildschirm-Pixel
+    wäre).
+12. **Zeiger und Fangen:** `interaction::planePoint(ray, plane)` (Strahl ∩ Ebene → u, v; parallel → kein Ergebnis) und die reine Funktion
+    `interaction::sketchSnap(...)`: Endpunkte, Linienmittelpunkte, Kreis-/Bogenmitten, Raster, waagerecht/senkrecht zu vorhandenen
+    Punkten (liefert Hilfslinien zum gestrichelten Zeichnen). Fangradius in Bildschirm-Pixeln; Vorrang Punkt > Mitte > Ausrichtung >
+    Raster. Im Modus zeigt ein Punkt-Marker die gefangene Position. Zeichenwerkzeuge kommen erst in 2.1c.
 
 ## Teil 2.1a – Datenmodell und Commands (gebaut 2026-11-06)
 1. `SketchData` in `src/core/include/fission/core/sketch.h` (Form im ADR-0013): `SketchElement { id, kind, points, construction }` mit Punkt, Linie,
