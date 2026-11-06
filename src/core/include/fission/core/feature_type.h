@@ -50,7 +50,12 @@ struct FeatureIssue {
     ElementKind refKind = ElementKind::face;  ///< For `referenceNeedsHelp`: face or edge.
     FeatureId consumedBy; ///< For `referenceNeedsHelp` with reason `consumed`: the step that did.
     std::optional<ExpressionError> expression;
-    std::string detail; ///< For the log only, never shown.
+    /// Numbers (mm) a message can name, e.g. "maxRadius": the largest value that would work. A
+    /// feature type that knows one sets it; the catalogue says what to do with it (AP-2.14).
+    std::map<std::string, double> numbers;
+    std::optional<geo::Point3d> where; ///< The place in 3D the message belongs to, if there is one.
+    std::vector<std::string> elements; ///< Names of the faces or edges it concerns (shown red).
+    std::string detail;                ///< For the log only, never shown (except "copy details").
 };
 
 /// What a feature type says about a value it takes.

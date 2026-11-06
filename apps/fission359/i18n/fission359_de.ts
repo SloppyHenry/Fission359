@@ -1447,7 +1447,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+97"/>
+        <location filename="../qml/LeftPanel.qml" line="+98"/>
         <source>Bodies</source>
         <translation>Körper</translation>
     </message>
@@ -1596,7 +1596,7 @@
         <translation>Abbrechen</translation>
     </message>
     <message>
-        <location line="+99"/>
+        <location line="+101"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Jede Änderung landet hier als Satz.</translation>
     </message>
@@ -1896,12 +1896,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1198"/>
+        <location line="+1207"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1197"/>
+        <location line="-1206"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -1932,12 +1932,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1186"/>
+        <location line="+1195"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1184"/>
+        <location line="-1193"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -2191,7 +2191,7 @@
         <translation>Kopiere zuerst etwas.</translation>
     </message>
     <message>
-        <location line="+785"/>
+        <location line="+794"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
@@ -2206,7 +2206,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1145"/>
+        <location line="-1107"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -2266,7 +2266,7 @@
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
     <message>
-        <location line="+1180"/>
+        <location line="+1138"/>
         <source>Unit: mm</source>
         <translation>Einheit: mm</translation>
     </message>
@@ -2583,7 +2583,7 @@
         <translation>Mehrere Änderungen</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+81"/>
         <source>, part %1</source>
         <translation>, Teil %1</translation>
     </message>
@@ -2637,22 +2637,22 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-306"/>
+        <location line="-307"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1184"/>
+        <location line="-1193"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1219"/>
+        <location line="+1228"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1095"/>
+        <location line="-1060"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
@@ -3085,19 +3085,114 @@
         <translation>Die Datei konnte nicht geschrieben werden. Ist der Ordner beschreibbar und die Festplatte nicht voll?</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+31"/>
         <source>Change value</source>
         <translation>Wert ändern</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+5"/>
         <source>Hide this step</source>
         <translation>Diesen Schritt ausblenden</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-4"/>
         <source>Choose again</source>
         <translation>Neu wählen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Use the largest value (%1 mm)</source>
+        <translation>Größtmöglichen Wert verwenden (%1 mm)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Make flush</source>
+        <translation>Bündig machen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy details for a bug report</source>
+        <translation>Details für einen Fehlerbericht kopieren</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>This does not exist after step %1.</source>
+        <translation>Das gibt es nach Schritt %1 nicht mehr.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This was used up by an earlier step.</source>
+        <translation>Das wurde von einem früheren Schritt aufgebraucht.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The surface was split.</source>
+        <translation>Die Fläche wurde geteilt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This has turned a lot.</source>
+        <translation>Das hat sich stark gedreht.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Two equal ones changed places.</source>
+        <translation>Zwei gleiche haben die Plätze getauscht.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This has lost its reference.</source>
+        <translation>Der Bezug ist verloren gegangen.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 does not work here.</source>
+        <translation>%1 geht hier nicht.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>These values do not work.</source>
+        <translation>Diese Werte gehen nicht.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A value cannot be calculated.</source>
+        <translation>Ein Wert lässt sich nicht berechnen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The result is not clean.</source>
+        <translation>Das Ergebnis ist nicht sauber.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nothing is left.</source>
+        <translation>Es bleibt nichts übrig.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The cutter misses the body.</source>
+        <translation>Der Ausschneider trifft den Körper nicht.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The font does not fit.</source>
+        <translation>Die Schrift passt nicht.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This step is not known here.</source>
+        <translation>Diesen Schritt kennt diese Version nicht.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Calculation replaced.</source>
+        <translation>Berechnung ersetzt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>That did not work.</source>
+        <translation>Das hat nicht geklappt.</translation>
     </message>
     <message>
         <location line="+11"/>
@@ -3115,6 +3210,16 @@
         <location line="+115"/>
         <source>That divides by zero.</source>
         <translation>Das teilt durch null.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1 with %2 mm does not work here. The largest value that works is %3 mm.</source>
+        <translation>%1 mit %2 mm geht hier nicht. Der größte Wert, der geht, ist %3 mm.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This value does not work here. The largest value that works is %1 mm.</source>
+        <translation>Dieser Wert geht hier nicht. Der größte Wert, der geht, ist %1 mm.</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -3242,6 +3347,11 @@
         <translation>Die Körper überlappen sich nicht, deshalb bleibt nichts übrig. Verschiebe sie so, dass sie sich berühren.</translation>
     </message>
     <message>
+        <location line="+13"/>
+        <source>This is a fault in the program, not yours. If you copy the details, you can report it.</source>
+        <translation>Das ist ein Fehler im Programm, nicht deiner. Wenn du die Details kopierst, kannst du ihn melden.</translation>
+    </message>
+    <message>
         <location line="+7"/>
         <source>An earlier step has a problem.</source>
         <translation>Ein früherer Schritt hat ein Problem.</translation>
@@ -3261,11 +3371,6 @@
         <source>The calculation was replaced by a newer change.</source>
         <translation>Die Berechnung wurde durch eine neuere Änderung ersetzt.</translation>
     </message>
-    <message>
-        <location line="+2"/>
-        <source>This shape could not be built.</source>
-        <translation>Diese Form ließ sich nicht bauen.</translation>
-    </message>
 </context>
 <context>
     <name>NumberField</name>
@@ -3279,7 +3384,7 @@
 <context>
     <name>RecipeRow</name>
     <message>
-        <location filename="../qml/RecipeRow.qml" line="+37"/>
+        <location filename="../qml/RecipeRow.qml" line="+38"/>
         <source>Needs help</source>
         <translation>Braucht Hilfe</translation>
     </message>
@@ -3294,7 +3399,7 @@
         <translation>Ausgeblendet</translation>
     </message>
     <message>
-        <location line="+110"/>
+        <location line="+112"/>
         <source>Name of the step</source>
         <translation>Name des Schritts</translation>
     </message>

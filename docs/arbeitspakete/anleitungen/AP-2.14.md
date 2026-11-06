@@ -52,6 +52,20 @@ parallel zu 2.4/2.5/2.6/2.7 (deren Fehlercodes).
    erscheint (QML-Text-Eigenschaften im Fenster-Test durchsuchen oder `MessageCatalog` nutzt `detail` nirgends außer in `copyDetails`;
    Letzteres per grep-Test erzwingen).
 
+## Stand 2026-11-04
+Haltepunkte vom Maintainer bestätigt (Fallback-Text mit „Details kopieren“, Ton der drei Beispiele).
+Gebaut (Schritte 1, 3–7):
+- `FeatureIssue::numbers` / `where` / `elements`, auch aus `GeometryError` (`withNumber`, `at`, `concerning`); Vereinbarung: `maxValue` ist der größte Wert, der für den Wert `subject` geht, `given` der eingegebene.
+- `FeatureState::failedPreview`: grobes Netz eines Ergebnisses, das die Gültigkeitsprüfung nicht bestand (gefüllt in `validated`, `occt_build.h`); die Szene zeichnet es rot und halbdurchsichtig, nie zum Rechnen.
+- Katalog: `title()` (Was ist passiert?), Sätze mit Zahlen, Fallback „Fehler im Programm“, Aktionen `useMaximum`, `makeFlush` (setzt „fuzzy“ beim Kombinieren), `copyDetails`. `useMaximum` und `makeFlush` sind je ein Undo-Schritt; `copyDetails` kopiert `DocumentModel::problemReport`.
+- `check_messages.py` prüft zusätzlich jeden `GeometryErrorCode`, jeden `HelpReason` und dass das rohe `detail` nur in `problemReport` vorkommt.
+- Tests: `tests/unit/ui/test_messages.cpp`.
+
+Offen (braucht Erzeuger):
+- **Karte an der Stelle in 3D** (`where`) und rote Hervorhebung der `elements`: noch kein Schritt setzt sie. Mit AP-2.5 (Abrunden/Fase) zusammen bauen, dann gibt es etwas zu sehen.
+- **Pflichtfälle aus „Bekannte Problemfälle“** (Radius zu groß, fast bündig, Spalt, Aushöhlen, Kante-zu-Kante): die Codes setzen AP-2.4/2.5 beim Bau ihrer Werkzeuge (`numbers.maxValue`, neue `FeatureIssueCode`); der Katalog und `check_messages.py` zwingen dann zu Text. `Verbinden` und `Anderes Verfahren versuchen` sind erst dann möglich.
+- Fenster-Test der Karte mit Knöpfen.
+
 ## Tests
 - `check_messages` grün; ein absichtlich ergänzter Code ohne Text lässt ihn rot werden (einmal ausprobieren, nicht committen).
 - UI-Test: Radius zu groß (sobald AP-2.5 da ist) → Meldung mit Zahl, Aktion setzt den Wert, ein Undo-Schritt.

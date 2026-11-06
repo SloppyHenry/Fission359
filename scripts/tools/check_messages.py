@@ -5,7 +5,11 @@
 
 Reads the codes of `FeatureIssueCode` (src/core/include/fission/core/feature_type.h) and checks
 that apps/fission359/qml/MessageCatalog.qml has an entry for each and that every entry lists its
-actions. The codes of problems with files (`FileController::fileProblem`) and with exporting
+actions. Every `GeometryErrorCode` (src/geometry/gal/include/fission/geo/error.h) must lead to a
+code of the core (`issueFromKernel` in recompute.cpp), every `HelpReason` (help_reason.h) must have
+a sentence and a title in the catalogue and a name in `helpReasonName`, and the raw `detail` of a
+problem must reach nothing but the "copy details" report (`problemReport` in document_model.cpp).
+The codes of problems with files (`FileController::fileProblem`) and with exporting
 (`ExportController::finished`) are read from the C++ sources and must be in `fileEntries` and
 `exportEntries` and have a sentence in `fileText` / `exportText`.
 Usage: check_messages.py <repository root>
@@ -26,12 +30,44 @@ problems = []
 for code in codes:
     if code not in entries:
         problems.append(f"MessageCatalog.qml: no entry for {code}")
-    if f'case "{code}"' not in catalogue and code not in ("namingContractViolated", "kernelFailed"):
+    if f'case "{code}"' not in catalogue:
         problems.append(f"MessageCatalog.qml: no sentence for {code}")
 for code in entries:
     if code not in codes:
         problems.append(f"MessageCatalog.qml: {code} is not a code of the core")
 
+
+# Every code of the geometry layer is turned into a code of the core (and so has a message).
+error_header = (root / "src/geometry/gal/include/fission/geo/error.h").read_text(encoding="utf-8")
+geometry_codes = re.findall(
+    r"^\s*([a-zA-Z]+),", re.search(r"enum class GeometryErrorCode \{(.*?)\};", error_header, re.S).group(1), re.M)
+recompute = (root / "src/core/src/recompute.cpp").read_text(encoding="utf-8")
+for code in geometry_codes:
+    if f"case geo::GeometryErrorCode::{code}:" not in recompute:
+        problems.append(f"recompute.cpp: GeometryErrorCode::{code} is not turned into a code of the core")
+
+# Every reason for "needs help" has a name for the interface, a title and a sentence.
+reason_header = (root / "src/core/include/fission/core/help_reason.h").read_text(encoding="utf-8")
+reasons = re.findall(
+    r"^\s*([a-zA-Z]+),?", re.search(r"enum class HelpReason \{(.*?)\};", reason_header, re.S).group(1), re.M)
+model_source = (root / "src/ui/src/document_model.cpp").read_text(encoding="utf-8")
+for reason in reasons:
+    if reason == "none":
+        continue
+    if f"core::HelpReason::{reason}" not in model_source:
+        problems.append(f"document_model.cpp: HelpReason::{reason} has no name for the interface")
+    if reason != "notFound" and catalogue.count(f'case "{reason}":') < 2:
+        problems.append(f"MessageCatalog.qml: HelpReason {reason} needs a title and a sentence")
+
+# No raw kernel text in the interface: `detail` is read only to write the report to copy.
+report = re.search(r"QString DocumentModel::problemReport\(.*?\n\}\n", model_source, re.S)
+rest = model_source.replace(report.group(0), "") if report else model_source
+if not report:
+    problems.append("document_model.cpp: problemReport not found")
+if re.search(r"(issue|problem)(\.|->)detail", rest):
+    problems.append("document_model.cpp: the raw `detail` of a problem is used outside problemReport")
+if re.search(r"problem\.detail", catalogue) and "expressionCodeName" not in model_source:
+    problems.append("MessageCatalog.qml: `problem.detail` is only the code of a formula error")
 
 
 def function_body(source, name):

@@ -1072,6 +1072,15 @@ Window {
             onStepRenamed: (index, text) => DocumentModel.setStepLabel(index, text)
             onStepHideRequested: (index, hide) => DocumentModel.setStepSuppressed(index, hide)
             onStepRepairRequested: index => DocumentModel.startRepair(index)
+            onStepProblemActionRequested: (index, id) => {
+                if (id === "useMaximum") {
+                    DocumentModel.useMaximum(index)
+                } else if (id === "makeFlush") {
+                    DocumentModel.setStepText(index, "fuzzy", "yes")
+                } else if (id === "copyDetails") {
+                    DocumentModel.copyProblemDetails(index)
+                }
+            }
             onStepDeleteRequested: index => root.requestDeletion(DocumentModel.deletionOfStep(index), true)
             onDeleteConfirmed: {
                 const steps = root.pendingDeletion.steps
@@ -1553,8 +1562,9 @@ Window {
         icon: recipeIcon(step.type),
         label: step.label,
         state: step.state,
+        problemTitle: step.problem ? messageCatalog.title(step.problem, step) : "",
         problem: step.problem ? problemText(step.problem, step) : "",
-        problemActions: step.problem ? messageCatalog.actionsFor(step.problem) : []
+        problemActions: step.problem ? messageCatalog.actionsFor(step.problem, step) : []
     }))
 
     readonly property var chosenBodyIndexes: Selection.items.map(item => item.bodyIndex)
