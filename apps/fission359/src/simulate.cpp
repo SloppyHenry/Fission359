@@ -741,7 +741,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             continue;
         }
         if (kind == QLatin1String("search") || kind == QLatin1String("runcommand")) {
-            // search:runde ecken,soon.fillet - the best match for the text is this command
+            // search:bohren,soon.drill - the best match for the text is this command
             // (looked up through the real catalogue of the program).
             // runcommand:tool.rotate - does that command, as a click in the list would.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
