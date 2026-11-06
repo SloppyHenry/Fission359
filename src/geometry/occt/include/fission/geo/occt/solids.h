@@ -58,6 +58,9 @@ Bounds bounds(const Solid& solid);
 /// The box that touches the body (see `GeometryKernel::exactBounds`).
 Bounds exactBounds(const Solid& solid);
 
+/// What every face and edge of the body looks like (see `GeometryKernel::signatures`).
+BodySignatures signatures(const Solid& solid);
+
 /// Tessellation for display. Throws GeometryError if the kernel cannot mesh the body.
 TriangleMesh tessellate(const Solid& solid, const TessellationParams& params = {});
 

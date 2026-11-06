@@ -1,0 +1,93 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Fission359 – Mockup AP-2.10e: Verweis braucht Hilfe, Reparatur (Attrappe, kein Produktionscode). Farben und Schrift wie oberflaeche.html. -->
+<meta charset="utf-8">
+<title>Fission359 – Verweis reparieren (Mockup)</title>
+<style>
+:root{color-scheme:dark;--chrome:#131416;--bar:#1A1B1E;--panel:#1F2023;--field:#27292D;--line:#34363B;--line-2:#3A3D43;--view:#2B2D31;
+--fg:#E8E9EB;--fg-2:#C9CCD1;--fg-3:#A4A8B0;--accent:#2563D9;--accent-text:#7FB0FF;--accent-line:#5B97FF;--accent-soft:#22314F;
+--amber:#F0A53A;--amber-fg:#1A1205;--amber-soft:rgba(240,165,58,.12);--amber-line:rgba(240,165,58,.45);--ok:#5DBB63;--ok-soft:rgba(93,187,99,.14);
+--font:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--chrome);color:var(--fg);font:13px/1.45 var(--font)}
+.strip{background:#2c2516;color:#f4e5c2;padding:8px 14px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #7c6534}
+.strip button{background:transparent;color:inherit;border:1px solid #7c6534;border-radius:6px;padding:4px 10px;cursor:pointer}
+.strip button.on{background:#fff8e8;color:#2a1d03}
+.app{display:grid;grid-template-columns:260px 1fr;height:calc(100vh - 44px)}
+.left{background:var(--panel);border-right:1px solid var(--line);padding:12px;overflow:auto}
+.left h3{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--fg-3);margin:4px 0 8px}
+.step{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;border:1px solid transparent;cursor:default}
+.step.sel{background:var(--accent-soft);border-color:var(--accent-line)}
+.step .n{width:20px;height:20px;border-radius:50%;background:var(--field);display:grid;place-items:center;font:500 11px var(--mono)}
+.step .warn{color:var(--amber);font-size:15px;margin-left:auto}
+.step .okmark{color:var(--ok);margin-left:auto}
+.card{margin-top:12px;border:1px solid var(--amber-line);background:var(--amber-soft);border-radius:8px;padding:10px 12px}
+.card.fine{border-color:var(--line-2);background:var(--field)}
+.card h4{margin:0 0 4px;font-size:13px}.card p{margin:0 0 8px;color:var(--fg-2)}
+.btn{height:30px;padding:0 12px;border-radius:6px;border:1px solid var(--line-2);background:transparent;color:var(--fg);cursor:pointer}
+.btn.amber{background:var(--amber);border-color:var(--amber);color:var(--amber-fg);font-weight:600}
+.btn.link{border:0;color:var(--accent-text);padding:0 4px}
+.stage{position:relative;background:var(--view);overflow:hidden}
+.hint{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(31,32,35,.94);border:1px solid var(--line-2);border-radius:8px;padding:8px 14px;box-shadow:0 6px 20px rgba(0,0,0,.45);white-space:nowrap}
+.hint b{color:var(--accent-text)}
+svg{width:100%;height:100%}
+.face{fill:#9aa3b2;stroke:#0a0b0d;stroke-opacity:.55}
+.ghost{fill:rgba(170,182,200,.18);stroke:#5B97FF;stroke-width:2.5;stroke-dasharray:8 6}
+.candidate{fill:rgba(91,151,255,.14);stroke:#5B97FF;stroke-width:1.5}
+.candidate:hover{fill:rgba(91,151,255,.32)}
+.note{position:absolute;right:14px;bottom:14px;max-width:340px;color:var(--fg-3);font-size:12px;background:rgba(31,32,35,.8);padding:8px 10px;border-radius:6px;border:1px dashed #7c6534}
+</style>
+<div class="strip"><b>Mockup AP-2.10e</b><span>Zustand:</span>
+<button data-s="1" class="on">① Schritt mit ⚠</button><button data-s="2">② „Neu wählen“ geklickt</button><button data-s="3">③ Fläche gewählt</button>
+<button id="lang" style="margin-left:auto">Deutsch / English</button></div>
+<div class="app">
+<div class="left">
+  <h3 data-de="Rezept" data-en="Recipe">Rezept</h3>
+  <div class="step"><span class="n">1</span><span data-de="Quader 40 × 30 × 10" data-en="Box 40 × 30 × 10">Quader 40 × 30 × 10</span></div>
+  <div class="step"><span class="n">2</span><span data-de="Quader (Ausschnitt)" data-en="Box (cut-out)">Quader (Ausschnitt)</span></div>
+  <div class="step"><span class="n">3</span><span data-de="Zusammenfügen (Ausschneiden)" data-en="Combine (cut out)">Zusammenfügen (Ausschneiden)</span></div>
+  <div class="step" id="s4"><span class="n">4</span><span data-de="Markierung auf Oberseite" data-en="Mark on top face">Markierung auf Oberseite</span><span id="mark" class="warn">⚠</span></div>
+  <div id="card"></div>
+</div>
+<div class="stage">
+  <svg viewBox="0 0 800 520" aria-label="3D-Ansicht (Skizze)">
+    <g transform="translate(0,20)">
+      <polygon class="face" points="200,330 520,330 600,270 280,270" opacity=".75"/>
+      <polygon class="face" points="200,330 520,330 520,390 200,390" opacity=".9"/>
+      <polygon class="face" points="520,330 600,270 600,330 520,390" opacity=".65"/>
+      <g id="layer"></g>
+    </g>
+  </svg>
+  <div class="hint" id="hint"></div>
+  <div class="note" data-de="Mockup: Der Schlitz teilt die Oberseite in zwei Stücke. Das Programm kann nicht raten, welches gemeint war, und fragt nach." data-en="Mockup: the slot cuts the top face into two pieces. The program cannot guess which one was meant and asks.">Mockup: Der Schlitz teilt die Oberseite in zwei Stücke. Das Programm kann nicht raten, welches gemeint war, und fragt nach.</div>
+</div>
+</div>
+<script>
+let state=1,en=false;const T=(d,e)=>en?e:d;
+function draw(){
+  const L=document.getElementById('layer'),card=document.getElementById('card'),hint=document.getElementById('hint'),mark=document.getElementById('mark'),s4=document.getElementById('s4');
+  document.querySelectorAll('.strip button[data-s]').forEach(b=>b.classList.toggle('on',+b.dataset.s===state));
+  s4.classList.toggle('sel',state>=1);
+  mark.className=state===3?'okmark':'warn';mark.textContent=state===3?'✓':'⚠';
+  // the two top pieces (left, right of the slot) and the ghost of the old whole top
+  const left='<polygon id="pl" class="%C" points="200,330 335,330 395,285 260,285"/>',right='<polygon id="pr" class="%C" points="395,285 460,330 520,330 600,270 520,270 460,285"/>';
+  if(state===1){
+    L.innerHTML='<polygon class="ghost" points="200,330 520,330 600,270 280,270"/>';
+    card.innerHTML=`<div class="card"><h4>⚠ ${T('Die Fläche wurde geteilt','The face was split')}</h4><p>${T('Schritt ④ meinte die Oberseite. Sie besteht jetzt aus zwei Stücken, und das Programm kann nicht wissen, welches gemeint ist.','Step ④ meant the top face. It now consists of two pieces and the program cannot know which one was meant.')}</p><button class="btn amber" id="pick">${T('Neu wählen','Choose again')}</button> <button class="btn link">${T('Schritt ausblenden','Switch step off')}</button></div>`;
+    hint.innerHTML=T('Schritt ④ braucht Hilfe. Das alte Stück ist gestrichelt gezeichnet.','Step ④ needs help. The old face is drawn dashed.');
+    document.getElementById('pick').onclick=()=>{state=2;draw()};
+  }else if(state===2){
+    L.innerHTML='<polygon class="ghost" points="200,330 520,330 600,270 280,270"/>'+left.replace('%C','candidate')+right.replace('%C','candidate');
+    card.innerHTML=`<div class="card"><h4>${T('Neu wählen','Choose again')}</h4><p>${T('Nur Flächen sind wählbar. Esc bricht ab.','Only faces can be picked. Esc cancels.')}</p><button class="btn" id="cancel">${T('Abbrechen','Cancel')}</button></div>`;
+    hint.innerHTML=`<b>${T('Klicke die Fläche, die gemeint ist','Click the face that was meant')}</b>`;
+    document.getElementById('cancel').onclick=()=>{state=1;draw()};
+    document.getElementById('pl').onclick=()=>{state=3;draw()};document.getElementById('pr').onclick=()=>{state=3;draw()};
+  }else{
+    L.innerHTML=left.replace('%C','candidate').replace('candidate','face').replace('class="face"','class="face" style="fill:#7FB0FF"')+right.replace('%C','face');
+    card.innerHTML=`<div class="card fine"><h4>✓ ${T('Neu zugeordnet','Assigned again')}</h4><p>${T('Schritt ④ sitzt jetzt auf dem linken Stück. Mit Strg+Z geht es zurück (ein Schritt).','Step ④ now sits on the left piece. Ctrl+Z undoes it (one step).')}</p><button class="btn link" id="undo">${T('Rückgängig','Undo')}</button></div>`;
+    hint.innerHTML=T('Fertig. Die Markierung folgt jetzt diesem Stück.','Done. The mark now follows this piece.');
+    document.getElementById('undo').onclick=()=>{state=1;draw()};
+  }
+}
+document.querySelectorAll('.strip button[data-s]').forEach(b=>b.onclick=()=>{state=+b.dataset.s;draw()});
+document.getElementById('lang').onclick=()=>{en=!en;document.querySelectorAll('[data-de]').forEach(e=>e.textContent=en?e.dataset.en:e.dataset.de);draw()};
+draw();
+</script>

@@ -42,6 +42,7 @@ Rectangle {
     property var problemActions: []
     signal editRequested
     signal hideRequested
+    signal pickAgainRequested
 
     width: parent ? parent.width : 260
     height: column.implicitHeight
@@ -258,7 +259,9 @@ Rectangle {
                     objectName: "problemAction_" + modelData.id
                     small: true
                     text: modelData.label
-                    onClicked: modelData.id === "editValue" ? root.editRequested() : root.hideRequested()
+                    onClicked: modelData.id === "editValue" ? root.editRequested()
+                             : modelData.id === "pickAgain" ? root.pickAgainRequested()
+                             : root.hideRequested()
                 }
             }
         }

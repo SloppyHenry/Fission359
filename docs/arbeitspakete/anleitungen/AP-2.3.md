@@ -70,3 +70,9 @@ Rezeptsatz (AP-1.9 `RecipeSentences.js`), Meldungskatalog-Einträge (AP-2.14), D
 
 ## Nicht tun
 Keine Verjüngung bei Drehkörpern; keine Twist-Extrusion (das ist Verformen, AP-4.3).
+
+## Folgearbeit aus AP-2.10: Namens-Szenarien nachziehen
+Sobald Skizzen Verweise nutzt (`FeatureDraft::refs`, `ExecuteInput::refs`), gehören seine Szenarien in die Produkt-Suite
+`tests/unit/naming/` (Vorbild: `test_scenarios.cpp`, die Szenarien des Prototyps in `tests/naming/test_scenarios.cpp` und `test_evil.cpp`
+mit denselben Erwartungen) und in die Zufallsprobe (`test_random.cpp`). Der Test-Schritt `markFace` (`refs_support.h`) wird dabei durch den
+echten Schritt ersetzt. Ein Schritt ohne Namens-Vertrag (alle erzeugten Flächen benennen, `ElementHistory` liefern) wird nicht aufgenommen.

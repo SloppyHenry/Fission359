@@ -22,6 +22,8 @@ Rectangle {
     signal stepRenamed(int index, string text)
     signal stepDeleteRequested(int index)
     signal stepHideRequested(int index, bool hide)
+    /// "Choose again" on a step whose reference needs help (AP-2.10e).
+    signal stepRepairRequested(int index)
     signal deleteConfirmed
     signal hideInstead
     signal deleteCancelled
@@ -564,6 +566,7 @@ Rectangle {
                             problemActions: stepItem.modelData.problemActions
                             onEditRequested: root.stepRequested(stepItem.index)
                             onHideRequested: root.stepHideRequested(stepItem.index, true)
+                            onPickAgainRequested: root.stepRepairRequested(stepItem.index)
                             selected: stepItem.index === root.currentStep
                             beyondMarker: root.marker >= 0 && stepItem.index >= root.marker
                             onClicked: root.stepRequested(stepItem.index)

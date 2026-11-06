@@ -7,7 +7,10 @@ Qt RHI, Paketierung) und UX-Anwält:in für Einsteiger („Versteht das jemand, 
 
 ## Zusammenarbeit
 - Open Source (GPL-3.0-or-later): Code, Kommentare und Commits so, dass Fremde beitragen können.
-- UX, neue Abhängigkeiten, Dateiformat und Design-Prinzipien entscheidet der Maintainer: höchstens 3 Optionen, mit Empfehlung und Konsequenzen.
+- **Autonomer Ausbau (Festlegung 2026-11-05):** Der Maintainer hat die Entscheidungen delegiert. Eine leitende Sitzung
+  (Orchestrierung) entscheidet UX, Abhängigkeiten, Dateiformat und Haltepunkte selbst, lässt Unter-Sitzungen bauen, prüft und
+  mergt. Rollen, Ablauf, Auftragsvorlage und was weiter gefragt wird: `docs/arbeitspakete/anleitungen/orchestrierung.md`.
+- Entscheidungen werden begründet festgehalten (Festlegungen, Abschlussvermerk, ADR, `docs/06-rueckfragen.md`).
 - Fortschritt belegen mit Tests, Screenshots und einer „So probierst du es aus“-Anleitung (`scripts/setup`, `scripts/run`, `scripts/test`).
 
 ## Testumgebung
@@ -52,21 +55,22 @@ Regeln 11–13 prüft Ablauf D (UX §15) automatisch. Diesen Test nie abschwäch
 - Alles baut und läuft auf macOS arm64 **und** Linux x86_64.
 
 ## Arbeitsweise
-**Jedes offene AP hat eine Bauanleitung** in `docs/arbeitspakete/anleitungen/` (Einstieg: `README.md`, Handgriffe: `handbuch.md`). Vor Beginn die
-Anleitung des APs ganz lesen; ihre Haltepunkte sind Pflichtfragen an den Maintainer. Wer ein AP zerlegt oder eine neue Aufgabe anlegt,
+**Jedes offene AP hat eine Bauanleitung** in `docs/arbeitspakete/anleitungen/` (Einstieg: `README.md`, Handgriffe: `handbuch.md`,
+Rollen: `orchestrierung.md`). Vor Beginn die Anleitung des APs ganz lesen. Wer ein AP zerlegt oder eine neue Aufgabe anlegt,
 schreibt die Anleitung im selben Aufbau; wer ein AP abschließt, überträgt Folgearbeiten in die passende Anleitung.
 
-1. Ein Arbeitspaket nach dem anderen; Abhängigkeiten prüfen.
-2. Erst Zusammenfassung (3–5 Sätze), offene Fragen, kurzer Plan. XL-APs zuerst in Teilpakete zerlegen.
-3. Bei echten Unklarheiten fragen (UX, neue Abhängigkeiten, Dateiformat, Design-Prinzipien). Kleine Details: Annahme treffen
-   und im Abschlussvermerk nennen.
-4. Kleine, lauffähige Schritte; nach jedem bauen, neue Tests sofort mitschreiben. Der komplette Testlauf kommt am Ende der Arbeitssitzung (`docs/arbeitspakete/anleitungen/handbuch.md` §10). Commits: `AP-1.5: Add cylinder primitive with handles`.
+1. Abhängigkeiten prüfen. Unabhängige Pakete dürfen parallel laufen, jedes in eigener Arbeitskopie (git worktree).
+2. Haltepunkte entscheidet die Orchestrierung vor dem Bau und trägt sie als Festlegungen ein. Umsetzer fragen nicht nach,
+   sondern halten an und berichten, wenn etwas nicht entschieden ist. XL-APs zuerst in Teilpakete zerlegen.
+3. Kleine Details: Annahme treffen und in PR und Abschlussvermerk nennen.
+4. Kleine, lauffähige Schritte; nach jedem bauen, neue Tests sofort mitschreiben und die Unit-Tests laufen lassen; Fenster-Tests
+   laufen in der CI (`docs/arbeitspakete/anleitungen/handbuch.md` §10). Commits: `AP-1.5: Add cylinder primitive with handles`.
    Je Teilpaket ein PR mit grüner CI (`main` ist geschützt).
 5. Architekturentscheidungen als ADR (`docs/adr/0000-vorlage.md`).
 6. Gegen Definition of Done und Akzeptanzkriterien prüfen. Nichts als erledigt markieren, was nicht nachweislich funktioniert.
-7. **Abschluss:** Status in der Phasendatei setzen und einen **knappen** Abschlussvermerk schreiben: Datum, Ergebnis (Stichpunkte),
-   weiter geltende Festlegungen, offene Reste. „So probierst du es aus“ und Testnachweise gehören in die PR-Beschreibung, nicht in
-   die Phasendatei.
+7. **Abschluss:** Merge bei grüner CI und bestandener Prüfung durch die Orchestrierung; Status `erledigt` in der Phasendatei und
+   ein **knapper** Abschlussvermerk: Datum, Ergebnis (Stichpunkte), weiter geltende Festlegungen, offene Reste. „So probierst du
+   es aus“ und Testnachweise gehören in die PR-Beschreibung, nicht in die Phasendatei.
 
 ## Bei Zielkonflikten
 (1) Daten- und Ergebnis-Korrektheit, (2) Verständlichkeit für Einsteiger, (3) Präzision, (4) UI-Reaktion, (5) Wartbarkeit,

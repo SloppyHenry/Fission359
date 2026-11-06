@@ -1447,7 +1447,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+99"/>
+        <location filename="../qml/LeftPanel.qml" line="+97"/>
         <source>Bodies</source>
         <translation>Körper</translation>
     </message>
@@ -1596,7 +1596,7 @@
         <translation>Abbrechen</translation>
     </message>
     <message>
-        <location line="+98"/>
+        <location line="+99"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Jede Änderung landet hier als Satz.</translation>
     </message>
@@ -1660,12 +1660,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+714"/>
+        <location line="+703"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location line="-713"/>
+        <location line="-702"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
@@ -1896,12 +1896,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1249"/>
+        <location line="+1198"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1248"/>
+        <location line="-1197"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -1932,12 +1932,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1236"/>
+        <location line="+1186"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1234"/>
+        <location line="-1184"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -1977,24 +1977,34 @@
         <translation>Prüfen: Flächen, Kanten und Ecken messen.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+9"/>
+        <source>Click the edge that was meant. Esc cancels.</source>
+        <translation>Klicke die Kante, die gemeint ist. Esc bricht ab.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click the face that was meant. Esc cancels.</source>
+        <translation>Klicke die Fläche, die gemeint ist. Esc bricht ab.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</source>
         <translation>Fang mit einer Form an: Öffne „Formen“ in der Werkzeugleiste oder drücke %1 und sag, was du bauen willst.</translation>
     </message>
     <message>
-        <location line="+24"/>
-        <location line="+789"/>
+        <location line="+23"/>
+        <location line="+749"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-787"/>
-        <location line="+788"/>
+        <location line="-747"/>
+        <location line="+748"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-782"/>
+        <location line="-742"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -2072,7 +2082,17 @@
         <translation>normal</translation>
     </message>
     <message>
-        <location line="+213"/>
+        <location line="+121"/>
+        <source>Click an edge of the body this step works on.</source>
+        <translation>Klicke eine Kante des Körpers, auf dem dieser Schritt arbeitet.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click a face of the body this step works on.</source>
+        <translation>Klicke eine Fläche des Körpers, auf dem dieser Schritt arbeitet.</translation>
+    </message>
+    <message>
+        <location line="+125"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
@@ -2136,7 +2156,7 @@
         </translation>
     </message>
     <message>
-        <location line="-608"/>
+        <location line="-584"/>
         <source>Arrives in a later version.</source>
         <translation>Kommt in einer späteren Version.</translation>
     </message>
@@ -2171,12 +2191,12 @@
         <translation>Kopiere zuerst etwas.</translation>
     </message>
     <message>
-        <location line="+827"/>
+        <location line="+785"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
     <message>
-        <location line="+119"/>
+        <location line="+121"/>
         <source>Click a face of the print bed or of another body.</source>
         <translation>Klicke auf eine Fläche des Druckbetts oder eines anderen Körpers.</translation>
     </message>
@@ -2191,7 +2211,7 @@
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
     <message>
-        <location line="-17"/>
+        <location line="-20"/>
         <source>Next tab</source>
         <translation>Nächster Tab</translation>
     </message>
@@ -2211,7 +2231,7 @@
         <translation>Strg+Umschalt+Tab</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+21"/>
         <source>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</source>
         <translation>Tippe einen Abstand, um genau zu verschieben (Tab für die nächste Richtung), Enter übernimmt, Esc setzt zurück.</translation>
     </message>
@@ -2506,6 +2526,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>%1 step: chose again</source>
+        <translation>%1-Schritt: neu gewählt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Body renamed to “%1”</source>
         <translation>Körper umbenannt in „%1“</translation>
     </message>
@@ -2612,17 +2637,17 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-314"/>
+        <location line="-306"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1231"/>
+        <location line="-1184"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1266"/>
+        <location line="+1219"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
@@ -2632,12 +2657,12 @@
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+535"/>
+        <location line="+554"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-585"/>
+        <location line="-601"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
@@ -3065,13 +3090,17 @@
         <translation>Wert ändern</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="+1"/>
         <source>Hide this step</source>
         <translation>Diesen Schritt ausblenden</translation>
     </message>
     <message>
-        <location line="-102"/>
-        <location line="+113"/>
+        <location line="+0"/>
+        <source>Choose again</source>
+        <translation>Neu wählen</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>I don’t know “%1”.</source>
         <translation>„%1“ kenne ich nicht.</translation>
     </message>
@@ -3154,6 +3183,46 @@
     </message>
     <message>
         <location line="+2"/>
+        <source>edge</source>
+        <translation>Kante</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>face</source>
+        <translation>Fläche</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The %1 was split into pieces, so I cannot tell which one you meant. Choose it again.</source>
+        <translation>Die %1 wurde geteilt, ich weiß nicht, welches Stück du meinst. Wähle sie neu.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>This %1 does not exist any more after step %2. Choose another one.</source>
+        <translation>Diese %1 gibt es nach Schritt %2 nicht mehr. Wähle eine andere.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An earlier step used up this %1. Choose another one.</source>
+        <translation>Ein früherer Schritt hat diese %1 aufgebraucht. Wähle eine andere.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This %1 has turned a lot. Choose it again to be sure.</source>
+        <translation>Diese %1 hat sich stark gedreht. Wähle sie neu, damit es sicher stimmt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Two equal ones seem to have changed places. Choose the %1 you meant.</source>
+        <translation>Zwei gleiche scheinen die Plätze getauscht zu haben. Wähle die %1, die du meinst.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I cannot find this %1 any more. Choose it again.</source>
+        <translation>Ich finde diese %1 nicht mehr. Wähle sie neu.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>A cutter does not touch the body, so nothing is cut out. Move it onto the body.</source>
         <translation>Ein Ausschneider berührt den Körper nicht, deshalb wird nichts ausgeschnitten. Schiebe ihn auf den Körper.</translation>
     </message>
@@ -3225,7 +3294,7 @@
         <translation>Ausgeblendet</translation>
     </message>
     <message>
-        <location line="+109"/>
+        <location line="+110"/>
         <source>Name of the step</source>
         <translation>Name des Schritts</translation>
     </message>

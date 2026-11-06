@@ -13,6 +13,12 @@ add_executable(fission_unit_tests
   core/test_scaling.cpp
   core/test_cuts.cpp
   core/test_serialize.cpp
+  core/test_body_looks.cpp
+  core/test_resolve.cpp
+  naming/test_refs.cpp
+  naming/test_scenarios.cpp
+  naming/test_random.cpp
+  naming/test_sensitivity.cpp
   features/test_primitives.cpp
   features/test_combine.cpp
   features/test_split.cpp
@@ -27,6 +33,7 @@ add_executable(fission_unit_tests
   geometry/test_shapes.cpp
   geometry/test_rotation.cpp
   geometry/test_booleans_gal.cpp
+  geometry/test_signatures.cpp
   geometry/test_seat.cpp
   geometry/test_text.cpp
   geometry/test_exchange.cpp
@@ -60,6 +67,7 @@ add_executable(fission_unit_tests
   ui/test_distances.cpp
   ui/test_body_edits.cpp
   ui/test_align.cpp
+  ui/test_repair.cpp
   interaction/test_drag.cpp
   interaction/test_snap.cpp
   interaction/test_distances.cpp

@@ -12,6 +12,7 @@
 #include "fission/core/command.h"
 #include "fission/core/commands.h"
 #include "fission/core/document.h"
+#include "fission/core/recompute.h"
 
 namespace fission::core {
 
@@ -32,6 +33,11 @@ public:
     /// False when the command was refused. A command that changes nothing is accepted but
     /// leaves no step.
     bool execute(std::unique_ptr<Command> command);
+
+    /// Technical upkeep, no command of the person: writes the refreshed looks of references that
+    /// the recompute found again safely (`applyHealedRefs`). Leaves no step and does not make the
+    /// document "changed". Returns how many references were written; the caller recomputes.
+    std::size_t mendRefs(const RecomputeResult& result);
 
     /// Adds a step and tells its id; nullopt when refused.
     std::optional<FeatureId> addFeature(FeatureDraft draft,

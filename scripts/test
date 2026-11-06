@@ -97,6 +97,9 @@ step "Führe Tests aus"
 if [ "$(detect_os)" != "macos" ]; then
     export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-offscreen}"
 fi
+# The product suite of persistent references (tests/unit/naming) writes its counts here.
+NAMING_PRODUCT_REPORT="$(mktemp)"
+export FISSION_NAMING_PRODUCT_REPORT="$NAMING_PRODUCT_REPORT"
 ctest --preset "$PRESET" >"$TEST_LOG" 2>&1
 CTEST_EXIT=$?
 
@@ -143,6 +146,25 @@ fi
 if [ "$NAMING_TOTAL" -gt 0 ]; then
     ok "Persistente Referenzen: $NAMING_TOTAL Szenarien, böse Fälle und Zufallsproben geprüft, nichts still falsch zugeordnet (Bericht: docs/spikes/persistente-referenzen.md)"
 fi
+
+if [ -s "$NAMING_PRODUCT_REPORT" ]; then
+    # Lines: "group correct helpPlus helpMinus wrong"
+    read -r NP_TOTAL NP_CORRECT NP_PLUS NP_MINUS NP_WRONG <<EOF_NP
+$(awk '{c+=$2; p+=$3; m+=$4; w+=$5} END {print c+p+m+w, c, p, m, w}' "$NAMING_PRODUCT_REPORT")
+EOF_NP
+    NP_AUTO=100
+    if [ $((NP_CORRECT + NP_MINUS + NP_WRONG)) -gt 0 ]; then
+        NP_AUTO=$((100 * NP_CORRECT / (NP_CORRECT + NP_MINUS + NP_WRONG)))
+    fi
+    NP_TEXT="Persistente Referenzen (Produkt): $NP_TOTAL Szenarien, $NP_WRONG still falsch ($NP_AUTO % von selbst richtig, $NP_PLUS zu Recht um Hilfe gebeten, $NP_MINUS unnötig)"
+    if [ "$NP_WRONG" -eq 0 ] && [ "$NP_AUTO" -ge 90 ]; then
+        ok "$NP_TEXT"
+    else
+        fail "$NP_TEXT"
+        FAILED=$((FAILED + 1)); FAILED_NAMES+=("Persistente Referenzen (Produkt)")
+    fi
+fi
+rm -f "$NAMING_PRODUCT_REPORT"
 
 say ""
 if [ "$CTEST_EXIT" -eq 0 ] && [ "$FAILED" -eq 0 ] && [ "$PASSED" -gt 0 ]; then

@@ -15,6 +15,7 @@
 #include "fission/geo/outline.h"
 #include "fission/geo/primitives.h"
 #include "fission/geo/rotation.h"
+#include "fission/geo/signature.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
 
@@ -167,6 +168,14 @@ public:
     }
 
     virtual TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const = 0;
+
+    /// What every face and edge of a body looks like (ADR-0003, the base of persistent
+    /// references). Costs about as much as a tessellation of the body's topology: ask only for
+    /// bodies a reference points to. The default refuses.
+    virtual BodySignatures signatures(const Solid& solid) const {
+        (void)solid;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot describe bodies");
+    }
 };
 
 } // namespace fission::geo
