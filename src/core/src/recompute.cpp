@@ -7,6 +7,8 @@
 #include <bit>
 #include <exception>
 
+#include "fission/core/body_looks.h"
+#include "fission/core/resolve.h"
 #include "fission/geo/error.h"
 
 namespace fission::core {
@@ -64,7 +66,8 @@ std::optional<FeatureIssue> resolveValues(const Feature& feature, const FeatureT
 
 // Everything that goes into a result, written out. Equal text, equal result.
 std::string cacheKey(const Feature& feature, const FeatureType& type, const ResolvedParams& params,
-                     const std::vector<const BodyResult*>& inputs) {
+                     const std::vector<const BodyResult*>& inputs,
+                     const std::map<std::string, std::vector<ResolvedRef>>& refs) {
     std::string key(type.id());
     key += '\x1f';
     key += std::to_string(type.version());
@@ -96,6 +99,18 @@ std::string cacheKey(const Feature& feature, const FeatureType& type, const Reso
         key += std::to_string(input->token);
         key += '.';
         key += std::to_string(input->outputIndex);
+    }
+    // The elements the references led to are part of what goes into the result.
+    for (const auto& [slot, found] : refs) {
+        key += "\x1f@" + slot;
+        for (const ResolvedRef& ref : found) {
+            key += ',';
+            key += std::to_string(static_cast<int>(ref.kind));
+            key += ':';
+            key += std::to_string(ref.id);
+            key += ':';
+            key += ref.element;
+        }
     }
     return key;
 }
@@ -184,6 +199,41 @@ void RecomputeCache::trim() {
     }
 }
 
+// What the step used up: the faces and edges of its inputs that are not in a result any more,
+// together with what earlier steps used up. Only steps that report a change to face names can
+// have used something up; for the others the inherited list is all there is.
+std::vector<ConsumedElement> consumedBy(const Feature& feature, const FeatureType& type,
+                                        const FeatureOutput& output,
+                                        const std::vector<const BodyResult*>& inputBodies,
+                                        const geo::GeometryKernel& kernel,
+                                        const PlacementFn& placement) {
+    std::vector<ConsumedElement> consumed;
+    for (const BodyResult* input : inputBodies) {
+        mergeConsumed(consumed, input->consumed);
+    }
+    if (output.history.empty()) {
+        return consumed;
+    }
+    try {
+        std::vector<BodyFace> names;
+        for (const geo::NamedFace& face : output.faces) {
+            names.push_back(
+                {face.faceId, type.passesOnNames() ? face.role : elementName(feature, face.role)});
+        }
+        const BodyLooks after = describeBody(names, kernel.signatures(output.solid));
+        for (const BodyResult* input : inputBodies) {
+            // Saved in the coordinates of the steps that made the elements, like references are.
+            const BodyLooks before =
+                toBodyFrame(describeBody(input->faces, kernel.signatures(input->solid)), placement);
+            mergeConsumed(consumed, consumedBetween(before, after, feature.id));
+        }
+    } catch (const geo::GeometryError&) {
+        // A kernel that cannot describe bodies (a test double) cannot tell what was used up; the
+        // OpenCASCADE kernel always can.
+    }
+    return consumed;
+}
+
 std::optional<RecomputeResult> recompute(const Document& document, const FeatureRegistry& registry,
                                          const geo::GeometryKernel& kernel, RecomputeCache& cache,
                                          CancelToken cancel) {
@@ -193,6 +243,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         resolveMeasures(document.measureDefinitions(), document.settings().defaultUnitMillimetres);
     const MeasureLookup lookup = result.measures.lookup();
     ++cache.clock_;
+    // What the bodies look like, for steps that hold references (by result token and output).
+    std::map<std::pair<std::uint64_t, std::size_t>, BodyLooks> looksOfBody;
 
     using Entry = RecomputeCache::Entry;
     using Output = RecomputeCache::Output;
@@ -207,6 +259,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             body.producer = feature.id;
             body.solid = entry.outputs[i].solid;
             body.stale = stale;
+            body.consumed = entry.outputs[i].consumed;
             body.token = entry.token;
             body.outputIndex = i;
             for (const geo::NamedFace& role : entry.outputs[i].roles) {
@@ -236,8 +289,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         }
 
         // A step that fails: error on it, its last valid result (if it had one) stays visible.
-        const auto fail = [&](FeatureIssue issue) {
-            state.status = FeatureStatus::error;
+        const auto fail = [&](FeatureIssue issue, FeatureStatus status = FeatureStatus::error) {
+            state.status = status;
             state.issue = std::move(issue);
             const auto good = cache.lastGood_.find(feature.id);
             if (good != cache.lastGood_.end()) {
@@ -309,8 +362,97 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             continue;
         }
 
+        // References: found again safely, or the step is not calculated and shows its last valid
+        // result with a warning (rule 6: never apply a step to guessed geometry).
+        std::map<std::string, std::vector<ResolvedRef>> resolvedRefs;
+        if (!feature.refs.empty()) {
+            std::optional<FeatureIssue> help;
+            FeatureId consumedStep;
+            const auto needHelp = [&](const std::string& slot, std::size_t index, ElementKind kind,
+                                      HelpReason reason, std::string detail,
+                                      FeatureId consumedBy = {}) {
+                if (!help) {
+                    consumedStep = std::move(consumedBy);
+                    help = issueOf(FeatureIssueCode::referenceNeedsHelp, slot, std::move(detail));
+                    help->helpReason = reason;
+                    help->refIndex = index;
+                    help->refKind = kind;
+                    help->consumedBy = consumedStep;
+                }
+            };
+            const BodyResult* target = inputBodies.empty() ? nullptr : inputBodies.front();
+            const BodyLooks* looksPtr = nullptr;
+            bool described = false;
+            if (target != nullptr) {
+                try {
+                    // Many steps point into the same body: describe it once per run.
+                    const auto key = std::make_pair(target->token, target->outputIndex);
+                    auto known = looksOfBody.find(key);
+                    if (known == looksOfBody.end()) {
+                        known = looksOfBody
+                                    .emplace(key, describeBody(target->faces,
+                                                               kernel.signatures(target->solid)))
+                                    .first;
+                    }
+                    looksPtr = &known->second;
+                    described = true;
+                } catch (const geo::GeometryError& error) {
+                    const auto& first = *feature.refs.begin();
+                    needHelp(first.first, 0,
+                             first.second.empty() ? ElementKind::face : first.second.front().kind,
+                             HelpReason::notFound, error.what());
+                }
+            }
+            // The place of the step that made an element, worked out once per step.
+            std::map<std::string, Placement> places;
+            const PlacementFn placement = [&](const std::string& name) {
+                const auto known = places.find(name);
+                if (known != places.end()) {
+                    return known->second;
+                }
+                return places.emplace(name, placementOf(document, registry, result.features, name))
+                    .first->second;
+            };
+            for (const auto& [slot, list] : feature.refs) {
+                for (std::size_t index = 0; index < list.size(); ++index) {
+                    const PersistentRef& ref = list[index];
+                    if (!described) {
+                        needHelp(slot, index, ref.kind, HelpReason::notFound, "no body to look in");
+                        continue;
+                    }
+                    const ResolveOutcome outcome =
+                        resolve(ref, *looksPtr, target->consumed, placement);
+                    if (outcome.state != ResolveOutcome::State::found) {
+                        needHelp(slot, index, ref.kind, outcome.reason, outcome.detail,
+                                 outcome.consumedBy);
+                        continue;
+                    }
+                    resolvedRefs[slot].push_back({ref.kind, outcome.element, outcome.id});
+                    PersistentRef healed = refreshed(ref, *looksPtr, outcome, placement);
+                    if (!(healed == ref)) {
+                        result.healed.push_back({feature.id, slot, index, ref, std::move(healed)});
+                    }
+                }
+            }
+            if (help) {
+                fail(std::move(*help), FeatureStatus::warning);
+                continue;
+            }
+        }
+
+        // The place of the step that made an element (for the memory of used-up elements).
+        std::map<std::string, Placement> hereCache;
+        const PlacementFn placementHere = [&](const std::string& name) {
+            const auto known = hereCache.find(name);
+            if (known != hereCache.end()) {
+                return known->second;
+            }
+            return hereCache.emplace(name, placementOf(document, registry, result.features, name))
+                .first->second;
+        };
+
         // Remembered, or ask the kernel.
-        const std::string key = cacheKey(feature, *type, state.params, inputBodies);
+        const std::string key = cacheKey(feature, *type, state.params, inputBodies, resolvedRefs);
         const Entry* entry = cache.find(key);
         if (entry != nullptr) {
             ++result.remembered;
@@ -318,8 +460,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             std::vector<Output> outputs;
             try {
                 const ExecuteContext context{kernel, cancel};
-                FeatureResult made =
-                    type->execute({feature, state.params, inputs, std::move(producers)}, context);
+                FeatureResult made = type->execute(
+                    {feature, state.params, inputs, std::move(producers), resolvedRefs}, context);
                 if (cancel.stop_requested()) {
                     return std::nullopt; // a step that gave up because it was asked to
                 }
@@ -338,7 +480,10 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                         violated = true;
                         break;
                     }
-                    outputs.push_back({std::move(output.solid), std::move(output.faces)});
+                    std::vector<ConsumedElement> consumed =
+                        consumedBy(feature, *type, output, inputBodies, kernel, placementHere);
+                    outputs.push_back(
+                        {std::move(output.solid), std::move(output.faces), std::move(consumed)});
                 }
                 if (violated) {
                     continue;
@@ -376,6 +521,27 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         return std::nullopt;
     }
     return result;
+}
+
+std::size_t applyHealedRefs(Document& document, const RecomputeResult& result) {
+    std::size_t written = 0;
+    for (const HealedRef& healed : result.healed) {
+        const Feature* feature = document.findFeature(healed.feature);
+        if (feature == nullptr) {
+            continue;
+        }
+        const auto slot = feature->refs.find(healed.slot);
+        if (slot == feature->refs.end() || healed.index >= slot->second.size() ||
+            !(slot->second[healed.index] == healed.before)) {
+            continue; // changed since: the recompute's answer is out of date
+        }
+        std::vector<PersistentRef> list = slot->second;
+        list[healed.index] = healed.after;
+        if (document.setFeatureRefs(healed.feature, healed.slot, std::move(list))) {
+            ++written;
+        }
+    }
+    return written;
 }
 
 // --- worker ------------------------------------------------------------------------------

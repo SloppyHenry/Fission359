@@ -37,7 +37,8 @@ QtObject {
         "fontNotFound": { actions: ["editValue", "hideStep"] },
         "fontStyleMissing": { actions: ["editValue", "hideStep"] },
         "combineEmpty": { actions: ["hideStep"] },
-        "combineNoOverlap": { actions: ["hideStep"] }
+        "combineNoOverlap": { actions: ["hideStep"] },
+        "referenceNeedsHelp": { actions: ["pickAgain", "hideStep"] }
     })
 
     /// Problems with files: "card" is shown as a card with buttons, else as a hint line. The
@@ -138,7 +139,8 @@ QtObject {
         const ids = entry ? entry.actions : ["hideStep"]
         return ids.map(id => ({
             id: id,
-            label: id === "editValue" ? qsTr("Change value") : qsTr("Hide this step")
+            label: id === "editValue" ? qsTr("Change value")
+                 : id === "pickAgain" ? qsTr("Choose again") : qsTr("Hide this step")
         }))
     }
 
@@ -182,6 +184,19 @@ QtObject {
                 return qsTr("The cutting plane does not touch the body. Move it into the body.")
             }
             return qsTr("The shape cannot be built with these values. Try changing a value a little.")
+        case "referenceNeedsHelp": {
+            const what = problem.kind === "edge" ? qsTr("edge") : qsTr("face")
+            switch (problem.reason) {
+            case "split": return qsTr("The %1 was split into pieces, so I cannot tell which one you meant. Choose it again.").arg(what)
+            case "consumed":
+                return problem.step !== undefined
+                    ? qsTr("This %1 does not exist any more after step %2. Choose another one.").arg(what).arg(problem.step)
+                    : qsTr("An earlier step used up this %1. Choose another one.").arg(what)
+            case "turned": return qsTr("This %1 has turned a lot. Choose it again to be sure.").arg(what)
+            case "swapped": return qsTr("Two equal ones seem to have changed places. Choose the %1 you meant.").arg(what)
+            default: return qsTr("I cannot find this %1 any more. Choose it again.").arg(what)
+            }
+        }
         case "combineNoOverlap":
             return qsTr("A cutter does not touch the body, so nothing is cut out. Move it onto the body.")
         case "kernelResultInvalid":

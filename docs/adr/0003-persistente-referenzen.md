@@ -75,3 +75,20 @@ Wir wählen **Option A**, mit diesen festen Bestandteilen:
 - OCAF-Praxistest: `tests/naming/test_ocaf.cpp`
 - FreeCAD: Quellkopf `src/App/ElementMap.h`, Wiki-Beschreibung des Naming-Algorithmus (nur gelesen, kein
   Code übernommen)
+
+## Nachtrag 2026-11-03 (AP-2.10)
+
+Beim Übertragen in den Produktcode sind drei Dinge festgelegt worden, die der Prototyp noch nicht hatte:
+
+1. **Geteilte Flächen heißen `Name#1`, `Name#2`.** Der Kernel nummeriert die Stücke einer zerschnittenen Fläche (ADR-0011). Ein Verweis, dessen
+   Name fehlt, aber dessen Fläche (oder eine der zwei Flächen einer Kante) als Stücke weiterlebt, bekommt immer „braucht Hilfe: geteilt“. Die
+   Namensschicht liefert dafür die Historie (`NamedSolid::history`).
+2. **Verglichen wird in den Koordinaten des eigenen Schritts (nur Drehung).** Jedes Element wird mit der Drehung des Schritts, dessen Namen es
+   trägt, in dessen Koordinaten zurückgerechnet (`PlacementFn`, ADR-0010 Punkt 4). Verweise und das Gedächtnis für verbrauchte Elemente
+   liegen in diesen Koordinaten. Die **Position** (`x`, `y`, `z`) wird bewusst **nicht** herausgerechnet: Elemente verschiedener Schritte
+   würden sonst einander ähneln, obwohl sie weit auseinanderliegen, und die Ähnlichkeitssuche könnte still falsch zuordnen. Folge: Nach dem
+   Verschieben eines Körpers kann die Ähnlichkeitssuche zu Recht um Hilfe bitten; Treffer über den Namen sind nicht betroffen.
+3. **Heilen ohne Undo-Schritt.** Das aufgefrischte Aussehen eines sicher gefundenen Verweises wird im Dokument gespeichert, aber nicht als
+   Nutzerbefehl (`History::mendRefs`). Die Neuberechnung im Hintergrund schreibt nichts; sie meldet, die Oberfläche übernimmt.
+
+Das Revisionskriterium oben gilt weiter. Die Produkt-Suite (`tests/unit/naming/`) und `scripts/test` prüfen es bei jedem Lauf.

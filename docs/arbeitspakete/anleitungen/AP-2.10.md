@@ -66,7 +66,9 @@ Gedächtnis für verbrauchte Elemente; nur strenger Modus.
    schreiben; Ergebnis meldet „Verweis X hat jetzt Aussehen Y“, die Oberfläche übernimmt es ohne Undo-Schritt (technische Pflege, kein
    Nutzerbefehl). Haltepunkt, falls das unsauber wirkt; Alternative: Aussehen nicht speichern, sondern bei jedem Laden neu.
 5. Tests: alle Szenarien aus `tests/naming/test_scenarios.cpp` und `test_evil.cpp` gegen den Produktcode portieren
-   (`tests/unit/core/test_resolve.cpp`), gleiche Erwartungen.
+   (`tests/unit/core/test_resolve.cpp`), gleiche Erwartungen. **Stand:** portiert sind die Szenarien, die Quader, Zylinder und
+   Zusammenfügen bauen können (Maße ändern, Schritt ersetzt, Fläche geteilt, Fläche überdeckt, Plätze getauscht, Drehung, Lage).
+   Die Szenarien mit Abrunden, Bohren und Skizzen folgen, sobald es diese Werkzeuge gibt.
 
 ## Teil 2.10c – Verweise anlegen und speichern
 1. `core::makeRef(elementName, looks)`: aus einer Auswahl (ADR-0009) einen `PersistentRef` bauen.
@@ -109,3 +111,26 @@ Gedächtnis für verbrauchte Elemente; nur strenger Modus.
 - Keine großzügige „bitte prüfen“-Stufe (ADR-0003 Punkt 6).
 - Kein OCAF.
 - Schwellen nicht „mal eben“ lockern, um mehr Treffer zu bekommen: Änderung nur mit neuer Messung und ADR-Nachtrag.
+
+## Stand 2.10d (Produkt-Suite)
+`tests/unit/naming/`: `test_scenarios.cpp` (70 Szenarien: Maße, Einfügen davor, Ausblenden, Verschieben, Drehen, Schritt ersetzt, Zylinder,
+Teilen, Überdecken, Verschmelzen), `test_random.cpp` (10 Ketten à 12 Änderungen, eigener Zufallsgenerator, Wahrheit aus der Geometrie),
+`test_sensitivity.cpp` (Gedächtnis, Plätze-getauscht-Prüfung, 45°-Regel: je ein Fall, der ohne den Baustein still falsch wäre).
+`scripts/test` zählt die Szenarien und fällt durch bei einem stillen Fehler oder unter 90 % automatisch richtig.
+**Noch offen:** Szenarien mit Abrunden, Bohren, Skizzen (mit AP-2.5, 2.7, 2.3 nachziehen); Bohrungen verschieben/vergrößern;
+Zufallsprobe um Teilen und Vereinen erweitern. Jedes Element wird in den Koordinaten des eigenen Schritts verglichen (`PlacementFn`,
+nur Drehung). Die Position wird bewusst nicht herausgerechnet (siehe ADR-0003, Nachtrag 2026-11-03): nach einem Verschieben kann die
+Ähnlichkeitssuche zu Recht um Hilfe bitten. Das Gedächtnis für verbrauchte Elemente liegt ebenfalls in den Koordinaten der Schritte.
+**Noch offen für die Abnahme:** Messwert der Auflösung bei 50 Schritten eintragen (Test `[perf]` in `test_refs.cpp`, Budget < 50 ms im
+Release); ein Zwischenspeicher der Aussehen über Läufe hinweg nur, falls die Messung ihn verlangt (je Lauf wird ein Körper einmal beschrieben).
+
+## Stand 2.10e (Reparatur-Oberfläche)
+Rezept-Zeile mit ⚠: Karte mit Grund (geteilt, verbraucht, gedreht, Plätze getauscht, nicht gefunden) und Knopf „Neu wählen“
+(`MessageCatalog.qml`). Klick: `DocumentModel.startRepair` schaltet die Auswahl auf Flächen bzw. Kanten, die Hinweiszeile sagt „Klicke die
+Fläche, die gemeint ist“, `RepairGhostLayer.qml` zeichnet das alte Element gestrichelt (Quadrat gleicher Fläche bzw. Linie, aus dem
+gespeicherten Aussehen; die letzte gültige Geometrie des Elements wird nicht benutzt). Ein Klick auf den Körper des Schritts ruft
+`completeRepair` auf: ein Command `makeSetFeatureRefs`, ein Undo-Schritt. Esc bricht ab; verschwindet das Problem von selbst, endet die
+Reparatur. Tests: `tests/unit/ui/test_repair.cpp`. Mockup: `docs/mockups/reparatur-verweis.html`.
+**Noch offen:** das Fenster-Verhalten (Klick im 3D-Fenster) ist nur über `DocumentModel` getestet, nicht mit einem Fenster-Test;
+sichtbar im Programm erst, wenn ein Werkzeug Verweise nutzt (AP-2.5). Die Meldung „Diese Kante gibt es nach Schritt ③ nicht mehr“ nennt den
+Schritt (`ConsumedElement::step`).

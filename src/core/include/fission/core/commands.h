@@ -50,6 +50,9 @@ std::unique_ptr<Command> makeSetFeatureValue(FeatureId id, std::string name,
 std::unique_ptr<Command> makeSetFeatureText(FeatureId id, std::string name, std::string text);
 /// Replaces the bodies a step works on (a combine step gets another tool).
 std::unique_ptr<Command> makeSetFeatureInputs(FeatureId id, std::vector<BodyId> inputs);
+/// Points the references of slot `slot` of a step at other elements (the person picked again).
+std::unique_ptr<Command> makeSetFeatureRefs(FeatureId id, std::string slot,
+                                            std::vector<PersistentRef> refs);
 std::unique_ptr<Command> makeSetFeatureLabel(FeatureId id, std::string label);
 /// Switches a step off or on ("ausblenden").
 std::unique_ptr<Command> makeSetFeatureSuppressed(FeatureId id, bool suppressed);

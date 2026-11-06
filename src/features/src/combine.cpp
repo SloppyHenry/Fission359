@@ -93,8 +93,8 @@ public:
         geo::NamedSolid made =
             context.kernel.boolean(*mode, named(input.inputs.front()), tools, fuzzy);
         FeatureResult result;
-        result.outputs.push_back(
-            {input.feature.outputs.at(0), std::move(made.solid), std::move(made.faces)});
+        result.outputs.push_back({input.feature.outputs.at(0), std::move(made.solid),
+                                  std::move(made.faces), std::move(made.history)});
         return result;
     }
 

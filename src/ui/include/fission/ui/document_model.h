@@ -85,6 +85,11 @@ class DocumentModel : public QObject {
     Q_PROPERTY(double workplaneZ READ workplaneZ NOTIFY workplaneChanged)
     Q_PROPERTY(QString workplaneBodyId READ workplaneBodyId NOTIFY workplaneChanged)
     Q_PROPERTY(bool calculating READ calculating NOTIFY calculatingChanged)
+    /// A step with a reference that "needs help" is being repaired: the next click on a face or
+    /// edge (`repairKind`) of its body picks again (AP-2.10e).
+    Q_PROPERTY(bool repairing READ repairing NOTIFY repairChanged)
+    /// What is to be picked while repairing: "face" or "edge".
+    Q_PROPERTY(QString repairKind READ repairKind NOTIFY repairChanged)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY historyChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY historyChanged)
     /// What `undo` / `redo` would do next, as { key, type, number, field, value, name } (text
@@ -111,6 +116,11 @@ public:
     /// `kernel` does the geometry work; the application hands in the OpenCASCADE one.
     explicit DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel,
                            QObject* parent = nullptr);
+    /// With more feature types than the built-in ones (tests register steps that only exist
+    /// there, like one that holds a reference).
+    DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel,
+                  std::vector<std::unique_ptr<const core::FeatureType>> extraTypes,
+                  QObject* parent = nullptr);
     ~DocumentModel() override;
 
     /// The number fields use the named measures of the document in their formulas.
@@ -350,6 +360,20 @@ public:
     /// The cutting plane of the chosen split step, to be drawn as a translucent sheet: `valid` and
     /// `corners`, four points `{x, y, z}` (mm) round the plane, a little larger than the body.
     Q_INVOKABLE QVariantMap splitPlane() const;
+
+    bool repairing() const noexcept { return !m_repairFeature.empty(); }
+    QString repairKind() const;
+    /// Starts picking again for the step at `stepIndex` (it must have a reference that needs
+    /// help). False when it has none.
+    Q_INVOKABLE bool startRepair(int stepIndex);
+    Q_INVOKABLE void cancelRepair();
+    /// The pick: face or edge `number` of the body `bodyId` (a `Selection` item). Sets the
+    /// reference as one undo step and ends the repair. False (and the repair goes on) when it is
+    /// the wrong kind, a body other than the step's, or an element that cannot be found again.
+    Q_INVOKABLE bool completeRepair(const QString& bodyId, const QString& kind, int number);
+    /// Where the reference used to point, to be drawn as a dashed ghost: `valid`, `kind`, and
+    /// `points` (4 corners of a face, 2 ends of an edge) as `{x, y, z}` in mm.
+    Q_INVOKABLE QVariantMap repairGhost() const;
     Q_INVOKABLE int splitBody(const QString& bodyId);
     Q_INVOKABLE QString combineBodies(const QStringList& bodyIds, const QString& mode);
     bool canPaste() const { return !m_clipboard.empty() || systemClipboardHasBodies(); }
@@ -430,6 +454,7 @@ signals:
     void currentStepChanged();
     void stepValuesChanged();
     void calculatingChanged();
+    void repairChanged();
     void fontsChanged();
     void placingChanged();
     /// A shape was put down for good (dragged in or clicked): its step number and type.
@@ -474,6 +499,11 @@ private:
 
     std::shared_ptr<const geo::GeometryKernel> m_kernel;
     core::FeatureRegistry m_registry;
+    // The reference being picked again (empty feature id = none).
+    core::FeatureId m_repairFeature;
+    std::string m_repairSlot;
+    std::size_t m_repairIndex = 0;
+    core::ElementKind m_repairElementKind = core::ElementKind::face;
     // The values of the step when making it larger or smaller began (`beginScale`).
     struct ScaleStart {
         core::FeatureId id;

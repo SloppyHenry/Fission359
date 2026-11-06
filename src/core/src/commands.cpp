@@ -282,6 +282,27 @@ std::unique_ptr<Command> makeSetFeatureText(FeatureId id, std::string name, std:
         });
 }
 
+std::unique_ptr<Command> makeSetFeatureRefs(FeatureId id, std::string slot,
+                                            std::vector<PersistentRef> refs) {
+    std::string key = "refs/" + id.value + "/" + slot;
+    return std::make_unique<SetCommand<std::vector<PersistentRef>>>(
+        std::move(key), std::move(refs),
+        [id, slot](const Document& document) -> std::optional<std::vector<PersistentRef>> {
+            const Feature* feature = document.findFeature(id);
+            if (feature == nullptr) {
+                return std::nullopt;
+            }
+            const auto found = feature->refs.find(slot);
+            return found != feature->refs.end() ? found->second : std::vector<PersistentRef>{};
+        },
+        [id, slot](Document& document, const std::vector<PersistentRef>& value) {
+            return document.setFeatureRefs(id, slot, value);
+        },
+        [id](const Document& document, const std::vector<PersistentRef>&) {
+            return featureLabel(document, id, "setRefs");
+        });
+}
+
 std::unique_ptr<Command> makeSetFeatureInputs(FeatureId id, std::vector<BodyId> inputs) {
     std::string key = "inputs/" + id.value;
     return std::make_unique<SetCommand<std::vector<BodyId>>>(
