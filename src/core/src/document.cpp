@@ -662,7 +662,8 @@ bool Document::setFeatureInputs(const FeatureId& id, std::vector<BodyId> inputs)
 
 std::optional<FeatureId> Document::consumerOf(const BodyId& id) const {
     for (const Feature& feature : features_) {
-        if (feature.suppressed) {
+        // A sketch only reads a face of the body; it leaves the body as it is.
+        if (feature.suppressed || feature.sketch) {
             continue;
         }
         const auto used = std::find(feature.inputs.begin(), feature.inputs.end(), id);

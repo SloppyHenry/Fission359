@@ -15,6 +15,8 @@ Window {
     readonly property string primaryKey: isMac ? "⌘" : qsTr("Ctrl+")
     readonly property string documentName: Files.fileName !== "" ? Files.fileName : qsTr("Untitled")
     property string tool: "move"
+    // The sketch mode (AP-2.1b): "idle", "picking" (waiting for the click on a plane) or "active".
+    readonly property string sketchState: Sketch.picking ? "picking" : Sketch.active ? "active" : "idle"
     // "Lay on face": the next click on a face puts the chosen body on it (Esc leaves it).
     property bool seating: false
     // Developer option --simulate "filtermenu": opens the menu "Choose: ..." of the 3D view.
@@ -175,6 +177,8 @@ Window {
             ? (DocumentModel.repairKind === "edge" ? qsTr("Click the edge that was meant. Esc cancels.")
                                                     : qsTr("Click the face that was meant. Esc cancels."))
             : root.seating ? qsTr("Click the face the body should lie on. Esc cancels.")
+            : Sketch.picking ? qsTr("Click a flat face or the ground plane. Esc cancels.")
+            : Sketch.active ? qsTr("Sketching: the pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.")
             : Placement.active ? qsTr("Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt")
             : Gizmo.editing ? qsTr("Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.")
             : Rotate.editing ? qsTr("Type an angle to turn exactly (Tab for the next ring), Enter accepts, Esc puts it back.")
@@ -395,6 +399,10 @@ Window {
     }
 
     function run(id) {
+        if (id.startsWith("sketch.open.")) { // the developer option --simulate: a double click on a step
+            Sketch.reopen(parseInt(id.substring(12)))
+            return
+        }
         if (id.startsWith("recent.")) {
             const files = Files.recentFiles
             const path = files[parseInt(id.substring(7))]
@@ -433,6 +441,12 @@ Window {
             if (Measure.enabled && Selection.filter === "body") {
                 Selection.filter = "all"
             }
+            break
+        case "sketchdone": Sketch.finish(); break
+        case "sketch":
+            root.flyout = ""
+            Measure.enabled = false
+            Sketch.start()
             break
         case "about": aboutWindow.show(); aboutWindow.raise(); break
         case "settings": settingsOpen = !settingsOpen; break
@@ -796,18 +810,26 @@ Window {
     Shortcut { sequence: "D"; enabled: Selection.count > 0 && !root.typing && !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("dropToBed") }
     Shortcut {
         sequence: "Escape"
-        enabled: root.seating
+        enabled: root.seating && !Sketch.engaged
         onActivated: root.seating = false
     }
     Shortcut {
         sequence: "Escape"
-        enabled: Measure.enabled && !root.seating
+        enabled: Measure.enabled && !root.seating && !Sketch.engaged
         onActivated: Measure.enabled = false
     }
     Shortcut {
         sequence: "Escape"
-        enabled: DocumentModel.repairing && !Measure.enabled && !root.seating
+        enabled: DocumentModel.repairing && !Measure.enabled && !root.seating && !Sketch.engaged
         onActivated: DocumentModel.cancelRepair()
+    }
+    // The sketch mode (AP-2.1b): Esc ends a tool, then the sketch, or the choosing of the plane.
+    // The other Esc shortcuts are off meanwhile: two active shortcuts on one key fire neither.
+    Shortcut {
+        sequence: "Escape"
+        enabled: Sketch.engaged && !root.typing && !root.seating && !Placement.active
+                 && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing
+        onActivated: Sketch.escape()
     }
 
     // Choosing again (AP-2.10e): while a step is repaired only faces (or edges) can be picked, and
@@ -826,6 +848,19 @@ Window {
             }
         }
     }
+    // The sketch mode says what is wrong as a hint, never as a dialog (AP-2.1b).
+    Connections {
+        target: Sketch
+
+        function onNotice(code) {
+            root.showHint(messageCatalog.sketchNotice(code))
+        }
+    }
+    Binding { target: Sketch; property: "gridColour"; value: Theme.gridMajor }
+    Binding { target: Sketch; property: "gridMajorColour"; value: Theme.fg4 }
+    Binding { target: Sketch; property: "elementColour"; value: Theme.fg }
+    Binding { target: Sketch; property: "guideColour"; value: Theme.accentLine }
+    Binding { target: Sketch; property: "markerColour"; value: Theme.accentLine }
     Connections {
         target: Selection
 
@@ -848,6 +883,7 @@ Window {
         sequence: "Escape"
         enabled: Selection.count > 0 && !root.typing && !Measure.enabled && !DocumentModel.repairing
                  && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !root.seating
+                 && !Sketch.engaged
         onActivated: root.run("selectnone")
     }
     Shortcut { sequence: "Ctrl+M"; enabled: !root.isMac && !root.typing; onActivated: root.run("measures") }
@@ -1233,6 +1269,7 @@ Window {
             onStepRequested: index => DocumentModel.selectStep(DocumentModel.currentStep === index ? -1 : index)
             onStepHovered: (index, on) => viewport.lightUpBodies(on ? [DocumentModel.bodyOfStep(index)] : [])
             onStepRenamed: (index, text) => DocumentModel.setStepLabel(index, text)
+            onStepOpenRequested: index => Sketch.reopen(index)
             onStepHideRequested: (index, hide) => DocumentModel.setStepSuppressed(index, hide)
             onStepRepairRequested: index => DocumentModel.startRepair(index)
             onStepProblemActionRequested: (index, id) => {
@@ -1296,7 +1333,7 @@ Window {
                 accentColor: Theme.accentLine
                 animated: !AppOptions.reduceMotion
                 mouseStyle: root.mouseStyle
-                bodiesMovable: root.tool !== "select"
+                bodiesMovable: root.tool !== "select" && !Sketch.engaged
                 Component.onCompleted: Files.attachViewport(viewport) // each tab keeps its camera
                 onAmbientOcclusionTurnedOff: root.showHint(
                     qsTr("Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu."))
@@ -1526,6 +1563,9 @@ Window {
                 onMeasureRequested: root.run("measure")
                 chosenCount: root.chosenBodies.length
                 onCombineRequested: way => root.combine(way)
+                sketching: Sketch.engaged
+                sketchActive: Sketch.active
+                onSketchDoneRequested: Sketch.finish()
                 onFlyoutCloseRequested: root.flyout = ""
                 onGroupRequested: group => {
                     if (group === "shapes") {
@@ -1534,6 +1574,12 @@ Window {
                         root.flyout = root.flyout === "combine" ? "" : "combine"
                     } else if (group === "check") {
                         root.flyout = root.flyout === "check" ? "" : "check"
+                    } else if (group === "sketch") {
+                        if (Sketch.engaged) {
+                            Sketch.escape()
+                        } else {
+                            root.run("sketch")
+                        }
                     } else {
                         root.flyout = ""
                         root.showHint(qsTr("This tool group arrives in a later version."))
@@ -1688,6 +1734,18 @@ Window {
     }
 
     // One short sentence for a step of the history ("Width changed to 35").
+    // The sketch parts by their kind, in the words of the glossary.
+    function sketchElementLabel(kind) {
+        switch (kind) {
+        case "point": return qsTr("Point")
+        case "line": return qsTr("Line")
+        case "circle": return qsTr("Circle")
+        case "arc": return qsTr("Arc")
+        case "spline": return qsTr("Curve")
+        default: return qsTr("Sketch part")
+        }
+    }
+
     function historyText(step) {
         if (!step || !step.key) {
             return ""
@@ -1732,6 +1790,11 @@ Window {
         case "solidBody": return qsTr("%1 made a part again").arg(body)
         case "importFile": return step.count === "1" ? qsTr("“%1” imported").arg(step.file) : qsTr("“%1” imported with %2 bodies").arg(step.file).arg(step.count)
         case "importUnit": return qsTr("Unit of “%1” put right").arg(step.file)
+        case "addSketchElement": return qsTr("%1 added to the sketch").arg(sketchElementLabel(step.kind))
+        case "removeSketchElement": return qsTr("%1 removed from the sketch").arg(sketchElementLabel(step.kind))
+        case "moveSketchPoints": return qsTr("Sketch changed")
+        case "sketchConstructionOn": return qsTr("%1 made a helper line").arg(sketchElementLabel(step.kind))
+        case "sketchConstructionOff": return qsTr("%1 made a normal line again").arg(sketchElementLabel(step.kind))
         case "setLabel": return qsTr("Step renamed")
         case "setRollback": return step.count === "" ? qsTr("Time marker put back to now") : qsTr("Time marker moved")
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
@@ -1803,6 +1866,8 @@ Window {
         icon: recipeIcon(step.type),
         label: step.label,
         state: step.state,
+        type: step.type,
+        active: step.active,
         problemTitle: step.problem ? messageCatalog.title(step.problem, step) : "",
         problem: step.problem ? problemText(step.problem, step) : "",
         problemActions: step.problem ? messageCatalog.actionsFor(step.problem, step) : []

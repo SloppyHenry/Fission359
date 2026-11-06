@@ -140,6 +140,11 @@ public:
     /// Turns the view to look squarely at a face of a body (by `RenderBody::id` and face number)
     /// and makes the face the new centre. Returns false if the body or face is not shown.
     Q_INVOKABLE bool lookAtFace(const QString& body, int face);
+    /// Turns the view to look squarely at a plane (its normal points to the viewer) and puts
+    /// the point `centre` (mm) in the middle; the sketch mode (AP-2.1b). Animated.
+    void lookAtPlane(const QVector3D& normal, const QVector3D& centre);
+    /// Takes the camera to a pose that was saved with `cameraPose`, animated.
+    void goToPose(const render::CameraPose& pose);
     /// Moves the face under the point to the middle and zooms to fit it, without turning the
     /// view (Smart Zoom of the trackpad).
     Q_INVOKABLE bool zoomToSurface(double x, double y);
@@ -248,7 +253,8 @@ public:
         placement = 4,
         distances = 5,
         align = 6,
-        measure = 7
+        measure = 7,
+        sketch = 8 ///< the grid, the elements and the catch marker of the sketch mode (AP-2.1b)
     };
     void setHandleGraphics(render::HandleGraphics graphics,
                            HandleSource source = HandleSource::size);
@@ -318,6 +324,9 @@ signals:
     void pickTimed(double milliseconds);
     /// The element under the pointer changed (`body` empty: none).
     void hoverChanged(const QString& body, int kind, int number);
+    /// The pointer moved over the view (no button pressed) to (x, y) in item pixels; also when
+    /// `hoverAt` put it there. For the sketch mode, which catches it on the sketch.
+    void pointerMoved(double x, double y);
     void highlightsChanged();
     /// A drag with the left button ended: everything in the rectangle (item pixels).
     void rubberBandFinished(const QRectF& area, bool extend);
@@ -365,7 +374,7 @@ private:
 
     core::SelectionFilter m_filter;
     std::vector<render::Highlight> m_selectionHighlights;
-    std::array<render::HandleGraphics, 8> m_handleGraphics;
+    std::array<render::HandleGraphics, 9> m_handleGraphics;
     std::optional<render::Highlight> m_hover;
     std::vector<render::Highlight> m_listHover; ///< lit up from a list, see `lightUpBodies`
     std::deque<PickRequest> m_pickQueue;

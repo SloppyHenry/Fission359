@@ -424,3 +424,42 @@ TEST_CASE("sketch commands describe themselves with keys and values, no text",
     CHECK(steps[4].key == "removeSketchElement");
     CHECK(steps[4].values.at("element") == "A1");
 }
+
+// --- the plane on a face (AP-2.1b) -------------------------------------------------------------
+
+TEST_CASE("planeOnFace: u runs along the edge given, v = normal x u, the origin is the centre",
+          "[sketch][plane]") {
+    // A wall looking along +X, its long edge pointing up (Z).
+    const SketchPlane plane = planeOnFace({10.0, 5.0, 3.0}, {1.0, 0.0, 0.0}, {{0.0, 0.0, 1.0}});
+    CHECK(plane.origin() == fission::geo::Point3d{10.0, 5.0, 3.0});
+    CHECK(plane.uAxis().z == Approx(1.0));
+    CHECK(plane.normal().x == Approx(1.0));
+    // v = n x u = X x Z = -Y
+    CHECK(plane.vAxis().y == Approx(-1.0));
+}
+
+TEST_CASE("planeOnFace: without an edge u is the bed's X axis, or Y when the face looks along X",
+          "[sketch][plane]") {
+    const SketchPlane top = planeOnFace({0.0, 0.0, 5.0}, {0.0, 0.0, 1.0}, std::nullopt);
+    CHECK(top.uAxis().x == Approx(1.0));
+    CHECK(top.vAxis().y == Approx(1.0));
+
+    const SketchPlane front = planeOnFace({0.0, -5.0, 0.0}, {0.0, -1.0, 0.0}, std::nullopt);
+    CHECK(front.uAxis().x == Approx(1.0)); // X is across the normal
+    CHECK(front.normal().y == Approx(-1.0));
+
+    const SketchPlane side = planeOnFace({5.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, std::nullopt);
+    CHECK(side.uAxis().y == Approx(1.0)); // X is along the normal, so Y
+    CHECK(side.normal().x == Approx(1.0));
+}
+
+TEST_CASE("planeOnFace: an edge is made perpendicular to the normal; one along it is ignored",
+          "[sketch][plane]") {
+    const SketchPlane slanted = planeOnFace({0.0, 0.0, 0.0}, {0.0, 0.0, 1.0}, {{1.0, 0.0, 0.7}});
+    CHECK(slanted.uAxis().x == Approx(1.0));
+    CHECK(slanted.uAxis().z == Approx(0.0).margin(1e-12));
+    const SketchPlane along = planeOnFace({0.0, 0.0, 0.0}, {0.0, 0.0, 1.0}, {{0.0, 0.0, 1.0}});
+    CHECK(along.uAxis().x == Approx(1.0)); // falls back to the bed's X axis
+    // No normal, no face: the ground plane, never a guess.
+    CHECK(planeOnFace({1.0, 1.0, 1.0}, {0.0, 0.0, 0.0}, std::nullopt) == SketchPlane());
+}

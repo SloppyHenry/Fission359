@@ -24,6 +24,9 @@ Item {
     property string filter: "all"          // what can be chosen: all | body | face | edge | vertex
     property string flyout: ""             // the open tool group: "" or "shapes"
     property bool measuring: false         // the tool "Measure" is on
+    property bool sketching: false         // choosing the plane of a sketch, or drawing in one
+    property bool sketchActive: false      // drawing in a sketch: "Done" shows
+    signal sketchDoneRequested
     signal measureRequested()
     signal flyoutCloseRequested
     /// More than one body is chosen: the ways to combine can be used.
@@ -51,7 +54,9 @@ Item {
         shapeFlyout.visible ? Qt.rect(shapeFlyout.x, shapeFlyout.y, shapeFlyout.width, shapeFlyout.height)
                             : Qt.rect(0, 0, 0, 0),
         Qt.rect(cubeColumn.x, cubeColumn.y, cubeColumn.width, cubeColumn.height),
-        Qt.rect(navBar.x, navBar.y, navBar.width, navBar.height)
+        Qt.rect(navBar.x, navBar.y, navBar.width, navBar.height),
+        sketchBar.visible ? Qt.rect(sketchBar.x, sketchBar.y, sketchBar.width, sketchBar.height)
+                          : Qt.rect(0, 0, 0, 0)
     ]
 
     // How the mouse does it depends on the style chosen in the View menu.
@@ -68,6 +73,44 @@ Item {
         case "blender":
         case "sketchup": return qsTr("Pan: Shift + middle mouse button – or drag this button")
         default: return qsTr("Pan: drag with the middle mouse button – or drag this button")
+        }
+    }
+
+    // --- the sketch mode: "Done" at the top of the view (AP-2.1b) -----------------------------
+    Float {
+        id: sketchBar
+
+        objectName: "sketchBar"
+        visible: root.sketchActive
+        x: Math.round((root.width - width) / 2)
+        y: 12
+        width: sketchRow.implicitWidth + 16
+        height: 38
+
+        Row {
+            id: sketchRow
+
+            x: 10
+            y: 4
+            spacing: 12
+
+            Txt {
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Sketch")
+                color: Theme.fg3
+                font.pixelSize: Theme.fontSizeSmallPlus
+                elide: Text.ElideNone
+            }
+
+            Btn {
+                objectName: "sketchDone"
+                anchors.verticalCenter: parent.verticalCenter
+                small: true
+                variant: "primary"
+                iconName: "ok"
+                text: qsTr("Done")
+                onClicked: root.sketchDoneRequested()
+            }
         }
     }
 
@@ -352,7 +395,7 @@ Item {
                         width: paletteColumn.width
                         text: modelData.text
                         iconName: modelData.icon
-                        expanded: root.flyout === modelData.id
+                        expanded: root.flyout === modelData.id || (modelData.id === "sketch" && root.sketching)
                         tipText: modelData.tip
                         onClicked: root.groupRequested(modelData.id)
                     }

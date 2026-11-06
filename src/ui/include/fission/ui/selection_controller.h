@@ -10,6 +10,8 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <optional>
+
 #include "fission/core/selection.h"
 #include "fission/ui/document_model.h"
 #include "fission/ui/viewport_3d.h"
@@ -53,6 +55,10 @@ public:
     QVariantMap hover() const { return m_hover; }
     bool singleFaceChosen() const;
 
+    /// Narrows what the 3D view hands over to `filter`, whatever the person chose to select
+    /// (the sketch mode: only faces, or nothing). Without a value the chosen filter is back.
+    void overrideViewportFilter(std::optional<core::SelectionFilter> filter);
+
     /// Nothing chosen any more (Esc).
     Q_INVOKABLE void clear();
     /// A body of the list was clicked; with `extend` it is added or removed.
@@ -88,6 +94,7 @@ private:
 
     QPointer<DocumentModel> m_model;
     QPointer<Viewport3D> m_viewport;
+    std::optional<core::SelectionFilter> m_filterOverride;
     core::Selection m_selection;
     QVariantMap m_hover;
     bool m_followingStep = false; ///< the recipe's step is being set from here (no echo)

@@ -70,6 +70,17 @@ QtObject {
         "cannotWrite": { card: true, buttons: ["ok"] }
     })
 
+    /// The hint of the sketch mode (AP-2.1b) for a code of `Sketch.notice`: shown as a hint line,
+    /// never as a dialog.
+    function sketchNotice(code) {
+        switch (code) {
+        case "curvedFace": return qsTr("Sketches only go on flat faces. Tip: helper planes come later.")
+        case "faceUnusable": return qsTr("This face cannot be drawn on. Choose another flat face or the ground plane.")
+        case "needsHelp": return qsTr("This sketch has no plane at the moment. Its face may be gone: choose it again in the recipe.")
+        default: return ""
+        }
+    }
+
     /// A length in mm as people write it: "3,1" in German, "3.1" in English, no needless zeros.
     function mm(value) {
         const text = Number(value).toLocaleString(Qt.locale(), "f", 2)
@@ -290,6 +301,9 @@ QtObject {
             if (problem.field === "unsure") {
                 return qsTr("Hollowing did not work for sure.")
             }
+            if (problem.field === "basePlane" || problem.field === "plane" || problem.field === "sketch") {
+                return qsTr("This sketch has no plane.")
+            }
             return problem.numbers && problem.numbers.maxValue !== undefined && problem.field !== ""
                 ? qsTr("%1 does not work here.").arg(valueLabel(problem.field))
                 : qsTr("These values do not work.")
@@ -372,6 +386,12 @@ QtObject {
             }
             if (problem.field === "face") {
                 return qsTr("This face cannot be moved this way. Choose another face or another tool.")
+            }
+            if (problem.field === "plane") {
+                return qsTr("Sketches only go on flat faces. Choose a flat face or the ground plane.")
+            }
+            if (problem.field === "basePlane" || problem.field === "sketch") {
+                return qsTr("The plane of this sketch cannot be used. Hide the step and draw a new sketch.")
             }
             return qsTr("The shape cannot be built with these values. Try changing a value a little.")
         case "referenceNeedsHelp": {

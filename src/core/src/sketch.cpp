@@ -77,6 +77,37 @@ double SketchPlane::heightOf(const Point3d& world) const noexcept {
     return dot(d, n_);
 }
 
+SketchPlane planeOnFace(const Point3d& centre, const Point3d& normal,
+                        const std::optional<Point3d>& longestEdge) {
+    const double normalLength = length(normal);
+    if (!(normalLength > 0.0) || !std::isfinite(normalLength)) {
+        return SketchPlane(); // there is no face to lie on
+    }
+    const Point3d n = scaled(normal, 1.0 / normalLength);
+    // The direction, made perpendicular to the normal; nothing if it lies along it.
+    const auto across = [&](const Point3d& direction) -> std::optional<Point3d> {
+        const double along = dot(direction, n);
+        const Point3d rest{direction.x - along * n.x, direction.y - along * n.y,
+                           direction.z - along * n.z};
+        const double restLength = length(rest);
+        if (!(restLength > 1e-9) || !std::isfinite(restLength)) {
+            return std::nullopt;
+        }
+        return scaled(rest, 1.0 / restLength);
+    };
+    std::optional<Point3d> u;
+    if (longestEdge) {
+        u = across(*longestEdge);
+    }
+    if (!u) {
+        u = across({1.0, 0.0, 0.0});
+    }
+    if (!u) {
+        u = across({0.0, 1.0, 0.0});
+    }
+    return SketchPlane(centre, *u, cross(n, *u));
+}
+
 std::string_view basePlaneWord(BasePlane plane) {
     switch (plane) {
     case BasePlane::xy:

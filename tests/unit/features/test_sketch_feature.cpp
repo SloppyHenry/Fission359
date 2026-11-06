@@ -7,6 +7,8 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <cmath>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -147,28 +149,185 @@ TEST_CASE("sketch step: next to a body, the steps do not disturb each other", "[
     CHECK(off.bodies.size() == 2);
 }
 
-TEST_CASE("sketch step: a sketch on a face has no plane yet, it is never guessed", "[sketch]") {
-    SketchWorld world;
-    const FeatureId box = *world.history.addFeature(defaultDraft(*world.registry.find("box")));
-    const BodyId body = world.history.document().bodies().front().id;
-    const RecomputeResult boxResult = world.calculate();
-    const BodyResult& made = boxResult.bodies.at(body);
-    const BodyLooks looks = describeBody(made.faces, world.kernel->signatures(made.solid));
-    REQUIRE_FALSE(looks.faces.empty());
-    const auto ref = makeRef(looks, ElementKind::face, looks.faces.front().id,
-                             placementOf(world.history.document(), world.registry,
-                                         boxResult.features, looks.faces.front().name));
-    REQUIRE(ref.has_value());
-    (void)box;
+// --- a sketch on a face (AP-2.1b) ------------------------------------------------------------
 
-    FeatureDraft draft = defaultDraft(*world.registry.find("sketch"));
-    draft.inputs = {body};
-    draft.refs["plane"] = {*ref};
-    const FeatureId step = *world.history.addFeature(std::move(draft));
-    const RecomputeResult result = world.calculate();
-    CHECK(result.features[1].status == FeatureStatus::ok);
-    REQUIRE(result.sketches.contains(step));
-    CHECK_FALSE(result.sketches.at(step).plane.has_value());
+namespace {
+
+struct FaceSketch {
+    SketchWorld world;
+    FeatureId shape;
+    BodyId body;
+
+    // A box (or another shape) with the given values.
+    void make(const std::string& type, const std::map<std::string, std::string>& values) {
+        FeatureDraft draft = defaultDraft(*world.registry.find(type));
+        for (const auto& [name, expression] : values) {
+            draft.params.at(name).expression = expression;
+        }
+        draft.newBodies = 1;
+        shape = *world.history.addFeature(std::move(draft));
+        body = world.history.document().bodies().front().id;
+    }
+
+    // The reference to the face with this name, e.g. "F1/box/top".
+    PersistentRef faceRef(const std::string& name) {
+        const RecomputeResult result = world.calculate();
+        const BodyResult& made = result.bodies.at(body);
+        const BodyLooks looks = describeBody(made.faces, world.kernel->signatures(made.solid));
+        for (const NamedLook& face : looks.faces) {
+            if (face.name == name) {
+                const auto ref = makeRef(looks, ElementKind::face, face.id,
+                                         placementOf(world.history.document(), world.registry,
+                                                     result.features, face.name));
+                REQUIRE(ref.has_value());
+                return *ref;
+            }
+        }
+        FAIL("no face named " << name);
+        return {};
+    }
+
+    FeatureId sketchOn(const std::string& name) {
+        FeatureDraft draft = defaultDraft(*world.registry.find("sketch"));
+        draft.inputs = {body};
+        draft.refs["plane"] = {faceRef(name)};
+        return *world.history.addFeature(std::move(draft));
+    }
+
+    // The plane of the sketch; the step must have calculated.
+    SketchPlane planeOf(const FeatureId& step) {
+        const RecomputeResult result = world.calculate();
+        REQUIRE(result.state(step)->status == FeatureStatus::ok);
+        REQUIRE(result.sketches.contains(step));
+        REQUIRE(result.sketches.at(step).plane.has_value());
+        return *result.sketches.at(step).plane;
+    }
+};
+
+void checkSquare(const SketchPlane& plane) {
+    CHECK(plane.uAxis().x * plane.vAxis().x + plane.uAxis().y * plane.vAxis().y +
+              plane.uAxis().z * plane.vAxis().z ==
+          Approx(0.0).margin(1e-12));
+    CHECK(plane.normal().x * plane.normal().x + plane.normal().y * plane.normal().y +
+              plane.normal().z * plane.normal().z ==
+          Approx(1.0));
+}
+
+} // namespace
+
+TEST_CASE("sketch step: on the top of a box the plane lies in the top, in its middle",
+          "[sketch][plane]") {
+    FaceSketch test;
+    test.make("box", {{"width", "40"}, {"depth", "20"}, {"height", "10"}});
+    const SketchPlane plane = test.planeOf(test.sketchOn("F1/box/top"));
+    checkSquare(plane);
+    CHECK(plane.origin().x == Approx(0.0).margin(1e-9));
+    CHECK(plane.origin().y == Approx(0.0).margin(1e-9));
+    CHECK(plane.origin().z == Approx(10.0));
+    CHECK(plane.normal().z == Approx(1.0)); // looks up, like the face
+    // u runs along the long edge (X), v across the face.
+    CHECK(std::abs(plane.uAxis().x) == Approx(1.0));
+    CHECK(std::abs(plane.vAxis().y) == Approx(1.0));
+}
+
+TEST_CASE("sketch step: on a side face the plane stands up and looks out of the box",
+          "[sketch][plane]") {
+    FaceSketch test;
+    test.make("box", {{"width", "40"}, {"depth", "20"}, {"height", "10"}});
+    const SketchPlane right = test.planeOf(test.sketchOn("F1/box/right"));
+    checkSquare(right);
+    CHECK(right.normal().x == Approx(1.0));
+    CHECK(right.origin().x == Approx(20.0));
+    CHECK(right.origin().z == Approx(5.0));
+    // The right face is 20 wide (Y) and 10 high (Z): u runs along Y, its longest edge.
+    CHECK(std::abs(right.uAxis().y) == Approx(1.0));
+
+    const SketchPlane front = test.planeOf(test.sketchOn("F1/box/front"));
+    CHECK(front.normal().y == Approx(-1.0));
+    CHECK(std::abs(front.uAxis().x) == Approx(1.0)); // 40 mm wide: the longest edge
+    // A point of the plane is on the face: (u, v) = (0, 0) is its middle.
+    const auto middle = front.toWorld({0.0, 0.0});
+    CHECK(middle.y == Approx(-10.0));
+    CHECK(middle.z == Approx(5.0));
+}
+
+TEST_CASE("sketch step: the plane follows a body that is moved and turned", "[sketch][plane]") {
+    FaceSketch test;
+    test.make("box", {{"width", "40"}, {"depth", "20"}, {"height", "10"}});
+    const FeatureId step = test.sketchOn("F1/box/top");
+    const SketchPlane before = test.planeOf(step);
+
+    // Moved: the same plane, 100 mm to the right and 30 mm back.
+    REQUIRE(test.world.history.document().findFeature(test.shape) != nullptr);
+    test.world.history.execute(makeSetFeatureValue(test.shape, "x", "100"));
+    test.world.history.execute(makeSetFeatureValue(test.shape, "y", "30"));
+    const SketchPlane moved = test.planeOf(step);
+    CHECK(moved.origin().x == Approx(100.0).margin(1e-9));
+    CHECK(moved.origin().y == Approx(30.0).margin(1e-9));
+    CHECK(moved.origin().z == Approx(10.0));
+    CHECK(moved.uAxis().x == Approx(before.uAxis().x));
+    CHECK(moved.vAxis().y == Approx(before.vAxis().y));
+
+    // Turned a quarter about Z: the plane turns with the body, its u axis now runs along Y.
+    test.world.history.execute(makeSetFeatureValue(test.shape, "x", "0"));
+    test.world.history.execute(makeSetFeatureValue(test.shape, "y", "0"));
+    test.world.history.execute(makeSetFeatureValue(test.shape, "rotZ", "90"));
+    const SketchPlane turned = test.planeOf(step);
+    checkSquare(turned);
+    CHECK(std::abs(turned.uAxis().y) == Approx(1.0));
+    CHECK(turned.normal().z == Approx(1.0));
+    // The turn is exactly the body's: u = before.u turned by 90 degrees about Z.
+    CHECK(turned.uAxis().x == Approx(-before.uAxis().y).margin(1e-9));
+    CHECK(turned.uAxis().y == Approx(before.uAxis().x).margin(1e-9));
+}
+
+TEST_CASE("sketch step: on a tilted face the plane is the face's own", "[sketch][plane]") {
+    FaceSketch test;
+    test.make("box", {{"width", "40"}, {"depth", "20"}, {"height", "10"}, {"rotX", "30"}});
+    const SketchPlane plane = test.planeOf(test.sketchOn("F1/box/top"));
+    checkSquare(plane);
+    CHECK(plane.normal().x == Approx(0.0).margin(1e-9));
+    CHECK(plane.normal().y == Approx(-std::sin(30.0 * 3.14159265358979323846 / 180.0)));
+    CHECK(plane.normal().z == Approx(std::cos(30.0 * 3.14159265358979323846 / 180.0)));
+    CHECK(std::abs(plane.uAxis().x) == Approx(1.0)); // the long edge stays along X
+}
+
+TEST_CASE("sketch step: a curved face is refused, as an error on the step", "[sketch][plane]") {
+    FaceSketch test;
+    test.make("cylinder", {});
+    const FeatureId step = test.sketchOn("F1/cylinder/side");
+    const RecomputeResult result = test.world.calculate();
+    CHECK(result.state(step)->status == FeatureStatus::error);
+    CHECK(result.state(step)->issue->code == FeatureIssueCode::kernelRejected);
+    CHECK(result.state(step)->issue->subject == "plane"); // the message catalogue speaks of it
+    CHECK_FALSE(result.sketches.contains(step));
+    // The flat top of the same cylinder is fine.
+    const FeatureId top = test.sketchOn("F1/cylinder/top");
+    CHECK(test.planeOf(top).normal().z == Approx(1.0));
+}
+
+TEST_CASE("sketch step: a face that cannot be found again needs help, nothing is guessed",
+          "[sketch][plane]") {
+    FaceSketch test;
+    test.make("box", {});
+    FeatureDraft draft = defaultDraft(*test.world.registry.find("sketch"));
+    draft.refs["plane"] = {test.faceRef("F1/box/top")}; // no body to look in
+    const FeatureId lonely = *test.world.history.addFeature(std::move(draft));
+    const RecomputeResult result = test.world.calculate();
+    const FeatureState* state = result.state(lonely);
+    REQUIRE(state != nullptr);
+    CHECK(state->status == FeatureStatus::warning);
+    REQUIRE(state->issue.has_value());
+    CHECK(state->issue->code == FeatureIssueCode::referenceNeedsHelp);
+    CHECK_FALSE(result.sketches.contains(lonely));
+}
+
+TEST_CASE("sketch step: a box with a sketch on it stays a whole body", "[sketch][plane]") {
+    FaceSketch test;
+    test.make("box", {});
+    (void)test.sketchOn("F1/box/top");
+    // The sketch only reads the face: the body is not used up by it.
+    CHECK_FALSE(test.world.history.document().consumerOf(test.body).has_value());
 }
 
 TEST_CASE("sketch step: wrong words and broken data are errors on the step, not a crash",

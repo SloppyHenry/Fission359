@@ -76,6 +76,13 @@ std::optional<BasePlane> basePlaneFromWord(std::string_view word);
 /// as for bodies, ADR-0010) about that origin.
 SketchPlane placedBasePlane(BasePlane plane, const geo::Point3d& origin, const geo::Angles& turn);
 
+/// The plane of a sketch that lies on a flat face (ADR-0013 / AP-2.1 decision 8): the origin is
+/// the face's centre; u runs along `longestEdge` (the longest straight edge of the face, if it has
+/// one), otherwise along the bed's X axis, or Y when the face looks along X; both are made
+/// perpendicular to the normal. v = normal × u, so the normal stays the face's own.
+SketchPlane planeOnFace(const geo::Point3d& centre, const geo::Point3d& normal,
+                        const std::optional<geo::Point3d>& longestEdge);
+
 enum class SketchElementKind { point, line, circle, arc, spline };
 
 inline constexpr std::size_t sketchElementKindCount = 5;

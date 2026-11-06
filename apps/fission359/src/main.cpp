@@ -72,6 +72,7 @@
 #include "fission/ui/scale_controller.h"
 #include "fission/ui/selection_controller.h"
 #include "fission/ui/shape_previews.h"
+#include "fission/ui/sketch_controller.h"
 #include "fission/ui/snap_session.h"
 #include "fission/ui/theme.h"
 #include "fission/ui/viewport_3d.h"
@@ -186,7 +187,12 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "unless the chosen step has exactly that value), tool:size (choose a tool of the "
             "palette), flyout:combine (open that group of the palette), expectflyout:shapes (fail "
             "unless "
-            "that group is open; expectflyout: for none), filtermenu (open the "
+            "that group is open; expectflyout: for none), expectsketch:active (fail unless the "
+            "sketch mode is idle, picking or active; menu:sketch starts it, menu:sketchdone ends "
+            "it, menu:sketch.open.2 opens the sketch of step 2 again), expectsketchplane:face "
+            "(fail "
+            "unless the last sketch lies on a face of a body; expectsketchplane:ground), "
+            "filtermenu (open the "
             "choice menu of the 3D view), snap:off (snapping off as "
             "with Shift held; snap:on), grid:0.1 (the step of "
             "snapping in mm, 0 = automatic), "
@@ -565,6 +571,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Selection", &selection);
     fission::ui::MeasureController measure(&documentModel, &selection, kernel);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Measure", &measure);
+    fission::ui::SketchController sketch(&documentModel, &selection);
+    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Sketch", &sketch);
     fission::ui::PlacementController placement(&documentModel);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Placement", &placement);
     fission::ui::HandleController handles(&documentModel);
@@ -623,6 +631,7 @@ int main(int argc, char* argv[]) {
         scale.attach(viewport);
         distances.attach(viewport);
         measure.attach(viewport);
+        sketch.attach(viewport);
         align.attach(viewport);
         distances.attachGizmo(&gizmo);
         viewport->setScene(documentModel.scene());

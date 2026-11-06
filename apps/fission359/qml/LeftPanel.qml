@@ -20,6 +20,7 @@ Rectangle {
     // The recipe as the person edits it (AP-1.9).
     signal stepHovered(int index, bool on)
     signal stepRenamed(int index, string text)
+    signal stepOpenRequested(int index)
     signal stepDeleteRequested(int index)
     signal stepHideRequested(int index, bool hide)
     /// "Choose again" on a step whose reference needs help (AP-2.10e).
@@ -563,6 +564,9 @@ Rectangle {
                             sentence: stepItem.modelData.text
                             label: stepItem.modelData.label
                             state: stepItem.modelData.state
+                            opensSketch: stepItem.modelData.type === "sketch"
+                            active: stepItem.modelData.active === true
+                            onOpenRequested: root.stepOpenRequested(stepItem.index)
                             problemTitle: stepItem.modelData.problemTitle
                             problem: stepItem.modelData.problem
                             problemActions: stepItem.modelData.problemActions
