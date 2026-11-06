@@ -279,6 +279,22 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
             --camera=0,90,260 --simulate "put:cylinder;selectall;menu:merge;recipe:box,cylinder,combine")
   set_tests_properties(app_combine_menu PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.1b: the command search finds the sketch ("zeichnen", "2D", "outline"), "Sketch" waits for
+  # the click on a plane, a click on the ground makes a sketch step that is the active one, "Done"
+  # takes an empty sketch away again (one undo step), and Esc does the same.
+  add_test(NAME app_sketch_ground
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-ground.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "search:zeichnen,menu.sketch;search:2D,menu.sketch;search:outline,menu.sketch;runcommand:menu.sketch;expectsketch:picking;expecthint:flat face;click:60,60;expectsketch:active;expectsketchplane:ground;recipe:box,sketch;menu:sketchdone;expectsketch:idle;recipe:box;expectundo:removeFeature;menu:undo;recipe:box,sketch;menu:redo;recipe:box;menu:sketch;click:60,60;expectsketch:active;key:Escape;expectsketch:idle;recipe:box")
+  set_tests_properties(app_sketch_ground PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.1b: a click on the top of the box makes a sketch on that face (it reads the box).
+  add_test(NAME app_sketch_face
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-face.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;expectsketch:picking;click:366,341;expectsketch:active;expectsketchplane:face;recipe:box,sketch;menu:sketchdone;expectsketch:idle;recipe:box")
+  set_tests_properties(app_sketch_face PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-1.7e: one body is split through the menu Body: the cut, and one placing step per part.
   add_test(NAME app_split_menu
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>

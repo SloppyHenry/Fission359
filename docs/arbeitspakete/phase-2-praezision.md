@@ -7,7 +7,7 @@
 ---
 
 ### AP-2.1 Skizzen-Modus: Zeichnen
-**Status:** in Arbeit (2.1a Datenmodell gebaut) · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-1.6, AP-1.10, AP-2.10 (Teile a–c)
+**Status:** in Arbeit (2.1a Datenmodell, 2.1b Skizzen-Modus gebaut) · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-1.6, AP-1.10, AP-2.10 (Teile a–c)
 **Bauanleitung:** [anleitungen/AP-2.1.md](anleitungen/AP-2.1.md)
 
 **Umfang:**
@@ -26,7 +26,15 @@
   (`P1`, `L3`, `C2`, `A1`, `S1`); `RecomputeResult::sketches`; Befehle Element hinzufügen/entfernen, Punkte verschieben (ein Zug = ein Undo-Schritt), Hilfslinie an/aus; Dateiformat **3**
   (Migration 1→2→3, Fixtures `v1/sketch.fission` und `v3/sketch.fission`); Rezept-Satz „Skizze“.
 - Festlegungen: [ADR-0013](../adr/0013-skizzen-im-dokument.md) und AP-2.1.md „Festlegungen (2026-11-06)“ (alle Elemente sind Punkte; Ebene aus einer Fläche rechnet erst 2.1b).
-- Offene Reste: Teile b–g (Oberfläche, Zeichnen, Fangen, Bereiche); Texte für „Letzte Aktionen“/Bearbeiten-Menü der neuen Befehle; Meldungstext für `kernelRejected` mit `basePlane`/`sketch` kommt mit 2.1b.
+- Offene Reste: Teile c–g (Zeichnen, Spline, Bearbeiten, Kanten, Bereiche); die Reste dieses Vermerks (Texte der neuen Befehle, Meldungstext für `basePlane`/`sketch`) sind mit 2.1b erledigt.
+
+**Vermerk 2026-11-06 (Teil 2.1b, Skizzen-Modus):**
+- Ergebnis: Knopf „Skizze“ (Palette, Befehlssuche mit Synonymen, Hinweis, Tooltip) wählt die Ebene: Klick auf die Grundebene (z = 0) oder auf eine ebene Körperfläche
+  (Schritt mit Verweis `plane` und dem Körper als Eingang; die Ebene wird aus der Fläche gerechnet und folgt dem Körper, `GeometryKernel::flatFace`, `core::planeOnFace`);
+  gekrümmte Fläche → Hinweis statt Schritt. Im Modus: Ansicht dreht animiert auf die Ebene, andere Körper blass (ca. 35 %), Skizzenraster, Punkt-Marker und
+  gestrichelte Hilfslinien (`interaction::planePoint`, `sketchSnap`), Knopf „Fertig“ und Esc, leere Skizze wird per Command wieder entfernt, Doppelklick im Rezept öffnet sie erneut.
+- Festlegungen: AP-2.1.md „Festlegungen“ 7–12. Ein `sketch`-Schritt zählt nicht als Verbraucher des Körpers (`Document::consumerOf`).
+- Offene Reste: Zeichenwerkzeuge (2.1c); Fenster-Tests `app_sketch_ground` und `app_sketch_face` liefen bisher nur in der CI.
 
 ---
 

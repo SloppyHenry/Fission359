@@ -418,6 +418,16 @@
         <translation>Click a face, an edge or a corner; Shift+click adds a second one for the distance and the angle.</translation>
     </message>
     <message>
+        <location line="+5"/>
+        <source>A 2D drawing on a flat face or on the ground plane, as the base for a body. Done or Esc ends it.</source>
+        <translation>A 2D drawing on a flat face or on the ground plane, as the base for a body. Done or Esc ends it.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click a flat face or the ground plane.</source>
+        <translation>Click a flat face or the ground plane.</translation>
+    </message>
+    <message>
         <location line="+4"/>
         <source>Named measures</source>
         <translation>Named measures</translation>
@@ -985,34 +995,16 @@
     </message>
     <message>
         <location line="-105"/>
-        <location line="+114"/>
         <source>Round edges</source>
         <translation>Round edges</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Rounds the edges of a body with one radius.</source>
-        <translation>Rounds the edges of a body with one radius.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <location line="+6"/>
-        <source>Choose edges, drag the dot.</source>
-        <translation>Choose edges, drag the dot.</translation>
-    </message>
-    <message>
-        <location line="-115"/>
-        <location line="+113"/>
+        <location line="+7"/>
         <source>Bevel edges</source>
         <translation>Bevel edges</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Cuts the edges of a body at an angle.</source>
-        <translation>Cuts the edges of a body at an angle.</translation>
-    </message>
-    <message>
-        <location line="+5"/>
+        <location line="+107"/>
         <source>Drilled hole</source>
         <translation>Drilled hole</translation>
     </message>
@@ -1027,23 +1019,12 @@
         <translation>Click a face, then drag the dot.</translation>
     </message>
     <message>
-        <location line="-86"/>
-        <location line="+90"/>
+        <location line="-74"/>
         <source>Hollow out</source>
         <translation>Hollow out</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Makes a body hollow with a wall of a chosen thickness.</source>
-        <translation>Makes a body hollow with a wall of a chosen thickness.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Choose the body and the faces that stay open.</source>
-        <translation>Choose the body and the faces that stay open.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
+        <location line="+78"/>
         <source>Pull up a sketch</source>
         <translation>Pull up a sketch</translation>
     </message>
@@ -1058,22 +1039,12 @@
         <translation>Draw a sketch, then drag it up.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="-274"/>
         <source>Sketch</source>
         <translation>Sketch</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Draws lines, circles and rectangles with exact measures on a face.</source>
-        <translation>Draws lines, circles and rectangles with exact measures on a face.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Choose a face to draw on.</source>
-        <translation>Choose a face to draw on.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
+        <location line="+278"/>
         <source>Pattern</source>
         <translation>Pattern</translation>
     </message>
@@ -1595,7 +1566,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+98"/>
+        <location filename="../qml/LeftPanel.qml" line="+103"/>
         <source>Bodies</source>
         <translation>Bodies</translation>
     </message>
@@ -1744,7 +1715,7 @@
         <translation>Cancel</translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+104"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Every change appears here as a sentence.</translation>
     </message>
@@ -1782,7 +1753,7 @@
         <translation>Untitled</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+27"/>
         <source>%1 × %2</source>
         <translation>%1 × %2</translation>
     </message>
@@ -1808,12 +1779,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+866"/>
+        <location line="+953"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-865"/>
+        <location line="-952"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
@@ -1843,7 +1814,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+116"/>
+        <location line="+123"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -1853,7 +1824,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-116"/>
+        <location line="-123"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -2044,12 +2015,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1420"/>
+        <location line="+1567"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1419"/>
+        <location line="-1566"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -2080,12 +2051,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1399"/>
+        <location line="+1544"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1397"/>
+        <location line="-1542"/>
         <source>Round edges</source>
         <translation>Round edges</translation>
     </message>
@@ -2126,12 +2097,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1397"/>
+        <location line="+1542"/>
         <source>Draft</source>
         <translation>Draft</translation>
     </message>
     <message>
-        <location line="-1395"/>
+        <location line="-1540"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -2161,7 +2132,17 @@
         <translation>About Fission359</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+12"/>
+        <source>Click a flat face or the ground plane. Esc cancels.</source>
+        <translation>Click a flat face or the ground plane. Esc cancels.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sketching: the pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
+        <translation>Sketching: the pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.</source>
         <translation>Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.</translation>
     </message>
@@ -2171,7 +2152,7 @@
         <translation>Check: measure faces, edges and corners.</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="-14"/>
         <source>Click the edge that was meant. Esc cancels.</source>
         <translation>Click the edge that was meant. Esc cancels.</translation>
     </message>
@@ -2181,24 +2162,24 @@
         <translation>Click the face that was meant. Esc cancels.</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+17"/>
         <source>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</source>
         <translation>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</translation>
     </message>
     <message>
-        <location line="+23"/>
-        <location line="+901"/>
+        <location line="+24"/>
+        <location line="+1012"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-899"/>
-        <location line="+900"/>
+        <location line="-1010"/>
+        <location line="+1011"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-894"/>
+        <location line="-1005"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -2244,7 +2225,7 @@
         </translation>
     </message>
     <message>
-        <location line="+104"/>
+        <location line="+114"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -2381,7 +2362,7 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+121"/>
+        <location line="+146"/>
         <source>Click an edge of the body this step works on.</source>
         <translation>Click an edge of the body this step works on.</translation>
     </message>
@@ -2391,7 +2372,7 @@
         <translation>Click a face of the body this step works on.</translation>
     </message>
     <message>
-        <location line="+125"/>
+        <location line="+127"/>
         <source>Open</source>
         <translation>Open</translation>
     </message>
@@ -2455,7 +2436,7 @@
         </translation>
     </message>
     <message>
-        <location line="-736"/>
+        <location line="-831"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2490,22 +2471,22 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+934"/>
+        <location line="+1050"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
     <message>
-        <location line="+161"/>
+        <location line="+166"/>
         <source>Click a face of the print bed or of another body.</source>
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+114"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1300"/>
+        <location line="-1439"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -2530,7 +2511,7 @@
         <translation>Ctrl+Shift+Tab</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+23"/>
         <source>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</source>
         <translation>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</translation>
     </message>
@@ -2565,7 +2546,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1331"/>
+        <location line="+1472"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2585,7 +2566,7 @@
         <translation>Placing</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>Width</source>
         <translation>Width</translation>
     </message>
@@ -2660,7 +2641,7 @@
         <translation>Position</translation>
     </message>
     <message numerus="yes">
-        <location line="+44"/>
+        <location line="+56"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>Cut out %n body</numerusform>
@@ -2673,12 +2654,12 @@
         <translation>%1 added</translation>
     </message>
     <message>
-        <location line="-978"/>
+        <location line="-1107"/>
         <source>This body cannot be hollowed: it may already be part of another body.</source>
         <translation>This body cannot be hollowed: it may already be part of another body.</translation>
     </message>
     <message>
-        <location line="+712"/>
+        <location line="+808"/>
         <source>Bevelled. Drag the grip or type a distance.</source>
         <translation>Bevelled. Drag the grip or type a distance.</translation>
     </message>
@@ -2688,7 +2669,7 @@
         <translation>Rounded. Drag the grip or type a radius.</translation>
     </message>
     <message>
-        <location line="+215"/>
+        <location line="+234"/>
         <source>Rounding</source>
         <translation>Rounding</translation>
     </message>
@@ -2723,7 +2704,7 @@
         <translation>Hollowing out</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+15"/>
         <source>Distance</source>
         <translation>Distance</translation>
     </message>
@@ -2743,21 +2724,52 @@
         <translation>Angle</translation>
     </message>
     <message>
-        <location line="-564"/>
+        <location line="-631"/>
         <source>Outline exported.</source>
         <translation>Outline exported.</translation>
     </message>
     <message>
-        <location line="+527"/>
+        <location line="+605"/>
         <source>Imported body</source>
         <translation>Imported body</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Sketch</source>
         <translation>Sketch</translation>
     </message>
     <message>
         <location line="+38"/>
+        <source>Point</source>
+        <translation>Point</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Line</source>
+        <translation>Line</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Circle</source>
+        <translation>Circle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Arc</source>
+        <translation>Arc</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Curve</source>
+        <translation>Curve</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sketch part</source>
+        <translation>Sketch part</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>%1 removed</source>
         <translation>%1 removed</translation>
     </message>
@@ -2936,6 +2948,31 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>%1 added to the sketch</source>
+        <translation>%1 added to the sketch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 removed from the sketch</source>
+        <translation>%1 removed from the sketch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sketch changed</source>
+        <translation>Sketch changed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 made a helper line</source>
+        <translation>%1 made a helper line</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 made a normal line again</source>
+        <translation>%1 made a normal line again</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Step renamed</source>
         <translation>Step renamed</translation>
     </message>
@@ -3018,7 +3055,7 @@
         <translation>Several changes</translation>
     </message>
     <message>
-        <location line="+95"/>
+        <location line="+97"/>
         <source>, part %1</source>
         <translation>, part %1</translation>
     </message>
@@ -3072,32 +3109,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-343"/>
+        <location line="-372"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1397"/>
+        <location line="-1539"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1432"/>
+        <location line="+1574"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1253"/>
+        <location line="-1387"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+706"/>
+        <location line="+758"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-753"/>
+        <location line="-808"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -3349,7 +3386,7 @@
 <context>
     <name>MessageCatalog</name>
     <message>
-        <location filename="../qml/MessageCatalog.qml" line="+68"/>
+        <location filename="../qml/MessageCatalog.qml" line="+93"/>
         <source>It was inches</source>
         <translation>It was inches</translation>
     </message>
@@ -3450,18 +3487,18 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+123"/>
+        <location line="+241"/>
         <source>This file has no solid body in it, only surfaces or lines. Fission359 can only use solid bodies.</source>
         <translation>This file has no solid body in it, only surfaces or lines. Fission359 can only use solid bodies.</translation>
     </message>
     <message>
-        <location line="-120"/>
-        <location line="+118"/>
+        <location line="-238"/>
+        <location line="+236"/>
         <source>This file could not be read. Is it a STEP or IGES file that is not damaged?</source>
         <translation>This file could not be read. Is it a STEP or IGES file that is not damaged?</translation>
     </message>
     <message numerus="yes">
-        <location line="-109"/>
+        <location line="-227"/>
         <source>%n body(ies) had small flaws in the file and was repaired.</source>
         <translation>
             <numerusform>%n body had small flaws in the file and was repaired.</numerusform>
@@ -3585,7 +3622,7 @@
         <translation>Hollowing did not work for sure.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+6"/>
         <source>%1 does not work here.</source>
         <translation>%1 does not work here.</translation>
     </message>
@@ -3635,24 +3672,45 @@
         <translation>That did not work.</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="-175"/>
+        <location line="+186"/>
         <source>I don’t know “%1”.</source>
         <translation>I don’t know “%1”.</translation>
     </message>
     <message>
-        <location line="-111"/>
-        <location line="+114"/>
+        <location line="-255"/>
+        <source>Sketches only go on flat faces. Tip: helper planes come later.</source>
+        <translation>Sketches only go on flat faces. Tip: helper planes come later.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This face cannot be drawn on. Choose another flat face or the ground plane.</source>
+        <translation>This face cannot be drawn on. Choose another flat face or the ground plane.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This sketch has no plane at the moment. Its face may be gone: choose it again in the recipe.</source>
+        <translation>This sketch has no plane at the moment. Its face may be gone: choose it again in the recipe.</translation>
+    </message>
+    <message>
+        <location line="+69"/>
+        <location line="+187"/>
         <source>“%1” has a problem itself.</source>
         <translation>“%1” has a problem itself.</translation>
     </message>
     <message>
-        <location line="-112"/>
-        <location line="+115"/>
+        <location line="-185"/>
+        <location line="+188"/>
         <source>That divides by zero.</source>
         <translation>That divides by zero.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-33"/>
+        <source>This sketch has no plane.</source>
+        <translation>This sketch has no plane.</translation>
+    </message>
+    <message>
+        <location line="+38"/>
         <source>The wall is thicker than the body at its thinnest place (%1 mm).</source>
         <translation>The wall is thicker than the body at its thinnest place (%1 mm).</translation>
     </message>
@@ -3752,6 +3810,16 @@
         <translation>This face cannot be moved this way. Choose another face or another tool.</translation>
     </message>
     <message>
+        <location line="+3"/>
+        <source>Sketches only go on flat faces. Choose a flat face or the ground plane.</source>
+        <translation>Sketches only go on flat faces. Choose a flat face or the ground plane.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The plane of this sketch cannot be used. Hide the step and draw a new sketch.</source>
+        <translation>The plane of this sketch cannot be used. Hide the step and draw a new sketch.</translation>
+    </message>
+    <message>
         <location line="+2"/>
         <source>The shape cannot be built with these values. Try changing a value a little.</source>
         <translation>The shape cannot be built with these values. Try changing a value a little.</translation>
@@ -3817,12 +3885,13 @@
         <translation>The bodies do not overlap, so nothing is left. Move them so that they touch.</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+17"/>
         <source>This is a fault in the program, not yours. If you copy the details, you can report it.</source>
         <translation>This is a fault in the program, not yours. If you copy the details, you can report it.</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="-120"/>
+        <location line="+110"/>
         <source>An earlier step has a problem.</source>
         <translation>An earlier step has a problem.</translation>
     </message>
@@ -3854,7 +3923,7 @@
 <context>
     <name>RecipeRow</name>
     <message>
-        <location filename="../qml/RecipeRow.qml" line="+38"/>
+        <location filename="../qml/RecipeRow.qml" line="+41"/>
         <source>Needs help</source>
         <translation>Needs help</translation>
     </message>
@@ -3869,12 +3938,17 @@
         <translation>Hidden</translation>
     </message>
     <message>
-        <location line="+112"/>
+        <location line="+122"/>
         <source>Name of the step</source>
         <translation>Name of the step</translation>
     </message>
     <message>
-        <location line="+69"/>
+        <location line="+30"/>
+        <source>You are drawing in this sketch.</source>
+        <translation>You are drawing in this sketch.</translation>
+    </message>
+    <message>
+        <location line="+50"/>
         <source>(hidden)</source>
         <translation>(hidden)</translation>
     </message>
@@ -4056,6 +4130,7 @@
         <translation>Imported from “%1”, part %2</translation>
     </message>
     <message>
+        <location line="+3"/>
         <source>Sketch</source>
         <translation>Sketch</translation>
     </message>
@@ -4969,7 +5044,7 @@
 <context>
     <name>ViewOverlay</name>
     <message>
-        <location filename="../qml/ViewOverlay.qml" line="+95"/>
+        <location filename="../qml/ViewOverlay.qml" line="+138"/>
         <location line="+10"/>
         <source>Orthographic</source>
         <translation>Orthographic</translation>
@@ -5037,12 +5112,18 @@
         <translation>Basic shapes, text and kits. With “As Hole” any shape becomes a hole.</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-278"/>
+        <location line="+279"/>
         <source>Sketch</source>
         <translation>Sketch</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-267"/>
+        <source>Done</source>
+        <translation>Done</translation>
+    </message>
+    <message>
+        <location line="+268"/>
         <source>2D drawing as a base, with measures and rules.</source>
         <translation>2D drawing as a base, with measures and rules.</translation>
     </message>
@@ -5122,17 +5203,17 @@
         <translation>Orbit</translation>
     </message>
     <message>
-        <location line="-399"/>
+        <location line="-437"/>
         <source>Orbit: drag with the right mouse button – or drag this button</source>
         <translation>Orbit: drag with the right mouse button – or drag this button</translation>
     </message>
     <message>
-        <location line="+407"/>
+        <location line="+445"/>
         <source>Pan</source>
         <translation>Pan</translation>
     </message>
     <message>
-        <location line="-400"/>
+        <location line="-438"/>
         <source>Pan: drag with the middle mouse button – or drag this button</source>
         <translation>Pan: drag with the middle mouse button – or drag this button</translation>
     </message>
@@ -5152,7 +5233,7 @@
         <translation>Pan: Shift + middle mouse button – or drag this button</translation>
     </message>
     <message>
-        <location line="+409"/>
+        <location line="+447"/>
         <source>Zoom</source>
         <translation>Zoom</translation>
     </message>

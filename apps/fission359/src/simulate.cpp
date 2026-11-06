@@ -414,6 +414,47 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("expectsketch")) {
+            // expectsketch:active - the sketch mode is in this state: idle | picking | active.
+            const QString state = action.mid(colon + 1).trimmed();
+            delay += 500;
+            QTimer::singleShot(delay, viewport, [window, state] {
+                const QString now = window->property("sketchState").toString();
+                if (now != state) {
+                    qWarning().noquote()
+                        << QStringLiteral("the sketch mode is \"%1\", expected \"%2\"")
+                               .arg(now, state);
+                    g_simulationFailure = 12;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("expectsketchplane")) {
+            // expectsketchplane:face - the last sketch step of the recipe lies on a face of a
+            // body (it reads the body and points at the face); expectsketchplane:ground - on a
+            // plane of the bed.
+            const QString where = action.mid(colon + 1).trimmed();
+            delay += 500;
+            QTimer::singleShot(delay, viewport, [model, where] {
+                bool found = false;
+                bool onFace = false;
+                for (const fission::core::Feature& step : model->document().features()) {
+                    if (step.type == "sketch") {
+                        found = true;
+                        onFace = step.refs.contains("plane") && !step.inputs.empty();
+                    }
+                }
+                if (!found || onFace != (where == QLatin1String("face"))) {
+                    qWarning().noquote()
+                        << QStringLiteral("expected a sketch on the %1; found %2")
+                               .arg(where, found ? (onFace ? QStringLiteral("a face")
+                                                           : QStringLiteral("the ground"))
+                                                 : QStringLiteral("no sketch"));
+                    g_simulationFailure = 13;
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("grid")) { // grid:0.1 - the step of snapping (0: automatic)
             const double step = action.mid(colon + 1).trimmed().toDouble();
             delay += 350;

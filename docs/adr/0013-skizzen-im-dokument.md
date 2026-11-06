@@ -27,8 +27,8 @@ Option 1.
    Wort `basePlane` (`xy` | `xz` | `yz`), dazu die Lage `x`, `y`, `z` und die Drehung `rotX`, `rotY`, `rotZ` der Ebene (wie bei
    Körpern). Die Klasse `SketchPlane { origin, uAxis, vAxis, normal }` rechnet mit `toWorld` und `toPlane` zwischen Ebenen- und
    Weltkoordinaten um; beide werden nie gemischt. `xy`: u = X, v = Y; `xz`: u = X, v = Z (Ansicht von vorn); `yz`: u = Y, v = Z
-   (Ansicht von rechts). Bei einer Fläche rechnet erst der Skizzen-Modus (Teil 2.1b) die Ebene aus; bis dahin hat das Ergebnis
-   keine Ebene, statt sie zu raten (Regel 6).
+   (Ansicht von rechts). Bei einer Fläche rechnet der Schritt die Ebene selbst aus der Fläche (Teil 2.1b: Mitte, Normale, längste gerade
+   Kante, `GeometryKernel::flatFace`); ein Verweis, der nicht sicher gefunden wird, macht den Schritt „braucht Hilfe“, statt die Ebene zu raten (Regel 6).
 3. **Elemente:** Punkt, Linie, Kreis, Bogen, Spline (keine Ellipse). Alles ist Punkte in Ebenen-Koordinaten (u, v) in mm als `double`,
    damit ein einziger Befehl „Punkte verschieben“ alle Elemente ändert: Linie {Anfang, Ende}; Kreis {Mitte, Punkt auf dem Kreis}
    (Radius = Abstand); Bogen {Mitte, Anfang, Ende} gegen den Uhrzeigersinn (Radius = Abstand Mitte–Anfang, das Ende gibt nur die

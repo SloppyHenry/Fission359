@@ -72,7 +72,13 @@ Die Haltepunkte von Teil a sind entschieden; die Begründungen stehen in [ADR-00
    dem Körper der Fläche. Texte für „Letzte Aktionen“ (`addSketchElement`, `removeSketchElement`, `moveSketchPoints`, `sketchConstructionOn/Off`)
    und der Meldungstext für einen Fehler auf dem Skizzenschritt (Wort `basePlane`) fehlen noch.
 
-## Teil 2.1b – Skizzen-Modus
+## Teil 2.1b – Skizzen-Modus (gebaut 2026-11-06)
+Gebaut: Schritte 1–5 mit den Festlegungen 7–12; die Reste aus 2.1a Punkt 4 sind erledigt (Texte für „Letzte Aktionen“, Meldungstext für
+`kernelRejected` mit `basePlane`/`plane`/`sketch`). Wo es im Code liegt: `SketchController` (`src/ui`), `interaction/sketch_snap.h`, `core::planeOnFace`,
+`GeometryKernel::flatFace`, `DocumentModel::addSketch` / `removeSketchIfEmpty` / `setActiveSketch`. Für 2.1c: Esc-Reihenfolge ist in
+`SketchController::escape` vorbereitet (Werkzeug zuerst), `toolActive` ist noch immer falsch; Zeichenwerkzeuge hängen sich in `SketchController::onPicked` /
+`pointAt` ein; die Ziffern 1–6 sind im Skizzen-Modus noch Ansichten.
+Die Planung dazu:
 1. Werkzeug „Skizze“ (Palette oder Werkzeuggruppe, nach Mockup). Klick auf Fläche (eben!) oder Grundebene → neuer `sketch`-Schritt mit
    Verweis auf die Fläche; Kamera `lookAtFace` animiert; Skizzenraster auf der Ebene (Renderer: Raster wie Bett, aber auf beliebiger Ebene).
 2. 2D-Zeigerposition: Strahl der Maus mit der Ebene schneiden → (u, v) in Ebenen-Koordinaten. Funktion `interaction::planePoint(ray, plane)`.

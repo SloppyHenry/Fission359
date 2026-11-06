@@ -19,12 +19,15 @@ Rectangle {
     property string problemTitle: ""   // what went wrong, in one line
     property string problem: ""        // why, where and what to do, in words
     property bool selected: false
+    property bool opensSketch: false   // a double click opens the sketch (else it renames the step)
+    property bool active: false        // the sketch being drawn in
     property bool beyondMarker: false  // after the time marker: not calculated
     readonly property bool editing: nameInput.visible
     readonly property bool hidden: state === "off"
     signal clicked
     signal hovered(bool on)
     signal renamed(string text)
+    signal openRequested
     signal menuRequested(real x, real y)
     signal deleteRequested
 
@@ -50,12 +53,22 @@ Rectangle {
     width: parent ? parent.width : 260
     height: column.implicitHeight
     radius: 6
-    color: selected ? Theme.accentSoft : state === "fails" ? Theme.badSoft
+    color: selected || active ? Theme.accentSoft : state === "fails" ? Theme.badSoft
          : hover.hovered ? Theme.field : "transparent"
     opacity: hidden || beyondMarker ? 0.55 : 1.0
     activeFocusOnTab: true
     Accessible.name: sentence
     Accessible.role: Accessible.ListItem
+
+    Rectangle {
+        visible: root.active
+        x: 0
+        y: 4
+        width: 3
+        height: parent.height - 8
+        radius: 1.5
+        color: Theme.accentLine
+    }
 
     Keys.onPressed: event => {
         if (event.key === Qt.Key_F2) {
@@ -84,7 +97,7 @@ Rectangle {
             }
             root.clicked()
         }
-        onDoubleTapped: Qt.callLater(root.startRename)
+        onDoubleTapped: root.opensSketch ? root.openRequested() : Qt.callLater(root.startRename)
     }
 
     TapHandler {
@@ -171,6 +184,17 @@ Rectangle {
                     text: root.sentence
                     color: root.label !== "" ? Theme.fg3 : Theme.fg
                     font.pixelSize: root.label !== "" ? Theme.fontSizeSmall : Theme.fontSize
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideNone
+                }
+
+                // Never colour alone: the sketch being drawn in says so in words.
+                Txt {
+                    visible: root.active
+                    width: parent.width
+                    text: qsTr("You are drawing in this sketch.")
+                    color: Theme.accentLine
+                    font.pixelSize: Theme.fontSizeSmall
                     wrapMode: Text.WordWrap
                     elide: Text.ElideNone
                 }
