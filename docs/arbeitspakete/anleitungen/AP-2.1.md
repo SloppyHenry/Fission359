@@ -25,20 +25,18 @@ AP-1.4, AP-1.6 (erledigt), AP-1.10 (Skizzen müssen gespeichert werden), AP-2.10
   Regeln) gibt es keine Struktur.
 - Die Ansicht kann senkrecht auf eine Fläche schauen (`lookAtFace`), Linien und Punkte in 3D zeichnen (Griff-Grafik).
 
-## Haltepunkte (Teil a, vor jedem Code)
-1. **ADR-0011 bzw. nächste freie Nummer: „Skizzen im Dokument“.** Empfohlener Entwurf:
-   - Feature-Typ `sketch` mit neuem Feld `Feature::sketch` (Struktur `SketchData` im Core): Ebene (`refs["plane"]` = Fläche, oder Wort
-     `basePlane` = xy|xz|yz, plus Lage/Drehung der Ebene), Elemente (Punkt, Linie, Kreis, Bogen, Ellipse? nein, Spline) mit **stabilen Ids**
-     (`P1`, `L3`, `C2` – nie wiederverwendet, wie Feature-Nummern), Koordinaten als **Zahlen in mm in Ebenen-Koordinaten**, Kennzeichen
-     „Hilfslinie“. Regeln/Maße (AP-2.2) als eigene Liste mit Ids; Maß-Werte sind **Ausdrücke** (`Value`).
-   - Die Skizze erzeugt **keinen Körper** (`newBodies = 0`); ihr Ergebnis sind Kurven und Bereiche, die AP-2.3 benutzt. Dafür braucht die
-     Neuberechnung ein Ergebnis „Skizze“ neben Körpern (`RecomputeResult::sketches`).
-   - Namens-Vertrag: Bereiche und Kanten der Skizze heißen nach den Element-Ids (`F7/sketch/L3`), damit Körper aus Skizzen stabile
-     Flächennamen bekommen (`F8/extrude/side[L3]`, ADR-0003 Punkt 1).
-   Alternativen im ADR nennen (Skizze als Wörter-JSON in `texts` – verworfen, kein Undo je Element).
-2. **Skizzen-Werkzeuge im Mockup?** Wenn das Mockup keine Skizzen-Oberfläche zeigt: erst ein Mockup (HTML wie `docs/mockups/oberflaeche.html`)
-   bauen und freigeben lassen (Gestaltung ist verbindlich, R17).
-3. **Bedienung „Skizze beenden“:** Empfehlung: Knopf „Fertig“ oben in der Ansicht + Esc (zweimal: erst Werkzeug, dann Skizze).
+## Festlegungen (2026-11-06)
+Die Haltepunkte von Teil a sind entschieden; die Begründungen stehen in [ADR-0013](../../adr/0013-skizzen-im-dokument.md).
+1. **Skizzen im Dokument:** Feature-Typ `sketch`, Feld `Feature::sketch` (`SketchData`), stabile Ids je Art (`P1`, `L3`, `C2`, `A1`,
+   `S1`), Zahlen in mm in Ebenen-Koordinaten, Kennzeichen „Hilfslinie“, leere Liste für Regeln und Maße (AP-2.2), kein Körper,
+   `RecomputeResult::sketches`, Namens-Vertrag `F7/sketch/L3`. Verworfen: Skizze als JSON-Wörter in `texts` (kein Undo je Element).
+2. **Dateiformat Version 3** (neues Feld `sketch` je Schritt, sonst fehlt es); Migration 2 → 3 ohne Umschreiben; 1 → 2 → 3 lückenlos;
+   Version-1-Fixture für den Typ `sketch`.
+3. **Kein Mockup nötig:** Die Werkzeuggruppe „Skizze“ steht in `docs/mockups/oberflaeche.html`.
+4. **Skizze beenden (Teil 2.1b):** Knopf „Fertig“ oben in der Ansicht und Esc, zweimal: erst das Werkzeug, dann die Skizze.
+5. **Elemente sind Punkte** (Teil a, im ADR): Kreis = {Mitte, Punkt auf dem Kreis}, Bogen = {Mitte, Anfang, Ende} gegen den Uhrzeigersinn,
+   Spline = durch alle Punkte. Radius und Winkel sind abgeleitet.
+6. **Ebene aus einer Fläche** rechnet erst Teil 2.1b aus; bis dahin hat das Ergebnis der Skizze dann keine Ebene (nie raten, Regel 6).
 
 ## Teil 2.1a – Datenmodell und Commands
 1. `SketchData` in `src/core/include/fission/core/sketch.h`: `struct SketchPoint { std::string id; double u, v; bool construction; }`,
