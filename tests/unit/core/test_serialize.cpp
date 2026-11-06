@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <clocale>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -74,6 +75,21 @@ Document everythingDocument() {
                 firstBodies.push_back(body);
             }
         }
+    }
+    // The sketch step holds one element of every kind, with numbers that do not round nicely.
+    for (const Feature& feature : document.features()) {
+        if (feature.type != "sketch") {
+            continue;
+        }
+        const FeatureId sketch = feature.id;
+        document.addSketchElement(sketch, SketchElementKind::point, {{1.0 / 3.0, -2.5e-7}});
+        document.addSketchElement(sketch, SketchElementKind::line, {{0, 0}, {1234567.891, -0.1}});
+        document.addSketchElement(sketch, SketchElementKind::circle, {{5, 5}, {5, 12.75}}, true);
+        document.addSketchElement(sketch, SketchElementKind::arc, {{0, 0}, {10, 0}, {0, 10}});
+        document.addSketchElement(sketch, SketchElementKind::spline,
+                                  {{0, 0}, {1, 2}, {3, 1}, {4, 4}});
+        document.takeSketchElement(sketch, "L1"); // L1 is gone for good, the next line is L2
+        document.addSketchElement(sketch, SketchElementKind::line, {{2, 2}, {3, 3}});
     }
     document.setFeatureSuppressed(document.features().at(1).id, true);
     document.setFeatureLabel(document.features().at(0).id, "Grundplatte");
@@ -267,4 +283,148 @@ TEST_CASE("older files are lifted one version at a time", "[serialize]") {
           LoadProblemCode::unsupportedFormat);
     // The program's own table is empty at version 1: version 0 is not readable by it.
     CHECK_FALSE(load(json.dump()).document);
+}
+
+// --- sketches (format 3, AP-2.1a) -----------------------------------------------------------
+
+namespace {
+
+const Feature& sketchStep(const Document& document) {
+    for (const Feature& feature : document.features()) {
+        if (feature.type == "sketch") {
+            return feature;
+        }
+    }
+    FAIL("no sketch step");
+    return document.features().front();
+}
+
+} // namespace
+
+TEST_CASE("sketches survive the round trip with ids, counters and aids", "[serialize][sketch]") {
+    const Document original = everythingDocument();
+    const SketchData& before = *sketchStep(original).sketch;
+    REQUIRE(before.elements.size() == 5);
+    CHECK(before.elements.back().id == "L2");
+
+    const LoadResult loaded = load(toJson(original));
+    REQUIRE(loaded.document);
+    CHECK(loaded.problems.empty());
+    const SketchData& after = *sketchStep(*loaded.document).sketch;
+    CHECK(after == before);
+    CHECK(after.lastNumber[static_cast<std::size_t>(SketchElementKind::line)] == 2);
+    CHECK(after.elements[1].construction); // the circle
+    CHECK(after.elements[3].points.size() == 4);
+
+    // A new element after loading gets the next number, not a used one.
+    Document again = *loaded.document;
+    CHECK(*again.addSketchElement(sketchStep(again).id, SketchElementKind::line,
+                                  {{0, 0}, {1, 1}}) == "L3");
+}
+
+TEST_CASE("only sketch steps carry the field sketch", "[serialize][sketch]") {
+    const Json json = Json::parse(toJson(everythingDocument()));
+    int sketches = 0;
+    for (const Json& feature : json.at("features")) {
+        CHECK(feature.contains("sketch") == (feature.at("type") == "sketch"));
+        sketches += feature.contains("sketch") ? 1 : 0;
+    }
+    CHECK(sketches == 1);
+    CHECK(json.at("formatVersion") == 3);
+}
+
+TEST_CASE("a file of format 2 opens in format 3, a sketch step is an empty sketch",
+          "[serialize][sketch]") {
+    Json json = Json::parse(toJson(everythingDocument()));
+    json["formatVersion"] = 2;
+    for (Json& feature : json["features"]) {
+        feature.erase("sketch");
+    }
+    const LoadResult loaded = load(json.dump());
+    REQUIRE(loaded.document);
+    CHECK(loaded.problems.empty());
+    const Feature& step = sketchStep(*loaded.document);
+    REQUIRE(step.sketch.has_value());
+    CHECK(step.sketch->elements.empty());
+    // Written again it is format 3, with the field.
+    CHECK(Json::parse(toJson(*loaded.document)).at("formatVersion") == 3);
+    CHECK(load(toJson(*loaded.document)).document->sameContentAs(*loaded.document));
+}
+
+TEST_CASE("a file of format 1 is lifted through 2 to 3", "[serialize][sketch]") {
+    Json json = Json::parse(toJson(everythingDocument()));
+    json["formatVersion"] = 1;
+    for (Json& feature : json["features"]) {
+        feature.erase("sketch");
+    }
+    for (Json& parameter : json["parameters"]) {
+        parameter.erase("slider");
+    }
+    const LoadResult loaded = load(json.dump());
+    REQUIRE(loaded.document);
+    CHECK(loaded.problems.empty());
+    CHECK(sketchStep(*loaded.document).sketch.has_value());
+    CHECK_FALSE(loaded.document->parameters().front().slider);
+}
+
+TEST_CASE("broken sketches give a problem and no document", "[serialize][sketch]") {
+    const Json good = Json::parse(toJson(everythingDocument()));
+    std::size_t at = 0;
+    while (good["features"][at].at("type") != "sketch") {
+        ++at;
+    }
+    const std::string base = "/features/" + std::to_string(at) + "/sketch";
+    const auto broken = [&](const std::function<void(Json&)>& change) {
+        Json json = good;
+        change(json["features"][at]["sketch"]);
+        return load(json.dump());
+    };
+
+    SECTION("an id used twice") {
+        const LoadResult result =
+            broken([](Json& sketch) { sketch["elements"][1]["id"] = sketch["elements"][0]["id"]; });
+        CHECK_FALSE(result.document);
+        CHECK(result.problems.at(0) == LoadProblem{LoadProblemCode::inconsistent, base});
+    }
+    SECTION("a counter behind an id would give the id out again") {
+        const LoadResult result = broken([](Json& sketch) { sketch["lastNumber"]["S"] = 0; });
+        CHECK_FALSE(result.document);
+        CHECK(result.problems.at(0).code == LoadProblemCode::inconsistent);
+    }
+    SECTION("the letter of the id does not fit the kind") {
+        const LoadResult result = broken([](Json& sketch) { sketch["elements"][0]["id"] = "L7"; });
+        CHECK_FALSE(result.document);
+        CHECK(result.problems.at(0).code == LoadProblemCode::inconsistent);
+    }
+    SECTION("the wrong number of points for the kind") {
+        const LoadResult result =
+            broken([](Json& sketch) { sketch["elements"][1]["points"].push_back({1, 2}); });
+        CHECK_FALSE(result.document);
+        CHECK(result.problems.at(0).code == LoadProblemCode::inconsistent);
+    }
+    SECTION("an unknown kind") {
+        const LoadResult result =
+            broken([](Json& sketch) { sketch["elements"][0]["kind"] = "ellipse"; });
+        CHECK_FALSE(result.document);
+        CHECK(result.problems.at(0) ==
+              LoadProblem{LoadProblemCode::unknownValue, base + "/elements/0/kind"});
+    }
+    SECTION("a point that is not two numbers") {
+        const LoadResult result = broken(
+            [](Json& sketch) { sketch["elements"][1]["points"][0] = Json::array({1, 2, 3}); });
+        CHECK_FALSE(result.document);
+        CHECK(result.problems.at(0) ==
+              LoadProblem{LoadProblemCode::wrongType, base + "/elements/1/points/0"});
+    }
+    SECTION("a missing field says which") {
+        const LoadResult result = broken([](Json& sketch) { sketch.erase("rules"); });
+        CHECK_FALSE(result.document);
+        CHECK(result.problems.at(0) == LoadProblem{LoadProblemCode::missingField, base + "/rules"});
+    }
+    SECTION("a field this version does not know is reported and ignored") {
+        const LoadResult result = broken([](Json& sketch) { sketch["grid"] = 5; });
+        REQUIRE(result.document);
+        CHECK_FALSE(result.hasFatalProblem());
+        CHECK(result.problems.at(0) == LoadProblem{LoadProblemCode::unknownField, base + "/grid"});
+    }
 }

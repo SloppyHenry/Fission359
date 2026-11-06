@@ -27,6 +27,12 @@ constexpr WordTable<QuantityKind, 3> quantityWords{{{QuantityKind::length, "leng
                                                     {QuantityKind::plain, "plain"}}};
 constexpr WordTable<BodyKind, 2> bodyKindWords{
     {{BodyKind::precise, "precise"}, {BodyKind::free, "free"}}};
+constexpr WordTable<SketchElementKind, sketchElementKindCount> sketchKindWords{
+    {{SketchElementKind::point, "point"},
+     {SketchElementKind::line, "line"},
+     {SketchElementKind::circle, "circle"},
+     {SketchElementKind::arc, "arc"},
+     {SketchElementKind::spline, "spline"}}};
 constexpr WordTable<ElementKind, 2> elementKindWords{
     {{ElementKind::face, "face"}, {ElementKind::edge, "edge"}}};
 constexpr WordTable<ElementShape, 10> elementShapeWords{{{ElementShape::unknown, "unknown"},
@@ -97,6 +103,33 @@ Json valueJson(const Value& value) {
     return {{"expression", value.expression}, {"kind", wordOf(quantityWords, value.kind)}};
 }
 
+Json sketchJson(const SketchData& sketch) {
+    Json elements = Json::array();
+    for (const SketchElement& element : sketch.elements) {
+        Json points = Json::array();
+        for (const SketchPoint& point : element.points) {
+            points.push_back(Json::array({point.u, point.v}));
+        }
+        elements.push_back({{"id", element.id},
+                            {"kind", wordOf(sketchKindWords, element.kind)},
+                            {"points", std::move(points)},
+                            {"construction", element.construction}});
+    }
+    Json lastNumber = Json::object();
+    for (const auto& [kind, word] : sketchKindWords) {
+        lastNumber[std::string(1, sketchIdLetter(kind))] =
+            sketch.lastNumber[static_cast<std::size_t>(kind)];
+    }
+    Json rules = Json::array();
+    for (const SketchRule& rule : sketch.rules) {
+        rules.push_back({{"id", rule.id}, {"kind", rule.kind}, {"elements", rule.elements}});
+    }
+    return {{"elements", std::move(elements)},
+            {"lastNumber", std::move(lastNumber)},
+            {"rules", std::move(rules)},
+            {"lastRuleNumber", sketch.lastRuleNumber}};
+}
+
 Json featureJson(const Feature& feature) {
     Json params = Json::object();
     for (const auto& [name, value] : feature.params) {
@@ -122,17 +155,21 @@ Json featureJson(const Feature& feature) {
     for (const BodyId& id : feature.outputs) {
         outputs.push_back(id.value);
     }
-    return {{"id", feature.id.value},
-            {"number", feature.number},
-            {"type", feature.type},
-            {"typeVersion", feature.typeVersion},
-            {"label", feature.label},
-            {"params", std::move(params)},
-            {"texts", std::move(texts)},
-            {"refs", std::move(refs)},
-            {"inputs", std::move(inputs)},
-            {"outputs", std::move(outputs)},
-            {"suppressed", feature.suppressed}};
+    Json json = {{"id", feature.id.value},
+                 {"number", feature.number},
+                 {"type", feature.type},
+                 {"typeVersion", feature.typeVersion},
+                 {"label", feature.label},
+                 {"params", std::move(params)},
+                 {"texts", std::move(texts)},
+                 {"refs", std::move(refs)},
+                 {"inputs", std::move(inputs)},
+                 {"outputs", std::move(outputs)},
+                 {"suppressed", feature.suppressed}};
+    if (feature.sketch) { // only sketch steps have the field (format 3)
+        json["sketch"] = sketchJson(*feature.sketch);
+    }
+    return json;
 }
 
 Json bodyJson(const Body& body) {
@@ -195,6 +232,13 @@ public:
             fail(LoadProblemCode::missingField, childPath(path_, key));
         }
         return *found;
+    }
+
+    /// A field that may be absent (null when it is).
+    const Json* optionalField(const std::string& key) {
+        seen_.insert(key);
+        const auto found = json_.find(key);
+        return found == json_.end() ? nullptr : &*found;
     }
 
     std::string path(const std::string& key) const { return childPath(path_, key); }
@@ -366,6 +410,53 @@ Value valueFrom(const Json& json, const std::string& path, Problems& problems) {
     return value;
 }
 
+SketchData sketchFrom(const Json& json, const std::string& path, Problems& problems) {
+    ObjectReader reader(json, path, problems);
+    SketchData sketch;
+    const Json& elements = reader.array("elements");
+    for (std::size_t i = 0; i < elements.size(); ++i) {
+        ObjectReader item(elements[i], childPath(reader.path("elements"), std::to_string(i)),
+                          problems);
+        SketchElement element;
+        element.id = item.text("id");
+        element.kind = item.word("kind", sketchKindWords);
+        const Json& points = item.array("points");
+        for (std::size_t p = 0; p < points.size(); ++p) {
+            const Json& pair = points[p];
+            if (!pair.is_array() || pair.size() != 2 || !pair[0].is_number() ||
+                !pair[1].is_number()) {
+                fail(LoadProblemCode::wrongType, childPath(item.path("points"), std::to_string(p)));
+            }
+            element.points.push_back({pair[0].get<double>(), pair[1].get<double>()});
+        }
+        element.construction = item.flag("construction");
+        item.finish();
+        sketch.elements.push_back(std::move(element));
+    }
+    ObjectReader numbers(reader.object("lastNumber"), reader.path("lastNumber"), problems);
+    for (const auto& [kind, word] : sketchKindWords) {
+        sketch.lastNumber[static_cast<std::size_t>(kind)] =
+            numbers.integer(std::string(1, sketchIdLetter(kind)));
+    }
+    numbers.finish();
+    const Json& rules = reader.array("rules");
+    for (std::size_t i = 0; i < rules.size(); ++i) {
+        ObjectReader item(rules[i], childPath(reader.path("rules"), std::to_string(i)), problems);
+        SketchRule rule;
+        rule.id = item.text("id");
+        rule.kind = item.text("kind");
+        rule.elements = stringsFrom(item, "elements");
+        item.finish();
+        sketch.rules.push_back(std::move(rule));
+    }
+    sketch.lastRuleNumber = reader.integer("lastRuleNumber");
+    reader.finish();
+    if (!sketch.consistent()) { // repeated ids, a counter behind an id, unusable points
+        fail(LoadProblemCode::inconsistent, path);
+    }
+    return sketch;
+}
+
 Feature featureFrom(const Json& json, const std::string& path, Problems& problems) {
     ObjectReader reader(json, path, problems);
     Feature feature;
@@ -403,6 +494,11 @@ Feature featureFrom(const Json& json, const std::string& path, Problems& problem
     feature.inputs = idsFrom<BodyId>(reader, "inputs");
     feature.outputs = idsFrom<BodyId>(reader, "outputs");
     feature.suppressed = reader.flag("suppressed");
+    if (const Json* sketch = reader.optionalField("sketch")) {
+        feature.sketch = sketchFrom(*sketch, reader.path("sketch"), problems);
+    } else if (feature.type == "sketch") {
+        feature.sketch = SketchData{}; // a file of format 2 or older: an empty sketch
+    }
     reader.finish();
     return feature;
 }
@@ -616,7 +712,10 @@ std::string toJson(const Document& document) {
 
 LoadResult fromJson(std::string_view text) {
     // Version 1 -> 2 (AP-2.9): every measure gets the field `slider`, empty.
-    static const MigrationTable builtIn = {{1, [](Json& root) {
+    // Version 2 -> 3 (AP-2.1): sketch steps carry the field `sketch`; every other step has none.
+    // Nothing to rewrite: a sketch step without the field is an empty sketch on the ground plane.
+    static const MigrationTable builtIn = {{1,
+                                            [](Json& root) {
                                                 const auto found = root.find("parameters");
                                                 if (found == root.end() || !found->is_array()) {
                                                     return;
@@ -627,7 +726,8 @@ LoadResult fromJson(std::string_view text) {
                                                         parameter["slider"] = nullptr;
                                                     }
                                                 }
-                                            }}};
+                                            }},
+                                           {2, [](Json&) {}}};
     return read(text, builtIn, currentFormatVersion);
 }
 

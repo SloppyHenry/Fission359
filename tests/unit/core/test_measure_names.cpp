@@ -174,7 +174,8 @@ TEST_CASE("slider range: ranges that cannot work are refused", "[measures]") {
     CHECK_FALSE(history.document().parameters()[0].slider);
 }
 
-TEST_CASE("a file of format 1 opens in format 2 without slider", "[measures][serialize]") {
+TEST_CASE("a file of format 1 opens in the current format without slider",
+          "[measures][serialize]") {
     const std::string version1 = R"({
       "formatVersion": 1, "title": "Alt",
       "settings": {"defaultUnitMillimetres": 1.0, "palette": []},
@@ -186,9 +187,9 @@ TEST_CASE("a file of format 1 opens in format 2 without slider", "[measures][ser
     REQUIRE(loaded.document->parameters().size() == 1);
     CHECK(loaded.document->parameters()[0].comment == "alt");
     CHECK_FALSE(loaded.document->parameters()[0].slider);
-    // Written again it is format 2 and reads back the same.
+    // Written again it is the current format and reads back the same.
     const std::string text = toJson(*loaded.document);
-    CHECK(nlohmann::json::parse(text).at("formatVersion") == 2);
+    CHECK(nlohmann::json::parse(text).at("formatVersion") == currentFormatVersion);
     const LoadResult again = fromJson(text);
     REQUIRE(again.document);
     CHECK(again.document->sameContentAs(*loaded.document));

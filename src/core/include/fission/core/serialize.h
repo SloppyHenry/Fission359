@@ -17,7 +17,7 @@
 namespace fission::core {
 
 /// The version of `document.json` this program writes (docs/03-architektur.md §7).
-inline constexpr int currentFormatVersion = 2;
+inline constexpr int currentFormatVersion = 3;
 
 /// What went wrong or looked odd while reading. Codes only: the interface turns them into
 /// sentences (rule 5), nothing is built as text here.
@@ -61,7 +61,8 @@ std::string toJson(const Document& document);
 LoadResult fromJson(std::string_view text);
 
 /// Lifts a parsed document one format version up: `migrations[v]` turns version v into v + 1,
-/// in place. Version 2 (AP-2.9) added the optional `slider` of a measure.
+/// in place. Version 2 (AP-2.9) added the optional `slider` of a measure; version 3 (AP-2.1) the
+/// field `sketch` of sketch steps (nothing to rewrite).
 using MigrationTable = std::map<int, std::function<void(nlohmann::json&)>>;
 
 /// Like `fromJson`, with a table of migrations to use instead of the built-in one. For tests
