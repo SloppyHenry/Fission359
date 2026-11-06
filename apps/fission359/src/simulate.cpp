@@ -178,7 +178,8 @@ struct Pull : std::enable_shared_from_this<Pull> {
 };
 
 int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int delay,
-                 std::function<QPointF()> start, QPointF pull, int steps, bool hold = false) {
+                 std::function<QPointF()> start, QPointF pull, int steps, bool hold = false,
+                 fission::ui::DocumentModel* waitFor = nullptr) {
     auto action = std::make_shared<Pull>();
     action->window = window;
     action->viewport = viewport;
@@ -187,9 +188,19 @@ int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int de
     action->steps = steps;
     action->hold = hold;
     delay += 350;
-    QTimer::singleShot(delay, viewport, [action] {
-        ++g_pullsRunning;
-        action->press(5000);
+    QTimer::singleShot(delay, viewport, [action, viewport, waitFor] {
+        const auto begin = [action] {
+            ++g_pullsRunning;
+            action->press(5000);
+        };
+        // With `waitFor`, the press comes once the pulls before it are over and the model has
+        // worked out their result, as when a person looks and then takes the next handle (the
+        // parts of a gizmo are where they were before while a result is still on its way).
+        if (waitFor != nullptr) {
+            whenCalculated(viewport, waitFor, begin, 2000);
+        } else {
+            begin();
+        }
     });
     // The planned end of the pull; a check after it waits for the real one (`g_pullsRunning`).
     delay += 90 * steps;
@@ -323,7 +334,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     return QPointF();
                 },
                 QPointF(spec.value(1).toDouble(), spec.value(2).toDouble()), steps,
-                spec.value(4) == QLatin1String("hold"));
+                spec.value(4) == QLatin1String("hold"), model);
             continue;
         }
         if (kind == QLatin1String("ring")) {
@@ -567,20 +578,32 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             };
             if (kind == QLatin1String("rowediting")) {
                 delay += 350;
-                QTimer::singleShot(delay, viewport, [findRow, name] {
+                // The double click is played back in real time and the program may be busy for a
+                // moment: wait up to 3 s for the row to switch to renaming, then fail.
+                auto check = std::make_shared<std::function<void(int)>>();
+                *check = [viewport, findRow, name, check](int patience) {
                     QQuickItem* row = findRow();
-                    if (row == nullptr || !row->property("editing").toBool()) {
-                        qWarning().noquote()
-                            << QStringLiteral("expected %1 to be renamed now").arg(name);
-                        g_simulationFailure = 5;
+                    if (row != nullptr && row->property("editing").toBool()) {
+                        return;
                     }
-                });
+                    if (patience > 0) {
+                        QTimer::singleShot(100, viewport,
+                                           [check, patience] { (*check)(patience - 100); });
+                        return;
+                    }
+                    qWarning().noquote()
+                        << QStringLiteral("expected %1 to be renamed now").arg(name);
+                    g_simulationFailure = 5;
+                };
+                QTimer::singleShot(delay, viewport, [check] { (*check)(3000); });
                 continue;
             }
+            auto clock = std::make_shared<QElapsedTimer>();
+            clock->start();
             for (const QEvent::Type type : {QEvent::MouseButtonPress, QEvent::MouseButtonRelease,
                                             QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
                 delay += type == QEvent::MouseButtonPress ? 120 : 40;
-                QTimer::singleShot(delay, viewport, [window, findRow, type] {
+                QTimer::singleShot(delay, viewport, [window, findRow, type, clock] {
                     QQuickItem* row = findRow();
                     if (row == nullptr) {
                         return;
@@ -591,6 +614,9 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()),
                                       Qt::LeftButton, press ? Qt::LeftButton : Qt::NoButton,
                                       Qt::NoModifier);
+                    // Real events carry the time they happened; the handler of a double tap
+                    // measures the time between the two taps with it.
+                    event.setTimestamp(static_cast<ulong>(clock->elapsed()));
                     QCoreApplication::sendEvent(window, &event);
                 });
             }
