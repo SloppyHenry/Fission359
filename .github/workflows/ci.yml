@@ -333,6 +333,18 @@ jobs:
         run: |
           app="$PWD/build/package/stage/Fission359.app/Contents/MacOS/fission359"
           test -x "$app"
+          # The window tests have fixed pixel positions and ask for a window of 1280x800; a runner
+          # screen smaller than that shrinks the window. Log the screen, and try to give it more room
+          # (best effort; the program also keeps the asked-for size by itself in test mode).
+          system_profiler SPDisplaysDataType | grep -i -E "resolution|displays|metal" || true
+          if brew install displayplacer >/dev/null 2>&1; then
+            displayplacer list || true
+            screen_id="$(displayplacer list | awk '/Persistent screen id/ {print $4; exit}')"
+            if [ -n "$screen_id" ]; then
+              displayplacer "id:$screen_id res:1920x1080" || echo "Resolution not changed."
+              displayplacer list | grep -i -E "resolution|current" || true
+            fi
+          fi
           cmake --preset macos-release -DFISSION_APP_UNDER_TEST="$app"
           cmake --build --preset macos-release --target fission_screenshot_check
           ctest --preset macos-release -R '^app_' --no-tests=error --timeout 600 \
