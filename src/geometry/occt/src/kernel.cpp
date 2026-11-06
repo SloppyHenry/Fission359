@@ -47,6 +47,9 @@ public:
     FaceAnchor faceAnchor(const Solid& solid, std::uint32_t faceId) const override {
         return faceAnchorOf(solid, faceId);
     }
+    FlatFace flatFace(const Solid& solid, std::uint32_t faceId) const override {
+        return flatFaceOf(solid, faceId);
+    }
     NamedSolid removeFaces(const NamedSolid& solid,
                            const std::vector<std::uint32_t>& faceIds) const override {
         return removeFacesNamed(solid, faceIds);

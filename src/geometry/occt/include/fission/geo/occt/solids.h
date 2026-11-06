@@ -61,6 +61,9 @@ NamedSolid offsetFaceNamed(const NamedSolid& solid, std::uint32_t faceId, double
 /// Where the grip of a face stands (see `GeometryKernel::faceAnchor`). Throws GeometryError.
 FaceAnchor faceAnchorOf(const Solid& solid, std::uint32_t faceId);
 
+/// The facts of a flat face (see `GeometryKernel::flatFace`). Throws GeometryError.
+FlatFace flatFaceOf(const Solid& solid, std::uint32_t faceId);
+
 /// Removes faces and heals the body (see `GeometryKernel::removeFaces`). Throws GeometryError.
 NamedSolid removeFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds);
 

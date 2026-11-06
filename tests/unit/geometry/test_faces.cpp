@@ -294,3 +294,68 @@ TEST_CASE("tiltFace: a hinge off the face, no angle or a face that is not flat a
         kernel->tiltFace(cylinder, roundFace(*kernel, cylinder, 5.0), {5, 0, 0}, {0, 1, 0}, 10.0),
         geo::GeometryError);
 }
+
+TEST_CASE("flatFace: the top of a box has its middle, its normal and its longest edge",
+          "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid box = kernel->makeBox(40, 20, 10, {0, 0, 0}, 0.0);
+    const geo::FlatFace top = kernel->flatFace(box.solid, flatFace(*kernel, box, {0, 0, 1}));
+    CHECK(top.centre.x == Approx(20.0));
+    CHECK(top.centre.y == Approx(10.0));
+    CHECK(top.centre.z == Approx(10.0));
+    CHECK(top.normal.z == Approx(1.0));
+    REQUIRE(top.longestEdge.has_value());
+    CHECK(std::abs(top.longestEdge->x) == Approx(1.0)); // the 40 mm edges
+    CHECK(top.longestEdge->z == Approx(0.0).margin(1e-12));
+}
+
+TEST_CASE("flatFace: on every side of a box the edge runs along the longer side of the face",
+          "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid box = kernel->makeBox(40, 20, 10, {0, 0, 0}, 0.0);
+    // Direction of the face, and the axis (0 = x, 1 = y, 2 = z) its longest edge must run along.
+    const struct {
+        geo::Point3d looks;
+        int along;
+    } sides[] = {{{0, 0, 1}, 0},  {{0, 0, -1}, 0}, {{0, 1, 0}, 0},
+                 {{0, -1, 0}, 0}, {{1, 0, 0}, 1},  {{-1, 0, 0}, 1}};
+    for (const auto& side : sides) {
+        const geo::FlatFace face = kernel->flatFace(box.solid, flatFace(*kernel, box, side.looks));
+        REQUIRE(face.longestEdge.has_value());
+        const double parts[3] = {face.longestEdge->x, face.longestEdge->y, face.longestEdge->z};
+        CHECK(std::abs(parts[side.along]) == Approx(1.0));
+        CHECK(face.normal.x == Approx(side.looks.x));
+        CHECK(face.normal.y == Approx(side.looks.y));
+        CHECK(face.normal.z == Approx(side.looks.z));
+    }
+}
+
+TEST_CASE("flatFace: only the outer boundary counts, not the edge of a hole", "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid plate = plateWithHole(*kernel);
+    const geo::FlatFace top = kernel->flatFace(plate.solid, flatFace(*kernel, plate, {0, 0, 1}));
+    CHECK(top.centre.x == Approx(20.0));
+    CHECK(top.centre.y == Approx(20.0));
+    CHECK(top.normal.z == Approx(1.0));
+    // The outer edges are straight and 40 mm long; the circle of the hole has no straight edge.
+    REQUIRE(top.longestEdge.has_value());
+    CHECK(std::abs(top.longestEdge->x) + std::abs(top.longestEdge->y) == Approx(1.0));
+}
+
+TEST_CASE("flatFace: a face without a straight edge has none to offer", "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid cylinder = kernel->makeCylinder(5.0, 10.0, {0, 0, 0});
+    const geo::FlatFace top =
+        kernel->flatFace(cylinder.solid, flatFace(*kernel, cylinder, {0, 0, 1}));
+    CHECK(top.normal.z == Approx(1.0));
+    CHECK_FALSE(top.longestEdge.has_value());
+}
+
+TEST_CASE("flatFace: a curved face and a face that is not there are refused", "[geometry][faces]") {
+    const auto kernel = geo::occt::makeKernel();
+    const geo::NamedSolid cylinder = kernel->makeCylinder(5.0, 10.0, {0, 0, 0});
+    CHECK_THROWS_AS(kernel->flatFace(cylinder.solid, roundFace(*kernel, cylinder, 5.0)),
+                    geo::GeometryError);
+    CHECK_THROWS_AS(kernel->flatFace(cylinder.solid, 0), geo::GeometryError);
+    CHECK_THROWS_AS(kernel->flatFace(cylinder.solid, 99), geo::GeometryError);
+}

@@ -20,8 +20,9 @@ using namespace fission::core;
 // A sketch (ADR-0013): a plane and the elements drawn on it. It makes no body; its result is the
 // plane and the elements (`SketchResult`), which the later steps that build bodies from sketches
 // (AP-2.3) take their curves from. The plane is one of the three base planes (word `basePlane`),
-// moved by x, y, z and turned by rotX, rotY, rotZ; or a face of a body (reference `plane`), which
-// the sketch mode puts in later (AP-2.1b): then the result has no plane yet.
+// moved by x, y, z and turned by rotX, rotY, rotZ; or a flat face of a body (reference `plane`,
+// the body is the step's input): the plane is worked out from the face every time, so it follows
+// the body (AP-2.1b). A face that cannot be found again safely is not calculated at all (rule 6).
 class SketchType final : public FeatureType {
 public:
     std::string_view id() const override { return "sketch"; }
@@ -47,7 +48,7 @@ public:
         return std::nullopt;
     }
 
-    FeatureResult execute(const ExecuteInput& input, const ExecuteContext&) const override {
+    FeatureResult execute(const ExecuteInput& input, const ExecuteContext& context) const override {
         SketchResult sketch;
         if (input.feature.sketch) {
             sketch.data = *input.feature.sketch;
@@ -57,7 +58,18 @@ public:
                                      "sketch: the elements are not usable", "sketch");
         }
         const auto onFace = input.feature.refs.find("plane");
-        if (onFace == input.feature.refs.end() || onFace->second.empty()) {
+        if (onFace != input.feature.refs.end() && !onFace->second.empty()) {
+            const auto found = input.refs.find("plane");
+            if (input.inputs.empty() || found == input.refs.end() || found->second.empty() ||
+                found->second.front().kind != ElementKind::face) {
+                throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                         "sketch: the face to draw on is not there", "plane");
+            }
+            // Throws for a face that is not flat.
+            const geo::FlatFace face =
+                context.kernel.flatFace(input.inputs.front().solid, found->second.front().id);
+            sketch.plane = planeOnFace(face.centre, face.normal, face.longestEdge);
+        } else {
             const auto base = basePlaneFromWord(textOf(input.feature, "basePlane", "xy"));
             if (!base) {
                 throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,

@@ -56,6 +56,18 @@ struct FaceAnchor {
     Point3d way;
 };
 
+/// The facts about a flat face that a sketch needs to lie on it (AP-2.1b): where its middle is,
+/// where it looks, and along which straight edge a sketch is to be turned.
+struct FlatFace {
+    Point3d centre; ///< The centre of mass of the face's surface (mm).
+    Point3d normal; ///< The way the face looks out of the body (unit vector).
+    /// Direction (unit vector, along the face) of the longest straight edge of the face's outer
+    /// boundary, sensed so that the face lies to the left of it seen from outside the body. Nothing
+    /// when the boundary has no straight edge. Of several equally long edges the first in the
+    /// body's own order, so that the answer follows the body when it is moved or turned.
+    std::optional<Point3d> longestEdge;
+};
+
 /// What features may ask of the geometry kernel (docs/03-architektur.md §4). The core and the
 /// feature types only know this interface; the OpenCASCADE implementation is handed in by the
 /// application, tests may hand in another one.
@@ -170,6 +182,14 @@ public:
         (void)solid;
         (void)faceId;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
+    }
+
+    /// The facts of a flat face (see `FlatFace`). Throws `GeometryError` with `invalidInput` for a
+    /// number that is not a face of the body or a face that is not flat. The default refuses.
+    virtual FlatFace flatFace(const Solid& solid, std::uint32_t faceId) const {
+        (void)solid;
+        (void)faceId;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot describe faces");
     }
 
     /// Removes faces and lets the body heal: the neighbours grow until they meet (a hole closes,

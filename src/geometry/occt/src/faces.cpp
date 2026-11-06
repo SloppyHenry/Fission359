@@ -16,6 +16,7 @@
 #include "fission/geo/occt/solids.h"
 
 #include "occt_build.h"
+#include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
@@ -25,8 +26,10 @@
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepTools.hxx>
+#include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
 #include <Standard_Failure.hxx>
+#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <gp_Ax1.hxx>
 #include <gp_Ax2.hxx>
@@ -497,6 +500,59 @@ FaceAnchor faceAnchorOf(const Solid& solid, std::uint32_t faceId) {
         }
     } catch (const Standard_Failure&) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "faceAnchor: the kernel failed");
+    }
+}
+
+FlatFace flatFaceOf(const Solid& solid, std::uint32_t faceId) {
+    ShapeMap faces;
+    TopExp::MapShapes(shapeOf(solid), TopAbs_FACE, faces);
+    if (faceId < 1 || static_cast<int>(faceId) > faces.Extent()) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "flatFace: the face is not there");
+    }
+    const TopoDS_Face face = TopoDS::Face(faces(static_cast<int>(faceId)));
+    if (!isFlat(face)) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "flatFace: the face is not flat");
+    }
+    try {
+        const gp_Pnt middle = faceCentre(face);
+        const gp_Dir normal = outwardNormal(face);
+        FlatFace made;
+        made.centre = {middle.X(), middle.Y(), middle.Z()};
+        made.normal = {normal.X(), normal.Y(), normal.Z()};
+
+        // The longest straight edge of the outer boundary (inner boundaries are holes).
+        const TopoDS_Wire outer = BRepTools::OuterWire(face);
+        double longest = 0.0;
+        gp_Vec way;
+        for (TopExp_Explorer edges(outer, TopAbs_EDGE); edges.More(); edges.Next()) {
+            const TopoDS_Edge edge = TopoDS::Edge(edges.Current());
+            if (BRep_Tool::Degenerated(edge) || BRepAdaptor_Curve(edge).GetType() != GeomAbs_Line) {
+                continue;
+            }
+            TopoDS_Vertex from;
+            TopoDS_Vertex to;
+            TopExp::Vertices(edge, from, to, true);
+            const gp_Vec along(BRep_Tool::Pnt(from), BRep_Tool::Pnt(to));
+            const double length = along.Magnitude();
+            if (length > longest * (1.0 + 1e-9) + 1e-12) { // the first of equally long ones stays
+                longest = length;
+                way = along;
+                // Which side is the face on? Turn the way so that the face lies to its left.
+                const gp_Pnt start = BRep_Tool::Pnt(from);
+                const gp_Vec left = gp_Vec(normal).Crossed(way);
+                const gp_Vec toMiddle(start, middle);
+                if (left.Dot(toMiddle) < 0.0) {
+                    way.Reverse();
+                }
+            }
+        }
+        if (longest > 0.0) {
+            way.Normalize();
+            made.longestEdge = Point3d{way.X(), way.Y(), way.Z()};
+        }
+        return made;
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "flatFace: the kernel failed");
     }
 }
 
