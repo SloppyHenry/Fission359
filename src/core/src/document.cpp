@@ -16,6 +16,23 @@ void Document::setSettings(const DocumentSettings& settings) {
     touch();
 }
 
+namespace {
+
+bool sameAssets(const AssetMap& a, const AssetMap& b) {
+    if (a.size() != b.size()) {
+        return false;
+    }
+    for (auto left = a.begin(), right = b.begin(); left != a.end(); ++left, ++right) {
+        if (left->first != right->first ||
+            (left->second != right->second && *left->second != *right->second)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+} // namespace
+
 Document Document::fromParts(DocumentParts parts) {
     Document document;
     document.title = std::move(parts.title);
@@ -25,6 +42,7 @@ Document Document::fromParts(DocumentParts parts) {
     document.bodies_ = std::move(parts.bodies);
     document.lastFeatureNumber_ = parts.lastFeatureNumber;
     document.rollback_ = parts.rollback;
+    document.assets_ = std::move(parts.assets);
     return document;
 }
 
@@ -32,7 +50,67 @@ bool Document::sameContentAs(const Document& other) const {
     return title == other.title && settings_ == other.settings_ &&
            parameters_ == other.parameters_ && features_ == other.features_ &&
            bodies_ == other.bodies_ && lastFeatureNumber_ == other.lastFeatureNumber_ &&
-           rollback() == other.rollback();
+           rollback() == other.rollback() && sameAssets(assets_, other.assets_);
+}
+
+// --- embedded files -----------------------------------------------------------------------
+
+std::string Document::addAsset(std::string preferredName, Bytes bytes) {
+    for (char& c : preferredName) {
+        if (c == '/' || c == '\\' || c == '\0') {
+            c = '_';
+        }
+    }
+    while (!preferredName.empty() && preferredName.front() == '.') {
+        preferredName.erase(preferredName.begin());
+    }
+    if (preferredName.empty()) {
+        preferredName = "file";
+    }
+    std::string name = preferredName;
+    const std::size_t dot = preferredName.rfind('.');
+    const std::string stem =
+        dot == std::string::npos ? preferredName : preferredName.substr(0, dot);
+    const std::string extension = dot == std::string::npos ? "" : preferredName.substr(dot);
+    for (int n = 2; assets_.contains(name); ++n) {
+        name = stem + "-" + std::to_string(n) + extension;
+    }
+    assets_[name] = std::make_shared<const Bytes>(std::move(bytes));
+    touch();
+    return name;
+}
+
+bool Document::putAsset(const std::string& name, std::shared_ptr<const Bytes> content) {
+    if (!content || name.empty()) {
+        return false;
+    }
+    const auto found = assets_.find(name);
+    if (found != assets_.end()) {
+        return found->second == content || *found->second == *content;
+    }
+    assets_[name] = std::move(content);
+    touch();
+    return true;
+}
+
+bool Document::removeAsset(const std::string& name) {
+    if (assets_.erase(name) == 0) {
+        return false;
+    }
+    touch();
+    return true;
+}
+
+std::vector<std::string> Document::usedAssetNames() const {
+    std::vector<std::string> names;
+    for (const Feature& feature : features_) {
+        const auto found = feature.texts.find("asset");
+        if (found != feature.texts.end() && assets_.contains(found->second) &&
+            std::find(names.begin(), names.end(), found->second) == names.end()) {
+            names.push_back(found->second);
+        }
+    }
+    return names;
 }
 
 // --- named measures ----------------------------------------------------------------------

@@ -62,6 +62,7 @@
 #include "fission/ui/file_controller.h"
 #include "fission/ui/gizmo_controller.h"
 #include "fission/ui/handle_controller.h"
+#include "fission/ui/import_controller.h"
 #include "fission/ui/language.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/placement_controller.h"
@@ -512,6 +513,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Files", &files);
     fission::ui::ExportController exporter(&documentModel, kernel);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Exporter", &exporter);
+    fission::ui::ImportController importer(&documentModel, kernel);
+    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Importer", &importer);
     FileOpenFilter fileOpenFilter;
     app.installEventFilter(&fileOpenFilter);
     fission::ui::Language language(&engine);

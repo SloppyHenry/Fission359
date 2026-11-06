@@ -211,7 +211,7 @@
 ---
 
 ### AP-2.13 STEP und weitere Formate
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.10
+**Status:** umgesetzt, wartet auf Abnahme (2026-11-05) · **Größe:** M · **Abhängigkeiten:** AP-1.10
 **Bauanleitung:** [anleitungen/AP-2.13.md](anleitungen/AP-2.13.md)
 
 **Umfang:**
@@ -220,7 +220,19 @@
 - Importierte STEP-Körper sind präzise (aber ohne Verlauf) → mit direktem Bearbeiten (AP-2.4) änderbar
 
 **Akzeptanzkriterien:**
-- [ ] Roundtrip Fission → STEP → Fusion/FreeCAD → STEP → Fission ohne Geometrieverlust (Volumen, Flächenzahl)
+- [x] Roundtrip Fission → STEP → Fission ohne Geometrieverlust (Volumen, Fläche, Flächenzahl, Namen, Farben), auch mit 6 STEP-Dateien anderer Programme
+- [ ] Roundtrip über Fusion/FreeCAD: manuell, steht noch aus (Maintainer)
+
+**Abschlussvermerk 2026-11-05:**
+- Ergebnis: `.fission` mit Ordner `assets/` (Prüfsummen), Schritt „Import“ je Körper (ein Undo-Schritt), STEP/IGES lesen, STEP schreiben (Farben,
+  Namen), OBJ (mit `.mtl`), SVG und DXF vom Umriss einer ebenen Fläche, Datei ▸ Importieren…, Ablegen auf das Fenster, Export-Karte um OBJ, STEP,
+  SVG, DXF erweitert.
+- Festlegungen: [ADR-0012](../adr/0012-eingebettete-dateien-und-import.md). Annahmen: Schritt-Typ heißt `import` (Flächennamen `F<n>/import/face<i>`);
+  Import-Körper nur verschiebbar (x, y, z); SVG/DXF-Ansicht von außen auf die Fläche.
+- Offene Reste: „Aktualisieren“ einer eingebetteten Datei; Drehen/Größe eines Import-Körpers über `place` und AP-2.4; reine Flächenmodelle aus IGES;
+  Reparatur-Hinweis nur durch Fremddateien mit Fehlern prüfbar (kein Testfall in der Sammlung); Roundtrip über Fusion/FreeCAD.
+
+
 
 ---
 

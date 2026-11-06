@@ -22,9 +22,11 @@ add_executable(fission_unit_tests
   features/test_combine.cpp
   features/test_split.cpp
   features/test_text_feature.cpp
+  features/test_import.cpp
   services/test_settings.cpp
   io/test_fission_file.cpp
   io/test_export.cpp
+  io/test_formats.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp
@@ -33,6 +35,7 @@ add_executable(fission_unit_tests
   geometry/test_signatures.cpp
   geometry/test_seat.cpp
   geometry/test_text.cpp
+  geometry/test_exchange.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
   render/test_picking.cpp
@@ -46,6 +49,7 @@ add_executable(fission_unit_tests
   ui/test_preferences.cpp
   ui/test_command_search.cpp
   ui/test_export_controller.cpp
+  ui/test_import_controller.cpp
   ui/test_selection_controller.cpp
   ui/test_placement.cpp
   ui/test_handles.cpp

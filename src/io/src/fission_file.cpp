@@ -36,6 +36,7 @@ using Json = nlohmann::json;
 constexpr const char* manifestName = "manifest.json";
 constexpr const char* documentName = "document.json";
 constexpr const char* previewName = "preview.png";
+constexpr std::string_view assetsFolder = "assets/";
 
 // --- small RAII wrappers around minizip-ng's C handles -------------------------------------
 
@@ -104,8 +105,10 @@ bool addEntry(void* writer, const char* name, const Bytes& data) {
     info.modified_date = std::time(nullptr);
     info.compression_method = MZ_COMPRESS_METHOD_DEFLATE;
     info.flag = MZ_ZIP_FLAG_UTF8;
-    return mz_zip_writer_add_buffer(writer, const_cast<std::uint8_t*>(data.data()),
-                                    static_cast<std::int32_t>(data.size()), &info) == MZ_OK;
+    std::uint8_t nothing = 0; // an empty file has no buffer to point to
+    return mz_zip_writer_add_buffer(
+               writer, data.empty() ? &nothing : const_cast<std::uint8_t*>(data.data()),
+               static_cast<std::int32_t>(data.size()), &info) == MZ_OK;
 }
 
 std::optional<Bytes> buildZip(const std::vector<std::pair<std::string, Bytes>>& entries) {
@@ -197,12 +200,26 @@ SaveResult refused(FileProblemCode code) {
 
 } // namespace
 
+bool isValidAssetName(const std::string& name) {
+    return !name.empty() && name.front() != '.' && name.find_first_of("/\\") == std::string::npos &&
+           name.find('\0') == std::string::npos;
+}
+
 SaveResult save(const core::Document& document, const std::filesystem::path& path,
                 const SaveExtras& extras, const SaveOptions& options) {
+    const std::vector<std::string> assetNames = document.usedAssetNames();
+    for (const std::string& name : assetNames) {
+        if (!isValidAssetName(name)) {
+            return refused(FileProblemCode::cannotWrite);
+        }
+    }
     const Bytes documentBytes = bytesOf(core::toJson(document));
     Json checksums = {{documentName, sha256Hex(options.wrongChecksum ? Bytes{0} : documentBytes)}};
     if (!extras.previewPng.empty()) {
         checksums[previewName] = sha256Hex(extras.previewPng);
+    }
+    for (const std::string& name : assetNames) {
+        checksums[std::string(assetsFolder) + name] = sha256Hex(*document.assets().at(name));
     }
     const std::string now = nowIso();
     const Json manifest = {{"formatVersion", core::currentFormatVersion},
@@ -216,6 +233,9 @@ SaveResult save(const core::Document& document, const std::filesystem::path& pat
     entries.emplace_back(documentName, documentBytes);
     if (!extras.previewPng.empty()) {
         entries.emplace_back(previewName, extras.previewPng);
+    }
+    for (const std::string& name : assetNames) {
+        entries.emplace_back(std::string(assetsFolder) + name, *document.assets().at(name));
     }
     const auto zip = buildZip(entries);
     if (!zip || !writeFileAtomically(path, *zip, options.failAfterBytes)) {
@@ -267,6 +287,22 @@ OpenResult open(const std::filesystem::path& path, const OpenOptions& options) {
         }
     }
 
+    // Embedded files: only those with a usable name; one without a checksum counts as damaged.
+    core::AssetMap assets;
+    for (const auto& [name, data] : *entries) {
+        if (!name.starts_with(assetsFolder)) {
+            continue;
+        }
+        const std::string assetName = name.substr(assetsFolder.size());
+        if (!isValidAssetName(assetName)) {
+            continue;
+        }
+        if (!manifest["checksums"].contains(name)) {
+            damaged = true;
+        }
+        assets[assetName] = std::make_shared<const Bytes>(data);
+    }
+
     const Bytes& documentBytes = entries->at(documentName);
     core::LoadResult loaded = core::fromJson(std::string_view(
         reinterpret_cast<const char*>(documentBytes.data()), documentBytes.size()));
@@ -291,6 +327,9 @@ OpenResult open(const std::filesystem::path& path, const OpenOptions& options) {
         result.previewPng = preview->second;
     }
     result.document = std::move(loaded.document);
+    for (const auto& [name, content] : assets) {
+        result.document->putAsset(name, content);
+    }
     return result;
 }
 

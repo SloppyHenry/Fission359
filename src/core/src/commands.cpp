@@ -223,6 +223,97 @@ CommandDescription AddFeatureCommand::describe() const {
     return {"addFeature", {{"type", type_}, {"number", std::to_string(number_)}}};
 }
 
+namespace {
+
+class ImportFileCommand final : public Command {
+public:
+    ImportFileCommand(std::string fileName, Bytes bytes, std::vector<ImportedPart> parts)
+        : fileName_(std::move(fileName)), content_(std::make_shared<const Bytes>(std::move(bytes))),
+          parts_(std::move(parts)) {}
+
+    ApplyResult apply(Document& document) override {
+        if (!taken_.empty()) { // redo: same file, same ids, same places
+            document.putAsset(assetName_, content_);
+            for (RemovedFeature& removed : taken_) {
+                document.restoreFeature(std::move(removed));
+            }
+            taken_.clear();
+            document.setLastFeatureNumber(numberAfter_);
+            return ApplyResult::applied;
+        }
+        if (parts_.empty()) {
+            return ApplyResult::refused;
+        }
+        numberBefore_ = document.lastFeatureNumber();
+        assetName_ = document.addAsset(fileName_, *content_);
+        content_ = document.assets().at(assetName_);
+        ids_.clear();
+        for (const ImportedPart& part : parts_) {
+            FeatureDraft draft = part.draft;
+            draft.texts["asset"] = assetName_;
+            const auto added = document.addFeature(std::move(draft));
+            if (!added) {
+                undoPartial(document);
+                return ApplyResult::refused;
+            }
+            ids_.push_back(*added);
+            const Feature* feature = document.findFeature(*added);
+            if (feature != nullptr && !feature->outputs.empty()) {
+                if (!part.bodyName.empty()) {
+                    document.setBodyName(feature->outputs.front(), part.bodyName);
+                }
+                if (part.color) {
+                    document.setBodyColor(feature->outputs.front(), *part.color);
+                }
+            }
+        }
+        numberAfter_ = document.lastFeatureNumber();
+        return ApplyResult::applied;
+    }
+
+    void revert(Document& document) override {
+        taken_.clear();
+        for (auto id = ids_.rbegin(); id != ids_.rend(); ++id) {
+            if (auto removed = document.takeFeature(*id)) {
+                taken_.insert(taken_.begin(), std::move(*removed));
+            }
+        }
+        document.removeAsset(assetName_);
+        document.setLastFeatureNumber(numberBefore_);
+    }
+
+    CommandDescription describe() const override {
+        return {"importFile", {{"file", fileName_}, {"count", std::to_string(parts_.size())}}};
+    }
+
+private:
+    void undoPartial(Document& document) {
+        for (auto id = ids_.rbegin(); id != ids_.rend(); ++id) {
+            document.takeFeature(*id);
+        }
+        ids_.clear();
+        document.removeAsset(assetName_);
+        document.setLastFeatureNumber(numberBefore_);
+    }
+
+    std::string fileName_;
+    std::shared_ptr<const Bytes> content_;
+    std::vector<ImportedPart> parts_;
+    std::string assetName_;
+    std::vector<FeatureId> ids_;
+    std::vector<RemovedFeature> taken_; // while undone, in the order of the recipe
+    int numberBefore_ = 0;
+    int numberAfter_ = 0;
+};
+
+} // namespace
+
+std::unique_ptr<Command> makeImportFile(std::string fileName, Bytes bytes,
+                                        std::vector<ImportedPart> parts) {
+    return std::make_unique<ImportFileCommand>(std::move(fileName), std::move(bytes),
+                                               std::move(parts));
+}
+
 // --- factories ----------------------------------------------------------------------------
 
 std::unique_ptr<Command> makeRemoveFeature(FeatureId id) {

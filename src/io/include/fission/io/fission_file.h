@@ -42,6 +42,12 @@ struct SaveExtras {
     std::string created;
 };
 
+/// True when `name` may be used as the name of an embedded file: a plain file name, not empty,
+/// without `/`, `\\` or a leading `.`. The embedded files are those of the document that a step
+/// still names (`core::Document::usedAssetNames`); saving a name that is not valid fails with
+/// `cannotWrite`.
+bool isValidAssetName(const std::string& name);
+
 /// Switches for tests.
 struct SaveOptions {
     /// Simulates a crash: only this many bytes of the new file get written, then saving stops
@@ -57,10 +63,11 @@ struct SaveResult {
     std::optional<FileProblem> problem;
 };
 
-/// Writes the document as a `.fission` file: a ZIP with `manifest.json`, `document.json` and
-/// `preview.png` (docs/03-architektur.md §7). Atomic: everything goes to a temporary file in the
-/// same folder, which is flushed to disk and then renamed over the target. Whatever fails on the
-/// way, the old file is untouched and no temporary file stays behind.
+/// Writes the document as a `.fission` file: a ZIP with `manifest.json`, `document.json`,
+/// `preview.png` and the embedded files in `assets/` (docs/03-architektur.md §7). Atomic:
+/// everything goes to a temporary file in the same folder, which is flushed to disk and then
+/// renamed over the target. Whatever fails on the way, the old file is untouched and no temporary
+/// file stays behind.
 SaveResult save(const core::Document& document, const std::filesystem::path& path,
                 const SaveExtras& extras, const SaveOptions& options = {});
 

@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -19,6 +20,12 @@
 #include "fission/core/persistent_ref.h"
 
 namespace fission::core {
+
+using Bytes = std::vector<std::uint8_t>;
+
+/// Files embedded in the project (an imported STEP file, later fonts and images), by name. The
+/// content never changes under a name; copies of a document share it.
+using AssetMap = std::map<std::string, std::shared_ptr<const Bytes>>;
 
 /// A number as the person typed it. The calculated value is not stored here: it is the result
 /// of a recompute and depends on the named measures at that moment.
@@ -115,6 +122,7 @@ struct DocumentParts {
     std::vector<Body> bodies;
     int lastFeatureNumber = 0;
     std::optional<std::size_t> rollback;
+    AssetMap assets;
 };
 
 /// A new step, before the document gave it an id and a number.
@@ -238,6 +246,18 @@ public:
     /// Moves the marker; `count` at or beyond the end of the recipe means "all".
     bool setRollback(std::optional<std::size_t> count);
 
+    // --- embedded files ------------------------------------------------------------------
+    const AssetMap& assets() const noexcept { return assets_; }
+    /// Embeds a file and returns the name it got: `preferredName` made safe (a plain file name),
+    /// and numbered ("part-2.step") when the name is taken.
+    std::string addAsset(std::string preferredName, Bytes bytes);
+    /// Puts a file back under exactly this name (undo and redo, opening a file). False when the
+    /// name is taken by other content.
+    bool putAsset(const std::string& name, std::shared_ptr<const Bytes> content);
+    bool removeAsset(const std::string& name);
+    /// The files some step still names (`texts["asset"]`); the others are not saved.
+    std::vector<std::string> usedAssetNames() const;
+
     // --- bodies --------------------------------------------------------------------------
     const std::vector<Body>& bodies() const noexcept { return bodies_; }
     const Body* findBody(const BodyId& id) const;
@@ -258,6 +278,7 @@ private:
     std::vector<Body> bodies_;
     int lastFeatureNumber_ = 0;
     std::optional<std::size_t> rollback_;
+    AssetMap assets_;
     std::uint64_t revision_ = 0;
     IdSource ids_;
 };

@@ -3,6 +3,7 @@
 
 #include "fission/geo/occt/kernel.h"
 
+#include "fission/geo/occt/exchange.h"
 #include "fission/geo/occt/solids.h"
 
 namespace fission::geo::occt {
@@ -37,6 +38,16 @@ public:
     std::vector<std::string> fontFamilies() const override { return fonts_.families(); }
     std::vector<FontStyle> fontStyles(const std::string& family) const override {
         return fonts_.styles(family);
+    }
+    ImportResult importFile(ImportFormat format, const std::vector<std::uint8_t>& bytes,
+                            const ImportOptions& options) const override {
+        return occt::importFile(format, bytes, options);
+    }
+    std::string exportStep(const std::vector<ExportBody>& bodies) const override {
+        return occt::exportStep(bodies);
+    }
+    Outline faceOutline(const Solid& solid, std::uint32_t faceId) const override {
+        return occt::faceOutline(solid, faceId);
     }
     SolidReport measure(const Solid& solid) const override { return occt::measure(solid); }
     Bounds bounds(const Solid& solid) const override { return occt::bounds(solid); }

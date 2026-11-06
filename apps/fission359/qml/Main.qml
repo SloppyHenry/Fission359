@@ -85,6 +85,7 @@ Window {
             { id: "save", text: qsTr("Save"), shortcut: primaryKey + "S", nativeShortcut: "Ctrl+S", enabled: Files.modified || Files.fileName === "" },
             { id: "saveas", text: qsTr("Save as…"), shortcut: isMac ? "⇧⌘S" : qsTr("Ctrl+Shift+S"), nativeShortcut: "Ctrl+Shift+S" },
             { separator: true },
+            { id: "import", text: qsTr("Import…") },
             { id: "export", text: qsTr("Export…"), shortcut: primaryKey + "E", nativeShortcut: "Ctrl+E" },
             { separator: true },
             { id: "close", text: qsTr("Close"), shortcut: primaryKey + "W", nativeShortcut: "Ctrl+W" },
@@ -389,6 +390,7 @@ Window {
             }
             break
         case "saveas": saveDialog.open(); break
+        case "import": importDialog.open(); break
         case "export": exportOpen = !exportOpen; break
         case "about": aboutWindow.show(); aboutWindow.raise(); break
         case "settings": settingsOpen = !settingsOpen; break
@@ -783,6 +785,33 @@ Window {
     }
 
     FileDialog {
+        id: importDialog
+
+        title: qsTr("Import")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [qsTr("STEP and IGES files (*.step *.stp *.iges *.igs)")]
+        currentFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+        onAccepted: Importer.importFrom(selectedFile)
+    }
+
+    // A file dropped on the window: a project opens, a STEP or IGES file is imported.
+    DropArea {
+        anchors.fill: parent
+        keys: ["text/uri-list"]
+        onDropped: drop => {
+            for (let i = 0; i < drop.urls.length; ++i) {
+                const url = drop.urls[i]
+                if (url.toString().toLowerCase().endsWith(".fission")) {
+                    Files.openFrom(url)
+                } else {
+                    Importer.importFrom(url)
+                }
+            }
+            drop.accept()
+        }
+    }
+
+    FileDialog {
         id: saveDialog
 
         title: qsTr("Save")
@@ -804,9 +833,25 @@ Window {
         title: qsTr("Export")
         fileMode: FileDialog.SaveFile
         defaultSuffix: root.exportFormat
-        nameFilters: root.exportFormat === "stl" ? [qsTr("STL files (*.stl)")] : [qsTr("3MF files (*.3mf)")]
+        nameFilters: {
+            switch (root.exportFormat) {
+            case "stl": return [qsTr("STL files (*.stl)")]
+            case "obj": return [qsTr("OBJ files (*.obj)")]
+            case "step": return [qsTr("STEP files (*.step *.stp)")]
+            case "svg": return [qsTr("SVG files (*.svg)")]
+            case "dxf": return [qsTr("DXF files (*.dxf)")]
+            default: return [qsTr("3MF files (*.3mf)")]
+            }
+        }
         currentFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
         onAccepted: {
+            if (root.exportFormat === "svg" || root.exportFormat === "dxf") {
+                const face = Selection.items.length === 1 ? Selection.items[0] : null
+                if (face !== null) {
+                    Exporter.startOutline(root.exportFormat, face.body, face.number, selectedFile)
+                }
+                return
+            }
             const names = {}
             for (let i = 0; i < DocumentModel.bodies.length; ++i) {
                 names[DocumentModel.bodyIdAt(i)] = root.bodyName(i)
@@ -820,8 +865,11 @@ Window {
         target: Exporter
 
         function onFinished(code, path, bodies) {
-            if (code === "") {
+            if (code === "" && root.exportFormat !== "svg" && root.exportFormat !== "dxf") {
                 root.showHint(qsTr("%n body(ies) exported.", "", bodies))
+                root.exportOpen = false
+            } else if (code === "") {
+                root.showHint(qsTr("Outline exported."))
                 root.exportOpen = false
             }
         }
@@ -837,6 +885,7 @@ Window {
         anchors.rightMargin: 16
         z: 19
         anyChosen: root.chosenBodies.length > 0
+        faceChosen: Selection.singleFaceChosen
         onCloseRequested: root.exportOpen = false
         onExportRequested: (format, quality, onlyChosen) => {
             root.exportFormat = format
@@ -1326,6 +1375,7 @@ Window {
         if (type === "combine") { return qsTr("Combine") }
         if (type === "split") { return qsTr("Split") }
         if (type === "place") { return qsTr("Placing") }
+        if (type === "import") { return qsTr("Imported body") }
         const name = shapeCatalog.nameOf(type)
         return name !== "" ? name : qsTr("Body")
     }
@@ -1389,6 +1439,8 @@ Window {
                 ? qsTr("%1 made smaller to %2 %").arg(body).arg(Numbers.format(Number(step.value), 1))
                 : qsTr("%1 made larger to %2 %").arg(body).arg(Numbers.format(Number(step.value), 1))
         case "solidBody": return qsTr("%1 made a part again").arg(body)
+        case "importFile": return step.count === "1" ? qsTr("“%1” imported").arg(step.file) : qsTr("“%1” imported with %2 bodies").arg(step.file).arg(step.count)
+        case "importUnit": return qsTr("Unit of “%1” put right").arg(step.file)
         case "setLabel": return qsTr("Step renamed")
         case "setRollback": return step.count === "" ? qsTr("Time marker put back to now") : qsTr("Time marker moved")
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
