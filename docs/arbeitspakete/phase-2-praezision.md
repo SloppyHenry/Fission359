@@ -62,7 +62,7 @@
 ---
 
 ### AP-2.4 Direktes Bearbeiten von Flächen
-**Status:** in Arbeit (Teile a–e gebaut: Fläche ziehen, intelligentes Strecken, Fläche drehen, entfernen, versetzen, mit Befehlen und Pfeil; Tests aus dem Kern und der Oberfläche; Bogen-Griff zum Drehen, Fenster-Test, Körper ohne Verlauf offen) · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-2.10 (Basis)
+**Status:** in Arbeit (Teil 1 in main seit 2026-11-06, PR #98; Teile a–e gebaut: Fläche ziehen, intelligentes Strecken, Fläche drehen, entfernen, versetzen, mit Befehlen und Pfeil; Tests aus dem Kern und der Oberfläche; Bogen-Griff zum Drehen, Fenster-Test, Körper ohne Verlauf offen) · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-2.10 (Basis)
 **Bauanleitung:** [anleitungen/AP-2.4.md](anleitungen/AP-2.4.md)
 
 **Umfang:**
@@ -81,7 +81,7 @@
 ---
 
 ### AP-2.5 Abrunden und Abschrägen
-**Status:** in Arbeit (Kernel, Schritte, Meldung, Befehle, Griff am Schritt und Hover-Knopf gebaut; Tests aus AP-0.5, Namens-Szenarien, Fenster-Test offen) · **Größe:** L · **Abhängigkeiten:** AP-2.10 (Basis)
+**Status:** in Arbeit (Teil 1 in main seit 2026-11-06, PR #97; Kernel, Schritte, Meldung, Befehle, Griff am Schritt und Hover-Knopf gebaut; Tests aus AP-0.5, Namens-Szenarien, Fenster-Test offen) · **Größe:** L · **Abhängigkeiten:** AP-2.10 (Basis)
 **Bauanleitung:** [anleitungen/AP-2.5.md](anleitungen/AP-2.5.md)
 
 **Umfang:**
@@ -97,7 +97,7 @@
 ---
 
 ### AP-2.6 Aushöhlen und Schräge
-**Status:** in Arbeit (Kern mit Plausibilitätsprüfung, Schritte, Befehle, Meldungen gebaut; Rezept-Neubau des Innenkörpers, Wand je Fläche, Winkel-Griff, Fenster-Test offen) · **Größe:** M · **Abhängigkeiten:** AP-2.4, AP-2.10
+**Status:** in Arbeit (Teil 1 in main seit 2026-11-06, PR #98; Kern mit Plausibilitätsprüfung, Schritte, Befehle, Meldungen gebaut; Rezept-Neubau des Innenkörpers, Wand je Fläche, Winkel-Griff, Fenster-Test offen) · **Größe:** M · **Abhängigkeiten:** AP-2.4, AP-2.10
 **Bauanleitung:** [anleitungen/AP-2.6.md](anleitungen/AP-2.6.md)
 
 **Umfang:**
@@ -142,8 +142,8 @@
 ---
 
 ### AP-2.9 Benannte Maße und Konfigurator
-**Status:** umgesetzt, wartet auf Abnahme (2026-11-05) · **Größe:** M · **Abhängigkeiten:** AP-1.8
-**Bauanleitung:** [anleitungen/AP-2.9.md](anleitungen/AP-2.9.md)
+**Status:** erledigt (2026-11-06, PR #95) · **Größe:** M · **Abhängigkeiten:** AP-1.8
+**Bauanleitung:** [anleitungen/erledigt/AP-2.9.md](anleitungen/erledigt/AP-2.9.md)
 
 **Umfang:**
 - Maße-Tabelle (Name, Ausdruck, Ergebnis, Einheit, Kommentar, „verwendet in“)
@@ -166,8 +166,8 @@
 ---
 
 ### AP-2.10 Persistente Referenzen (produktiv) und Reparatur-UI
-**Status:** Review (2026-11-03) · **Größe:** XL · **Abhängigkeiten:** AP-0.6, AP-1.1, AP-1.7, AP-1.10
-**Bauanleitung:** [anleitungen/AP-2.10.md](anleitungen/AP-2.10.md)
+**Status:** erledigt (2026-11-06, PR #91) · **Größe:** XL · **Abhängigkeiten:** AP-0.6, AP-1.1, AP-1.7, AP-1.10
+**Bauanleitung:** [anleitungen/erledigt/AP-2.10.md](anleitungen/erledigt/AP-2.10.md)
 
 > Vor dem Start in Teilpakete zerlegen (Naming für jede Feature-Art, Signatur-Matching, Reparatur-UI).
 
@@ -190,12 +190,12 @@
 - Messwert: Auflösung von 49 Verweisen in einem Lauf ohne Kernel-Aufruf 0,64 ms (Release, Mac; Budget 50 ms).
 - Offene Reste: Szenarien mit Abrunden, Bohren, Skizzen (mit AP-2.5, 2.7, 2.3, in deren Anleitungen eingetragen); Fenster-Test der
   Reparatur (sichtbar erst mit AP-2.5); Lauf auf Linux steht aus (CI); die Aussehen eines Körpers werden je Lauf einmal berechnet, nicht über
-  Läufe hinweg gespeichert. Details: [anleitungen/AP-2.10.md](anleitungen/AP-2.10.md), Abschnitte „Stand“.
+  Läufe hinweg gespeichert. Details: [anleitungen/erledigt/AP-2.10.md](anleitungen/erledigt/AP-2.10.md), Abschnitte „Stand“.
 
 ---
 
 ### AP-2.11 Messen und Analysieren
-**Status:** teilweise umgesetzt (2026-11-05), Schnittansicht offen · **Größe:** M · **Abhängigkeiten:** AP-1.4
+**Status:** in Arbeit (Messen und Eckdaten in main seit 2026-11-06, PR #94; Schnittansicht offen) · **Größe:** M · **Abhängigkeiten:** AP-1.4
 **Bauanleitung:** [anleitungen/AP-2.11.md](anleitungen/AP-2.11.md)
 
 **Umfang:**
@@ -229,8 +229,8 @@
 ---
 
 ### AP-2.13 STEP und weitere Formate
-**Status:** umgesetzt, wartet auf Abnahme (2026-11-05) · **Größe:** M · **Abhängigkeiten:** AP-1.10
-**Bauanleitung:** [anleitungen/AP-2.13.md](anleitungen/AP-2.13.md)
+**Status:** erledigt (2026-11-06, PR #93) · **Größe:** M · **Abhängigkeiten:** AP-1.10
+**Bauanleitung:** [anleitungen/erledigt/AP-2.13.md](anleitungen/erledigt/AP-2.13.md)
 
 **Umfang:**
 - STEP AP214/AP242 Import und Export inkl. Farben und Namen (OCCT XCAF); IGES Import
@@ -255,7 +255,7 @@
 ---
 
 ### AP-2.14 Meldungskatalog und Fehler-UX
-**Status:** in Arbeit (Grundlage gebaut, Rest hängt an AP-2.4/2.5) · **Größe:** M · **Abhängigkeiten:** AP-1.12, AP-0.5
+**Status:** in Arbeit (Teil 1 in main seit 2026-11-06, PR #96; Grundlage gebaut, Rest hängt an AP-2.4/2.5) · **Größe:** M · **Abhängigkeiten:** AP-1.12, AP-0.5
 **Bauanleitung:** [anleitungen/AP-2.14.md](anleitungen/AP-2.14.md)
 
 **Umfang:**

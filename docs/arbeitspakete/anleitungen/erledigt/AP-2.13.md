@@ -46,7 +46,7 @@ in FreeCAD öffnen.
 Keine STL-Import (Netze, AP-4.1). Keine Baugruppen-Struktur aus STEP übernehmen (flach importieren, Hinweis bei Baugruppen).
 
 ## Stand (2026-11-05)
-Umgesetzt wie oben beschrieben, siehe Abschlussvermerk in der Phasendatei und [ADR-0012](../../adr/0012-eingebettete-dateien-und-import.md). Was für die
+Umgesetzt wie oben beschrieben, siehe Abschlussvermerk in der Phasendatei und [ADR-0012](../../../adr/0012-eingebettete-dateien-und-import.md). Was für die
 nächsten Arbeiten bleibt:
 - **Aktualisieren** einer eingebetteten Datei (neue Fassung der Fremddatei einlesen, Schritte behalten, Flächennamen nach Reihenfolge abgleichen).
 - **AP-2.4:** Import-Körper tragen nur x, y, z. Direktes Bearbeiten (Löcher vergrößern, Flächen schieben) und Drehen sind dort anzubinden; Namen

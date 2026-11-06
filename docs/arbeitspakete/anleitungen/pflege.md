@@ -1,7 +1,7 @@
 # Pflege: Fehler, Politur und Folgearbeiten
 
 Kleine Aufgaben außerhalb der APs. Jede ist für sich ein PR (Branch `pflege-<nummer>-<stichwort>`). Allgemeine Regeln: [README](README.md), [Handbuch](handbuch.md).
-Stand: 2026-11-03, gegen den Code auf `main` geprüft.
+Stand: 2026-11-06 (P17 erledigt mit PR #99), gegen den Code auf `main` geprüft.
 
 ## Reihenfolge
 **Nach Bedarf**, der Nutzertest 1 (AP-1.13) kann die Reihenfolge ändern. P18, P2 und P3 sind vor dem Nutzertest erledigt worden.
@@ -66,9 +66,6 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 
 ## P16 Griff-Art „Klassisch“ vervollständigen
 **Größe:** M · Offen aus AP-1.11. Es fehlen Eck-Griffe, die Breite und Tiefe zugleich ändern, und der schwarze Hebe-Pfeil (Lage z). Regeln 11–13 gelten; Ablauf D muss auch mit „Klassisch“ grün sein (R19).
-
-## P17 Kamera je Tab merken
-**Größe:** S · Offen aus AP-1.11. Beim Tab-Wechsel bleibt heute die Kamera des vorigen Projekts. Test: zwei Tabs, Ansicht ändern, wechseln, Ansicht stimmt.
 
 ## P19 Kontextleiste und Hinweise: Reste
 **Größe:** S–M · Aus AP-1.8 und AP-1.12. Tooltip-Karten für Menübefehle der Kontextleiste; „Wert ändern“ wählt den Schritt, soll auch das Feld fokussieren; „Mehr ▾“ und Ausrichten bei mehreren Körpern; die Leiste kann Maßzahlen der Ansicht kurz verdecken.
