@@ -1,6 +1,6 @@
 # AP-2.1 Skizzen-Modus: Zeichnen
 
-**Größe:** L, zerlegt in a–g · **Phasendatei:** AP-2.1
+**Größe:** L, zerlegt in a–g (c in c1 und c2) · **Phasendatei:** AP-2.1
 
 ## Ziel
 „Skizze“ wählen, auf eine Fläche oder die Grundebene klicken: Die Ansicht dreht sich animiert senkrecht darauf, ein Skizzenraster erscheint.
@@ -61,6 +61,14 @@ Die Haltepunkte von Teil a sind entschieden; die Begründungen stehen in [ADR-00
     Punkten (liefert Hilfslinien zum gestrichelten Zeichnen). Fangradius in Bildschirm-Pixeln; Vorrang Punkt > Mitte > Ausrichtung >
     Raster. Im Modus zeigt ein Punkt-Marker die gefangene Position. Zeichenwerkzeuge kommen erst in 2.1c.
 
+13. **Werkzeugleiste der Skizze (2.1c1):** Im Skizzen-Modus zeigt die Werkzeuggruppe „Skizze“ (Ort und Aussehen nach Mockup; fehlt dort etwas, eine Leiste oben in der Ansicht neben „Fertig“ im Stil von `docs/08-gestaltung.md`) die Werkzeuge. Tasten nur im Skizzen-Modus: L Linie, R Rechteck, C Kreis, P Punkt, X Hilfslinie an/aus. Varianten (Rechteck 2 Ecken / Mitte+Ecke, Kreis Mitte+Radius / 3 Punkte) als kleines Auswahlmenü am Werkzeugknopf; Standard ist jeweils die erste. Nach einem fertigen Element bleibt das Werkzeug aktiv (wie Fusion); Esc beendet erst das laufende Element, dann das Werkzeug, dann die Skizze (Festlegung 10; die Esc-Kurzbefehle in `Main.qml` schließen sich gegenseitig aus).
+14. **Elemente im Datenmodell (2.1c1):** Rechteck = 4 Linien in einer Transaktion (ein Undo-Schritt); Kreis = Element Kreis {Mitte, Randpunkt}; der 3-Punkte-Kreis wird zu Mitte+Randpunkt umgerechnet (kollinear: kein Kreis, Hinweis in der Hinweiszeile, kein Fehlerdialog); eine Linienkette besteht aus einzelnen Linien, deren Endpunkte exakt gleiche Koordinaten haben (gemeinsame Punkte und Regeln kommen erst mit AP-2.2). Jedes fertige Element (bzw. Rechteck) ist ein Command (Regel 3). Elemente mit Länge/Radius < 0,01 mm werden nicht angelegt.
+15. **Hilfslinie (2.1c1):** Schalter in der Leiste und Taste X schalten um; gedrückte ⌥/Alt zeichnet die aktuelle Form als Hilfslinie. Hilfslinien werden gestrichelt gezeichnet (`construction = true`).
+16. **Tippen ersetzt Ziehen (2.1c1, Regel 2):** Während ein Element gezogen wird, öffnet eine Ziffer (oder Minus/Komma/Punkt) das gemeinsame Zahlenfeld am Zeiger (mit Ausdrücken, Einheiten, benannten Maßen). Linie: Länge, Tab → Winkel (Grad gegen die u-Achse); Rechteck: Breite, Tab → Höhe (bei Mitte+Ecke die ganze Breite/Höhe); Kreis: Radius (wie bei Zylinder und Kugel im Programm). Beim 3-Punkte-Kreis gibt es nichts zu tippen. Enter setzt das Element. Die Werte setzen nur Koordinaten (echte Maße erst AP-2.2).
+17. **Ziffern 1–6 im Skizzen-Modus (2.1c1):** Solange ein Werkzeug aktiv ist, gehen Ziffern ins Zahlenfeld (oder werden verschluckt, wenn nichts zu tippen ist), nie an die Ansichten. Ohne aktives Werkzeug bleiben sie Ansichten.
+18. **Vorschau (2.1c1):** Das entstehende Element wird beim Bewegen live gezeichnet (kräftig, mit Länge/Radius als kleiner Zahl am Zeiger); gefangen wird über `sketchSnap` (Festlegung 12), Shift schaltet das Fangen aus.
+19. **Regel 10 (2.1c1):** Jedes Werkzeug hat Hinweiszeilen-Text, Tooltip-Karte und Synonyme für die Befehlssuche (DE+EN, Glossar §12): Linie (Strich, Kante zeichnen / line, segment), Rechteck (Viereck, Kasten / rectangle, box outline), Kreis (Rund, Loch-Umriss / circle, round), Punkt (Markierung / point, mark), Hilfslinie (Konstruktion / construction, helper line).
+
 ## Teil 2.1a – Datenmodell und Commands (gebaut 2026-11-06)
 1. `SketchData` in `src/core/include/fission/core/sketch.h` (Form im ADR-0013): `SketchElement { id, kind, points, construction }` mit Punkt, Linie,
    Kreis {Mitte, Randpunkt}, Bogen {Mitte, Anfang, Ende}, Spline {Durchgangspunkte}; `SketchPlane`; Ids zählen je Skizze und Art hoch;
@@ -87,7 +95,11 @@ Die Planung dazu:
 4. Gekrümmte Fläche angeklickt: Hinweis „Skizzen gehen nur auf ebenen Flächen. Tipp: Hilfsebene (kommt mit AP-2.12)“.
 5. Während des Skizzierens: andere Körper blass, Skizze kräftig; Rezept zeigt den Skizzen-Schritt aktiv.
 
-## Teil 2.1c – Grundwerkzeuge
+## Teil 2.1c – Grundwerkzeuge (geteilt, Entscheidung 2026-11-06)
+- **2.1c1 (dieser Teil):** Linie (Klick-Klick-Kette; Doppelklick oder Esc beendet die Kette), Rechteck (2 Ecken; Mitte+Ecke), Kreis (Mitte+Radius; 3 Punkte), Punkt, Hilfslinie. Festlegungen 13–19.
+- **2.1c2 (später):** Bogen (3 Punkte; Mitte+Start+Ende), tangentialer Bogen durch Ziehen am Linienende, Langloch, Polygon.
+
+Ursprüngliche Beschreibung für beide Teile:
 Linie (Klick-Klick-Kette, Doppelklick/Esc beendet, Ziehen am Ende einer Linie macht einen tangentialen Bogen), Rechteck (2 Ecken; Mitte+Ecke),
 Kreis (Mitte+Radius; 3 Punkte), Bogen (3 Punkte; Mitte+Start+Ende), Langloch (2 Mitten + Breite), Polygon (Mitte, Ecke, Anzahl Seiten tippbar),
 Punkt, Hilfslinie (Schalter oder ⌥ beim Zeichnen; gestrichelt, bildet keine Bereiche).
