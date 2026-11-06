@@ -642,6 +642,7 @@ void Viewport3D::hoverMoveEvent(QHoverEvent* event) {
     m_hoverSimulated = false;
     m_hoverPosition = event->position();
     hoverAgain();
+    emit pointerMoved(event->position().x(), event->position().y());
     QQuickRhiItem::hoverMoveEvent(event);
 }
 
@@ -717,6 +718,7 @@ void Viewport3D::hoverAt(double x, double y) {
     m_hoverSimulated = true;
     m_hoverPosition = QPointF(x, y);
     hoverAgain();
+    emit pointerMoved(x, y);
 }
 
 void Viewport3D::requestRegionPick(const QRectF& area, bool extend) {
@@ -1011,6 +1013,16 @@ bool Viewport3D::lookAtFace(const QString& body, int face) {
         return true;
     }
     return false;
+}
+
+void Viewport3D::lookAtPlane(const QVector3D& normal, const QVector3D& centre) {
+    render::CameraPose pose = m_camera.poseLookingFrom(normal);
+    pose.target = centre;
+    animateTo(pose);
+}
+
+void Viewport3D::goToPose(const render::CameraPose& pose) {
+    animateTo(pose);
 }
 
 bool Viewport3D::zoomToSurface(double x, double y) {

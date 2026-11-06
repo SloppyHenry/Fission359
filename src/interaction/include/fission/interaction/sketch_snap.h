@@ -59,6 +59,11 @@ struct SketchSnap {
     std::vector<SketchGuide> guides;
 };
 
+/// The distance (mm) of the grid lines drawn on a sketch plane: `baseStep` (the grid setting of
+/// the bed), made coarser (2, 5, 10, 20, ... times) until neighbouring lines are at least
+/// `minPixels` apart on the screen. 0 for a `baseStep` or zoom that is not positive.
+double sketchGridStep(double baseStep, double pixelsPerMillimetre, double minPixels = 6.0);
+
 /// Catches the pointer (plane coordinates) on the elements of a sketch. Construction lines count
 /// like the others. With nothing to catch on and no grid the position is the pointer's.
 SketchSnap sketchSnap(const core::SketchPoint& pointer,

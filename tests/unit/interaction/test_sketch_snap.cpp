@@ -245,3 +245,18 @@ TEST_CASE("sketchSnap: ignores elements with unusable points", "[sketch][snap]")
         element("L1", SketchElementKind::line, {{0.0, 0.0}})}; // a line needs two points
     CHECK(sketchSnap({0.5, 0.5}, sketch, settings()).kind == SketchSnapKind::none);
 }
+
+TEST_CASE("sketchGridStep: the grid of the bed, coarser where lines would crowd",
+          "[sketch][snap]") {
+    // 1 mm at 8 px/mm is 8 px apart: fine as it is.
+    CHECK(sketchGridStep(1.0, 8.0) == Approx(1.0));
+    // At 2 px/mm 1 mm is 2 px: 2 mm is 4 px, 5 mm is 10 px.
+    CHECK(sketchGridStep(1.0, 2.0) == Approx(5.0));
+    // At 0.5 px/mm: 10 mm is 5 px, 20 mm is 10 px.
+    CHECK(sketchGridStep(1.0, 0.5) == Approx(20.0));
+    // A finer grid setting is kept while there is room for it.
+    CHECK(sketchGridStep(0.1, 100.0) == Approx(0.1));
+    CHECK(sketchGridStep(0.1, 20.0) == Approx(0.5)); // 0.1 is 2 px, 0.2 is 4, 0.5 is 10
+    CHECK(sketchGridStep(0.0, 8.0) == 0.0);
+    CHECK(sketchGridStep(1.0, 0.0) == 0.0);
+}

@@ -128,9 +128,9 @@ struct FeatureOutput {
 /// What a sketch step leaves behind (ADR-0013). Curves and areas follow with the later parts of
 /// AP-2.1; for now the result is the plane and the elements, as the step has them.
 struct SketchResult {
-    /// Where the sketch lies. Empty when the plane is a face of a body (a reference): the face's
-    /// plane is worked out by the sketch mode (AP-2.1b), not here, and a sketch is never put on a
-    /// guessed plane (rule 6).
+    /// Where the sketch lies: a base plane, or the plane of a flat face of a body (worked out from
+    /// the face every time, so it follows the body; AP-2.1b). A sketch is never put on a guessed
+    /// plane (rule 6): a face that cannot be found again safely means no result at all.
     std::optional<SketchPlane> plane;
     SketchData data;
 

@@ -507,11 +507,13 @@ FlatFace flatFaceOf(const Solid& solid, std::uint32_t faceId) {
     ShapeMap faces;
     TopExp::MapShapes(shapeOf(solid), TopAbs_FACE, faces);
     if (faceId < 1 || static_cast<int>(faceId) > faces.Extent()) {
-        throw GeometryError(GeometryErrorCode::invalidInput, "flatFace: the face is not there");
+        throw GeometryError(GeometryErrorCode::invalidInput, "flatFace: the face is not there",
+                            "plane");
     }
     const TopoDS_Face face = TopoDS::Face(faces(static_cast<int>(faceId)));
     if (!isFlat(face)) {
-        throw GeometryError(GeometryErrorCode::invalidInput, "flatFace: the face is not flat");
+        throw GeometryError(GeometryErrorCode::invalidInput, "flatFace: the face is not flat",
+                            "plane");
     }
     try {
         const gp_Pnt middle = faceCentre(face);

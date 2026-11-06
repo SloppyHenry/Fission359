@@ -40,7 +40,7 @@ void SelectionController::attach(Viewport3D* viewport) {
     connect(viewport, &Viewport3D::hoverChanged, this, &SelectionController::onHover);
     connect(viewport, &Viewport3D::rubberBandFinished, this, &SelectionController::onRubberBand);
     connect(viewport, &Viewport3D::regionPicked, this, &SelectionController::onRegionPicked);
-    viewport->setSelectionFilter(m_selection.filter());
+    viewport->setSelectionFilter(m_filterOverride.value_or(m_selection.filter()));
     showInView();
 }
 
@@ -99,11 +99,18 @@ void SelectionController::setFilter(const QString& name) {
     }
     const bool changedChoice = m_selection.setFilter(next);
     if (m_viewport) {
-        m_viewport->setSelectionFilter(next);
+        m_viewport->setSelectionFilter(m_filterOverride.value_or(next));
     }
     emit filterChanged();
     if (changedChoice) {
         choiceChanged();
+    }
+}
+
+void SelectionController::overrideViewportFilter(std::optional<core::SelectionFilter> filter) {
+    m_filterOverride = filter;
+    if (m_viewport) {
+        m_viewport->setSelectionFilter(filter.value_or(m_selection.filter()));
     }
 }
 

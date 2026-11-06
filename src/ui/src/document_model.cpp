@@ -234,6 +234,8 @@ DocumentModel::~DocumentModel() {
 namespace {
 // How much of a hole one sees (0 - 255): enough to grab it, not enough to take it for a part.
 constexpr int kHoleAlpha = 110;
+// How much of the other bodies one sees while a sketch is drawn (about 35 %).
+constexpr int kPaleAlpha = 90;
 
 const PrinterProfile& generic() {
     return printerCatalog().front();
@@ -735,6 +737,8 @@ void DocumentModel::rebuildScene() {
             drawn.color = QColor(body.color.red, body.color.green, body.color.blue);
             if (body.hole || part.toolGhost) {
                 drawn.color.setAlpha(kHoleAlpha); // a ghost: it is a tool, not a part
+            } else if (!m_activeSketch.empty()) {
+                drawn.color.setAlpha(kPaleAlpha); // pale while a sketch is drawn
             }
             scene->bodies.push_back(std::move(drawn));
         }
@@ -766,6 +770,8 @@ void DocumentModel::rebuildLists() {
         const core::FeatureState* state = m_result ? m_result->state(feature.id) : nullptr;
         QVariantMap entry;
         entry[QStringLiteral("index")] = static_cast<int>(i);
+        entry[QStringLiteral("id")] = toQString(feature.id.value);
+        entry[QStringLiteral("active")] = !m_activeSketch.empty() && feature.id == m_activeSketch;
         entry[QStringLiteral("type")] = toQString(feature.type);
         entry[QStringLiteral("label")] = toQString(feature.label);
         entry[QStringLiteral("suppressed")] = feature.suppressed;
@@ -3655,6 +3661,139 @@ QString DocumentModel::pushFace(const QString& bodyId, int faceNumber) {
     }
     return addFaceStep(bodyId, type, {static_cast<std::uint32_t>(faceNumber)}, "face", values,
                        transaction);
+}
+
+QString DocumentModel::addSketch(const QString& bodyId, int faceNumber) {
+    const core::FeatureType* type = m_registry.find("sketch");
+    if (type == nullptr) {
+        return {};
+    }
+    core::FeatureDraft draft = core::defaultDraft(*type);
+    if (!bodyId.isEmpty()) {
+        const core::Body* target = findBody(bodyId);
+        if (target == nullptr || faceNumber < 1 || !m_result ||
+            m_history.document().consumerOf(target->id) || !faceIsFlat(bodyId, faceNumber)) {
+            return {};
+        }
+        const auto made = m_result->bodies.find(target->id);
+        if (made == m_result->bodies.end()) {
+            return {};
+        }
+        try {
+            const core::BodyLooks looks =
+                core::describeBody(made->second.faces, m_kernel->signatures(made->second.solid));
+            const auto found = std::find_if(
+                looks.faces.begin(), looks.faces.end(), [&](const core::NamedLook& face) {
+                    return face.id == static_cast<std::uint32_t>(faceNumber);
+                });
+            if (found == looks.faces.end()) {
+                return {};
+            }
+            auto ref = core::makeRef(looks, core::ElementKind::face, found->id,
+                                     core::placementOf(m_history.document(), m_registry,
+                                                       m_result->features, found->name));
+            if (!ref) {
+                return {}; // without a name it could not be found again after the next change
+            }
+            draft.refs["plane"] = {std::move(*ref)};
+        } catch (const geo::GeometryError&) {
+            return {};
+        }
+        draft.inputs = {target->id};
+    }
+    const auto id = m_history.addFeature(std::move(draft));
+    if (!id) {
+        return {};
+    }
+    documentChanged();
+    emit historyChanged();
+    return toQString(id->value);
+}
+
+bool DocumentModel::faceIsFlat(const QString& bodyId, int faceNumber) const {
+    const core::Body* target = findBody(bodyId);
+    if (target == nullptr || faceNumber < 1 || !m_result) {
+        return false;
+    }
+    const auto made = m_result->bodies.find(target->id);
+    if (made == m_result->bodies.end()) {
+        return false;
+    }
+    try {
+        const geo::BodySignatures looks = m_kernel->signatures(made->second.solid);
+        return static_cast<std::size_t>(faceNumber) <= looks.faces.size() &&
+               looks.faces[static_cast<std::size_t>(faceNumber) - 1].shape ==
+                   geo::SignatureShape::plane;
+    } catch (const geo::GeometryError&) {
+        return false;
+    }
+}
+
+bool DocumentModel::removeSketchIfEmpty(const QString& stepId) {
+    const core::Feature* step =
+        m_history.document().findFeature(core::FeatureId{stepId.toStdString()});
+    if (step == nullptr || !step->sketch || !step->sketch->elements.empty()) {
+        return false;
+    }
+    const core::FeatureId id = step->id;
+    if (!executeWithCuts(core::makeRemoveFeature(id), {"removeFeature", {{"type", "sketch"}}})) {
+        return false;
+    }
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
+QString DocumentModel::activeSketch() const {
+    return toQString(m_activeSketch.value);
+}
+
+void DocumentModel::setActiveSketch(const QString& stepId) {
+    const core::FeatureId next{stepId.toStdString()};
+    if (next == m_activeSketch) {
+        return;
+    }
+    m_activeSketch = next;
+    rebuildLists();
+    rebuildScene(); // the other bodies turn pale, or solid again
+    emit activeSketchChanged();
+}
+
+int DocumentModel::stepIndexOfId(const QString& stepId) const {
+    return stepIndexOf(core::FeatureId{stepId.toStdString()});
+}
+
+QString DocumentModel::stepIdAt(int index) const {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size())) {
+        return {};
+    }
+    return toQString(features[static_cast<std::size_t>(index)].id.value);
+}
+
+std::optional<core::SketchResult> DocumentModel::sketchResult(const QString& stepId) const {
+    if (!m_result) {
+        return std::nullopt;
+    }
+    const core::FeatureId id{stepId.toStdString()};
+    // A step that needs help shows its last good result, but nobody draws on that: the plane
+    // may not be where the face is now (rule 6).
+    const core::FeatureState* state = m_result->state(id);
+    const auto found = m_result->sketches.find(id);
+    if (state == nullptr || state->status != core::FeatureStatus::ok ||
+        found == m_result->sketches.end()) {
+        return std::nullopt;
+    }
+    return found->second;
+}
+
+std::vector<core::SketchElement> DocumentModel::sketchElements(const QString& stepId) const {
+    const core::Feature* step =
+        m_history.document().findFeature(core::FeatureId{stepId.toStdString()});
+    if (step == nullptr || !step->sketch) {
+        return {};
+    }
+    return step->sketch->elements;
 }
 
 QString DocumentModel::removeFaces(const QString& bodyId, const QVariantList& faceNumbers) {

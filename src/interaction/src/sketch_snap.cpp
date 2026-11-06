@@ -112,6 +112,25 @@ std::optional<SketchPoint> planePoint(const PlaneRay& ray, const core::SketchPla
                           ray.origin.z + t * ray.direction.z});
 }
 
+double sketchGridStep(double baseStep, double pixelsPerMillimetre, double minPixels) {
+    if (!(baseStep > 0.0) || !(pixelsPerMillimetre > 0.0) || !std::isfinite(baseStep) ||
+        !std::isfinite(pixelsPerMillimetre)) {
+        return 0.0;
+    }
+    static constexpr double kFactors[] = {1.0, 2.0, 5.0};
+    double decade = 1.0;
+    for (int guard = 0; guard < 40; ++guard) {
+        for (const double factor : kFactors) {
+            const double step = baseStep * decade * factor;
+            if (step * pixelsPerMillimetre >= minPixels) {
+                return step;
+            }
+        }
+        decade *= 10.0;
+    }
+    return baseStep * decade;
+}
+
 SketchSnap sketchSnap(const SketchPoint& pointer, const std::vector<SketchElement>& elements,
                       const SketchSnapSettings& settings) {
     SketchSnap result;

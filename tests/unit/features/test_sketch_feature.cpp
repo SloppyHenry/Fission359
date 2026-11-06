@@ -299,6 +299,7 @@ TEST_CASE("sketch step: a curved face is refused, as an error on the step", "[sk
     const RecomputeResult result = test.world.calculate();
     CHECK(result.state(step)->status == FeatureStatus::error);
     CHECK(result.state(step)->issue->code == FeatureIssueCode::kernelRejected);
+    CHECK(result.state(step)->issue->subject == "plane"); // the message catalogue speaks of it
     CHECK_FALSE(result.sketches.contains(step));
     // The flat top of the same cylinder is fine.
     const FeatureId top = test.sketchOn("F1/cylinder/top");

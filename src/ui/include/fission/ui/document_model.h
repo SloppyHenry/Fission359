@@ -439,6 +439,33 @@ public:
     /// the id of the new body, empty when the body is part of another one, the face cannot be
     /// named again after a change, or the kernel cannot move this kind of face.
     Q_INVOKABLE QString pushFace(const QString& bodyId, int faceNumber);
+    // --- sketches (AP-2.1b, ADR-0013) ---
+    /// Adds an empty sketch step: on the ground plane (`bodyId` empty) or on a flat face of a body
+    /// (the step then reads the body and points at the face). Returns the id of the step, empty
+    /// when the body is part of another one, the face is not flat or cannot be named again after
+    /// a change. A new step of the recipe, one step of the history.
+    Q_INVOKABLE QString addSketch(const QString& bodyId, int faceNumber);
+    /// True when the face is flat, i.e. a sketch can lie on it.
+    Q_INVOKABLE bool faceIsFlat(const QString& bodyId, int faceNumber) const;
+    /// Removes the sketch step when nothing was drawn in it (a normal command, so that undo
+    /// brings it back). Returns true when it was removed.
+    Q_INVOKABLE bool removeSketchIfEmpty(const QString& stepId);
+    /// The sketch step being drawn in (empty: none). While it is set, the other bodies are drawn
+    /// pale and the step is marked as active in the recipe.
+    Q_PROPERTY(
+        QString activeSketch READ activeSketch WRITE setActiveSketch NOTIFY activeSketchChanged)
+    QString activeSketch() const;
+    void setActiveSketch(const QString& stepId);
+    /// The position (0-based) of a step in the recipe, -1 when there is none with that id.
+    Q_INVOKABLE int stepIndexOfId(const QString& stepId) const;
+    Q_INVOKABLE QString stepIdAt(int index) const;
+    /// The calculated sketch of a step: its plane and elements. Nothing when the step has none
+    /// (it failed, needs help, or is not calculated yet): the last good result of a step that
+    /// needs help is not offered, nobody draws on a plane that may have moved.
+    std::optional<core::SketchResult> sketchResult(const QString& stepId) const;
+    /// The elements of a sketch as they are in the document now (also before the calculation).
+    std::vector<core::SketchElement> sketchElements(const QString& stepId) const;
+
     /// Removes faces and lets the body heal (a hole closes, a rounding goes sharp): a new step.
     /// Returns the id of the new body, empty when nothing can be done.
     Q_INVOKABLE QString removeFaces(const QString& bodyId, const QVariantList& faceNumbers);
@@ -560,6 +587,7 @@ signals:
     void stepValuesChanged();
     void calculatingChanged();
     void repairChanged();
+    void activeSketchChanged();
     void fontsChanged();
     void placingChanged();
     /// A shape was put down for good (dragged in or clicked): its step number and type.
@@ -614,6 +642,7 @@ private:
     core::FeatureRegistry m_registry;
     // The reference being picked again (empty feature id = none).
     core::FeatureId m_repairFeature;
+    core::FeatureId m_activeSketch; ///< empty = not sketching
     std::string m_repairSlot;
     std::size_t m_repairIndex = 0;
     core::ElementKind m_repairElementKind = core::ElementKind::face;
