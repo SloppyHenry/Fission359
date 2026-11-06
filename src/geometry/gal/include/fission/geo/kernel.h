@@ -9,6 +9,7 @@
 
 #include "fission/geo/error.h"
 #include "fission/geo/exchange.h"
+#include "fission/geo/measuring.h"
 #include "fission/geo/mesh.h"
 #include "fission/geo/named_solid.h"
 #include "fission/geo/outline.h"
@@ -137,6 +138,16 @@ public:
         (void)solid;
         (void)faceId;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot draw outlines");
+    }
+
+    /// Measures one element (corner: position; edge: length, radius of a circle or arc; face:
+    /// area, radius of a cylinder or sphere) or the shortest distance and the angle between two
+    /// (AP-2.11, see `Measurement`). The two may lie on different bodies. Throws `GeometryError`
+    /// with `invalidInput` for another count, a number that is not an element of its body or a
+    /// body of another kernel. The default refuses.
+    virtual Measurement measureElements(const std::vector<ElementRef>& elements) const {
+        (void)elements;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot measure");
     }
 
     virtual SolidReport measure(const Solid& solid) const = 0;

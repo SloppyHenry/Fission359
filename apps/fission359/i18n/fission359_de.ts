@@ -120,6 +120,20 @@
     </message>
 </context>
 <context>
+    <name>CheckFlyout</name>
+    <message>
+        <location filename="../qml/CheckFlyout.qml" line="+27"/>
+        <location line="+3"/>
+        <source>Measure</source>
+        <translation>Messen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click faces, edges or corners to see their length, area, radius, distance or angle. The number can be copied.</source>
+        <translation>Klicke Flächen, Kanten oder Ecken an und sieh Länge, Fläche, Radius, Abstand oder Winkel. Die Zahl lässt sich kopieren.</translation>
+    </message>
+</context>
+<context>
     <name>ColorField</name>
     <message>
         <location filename="../qml/ColorField.qml" line="+20"/>
@@ -387,6 +401,21 @@
         <location line="+1"/>
         <source>Ctrl+Shift+S</source>
         <translation>Strg+Umschalt+S</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Measure</source>
+        <translation>Messen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the length, area, radius, distance or angle of faces, edges and corners. The number can be copied.</source>
+        <translation>Zeigt Länge, Fläche, Radius, Abstand oder Winkel von Flächen, Kanten und Ecken. Die Zahl lässt sich kopieren.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click a face, an edge or a corner; Shift+click adds a second one for the distance and the angle.</source>
+        <translation>Klicke eine Fläche, eine Kante oder eine Ecke an. Mit Umschalt+Klick kommt eine zweite dazu, für Abstand und Winkel.</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -977,6 +1006,11 @@
         <location line="+1"/>
         <source>View</source>
         <translation>Ansicht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Check</source>
+        <translation>Prüfen</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1732,6 +1766,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Measure</source>
+        <translation>Messen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Orthographic</source>
         <translation>Orthografisch</translation>
     </message>
@@ -1908,6 +1947,16 @@
         <translation>Über Fission359</translation>
     </message>
     <message>
+        <location line="+17"/>
+        <source>Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.</source>
+        <translation>Klicke eine Fläche, eine Kante oder eine Ecke an. Mit Umschalt+Klick kommt eine zweite dazu. Esc beendet das Messen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Check: measure faces, edges and corners.</source>
+        <translation>Prüfen: Flächen, Kanten und Ecken messen.</translation>
+    </message>
+    <message>
         <location line="+9"/>
         <source>Click the edge that was meant. Esc cancels.</source>
         <translation>Klicke die Kante, die gemeint ist. Esc bricht ab.</translation>
@@ -1961,7 +2010,7 @@
         </translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+97"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -2132,12 +2181,12 @@
         <translation>Klicke auf eine Fläche des Druckbetts oder eines anderen Körpers.</translation>
     </message>
     <message>
-        <location line="+100"/>
+        <location line="+104"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1098"/>
+        <location line="-1133"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -2192,12 +2241,12 @@
         <translation>Wähle zwei oder mehr Körper (Umschalt+Klick). Dann vereinen, die anderen aus dem ersten ausschneiden oder nur den gemeinsamen Teil behalten. Ein einzelner Körper lässt sich in zwei teilen.</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</source>
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
     <message>
-        <location line="+1129"/>
+        <location line="+1163"/>
         <source>Unit: mm</source>
         <translation>Einheit: mm</translation>
     </message>
@@ -2300,12 +2349,12 @@
         <translation>%1 hinzugefügt</translation>
     </message>
     <message>
-        <location line="-534"/>
+        <location line="-556"/>
         <source>Outline exported.</source>
         <translation>Umriss exportiert.</translation>
     </message>
     <message>
-        <location line="+497"/>
+        <location line="+519"/>
         <source>Imported body</source>
         <translation>Importierter Körper</translation>
     </message>
@@ -2583,7 +2632,7 @@
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1051"/>
+        <location line="-1084"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
@@ -2619,6 +2668,70 @@
         <location line="+0"/>
         <source>now (earlier state)</source>
         <translation>jetzt (früherer Stand)</translation>
+    </message>
+</context>
+<context>
+    <name>MeasureCard</name>
+    <message>
+        <location filename="../qml/MeasureCard.qml" line="+27"/>
+        <source>Position</source>
+        <translation>Position</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Distance</source>
+        <translation>Abstand</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Angle</source>
+        <translation>Winkel</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Length</source>
+        <translation>Länge</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Area</source>
+        <translation>Fläche</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Diameter</source>
+        <translation>Durchmesser</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Click a face, an edge or a corner. A second one (Shift+click) gives the distance and the angle between them.</source>
+        <translation>Klicke eine Fläche, eine Kante oder eine Ecke an. Eine zweite (Umschalt+Klick) zeigt den Abstand und den Winkel dazwischen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shift+click adds the next one. Esc ends measuring.</source>
+        <translation>Umschalt+Klick fügt die nächste hinzu. Esc beendet das Messen.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+11"/>
+        <source>Measure</source>
+        <translation>Messen</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>Copy</source>
+        <translation>Kopieren</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Done</source>
+        <translation>Fertig</translation>
     </message>
 </context>
 <context>
@@ -3131,7 +3244,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+123"/>
+        <location filename="../qml/RightPanel.qml" line="+149"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -3156,7 +3269,7 @@
         <translation>Ändere einen Wert oder tippe eine Formel.</translation>
     </message>
     <message>
-        <location line="+47"/>
+        <location line="+115"/>
         <source>Cut</source>
         <translation>Schnitt</translation>
     </message>
@@ -3196,7 +3309,7 @@
         <translation>Text</translation>
     </message>
     <message numerus="yes">
-        <location line="-86"/>
+        <location line="-154"/>
         <source>%n body(ies) selected</source>
         <translation>
             <numerusform>%n Körper ausgewählt</numerusform>
@@ -3219,7 +3332,7 @@
         <translation>Farbe</translation>
     </message>
     <message>
-        <location line="+68"/>
+        <location line="+136"/>
         <source>Words</source>
         <translation>Worte</translation>
     </message>
@@ -3239,12 +3352,74 @@
         <translation>Kursiv</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-150"/>
+        <location line="+160"/>
         <source>Size</source>
         <translation>Größe</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="-173"/>
+        <source>Facts</source>
+        <translation>Eckdaten</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Volume</source>
+        <translation>Volumen</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Surface</source>
+        <translation>Oberfläche</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Material</source>
+        <translation>Material</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+27"/>
+        <source>Filament</source>
+        <translation>Filament</translation>
+    </message>
+    <message>
+        <location line="-25"/>
+        <source>1.75 mm</source>
+        <translation>1,75 mm</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>2.85 mm</source>
+        <translation>2,85 mm</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Density</source>
+        <translation>Dichte</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Weight</source>
+        <translation>Gewicht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>up to %1 g</source>
+        <translation>bis zu %1 g</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>up to %1 m</source>
+        <translation>bis zu %1 m</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The slicer uses less: infill and walls decide the real weight.</source>
+        <translation>Im Slicer wird es meist weniger: Füllung und Wände bestimmen das echte Gewicht.</translation>
+    </message>
+    <message>
+        <location line="+154"/>
         <source>Position</source>
         <translation>Lage</translation>
     </message>
@@ -3946,7 +4121,7 @@
 <context>
     <name>ViewOverlay</name>
     <message>
-        <location filename="../qml/ViewOverlay.qml" line="+93"/>
+        <location filename="../qml/ViewOverlay.qml" line="+95"/>
         <location line="+10"/>
         <source>Orthographic</source>
         <translation>Orthografisch</translation>
@@ -4074,7 +4249,7 @@
         <translation>Messen, Schnitt, Druckcheck, Gewicht.</translation>
     </message>
     <message>
-        <location line="+69"/>
+        <location line="+84"/>
         <source>Home view (Home)</source>
         <translation>Startansicht (Pos1)</translation>
     </message>
@@ -4099,17 +4274,17 @@
         <translation>Drehen</translation>
     </message>
     <message>
-        <location line="-384"/>
+        <location line="-399"/>
         <source>Orbit: drag with the right mouse button – or drag this button</source>
         <translation>Drehen: rechte Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
     <message>
-        <location line="+392"/>
+        <location line="+407"/>
         <source>Pan</source>
         <translation>Verschieben</translation>
     </message>
     <message>
-        <location line="-385"/>
+        <location line="-400"/>
         <source>Pan: drag with the middle mouse button – or drag this button</source>
         <translation>Verschieben: mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
@@ -4129,7 +4304,7 @@
         <translation>Verschieben: Umschalt + mittlere Maustaste ziehen – oder diesen Knopf ziehen</translation>
     </message>
     <message>
-        <location line="+394"/>
+        <location line="+409"/>
         <source>Zoom</source>
         <translation>Zoom</translation>
     </message>

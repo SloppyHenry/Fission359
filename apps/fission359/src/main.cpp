@@ -64,6 +64,7 @@
 #include "fission/ui/handle_controller.h"
 #include "fission/ui/import_controller.h"
 #include "fission/ui/language.h"
+#include "fission/ui/measure_controller.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/placement_controller.h"
 #include "fission/ui/preferences.h"
@@ -562,6 +563,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "DocumentModel", &documentModel);
     fission::ui::SelectionController selection(&documentModel);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Selection", &selection);
+    fission::ui::MeasureController measure(&documentModel, &selection, kernel);
+    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Measure", &measure);
     fission::ui::PlacementController placement(&documentModel);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Placement", &placement);
     fission::ui::HandleController handles(&documentModel);
@@ -619,6 +622,7 @@ int main(int argc, char* argv[]) {
         rotate.attach(viewport);
         scale.attach(viewport);
         distances.attach(viewport);
+        measure.attach(viewport);
         align.attach(viewport);
         distances.attachGizmo(&gizmo);
         viewport->setScene(documentModel.scene());

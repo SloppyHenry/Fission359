@@ -107,6 +107,7 @@ Window {
             { id: "settings", text: qsTr("Settings…"), shortcut: primaryKey + ",", nativeShortcut: "Ctrl+,", role: "preferences" }
         ] },
         { title: qsTr("View"), items: [
+            { id: "measure", text: qsTr("Measure"), checked: Measure.enabled },
             { id: "orthographic", text: qsTr("Orthographic"), shortcut: "P", checked: root.orthographic },
             { id: "bed", text: qsTr("Print bed"), checked: root.bedVisible },
             { id: "softshadows", text: qsTr("Soft shadows"), checked: viewport.ambientOcclusion },
@@ -170,6 +171,8 @@ Window {
             : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
             : root.flyout === "combine" ? qsTr("Choose two or more bodies (Shift+click), then merge them, subtract the others from the first or keep only what they share. One body can be split in two.")
+            : Measure.enabled ? qsTr("Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.")
+            : root.flyout === "check" ? qsTr("Check: measure faces, edges and corners.")
             : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.")
             : root.hoverText !== "" ? root.hoverText
             : Selection.count > 0 ? toolCatalog.find(root.tool).hint
@@ -392,6 +395,13 @@ Window {
         case "saveas": saveDialog.open(); break
         case "import": importDialog.open(); break
         case "export": exportOpen = !exportOpen; break
+        case "measure":
+            Measure.enabled = !Measure.enabled
+            root.flyout = ""
+            if (Measure.enabled && Selection.filter === "body") {
+                Selection.filter = "all"
+            }
+            break
         case "about": aboutWindow.show(); aboutWindow.raise(); break
         case "settings": settingsOpen = !settingsOpen; break
         case "search": searchOpen = !searchOpen; break
@@ -619,7 +629,12 @@ Window {
     }
     Shortcut {
         sequence: "Escape"
-        enabled: DocumentModel.repairing
+        enabled: Measure.enabled && !root.seating
+        onActivated: Measure.enabled = false
+    }
+    Shortcut {
+        sequence: "Escape"
+        enabled: DocumentModel.repairing && !Measure.enabled && !root.seating
         onActivated: DocumentModel.cancelRepair()
     }
 
@@ -659,8 +674,8 @@ Window {
     }
     Shortcut {
         sequence: "Escape"
-        enabled: Selection.count > 0 && !root.typing && !Handles.editing && !Gizmo.editing
-                 && !Rotate.editing && !Scale.editing && !root.seating
+        enabled: Selection.count > 0 && !root.typing && !Measure.enabled && !DocumentModel.repairing
+                 && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !root.seating
         onActivated: root.run("selectnone")
     }
     Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
@@ -873,6 +888,18 @@ Window {
                 root.exportOpen = false
             }
         }
+    }
+
+    MeasureCard {
+        id: measureCard
+
+        visible: Measure.enabled
+        anchors.top: docTabs.bottom
+        anchors.topMargin: 10
+        anchors.right: parent.right
+        anchors.rightMargin: 16
+        z: 19
+        onCloseRequested: Measure.enabled = false
     }
 
     ExportCard {
@@ -1174,6 +1201,11 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            MeasureLayer {
+                anchors.fill: parent
+                text: measureCard.mainNumber
+            }
+
             // The cutting plane of the chosen split, as a translucent sheet.
             SplitPlaneLayer {
                 anchors.fill: parent
@@ -1264,6 +1296,8 @@ Window {
                 onDisplayRequested: mode => root.display = mode
                 onToolRequested: tool => root.tool = tool
                 flyout: root.flyout
+                measuring: Measure.enabled
+                onMeasureRequested: root.run("measure")
                 chosenCount: root.chosenBodies.length
                 onCombineRequested: way => root.combine(way)
                 onFlyoutCloseRequested: root.flyout = ""
@@ -1272,6 +1306,8 @@ Window {
                         root.flyout = root.flyout === "shapes" ? "" : "shapes"
                     } else if (group === "combine") {
                         root.flyout = root.flyout === "combine" ? "" : "combine"
+                    } else if (group === "check") {
+                        root.flyout = root.flyout === "check" ? "" : "check"
                     } else {
                         root.flyout = ""
                         root.showHint(qsTr("This tool group arrives in a later version."))
@@ -1318,6 +1354,7 @@ Window {
             stepTitle: root.currentStepTitle
             mode: root.panelMode
             bodyName: root.bodyName(root.panelBodyIndex)
+            factsBodyId: root.panelMode === "body" && root.panelBodyIndex >= 0 ? DocumentModel.bodyIdAt(root.panelBodyIndex) : ""
             renamable: root.panelBodyIndex >= 0
             partText: Selection.items.length === 1 ? root.partName(Selection.items[0].kind, Selection.items[0].bodyIndex) : ""
             bodyCount: root.chosenBodies.length

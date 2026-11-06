@@ -247,7 +247,8 @@ public:
         corners = 3,
         placement = 4,
         distances = 5,
-        align = 6
+        align = 6,
+        measure = 7
     };
     void setHandleGraphics(render::HandleGraphics graphics,
                            HandleSource source = HandleSource::size);
@@ -364,7 +365,7 @@ private:
 
     core::SelectionFilter m_filter;
     std::vector<render::Highlight> m_selectionHighlights;
-    std::array<render::HandleGraphics, 7> m_handleGraphics;
+    std::array<render::HandleGraphics, 8> m_handleGraphics;
     std::optional<render::Highlight> m_hover;
     std::vector<render::Highlight> m_listHover; ///< lit up from a list, see `lightUpBodies`
     std::deque<PickRequest> m_pickQueue;

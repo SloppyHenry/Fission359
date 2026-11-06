@@ -4,6 +4,7 @@
 #include "fission/geo/occt/kernel.h"
 
 #include "fission/geo/occt/exchange.h"
+#include "fission/geo/occt/measuring.h"
 #include "fission/geo/occt/solids.h"
 
 namespace fission::geo::occt {
@@ -45,6 +46,9 @@ public:
     }
     std::string exportStep(const std::vector<ExportBody>& bodies) const override {
         return occt::exportStep(bodies);
+    }
+    Measurement measureElements(const std::vector<ElementRef>& elements) const override {
+        return occt::measureElements(elements);
     }
     Outline faceOutline(const Solid& solid, std::uint32_t faceId) const override {
         return occt::faceOutline(solid, faceId);
