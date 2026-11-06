@@ -233,6 +233,7 @@ Viewport3D::Viewport3D(QQuickItem* parent) : QQuickRhiItem(parent) {
     m_camera.setViewportSize(QSizeF(800.0, 600.0));
     m_camera.frame({-0.5F * bed.sizeX, -0.5F * bed.sizeY, 0.0F},
                    {0.5F * bed.sizeX, 0.5F * bed.sizeY, 0.0F});
+    m_defaultPose = m_camera.pose();
 
     m_animation.setDuration(kAnimationMilliseconds);
     m_animation.setEasingCurve(QEasingCurve::OutCubic);
@@ -452,6 +453,12 @@ void Viewport3D::reportSlowFrames(double averageMilliseconds) {
             }
         },
         Qt::QueuedConnection);
+}
+
+void Viewport3D::restoreCameraPose(const render::CameraPose& pose) {
+    m_animation.stop();
+    m_camera.setPose(pose);
+    cameraMoved();
 }
 
 void Viewport3D::cameraMoved() {

@@ -992,6 +992,7 @@ Window {
                 animated: !AppOptions.reduceMotion
                 mouseStyle: root.mouseStyle
                 bodiesMovable: root.tool !== "select"
+                Component.onCompleted: Files.attachViewport(viewport) // each tab keeps its camera
                 onAmbientOcclusionTurnedOff: root.showHint(
                     qsTr("Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu."))
             }
