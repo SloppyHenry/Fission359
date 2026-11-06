@@ -38,13 +38,16 @@ Die Haltepunkte von Teil a sind entschieden; die Begründungen stehen in [ADR-00
    Spline = durch alle Punkte. Radius und Winkel sind abgeleitet.
 6. **Ebene aus einer Fläche** rechnet erst Teil 2.1b aus; bis dahin hat das Ergebnis der Skizze dann keine Ebene (nie raten, Regel 6).
 
-## Teil 2.1a – Datenmodell und Commands
-1. `SketchData` in `src/core/include/fission/core/sketch.h`: `struct SketchPoint { std::string id; double u, v; bool construction; }`,
-   `struct SketchCurve { std::string id; CurveKind kind; std::vector<std::string> points; /* Kreis: Mitte + Radius-Wert */ double radius;
-   bool construction; std::vector<std::pair<double,double>> splinePoles; }` – genaue Form im ADR festlegen. Ids zählen je Skizze hoch.
-2. Commands: Element hinzufügen, entfernen, Punkte verschieben (eine Transaktion je Zug), Hilfslinie an/aus. Undo-Tests wie
-   `test_history.cpp` (Zufallsbefehle auf Skizzen).
-3. Dateiformat (AP-1.10): `sketch` im JSON, Roundtrip, Migration (neues Feld!).
+## Teil 2.1a – Datenmodell und Commands (gebaut 2026-11-06)
+1. `SketchData` in `src/core/include/fission/core/sketch.h` (Form im ADR-0013): `SketchElement { id, kind, points, construction }` mit Punkt, Linie,
+   Kreis {Mitte, Randpunkt}, Bogen {Mitte, Anfang, Ende}, Spline {Durchgangspunkte}; `SketchPlane`; Ids zählen je Skizze und Art hoch;
+   leere Liste `rules` (AP-2.2). Der Typ `sketch` steht in `src/features/src/sketch.cpp`.
+2. Commands (`commands.h`): `AddSketchElementCommand`, `makeRemoveSketchElement`, `makeMoveSketchPoints` (eine Transaktion je Zug),
+   `makeSetSketchConstruction`. Tests: `tests/unit/core/test_sketch.cpp`, Zufallstest in `test_history.cpp` (über `random_editor.h`).
+3. Dateiformat 3 (AP-1.10): Feld `sketch` je Schritt vom Typ `sketch`; Tests in `test_serialize.cpp` und `test_fission_file.cpp`.
+4. Für 2.1b: Die Ebene aus `refs["plane"]` (Fläche) fehlt im `SketchResult` noch (`plane` leer); den Schritt braucht dann einen Eingang (`inputs`) mit
+   dem Körper der Fläche. Texte für „Letzte Aktionen“ (`addSketchElement`, `removeSketchElement`, `moveSketchPoints`, `sketchConstructionOn/Off`)
+   und der Meldungstext für einen Fehler auf dem Skizzenschritt (Wort `basePlane`) fehlen noch.
 
 ## Teil 2.1b – Skizzen-Modus
 1. Werkzeug „Skizze“ (Palette oder Werkzeuggruppe, nach Mockup). Klick auf Fläche (eben!) oder Grundebene → neuer `sketch`-Schritt mit
