@@ -465,6 +465,12 @@ public:
     std::optional<core::SketchResult> sketchResult(const QString& stepId) const;
     /// The elements of a sketch as they are in the document now (also before the calculation).
     std::vector<core::SketchElement> sketchElements(const QString& stepId) const;
+    /// Adds elements that belong together (the four sides of a rectangle) to a sketch as ONE step
+    /// of the history; `kind` ("line", "rectangle", "circle", "point") names it in the history.
+    /// The ids in `elements` are ignored, the sketch gives them out. False (nothing changed) when
+    /// the step has no sketch, `elements` is empty or an element cannot be used.
+    bool addSketchElements(const QString& stepId, const std::vector<core::SketchElement>& elements,
+                           const QString& kind);
 
     /// Removes faces and lets the body heal (a hole closes, a rounding goes sharp): a new step.
     /// Returns the id of the new body, empty when nothing can be done.

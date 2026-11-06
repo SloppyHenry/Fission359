@@ -3,7 +3,9 @@
 
 #include "fission/ui/sketch_controller.h"
 
+#include <QCoreApplication>
 #include <QDebug>
+#include <QGuiApplication>
 #include <QVariantList>
 #include <QVector3D>
 
@@ -27,6 +29,7 @@ constexpr double kLift = 0.05;         // mm: drawn a little in front of the pla
 constexpr double kOutsideHalf = 100.0; // mm: half size of the grid on the plane of a face
 constexpr float kGridWidth = 1.0F;
 constexpr float kElementWidth = 2.5F;
+constexpr float kDraftWidth = 3.5F; // the element being pulled is stronger
 constexpr float kGuideWidth = 1.25F;
 constexpr double kDashPixels = 6.0;
 constexpr int kMaxGridLines = 160; // per direction
@@ -91,7 +94,8 @@ void arcLines(render::HandleGraphics& out, const core::SketchPlane& plane, core:
 }
 
 void drawElement(render::HandleGraphics& out, const core::SketchPlane& plane,
-                 const core::SketchElement& element, double pixelsPerMm, const QColor& colour) {
+                 const core::SketchElement& element, double pixelsPerMm, const QColor& colour,
+                 float width = kElementWidth) {
     if (!core::sketchPointsUsable(element.kind, element.points)) {
         return;
     }
@@ -105,7 +109,7 @@ void drawElement(render::HandleGraphics& out, const core::SketchPlane& plane,
     case core::SketchElementKind::point: {
         render::HandleDot dot;
         dot.centre = at(plane, p[0].u, p[0].v);
-        dot.radius = 3.5F;
+        dot.radius = width > kElementWidth ? 4.5F : 3.5F;
         dot.fill = colour;
         dot.ring = colour;
         dot.ringWidth = 0.0F;
@@ -114,15 +118,15 @@ void drawElement(render::HandleGraphics& out, const core::SketchPlane& plane,
     }
     case core::SketchElementKind::line:
         if (element.construction) {
-            dashed(out, plane, p[0], p[1], dash, kElementWidth, shown);
+            dashed(out, plane, p[0], p[1], dash, width, shown);
         } else {
-            line(out, plane, p[0], p[1], kElementWidth, shown);
+            line(out, plane, p[0], p[1], width, shown);
         }
         break;
     case core::SketchElementKind::circle: {
         const double radius = std::hypot(p[1].u - p[0].u, p[1].v - p[0].v);
-        arcLines(out, plane, p[0], radius, 0.0, 2.0 * std::numbers::pi, pixelsPerMm, kElementWidth,
-                 shown, element.construction, dash);
+        arcLines(out, plane, p[0], radius, 0.0, 2.0 * std::numbers::pi, pixelsPerMm, width, shown,
+                 element.construction, dash);
         break;
     }
     case core::SketchElementKind::arc: {
@@ -132,21 +136,43 @@ void drawElement(render::HandleGraphics& out, const core::SketchPlane& plane,
         if (a1 <= a0) {
             a1 += 2.0 * std::numbers::pi;
         }
-        arcLines(out, plane, p[0], radius, a0, a1, pixelsPerMm, kElementWidth, shown,
-                 element.construction, dash);
+        arcLines(out, plane, p[0], radius, a0, a1, pixelsPerMm, width, shown, element.construction,
+                 dash);
         break;
     }
     case core::SketchElementKind::spline:
         // Until the curve is calculated (AP-2.1d) the chain of its points.
         for (std::size_t i = 1; i < p.size(); ++i) {
             if (element.construction) {
-                dashed(out, plane, p[i - 1], p[i], dash, kElementWidth, shown);
+                dashed(out, plane, p[i - 1], p[i], dash, width, shown);
             } else {
-                line(out, plane, p[i - 1], p[i], kElementWidth, shown);
+                line(out, plane, p[i - 1], p[i], width, shown);
             }
         }
         break;
     }
+}
+
+// Alt is held: the shape being drawn is an aid. (The tests run without a window system.)
+bool altHeld() {
+    return qobject_cast<QGuiApplication*>(QCoreApplication::instance()) != nullptr &&
+           (QGuiApplication::queryKeyboardModifiers() & Qt::AltModifier) != 0;
+}
+
+const char* toolWord(interaction::SketchToolKind kind) {
+    switch (kind) {
+    case interaction::SketchToolKind::line:
+        return "line";
+    case interaction::SketchToolKind::rectangle:
+        return "rectangle";
+    case interaction::SketchToolKind::circle:
+        return "circle";
+    case interaction::SketchToolKind::point:
+        return "point";
+    case interaction::SketchToolKind::none:
+        break;
+    }
+    return "";
 }
 
 QString kindName(interaction::SketchSnapKind kind) {
@@ -187,6 +213,8 @@ void SketchController::attach(Viewport3D* viewport) {
     }
     connect(viewport, &Viewport3D::picked, this, &SketchController::onPicked);
     connect(viewport, &Viewport3D::pointerMoved, this, &SketchController::onPointerMoved);
+    connect(viewport, &Viewport3D::leftClicked, this, &SketchController::onClicked);
+    connect(viewport, &Viewport3D::leftDoubleClicked, this, &SketchController::onDoubleClicked);
     connect(viewport, &Viewport3D::cameraChanged, this, [this] {
         if (m_mode == Mode::sketching) {
             refresh();
@@ -250,6 +278,9 @@ void SketchController::beginOn(const QString& stepId) {
     m_cameraTurned = false;
     m_caught.reset();
     m_snapMap = {};
+    m_tool.select(interaction::SketchToolKind::none);
+    m_tool.setHelperLine(false);
+    updateDraft();
     if (m_viewport != nullptr && !m_previousPose) {
         m_previousPose = m_viewport->cameraPose();
     }
@@ -273,6 +304,8 @@ void SketchController::leave(bool removeIfEmpty) {
     m_caught.reset();
     m_snapMap = {};
     m_gridStep = 0.0;
+    m_tool.select(interaction::SketchToolKind::none);
+    m_tool.setHelperLine(false);
     if (m_viewport != nullptr) {
         m_viewport->setHandleGraphics({}, Viewport3D::HandleSource::sketch);
     }
@@ -289,6 +322,8 @@ void SketchController::leave(bool removeIfEmpty) {
         m_viewport->goToPose(*m_previousPose);
     }
     m_previousPose.reset();
+    updateDraft();
+    emit toolChanged();
     emit stateChanged();
     emit snapChanged();
 }
@@ -304,7 +339,14 @@ void SketchController::escape() {
     if (m_mode == Mode::idle) {
         return;
     }
-    // A drawing tool would end first (AP-2.1c); with none on, Esc ends the sketch.
+    // First the element being pulled, then the tool, then the sketch (decision 10 and 13).
+    if (toolActive()) {
+        if (!m_tool.cancel()) {
+            chooseTool(QString());
+        }
+        updateDraft();
+        return;
+    }
     finish();
 }
 
@@ -421,7 +463,8 @@ void SketchController::pointAt(const interaction::PlaneRay& ray, double pixelsPe
     map[QStringLiteral("element")] = QString::fromStdString(m_caught->element);
     map[QStringLiteral("guides")] = static_cast<int>(m_caught->guides.size());
     m_snapMap = map;
-    refresh();
+    m_tool.moveTo(m_caught->position, altHeld());
+    updateDraft(); // draws, too
     emit snapChanged();
 }
 
@@ -476,6 +519,11 @@ void SketchController::refresh() {
         for (const core::SketchElement& element : m_elements) {
             drawElement(graphics, m_plane, element, ppm, m_elementColour);
         }
+        if (toolActive()) {
+            for (const core::SketchElement& element : m_draft.elements) {
+                drawElement(graphics, m_plane, element, ppm, m_draftColour, kDraftWidth);
+            }
+        }
         if (m_caught) {
             const double dash = kDashPixels / std::max(ppm, 1e-6);
             for (const interaction::SketchGuide& guide : m_caught->guides) {
@@ -495,6 +543,154 @@ void SketchController::refresh() {
     if (m_viewport != nullptr) {
         m_viewport->setHandleGraphics(std::move(graphics), Viewport3D::HandleSource::sketch);
     }
+}
+
+// --- drawing (AP-2.1c1) -----------------------------------------------------------------
+
+QString SketchController::toolName() const {
+    return QString::fromLatin1(toolWord(m_tool.kind()));
+}
+
+void SketchController::setHelperLine(bool on) {
+    if (on == m_tool.helperLine()) {
+        return;
+    }
+    m_tool.setHelperLine(on);
+    emit toolChanged();
+    updateDraft();
+}
+
+void SketchController::toggleHelperLine() {
+    if (m_mode == Mode::sketching) {
+        setHelperLine(!m_tool.helperLine());
+    }
+}
+
+void SketchController::chooseTool(const QString& name, int variant) {
+    if (m_mode != Mode::sketching) {
+        return;
+    }
+    using interaction::SketchToolKind;
+    SketchToolKind kind = SketchToolKind::none;
+    for (const SketchToolKind candidate : {SketchToolKind::line, SketchToolKind::rectangle,
+                                           SketchToolKind::circle, SketchToolKind::point}) {
+        if (name == QLatin1String(toolWord(candidate))) {
+            kind = candidate;
+        }
+    }
+    int& remembered = m_variants[static_cast<std::size_t>(kind)];
+    if (variant >= 0) {
+        remembered = variant == 0 ? 0 : 1;
+    }
+    m_tool.select(kind, remembered);
+    emit toolChanged();
+    updateDraft();
+}
+
+void SketchController::onClicked(double x, double y) {
+    if (m_mode != Mode::sketching || !m_planeReady || m_viewport == nullptr) {
+        return;
+    }
+    const auto ray = m_viewport->rayAt(x, y);
+    if (!ray) {
+        return;
+    }
+    clickAt({{ray->origin.x(), ray->origin.y(), ray->origin.z()},
+             {ray->direction.x(), ray->direction.y(), ray->direction.z()}},
+            m_viewport->pixelsPerMillimetre(), altHeld());
+}
+
+void SketchController::onDoubleClicked(double, double) {
+    doubleClick();
+}
+
+void SketchController::clickAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre,
+                               bool alt) {
+    if (!toolActive() || !m_planeReady) {
+        return;
+    }
+    pointAt(ray, pixelsPerMillimetre);
+    if (!m_caught) {
+        return; // not over the plane
+    }
+    applyStep(m_tool.click(m_caught->position, alt));
+}
+
+void SketchController::doubleClick() {
+    if (!toolActive()) {
+        return;
+    }
+    applyStep(m_tool.doubleClick());
+}
+
+void SketchController::setTyped(int field, double value) {
+    if (!drawing()) {
+        return;
+    }
+    m_tool.setTyped(field, std::isfinite(value) ? std::optional<double>(value) : std::nullopt);
+    updateDraft();
+}
+
+void SketchController::clearTyped() {
+    m_tool.setTyped(0, std::nullopt);
+    m_tool.setTyped(1, std::nullopt);
+    updateDraft();
+}
+
+void SketchController::acceptTyped() {
+    if (!drawing()) {
+        return;
+    }
+    applyStep(m_tool.accept(altHeld()));
+}
+
+void SketchController::applyStep(const interaction::SketchToolStep& step) {
+    const QString kind = toolName();
+    for (const interaction::SketchBatch& batch : step.done) {
+        if (m_model != nullptr && m_model->addSketchElements(m_step, batch, kind)) {
+            m_elements = m_model->sketchElements(m_step);
+        }
+    }
+    using interaction::SketchToolNotice;
+    if (step.notice == SketchToolNotice::collinear) {
+        emit notice(QStringLiteral("collinear"));
+    } else if (step.notice == SketchToolNotice::tooSmall) {
+        emit notice(QStringLiteral("tooSmall"));
+    }
+    updateDraft();
+    if (!step.done.empty()) {
+        emit elementDone();
+    }
+}
+
+// The element being pulled: its numbers for the view, and the drawing.
+void SketchController::updateDraft() {
+    m_draft = toolActive() ? m_tool.draft() : interaction::SketchDraft{};
+    QVariantMap map;
+    map[QStringLiteral("valid")] = false;
+    if (toolActive() && m_tool.busy() && m_planeReady) {
+        QVariantList fields;
+        for (const interaction::SketchReadoutField& field : m_draft.fields) {
+            QVariantMap entry;
+            entry[QStringLiteral("name")] = QString::fromStdString(field.name);
+            entry[QStringLiteral("value")] = field.value;
+            entry[QStringLiteral("typed")] = field.typed;
+            fields << entry;
+        }
+        map[QStringLiteral("valid")] = true;
+        map[QStringLiteral("fields")] = fields;
+        map[QStringLiteral("u")] = m_draft.at.u;
+        map[QStringLiteral("v")] = m_draft.at.v;
+        if (m_viewport != nullptr) {
+            const geo::Point3d world = m_plane.toWorld(m_draft.at);
+            const QPointF screen = m_viewport->project(world.x, world.y, world.z);
+            map[QStringLiteral("x")] = screen.x();
+            map[QStringLiteral("y")] = screen.y();
+        }
+    }
+    m_readout = map;
+    refresh();
+    emit draftChanged();
 }
 
 } // namespace fission::ui
