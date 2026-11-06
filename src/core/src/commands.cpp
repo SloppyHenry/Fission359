@@ -109,6 +109,119 @@ private:
     CommandDescription description_;
 };
 
+// --- sketches -------------------------------------------------------------------------------
+
+constexpr const char* sketchKindWord(SketchElementKind kind) {
+    switch (kind) {
+    case SketchElementKind::point:
+        return "point";
+    case SketchElementKind::line:
+        return "line";
+    case SketchElementKind::circle:
+        return "circle";
+    case SketchElementKind::arc:
+        return "arc";
+    case SketchElementKind::spline:
+        return "spline";
+    }
+    return "line";
+}
+
+class RemoveSketchElementCommand final : public Command {
+public:
+    RemoveSketchElementCommand(FeatureId step, std::string element)
+        : step_(std::move(step)), element_(std::move(element)) {}
+
+    ApplyResult apply(Document& document) override {
+        description_ = featureLabel(document, step_, "removeSketchElement");
+        description_.values["element"] = element_;
+        taken_ = document.takeSketchElement(step_, element_);
+        return taken_ ? ApplyResult::applied : ApplyResult::refused;
+    }
+    void revert(Document& document) override {
+        if (taken_) {
+            document.restoreSketchElement(step_, std::move(*taken_));
+            taken_.reset();
+        }
+    }
+    CommandDescription describe() const override { return description_; }
+
+private:
+    FeatureId step_;
+    std::string element_;
+    std::optional<RemovedSketchElement> taken_;
+    CommandDescription description_;
+};
+
+class MoveSketchPointsCommand final : public Command {
+public:
+    MoveSketchPointsCommand(FeatureId step, std::vector<SketchPointMove> moves)
+        : step_(std::move(step)), after_(std::move(moves)) {}
+
+    ApplyResult apply(Document& document) override {
+        if (!known_) {
+            const Feature* feature = document.findFeature(step_);
+            if (feature == nullptr || !feature->sketch || after_.empty()) {
+                return ApplyResult::refused;
+            }
+            for (const SketchPointMove& move : after_) {
+                const SketchElement* element = feature->sketch->find(move.element);
+                if (element == nullptr) {
+                    return ApplyResult::refused;
+                }
+                before_.push_back({move.element, element->points});
+            }
+            description_ = featureLabel(document, step_, "moveSketchPoints");
+            description_.values["element"] = after_.front().element;
+            description_.values["count"] = std::to_string(after_.size());
+            known_ = true;
+            if (before_ == after_) {
+                return ApplyResult::unchanged;
+            }
+        }
+        if (!write(document, after_)) {
+            write(document, before_); // all or nothing
+            return ApplyResult::refused;
+        }
+        return ApplyResult::applied;
+    }
+
+    void revert(Document& document) override { write(document, before_); }
+
+    CommandDescription describe() const override { return description_; }
+
+    bool absorb(const Command& next) override {
+        const auto* other = dynamic_cast<const MoveSketchPointsCommand*>(&next);
+        if (other == nullptr || other->step_ != step_ || other->after_.size() != after_.size()) {
+            return false;
+        }
+        for (std::size_t i = 0; i < after_.size(); ++i) {
+            if (other->after_[i].element != after_[i].element) {
+                return false;
+            }
+        }
+        after_ = other->after_;
+        return true;
+    }
+
+    bool changesNothing() const override { return known_ && before_ == after_; }
+
+private:
+    bool write(Document& document, const std::vector<SketchPointMove>& moves) const {
+        bool all = true;
+        for (const SketchPointMove& move : moves) {
+            all = document.setSketchPoints(step_, move.element, move.points) && all;
+        }
+        return all;
+    }
+
+    FeatureId step_;
+    std::vector<SketchPointMove> before_;
+    std::vector<SketchPointMove> after_;
+    bool known_ = false;
+    CommandDescription description_;
+};
+
 class AddParameterCommand final : public Command {
 public:
     explicit AddParameterCommand(Parameter parameter) : parameter_(std::move(parameter)) {}
@@ -664,6 +777,70 @@ std::unique_ptr<Command> makeSetParameterSlider(std::string name,
 
 std::unique_ptr<Command> makeRenameParameter(std::string name, std::string newName) {
     return std::make_unique<RenameParameterCommand>(std::move(name), std::move(newName));
+}
+
+// --- sketches -------------------------------------------------------------------------------
+
+AddSketchElementCommand::AddSketchElementCommand(FeatureId step, SketchElementKind kind,
+                                                 std::vector<SketchPoint> points, bool construction)
+    : step_(std::move(step)), kind_(kind), points_(std::move(points)), construction_(construction) {
+}
+
+ApplyResult AddSketchElementCommand::apply(Document& document) {
+    const Feature* feature = document.findFeature(step_);
+    if (feature == nullptr || !feature->sketch) {
+        return ApplyResult::refused;
+    }
+    numberBefore_ = feature->sketch->lastNumber[static_cast<std::size_t>(kind_)];
+    element_ = document.addSketchElement(step_, kind_, points_, construction_);
+    if (!element_) {
+        return ApplyResult::refused;
+    }
+    description_ = featureLabel(document, step_, "addSketchElement");
+    description_.values["kind"] = sketchKindWord(kind_);
+    description_.values["element"] = *element_;
+    return ApplyResult::applied;
+}
+
+void AddSketchElementCommand::revert(Document& document) {
+    if (element_) {
+        document.takeSketchElement(step_, *element_);
+        document.setSketchLastNumber(step_, kind_, numberBefore_);
+    }
+}
+
+CommandDescription AddSketchElementCommand::describe() const {
+    return description_;
+}
+
+std::unique_ptr<Command> makeRemoveSketchElement(FeatureId step, std::string element) {
+    return std::make_unique<RemoveSketchElementCommand>(std::move(step), std::move(element));
+}
+
+std::unique_ptr<Command> makeMoveSketchPoints(FeatureId step, std::vector<SketchPointMove> moves) {
+    return std::make_unique<MoveSketchPointsCommand>(std::move(step), std::move(moves));
+}
+
+std::unique_ptr<Command> makeSetSketchConstruction(FeatureId step, std::string element,
+                                                   bool construction) {
+    std::string key = "sketchConstruction/" + step.value + "/" + element;
+    return std::make_unique<SetCommand<bool>>(
+        std::move(key), construction,
+        [step, element](const Document& document) -> std::optional<bool> {
+            const Feature* feature = document.findFeature(step);
+            const SketchElement* found =
+                feature != nullptr && feature->sketch ? feature->sketch->find(element) : nullptr;
+            return found != nullptr ? std::optional<bool>(found->construction) : std::nullopt;
+        },
+        [step, element](Document& document, const bool& value) {
+            return document.setSketchConstruction(step, element, value);
+        },
+        [step, element](const Document& document, const bool& value) {
+            CommandDescription description = featureLabel(
+                document, step, value ? "sketchConstructionOn" : "sketchConstructionOff");
+            description.values["element"] = element;
+            return description;
+        });
 }
 
 } // namespace fission::core

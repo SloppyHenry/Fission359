@@ -87,11 +87,12 @@ struct HealedRef {
 struct RecomputeResult {
     std::uint64_t revision = 0; ///< Revision of the document this was calculated from.
     MeasureResolution measures;
-    std::vector<FeatureState> features;  ///< In recipe order.
-    std::map<BodyId, BodyResult> bodies; ///< Only bodies that have geometry.
-    std::size_t executed = 0;            ///< Steps the kernel was asked for.
-    std::size_t remembered = 0;          ///< Steps taken from the memory.
-    std::vector<HealedRef> healed;       ///< References whose saved look is out of date.
+    std::vector<FeatureState> features;         ///< In recipe order.
+    std::map<BodyId, BodyResult> bodies;        ///< Only bodies that have geometry.
+    std::map<FeatureId, SketchResult> sketches; ///< Sketch steps that were calculated.
+    std::size_t executed = 0;                   ///< Steps the kernel was asked for.
+    std::size_t remembered = 0;                 ///< Steps taken from the memory.
+    std::vector<HealedRef> healed;              ///< References whose saved look is out of date.
 
     const FeatureState* state(const FeatureId& id) const;
 };
@@ -122,11 +123,13 @@ private:
     struct Entry {
         std::uint64_t token = 0;
         std::vector<Output> outputs;
+        std::optional<SketchResult> sketch;
         std::uint64_t lastUsed = 0;
     };
 
     const Entry* find(const std::string& key);
-    const Entry& store(const std::string& key, std::vector<Output> outputs);
+    const Entry& store(const std::string& key, std::vector<Output> outputs,
+                       std::optional<SketchResult> sketch = std::nullopt);
     void trim();
 
     std::size_t capacity_;

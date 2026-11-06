@@ -366,6 +366,9 @@ std::optional<FeatureId> Document::addFeature(FeatureDraft draft,
     const std::size_t at =
         std::min(position.value_or(atMarker ? *rollback() : features_.size()), features_.size());
 
+    if (draft.sketch && !draft.sketch->consistent()) {
+        return std::nullopt; // repeated ids, a counter behind an id, unusable points
+    }
     // An input must be made by a step that comes earlier in the recipe: no cycles possible.
     for (const BodyId& input : draft.inputs) {
         const Body* body = findBody(input);
@@ -385,6 +388,7 @@ std::optional<FeatureId> Document::addFeature(FeatureDraft draft,
     feature.texts = std::move(draft.texts);
     feature.refs = std::move(draft.refs);
     feature.inputs = std::move(draft.inputs);
+    feature.sketch = std::move(draft.sketch);
     for (int i = 0; i < draft.newBodies; ++i) {
         Body body;
         body.id = BodyId{ids_.nextUuid()};
@@ -544,6 +548,96 @@ bool Document::setFeatureRefs(const FeatureId& id, std::string_view name,
     }
     feature->refs[std::string(name)] = std::move(refs);
     touch();
+    return true;
+}
+
+// --- sketches -----------------------------------------------------------------------------
+
+std::optional<std::string> Document::addSketchElement(const FeatureId& id, SketchElementKind kind,
+                                                      std::vector<SketchPoint> points,
+                                                      bool construction) {
+    Feature* feature = mutableFeature(id);
+    if (feature == nullptr || !feature->sketch || !sketchPointsUsable(kind, points)) {
+        return std::nullopt;
+    }
+    SketchElement element;
+    element.id = feature->sketch->allocateId(kind);
+    element.kind = kind;
+    element.points = std::move(points);
+    element.construction = construction;
+    std::string made = element.id;
+    feature->sketch->elements.push_back(std::move(element));
+    touch();
+    return made;
+}
+
+std::optional<RemovedSketchElement> Document::takeSketchElement(const FeatureId& id,
+                                                                std::string_view elementId) {
+    Feature* feature = mutableFeature(id);
+    if (feature == nullptr || !feature->sketch) {
+        return std::nullopt;
+    }
+    const auto index = feature->sketch->indexOf(elementId);
+    if (!index) {
+        return std::nullopt;
+    }
+    auto& elements = feature->sketch->elements;
+    RemovedSketchElement removed{std::move(elements[*index]), *index};
+    elements.erase(elements.begin() + static_cast<std::ptrdiff_t>(*index));
+    touch();
+    return removed;
+}
+
+bool Document::restoreSketchElement(const FeatureId& id, RemovedSketchElement removed) {
+    Feature* feature = mutableFeature(id);
+    if (feature == nullptr || !feature->sketch || feature->sketch->find(removed.element.id)) {
+        return false;
+    }
+    auto& elements = feature->sketch->elements;
+    const std::size_t at = std::min(removed.index, elements.size());
+    elements.insert(elements.begin() + static_cast<std::ptrdiff_t>(at), std::move(removed.element));
+    touch();
+    return true;
+}
+
+bool Document::setSketchLastNumber(const FeatureId& id, SketchElementKind kind, int number) {
+    Feature* feature = mutableFeature(id);
+    if (feature == nullptr || !feature->sketch || number < 0) {
+        return false;
+    }
+    feature->sketch->lastNumber[static_cast<std::size_t>(kind)] = number;
+    touch();
+    return true;
+}
+
+bool Document::setSketchPoints(const FeatureId& id, std::string_view elementId,
+                               std::vector<SketchPoint> points) {
+    Feature* feature = mutableFeature(id);
+    SketchElement* element =
+        feature != nullptr && feature->sketch ? feature->sketch->find(elementId) : nullptr;
+    if (element == nullptr || !sketchPointsUsable(element->kind, points) ||
+        (!sketchTakesMorePoints(element->kind) && points.size() != element->points.size())) {
+        return false;
+    }
+    if (element->points != points) {
+        element->points = std::move(points);
+        touch();
+    }
+    return true;
+}
+
+bool Document::setSketchConstruction(const FeatureId& id, std::string_view elementId,
+                                     bool construction) {
+    Feature* feature = mutableFeature(id);
+    SketchElement* element =
+        feature != nullptr && feature->sketch ? feature->sketch->find(elementId) : nullptr;
+    if (element == nullptr) {
+        return false;
+    }
+    if (element->construction != construction) {
+        element->construction = construction;
+        touch();
+    }
     return true;
 }
 

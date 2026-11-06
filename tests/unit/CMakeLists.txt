@@ -9,6 +9,7 @@ add_executable(fission_unit_tests
   core/test_document.cpp
   core/test_recompute.cpp
   core/test_history.cpp
+  core/test_sketch.cpp
   core/test_selection.cpp
   core/test_scaling.cpp
   core/test_cuts.cpp
@@ -28,6 +29,7 @@ add_executable(fission_unit_tests
   features/test_shell_draft.cpp
   features/test_text_feature.cpp
   features/test_import.cpp
+  features/test_sketch_feature.cpp
   services/test_settings.cpp
   io/test_fission_file.cpp
   io/test_export.cpp

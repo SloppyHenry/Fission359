@@ -93,6 +93,9 @@ FeatureDraft defaultDraft(const FeatureType& type) {
     for (const TextFieldSpec& spec : type.texts()) {
         draft.texts[spec.name] = spec.defaultValue;
     }
+    if (type.carriesSketch()) {
+        draft.sketch = SketchData{};
+    }
     return draft;
 }
 

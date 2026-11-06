@@ -100,6 +100,10 @@ std::string cacheKey(const Feature& feature, const FeatureType& type, const Reso
         key += '.';
         key += std::to_string(input->outputIndex);
     }
+    if (feature.sketch) {
+        key += "\x1f$";
+        key += feature.sketch->fingerprint();
+    }
     // The elements the references led to are part of what goes into the result.
     for (const auto& [slot, found] : refs) {
         key += "\x1f@" + slot;
@@ -186,10 +190,12 @@ const RecomputeCache::Entry* RecomputeCache::find(const std::string& key) {
 }
 
 const RecomputeCache::Entry& RecomputeCache::store(const std::string& key,
-                                                   std::vector<Output> outputs) {
+                                                   std::vector<Output> outputs,
+                                                   std::optional<SketchResult> sketch) {
     Entry entry;
     entry.token = nextToken_++;
     entry.outputs = std::move(outputs);
+    entry.sketch = std::move(sketch);
     entry.lastUsed = clock_;
     const auto [position, inserted] = entries_.insert_or_assign(key, std::move(entry));
     trim();
@@ -281,6 +287,9 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                     {role.faceId, passesOnNames ? role.role : elementName(feature, role.role)});
             }
             result.bodies[body.id] = std::move(body);
+        }
+        if (entry.sketch) {
+            result.sketches[feature.id] = *entry.sketch;
         }
     };
 
@@ -472,6 +481,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             ++result.remembered;
         } else {
             std::vector<Output> outputs;
+            std::optional<SketchResult> sketch;
             try {
                 const ExecuteContext context{kernel, cancel, &document.assets()};
                 FeatureResult made = type->execute(
@@ -486,6 +496,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                                      std::to_string(feature.outputs.size())));
                     continue;
                 }
+                sketch = std::move(made.sketch);
                 bool violated = false;
                 for (FeatureOutput& output : made.outputs) {
                     const geo::SolidReport report = kernel.measure(output.solid);
@@ -516,7 +527,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                 fail(issueOf(FeatureIssueCode::kernelFailed, {}, error.what()));
                 continue;
             }
-            entry = &cache.store(key, std::move(outputs));
+            entry = &cache.store(key, std::move(outputs), std::move(sketch));
             ++result.executed;
             state.computed = true;
         }

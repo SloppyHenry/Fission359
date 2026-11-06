@@ -11,6 +11,7 @@
 #include <optional>
 #include <random>
 #include <string>
+#include <vector>
 
 #include "fission/core/commands.h"
 
@@ -35,7 +36,7 @@ public:
         const auto& features = document.features();
         const auto& bodies = document.bodies();
         const auto& parameters = document.parameters();
-        switch (pick(17)) {
+        switch (pick(22)) {
         case 0:
         case 1: { // add (sometimes in the middle, sometimes working on an earlier body)
             FeatureDraft draft = boxDraft(std::to_string(pick(50)));
@@ -128,6 +129,63 @@ public:
                                                                  0.0, 10.0 + pick(90), 1.0}));
             }
             break;
+        case 17: { // a sketch step (makes no body)
+            FeatureDraft draft;
+            draft.type = "sketch";
+            draft.sketch = SketchData{};
+            return std::make_unique<AddFeatureCommand>(std::move(draft));
+        }
+        case 18: // a sketch element: any kind, with random numbers, sometimes unusable points
+            if (const Feature* sketch = anySketch(document)) {
+                static const SketchElementKind kinds[] = {
+                    SketchElementKind::point, SketchElementKind::line, SketchElementKind::circle,
+                    SketchElementKind::arc, SketchElementKind::spline};
+                const SketchElementKind kind = kinds[pick(5)];
+                std::vector<SketchPoint> points;
+                const std::size_t count = sketchMinPoints(kind) + pick(2);
+                for (std::size_t i = 0; i < count; ++i) {
+                    points.push_back({static_cast<double>(pick(200)) / 4.0 - 20.0,
+                                      static_cast<double>(pick(200)) / 4.0 - 20.0});
+                }
+                return std::make_unique<AddSketchElementCommand>(sketch->id, kind,
+                                                                 std::move(points), pick(4) == 0);
+            }
+            break;
+        case 19: // remove a sketch element
+            if (const Feature* sketch = anySketch(document);
+                sketch && !sketch->sketch->elements.empty()) {
+                const auto& elements = sketch->sketch->elements;
+                return makeRemoveSketchElement(sketch->id, elements[pick(elements.size())].id);
+            }
+            break;
+        case 20: // move the points of one or two elements
+            if (const Feature* sketch = anySketch(document);
+                sketch && !sketch->sketch->elements.empty()) {
+                const auto& elements = sketch->sketch->elements;
+                std::vector<SketchPointMove> moves;
+                const std::size_t first = pick(elements.size());
+                for (const std::size_t at : {first, (first + 1) % elements.size()}) {
+                    SketchPointMove move{elements[at].id, elements[at].points};
+                    for (SketchPoint& point : move.points) {
+                        point.u += static_cast<double>(pick(9)) - 4.0;
+                        point.v += static_cast<double>(pick(9)) - 4.0;
+                    }
+                    moves.push_back(std::move(move));
+                    if (pick(2) == 0 || elements.size() == 1) {
+                        break;
+                    }
+                }
+                return makeMoveSketchPoints(sketch->id, std::move(moves));
+            }
+            break;
+        case 21: // an element becomes an aid or back
+            if (const Feature* sketch = anySketch(document);
+                sketch && !sketch->sketch->elements.empty()) {
+                const auto& elements = sketch->sketch->elements;
+                return makeSetSketchConstruction(sketch->id, elements[pick(elements.size())].id,
+                                                 pick(2) == 0);
+            }
+            break;
         default: // the time marker anywhere, or back at the end
             return makeSetRollback(pick(3) == 0
                                        ? std::nullopt
@@ -141,6 +199,17 @@ public:
     }
 
 private:
+    // A random step that holds a sketch, or nothing.
+    const Feature* anySketch(const Document& document) {
+        std::vector<const Feature*> sketches;
+        for (const Feature& feature : document.features()) {
+            if (feature.sketch) {
+                sketches.push_back(&feature);
+            }
+        }
+        return sketches.empty() ? nullptr : sketches[pick(sketches.size())];
+    }
+
     std::mt19937_64 random_;
 };
 
