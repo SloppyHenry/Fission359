@@ -159,7 +159,10 @@ Window {
     // applies wins: a drag or typing in progress, a shape being put down, a message, an open
     // tool group, what is under the pointer, the tool when something is chosen, and at rest what
     // to do next. Everything that wants to tell the person something goes through here (AP-1.12c).
-    readonly property string currentHint: root.seating ? qsTr("Click the face the body should lie on. Esc cancels.")
+    readonly property string currentHint: DocumentModel.repairing
+            ? (DocumentModel.repairKind === "edge" ? qsTr("Click the edge that was meant. Esc cancels.")
+                                                    : qsTr("Click the face that was meant. Esc cancels."))
+            : root.seating ? qsTr("Click the face the body should lie on. Esc cancels.")
             : Placement.active ? qsTr("Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt")
             : Gizmo.editing ? qsTr("Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.")
             : Rotate.editing ? qsTr("Type an angle to turn exactly (Tab for the next ring), Enter accepts, Esc puts it back.")
@@ -631,6 +634,46 @@ Window {
     }
     Shortcut {
         sequence: "Escape"
+        enabled: DocumentModel.repairing
+        onActivated: DocumentModel.cancelRepair()
+    }
+
+    // Choosing again (AP-2.10e): while a step is repaired only faces (or edges) can be picked, and
+    // the first one that is the right kind of the right body is the new target.
+    property string filterBeforeRepair: "all"
+    Connections {
+        target: DocumentModel
+
+        function onRepairChanged() {
+            if (DocumentModel.repairing) {
+                root.filterBeforeRepair = Selection.filter
+                Selection.clear()
+                Selection.filter = DocumentModel.repairKind
+            } else if (Selection.filter === "face" || Selection.filter === "edge") {
+                Selection.filter = root.filterBeforeRepair
+            }
+        }
+    }
+    Connections {
+        target: Selection
+
+        function onChanged() {
+            if (!DocumentModel.repairing || Selection.count === 0) {
+                return
+            }
+            const item = Selection.items[Selection.count - 1]
+            if (DocumentModel.completeRepair(item.body, item.kind, item.number)) {
+                Selection.clear()
+            } else {
+                root.showHint(DocumentModel.repairKind === "edge"
+                              ? qsTr("Click an edge of the body this step works on.")
+                              : qsTr("Click a face of the body this step works on."))
+                Selection.clear()
+            }
+        }
+    }
+    Shortcut {
+        sequence: "Escape"
         enabled: Selection.count > 0 && !root.typing && !Measure.enabled && !Handles.editing && !Gizmo.editing
                  && !Rotate.editing && !Scale.editing && !root.seating
         onActivated: root.run("selectnone")
@@ -1015,6 +1058,7 @@ Window {
             onStepHovered: (index, on) => viewport.lightUpBodies(on ? [DocumentModel.bodyOfStep(index)] : [])
             onStepRenamed: (index, text) => DocumentModel.setStepLabel(index, text)
             onStepHideRequested: (index, hide) => DocumentModel.setStepSuppressed(index, hide)
+            onStepRepairRequested: index => DocumentModel.startRepair(index)
             onStepDeleteRequested: index => root.requestDeletion(DocumentModel.deletionOfStep(index), true)
             onDeleteConfirmed: {
                 const steps = root.pendingDeletion.steps
@@ -1166,6 +1210,13 @@ Window {
                 anchors.fill: parent
                 viewport: viewport
                 plane: root.splitPlaneInfo
+            }
+
+            // Where the reference of the step being repaired used to point (dashed).
+            RepairGhostLayer {
+                anchors.fill: parent
+                viewport: viewport
+                ghost: DocumentModel.repairing ? DocumentModel.repairGhost() : ({ valid: false })
             }
 
             // The label "Cuts out: …" on a chosen hole.
@@ -1430,6 +1481,7 @@ Window {
         case "setRollback": return step.count === "" ? qsTr("Time marker put back to now") : qsTr("Time marker moved")
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
         case "unsuppress": return qsTr("%1 step shown").arg(typeLabel(step.type))
+        case "pickAgain": return qsTr("%1 step: chose again").arg(typeLabel(step.type))
         case "nameBody": return qsTr("Body renamed to “%1”").arg(step.value)
         case "colorBody": return step.count !== undefined ? qsTr("Colour of %n body(ies) changed", "", Number(step.count)) : qsTr("Colour of %1 changed").arg(body)
         case "showBody": return qsTr("%1 shown").arg(body)

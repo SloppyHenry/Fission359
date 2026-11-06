@@ -64,3 +64,9 @@ So probierst du es aus: Platte, Bohrung ▸ „Schraube M4 ▸ Senkkopf“, zwei
 
 ## Nicht tun
 Keine zölligen Gewinde (später). Keine Normtexte kopieren, nur Zahlen.
+
+## Folgearbeit aus AP-2.10: Namens-Szenarien nachziehen
+Sobald Bohrungen Verweise nutzt (`FeatureDraft::refs`, `ExecuteInput::refs`), gehören seine Szenarien in die Produkt-Suite
+`tests/unit/naming/` (Vorbild: `test_scenarios.cpp`, die Szenarien des Prototyps in `tests/naming/test_scenarios.cpp` und `test_evil.cpp`
+mit denselben Erwartungen) und in die Zufallsprobe (`test_random.cpp`). Der Test-Schritt `markFace` (`refs_support.h`) wird dabei durch den
+echten Schritt ersetzt. Ein Schritt ohne Namens-Vertrag (alle erzeugten Flächen benennen, `ElementHistory` liefern) wird nicht aufgenommen.

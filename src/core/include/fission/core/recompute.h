@@ -19,6 +19,7 @@
 #include "fission/core/document.h"
 #include "fission/core/feature_type.h"
 #include "fission/core/measures.h"
+#include "fission/core/persistent_ref.h"
 
 namespace fission::core {
 
@@ -45,15 +46,39 @@ struct BodyFace {
     std::string name;         ///< "F1/box/top"
 };
 
+/// An element that a step used up (a covered face, a rounded edge): the body remembers what it
+/// looked like so a reference to it is not mistaken for a look-alike (ADR-0003 point 5).
+struct ConsumedElement {
+    ElementKind kind = ElementKind::face;
+    std::string name;
+    ElementLook look;
+    FeatureId step; ///< The step after which it was gone.
+};
+
 /// The geometry of one body after the last step that made or changed it.
 struct BodyResult {
     BodyId id;
     FeatureId producer;
     geo::Solid solid;
     std::vector<BodyFace> faces;
+    /// Faces and edges that steps up to here used up, with what they looked like. Only steps that
+    /// combine bodies fill it (they are the ones that can use elements up).
+    std::vector<ConsumedElement> consumed;
     bool stale = false;
     std::uint64_t token = 0;     ///< Identity of the result in the memory (for cache keys) ...
     std::size_t outputIndex = 0; ///< ... together with the number of the output.
+};
+
+/// A reference that was found again safely and now looks different from what is saved: the
+/// refreshed copy ("heals" the reference, ADR-0003 point 3). The recompute runs in a worker
+/// thread and must not write the document, so it reports; `applyHealedRefs` writes (technical
+/// upkeep, not a command of the person: no undo step).
+struct HealedRef {
+    FeatureId feature;
+    std::string slot;
+    std::size_t index = 0; ///< Position in `Feature::refs[slot]`.
+    PersistentRef before;  ///< What was saved: only applied if it still is.
+    PersistentRef after;
 };
 
 struct RecomputeResult {
@@ -63,6 +88,7 @@ struct RecomputeResult {
     std::map<BodyId, BodyResult> bodies; ///< Only bodies that have geometry.
     std::size_t executed = 0;            ///< Steps the kernel was asked for.
     std::size_t remembered = 0;          ///< Steps taken from the memory.
+    std::vector<HealedRef> healed;       ///< References whose saved look is out of date.
 
     const FeatureState* state(const FeatureId& id) const;
 };
@@ -88,6 +114,7 @@ private:
     struct Output {
         geo::Solid solid;
         std::vector<geo::NamedFace> roles;
+        std::vector<ConsumedElement> consumed;
     };
     struct Entry {
         std::uint64_t token = 0;
@@ -115,6 +142,10 @@ private:
 std::optional<RecomputeResult> recompute(const Document& document, const FeatureRegistry& registry,
                                          const geo::GeometryKernel& kernel, RecomputeCache& cache,
                                          CancelToken cancel = {});
+
+/// Writes the refreshed references of `result` into `document`, as far as they still are what
+/// the recompute started from. No command, no undo step. Returns how many were written.
+std::size_t applyHealedRefs(Document& document, const RecomputeResult& result);
 
 // --- the worker --------------------------------------------------------------------------
 
