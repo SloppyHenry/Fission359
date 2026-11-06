@@ -634,7 +634,7 @@ Window {
     }
     Shortcut {
         sequence: "Escape"
-        enabled: DocumentModel.repairing
+        enabled: DocumentModel.repairing && !Measure.enabled && !root.seating
         onActivated: DocumentModel.cancelRepair()
     }
 
@@ -674,8 +674,8 @@ Window {
     }
     Shortcut {
         sequence: "Escape"
-        enabled: Selection.count > 0 && !root.typing && !Measure.enabled && !Handles.editing && !Gizmo.editing
-                 && !Rotate.editing && !Scale.editing && !root.seating
+        enabled: Selection.count > 0 && !root.typing && !Measure.enabled && !DocumentModel.repairing
+                 && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !root.seating
         onActivated: root.run("selectnone")
     }
     Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
