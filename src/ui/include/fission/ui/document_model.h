@@ -426,6 +426,27 @@ public:
     /// version and kind of step. Empty when the step has no problem. Never sent anywhere.
     Q_INVOKABLE QString problemReport(int stepIndex) const;
     Q_INVOKABLE void copyProblemDetails(int stepIndex);
+    /// Rounds ("fillet") or bevels ("chamfer") edges of one body: a new step that takes the body
+    /// and carries the edges as references, in a size that fits the shortest edge. The result
+    /// keeps the name and colour of the body. Returns the id of the new body, empty when the body
+    /// is part of another one, an edge cannot be named again after a change, or the kind is
+    /// unknown. A size that does not work is not refused here: the step shows the problem.
+    Q_INVOKABLE QString blendEdges(const QString& bodyId, const QVariantList& edgeNumbers,
+                                   const QString& kind);
+    /// "Round all vertical edges" of a body. A fresh box (made by a box step, not turned, with
+    /// square corners) gets its corner radius set, which keeps it a basic shape; any other body
+    /// gets a rounding step on its vertical edges. One undo step either way. Returns the id of
+    /// the body that shows the result (empty when the body has no vertical edges or cannot be
+    /// changed).
+    Q_INVOKABLE QString roundVerticalEdges(const QString& bodyId);
+    /// Where the grip of an edge stands: `valid`, the middle of the edge `x y z` (mm) and the way
+    /// into the body `dx dy dz` (unit). Not valid for an edge between faces that are not flat.
+    Q_INVOKABLE QVariantMap edgeAnchor(const QString& bodyId, int number) const;
+    /// The edges to add to a click on edge `number` of a body so that a whole run is taken:
+    /// "chain" (the edges that run on tangentially from it), "face" (all edges of the face
+    /// `number`), "vertical" (all vertical edges of the body, `number` unused). Numbers as in the
+    /// mesh, sorted; empty for an unknown body.
+    Q_INVOKABLE QVariantList edgesOf(const QString& bodyId, const QString& which, int number) const;
     Q_INVOKABLE int splitBody(const QString& bodyId);
     Q_INVOKABLE QString combineBodies(const QStringList& bodyIds, const QString& mode);
     bool canPaste() const { return !m_clipboard.empty() || systemClipboardHasBodies(); }

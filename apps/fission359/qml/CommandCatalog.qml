@@ -12,7 +12,8 @@ import QtQuick
 //
 // run.kind is "tool" (switches the tool), "shape" (puts the shape on a free place), "menu" (the
 // command of the menu with that id) or "soon" (does not exist yet). `needs` says what the command
-// wants before it can run: "selection" (a body is chosen), "two" (two bodies), "one" (one body).
+// wants before it can run: "selection" (a body is chosen), "two" (two bodies), "one" (one body),
+// "edges" (edges of one body are chosen).
 QtObject {
     id: root
 
@@ -202,6 +203,27 @@ QtObject {
           synonyms: { de: ["teilen", "trennen", "durchschneiden", "zerschneiden", "halbieren"],
                       en: ["split", "cut in two", "slice", "divide", "halve"] },
           run: { kind: "menu", id: "split" } },
+        { id: "menu.round", group: "body", name: qsTr("Round edges"),
+          tip: qsTr("Rounds the chosen edges. Edges that run on without a corner are rounded together."),
+          hint: qsTr("Choose one or more edges, then type a radius or change it in the panel."),
+          needs: "edges",
+          synonyms: { de: ["abrunden", "runden", "verrunden", "kante runden", "kanten verrunden", "rundung", "fillet"],
+                      en: ["round", "round edges", "fillet", "smooth edge", "soften", "soften edges"] },
+          run: { kind: "menu", id: "round" } },
+        { id: "menu.bevel", group: "body", name: qsTr("Bevel edges"),
+          tip: qsTr("Cuts the chosen edges off flat."),
+          hint: qsTr("Choose one or more edges, then type a distance or change it in the panel."),
+          needs: "edges",
+          synonyms: { de: ["abschrägen", "fase", "anfasen", "kante abschrägen", "schräge kante", "kanten brechen", "anschrägen"],
+                      en: ["bevel", "chamfer", "bevel edges", "cut corner", "slant edge", "slant edges", "angled edge"] },
+          run: { kind: "menu", id: "bevel" } },
+        { id: "menu.roundVertical", group: "body", name: qsTr("Round vertical edges"),
+          tip: qsTr("Rounds all upright edges of the chosen body, like the corners of a box."),
+          hint: qsTr("Choose one body; its upright edges are rounded."),
+          needs: "one",
+          synonyms: { de: ["senkrechte kanten runden", "ecken runden", "ecken abrunden", "kanten oben runden"],
+                      en: ["round vertical edges", "round corners", "round upright edges", "soften corners"] },
+          run: { kind: "menu", id: "roundVertical" } },
         { id: "menu.view.frame", group: "view", name: qsTr("Show everything"),
           tip: qsTr("Zooms so that everything is in view."),
           hint: qsTr("The view turns and zooms; nothing in the project changes."),
@@ -253,18 +275,6 @@ QtObject {
     // What the program will be able to do later. They are listed so that the search finds them
     // and says so honestly (rule: no dead ends without a word).
     readonly property var soonCommands: [
-        { id: "soon.fillet", group: "soon", name: qsTr("Round edges"),
-          tip: qsTr("Rounds the edges of a body with one radius."),
-          hint: qsTr("Choose edges, drag the dot."),
-          synonyms: { de: ["abrunden", "runde ecken", "kanten verrunden", "rundung", "verrunden", "ecken abrunden"],
-                      en: ["round edges", "fillet", "round corners", "rounded corners", "soften edges"] },
-          run: { kind: "soon" } },
-        { id: "soon.chamfer", group: "soon", name: qsTr("Bevel edges"),
-          tip: qsTr("Cuts the edges of a body at an angle."),
-          hint: qsTr("Choose edges, drag the dot."),
-          synonyms: { de: ["fase", "kanten brechen", "anschrägen", "abschrägen", "schräge kante"],
-                      en: ["bevel edges", "chamfer", "bevel", "slant edges", "angled edge"] },
-          run: { kind: "soon" } },
         { id: "soon.drill", group: "soon", name: qsTr("Drilled hole"),
           tip: qsTr("A round hole in a face with a chosen diameter and depth, also countersunk."),
           hint: qsTr("Click a face, then drag the dot."),

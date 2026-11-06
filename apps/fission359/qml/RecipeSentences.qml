@@ -65,6 +65,12 @@ QtObject {
         if (step.type === "split" && v.length === 2) {
             return qsTr("Split across %1 at %2 mm").arg(["X", "Y", "Z"][Math.round(v[0])]).arg(n(v[1]))
         }
+        if (step.type === "fillet" && v.length === 2) {
+            return qsTr("Rounded %n edge(s), radius %1 mm", "", v[0]).arg(n(v[1]))
+        }
+        if (step.type === "chamfer" && v.length === 2) {
+            return qsTr("Bevelled %n edge(s), distance %1 mm", "", v[0]).arg(n(v[1]))
+        }
         if (step.type === "place" && v.length === 3) {
             return qsTr("Part placed, moved by %1, %2, %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
         }
@@ -79,7 +85,7 @@ QtObject {
             }
         }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "import"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "fillet", "chamfer"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)

@@ -846,9 +846,11 @@ void DocumentModel::rebuildLists() {
         int number = 0;
         int partNumber = 0;
         std::string name = body.name;
-        const bool continues =
-            maker != nullptr && (type == "combine" || type == "place" || type == "split") &&
-            !maker->inputs.empty() && origin.contains(maker->inputs.front().value);
+        const bool continues = maker != nullptr &&
+                               (type == "combine" || type == "place" || type == "split" ||
+                                type == "fillet" || type == "chamfer") &&
+                               !maker->inputs.empty() &&
+                               origin.contains(maker->inputs.front().value);
         if (continues) {
             const Origin& started = origin.at(maker->inputs.front().value);
             type = started.type;
@@ -934,7 +936,7 @@ QVariantList DocumentModel::buildStepValues() const {
             : spec.name == "through"                                   ? QStringLiteral("through")
             : spec.name == "axis"                                      ? QStringLiteral("axis")
             : spec.name == "position"                                  ? QStringLiteral("cut")
-            : spec.name == "anchorU" || spec.name == "anchorV"         ? QStringLiteral("hidden")
+            : spec.name.rfind("anchor", 0) == 0                        ? QStringLiteral("hidden")
                                                                        : QStringLiteral("size");
         // The coloured letter in front of a place or a turn: x, y, z (empty for sizes).
         entry[QStringLiteral("axis")] = turn ? toQString(spec.name.substr(3, 1)).toLower()
@@ -3403,6 +3405,226 @@ QString DocumentModel::combineBodies(const QStringList& bodyIds, const QString& 
     documentChanged();
     emit historyChanged();
     return toQString(result.value);
+}
+
+namespace {
+// A point on an edge and the way from it into the body, between its two faces (against the sum
+// of their normals; all 0 when the faces are not flat or cancel out).
+struct EdgeAnchor {
+    geo::Point3d point;
+    geo::Point3d way;
+};
+
+EdgeAnchor edgeAnchorOf(const geo::BodySignatures& signs, std::uint32_t id) {
+    EdgeAnchor result;
+    if (id < 1 || id > signs.edges.size()) {
+        return result;
+    }
+    const geo::ElementSignature& edge = signs.edges[id - 1];
+    geo::Point3d sum;
+    for (const std::uint32_t face : edge.faces) {
+        if (face < 1 || face > signs.faces.size()) {
+            continue;
+        }
+        const geo::ElementSignature& side = signs.faces[face - 1];
+        if (side.shape == geo::SignatureShape::plane && side.hasDirection) {
+            sum = {sum.x - side.direction.x, sum.y - side.direction.y, sum.z - side.direction.z};
+        }
+    }
+    const double length = std::hypot(sum.x, sum.y, sum.z);
+    result.point = edge.centroid;
+    if (length > 1e-9) {
+        result.way = {sum.x / length, sum.y / length, sum.z / length};
+    }
+    return result;
+}
+} // namespace
+
+QString DocumentModel::blendEdges(const QString& bodyId, const QVariantList& edgeNumbers,
+                                  const QString& kind) {
+    const std::string type = kind.toStdString();
+    const core::FeatureType* stepType = m_registry.find(type);
+    const core::Body* target = findBody(bodyId);
+    if ((type != "fillet" && type != "chamfer") || stepType == nullptr || target == nullptr ||
+        edgeNumbers.isEmpty() || !m_result || m_history.document().consumerOf(target->id)) {
+        return {};
+    }
+    const auto made = m_result->bodies.find(target->id);
+    if (made == m_result->bodies.end()) {
+        return {};
+    }
+    std::vector<core::PersistentRef> refs;
+    double shortest = 1e30;
+    geo::Point3d anchor;
+    geo::Point3d way; // from the first edge into the body, between its two faces
+    bool anchored = false;
+    try {
+        const core::BodyLooks looks =
+            core::describeBody(made->second.faces, m_kernel->signatures(made->second.solid));
+        for (const QVariant& number : edgeNumbers) {
+            const auto found = std::find_if(
+                looks.edges.begin(), looks.edges.end(),
+                [&](const core::NamedLook& edge) { return edge.id == number.toUInt(); });
+            if (found == looks.edges.end()) {
+                return {};
+            }
+            auto ref = core::makeRef(looks, core::ElementKind::edge, found->id,
+                                     core::placementOf(m_history.document(), m_registry,
+                                                       m_result->features, found->name));
+            if (!ref) {
+                return {}; // without a name it could not be found again after the next change
+            }
+            if (!anchored) {
+                const EdgeAnchor spot =
+                    edgeAnchorOf(m_kernel->signatures(made->second.solid), found->id);
+                anchor = spot.point;
+                way = spot.way;
+                anchored = true;
+            }
+            refs.push_back(std::move(*ref));
+            shortest = std::min(shortest, found->look.size);
+        }
+    } catch (const geo::GeometryError&) {
+        return {};
+    }
+    // A size that fits the shortest edge, in steps of 0.1 mm: 2 mm at most, never below 0.1.
+    const double size = std::max(0.1, std::floor(std::min(2.0, 0.3 * shortest) * 10.0) / 10.0);
+
+    core::FeatureDraft draft = core::defaultDraft(*stepType);
+    draft.params.at(type == "fillet" ? "radius" : "distance").expression =
+        QString::number(size, 'f', 1).toStdString();
+    const auto setValue = [&](const char* name, double number) {
+        draft.params.at(name).expression = QString::number(number, 'g', 12).toStdString();
+    };
+    setValue("anchorX", anchor.x);
+    setValue("anchorY", anchor.y);
+    setValue("anchorZ", anchor.z);
+    setValue("anchorDx", way.x);
+    setValue("anchorDy", way.y);
+    setValue("anchorDz", way.z);
+    draft.inputs = {target->id};
+    draft.refs["edges"] = std::move(refs);
+    draft.newBodies = 1;
+    const core::Body before = *target;
+
+    m_history.beginTransaction({type == "fillet" ? "roundEdges" : "bevelEdges",
+                                {{"count", std::to_string(edgeNumbers.size())}}});
+    const auto id = m_history.addFeature(std::move(draft));
+    const core::Feature* feature = id ? m_history.document().findFeature(*id) : nullptr;
+    if (feature == nullptr || feature->outputs.empty()) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    const core::BodyId result = feature->outputs.front();
+    if (!before.name.empty()) {
+        m_history.execute(core::makeSetBodyName(result, before.name));
+    }
+    m_history.execute(core::makeSetBodyColor(result, before.color));
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return toQString(result.value);
+}
+
+QString DocumentModel::roundVerticalEdges(const QString& bodyId) {
+    const core::Body* body = findBody(bodyId);
+    if (body == nullptr || m_history.document().consumerOf(body->id)) {
+        return {};
+    }
+    const QVariantList vertical = edgesOf(bodyId, QStringLiteral("vertical"), 0);
+    if (vertical.isEmpty()) {
+        return {};
+    }
+    const core::Feature* maker = m_history.document().findFeature(body->createdBy);
+    const auto state = maker != nullptr && m_result ? m_result->state(maker->id) : nullptr;
+    if (maker != nullptr && maker->type == "box" && state != nullptr &&
+        state->status == core::FeatureStatus::ok) {
+        const auto value = [&](const char* name) {
+            const auto found = state->params.find(name);
+            return found == state->params.end() ? 0.0 : found->second.value;
+        };
+        const bool turned = value("rotX") != 0.0 || value("rotY") != 0.0 || value("rotZ") != 0.0;
+        if (!turned && value("cornerRadius") == 0.0) {
+            const double radius = std::max(
+                0.1,
+                std::floor(std::min(5.0, 0.2 * std::min(value("width"), value("depth"))) * 10.0) /
+                    10.0);
+            if (setStepValue(stepIndexOf(maker->id), QStringLiteral("cornerRadius"),
+                             QString::number(radius, 'f', 1))) {
+                return bodyId;
+            }
+            return {};
+        }
+    }
+    return blendEdges(bodyId, vertical, QStringLiteral("fillet"));
+}
+
+QVariantMap DocumentModel::edgeAnchor(const QString& bodyId, int number) const {
+    QVariantMap anchor;
+    anchor[QStringLiteral("valid")] = false;
+    const core::Body* body = findBody(bodyId);
+    if (body == nullptr || !m_result || number < 1) {
+        return anchor;
+    }
+    const auto made = m_result->bodies.find(body->id);
+    if (made == m_result->bodies.end()) {
+        return anchor;
+    }
+    try {
+        const EdgeAnchor spot = edgeAnchorOf(m_kernel->signatures(made->second.solid),
+                                             static_cast<std::uint32_t>(number));
+        const bool known = std::hypot(spot.way.x, spot.way.y, spot.way.z) > 0.5;
+        anchor[QStringLiteral("valid")] = known;
+        anchor[QStringLiteral("x")] = spot.point.x;
+        anchor[QStringLiteral("y")] = spot.point.y;
+        anchor[QStringLiteral("z")] = spot.point.z;
+        anchor[QStringLiteral("dx")] = spot.way.x;
+        anchor[QStringLiteral("dy")] = spot.way.y;
+        anchor[QStringLiteral("dz")] = spot.way.z;
+    } catch (const geo::GeometryError&) {
+    }
+    return anchor;
+}
+
+QVariantList DocumentModel::edgesOf(const QString& bodyId, const QString& which, int number) const {
+    QVariantList list;
+    const core::Body* body = findBody(bodyId);
+    if (body == nullptr || !m_result) {
+        return list;
+    }
+    const auto made = m_result->bodies.find(body->id);
+    if (made == m_result->bodies.end()) {
+        return list;
+    }
+    try {
+        std::vector<std::uint32_t> found;
+        if (which == QLatin1String("chain")) {
+            found = m_kernel->tangentChain(made->second.solid, static_cast<std::uint32_t>(number));
+        } else {
+            const geo::BodySignatures looks = m_kernel->signatures(made->second.solid);
+            for (const geo::ElementSignature& edge : looks.edges) {
+                if (edge.id == 0) {
+                    continue;
+                }
+                const bool onFace =
+                    which == QLatin1String("face") &&
+                    std::find(edge.faces.begin(), edge.faces.end(),
+                              static_cast<std::uint32_t>(number)) != edge.faces.end();
+                const bool vertical = which == QLatin1String("vertical") &&
+                                      edge.shape == geo::SignatureShape::line &&
+                                      std::abs(edge.direction.z) > 0.999;
+                if (onFace || vertical) {
+                    found.push_back(edge.id);
+                }
+            }
+        }
+        std::sort(found.begin(), found.end());
+        for (const std::uint32_t edge : found) {
+            list.push_back(edge);
+        }
+    } catch (const geo::GeometryError&) {
+    }
+    return list;
 }
 
 QStringList DocumentModel::duplicateBodies(const QStringList& bodyIds) {

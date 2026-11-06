@@ -50,6 +50,13 @@ NamedSolid translateNamed(const NamedSolid& solid, Point3d delta);
 NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,
                         const std::vector<NamedSolid>& tools, double fuzzy = 0.0);
 
+/// Rounds or bevels edges (see `GeometryKernel::blendEdges`). Throws GeometryError.
+NamedSolid blendEdgesNamed(const NamedSolid& solid, const std::vector<BlendEdge>& edges,
+                           const BlendSpec& spec, const std::string& rolePrefix);
+
+/// The edges rounded together with `edge` (see `GeometryKernel::tangentChain`).
+std::vector<std::uint32_t> tangentChainOf(const Solid& solid, std::uint32_t edge);
+
 /// Volume, area, bounding box, topology counts and validity of a body.
 SolidReport measure(const Solid& solid);
 

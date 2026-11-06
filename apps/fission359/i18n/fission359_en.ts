@@ -338,7 +338,7 @@
 <context>
     <name>CommandCatalog</name>
     <message>
-        <location filename="../qml/CommandCatalog.qml" line="+25"/>
+        <location filename="../qml/CommandCatalog.qml" line="+26"/>
         <source>New project</source>
         <translation>New project</translation>
     </message>
@@ -749,6 +749,41 @@
         <translation>Choose one body, then place the plane.</translation>
     </message>
     <message>
+        <location line="+6"/>
+        <source>Rounds the chosen edges. Edges that run on without a corner are rounded together.</source>
+        <translation>Rounds the chosen edges. Edges that run on without a corner are rounded together.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose one or more edges, then type a radius or change it in the panel.</source>
+        <translation>Choose one or more edges, then type a radius or change it in the panel.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Cuts the chosen edges off flat.</source>
+        <translation>Cuts the chosen edges off flat.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose one or more edges, then type a distance or change it in the panel.</source>
+        <translation>Choose one or more edges, then type a distance or change it in the panel.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Round vertical edges</source>
+        <translation>Round vertical edges</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rounds all upright edges of the chosen body, like the corners of a box.</source>
+        <translation>Rounds all upright edges of the chosen body, like the corners of a box.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose one body; its upright edges are rounded.</source>
+        <translation>Choose one body; its upright edges are rounded.</translation>
+    </message>
+    <message>
         <location line="+5"/>
         <source>Show everything</source>
         <translation>Show everything</translation>
@@ -864,7 +899,8 @@
         <translation>Every change is a sentence here.</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="-63"/>
+        <location line="+72"/>
         <source>Round edges</source>
         <translation>Round edges</translation>
     </message>
@@ -880,7 +916,8 @@
         <translation>Choose edges, drag the dot.</translation>
     </message>
     <message>
-        <location line="-2"/>
+        <location line="-73"/>
+        <location line="+71"/>
         <source>Bevel edges</source>
         <translation>Bevel edges</translation>
     </message>
@@ -1041,7 +1078,7 @@
 <context>
     <name>ContextBar</name>
     <message>
-        <location filename="../qml/ContextBar.qml" line="+35"/>
+        <location filename="../qml/ContextBar.qml" line="+37"/>
         <source>As part</source>
         <translation>As part</translation>
     </message>
@@ -1052,23 +1089,38 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+8"/>
+        <location line="+13"/>
         <source>Colour</source>
         <translation>Colour</translation>
     </message>
     <message>
-        <location line="-7"/>
+        <location line="-12"/>
         <source>Duplicate</source>
         <translation>Duplicate</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+7"/>
+        <location line="+12"/>
         <source>To the bed</source>
         <translation>To the bed</translation>
     </message>
     <message>
-        <location line="-3"/>
+        <location line="-11"/>
+        <source>Round vertical edges</source>
+        <translation>Round vertical edges</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Round</source>
+        <translation>Round</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bevel</source>
+        <translation>Bevel</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Merge</source>
         <translation>Merge</translation>
     </message>
@@ -1660,12 +1712,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+703"/>
+        <location line="+738"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-702"/>
+        <location line="-737"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
@@ -1695,7 +1747,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+107"/>
+        <location line="+109"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -1705,7 +1757,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-107"/>
+        <location line="-109"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -1896,12 +1948,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1207"/>
+        <location line="+1273"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1206"/>
+        <location line="-1272"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1932,12 +1984,27 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1195"/>
+        <location line="+1259"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1193"/>
+        <location line="-1257"/>
+        <source>Round edges</source>
+        <translation>Round edges</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bevel edges</source>
+        <translation>Bevel edges</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Round vertical edges</source>
+        <translation>Round vertical edges</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1993,18 +2060,18 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+749"/>
+        <location line="+780"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-747"/>
-        <location line="+748"/>
+        <location line="-778"/>
+        <location line="+779"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-742"/>
+        <location line="-773"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -2013,8 +2080,13 @@
         <source>Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to turn the view, with Shift + middle button to move it, scroll to zoom.</translation>
     </message>
+    <message>
+        <location line="+44"/>
+        <source>Choose one or more edges first.</source>
+        <translation>Choose one or more edges first.</translation>
+    </message>
     <message numerus="yes">
-        <location line="+127"/>
+        <location line="+86"/>
         <source>%n step(s) use what you delete: %1. They will need help.</source>
         <translation>
             <numerusform>%n step uses what you delete: %1. It will need help.</numerusform>
@@ -2042,7 +2114,7 @@
         <translation>Nothing to drop: the bodies already stand on the bed.</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+24"/>
         <source>This arrives in a later version.</source>
         <translation>This arrives in a later version.</translation>
     </message>
@@ -2052,7 +2124,27 @@
         <translation>This body cannot be split: it may be part of another body.</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+13"/>
+        <source>Choose edges of one body that is not part of another body yet.</source>
+        <translation>Choose edges of one body that is not part of another body yet.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Rounded. Type a radius, or change it in the panel.</source>
+        <translation>Rounded. Type a radius, or change it in the panel.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bevelled. Type a distance, or change it in the panel.</source>
+        <translation>Bevelled. Type a distance, or change it in the panel.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>This body has no vertical edges to round.</source>
+        <translation>This body has no vertical edges to round.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Choose two or more bodies that are not part of another body yet.</source>
         <translation>Choose two or more bodies that are not part of another body yet.</translation>
     </message>
@@ -2156,7 +2248,7 @@
         </translation>
     </message>
     <message>
-        <location line="-584"/>
+        <location line="-615"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2176,7 +2268,7 @@
         <translation>Choose two bodies first (Shift+click).</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+6"/>
         <source>Nothing to undo.</source>
         <translation>Nothing to undo.</translation>
     </message>
@@ -2191,22 +2283,22 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+794"/>
+        <location line="+822"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
     <message>
-        <location line="+121"/>
+        <location line="+149"/>
         <source>Click a face of the print bed or of another body.</source>
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
     <message>
-        <location line="+104"/>
+        <location line="+101"/>
         <source>%1 × %2 mm</source>
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1107"/>
+        <location line="-1167"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -2266,7 +2358,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1138"/>
+        <location line="+1198"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2276,7 +2368,12 @@
         <translation>Combine</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
+        <source>Bevelling</source>
+        <translation>Bevelling</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Placing</source>
         <translation>Placing</translation>
     </message>
@@ -2301,7 +2398,7 @@
         <translation>Radius</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>Corner radius</source>
         <translation>Corner radius</translation>
     </message>
@@ -2356,7 +2453,7 @@
         <translation>Position</translation>
     </message>
     <message numerus="yes">
-        <location line="+33"/>
+        <location line="+35"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>Cut out %n body</numerusform>
@@ -2364,9 +2461,34 @@
         </translation>
     </message>
     <message>
-        <location line="-17"/>
+        <location line="-19"/>
         <source>%1 added</source>
         <translation>%1 added</translation>
+    </message>
+    <message>
+        <location line="-245"/>
+        <source>Bevelled. Drag the grip or type a distance.</source>
+        <translation>Bevelled. Drag the grip or type a distance.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rounded. Drag the grip or type a radius.</source>
+        <translation>Rounded. Drag the grip or type a radius.</translation>
+    </message>
+    <message>
+        <location line="+203"/>
+        <source>Rounding</source>
+        <translation>Rounding</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Distance</source>
+        <translation>Distance</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Second distance</source>
+        <translation>Second distance</translation>
     </message>
     <message>
         <location line="-564"/>
@@ -2442,6 +2564,22 @@
         <location line="+1"/>
         <source>%1 split in two</source>
         <translation>%1 split in two</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n edge(s) rounded</source>
+        <translation>
+            <numerusform>%n edge rounded</numerusform>
+            <numerusform>%n edges rounded</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n edge(s) bevelled</source>
+        <translation>
+            <numerusform>%n edge bevelled</numerusform>
+            <numerusform>%n edges bevelled</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location line="+4"/>
@@ -2583,7 +2721,7 @@
         <translation>Several changes</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+88"/>
         <source>, part %1</source>
         <translation>, part %1</translation>
     </message>
@@ -2637,32 +2775,32 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-307"/>
+        <location line="-320"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1193"/>
+        <location line="-1257"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1228"/>
+        <location line="+1292"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1060"/>
+        <location line="-1120"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+554"/>
+        <location line="+585"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-601"/>
+        <location line="-632"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -3485,6 +3623,22 @@
         <location line="+3"/>
         <source>Split across %1 at %2 mm</source>
         <translation>Split across %1 at %2 mm</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>Rounded %n edge(s), radius %1 mm</source>
+        <translation>
+            <numerusform>Rounded %n edge, radius %1 mm</numerusform>
+            <numerusform>Rounded %n edges, radius %1 mm</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>Bevelled %n edge(s), distance %1 mm</source>
+        <translation>
+            <numerusform>Bevelled %n edge, distance %1 mm</numerusform>
+            <numerusform>Bevelled %n edges, distance %1 mm</numerusform>
+        </translation>
     </message>
     <message>
         <location line="+3"/>

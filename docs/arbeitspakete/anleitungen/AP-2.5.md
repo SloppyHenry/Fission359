@@ -40,6 +40,22 @@ AP-2.10 a–c (Kanten-Verweise), AP-2.14 (Meldungen mit Zahlen; sonst die Meldun
    Tippen ersetzt Ziehen, ⌥ beim Ziehen = Abschrägen. Mehrere gewählte Kanten = ein Schritt. Regel 10.
 6. Bestehender Schritt: Klick im Rezept → Griffe an allen seinen Kanten; Kanten hinzufügen/entfernen per ⇧-Klick.
 
+## Stand 2026-11-04
+Haltepunkte vom Maintainer bestätigt (Kontextleisten-Eintrag „Senkrechte Kanten abrunden“; frischer Quader setzt `cornerRadius`).
+Gebaut:
+- GAL: `GeometryKernel::blendEdges` (`BlendSpec`: Abrunden, Abschrägen mit einem oder zwei Abständen) und `tangentChain`; neuer `GeometryErrorCode::blendTooLarge` (landet als `kernelRejected` mit `subject` = Wert beim Schritt). OCCT in `src/geometry/occt/src/blends.cpp`. Neue Flächen heißen `F<n>/fillet/round[<Kantenname>]` bzw. `F<n>/chamfer/bevel[…]`, Eckflächen `…#corner<k>`; alte Flächen behalten ihre Namen.
+- Schritt-Typen `fillet` (Wert `radius`) und `chamfer` (`distance`, unter „Mehr“ `distance2`) in `src/features/src/blend.cpp`: ein Körper, Kanten aus dem Verweis `edges`, Ergebnis wie `combine` (Name/Farbe des Körpers bleiben). Tangentiale Kanten nimmt OCCT selbst mit (`tangentChain` zeigt sie).
+- **Größtmöglicher Wert:** bei Fehlschlag Intervallhalbierung (≤ 20 Versuche, abbrechbar), auf 0,1 mm abgerundet und gegengeprüft, als `numbers["maxValue"]` mit `given`, `where` (Kantenmitte) und `elements`. Die Meldung und der Knopf „Größtmöglichen Wert verwenden“ kommen aus AP-2.14; die Karte an der Stelle zeichnet `ProblemPlaceLayer.qml`.
+- `DocumentModel::blendEdges`, `roundVerticalEdges`, `edgesOf` (Kette, Kanten einer Fläche, senkrechte Kanten); Menü „Körper“, Kontextleiste (gewählte Kanten: Abrunden/Abschrägen; Körper mit senkrechten Kanten: „Senkrechte Kanten abrunden“), Befehlssuche mit Synonymen, Rezeptsatz, Verlaufstext.
+- Tests: `tests/unit/geometry/test_blends.cpp`, `tests/unit/features/test_blend.cpp`, `tests/unit/ui/test_blend_edges.cpp`.
+
+Offen:
+- **Griff in der Ansicht:** gebaut ist der Griff am Schritt: Nach „Abrunden“/„Abschrägen“ sitzt am ersten Rand ein Viertelkreis-Griff, Ziehen ändert den Wert (Werkzeug „Größe“ wird gewählt). Der Anker (Kantenmitte, Richtung nach innen) steht in den versteckten Werten `anchorX…anchorDz` des Schritts; ändert sich der Körper, bleibt er an der alten Stelle (nur die Anzeige, nie das Ergebnis). Dazu der **Hover-Griff** (`EdgeGripLayer.qml`): bei Filter „Kante“ erscheint über der Kante unter dem Zeiger ein Viertelkreis-Knopf (bleibt 0,7 s, damit man ihn erreicht); Klick rundet die Kante ab, ⌥-Klick schrägt sie ab, danach zieht man am Griff des Schritts. Das Ziehen direkt aus dem Hover-Knopf heraus (ein Zug statt Klick + Zug) ist nicht gebaut. Offen: Kanten hinzufügen/entfernen mit ⇧ am bestehenden Schritt, Anker nachführen, Fenster-Test des Hover-Knopfs (am Mac nur von Hand, nicht offscreen).
+- Die 20 Fälle aus AP-0.5 (`tests/geometry/test_fillets.cpp`) über die GAL und Szenarien in der Namens-Produkt-Suite (`tests/unit/naming/`, `markFace` ersetzen).
+- Winkelvariante der Fase (Abstand + Winkel), variabler Radius.
+- Cache des größtmöglichen Wertes (heute neu gesucht bei jeder Neuberechnung eines fehlschlagenden Schritts).
+- Ausgrauen mit Erklärung für freie Körper (UX §6) gibt es erst mit den freien Körpern.
+
 ## Tests
 - Golden: Quader 20³, eine Kante R 2 → Volumen = 8000 − (4 − π)·20 (Formel für Viertelkreis-Streifen), Flächen +1; vier senkrechte Kanten;
   Kette tangentialer Kanten; Abschrägung 1 mm (Volumen − 0,5·20).

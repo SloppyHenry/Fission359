@@ -36,6 +36,13 @@ public:
                        double fuzzy) const override {
         return booleanNamed(op, target, tools, fuzzy);
     }
+    NamedSolid blendEdges(const NamedSolid& solid, const std::vector<BlendEdge>& edges,
+                          const BlendSpec& spec, const std::string& rolePrefix) const override {
+        return blendEdgesNamed(solid, edges, spec, rolePrefix);
+    }
+    std::vector<std::uint32_t> tangentChain(const Solid& solid, std::uint32_t edge) const override {
+        return tangentChainOf(solid, edge);
+    }
     std::vector<std::string> fontFamilies() const override { return fonts_.families(); }
     std::vector<FontStyle> fontStyles(const std::string& family) const override {
         return fonts_.styles(family);

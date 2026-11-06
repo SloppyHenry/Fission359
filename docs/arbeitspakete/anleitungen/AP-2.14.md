@@ -62,8 +62,8 @@ Gebaut (Schritte 1, 3–7):
 - Tests: `tests/unit/ui/test_messages.cpp`.
 
 Offen (braucht Erzeuger):
-- **Karte an der Stelle in 3D** (`where`) und rote Hervorhebung der `elements`: noch kein Schritt setzt sie. Mit AP-2.5 (Abrunden/Fase) zusammen bauen, dann gibt es etwas zu sehen.
-- **Pflichtfälle aus „Bekannte Problemfälle“** (Radius zu groß, fast bündig, Spalt, Aushöhlen, Kante-zu-Kante): die Codes setzen AP-2.4/2.5 beim Bau ihrer Werkzeuge (`numbers.maxValue`, neue `FeatureIssueCode`); der Katalog und `check_messages.py` zwingen dann zu Text. `Verbinden` und `Anderes Verfahren versuchen` sind erst dann möglich.
+- **Karte an der Stelle in 3D:** seit AP-2.5 gebaut (`ProblemPlaceLayer.qml`, roter Ring und Karte an `where` für den gewählten Schritt). Noch offen: die betroffenen Kanten/Flächen (`elements`) rot im Netz hervorheben.
+- **Pflichtfälle aus „Bekannte Problemfälle“:** „Radius zu groß“ ist mit AP-2.5 da (Zahl + „Größtmöglichen Wert verwenden“). Offen: fast bündig, Spalt, Aushöhlen, Kante-zu-Kante. Die Codes setzen AP-2.4/2.6 beim Bau ihrer Werkzeuge (`numbers.maxValue`, neue `FeatureIssueCode`); der Katalog und `check_messages.py` zwingen dann zu Text. `Verbinden` und `Anderes Verfahren versuchen` sind erst dann möglich.
 - Fenster-Test der Karte mit Knöpfen.
 
 ## Tests

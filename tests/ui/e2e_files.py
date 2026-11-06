@@ -147,11 +147,11 @@ with tempfile.TemporaryDirectory() as data:
     run(tabs, "rescue:restore;rescue:restore;expectmodified:1")
 
     # 11. The command search finds things by everyday words, through the program's own catalogue.
-    run(data, "search:runde ecken,soon.fillet;search:bohren,soon.drill;search:hohl,soon.shell;"
+    run(data, "search:kanten verrunden,menu.round;search:bohren,soon.drill;search:hohl,soon.shell;"
               "search:namen,shape.text;search:verschiben,tool.move;search:grosse,tool.size;"
-              "search:round corners,soon.fillet;search:drill,soon.drill;search:rotate,tool.rotate;"
+              "search:round edges,menu.round;search:drill,soon.drill;search:rotate,tool.rotate;"
               "search:speichern,menu.save;search:rückgängig,menu.undo;search:kugel,shape.sphere;"
-              "runcommand:tool.rotate;runcommand:menu.settings;runcommand:soon.fillet")
+              "runcommand:tool.rotate;runcommand:menu.settings;runcommand:soon.drill")
 
     # 12. The hint line and the message catalogue.
     run(data, "menu:new;expecthint:Start with a shape;"

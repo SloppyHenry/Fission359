@@ -140,7 +140,11 @@ Window {
             { id: "merge", text: qsTr("Merge"), enabled: root.chosenBodies.length >= 2 },
             { id: "subtract", text: qsTr("Subtract"), enabled: root.chosenBodies.length >= 2 },
             { id: "overlap", text: qsTr("Keep overlap"), enabled: root.chosenBodies.length >= 2 },
-            { id: "split", text: qsTr("Split"), enabled: root.chosenBodies.length === 1 }
+            { id: "split", text: qsTr("Split"), enabled: root.chosenBodies.length === 1 },
+            { separator: true },
+            { id: "round", text: qsTr("Round edges"), enabled: root.edgesChosen },
+            { id: "bevel", text: qsTr("Bevel edges"), enabled: root.edgesChosen },
+            { id: "roundVertical", text: qsTr("Round vertical edges"), enabled: root.contextKind === "body" && root.chosenBodyHasVerticalEdges }
         ] },
         { title: qsTr("Window"), items: [
             { id: "nexttab", text: qsTr("Next tab"), shortcut: isMac ? "⌃⇥" : qsTr("Ctrl+Tab"), enabled: Files.tabs.length > 1 },
@@ -254,6 +258,9 @@ Window {
             break
         case "two":
             if (chosenBodies.length < 2) { return qsTr("Choose two bodies first (Shift+click).") }
+            break
+        case "edges":
+            if (!edgesChosen) { return qsTr("Choose one or more edges first.") }
             break
         }
         if (command.id === "menu.undo" && !undoAvailable) { return qsTr("Nothing to undo.") }
@@ -472,6 +479,9 @@ Window {
             break
         case "seatOnFace": seating = true; break
         case "split": splitChosen(); break
+        case "round": blendChosen("fillet"); break
+        case "bevel": blendChosen("chamfer"); break
+        case "roundVertical": roundVerticalChosen(); break
         case "merge":
         case "subtract":
         case "overlap": combine(id); break
@@ -511,6 +521,31 @@ Window {
         }
         root.flyout = ""
         root.tool = "size" // its handle, the dot on the plane, is shown by this tool
+    }
+
+    // Rounds or bevels the chosen edges (all of one body): a new step, shown with its size.
+    function blendChosen(kind) {
+        const edges = Selection.items.filter(item => item.kind === "edge")
+        const made = edges.length > 0 && edges.every(item => item.body === edges[0].body)
+            ? DocumentModel.blendEdges(edges[0].body, edges.map(item => item.number), kind) : ""
+        if (made === "") {
+            showHint(qsTr("Choose edges of one body that is not part of another body yet."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        root.tool = "size" // the grip at the edge is shown by this tool
+        showHint(kind === "fillet" ? qsTr("Rounded. Type a radius, or change it in the panel.")
+                                   : qsTr("Bevelled. Type a distance, or change it in the panel."))
+    }
+
+    function roundVerticalChosen() {
+        const made = DocumentModel.roundVerticalEdges(root.chosenBodies[0])
+        if (made === "") {
+            showHint(qsTr("This body has no vertical edges to round."))
+            return
+        }
+        Selection.chooseBodies([made])
     }
 
     // Combines the chosen bodies: the one chosen first is changed, the others are the tools.
@@ -1242,6 +1277,34 @@ Window {
                 ghost: DocumentModel.repairing ? DocumentModel.repairGhost() : ({ valid: false })
             }
 
+            // The quarter-circle grip over an edge: a click rounds it, Alt/⌥ bevels it.
+            EdgeGripLayer {
+                anchors.fill: parent
+                viewport: viewport
+                hover: Selection.hover
+                active: Selection.filter === "edge" && !busyForGrip
+                onRequested: (bodyId, number, bevel) => {
+                    const made = DocumentModel.blendEdges(bodyId, [number], bevel ? "chamfer" : "fillet")
+                    if (made !== "") {
+                        Selection.chooseBodies([made])
+                        root.tool = "size"
+                        showHint(bevel ? qsTr("Bevelled. Drag the grip or type a distance.")
+                                       : qsTr("Rounded. Drag the grip or type a radius."))
+                    }
+                }
+                readonly property bool busyForGrip: Handles.editing || Gizmo.editing || Rotate.editing
+                                                    || Scale.editing || Placement.active || root.seating
+            }
+
+            // Where the problem of the chosen step is, with its message (AP-2.14).
+            ProblemPlaceLayer {
+                anchors.fill: parent
+                viewport: viewport
+                spot: root.chosenProblem !== null && root.chosenProblem.where ? root.chosenProblem.where : null
+                title: root.chosenProblem !== null ? messageCatalog.title(root.chosenProblem, root.chosenStepData) : ""
+                text: root.chosenProblem !== null ? problemText(root.chosenProblem, root.chosenStepData) : ""
+            }
+
             // The label "Cuts out: …" on a chosen hole.
             CutLayer {
                 anchors.fill: parent
@@ -1289,6 +1352,7 @@ Window {
                 bodyIds: root.chosenBodies
                 allHoles: root.chosenAreHoles
                 bodyColor: root.chosenColor
+                verticalEdges: root.chosenBodyHasVerticalEdges
                 busy: Handles.editing || Gizmo.editing || Rotate.editing || Scale.editing
                       || Placement.active || root.seating || root.typing
                 onActionRequested: action => root.run(action)
@@ -1438,6 +1502,8 @@ Window {
     function typeLabel(type) {
         if (type === "combine") { return qsTr("Combine") }
         if (type === "split") { return qsTr("Split") }
+        if (type === "fillet") { return qsTr("Rounding") }
+        if (type === "chamfer") { return qsTr("Bevelling") }
         if (type === "place") { return qsTr("Placing") }
         if (type === "import") { return qsTr("Imported body") }
         const name = shapeCatalog.nameOf(type)
@@ -1450,6 +1516,8 @@ Window {
         case "depth": return qsTr("Depth")
         case "height": return qsTr("Height")
         case "radius": return qsTr("Radius")
+        case "distance": return qsTr("Distance")
+        case "distance2": return qsTr("Second distance")
         case "cornerRadius": return qsTr("Corner radius")
         case "font": return qsTr("Font")
         case "style": return qsTr("Style")
@@ -1491,6 +1559,8 @@ Window {
         case "alignBodies": return qsTr("Bodies aligned")
         case "seatBody": return qsTr("%1 laid on a face").arg(body)
         case "splitBody": return qsTr("%1 split in two").arg(body)
+        case "roundEdges": return qsTr("%n edge(s) rounded", "", Number(step.count))
+        case "bevelEdges": return qsTr("%n edge(s) bevelled", "", Number(step.count))
         case "combineBodies":
             switch (step.mode) {
             case "subtract": return qsTr("Cut out %n body(ies)", "", Number(step.count) - 1)
@@ -1551,11 +1621,18 @@ Window {
         switch (type) {
         case "combine": return "combine"
         case "split": return "scissors"
+        case "fillet": return "round"
+        case "chamfer": return "bevel"
         case "place": return "move"
         case "text": return "text"
         default: return "cube"
         }
     }
+
+    // The chosen step and its problem, if it has one with a place (null otherwise).
+    readonly property var chosenStepData: DocumentModel.currentStep >= 0
+        ? DocumentModel.recipe[DocumentModel.currentStep] : null
+    readonly property var chosenProblem: chosenStepData && chosenStepData.problem ? chosenStepData.problem : null
 
     readonly property var recipeList: DocumentModel.recipe.map(step => ({
         text: stepText(step),
@@ -1664,6 +1741,16 @@ Window {
         return DocumentModel.stepValues.length > 0 ? "body" : "none"
     }
     // What the context bar next to the selection is for: body | bodies | face | none.
+    // Edges are chosen, all of one body.
+    readonly property bool edgesChosen: {
+        const edges = Selection.items.filter(item => item.kind === "edge")
+        return edges.length > 0 && edges.every(item => item.body === edges[0].body)
+    }
+    // The one chosen body has vertical edges ("Round vertical edges" is offered).
+    readonly property bool chosenBodyHasVerticalEdges:
+        chosenBodies.length === 1 && DocumentModel.bodies
+        && DocumentModel.edgesOf(chosenBodies[0], "vertical", 0).length > 0
+
     readonly property string contextKind: {
         const items = Selection.items
         if (items.length === 0) {
@@ -1674,6 +1761,9 @@ Window {
         }
         if (items.some(item => item.kind === "body")) {
             return "body"
+        }
+        if (edgesChosen) {
+            return "edge"
         }
         return Selection.singleFaceChosen ? "face" : "none"
     }

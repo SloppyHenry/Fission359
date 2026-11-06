@@ -15,8 +15,10 @@
 #include <unistd.h>
 #include <vector>
 
+#include "fission/core/body_looks.h"
 #include "fission/core/feature_type.h"
 #include "fission/core/recompute.h"
+#include "fission/core/resolve.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/occt/kernel.h"
 #include "fission/io/fission_file.h"
@@ -290,7 +292,24 @@ Document fixtureDocument(World& world, const std::string& type) {
         REQUIRE(made);
         return document.findFeature(*made)->outputs;
     };
-    if (type == "import") { // carries its file, a small STEP block
+    if (type == "fillet" || type == "chamfer") { // work on an edge of a body
+        bodies = add("box", {});
+        RecomputeCache cache;
+        const auto result = recompute(document, world.registry, *world.kernel, cache);
+        REQUIRE(result.has_value());
+        const BodyResult& box = result->bodies.at(bodies.front());
+        const BodyLooks looks = describeBody(box.faces, world.kernel->signatures(box.solid));
+        REQUIRE_FALSE(looks.edges.empty());
+        const NamedLook& edge = looks.edges.front();
+        const auto ref =
+            makeRef(looks, ElementKind::edge, edge.id,
+                    placementOf(document, world.registry, result->features, edge.name));
+        REQUIRE(ref.has_value());
+        FeatureDraft draft = defaultDraft(*world.registry.find(type));
+        draft.inputs = {bodies.front()};
+        draft.refs["edges"] = {*ref};
+        REQUIRE(document.addFeature(std::move(draft)));
+    } else if (type == "import") { // carries its file, a small STEP block
         const std::string name =
             document.addAsset("block.step", Content(blockStep().begin(), blockStep().end()));
         FeatureDraft draft = defaultDraft(*world.registry.find("import"));
