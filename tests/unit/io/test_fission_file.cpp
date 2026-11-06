@@ -328,6 +328,10 @@ Document fixtureDocument(World& world, const std::string& type) {
         draft.texts["asset"] = name;
         const auto made = document.addFeature(std::move(draft));
         REQUIRE(made);
+    } else if (type == "sketch") { // makes no body: a box before it gives the file one
+        add("box", {});
+        FeatureDraft draft = defaultDraft(*world.registry.find("sketch"));
+        REQUIRE(document.addFeature(std::move(draft)));
     } else if (type == "combine" || type == "split" || type == "place") {
         bodies = add("box", {});
         const auto second = add("cylinder", {});
@@ -382,8 +386,58 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
         if (type != "text") { // needs a font that the test machine may not have
             CHECK_FALSE(result->bodies.empty());
         }
+        if (type == "sketch") { // format 1 did not know the field; the step is an empty sketch
+            REQUIRE(result->sketches.size() == 1);
+            CHECK(result->sketches.begin()->second.plane.has_value());
+            CHECK(result->sketches.begin()->second.data.elements.empty());
+        }
     }
     CHECK(count == world.registry.ids().size());
+}
+
+// The first file that has a sketch with elements (format 3, AP-2.1a). Written once, never changed.
+TEST_CASE("write the version 3 fixture file", "[.generate-fixtures]") {
+    World world;
+    const fs::path target = fixtureFolder("v3") / "sketch.fission";
+    fs::create_directories(fixtureFolder("v3"));
+    if (fs::exists(target)) {
+        return;
+    }
+    Document document(1000);
+    document.title = "Fixture sketch v3";
+    FeatureDraft draft = defaultDraft(*world.registry.find("sketch"));
+    draft.texts["basePlane"] = "xz";
+    const FeatureId sketch = *document.addFeature(std::move(draft));
+    document.addSketchElement(sketch, SketchElementKind::line, {{0, 0}, {10, 5}});
+    document.addSketchElement(sketch, SketchElementKind::circle, {{4, 4}, {4, 7}}, true);
+    document.addSketchElement(sketch, SketchElementKind::arc, {{0, 0}, {5, 0}, {0, 5}});
+    document.addSketchElement(sketch, SketchElementKind::spline, {{0, 0}, {1, 2}, {3, 1}});
+    document.addSketchElement(sketch, SketchElementKind::point, {{2, 2}});
+    document.takeSketchElement(sketch, "L1");
+    document.addSketchElement(sketch, SketchElementKind::line, {{1, 1}, {2, 3}});
+    SaveExtras fixed{{}, "0.1.0", "2026-11-06T12:00:00Z"};
+    REQUIRE(save(document, target, fixed).ok);
+}
+
+TEST_CASE("the version 3 fixture file with a sketch still opens and calculates", "[fission-file]") {
+    World world;
+    const OpenResult opened = open(fixtureFolder("v3") / "sketch.fission");
+    REQUIRE(opened.document);
+    CHECK(opened.problems.empty());
+    CHECK(opened.documentProblems.empty());
+    CHECK(opened.info.formatVersion == 3);
+    const SketchData& sketch = *opened.document->features().front().sketch;
+    REQUIRE(sketch.elements.size() == 5);
+    CHECK(sketch.elements.back().id == "L2"); // L1 was removed before saving; its number stays used
+    CHECK(sketch.find("C1")->construction);
+    CHECK_FALSE(sketch.find("L1"));
+    CHECK(sketch.find("A1")->points[2] == SketchPoint{0, 5});
+
+    RecomputeCache cache;
+    const auto result = recompute(*opened.document, world.registry, *world.kernel, cache);
+    REQUIRE(result.has_value());
+    REQUIRE(result->sketches.size() == 1);
+    CHECK(result->sketches.begin()->second.plane->normal().y == -1.0);
 }
 
 // --- the examples that come with the program (AP-1.11d) -------------------------------------

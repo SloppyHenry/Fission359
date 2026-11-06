@@ -2753,6 +2753,10 @@
         <translation>Imported body</translation>
     </message>
     <message>
+        <source>Sketch</source>
+        <translation>Sketch</translation>
+    </message>
+    <message>
         <location line="+38"/>
         <source>%1 removed</source>
         <translation>%1 removed</translation>
@@ -4050,6 +4054,10 @@
         <location line="+3"/>
         <source>Imported from “%1”, part %2</source>
         <translation>Imported from “%1”, part %2</translation>
+    </message>
+    <message>
+        <source>Sketch</source>
+        <translation>Sketch</translation>
     </message>
     <message numerus="yes">
         <location line="+4"/>

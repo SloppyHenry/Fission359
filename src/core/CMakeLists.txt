@@ -4,7 +4,7 @@
 # Core must not know Qt. Layer rules: cmake/FissionLayers.cmake.
 fission_add_library(fission_core
   SOURCES src/layer.cpp src/version.cpp src/expression.cpp src/measures.cpp src/id.cpp
-          src/document.cpp src/feature_type.cpp src/recompute.cpp
+          src/sketch.cpp src/document.cpp src/feature_type.cpp src/recompute.cpp
           src/commands.cpp src/history.cpp src/element_names.cpp src/selection.cpp src/scaling.cpp src/cuts.cpp src/body_looks.cpp src/resolve.cpp src/serialize.cpp
   PUBLIC fission_geometry nlohmann_json::nlohmann_json)
 

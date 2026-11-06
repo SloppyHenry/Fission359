@@ -18,6 +18,7 @@
 #include "fission/core/id.h"
 #include "fission/core/measures.h"
 #include "fission/core/persistent_ref.h"
+#include "fission/core/sketch.h"
 
 namespace fission::core {
 
@@ -73,6 +74,8 @@ struct Feature {
     std::vector<BodyId> inputs;  ///< Bodies this step works on (made by earlier steps).
     std::vector<BodyId> outputs; ///< Bodies this step creates or changes.
     bool suppressed = false;
+    /// The elements of a sketch step (type `sketch`, ADR-0013); other steps have none.
+    std::optional<SketchData> sketch;
 
     bool operator==(const Feature&) const = default;
 };
@@ -147,7 +150,14 @@ struct FeatureDraft {
     std::map<std::string, std::string> texts;
     std::map<std::string, std::vector<PersistentRef>> refs;
     std::vector<BodyId> inputs;
-    int newBodies = 0; ///< How many new bodies the step creates.
+    int newBodies = 0;                ///< How many new bodies the step creates.
+    std::optional<SketchData> sketch; ///< For a `sketch` step.
+};
+
+/// A sketch element taken out, with the place it had (undo of removing it).
+struct RemovedSketchElement {
+    SketchElement element;
+    std::size_t index = 0;
 };
 
 /// A step taken out of the recipe, with everything needed to put it back exactly where it was
@@ -271,6 +281,25 @@ public:
     bool setFeatureSuppressed(const FeatureId& id, bool suppressed);
     bool setFeatureRefs(const FeatureId& id, std::string_view name,
                         std::vector<PersistentRef> refs);
+
+    // --- sketches (ADR-0013) -----------------------------------------------------------------
+    // These change the sketch of a `sketch` step; the commands call them. They return false (or
+    // nothing) when the step does not exist or has no sketch, the element does not exist, or the
+    // points are not usable (wrong number, not finite numbers).
+    /// Adds an element at the end and returns the id it got (the kind's counter counts up).
+    std::optional<std::string> addSketchElement(const FeatureId& id, SketchElementKind kind,
+                                                std::vector<SketchPoint> points,
+                                                bool construction = false);
+    /// Takes an element out. Its number stays used (the counter is not touched).
+    std::optional<RemovedSketchElement> takeSketchElement(const FeatureId& id,
+                                                          std::string_view elementId);
+    bool restoreSketchElement(const FeatureId& id, RemovedSketchElement removed);
+    /// Sets the counter of a kind of id (undo of adding an element gives its number back).
+    bool setSketchLastNumber(const FeatureId& id, SketchElementKind kind, int number);
+    /// Replaces the points of an element (same number of points unless the element is a spline).
+    bool setSketchPoints(const FeatureId& id, std::string_view elementId,
+                         std::vector<SketchPoint> points);
+    bool setSketchConstruction(const FeatureId& id, std::string_view elementId, bool construction);
 
     // --- the time marker ("jetzt", AP-1.9) -------------------------------------------------
     /// How many steps of the recipe count, or nullopt for all of them. The steps after the

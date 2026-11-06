@@ -1653,6 +1653,7 @@ Window {
         if (type === "draft") { return qsTr("Draft") }
         if (type === "place") { return qsTr("Placing") }
         if (type === "import") { return qsTr("Imported body") }
+        if (type === "sketch") { return qsTr("Sketch") }
         const name = shapeCatalog.nameOf(type)
         return name !== "" ? name : qsTr("Body")
     }

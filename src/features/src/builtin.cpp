@@ -25,6 +25,7 @@ std::unique_ptr<const core::FeatureType> makeTiltFaceType();
 std::unique_ptr<const core::FeatureType> makeShellType();
 std::unique_ptr<const core::FeatureType> makeDraftType();
 std::unique_ptr<const core::FeatureType> makeImportType();
+std::unique_ptr<const core::FeatureType> makeSketchType();
 } // namespace detail
 
 void registerBuiltinFeatures(core::FeatureRegistry& registry) {
@@ -45,6 +46,7 @@ void registerBuiltinFeatures(core::FeatureRegistry& registry) {
     registry.add(detail::makeShellType());
     registry.add(detail::makeDraftType());
     registry.add(detail::makeImportType());
+    registry.add(detail::makeSketchType());
 }
 
 } // namespace fission::features

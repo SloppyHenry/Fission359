@@ -125,8 +125,22 @@ struct FeatureOutput {
     geo::ElementHistory history = {};
 };
 
+/// What a sketch step leaves behind (ADR-0013). Curves and areas follow with the later parts of
+/// AP-2.1; for now the result is the plane and the elements, as the step has them.
+struct SketchResult {
+    /// Where the sketch lies. Empty when the plane is a face of a body (a reference): the face's
+    /// plane is worked out by the sketch mode (AP-2.1b), not here, and a sketch is never put on a
+    /// guessed plane (rule 6).
+    std::optional<SketchPlane> plane;
+    SketchData data;
+
+    bool operator==(const SketchResult&) const = default;
+};
+
 struct FeatureResult {
     std::vector<FeatureOutput> outputs;
+    /// Set by a sketch step, which makes no body.
+    std::optional<SketchResult> sketch = std::nullopt;
 };
 
 class FeatureType;
@@ -187,6 +201,10 @@ public:
 
     /// How many new bodies a new step of this type makes.
     virtual int newBodies() const { return 1; }
+
+    /// True for a type whose steps hold a sketch (`Feature::sketch`, ADR-0013): a new step then
+    /// starts with an empty one.
+    virtual bool carriesSketch() const { return false; }
 
     /// The values the step takes, with their defaults.
     virtual std::vector<ParamSpec> parameters() const = 0;

@@ -7,7 +7,7 @@
 ---
 
 ### AP-2.1 Skizzen-Modus: Zeichnen
-**Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-1.6, AP-1.10, AP-2.10 (Teile a–c)
+**Status:** in Arbeit (2.1a Datenmodell gebaut) · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-1.6, AP-1.10, AP-2.10 (Teile a–c)
 **Bauanleitung:** [anleitungen/AP-2.1.md](anleitungen/AP-2.1.md)
 
 **Umfang:**
@@ -20,6 +20,13 @@
 **Akzeptanzkriterien:**
 - [ ] Ein L-Profil mit Rundung lässt sich ohne Regel-Kenntnisse in < 1 min zeichnen
 - [ ] Bereichserkennung funktioniert bei überlappenden Kreisen und Rechtecken (Golden-Tests)
+
+**Vermerk 2026-11-06 (Teil 2.1a, Datenmodell und Befehle):**
+- Ergebnis: Schritt-Typ `sketch` (kein Körper) mit `Feature::sketch`; `SketchPlane` (`toWorld`/`toPlane`), Elemente Punkt, Linie, Kreis, Bogen, Spline mit stabilen Ids je Art
+  (`P1`, `L3`, `C2`, `A1`, `S1`); `RecomputeResult::sketches`; Befehle Element hinzufügen/entfernen, Punkte verschieben (ein Zug = ein Undo-Schritt), Hilfslinie an/aus; Dateiformat **3**
+  (Migration 1→2→3, Fixtures `v1/sketch.fission` und `v3/sketch.fission`); Rezept-Satz „Skizze“.
+- Festlegungen: [ADR-0013](../adr/0013-skizzen-im-dokument.md) und AP-2.1.md „Festlegungen (2026-11-06)“ (alle Elemente sind Punkte; Ebene aus einer Fläche rechnet erst 2.1b).
+- Offene Reste: Teile b–g (Oberfläche, Zeichnen, Fangen, Bereiche); Texte für „Letzte Aktionen“/Bearbeiten-Menü der neuen Befehle; Meldungstext für `kernelRejected` mit `basePlane`/`sketch` kommt mit 2.1b.
 
 ---
 

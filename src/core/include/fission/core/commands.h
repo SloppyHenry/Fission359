@@ -54,6 +54,58 @@ struct ImportedPart {
 std::unique_ptr<Command> makeImportFile(std::string fileName, Bytes bytes,
                                         std::vector<ImportedPart> parts);
 
+// --- sketches (ADR-0013) ------------------------------------------------------------------
+
+/// Adds an element to the sketch of a step. Description key `addSketchElement`, values `type`,
+/// `number` (of the step), `kind` ("line", ...) and `element` (the id it got, once applied).
+/// Refused when the step has no sketch or the points are not usable for the kind. Undoing it gives
+/// the number of the id back, so redo gives the same id.
+class AddSketchElementCommand final : public Command {
+public:
+    AddSketchElementCommand(FeatureId step, SketchElementKind kind, std::vector<SketchPoint> points,
+                            bool construction = false);
+
+    ApplyResult apply(Document& document) override;
+    void revert(Document& document) override;
+    CommandDescription describe() const override;
+
+    /// The id of the new element once the command was applied.
+    const std::optional<std::string>& result() const noexcept { return element_; }
+
+private:
+    FeatureId step_;
+    SketchElementKind kind_;
+    std::vector<SketchPoint> points_;
+    bool construction_;
+    std::optional<std::string> element_;
+    int numberBefore_ = 0;
+    CommandDescription description_;
+};
+
+/// Removes an element from the sketch of a step; its number is not given out again. Description
+/// key `removeSketchElement`, values `type`, `number`, `element`.
+std::unique_ptr<Command> makeRemoveSketchElement(FeatureId step, std::string element);
+
+/// The new points of one element (all of them, in order).
+struct SketchPointMove {
+    std::string element;
+    std::vector<SketchPoint> points;
+
+    bool operator==(const SketchPointMove&) const = default;
+};
+
+/// Moves the points of one or more elements to new places, as one step of the history. Inside a
+/// transaction, further moves of the same elements merge into it: a drag is one undo step.
+/// Refused when an element does not exist or a move changes the number of points of an element
+/// (only a spline takes more or fewer) or has non-finite numbers. Description key
+/// `moveSketchPoints`, values `type`, `number`, `element` (the first) and `count`.
+std::unique_ptr<Command> makeMoveSketchPoints(FeatureId step, std::vector<SketchPointMove> moves);
+
+/// Turns an element into an aid ("Hilfslinie") or back. Description key `sketchConstructionOn` /
+/// `sketchConstructionOff`, values `type`, `number`, `element`.
+std::unique_ptr<Command> makeSetSketchConstruction(FeatureId step, std::string element,
+                                                   bool construction);
+
 /// Removes a step and the bodies it made.
 std::unique_ptr<Command> makeRemoveFeature(FeatureId id);
 
