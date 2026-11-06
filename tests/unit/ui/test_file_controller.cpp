@@ -24,6 +24,7 @@
 #include "fission/ui/clipboard_payload.h"
 #include "fission/ui/document_model.h"
 #include "fission/ui/file_controller.h"
+#include "fission/ui/viewport_3d.h"
 
 using fission::ui::DocumentModel;
 using fission::ui::FileController;
@@ -533,4 +534,43 @@ TEST_CASE("every tab has its own rescue file after a crash", "[files]") {
     }
     RescueSession next(folder.path("r2.ini"), rescueFolder);
     CHECK(next.recovery.rescued().size() == 2);
+}
+
+TEST_CASE("every tab keeps its own camera", "[files][tabs]") {
+    application();
+    Session session(QStringLiteral("tabs_camera_unused"));
+    fission::ui::Viewport3D viewport;
+    session.files.attachViewport(&viewport);
+    const fission::render::CameraPose standard = viewport.defaultCameraPose();
+    REQUIRE(viewport.cameraPose() == standard);
+
+    // Tab 1: turn and zoom the view.
+    viewport.setCamera(70.0, 10.0, 123.0);
+    const fission::render::CameraPose changed = viewport.cameraPose();
+    REQUIRE_FALSE(changed == standard);
+
+    // A new tab starts with the standard view (the first one has work in it, so it stays).
+    REQUIRE(session.model.setBodyName(0, QStringLiteral("Eins")));
+    const auto steps = session.model.historyPosition();
+    REQUIRE(session.files.newDocument());
+    REQUIRE(session.files.currentTab() == 1);
+    CHECK(viewport.cameraPose() == standard);
+
+    // Tab 2 gets a view of its own, tab 1 comes back exactly as it was left.
+    viewport.setCamera(-100.0, 60.0, 50.0);
+    const fission::render::CameraPose second = viewport.cameraPose();
+    REQUIRE(session.files.switchTab(0));
+    CHECK(viewport.cameraPose() == changed);
+    REQUIRE(session.files.switchTab(1));
+    CHECK(viewport.cameraPose() == second);
+
+    // A closed tab forgets its camera: the next new tab starts with the standard view again.
+    REQUIRE(session.files.switchTab(0));
+    REQUIRE(session.files.closeTab(1));
+    CHECK(viewport.cameraPose() == changed);
+    REQUIRE(session.files.newDocument());
+    CHECK(viewport.cameraPose() == standard);
+    // Looking around is no step of the history.
+    REQUIRE(session.files.switchTab(0));
+    CHECK(session.model.historyPosition() == steps);
 }
