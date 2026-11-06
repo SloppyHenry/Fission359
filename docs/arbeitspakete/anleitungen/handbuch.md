@@ -1,7 +1,7 @@
 # Handbuch für Umsetzer
 
 Wie man in Fission359 die wiederkehrenden Dinge richtig macht. Jede Bauanleitung verweist hierher („Handbuch §n“).
-Stand: 2026-11-02 (nach AP-1.12 und den Pflege-Aufgaben T1–T11). Wenn der Code anders aussieht als hier beschrieben, gilt der Code; korrigiere dann dieses
+Stand: 2026-11-05 (autonomer Ausbau, Rollen in [orchestrierung.md](orchestrierung.md)). Wenn der Code anders aussieht als hier beschrieben, gilt der Code; korrigiere dann dieses
 Handbuch im selben PR.
 
 ---
@@ -36,9 +36,10 @@ Auf kleinen oder geteilten Rechnern: `FISSION_JOBS=2 nice -n 19 scripts/test`.
    automatisch (`.vcpkg`), das erste Konfigurieren dauert trotzdem einige Minuten.
 2. Ein Commit je Schritt der Anleitung. Nachricht englisch: `AP-1.6c2: Snap size handles on points of other bodies`.
    Am Ende jeder Commit-Nachricht die Zeile, die die Sitzung für Commits vorgibt (Co-Authored-By), falls vorhanden.
-3. Je Teilpaket **ein PR** gegen `main`, geöffnet am Sitzungsende nach dem Testlauf (§10). PR-Beschreibung (Deutsch, Alltagssprache): Was kann man jetzt? · So probierst du es aus
+3. Je Teilpaket **ein PR** gegen `main`, geöffnet von der Orchestrierung nach ihrer Prüfung (Umsetzer pushen nicht). PR-Beschreibung (Deutsch, Alltagssprache): Was kann man jetzt? · So probierst du es aus
    (3–6 Schritte, beginnend mit `scripts/run --release` **aus welchem Ordner**) · Wie getestet · Annahmen · Bekannte Einschränkungen.
-4. Gemergt wird erst, wenn die CI grün ist **und** der Maintainer es ausprobiert und freigegeben hat. Danach Arbeitskopie
+4. Gemergt wird, wenn die CI grün ist **und** die Orchestrierung den Diff gegen Akzeptanzkriterien und Definition of Done
+   geprüft hat. Bei gestapelten Branches erst den unteren mergen, dann den oberen auf `main` aktualisieren (Merge, kein Force-Push). Danach Arbeitskopie
    entfernen: `git -C <repo> worktree remove ../<repo>-<ap>` und `git -C <repo> branch -d <branch>`.
 
 ## §3 Wo was hingehört (Schichten)
@@ -51,7 +52,7 @@ Auf kleinen oder geteilten Rechnern: `FISSION_JOBS=2 nice -n 19 scripts/test`.
 | `src/geometry/mesh` | Manifold-/SDF-Umsetzung (ab Phase 4) | Manifold |
 | `src/geometry/sketch` | PlaneGCS-Anbindung (ab AP-2.2) | PlaneGCS, Eigen |
 | `src/features` | Feature-Typen (Box, Zylinder, …, später Extrude, Fillet) | core, GAL |
-| `src/io` | Dateiformate (`.fission`, 3MF, STL, STEP) | core, GAL, lib3mf, minizip, json |
+| `src/io` | Dateiformate (`.fission` mit `assets/`, 3MF, STL, OBJ, SVG, DXF; STEP/IGES liest und schreibt der Kernel über die GAL) | core, GAL, lib3mf, minizip, json |
 | `src/analysis` | Messen, Druckcheck | core, GAL |
 | `src/interaction` | reine Zieh-/Fang-Mathematik ohne Fenster (`drag.h`, `snap.h`) | core, GAL, render |
 | `src/render` | RHI-Renderer, Picking, Kamera, Griff-Grafik | core, GAL, Qt Gui |
@@ -101,8 +102,9 @@ Regel 3: Die Oberfläche ändert das Dokument **nur** über `core::History::exec
    (mm, Grad), welche Flächen-Rollen das Ergebnis hat, welche `GeometryError`-Codes sie wirft. Nur GAL-Typen in der Signatur.
 2. Umsetzung in `src/geometry/occt/src/` (neue Datei oder `solids.cpp`), eingehängt in `occt/src/kernel.cpp`. Jedes Ergebnis mit
    `BRepCheck_Analyzer` prüfen (Hilfen in `occt_build.h`); ungültig → `GeometryError(kernelResultInvalid)`, nie durchreichen.
-3. Fehlt ein OCCT-Modul (z. B. `TKOffset`, `TKFillet` stecken in `ModelingAlgorithms` und sind schon gelinkt; `DataExchange` für
-   STEP nicht): in `src/geometry/occt/CMakeLists.txt` ergänzen, nicht global.
+3. Fehlt ein OCCT-Modul (z. B. `TKOffset`, `TKFillet` stecken in `ModelingAlgorithms` und sind schon gelinkt; für STEP/IGES sind seit AP-2.13
+   `TKDESTEP TKDEIGES TKXCAF TKXSBase TKDE` gelinkt): in `src/geometry/occt/CMakeLists.txt` ergänzen, nicht global, und nur die Module, die gebraucht
+   werden (Paketgröße im PR nennen).
 4. Golden-Tests in `tests/unit/geometry/` (§10). Der Kern muss mehrere Aufrufe gleichzeitig vertragen (keine statischen Variablen).
 
 ## §7 Rezept: Oberfläche (QML) und Controller
@@ -159,14 +161,14 @@ Bild für den PR: `build/<preset>/window-<name>.png`, oder manuell
 
 ## §10 Tests
 
-**Wann Tests laufen (Festlegung 2026-11-02):**
-- **Während der Sitzung** keine Testläufe nach einzelnen Änderungen, weder Unit- noch Fenster-Tests. Gebaut wird weiter nach jedem Schritt.
-  Einzige Ausnahme: Ein Unit-Test wird gezielt gestartet, um einen konkreten Fehler zu finden oder seine Behebung zu belegen.
-- **Am Ende der Arbeitssitzung:** `scripts/test --release` komplett, im Hintergrund (Fenster-Tests öffnen auf dem Mac Fenster). Fehler beheben, Ergebnis berichten, dann erst Branches pushen und PRs öffnen.
-- **Neue Tests gehören weiter zu jeder Änderung** und entstehen sofort mit: neue Funktion oder Werkzeug → Unit-, Golden- und Fenster-Tests wie unten. Sie laufen dann im
-  nächsten Gesamtlauf. „Test vor dem Code“ heißt jetzt: den Test zuerst schreiben, nicht einzeln starten.
-- Die CI läuft unverändert bei jedem PR und bleibt Bedingung fürs Mergen. Ablauf D wird nie abgeschwächt.
-
+**Wann Tests laufen (Festlegung 2026-11-05, ersetzt 2026-11-02):**
+- **Unit-Tests** (Catch2, ohne Fenster) laufen beim Umsetzer nach jedem Schritt: mindestens die betroffenen Tags, vor dem
+  Bericht einmal alle (`ctest --preset macos-release -E '^app_'`).
+- **Fenster-Tests** (`app_*`) öffnen auf dem Mac echte Fenster und laufen dort **nicht** lokal. Sie laufen in der CI (macOS und
+  Linux mit Xvfb) oder auf einem Linux-Testrechner unter Xvfb (`docs/testumgebung.md`). Lokal auf dem Mac nur gezielt einen
+  einzelnen, um einen roten CI-Fall zu verstehen, im Hintergrund.
+- **Die CI ist der Richter:** Ein PR wird erst gemergt, wenn alle Checks grün sind. Ablauf D wird nie abgeschwächt.
+- **Neue Tests gehören zu jeder Änderung** und entstehen sofort mit: neue Funktion oder Werkzeug → Unit-, Golden- und Fenster-Tests wie unten.
 
 - **Unit-Tests** (Catch2) in `tests/unit/<schicht>/test_<thema>.cpp`, Tags in eckigen Klammern (`[snap]`). Testnamen sind Sätze,
   die das Verhalten beschreiben: `"snap: a size handle catches on the face of another box"`.
@@ -183,8 +185,8 @@ Bild für den PR: `build/<preset>/window-<name>.png`, oder manuell
 
 ## §11 Wo Entscheidungen hingehören
 
-- Neue Abhängigkeit, neues Muster, Abweichung von der Architektur → ADR in `docs/adr/` (Vorlage `0000-vorlage.md`), vorher Haltepunkt.
-- Entscheidung des Maintainers → Festlegungen in der Phasendatei und ggf. `docs/06-rueckfragen.md`.
+- Neue Abhängigkeit, neues Muster, Abweichung von der Architektur → ADR in `docs/adr/` (Vorlage `0000-vorlage.md`), entschieden von der Orchestrierung.
+- Entschiedener Haltepunkt → Festlegungen in der Anleitung und der Phasendatei, über das AP hinaus geltend auch `docs/06-rueckfragen.md`.
 - Gestaltung → `docs/08-gestaltung.md` (bei Abweichung vom Mockup dort vermerken).
 
 ## §12 Stolperfallen (gesammelt)

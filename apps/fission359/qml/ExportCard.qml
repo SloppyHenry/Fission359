@@ -11,9 +11,12 @@ Float {
     id: root
 
     property bool anyChosen: false
+    property bool faceChosen: false
     property string format: "3mf"
     property string quality: "normal"
     property bool onlyChosen: false
+
+    readonly property bool isOutline: format === "svg" || format === "dxf"
 
     signal exportRequested(string format, string quality, bool onlyChosen)
     signal closeRequested
@@ -44,16 +47,54 @@ Float {
         Segmented {
             accessibleName: qsTr("File type")
             current: root.format
-            model: [{ value: "3mf", text: qsTr("3MF (colours, for slicers)") }, { value: "stl", text: "STL" }]
+            model: [{ value: "3mf", text: "3MF" }, { value: "stl", text: "STL" }, { value: "obj", text: "OBJ" }, { value: "step", text: "STEP" }]
             onActivated: value => root.format = value
         }
 
         Txt {
+            visible: !root.isOutline
+            width: parent.width
+            text: root.format === "3mf" ? qsTr("Shape and colours, for slicers.")
+                : root.format === "stl" ? qsTr("Shape only. Every program can read it.")
+                : root.format === "obj" ? qsTr("Shape and colours, for 3D programs. The colours go into a second file.")
+                : qsTr("The exact shape with names and colours, for other CAD programs.")
+            color: Theme.fg3
+            font.pixelSize: Theme.fontSizeSmall
+            wrapMode: Text.WordWrap
+            elide: Text.ElideNone
+        }
+
+        Txt {
+            text: qsTr("Outline for a laser cutter")
+            font.pixelSize: Theme.fontSizeSmall
+        }
+
+        Segmented {
+            visible: root.faceChosen
+            accessibleName: qsTr("Outline for a laser cutter")
+            current: root.format
+            model: [{ value: "svg", text: "SVG" }, { value: "dxf", text: "DXF" }]
+            onActivated: value => root.format = value
+        }
+
+        Txt {
+            width: parent.width
+            text: root.faceChosen ? qsTr("The edges of the chosen face, as seen from outside.")
+                                  : qsTr("Choose a flat face to export its outline.")
+            color: Theme.fg3
+            font.pixelSize: Theme.fontSizeSmall
+            wrapMode: Text.WordWrap
+            elide: Text.ElideNone
+        }
+
+        Txt {
+            visible: !root.isOutline && root.format !== "step"
             text: qsTr("Quality")
             font.pixelSize: Theme.fontSizeSmall
         }
 
         Segmented {
+            visible: !root.isOutline && root.format !== "step"
             accessibleName: qsTr("Quality")
             current: root.quality
             model: [{ value: "coarse", text: qsTr("Coarse") }, { value: "normal", text: qsTr("Normal") }, { value: "fine", text: qsTr("Fine") }]
@@ -62,7 +103,7 @@ Float {
 
         // "Coarse" lets curves deviate by up to 0.05 mm (rule 12 asks 0.01 mm of the others).
         Txt {
-            visible: root.quality === "coarse"
+            visible: root.quality === "coarse" && !root.isOutline && root.format !== "step"
             width: parent.width
             text: qsTr("Curves can be angular.")
             color: Theme.fg3
@@ -72,6 +113,7 @@ Float {
         }
 
         Toggle {
+            visible: !root.isOutline
             enabled: root.anyChosen
             text: qsTr("Only chosen bodies")
             checked: root.onlyChosen && root.anyChosen

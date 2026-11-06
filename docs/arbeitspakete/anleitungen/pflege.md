@@ -5,7 +5,7 @@ Stand: 2026-11-03, gegen den Code auf `main` geprüft.
 
 ## Reihenfolge
 **Nach Bedarf**, der Nutzertest 1 (AP-1.13) kann die Reihenfolge ändern. P18, P2 und P3 sind vor dem Nutzertest erledigt worden.
-**Braucht eine Entscheidung oder ein Testsystem:** P1 (Bild oder Video), P5, P8, P10, P11, P14 (Entscheidung oder Rechner).
+**Braucht eine Entscheidung (trifft die Orchestrierung) oder ein Testsystem:** P1 (Bild oder Video), P5, P8, P10, P11, P14 (Entscheidung oder Rechner).
 
 ---
 

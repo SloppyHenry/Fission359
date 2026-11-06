@@ -19,11 +19,28 @@ Build functional parts and decorations, mainly for FDM 3D printing. No browser, 
 **Status:** early alpha (phase 1: place, size, move, rotate and combine shapes, text, save, 3MF/STL export).
 Roadmap: [docs/04-roadmap.md](docs/04-roadmap.md) (German).
 
-## Try it
+## Install
 
-Download the latest build from [Releases](https://github.com/SloppyHenry/Fission359/releases): `.dmg` for macOS, `.AppImage`
-or `.flatpak` for Linux (Ubuntu 24.04 or newer). The builds are unsigned, so macOS asks once for permission:
-see [docs/paketierung.md](docs/paketierung.md).
+One command in the Terminal, on macOS (Apple Silicon) and Linux (x86_64, Ubuntu 24.04 or newer):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/SloppyHenry/Fission359/main/scripts/install.sh | bash
+```
+
+It downloads the newest release and installs it: on macOS into *Applications*, on Linux into your home folder with a menu
+entry and the command `fission359` (no `sudo` needed). Run the same command again to update.
+
+**Uninstall:**
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/SloppyHenry/Fission359/main/scripts/install.sh | bash -s -- --uninstall
+```
+
+This removes the program and its menu entry; your projects (`.fission` files) and settings stay.
+
+Prefer to install by hand? Download the `.dmg` (macOS), `.AppImage` or `.flatpak` (Linux) from
+[Releases](https://github.com/SloppyHenry/Fission359/releases). These downloads are unsigned, so macOS asks once for
+permission: see [docs/paketierung.md](docs/paketierung.md).
 
 ## Build from source
 

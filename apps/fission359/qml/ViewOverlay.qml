@@ -23,6 +23,8 @@ Item {
     }
     property string filter: "all"          // what can be chosen: all | body | face | edge | vertex
     property string flyout: ""             // the open tool group: "" or "shapes"
+    property bool measuring: false         // the tool "Measure" is on
+    signal measureRequested()
     signal flyoutCloseRequested
     /// More than one body is chosen: the ways to combine can be used.
     property int chosenCount: 0
@@ -387,6 +389,21 @@ Item {
             return Math.max(60, Math.min(wanted, root.height - height - 12))
         }
         onWayChosen: way => root.combineRequested(way)
+    }
+
+    // --- the tools of "Check", next to their button in the palette ---------------------------------
+    CheckFlyout {
+        id: checkFlyout
+
+        visible: root.flyout === "check"
+        measuring: root.measuring
+        onMeasureToggled: root.measureRequested()
+        x: palette.x + palette.width + 10
+        y: {
+            const button = groupRepeater.itemAt(6)
+            const wanted = button ? button.mapToItem(root, 0, 0).y - 6 : 60
+            return Math.max(60, Math.min(wanted, root.height - height - 12))
+        }
     }
 
     // --- view cube and buttons (top right) -------------------------------------------------

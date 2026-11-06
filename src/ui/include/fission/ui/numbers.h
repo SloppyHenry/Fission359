@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QVariantMap>
 
 #include "fission/core/expression.h"
@@ -22,6 +23,13 @@ public:
     /// The named measures of the document that formulas may use (millimetres). Set by the
     /// document model whenever they change.
     void setNamedMeasures(core::NamedMeasures measures) { m_measures = std::move(measures); }
+    /// The names of all named measures, for the completion in the fields.
+    void setMeasureNames(const QStringList& names) { m_measureNames = names; }
+    /// The measures a number field offers when `typed` (the word at the cursor) was begun
+    /// (AP-2.9): names that start with it first, then names that contain it, each group sorted;
+    /// case and umlauts do not matter. Nothing for an empty word, and a name that is typed out
+    /// completely is not offered again.
+    Q_INVOKABLE QStringList completions(const QString& typed) const;
 
     /// Value of what was typed in; kind is "length" (result in mm), "angle" or "plain".
     /// Returns NaN when the text is not a valid expression.
@@ -48,6 +56,7 @@ public:
 
 private:
     core::NamedMeasures m_measures;
+    QStringList m_measureNames;
     int m_maxDecimals = 4;
 };
 

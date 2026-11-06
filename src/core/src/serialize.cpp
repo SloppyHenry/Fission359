@@ -429,6 +429,21 @@ Parameter parameterFrom(const Json& json, const std::string& path, Problems& pro
     parameter.expression = reader.text("expression");
     parameter.kind = reader.word("kind", quantityWords);
     parameter.comment = reader.text("comment");
+    const Json& slider = reader.field("slider"); // null: no slider
+    if (slider.is_object()) {
+        ObjectReader range(slider, reader.path("slider"), problems);
+        SliderRange parsed;
+        parsed.min = range.number("min");
+        parsed.max = range.number("max");
+        parsed.step = range.number("step");
+        range.finish();
+        if (!parsed.valid()) {
+            fail(LoadProblemCode::wrongType, reader.path("slider"));
+        }
+        parameter.slider = parsed;
+    } else if (!slider.is_null()) {
+        fail(LoadProblemCode::wrongType, reader.path("slider"));
+    }
     reader.finish();
     return parameter;
 }
@@ -567,7 +582,11 @@ std::string toJson(const Document& document) {
         parameters.push_back({{"name", parameter.name},
                               {"expression", parameter.expression},
                               {"kind", wordOf(quantityWords, parameter.kind)},
-                              {"comment", parameter.comment}});
+                              {"comment", parameter.comment},
+                              {"slider", parameter.slider ? Json({{"min", parameter.slider->min},
+                                                                  {"max", parameter.slider->max},
+                                                                  {"step", parameter.slider->step}})
+                                                          : Json(nullptr)}});
     }
     Json features = Json::array();
     for (const Feature& feature : document.features()) {
@@ -596,7 +615,19 @@ std::string toJson(const Document& document) {
 }
 
 LoadResult fromJson(std::string_view text) {
-    static const MigrationTable builtIn; // empty while the format is at version 1
+    // Version 1 -> 2 (AP-2.9): every measure gets the field `slider`, empty.
+    static const MigrationTable builtIn = {{1, [](Json& root) {
+                                                const auto found = root.find("parameters");
+                                                if (found == root.end() || !found->is_array()) {
+                                                    return;
+                                                }
+                                                for (Json& parameter : *found) {
+                                                    if (parameter.is_object() &&
+                                                        !parameter.contains("slider")) {
+                                                        parameter["slider"] = nullptr;
+                                                    }
+                                                }
+                                            }}};
     return read(text, builtIn, currentFormatVersion);
 }
 

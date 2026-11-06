@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import QtQuick.Controls.Basic
 import Fission359.Ui
 
 // The one number field of the program (master prompt, rule 2): typing replaces the value,
@@ -28,6 +29,15 @@ Item {
     signal textCommitted(string text) // what was typed, when it differs from what was shown
     signal dragStarted()
     signal dragFinished(bool accepted)
+    // "Save as named measure" (right click): empty = the field offers none. The name is what the
+    // new measure is called at first (the label of the field).
+    property string saveName: ""
+    signal saveAsMeasureRequested(string suggestedName)
+    // The named measures that fit the word at the cursor (Numbers.completions), shown under the
+    // field; the arrow keys choose, Tab or Enter take the chosen one.
+    property var completions: []
+    property int completionIndex: -1
+    property int wordStart: 0
 
     implicitWidth: 96
     implicitHeight: column.implicitHeight
@@ -172,6 +182,10 @@ Item {
                     }
                     onAccepted: root.commit()
                     Keys.onEscapePressed: {
+                        if (root.completions.length > 0) {
+                            root.closeCompletions() // the list first, then the field
+                            return
+                        }
                         root.invalid = false
                         root.errorInfo = ({})
                         root.refresh()
@@ -181,7 +195,9 @@ Item {
                         root.invalid = false
                         root.errorInfo = ({})
                         pendingEdit = true
+                        root.updateCompletions()
                     }
+                    onCursorPositionChanged: if (!pendingEdit) root.closeCompletions()
                     // Option+arrow and Cmd+arrow are cursor moves of a text field (to the end of
                     // the line): claim them, or the field never sees the key.
                     Keys.onShortcutOverride: event => {
@@ -190,7 +206,19 @@ Item {
                         }
                     }
                     Keys.onPressed: event => {
-                        if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                        const shown = Math.min(root.completions.length, 6)
+                        if (shown > 0 && (event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
+                            const next = root.completionIndex + (event.key === Qt.Key_Down ? 1 : -1)
+                            root.completionIndex = (next + shown) % shown
+                            event.accepted = true
+                        } else if (shown > 0 && event.key === Qt.Key_Tab) {
+                            root.acceptCompletion(root.completionIndex >= 0 ? root.completionIndex : 0)
+                            event.accepted = true
+                        } else if (shown > 0 && root.completionIndex >= 0
+                                   && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
+                            root.acceptCompletion(root.completionIndex)
+                            event.accepted = true
+                        } else if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
                             root.step(event.key === Qt.Key_Up ? 1 : -1, event.modifiers)
                             event.accepted = true
                         }
@@ -241,6 +269,149 @@ Item {
         height: 2
         radius: 1
         color: Theme.bad
+    }
+
+    // --- named measures: completion and "save as" -----------------------------------------
+
+    function isLetter(c) {
+        return c === "_" || c.toLowerCase() !== c.toUpperCase() || c.charCodeAt(0) > 127
+    }
+
+    function isNameChar(c) {
+        return isLetter(c) || (c >= "0" && c <= "9")
+    }
+
+    // The name being typed at the cursor, or "".
+    function wordAtCursor() {
+        let start = input.cursorPosition
+        while (start > 0 && isNameChar(input.text.charAt(start - 1))) {
+            --start
+        }
+        const word = input.text.substring(start, input.cursorPosition)
+        root.wordStart = start
+        return word !== "" && isLetter(word.charAt(0)) ? word : ""
+    }
+
+    function updateCompletions() {
+        const word = root.readOnly ? "" : wordAtCursor()
+        root.completions = word === "" ? [] : Numbers.completions(word)
+        root.completionIndex = -1
+    }
+
+    function closeCompletions() {
+        root.completions = []
+        root.completionIndex = -1
+    }
+
+    // Puts the chosen name in place of the word typed so far.
+    function acceptCompletion(index) {
+        if (index < 0 || index >= root.completions.length) {
+            return false
+        }
+        const name = root.completions[index]
+        const end = input.cursorPosition
+        input.text = input.text.substring(0, root.wordStart) + name + input.text.substring(end)
+        input.cursorPosition = root.wordStart + name.length
+        input.pendingEdit = true
+        closeCompletions()
+        return true
+    }
+
+    Popup {
+        id: saveMenu
+
+        padding: 4
+        width: 220
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle {
+            radius: Theme.radiusFloat
+            color: Theme.raise
+            border.width: 1
+            border.color: Theme.line2
+        }
+        contentItem: AbstractButton {
+            id: saveEntry
+
+            implicitHeight: 30
+            hoverEnabled: true
+            Accessible.name: qsTr("Save as named measure")
+            onClicked: {
+                saveMenu.close()
+                root.saveAsMeasureRequested(root.saveName)
+            }
+            background: Rectangle {
+                radius: 5
+                color: saveEntry.hovered ? Theme.field : "transparent"
+            }
+            contentItem: Txt {
+                leftPadding: 8
+                verticalAlignment: Text.AlignVCenter
+                text: qsTr("Save as named measure")
+                color: Theme.fg
+            }
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        enabled: root.saveName !== "" && !root.readOnly
+        onClicked: mouse => saveMenu.popup(mouse.x, mouse.y)
+    }
+
+    Rectangle {
+        id: completionList
+
+        visible: root.completions.length > 0 && input.activeFocus
+        x: box.x
+        y: input.mapToItem(root, 0, 0).y + box.height
+        width: box.width
+        height: listColumn.implicitHeight + 8
+        radius: Theme.radius
+        color: Theme.raise
+        border.width: 1
+        border.color: Theme.line2
+        z: 10
+
+        Column {
+            id: listColumn
+
+            x: 4
+            y: 4
+            width: parent.width - 8
+
+            Repeater {
+                model: root.completions.slice(0, 6)
+
+                delegate: Rectangle {
+                    id: choice
+
+                    required property string modelData
+                    required property int index
+
+                    width: parent.width
+                    height: 26
+                    radius: 4
+                    color: root.completionIndex === index ? Theme.field : "transparent"
+
+                    Txt {
+                        anchors.verticalCenter: parent.verticalCenter
+                        x: 8
+                        text: choice.modelData
+                        mono: true
+                        color: Theme.fg
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onPressed: mouse => {
+                            root.acceptCompletion(choice.index)
+                            mouse.accepted = true
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // --- arrow keys -----------------------------------------------------------------------

@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -20,6 +21,12 @@
 
 namespace fission::core {
 
+using Bytes = std::vector<std::uint8_t>;
+
+/// Files embedded in the project (an imported STEP file, later fonts and images), by name. The
+/// content never changes under a name; copies of a document share it.
+using AssetMap = std::map<std::string, std::shared_ptr<const Bytes>>;
+
 /// A number as the person typed it. The calculated value is not stored here: it is the result
 /// of a recompute and depends on the named measures at that moment.
 struct Value {
@@ -29,12 +36,25 @@ struct Value {
     bool operator==(const Value&) const = default;
 };
 
+/// The range of the slider that turns a model into a configurator (AP-2.9).
+struct SliderRange {
+    double min = 0.0;
+    double max = 100.0;
+    double step = 1.0;
+
+    /// min < max, step > 0, all finite.
+    bool valid() const;
+    bool operator==(const SliderRange&) const = default;
+};
+
 /// A named measure (benanntes Maß).
 struct Parameter {
     std::string name;
     std::string expression;
     QuantityKind kind = QuantityKind::length;
     std::string comment;
+    /// Set when the measure is a slider in the configurator view.
+    std::optional<SliderRange> slider = std::nullopt;
 
     bool operator==(const Parameter&) const = default;
 };
@@ -115,6 +135,7 @@ struct DocumentParts {
     std::vector<Body> bodies;
     int lastFeatureNumber = 0;
     std::optional<std::size_t> rollback;
+    AssetMap assets;
 };
 
 /// A new step, before the document gave it an id and a number.
@@ -190,6 +211,27 @@ public:
     /// Puts a measure back at a given place (undo of removing it).
     void insertParameter(std::size_t index, Parameter parameter);
     std::vector<MeasureDefinition> measureDefinitions() const;
+    /// Changes the comment of the measure at a position.
+    bool setParameterCommentAt(std::size_t index, std::string comment);
+    /// Sets or takes away the slider of the measure at a position.
+    bool setParameterSliderAt(std::size_t index, std::optional<SliderRange> slider);
+    /// The steps (by number in the recipe, 0-based) and the other measures (by position) whose
+    /// formulas use the measure `name`.
+    struct MeasureUse {
+        std::vector<std::size_t> steps;
+        std::vector<std::size_t> measures;
+    };
+    MeasureUse usesOfParameter(std::string_view name) const;
+    /// Rewrites every formula of steps and measures that uses `oldName` to use `newName`; returns
+    /// what was rewritten, to undo it with `restoreFormulas`.
+    struct FormulaEdit {
+        bool inMeasure = false;
+        std::size_t index = 0; ///< Position of the step or of the measure.
+        std::string field;     ///< The value of a step.
+        std::string before;
+    };
+    std::vector<FormulaEdit> renameInFormulas(std::string_view oldName, std::string_view newName);
+    void restoreFormulas(const std::vector<FormulaEdit>& edits);
 
     // --- recipe --------------------------------------------------------------------------
     const std::vector<Feature>& features() const noexcept { return features_; }
@@ -238,6 +280,18 @@ public:
     /// Moves the marker; `count` at or beyond the end of the recipe means "all".
     bool setRollback(std::optional<std::size_t> count);
 
+    // --- embedded files ------------------------------------------------------------------
+    const AssetMap& assets() const noexcept { return assets_; }
+    /// Embeds a file and returns the name it got: `preferredName` made safe (a plain file name),
+    /// and numbered ("part-2.step") when the name is taken.
+    std::string addAsset(std::string preferredName, Bytes bytes);
+    /// Puts a file back under exactly this name (undo and redo, opening a file). False when the
+    /// name is taken by other content.
+    bool putAsset(const std::string& name, std::shared_ptr<const Bytes> content);
+    bool removeAsset(const std::string& name);
+    /// The files some step still names (`texts["asset"]`); the others are not saved.
+    std::vector<std::string> usedAssetNames() const;
+
     // --- bodies --------------------------------------------------------------------------
     const std::vector<Body>& bodies() const noexcept { return bodies_; }
     const Body* findBody(const BodyId& id) const;
@@ -258,6 +312,7 @@ private:
     std::vector<Body> bodies_;
     int lastFeatureNumber_ = 0;
     std::optional<std::size_t> rollback_;
+    AssetMap assets_;
     std::uint64_t revision_ = 0;
     IdSource ids_;
 };

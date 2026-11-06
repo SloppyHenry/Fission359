@@ -133,6 +133,10 @@ FeatureIssue issueFromKernelCode(const geo::GeometryError& error) {
         return issueOf(FeatureIssueCode::combineEmpty, {}, error.what());
     case geo::GeometryErrorCode::noOverlap:
         return issueOf(FeatureIssueCode::combineNoOverlap, {}, error.what());
+    case geo::GeometryErrorCode::importUnreadable:
+        return issueOf(FeatureIssueCode::importFileUnreadable, {}, error.what());
+    case geo::GeometryErrorCode::importEmpty:
+        return issueOf(FeatureIssueCode::importFileEmpty, {}, error.what());
     case geo::GeometryErrorCode::kernelFailure:
         break;
     }
@@ -467,7 +471,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         } else {
             std::vector<Output> outputs;
             try {
-                const ExecuteContext context{kernel, cancel};
+                const ExecuteContext context{kernel, cancel, &document.assets()};
                 FeatureResult made = type->execute(
                     {feature, state.params, inputs, std::move(producers), resolvedRefs}, context);
                 if (cancel.stop_requested()) {

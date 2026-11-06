@@ -38,4 +38,12 @@ bool exportStl(const std::vector<MeshForExport>& bodies, const std::filesystem::
 /// False when it could not be written.
 bool export3mf(const std::vector<MeshForExport>& bodies, const std::filesystem::path& path);
 
+/// Writes a Wavefront OBJ file (and the colours as `<name>.mtl` next to it): one object per
+/// body with its name, in millimetres, shared corners merged, counter-clockwise triangles seen
+/// from outside. Both files are written atomically. False when they could not be written.
+bool exportObj(const std::vector<MeshForExport>& bodies, const std::filesystem::path& path);
+
+/// Writes STEP text made by `GeometryKernel::exportStep` into a file, atomically.
+bool writeTextFile(const std::string& text, const std::filesystem::path& path);
+
 } // namespace fission::io
