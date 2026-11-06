@@ -325,6 +325,38 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;expectsketch:picking;click:366,341;expectsketch:active;expectsketchplane:face;recipe:box,sketch;menu:sketchdone;expectsketch:idle;recipe:box")
   set_tests_properties(app_sketch_face PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.1c1: a rectangle in a sketch on the ground: tool chosen by a word of the command search,
+  # first corner clicked, width and height typed, Enter sets four lines (one undo step); Done keeps
+  # the sketch with its lines in the recipe.
+  add_test(NAME app_sketch_rectangle
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-rectangle.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:Viereck,sketch.rectangle;search:Strich,sketch.line;search:Hilfslinie,sketch.helper;search:Markierung,sketch.point;menu:sketchtool.rectangle;expectsketchtool:rectangle;sketchmove:520,330;sketchclick:520,330;sketchmove:700,420;type:40,tab,25,enter;expectsketchelements:line=4;expectsketchsize:40,25;expectundo:addSketchElement;menu:undo;expectsketchelements:;menu:redo;expectsketchelements:line=4;menu:sketchdone;expectsketch:idle;recipe:box,sketch;menu:undo;expectsketchelements:")
+  set_tests_properties(app_sketch_rectangle PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.1c1: a chain of lines ended by a double click, a circle with a typed radius, and Esc ends
+  # the tool first and the sketch second.
+  add_test(NAME app_sketch_line_circle
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-line-circle.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;expectsketchtool:line;sketchmove:400,300;sketchclick:400,300;sketchclick:600,300;sketchdouble:600,450;expectsketchelements:line=2;menu:sketchtool.circle;sketchmove:800,350;sketchclick:800,350;sketchmove:850,350;type:12.5,enter;expectsketchelements:line=2,circle=1;expectsketchtool:circle;key:Escape;expectsketchtool:;expectsketch:active;key:Escape;expectsketch:idle;recipe:box,sketch")
+  set_tests_properties(app_sketch_line_circle PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.1c1: the helper line switch makes dashed aids, the next line is a normal one again.
+  add_test(NAME app_sketch_helper_line
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-helper.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.helper;menu:sketchtool.line;sketchmove:400,300;sketchclick:400,300;sketchclick:600,300;expectsketchelements:line=1,helper=1;menu:sketchtool.helper;sketchclick:600,450;expectsketchelements:line=2,helper=1;menu:sketchtool.point;sketchclick:300,200;expectsketchelements:line=2,point=1,helper=1")
+  set_tests_properties(app_sketch_helper_line PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.1c1 decision 17: with a drawing tool on, a digit opens the number field (it is not the
+  # view "front" of the key 1); Esc closes the field, the element goes on.
+  add_test(NAME app_sketch_digits
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-digits.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;sketchmove:400,300;sketchclick:400,300;sketchmove:500,300;key:1;expectsketchtyping:yes;key:Escape;expectsketchtyping:no;expectsketchtool:line;expectsketchelements:")
+  set_tests_properties(app_sketch_digits PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-1.7e: one body is split through the menu Body: the cut, and one placing step per part.
   add_test(NAME app_split_menu
     COMMAND ${_fission_gui_runner} ${_fission_app_exe}

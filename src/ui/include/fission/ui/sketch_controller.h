@@ -9,11 +9,13 @@
 #include <QString>
 #include <QVariantMap>
 
+#include <array>
 #include <optional>
 #include <vector>
 
 #include "fission/core/sketch.h"
 #include "fission/interaction/sketch_snap.h"
+#include "fission/interaction/sketch_tool.h"
 #include "fission/render/camera.h"
 
 namespace fission::ui {
@@ -29,7 +31,8 @@ class Viewport3D;
 ///    sketch step on it. A click on a curved face makes no step and says why (`notice`).
 ///  - In the sketch: the view looks squarely at the plane, the other bodies are pale, a grid lies
 ///    on the plane and the pointer catches on the sketch (a marker shows where). The drawing
-///    tools come with AP-2.1c.
+///    tools (AP-2.1c1: line, rectangle, circle, point, helper line) are `chooseTool`; the logic of
+///    each is `interaction::SketchTool`, this class wires it to the view and the document.
 ///  - `finish()` (the button "Done", Esc): an empty sketch is removed again (a normal command), the
 ///    view returns to where it was.
 /// The controller changes the document only through `DocumentModel` (commands).
@@ -41,8 +44,22 @@ class SketchController : public QObject {
     Q_PROPERTY(bool active READ active NOTIFY stateChanged)
     /// Picking or in a sketch: Esc, the hint line and the view belong to the sketch mode.
     Q_PROPERTY(bool engaged READ engaged NOTIFY stateChanged)
-    /// A drawing tool is on (none yet: AP-2.1c); Esc ends it before it ends the sketch.
-    Q_PROPERTY(bool toolActive READ toolActive NOTIFY stateChanged)
+    /// A drawing tool is on; Esc ends it before it ends the sketch.
+    Q_PROPERTY(bool toolActive READ toolActive NOTIFY toolChanged)
+    /// The tool: "" (none), "line", "rectangle", "circle" or "point"; and its variant (rectangle:
+    /// 0 two corners, 1 middle and corner; circle: 0 middle and radius, 1 three points).
+    Q_PROPERTY(QString tool READ toolName NOTIFY toolChanged)
+    Q_PROPERTY(int toolVariant READ toolVariant NOTIFY toolChanged)
+    /// The switch "Helper line": what is drawn is an aid (dashed). Alt does the same while held.
+    Q_PROPERTY(bool helperLine READ helperLine WRITE setHelperLine NOTIFY toolChanged)
+    /// An element is being pulled (the first click was made).
+    Q_PROPERTY(bool drawing READ drawing NOTIFY draftChanged)
+    /// How many clicks of the element being pulled are made (0 when none): the hint line.
+    Q_PROPERTY(int placed READ placed NOTIFY draftChanged)
+    /// The numbers of the element being pulled: { valid, x, y (item pixels, where they belong),
+    /// fields: [{ name, value, typed }] } with the names "length", "angle", "width", "height",
+    /// "radius"; just { valid: false } when nothing is pulled.
+    Q_PROPERTY(QVariantMap readout READ readout NOTIFY draftChanged)
     /// The plane of the sketch is known, grid and catching work.
     Q_PROPERTY(bool planeReady READ planeReady NOTIFY stateChanged)
     /// The id of the step being sketched in, empty when none.
@@ -57,6 +74,7 @@ class SketchController : public QObject {
     Q_PROPERTY(QColor elementColour MEMBER m_elementColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor guideColour MEMBER m_guideColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor markerColour MEMBER m_markerColour NOTIFY coloursChanged)
+    Q_PROPERTY(QColor draftColour MEMBER m_draftColour NOTIFY coloursChanged)
 
 public:
     SketchController(DocumentModel* model, SelectionController* selection,
@@ -67,7 +85,16 @@ public:
     bool picking() const noexcept { return m_mode == Mode::picking; }
     bool active() const noexcept { return m_mode == Mode::sketching; }
     bool engaged() const noexcept { return m_mode != Mode::idle; }
-    bool toolActive() const noexcept { return false; }
+    bool toolActive() const noexcept {
+        return m_mode == Mode::sketching && m_tool.kind() != interaction::SketchToolKind::none;
+    }
+    QString toolName() const;
+    int toolVariant() const noexcept { return m_tool.variant(); }
+    bool helperLine() const noexcept { return m_tool.helperLine(); }
+    void setHelperLine(bool on);
+    bool drawing() const noexcept { return toolActive() && m_tool.busy(); }
+    int placed() const noexcept { return static_cast<int>(m_tool.placedCount()); }
+    QVariantMap readout() const { return m_readout; }
     bool planeReady() const noexcept { return m_mode == Mode::sketching && m_planeReady; }
     QString step() const { return m_step; }
     QVariantMap snap() const { return m_snapMap; }
@@ -94,13 +121,44 @@ public:
     /// The pointer left the plane.
     void pointerGone();
 
+    // --- drawing (AP-2.1c1) ---
+    /// Chooses a tool by its name ("line", "rectangle", "circle", "point"; "" for none) and
+    /// variant (-1: the one used last with that tool). Does nothing outside a sketch. Choosing
+    /// the tool that is on drops the element being pulled. The tool stays on after each element.
+    Q_INVOKABLE void chooseTool(const QString& name, int variant = -1);
+    Q_INVOKABLE void toggleHelperLine();
+    /// A click on the plane along this line of sight (`alt`: the key that makes a helper line is
+    /// held). The point is the one the pointer catches (Shift off). The view calls this for each
+    /// click; tests call it directly.
+    void clickAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre, bool alt = false);
+    /// A double click: ends a chain of lines.
+    Q_INVOKABLE void doubleClick();
+    /// A number typed for field 0 or 1 of the element being pulled (millimetres, or degrees for
+    /// the angle); the element follows at once. NaN takes the number back.
+    Q_INVOKABLE void setTyped(int field, double value);
+    /// Takes all typed numbers back (the element follows the pointer again).
+    Q_INVOKABLE void clearTyped();
+    /// Enter: sets the element as the typed numbers and the pointer make it.
+    Q_INVOKABLE void acceptTyped();
+    /// How many numbers can be typed now (0 when nothing is pulled).
+    Q_INVOKABLE int fieldCount() const { return drawing() ? m_tool.fieldCount() : 0; }
+    /// The elements of the sketch as the controller knows them (the document's; for tests).
+    const std::vector<core::SketchElement>& elements() const noexcept { return m_elements; }
+
 signals:
     void stateChanged();
     void snapChanged();
     void coloursChanged();
+    /// The tool, its variant or the helper switch changed.
+    void toolChanged();
+    /// The element being pulled (or its numbers) changed.
+    void draftChanged();
+    /// An element was finished and is in the document; typing ends.
+    void elementDone();
     /// A sentence to tell the person, as a hint (never a dialog): "curvedFace" (sketches only go
     /// on flat faces), "faceUnusable" (this face cannot be drawn on), "needsHelp" (the sketch has
-    /// no plane at the moment).
+    /// no plane at the moment), "collinear" (three points on one line make no circle), "tooSmall"
+    /// (shorter than 0.01 mm: nothing was drawn).
     void notice(const QString& code);
 
 private:
@@ -113,6 +171,10 @@ private:
     void onPointerMoved(double x, double y);
     void refresh();
     double baseStep() const;
+    void applyStep(const interaction::SketchToolStep& step);
+    void updateDraft();
+    void onClicked(double x, double y);
+    void onDoubleClicked(double x, double y);
 
     QPointer<DocumentModel> m_model;
     QPointer<SelectionController> m_selection;
@@ -128,12 +190,17 @@ private:
     double m_pixelsPerMillimetre = 2.0;
     std::optional<interaction::SketchSnap> m_caught;
     QVariantMap m_snapMap;
+    interaction::SketchTool m_tool;
+    std::array<int, 5> m_variants{}; ///< the variant last used with each tool
+    interaction::SketchDraft m_draft;
+    QVariantMap m_readout;
 
     QColor m_gridColour{0x3A, 0x3D, 0x43};
     QColor m_gridMajorColour{0x55, 0x59, 0x61};
     QColor m_elementColour{0xE8, 0xEA, 0xED};
     QColor m_guideColour{0x4C, 0x8D, 0xFF};
     QColor m_markerColour{0x4C, 0x8D, 0xFF};
+    QColor m_draftColour{0x4C, 0x8D, 0xFF};
 };
 
 } // namespace fission::ui

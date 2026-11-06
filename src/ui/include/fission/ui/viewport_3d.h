@@ -327,6 +327,11 @@ signals:
     /// The pointer moved over the view (no button pressed) to (x, y) in item pixels; also when
     /// `hoverAt` put it there. For the sketch mode, which catches it on the sketch.
     void pointerMoved(double x, double y);
+    /// A click with the left button (no drag) at (x, y) in item pixels, at once and without the
+    /// pick pass; and a double click. For the drawing tools of the sketch mode, which need the
+    /// point on the plane and not the thing under the pointer.
+    void leftClicked(double x, double y);
+    void leftDoubleClicked(double x, double y);
     void highlightsChanged();
     /// A drag with the left button ended: everything in the rectangle (item pixels).
     void rubberBandFinished(const QRectF& area, bool extend);

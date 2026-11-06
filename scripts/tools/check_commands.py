@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Rule 10: every tool and command has a hint, a tooltip sentence and synonyms.
 
-Checks apps/fission359/qml/CommandCatalog.qml, ToolCatalog.qml and ShapeCatalog.qml: each command
+Checks apps/fission359/qml/CommandCatalog.qml, ToolCatalog.qml, SketchToolCatalog.qml and ShapeCatalog.qml: each command
 has `name`, `tip` and `hint` (as qsTr), and at least three synonyms in German and in English.
 Usage: check_commands.py <repository root>
 """
@@ -44,6 +44,7 @@ def blocks_of(path, marker):
 
 count = 0
 for file, marker, need in (("CommandCatalog.qml", "id", True), ("ToolCatalog.qml", "id", True),
+                           ("SketchToolCatalog.qml", "id", True),
                            ("ShapeCatalog.qml", "type", False)):
     for block in blocks_of(qml / file, marker):
         # a block ends at the closing of its object: cut at the next top level "}"

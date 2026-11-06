@@ -17,6 +17,8 @@ Window {
     property string tool: "move"
     // The sketch mode (AP-2.1b): "idle", "picking" (waiting for the click on a plane) or "active".
     readonly property string sketchState: Sketch.picking ? "picking" : Sketch.active ? "active" : "idle"
+    // The drawing tool of the sketch mode (AP-2.1c1): "" or line | rectangle | circle | point.
+    readonly property string sketchToolName: Sketch.active ? Sketch.tool : ""
     // "Lay on face": the next click on a face puts the chosen body on it (Esc leaves it).
     property bool seating: false
     // Developer option --simulate "filtermenu": opens the menu "Choose: ..." of the 3D view.
@@ -178,7 +180,7 @@ Window {
                                                     : qsTr("Click the face that was meant. Esc cancels."))
             : root.seating ? qsTr("Click the face the body should lie on. Esc cancels.")
             : Sketch.picking ? qsTr("Click a flat face or the ground plane. Esc cancels.")
-            : Sketch.active ? qsTr("Sketching: the pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.")
+            : Sketch.active ? root.sketchHint
             : Placement.active ? qsTr("Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt")
             : Gizmo.editing ? qsTr("Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.")
             : Rotate.editing ? qsTr("Type an angle to turn exactly (Tab for the next ring), Enter accepts, Esc puts it back.")
@@ -194,6 +196,16 @@ Window {
             : Selection.count > 0 ? toolCatalog.find(root.tool).hint
             : DocumentModel.bodies.length === 0 ? qsTr("Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.").arg(primaryKey + "K")
             : root.navigationText
+
+    // The hint line of the sketch mode: what the tool in use wants next (AP-2.1c1).
+    readonly property string sketchHint: {
+        const helper = Sketch.helperLine ? " " + qsTr("Helper lines are on: what you draw is only an aid.") : ""
+        if (Sketch.toolActive) {
+            return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed)
+                   + " " + qsTr("Shift switches catching off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
+        }
+        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
+    }
 
     // ---- undo and redo ---------------------------------------------------------------------
     // While a text field holds text that was typed and not yet accepted, Ctrl+Z is for that
@@ -246,10 +258,15 @@ Window {
         id: toolCatalog
     }
 
+    SketchToolCatalog {
+        id: sketchToolCatalog
+    }
+
     CommandCatalog {
         id: commandCatalog
 
         tools: toolCatalog
+        sketchTools: sketchToolCatalog
         shapes: shapeCatalog
         isMac: root.isMac
         primaryKey: root.primaryKey
@@ -275,6 +292,9 @@ Window {
             break
         case "face":
             if (!Selection.singleFaceChosen) { return qsTr("Choose one face first.") }
+            break
+        case "sketch":
+            if (!Sketch.active) { return qsTr("Open a sketch first (the tool “Sketch”).") }
             break
         case "faces":
             if (!facesChosen) { return qsTr("Choose one or more faces first.") }
@@ -401,6 +421,14 @@ Window {
     function run(id) {
         if (id.startsWith("sketch.open.")) { // the developer option --simulate: a double click on a step
             Sketch.reopen(parseInt(id.substring(12)))
+            return
+        }
+        if (id.startsWith("sketchtool.")) { // a drawing tool of the sketch mode (AP-2.1c1)
+            if (id === "sketchtool.helper") {
+                Sketch.toggleHelperLine()
+            } else {
+                Sketch.chooseTool(id.substring(11), -1)
+            }
             return
         }
         if (id.startsWith("recent.")) {
@@ -799,7 +827,13 @@ Window {
     // ---- shortcuts (the menus of macOS bring their own) ------------------------------------
     Shortcut { sequence: "Shift+F"; onActivated: root.run("focus") }
     Shortcut { sequence: "F"; onActivated: root.run("view.frame") }
-    Shortcut { sequence: "L"; enabled: Selection.singleFaceChosen; onActivated: root.run("view.lookat") }
+    Shortcut { sequence: "L"; enabled: Selection.singleFaceChosen && !Sketch.active; onActivated: root.run("view.lookat") }
+    // The drawing tools of the sketch mode (AP-2.1c1); the keys mean something else outside it.
+    Shortcut { sequence: "L"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.line") }
+    Shortcut { sequence: "R"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.rectangle") }
+    Shortcut { sequence: "C"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.circle") }
+    Shortcut { sequence: "P"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.point") }
+    Shortcut { sequence: "X"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.helper") }
     Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
     Shortcut { sequence: "Ctrl+C"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("copy") }
     Shortcut { sequence: "Ctrl+V"; enabled: !root.isMac && DocumentModel.canPaste && !root.typing; onActivated: root.run("paste") }
@@ -861,6 +895,7 @@ Window {
     Binding { target: Sketch; property: "elementColour"; value: Theme.fg }
     Binding { target: Sketch; property: "guideColour"; value: Theme.accentLine }
     Binding { target: Sketch; property: "markerColour"; value: Theme.accentLine }
+    Binding { target: Sketch; property: "draftColour"; value: Theme.accent }
     Connections {
         target: Selection
 
@@ -887,14 +922,14 @@ Window {
         onActivated: root.run("selectnone")
     }
     Shortcut { sequence: "Ctrl+M"; enabled: !root.isMac && !root.typing; onActivated: root.run("measures") }
-    Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
+    Shortcut { sequence: "P"; enabled: !Sketch.active; onActivated: root.run("orthographic") }
     Shortcut { sequence: "Home"; onActivated: root.run("view.home") }
-    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.front") }
-    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.back") }
-    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.left") }
-    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.right") }
-    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.top") }
-    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.bottom") }
+    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.front") }
+    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.back") }
+    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.left") }
+    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.right") }
+    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.top") }
+    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.bottom") }
     // A shape that was just put down waits for its sizes: digits type them (they are the views
     // again as soon as something else is chosen). Tab or Enter start typing, too.
     Repeater {
@@ -908,13 +943,30 @@ Window {
             Shortcut {
                 sequence: digit.modelData
                 enabled: (Handles.armed || Handles.editing || Gizmo.editing || Rotate.editing
-                          || Scale.editing)
+                          || Scale.editing) && !Sketch.toolActive
                          && !handleLayer.typing && !gizmoLayer.typing && !rotateLayer.typing
                          && !scaleLayer.typing && !distanceLayer.typing && !root.typing
                 onActivated: Gizmo.editing ? gizmoLayer.startTyping(digit.modelData)
                              : Rotate.editing ? rotateLayer.startTyping(digit.modelData)
                              : Scale.editing ? scaleLayer.startTyping(digit.modelData)
                                              : handleLayer.startTyping(digit.modelData)
+            }
+        }
+    }
+    // While a drawing tool is on (AP-2.1c1) digits are for the numbers of the element being drawn,
+    // never for the views (1 to 6): a number field opens at the pointer, or the key is taken.
+    Repeater {
+        model: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ",", ".", "-"]
+
+        delegate: Item {
+            id: sketchDigit
+
+            required property string modelData
+
+            Shortcut {
+                sequence: sketchDigit.modelData
+                enabled: Sketch.toolActive && !sketchLayer.typing && !root.typing
+                onActivated: sketchLayer.startTyping(sketchDigit.modelData)
             }
         }
     }
@@ -1423,6 +1475,13 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            SketchLayer {
+                id: sketchLayer
+
+                anchors.fill: parent
+                obstacles: viewOverlay.obstacles
+            }
+
             MeasureLayer {
                 anchors.fill: parent
                 text: measureCard.mainNumber
@@ -1565,7 +1624,13 @@ Window {
                 onCombineRequested: way => root.combine(way)
                 sketching: Sketch.engaged
                 sketchActive: Sketch.active
+                sketchTools: sketchToolCatalog
+                sketchTool: Sketch.tool
+                sketchVariant: Sketch.toolVariant
+                sketchHelper: Sketch.helperLine
                 onSketchDoneRequested: Sketch.finish()
+                onSketchToolRequested: (id, variant) => Sketch.chooseTool(id, variant)
+                onSketchHelperToggled: Sketch.toggleHelperLine()
                 onFlyoutCloseRequested: root.flyout = ""
                 onGroupRequested: group => {
                     if (group === "shapes") {
@@ -1740,6 +1805,7 @@ Window {
         case "point": return qsTr("Point")
         case "line": return qsTr("Line")
         case "circle": return qsTr("Circle")
+        case "rectangle": return qsTr("Rectangle")
         case "arc": return qsTr("Arc")
         case "spline": return qsTr("Curve")
         default: return qsTr("Sketch part")

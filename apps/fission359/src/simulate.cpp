@@ -41,6 +41,7 @@
 #include <cstdio>
 #include <functional>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -76,6 +77,7 @@
 #include "fission/ui/scale_controller.h"
 #include "fission/ui/selection_controller.h"
 #include "fission/ui/shape_previews.h"
+#include "fission/ui/sketch_controller.h"
 #include "fission/ui/snap_session.h"
 #include "fission/ui/theme.h"
 #include "fission/ui/viewport_3d.h"
@@ -276,9 +278,10 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                  fission::ui::HandleController* handles, fission::ui::GizmoController* gizmo,
                  fission::ui::RotateController* rotate, fission::ui::ScaleController* scale,
                  fission::ui::DistanceController* distances, fission::ui::AlignController* align,
-                 fission::ui::SelectionController* selection, fission::ui::FileController* files,
-                 fission::ui::ExportController* exporter, fission::ui::Preferences* preferences,
-                 const QString& actions, std::function<void()> done) {
+                 fission::ui::SelectionController* selection, fission::ui::SketchController* sketch,
+                 fission::ui::FileController* files, fission::ui::ExportController* exporter,
+                 fission::ui::Preferences* preferences, const QString& actions,
+                 std::function<void()> done) {
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
@@ -520,6 +523,121 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                                                            : QStringLiteral("the ground"))
                                                  : QStringLiteral("no sketch"));
                     g_simulationFailure = 13;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("sketchmove") || kind == QLatin1String("sketchclick") ||
+            kind == QLatin1String("sketchdouble")) {
+            // sketchclick:600,400 - the pointer goes there and clicks on the sketch plane (the
+            // drawing tools of the sketch mode; the plain click only asks what is under the
+            // pointer). sketchdouble: a click and then the double click that follows it.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const double x = spec.value(0).toDouble();
+            const double y = spec.value(1).toDouble();
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [viewport, kind, x, y] {
+                viewport->hoverAt(x, y);
+                if (kind != QLatin1String("sketchmove")) {
+                    emit viewport->leftClicked(x, y);
+                }
+                if (kind == QLatin1String("sketchdouble")) {
+                    emit viewport->leftDoubleClicked(x, y);
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("expectsketchtool")) {
+            // expectsketchtool:line - the drawing tool in use (empty: none).
+            const QString tool = action.mid(colon + 1).trimmed();
+            delay += 500;
+            QTimer::singleShot(delay, viewport, [window, tool] {
+                const QString now = window->property("sketchToolName").toString();
+                if (now != tool) {
+                    qWarning().noquote()
+                        << QStringLiteral("the sketch tool is \"%1\", expected \"%2\"")
+                               .arg(now, tool);
+                    g_simulationFailure = 14;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("expectsketchtyping")) {
+            // expectsketchtyping:yes - the number fields of the element being drawn are open (a
+            // digit was pressed); expectsketchtyping:no - they are not.
+            const bool wanted = action.mid(colon + 1).trimmed() == QLatin1String("yes");
+            delay += 500;
+            QTimer::singleShot(delay, viewport, [window, wanted] {
+                const QObject* layer = window->findChild<QObject*>(QStringLiteral("sketchLayer"));
+                const bool typing = layer != nullptr && layer->property("typing").toBool();
+                if (typing != wanted) {
+                    qWarning().noquote()
+                        << QStringLiteral("the number fields of the sketch are %1, expected %2")
+                               .arg(typing ? QStringLiteral("open") : QStringLiteral("closed"),
+                                    wanted ? QStringLiteral("open") : QStringLiteral("closed"));
+                    g_simulationFailure = 16;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("expectsketchelements") ||
+            kind == QLatin1String("expectsketchsize")) {
+            // expectsketchelements:line=4,circle=1 - the sketches of the recipe hold exactly these
+            // elements by kind (kinds not named: none; "helper=1" counts the aids among them);
+            // expectsketchsize:40,25 - the box round all of them is that wide and high (mm).
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const bool sizes = kind == QLatin1String("expectsketchsize");
+            delay += 500;
+            QTimer::singleShot(delay, viewport, [model, spec, sizes] {
+                std::map<QString, int> found;
+                double low[2] = {1e300, 1e300};
+                double high[2] = {-1e300, -1e300};
+                for (const fission::core::Feature& step : model->document().features()) {
+                    if (!step.sketch) {
+                        continue;
+                    }
+                    for (const fission::core::SketchElement& element : step.sketch->elements) {
+                        static const char* const names[] = {"point", "line", "circle", "arc",
+                                                            "spline"};
+                        found[QString::fromLatin1(names[static_cast<int>(element.kind)])] += 1;
+                        if (element.construction) {
+                            found[QStringLiteral("helper")] += 1; // aids are counted again
+                        }
+                        for (const fission::core::SketchPoint& point : element.points) {
+                            low[0] = std::min(low[0], point.u);
+                            low[1] = std::min(low[1], point.v);
+                            high[0] = std::max(high[0], point.u);
+                            high[1] = std::max(high[1], point.v);
+                        }
+                    }
+                }
+                bool right = true;
+                if (sizes) {
+                    right = std::abs((high[0] - low[0]) - spec.value(0).toDouble()) < 1e-6 &&
+                            std::abs((high[1] - low[1]) - spec.value(1).toDouble()) < 1e-6;
+                } else {
+                    std::map<QString, int> wanted;
+                    for (const QString& entry : spec) {
+                        if (entry.trimmed().isEmpty()) {
+                            continue;
+                        }
+                        wanted[entry.section(QLatin1Char('='), 0, 0).trimmed()] =
+                            entry.section(QLatin1Char('='), 1, 1).toInt();
+                    }
+                    right = wanted == found;
+                }
+                if (!right) {
+                    QStringList have;
+                    for (const auto& [name, count] : found) {
+                        have << QStringLiteral("%1=%2").arg(name).arg(count);
+                    }
+                    qWarning().noquote()
+                        << QStringLiteral("the sketches hold [%1], box %2 x %3; expected %4")
+                               .arg(have.join(QLatin1Char(',')))
+                               .arg(high[0] - low[0])
+                               .arg(high[1] - low[1])
+                               .arg(spec.join(QLatin1Char(',')));
+                    g_simulationFailure = 15;
                 }
             });
             continue;
@@ -1091,10 +1209,11 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         QStringList parts = action.mid(colon + 1).split(QLatin1Char(','));
         if (kind == QLatin1String("type")) { // type:50,tab,20,enter - what the keys would do
             delay += 350;
-            QTimer::singleShot(delay, viewport, [window, gizmo, rotate, scale, parts] {
+            QTimer::singleShot(delay, viewport, [window, gizmo, rotate, scale, sketch, parts] {
                 // While a body is moved, the digits are for the distance, while it is turned for
-                // the angle; else for the sizes.
-                const QString layerName = gizmo->editing()    ? QStringLiteral("gizmoLayer")
+                // the angle; else for the sizes. In a sketch they are for the element being drawn.
+                const QString layerName = sketch->drawing()   ? QStringLiteral("sketchLayer")
+                                          : gizmo->editing()  ? QStringLiteral("gizmoLayer")
                                           : rotate->editing() ? QStringLiteral("rotateLayer")
                                           : scale->editing()  ? QStringLiteral("scaleLayer")
                                                               : QStringLiteral("handleLayer");
