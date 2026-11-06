@@ -120,6 +120,20 @@
     </message>
 </context>
 <context>
+    <name>CheckFlyout</name>
+    <message>
+        <location filename="../qml/CheckFlyout.qml" line="+27"/>
+        <location line="+3"/>
+        <source>Measure</source>
+        <translation>Measure</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click faces, edges or corners to see their length, area, radius, distance or angle. The number can be copied.</source>
+        <translation>Click faces, edges or corners to see their length, area, radius, distance or angle. The number can be copied.</translation>
+    </message>
+</context>
+<context>
     <name>ColorField</name>
     <message>
         <location filename="../qml/ColorField.qml" line="+20"/>
@@ -390,13 +404,58 @@
     </message>
     <message>
         <location line="+4"/>
+        <source>Measure</source>
+        <translation>Measure</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shows the length, area, radius, distance or angle of faces, edges and corners. The number can be copied.</source>
+        <translation>Shows the length, area, radius, distance or angle of faces, edges and corners. The number can be copied.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click a face, an edge or a corner; Shift+click adds a second one for the distance and the angle.</source>
+        <translation>Click a face, an edge or a corner; Shift+click adds a second one for the distance and the angle.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Named measures</source>
+        <translation>Named measures</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Opens the table of named measures under the recipe. Change a number in one place and everything that uses it follows.</source>
+        <translation>Opens the table of named measures under the recipe. Change a number in one place and everything that uses it follows.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add a measure with +, use its name in any number field. The sliders view turns the model into a configurator.</source>
+        <translation>Add a measure with +, use its name in any number field. The sliders view turns the model into a configurator.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Import…</source>
+        <translation>Import…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Brings in a STEP or IGES file from another CAD program.</source>
+        <translation>Brings in a STEP or IGES file from another CAD program.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a file; its bodies appear in the project with their colours and names.</source>
+        <translation>Choose a file; its bodies appear in the project with their colours and names.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Export…</source>
         <translation>Export…</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Writes the bodies as a 3MF or STL file for the slicer.</source>
-        <translation>Writes the bodies as a 3MF or STL file for the slicer.</translation>
+        <source>Writes the bodies as a 3MF, STL, OBJ or STEP file, or the outline of a flat face as SVG or DXF.</source>
+        <translation>Writes the bodies as a 3MF, STL, OBJ or STEP file, or the outline of a flat face as SVG or DXF.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1088,6 +1147,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Check</source>
+        <translation>Check</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Soon</source>
         <translation>Soon</translation>
     </message>
@@ -1265,7 +1329,7 @@
 <context>
     <name>ExportCard</name>
     <message>
-        <location filename="../qml/ExportCard.qml" line="+23"/>
+        <location filename="../qml/ExportCard.qml" line="+26"/>
         <location line="+11"/>
         <source>Export</source>
         <translation>Export</translation>
@@ -1277,13 +1341,44 @@
         <translation>File type</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>3MF (colours, for slicers)</source>
-        <translation>3MF (colours, for slicers)</translation>
+        <location line="+9"/>
+        <source>Shape and colours, for slicers.</source>
+        <translation>Shape and colours, for slicers.</translation>
     </message>
     <message>
-        <location line="+5"/>
-        <location line="+5"/>
+        <location line="+1"/>
+        <source>Shape only. Every program can read it.</source>
+        <translation>Shape only. Every program can read it.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shape and colours, for 3D programs. The colours go into a second file.</source>
+        <translation>Shape and colours, for 3D programs. The colours go into a second file.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The exact shape with names and colours, for other CAD programs.</source>
+        <translation>The exact shape with names and colours, for other CAD programs.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <location line="+6"/>
+        <source>Outline for a laser cutter</source>
+        <translation>Outline for a laser cutter</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>The edges of the chosen face, as seen from outside.</source>
+        <translation>The edges of the chosen face, as seen from outside.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a flat face to export its outline.</source>
+        <translation>Choose a flat face to export its outline.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+6"/>
         <source>Quality</source>
         <translation>Quality</translation>
     </message>
@@ -1308,7 +1403,7 @@
         <translation>Curves can be angular.</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Only chosen bodies</source>
         <translation>Only chosen bodies</translation>
     </message>
@@ -1354,6 +1449,14 @@
         <location line="+1"/>
         <source>Discard</source>
         <translation>Discard</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+30"/>
+        <source>%n body(ies) imported.</source>
+        <translation>
+            <numerusform>%n body imported.</numerusform>
+            <numerusform>%n bodies imported.</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -1616,7 +1719,7 @@
         <translation>Heart</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+53"/>
         <source>Recipe</source>
         <translation>Recipe</translation>
     </message>
@@ -1626,7 +1729,7 @@
         <translation>Ctrl+Z</translation>
     </message>
     <message>
-        <location line="+66"/>
+        <location line="+81"/>
         <source>Delete anyway</source>
         <translation>Delete anyway</translation>
     </message>
@@ -1720,7 +1823,7 @@
         <translation>Ctrl+Shift+S</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Export…</source>
         <translation>Export…</translation>
     </message>
@@ -1755,12 +1858,17 @@
         <translation>Ctrl+Shift+Z</translation>
     </message>
     <message>
-        <location line="-24"/>
+        <location line="-25"/>
         <source>Open recent</source>
         <translation>Open recent</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+17"/>
+        <source>Import…</source>
+        <translation>Import…</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Recent actions</source>
         <translation>Recent actions</translation>
     </message>
@@ -1818,6 +1926,16 @@
         <location line="+2"/>
         <source>View</source>
         <translation>View</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Measure</source>
+        <translation>Measure</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Named measures</source>
+        <translation>Named measures</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2043,6 +2161,16 @@
         <translation>About Fission359</translation>
     </message>
     <message>
+        <location line="+17"/>
+        <source>Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.</source>
+        <translation>Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Check: measure faces, edges and corners.</source>
+        <translation>Check: measure faces, edges and corners.</translation>
+    </message>
+    <message>
         <location line="+9"/>
         <source>Click the edge that was meant. Esc cancels.</source>
         <translation>Click the edge that was meant. Esc cancels.</translation>
@@ -2116,7 +2244,7 @@
         </translation>
     </message>
     <message>
-        <location line="+89"/>
+        <location line="+104"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -2269,27 +2397,57 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+11"/>
+        <location line="+38"/>
         <source>Fission359 files (*.fission)</source>
         <translation>Fission359 files (*.fission)</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="-30"/>
+        <source>Import</source>
+        <translation>Import</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>STEP and IGES files (*.step *.stp *.iges *.igs)</source>
+        <translation>STEP and IGES files (*.step *.stp *.iges *.igs)</translation>
+    </message>
+    <message>
+        <location line="+41"/>
         <source>Export</source>
         <translation>Export</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
         <source>STL files (*.stl)</source>
         <translation>STL files (*.stl)</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="+1"/>
+        <source>OBJ files (*.obj)</source>
+        <translation>OBJ files (*.obj)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>STEP files (*.step *.stp)</source>
+        <translation>STEP files (*.step *.stp)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>SVG files (*.svg)</source>
+        <translation>SVG files (*.svg)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>DXF files (*.dxf)</source>
+        <translation>DXF files (*.dxf)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>3MF files (*.3mf)</source>
         <translation>3MF files (*.3mf)</translation>
     </message>
     <message numerus="yes">
-        <location line="+17"/>
+        <location line="+26"/>
         <source>%n body(ies) exported.</source>
         <translation>
             <numerusform>%n body exported.</numerusform>
@@ -2402,7 +2560,7 @@
         <translation>Choose two or more bodies (Shift+click), then merge them, subtract the others from the first or keep only what they share. One body can be split in two.</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</source>
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
@@ -2427,7 +2585,7 @@
         <translation>Placing</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <source>Width</source>
         <translation>Width</translation>
     </message>
@@ -2585,7 +2743,17 @@
         <translation>Angle</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="-564"/>
+        <source>Outline exported.</source>
+        <translation>Outline exported.</translation>
+    </message>
+    <message>
+        <location line="+527"/>
+        <source>Imported body</source>
+        <translation>Imported body</translation>
+    </message>
+    <message>
+        <location line="+38"/>
         <source>%1 removed</source>
         <translation>%1 removed</translation>
     </message>
@@ -2746,6 +2914,21 @@
         <location line="+1"/>
         <source>%1 made a part again</source>
         <translation>%1 made a part again</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>“%1” imported</source>
+        <translation>“%1” imported</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>“%1” imported with %2 bodies</source>
+        <translation>“%1” imported with %2 bodies</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Unit of “%1” put right</source>
+        <translation>Unit of “%1” put right</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2939,6 +3122,199 @@
     </message>
 </context>
 <context>
+    <name>MeasureCard</name>
+    <message>
+        <location filename="../qml/MeasureCard.qml" line="+27"/>
+        <source>Position</source>
+        <translation>Position</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Distance</source>
+        <translation>Distance</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Angle</source>
+        <translation>Angle</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Length</source>
+        <translation>Length</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Area</source>
+        <translation>Area</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Diameter</source>
+        <translation>Diameter</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Click a face, an edge or a corner. A second one (Shift+click) gives the distance and the angle between them.</source>
+        <translation>Click a face, an edge or a corner. A second one (Shift+click) gives the distance and the angle between them.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shift+click adds the next one. Esc ends measuring.</source>
+        <translation>Shift+click adds the next one. Esc ends measuring.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+11"/>
+        <source>Measure</source>
+        <translation>Measure</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>Copy</source>
+        <translation>Copy</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Done</source>
+        <translation>Done</translation>
+    </message>
+</context>
+<context>
+    <name>MeasuresPanel</name>
+    <message>
+        <location filename="../qml/MeasuresPanel.qml" line="+57"/>
+        <source>Named measures</source>
+        <translation>Named measures</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Measures</source>
+        <translation>Measures</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>View</source>
+        <translation>View</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Table</source>
+        <translation>Table</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Sliders</source>
+        <translation>Sliders</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>New measure</source>
+        <translation>New measure</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Measure</source>
+        <translation>Measure</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>A measure is a number with a name, like Width. Use it in any field and change it in one place. Right click a field and choose “Save as named measure”.</source>
+        <translation>A measure is a number with a name, like Width. Use it in any field and change it in one place. Right click a field and choose “Save as named measure”.</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Delete anyway</source>
+        <translation>Delete anyway</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Keep</source>
+        <translation>Keep</translation>
+    </message>
+    <message>
+        <location line="+93"/>
+        <source>Another measure has this name already.</source>
+        <translation>Another measure has this name already.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A name uses letters, digits and _ and starts with a letter.</source>
+        <translation>A name uses letters, digits and _ and starts with a letter.</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Used in</source>
+        <translation>Used in</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Step %1</source>
+        <translation>Step %1</translation>
+    </message>
+    <message>
+        <location line="+44"/>
+        <location line="+5"/>
+        <source>More</source>
+        <translation>More</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Delete measure</source>
+        <translation>Delete measure</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>step %1</source>
+        <translation>step %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>“%1” is used in %2. If you delete it, those places show a mistake until you give them another value.</source>
+        <translation>“%1” is used in %2. If you delete it, those places show a mistake until you give them another value.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Comment</source>
+        <translation>Comment</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Slider</source>
+        <translation>Slider</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Smallest</source>
+        <translation>Smallest</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Largest</source>
+        <translation>Largest</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Step</source>
+        <translation>Step</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>No measure has a slider yet. In the table, open “More” of a measure and switch on “Slider”.</source>
+        <translation>No measure has a slider yet. In the table, open “More” of a measure and switch on “Slider”.</translation>
+    </message>
+</context>
+<context>
     <name>MenuStrip</name>
     <message>
         <location filename="../qml/MenuStrip.qml" line="+130"/>
@@ -2969,7 +3345,12 @@
 <context>
     <name>MessageCatalog</name>
     <message>
-        <location filename="../qml/MessageCatalog.qml" line="+79"/>
+        <location filename="../qml/MessageCatalog.qml" line="+68"/>
+        <source>It was inches</source>
+        <translation>It was inches</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Open anyway</source>
         <translation>Open anyway</translation>
     </message>
@@ -3034,7 +3415,83 @@
         <translation>The file could not be read.</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+8"/>
+        <source>These measures use each other: %1.</source>
+        <translation>These measures use each other: %1.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>I don’t know the unit “%1”.</source>
+        <translation>I don’t know the unit “%1”.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The result is not the right kind of value (a length, an angle or a plain number).</source>
+        <translation>The result is not the right kind of value (a length, an angle or a plain number).</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This formula cannot be calculated.</source>
+        <translation>This formula cannot be calculated.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>This kind of file cannot be imported. Fission359 reads STEP and IGES files.</source>
+        <translation>This kind of file cannot be imported. Fission359 reads STEP and IGES files.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The file could not be read. Is it still there?</source>
+        <translation>The file could not be read. Is it still there?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+123"/>
+        <source>This file has no solid body in it, only surfaces or lines. Fission359 can only use solid bodies.</source>
+        <translation>This file has no solid body in it, only surfaces or lines. Fission359 can only use solid bodies.</translation>
+    </message>
+    <message>
+        <location line="-120"/>
+        <location line="+118"/>
+        <source>This file could not be read. Is it a STEP or IGES file that is not damaged?</source>
+        <translation>This file could not be read. Is it a STEP or IGES file that is not damaged?</translation>
+    </message>
+    <message numerus="yes">
+        <location line="-109"/>
+        <source>%n body(ies) had small flaws in the file and was repaired.</source>
+        <translation>
+            <numerusform>%n body had small flaws in the file and was repaired.</numerusform>
+            <numerusform>%n bodies had small flaws in the file and were repaired.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>%n body(ies) was put together from loose surfaces.</source>
+        <translation>
+            <numerusform>%n body was put together from loose surfaces.</numerusform>
+            <numerusform>%n bodies were put together from loose surfaces.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>%n thing(s) in the file are no solid bodies and were left out.</source>
+        <translation>
+            <numerusform>%n thing in the file is no solid body and was left out.</numerusform>
+            <numerusform>%n things in the file are no solid bodies and were left out.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The file is an assembly. Its parts came in as separate bodies.</source>
+        <translation>The file is an assembly. Its parts came in as separate bodies.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The file does not say which unit it uses. Millimetres were assumed.</source>
+        <translation>The file does not say which unit it uses. Millimetres were assumed.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
         <source>Export cancelled.</source>
         <translation>Export cancelled.</translation>
     </message>
@@ -3047,6 +3504,11 @@
         <location line="+2"/>
         <source>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</source>
         <translation>A body has a problem in its recipe, so it is not exported: the file would not show what you see. Fix the steps marked with a warning first.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This face is curved, so it has no flat outline. Choose a flat face.</source>
+        <translation>This face is curved, so it has no flat outline. Choose a flat face.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -3174,12 +3636,14 @@
         <translation>I don’t know “%1”.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-111"/>
+        <location line="+114"/>
         <source>“%1” has a problem itself.</source>
         <translation>“%1” has a problem itself.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-112"/>
+        <location line="+115"/>
         <source>That divides by zero.</source>
         <translation>That divides by zero.</translation>
     </message>
@@ -3354,8 +3818,7 @@
         <translation>This is a fault in the program, not yours. If you copy the details, you can report it.</translation>
     </message>
     <message>
-        <location line="-110"/>
-        <location line="+100"/>
+        <location line="+7"/>
         <source>An earlier step has a problem.</source>
         <translation>An earlier step has a problem.</translation>
     </message>
@@ -3373,6 +3836,15 @@
         <location line="+2"/>
         <source>The calculation was replaced by a newer change.</source>
         <translation>The calculation was replaced by a newer change.</translation>
+    </message>
+</context>
+<context>
+    <name>NumberField</name>
+    <message>
+        <location filename="../qml/NumberField.qml" line="+337"/>
+        <location line="+12"/>
+        <source>Save as named measure</source>
+        <translation>Save as named measure</translation>
     </message>
 </context>
 <context>
@@ -3574,6 +4046,11 @@
         <source>Part placed, moved by %1, %2, %3 mm</source>
         <translation>Part placed, moved by %1, %2, %3 mm</translation>
     </message>
+    <message>
+        <location line="+3"/>
+        <source>Imported from “%1”, part %2</source>
+        <translation>Imported from “%1”, part %2</translation>
+    </message>
     <message numerus="yes">
         <location line="+4"/>
         <source>Cut out %n body(ies)</source>
@@ -3607,7 +4084,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+123"/>
+        <location filename="../qml/RightPanel.qml" line="+151"/>
         <source>Object</source>
         <translation>Object</translation>
     </message>
@@ -3632,7 +4109,7 @@
         <translation>Change a value or type a formula.</translation>
     </message>
     <message>
-        <location line="+47"/>
+        <location line="+115"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
@@ -3642,7 +4119,7 @@
         <translation>Cut across</translation>
     </message>
     <message>
-        <location line="+307"/>
+        <location line="+317"/>
         <source>Hole</source>
         <translation>Hole</translation>
     </message>
@@ -3667,12 +4144,12 @@
         <translation>Make flush (closes gaps under 0.001 mm)</translation>
     </message>
     <message>
-        <location line="-286"/>
+        <location line="-294"/>
         <source>Text</source>
         <translation>Text</translation>
     </message>
     <message numerus="yes">
-        <location line="-86"/>
+        <location line="-156"/>
         <source>%n body(ies) selected</source>
         <translation>
             <numerusform>%n body selected</numerusform>
@@ -3695,7 +4172,7 @@
         <translation>Colour</translation>
     </message>
     <message>
-        <location line="+68"/>
+        <location line="+138"/>
         <source>Words</source>
         <translation>Words</translation>
     </message>
@@ -3715,28 +4192,90 @@
         <translation>Italic</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-152"/>
+        <location line="+162"/>
         <source>Size</source>
         <translation>Size</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="-175"/>
+        <source>Facts</source>
+        <translation>Facts</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Volume</source>
+        <translation>Volume</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Surface</source>
+        <translation>Surface</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Material</source>
+        <translation>Material</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+27"/>
+        <source>Filament</source>
+        <translation>Filament</translation>
+    </message>
+    <message>
+        <location line="-25"/>
+        <source>1.75 mm</source>
+        <translation>1.75 mm</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>2.85 mm</source>
+        <translation>2.85 mm</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Density</source>
+        <translation>Density</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Weight</source>
+        <translation>Weight</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>up to %1 g</source>
+        <translation>up to %1 g</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>up to %1 m</source>
+        <translation>up to %1 m</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The slicer uses less: infill and walls decide the real weight.</source>
+        <translation>The slicer uses less: infill and walls decide the real weight.</translation>
+    </message>
+    <message>
+        <location line="+158"/>
         <source>Position</source>
         <translation>Position</translation>
     </message>
     <message>
-        <location line="+44"/>
+        <location line="+46"/>
         <source>Rotation</source>
         <translation>Rotation</translation>
     </message>
     <message>
-        <location line="+57"/>
+        <location line="+59"/>
         <location line="+8"/>
         <source>More</source>
         <translation>More</translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+92"/>
         <source>Get new shapes from “Shapes” in the tool bar on the left – or press %1 and describe what you want to build.</source>
         <translation>Get new shapes from “Shapes” in the tool bar on the left – or press %1 and describe what you want to build.</translation>
     </message>
@@ -4422,7 +4961,7 @@
 <context>
     <name>ViewOverlay</name>
     <message>
-        <location filename="../qml/ViewOverlay.qml" line="+93"/>
+        <location filename="../qml/ViewOverlay.qml" line="+95"/>
         <location line="+10"/>
         <source>Orthographic</source>
         <translation>Orthographic</translation>
@@ -4550,7 +5089,7 @@
         <translation>Measure, section, print check, weight.</translation>
     </message>
     <message>
-        <location line="+69"/>
+        <location line="+84"/>
         <source>Home view (Home)</source>
         <translation>Home view (Home)</translation>
     </message>
@@ -4575,17 +5114,17 @@
         <translation>Orbit</translation>
     </message>
     <message>
-        <location line="-384"/>
+        <location line="-399"/>
         <source>Orbit: drag with the right mouse button – or drag this button</source>
         <translation>Orbit: drag with the right mouse button – or drag this button</translation>
     </message>
     <message>
-        <location line="+392"/>
+        <location line="+407"/>
         <source>Pan</source>
         <translation>Pan</translation>
     </message>
     <message>
-        <location line="-385"/>
+        <location line="-400"/>
         <source>Pan: drag with the middle mouse button – or drag this button</source>
         <translation>Pan: drag with the middle mouse button – or drag this button</translation>
     </message>
@@ -4605,7 +5144,7 @@
         <translation>Pan: Shift + middle mouse button – or drag this button</translation>
     </message>
     <message>
-        <location line="+394"/>
+        <location line="+409"/>
         <source>Zoom</source>
         <translation>Zoom</translation>
     </message>

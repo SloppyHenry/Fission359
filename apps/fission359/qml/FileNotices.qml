@@ -60,6 +60,23 @@ Item {
         }
     }
 
+    Connections {
+        target: Importer
+
+        function onFinished(code, fileName, bodies, notes) {
+            if (code !== "") {
+                root.showNotice(root.catalog.importNotice(code))
+                return
+            }
+            const notice = root.catalog.importedNotice(notes)
+            if (notice.card) {
+                root.showNotice(notice, notes.asset)
+            } else {
+                root.hintRequested(qsTr("%n body(ies) imported.", "", bodies))
+            }
+        }
+    }
+
     NoticeCard {
         id: fileCard
 
@@ -71,6 +88,8 @@ Item {
                 Files.openPath(payload, true)
             } else if (id === "saveas") {
                 root.saveAsRequested()
+            } else if (id === "inches") {
+                Importer.setInches(payload)
             }
         }
     }

@@ -142,7 +142,7 @@
 ---
 
 ### AP-2.9 Benannte Maße und Konfigurator
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.8
+**Status:** umgesetzt, wartet auf Abnahme (2026-11-05) · **Größe:** M · **Abhängigkeiten:** AP-1.8
 **Bauanleitung:** [anleitungen/AP-2.9.md](anleitungen/AP-2.9.md)
 
 **Umfang:**
@@ -152,8 +152,16 @@
 - Schieberegler-Ansicht (min/max/Schritt je Maß) als **Konfigurator**
 
 **Akzeptanzkriterien:**
-- [ ] Ablauf B Schritt 7 (Breite ändern) funktioniert vollständig
-- [ ] Umbenennen eines Maßes, das in 10 Ausdrücken steckt, ist ein einziger Undo-Schritt
+- [x] Ablauf B Schritt 7 (Breite ändern) funktioniert vollständig (Unit-Test am Dokumentmodell; Ausprobieren im Programm steht aus)
+- [x] Umbenennen eines Maßes, das in 10 Ausdrücken steckt, ist ein einziger Undo-Schritt (Test `rename everywhere: ten formulas at once`)
+
+**Abschlussvermerk 2026-11-05:**
+- Ergebnis: Bereich „Maße“ unter dem Rezept (⌘M, Ansicht ▸ Benannte Maße) mit Tabelle (Name, Formel, Ergebnis, „Benutzt in“ mit Klick auf den Schritt, Kommentar, Fehler je Zeile mit Zyklus-Pfad) und Regler-Ansicht
+  (Ziehen = ein Undo-Schritt, Live-Vorschau); Umbenennen schreibt alle Formeln in Schritten und Maßen um (`makeRenameMeasureEverywhere`, nur ganze Namen);
+  Rechtsklick am Zahlenfeld „Als benanntes Maß speichern“; Autovervollständigung im Zahlenfeld (`Numbers::completions`).
+- Festlegungen: Dateiformat **2** (neues Feld `slider` {min, max, step} je Maß, sonst null; Migration 1→2 gebaut, alte Dateien öffnen weiter), Bereich unter dem Rezept.
+  Maßnamen bestehen aus Buchstaben, Ziffern und `_` (Kollision: `Breite2`, nicht „Breite 2“, weil Formeln keine Leerzeichen in Namen lesen).
+- Offene Reste: Tabelle und Regler sind nur per Unit-Tests belegt, nicht im Fenster angesehen; Maße vom Typ „Winkel“ nehmen im Regler Grad ohne Einheitenzusatz.
 
 ---
 
@@ -187,7 +195,7 @@
 ---
 
 ### AP-2.11 Messen und Analysieren
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.4
+**Status:** teilweise umgesetzt (2026-11-05), Schnittansicht offen · **Größe:** M · **Abhängigkeiten:** AP-1.4
 **Bauanleitung:** [anleitungen/AP-2.11.md](anleitungen/AP-2.11.md)
 
 **Umfang:**
@@ -196,7 +204,17 @@
 - **Schnittansicht:** Ebene ziehen, Schnittfläche schraffiert
 
 **Akzeptanzkriterien:**
-- [ ] Messwerte stimmen mit analytischen Werten überein (1e-6)
+- [x] Messwerte stimmen mit analytischen Werten überein (1e-6): Golden-Tests für Abstand, Winkel (90°, 45° am Keil), Länge, Radius, Fläche; Gewicht PLA 20-mm-Würfel 9,92 g
+- [ ] Schnittansicht (Ebene ziehen, Schnittfläche schraffiert): **nicht gebaut**
+
+**Abschlussvermerk 2026-11-05 (ohne Schnittansicht):**
+- Ergebnis: Kernel misst Ecke, Kante, Fläche und je zwei davon (`measureElements`: Position, Länge, Fläche, Radius, kürzester Abstand, Winkel). Werkzeug „Messen“ (Prüfen ▸ Messen, Ansicht ▸ Messen):
+  Auswahl von ein bis zwei Elementen, Maßlinie mit Pfeilen und Zahl in der Ansicht, Karte mit Zeilen und „Kopieren“ (Hauptzahl, z. B. „12,50 mm“), Esc beendet.
+  Eckdaten im Panel bei einem gewählten Körper: Volumen, Oberfläche, Maße, Material (PLA, PETG, ABS, ASA, TPU), Filament 1,75/2,85 mm, Dichte änderbar,
+  „Gewicht bis zu … g“ und Filamentlänge „bis zu … m“ (Maximalwert, Hinweis auf Füllung und Wände).
+- Festlegungen: Gewicht wird als Höchstwert angezeigt; Schnittansicht soll nur Anzeige sein (Clip-Ebene, Deckfläche aus dem exakten Schnitt), nicht das Modell ändern.
+- Offene Reste: **Schnittansicht** (Clip-Ebene in allen Zeichen-Durchläufen des Renderers: Körper, Schatten, Umgebungsverdeckung, Auswahl; Deckfläche mit Schraffur); Messen mit Körpern als Ganzes und Punkt im Raum;
+  Materialwahl wird nicht mit dem Projekt gespeichert.
 
 ---
 
@@ -211,7 +229,7 @@
 ---
 
 ### AP-2.13 STEP und weitere Formate
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-1.10
+**Status:** umgesetzt, wartet auf Abnahme (2026-11-05) · **Größe:** M · **Abhängigkeiten:** AP-1.10
 **Bauanleitung:** [anleitungen/AP-2.13.md](anleitungen/AP-2.13.md)
 
 **Umfang:**
@@ -220,7 +238,19 @@
 - Importierte STEP-Körper sind präzise (aber ohne Verlauf) → mit direktem Bearbeiten (AP-2.4) änderbar
 
 **Akzeptanzkriterien:**
-- [ ] Roundtrip Fission → STEP → Fusion/FreeCAD → STEP → Fission ohne Geometrieverlust (Volumen, Flächenzahl)
+- [x] Roundtrip Fission → STEP → Fission ohne Geometrieverlust (Volumen, Fläche, Flächenzahl, Namen, Farben), auch mit 6 STEP-Dateien anderer Programme
+- [ ] Roundtrip über Fusion/FreeCAD: manuell, steht noch aus (Maintainer)
+
+**Abschlussvermerk 2026-11-05:**
+- Ergebnis: `.fission` mit Ordner `assets/` (Prüfsummen), Schritt „Import“ je Körper (ein Undo-Schritt), STEP/IGES lesen, STEP schreiben (Farben,
+  Namen), OBJ (mit `.mtl`), SVG und DXF vom Umriss einer ebenen Fläche, Datei ▸ Importieren…, Ablegen auf das Fenster, Export-Karte um OBJ, STEP,
+  SVG, DXF erweitert.
+- Festlegungen: [ADR-0012](../adr/0012-eingebettete-dateien-und-import.md). Annahmen: Schritt-Typ heißt `import` (Flächennamen `F<n>/import/face<i>`);
+  Import-Körper nur verschiebbar (x, y, z); SVG/DXF-Ansicht von außen auf die Fläche.
+- Offene Reste: „Aktualisieren“ einer eingebetteten Datei; Drehen/Größe eines Import-Körpers über `place` und AP-2.4; reine Flächenmodelle aus IGES;
+  Reparatur-Hinweis nur durch Fremddateien mit Fehlern prüfbar (kein Testfall in der Sammlung); Roundtrip über Fusion/FreeCAD.
+
+
 
 ---
 

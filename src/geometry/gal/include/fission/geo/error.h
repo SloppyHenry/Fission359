@@ -29,6 +29,8 @@ enum class GeometryErrorCode {
     fontNotFound,     ///< No font of that name on this computer; `subject()` is the name.
     fontStyleMissing, ///< The font exists, but not in the wanted style; `subject()` is its name.
     blendTooLarge, ///< Rounding or bevelling did not work with that size; `subject()` is the value.
+    importUnreadable, ///< The bytes are not a STEP or IGES file this kernel can read.
+    importEmpty,      ///< The file holds no solid body that could be used.
 };
 
 class GeometryError : public std::runtime_error {

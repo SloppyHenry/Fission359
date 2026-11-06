@@ -18,6 +18,8 @@ tests/fixtures/**/*.stl  filter=lfs diff=lfs merge=lfs -text
 tests/fixtures/**/*.3mf  filter=lfs diff=lfs merge=lfs -text
 tests/fixtures/**/*.step filter=lfs diff=lfs merge=lfs -text
 tests/fixtures/**/*.stp  filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/**/*.igs  filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/**/*.iges filter=lfs diff=lfs merge=lfs -text
 tests/fixtures/**/*.obj  filter=lfs diff=lfs merge=lfs -text
 tests/fixtures/**/*.brep filter=lfs diff=lfs merge=lfs -text
 tests/fixtures/**/*.fission filter=lfs diff=lfs merge=lfs -text

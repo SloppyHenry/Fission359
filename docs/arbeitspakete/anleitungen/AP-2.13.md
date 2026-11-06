@@ -44,3 +44,16 @@ in FreeCAD öffnen.
 
 ## Nicht tun
 Keine STL-Import (Netze, AP-4.1). Keine Baugruppen-Struktur aus STEP übernehmen (flach importieren, Hinweis bei Baugruppen).
+
+## Stand (2026-11-05)
+Umgesetzt wie oben beschrieben, siehe Abschlussvermerk in der Phasendatei und [ADR-0012](../../adr/0012-eingebettete-dateien-und-import.md). Was für die
+nächsten Arbeiten bleibt:
+- **Aktualisieren** einer eingebetteten Datei (neue Fassung der Fremddatei einlesen, Schritte behalten, Flächennamen nach Reihenfolge abgleichen).
+- **AP-2.4:** Import-Körper tragen nur x, y, z. Direktes Bearbeiten (Löcher vergrößern, Flächen schieben) und Drehen sind dort anzubinden; Namen
+  `F<n>/import/face<i>` sind stabil, solange die Datei gleich bleibt.
+- **Flächenmodelle:** IGES und STEP mit offenen Flächen werden nicht gelesen (nur geschlossene Hüllen werden vernäht). Brauchbar erst mit Flächenkörpern.
+- **Reparatur:** Der Pfad (`ShapeFix_Shape`, Hinweis „repariert“) ist gebaut, aber ohne Testdatei, die ihn auslöst. Sobald eine Fremddatei mit Fehlern
+  auftaucht, in `tests/fixtures/step/foreign` aufnehmen.
+- **Umriss mehrerer Flächen / Skizzen:** SVG und DXF gibt es für eine gewählte ebene Fläche; Skizzen kommen mit AP-2.1 (`geo::Outline` ist das
+  Zwischenformat).
+- **Roundtrip über Fusion/FreeCAD** (Akzeptanz) ist manuell zu prüfen; `FreeCADCmd` auf einem Testsystem würde es automatisieren.

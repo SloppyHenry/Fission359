@@ -9,7 +9,11 @@
 #include <vector>
 
 #include "fission/geo/error.h"
+#include "fission/geo/exchange.h"
+#include "fission/geo/measuring.h"
 #include "fission/geo/mesh.h"
+#include "fission/geo/named_solid.h"
+#include "fission/geo/outline.h"
 #include "fission/geo/primitives.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/signature.h"
@@ -17,24 +21,6 @@
 #include "fission/geo/types.h"
 
 namespace fission::geo {
-
-/// A face together with the role its creator gave it ("top", "side"). `faceId` counts like
-/// `TriangleMesh::faceIds` (1-based, in the order of the body's faces).
-struct NamedFace {
-    std::uint32_t faceId = 0;
-    std::string role;
-};
-
-/// A body and the roles of its faces. The naming contract (ADR-0003): an operation names **every**
-/// face it creates, so `faces` has exactly one entry per face of `solid`.
-///
-/// `history` tells what the operation did to the names of its inputs' faces. It is empty for
-/// operations that make a body from nothing and for pure moves (every face stays as it was).
-struct NamedSolid {
-    Solid solid;
-    std::vector<NamedFace> faces;
-    ElementHistory history = {};
-};
 
 /// How bodies are combined (AP-1.7, ADR-0011).
 enum class BooleanOp {
@@ -301,6 +287,48 @@ public:
     virtual std::vector<FontStyle> fontStyles(const std::string& family) const {
         (void)family;
         return {};
+    }
+
+    /// Reads the bodies of a STEP or IGES file held in memory (AP-2.13). Every solid becomes a
+    /// body, an assembly is read flat (`ImportResult::assembly`). Faces are named `face<i>` in
+    /// the order of the body's faces. Bodies that fail the validity check are repaired, and
+    /// say so (`ImportedBody::repaired`); those that cannot be repaired, and loose faces or
+    /// curves, are counted in `skipped`. Loose surfaces that close up into a watertight shell are
+    /// sewn into a body (`ImportedBody::joined`). Throws `GeometryError`: `importUnreadable` for
+    /// bytes that are not such a file, `importEmpty` when no body is left. The default refuses.
+    virtual ImportResult importFile(ImportFormat format, const std::vector<std::uint8_t>& bytes,
+                                    const ImportOptions& options) const {
+        (void)format;
+        (void)bytes;
+        (void)options;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot read files");
+    }
+
+    /// The bodies as a STEP file (AP214) with names and colours. The default refuses.
+    virtual std::string exportStep(const std::vector<ExportBody>& bodies) const {
+        (void)bodies;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot write STEP");
+    }
+
+    /// The edges of one flat face as a drawing (AP-2.13): seen from outside the body, with the
+    /// origin at a corner point of the face's plane and x along the plane's first axis. Lines,
+    /// circles and arcs stay exact, other curves become short lines. `faceId` counts like
+    /// `NamedFace::faceId`. Throws `GeometryError` with `invalidInput` for a number that is not a
+    /// face of the body or a face that is not flat. The default refuses.
+    virtual Outline faceOutline(const Solid& solid, std::uint32_t faceId) const {
+        (void)solid;
+        (void)faceId;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot draw outlines");
+    }
+
+    /// Measures one element (corner: position; edge: length, radius of a circle or arc; face:
+    /// area, radius of a cylinder or sphere) or the shortest distance and the angle between two
+    /// (AP-2.11, see `Measurement`). The two may lie on different bodies. Throws `GeometryError`
+    /// with `invalidInput` for another count, a number that is not an element of its body or a
+    /// body of another kernel. The default refuses.
+    virtual Measurement measureElements(const std::vector<ElementRef>& elements) const {
+        (void)elements;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot measure");
     }
 
     virtual SolidReport measure(const Solid& solid) const = 0;

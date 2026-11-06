@@ -44,6 +44,8 @@ Die Größenangaben an den Arbeitspaketen sind relativ, nicht in Tagen:
 
 Jedes Arbeitspaket hat eine Zeile `**Status:**` mit einem dieser Werte:
 `offen` · `in Arbeit` · `Review` · `erledigt` · `zurückgestellt`.
+`Review` heißt: PR offen, CI oder Prüfung durch die Orchestrierung stehen aus. `erledigt` setzt die Orchestrierung beim Merge
+(Rollen: [orchestrierung.md](arbeitspakete/anleitungen/orchestrierung.md)).
 Wer an einem AP arbeitet (Mensch oder Agent), aktualisiert den Status in der Phasendatei und ergänzt am Ende des APs einen knappen **Abschlussvermerk** (Datum, Ergebnis, weiter geltende Festlegungen, offene Reste). Testnachweise und die Ausprobier-Anleitung stehen in der PR-Beschreibung.
 
 ## Definition of Done (gilt für jedes Arbeitspaket)

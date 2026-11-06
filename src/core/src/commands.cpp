@@ -223,6 +223,97 @@ CommandDescription AddFeatureCommand::describe() const {
     return {"addFeature", {{"type", type_}, {"number", std::to_string(number_)}}};
 }
 
+namespace {
+
+class ImportFileCommand final : public Command {
+public:
+    ImportFileCommand(std::string fileName, Bytes bytes, std::vector<ImportedPart> parts)
+        : fileName_(std::move(fileName)), content_(std::make_shared<const Bytes>(std::move(bytes))),
+          parts_(std::move(parts)) {}
+
+    ApplyResult apply(Document& document) override {
+        if (!taken_.empty()) { // redo: same file, same ids, same places
+            document.putAsset(assetName_, content_);
+            for (RemovedFeature& removed : taken_) {
+                document.restoreFeature(std::move(removed));
+            }
+            taken_.clear();
+            document.setLastFeatureNumber(numberAfter_);
+            return ApplyResult::applied;
+        }
+        if (parts_.empty()) {
+            return ApplyResult::refused;
+        }
+        numberBefore_ = document.lastFeatureNumber();
+        assetName_ = document.addAsset(fileName_, *content_);
+        content_ = document.assets().at(assetName_);
+        ids_.clear();
+        for (const ImportedPart& part : parts_) {
+            FeatureDraft draft = part.draft;
+            draft.texts["asset"] = assetName_;
+            const auto added = document.addFeature(std::move(draft));
+            if (!added) {
+                undoPartial(document);
+                return ApplyResult::refused;
+            }
+            ids_.push_back(*added);
+            const Feature* feature = document.findFeature(*added);
+            if (feature != nullptr && !feature->outputs.empty()) {
+                if (!part.bodyName.empty()) {
+                    document.setBodyName(feature->outputs.front(), part.bodyName);
+                }
+                if (part.color) {
+                    document.setBodyColor(feature->outputs.front(), *part.color);
+                }
+            }
+        }
+        numberAfter_ = document.lastFeatureNumber();
+        return ApplyResult::applied;
+    }
+
+    void revert(Document& document) override {
+        taken_.clear();
+        for (auto id = ids_.rbegin(); id != ids_.rend(); ++id) {
+            if (auto removed = document.takeFeature(*id)) {
+                taken_.insert(taken_.begin(), std::move(*removed));
+            }
+        }
+        document.removeAsset(assetName_);
+        document.setLastFeatureNumber(numberBefore_);
+    }
+
+    CommandDescription describe() const override {
+        return {"importFile", {{"file", fileName_}, {"count", std::to_string(parts_.size())}}};
+    }
+
+private:
+    void undoPartial(Document& document) {
+        for (auto id = ids_.rbegin(); id != ids_.rend(); ++id) {
+            document.takeFeature(*id);
+        }
+        ids_.clear();
+        document.removeAsset(assetName_);
+        document.setLastFeatureNumber(numberBefore_);
+    }
+
+    std::string fileName_;
+    std::shared_ptr<const Bytes> content_;
+    std::vector<ImportedPart> parts_;
+    std::string assetName_;
+    std::vector<FeatureId> ids_;
+    std::vector<RemovedFeature> taken_; // while undone, in the order of the recipe
+    int numberBefore_ = 0;
+    int numberAfter_ = 0;
+};
+
+} // namespace
+
+std::unique_ptr<Command> makeImportFile(std::string fileName, Bytes bytes,
+                                        std::vector<ImportedPart> parts) {
+    return std::make_unique<ImportFileCommand>(std::move(fileName), std::move(bytes),
+                                               std::move(parts));
+}
+
 // --- factories ----------------------------------------------------------------------------
 
 std::unique_ptr<Command> makeRemoveFeature(FeatureId id) {
@@ -469,6 +560,106 @@ std::unique_ptr<Command> makeSetParameterExpression(std::string name, std::strin
         [name](const Document&, const std::string& value) {
             return CommandDescription{"setMeasure", {{"name", name}, {"value", value}}};
         });
+}
+
+namespace {
+
+class RenameMeasureEverywhereCommand final : public Command {
+public:
+    RenameMeasureEverywhereCommand(std::string name, std::string newName)
+        : name_(std::move(name)), newName_(std::move(newName)) {}
+
+    ApplyResult apply(Document& document) override {
+        const auto index = document.indexOfParameter(name_);
+        if (!index || !isValidMeasureName(newName_)) {
+            return ApplyResult::refused;
+        }
+        index_ = *index;
+        oldName_ = document.parameters()[index_].name;
+        if (oldName_ == newName_) {
+            return ApplyResult::unchanged;
+        }
+        // Another measure with this name (case and umlauts do not matter) would be mixed up
+        // with it; the measure itself may change its spelling.
+        const auto other = document.indexOfParameter(newName_);
+        if (other && *other != index_) {
+            return ApplyResult::refused;
+        }
+        edits_ = document.renameInFormulas(oldName_, newName_);
+        document.setParameterNameAt(index_, newName_);
+        return ApplyResult::applied;
+    }
+    void revert(Document& document) override {
+        document.setParameterNameAt(index_, oldName_);
+        document.restoreFormulas(edits_);
+    }
+    CommandDescription describe() const override {
+        return {"renameMeasure", {{"name", oldName_}, {"value", newName_}}};
+    }
+
+private:
+    std::string name_;
+    std::string newName_;
+    std::string oldName_;
+    std::size_t index_ = 0;
+    std::vector<Document::FormulaEdit> edits_;
+};
+
+class SetParameterSliderCommand final : public Command {
+public:
+    SetParameterSliderCommand(std::string name, std::optional<SliderRange> slider)
+        : name_(std::move(name)), slider_(slider) {}
+
+    ApplyResult apply(Document& document) override {
+        const auto index = document.indexOfParameter(name_);
+        if (!index || (slider_ && !slider_->valid())) {
+            return ApplyResult::refused;
+        }
+        index_ = *index;
+        old_ = document.parameters()[index_].slider;
+        if (old_ == slider_) {
+            return ApplyResult::unchanged;
+        }
+        return document.setParameterSliderAt(index_, slider_) ? ApplyResult::applied
+                                                              : ApplyResult::refused;
+    }
+    void revert(Document& document) override { document.setParameterSliderAt(index_, old_); }
+    CommandDescription describe() const override { return {"setMeasureSlider", {{"name", name_}}}; }
+
+private:
+    std::string name_;
+    std::optional<SliderRange> slider_;
+    std::optional<SliderRange> old_;
+    std::size_t index_ = 0;
+};
+
+} // namespace
+
+std::unique_ptr<Command> makeRenameMeasureEverywhere(std::string name, std::string newName) {
+    return std::make_unique<RenameMeasureEverywhereCommand>(std::move(name), std::move(newName));
+}
+
+std::unique_ptr<Command> makeSetParameterComment(std::string name, std::string comment) {
+    std::string key = "measureComment/" + name;
+    return std::make_unique<SetCommand<std::string>>(
+        std::move(key), std::move(comment),
+        [name](const Document& document) -> std::optional<std::string> {
+            const Parameter* parameter = document.findParameter(name);
+            return parameter != nullptr ? std::optional<std::string>(parameter->comment)
+                                        : std::nullopt;
+        },
+        [name](Document& document, const std::string& value) {
+            const auto index = document.indexOfParameter(name);
+            return index && document.setParameterCommentAt(*index, value);
+        },
+        [name](const Document&, const std::string&) {
+            return CommandDescription{"setMeasureComment", {{"name", name}}};
+        });
+}
+
+std::unique_ptr<Command> makeSetParameterSlider(std::string name,
+                                                std::optional<SliderRange> slider) {
+    return std::make_unique<SetParameterSliderCommand>(std::move(name), slider);
 }
 
 std::unique_ptr<Command> makeRenameParameter(std::string name, std::string newName) {
