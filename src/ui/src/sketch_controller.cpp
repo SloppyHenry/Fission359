@@ -3,6 +3,7 @@
 
 #include "fission/ui/sketch_controller.h"
 
+#include <QDebug>
 #include <QVariantList>
 #include <QVector3D>
 
@@ -365,8 +366,17 @@ void SketchController::onPicked(int intent, bool, const QString& body, int kind,
         static_cast<Viewport3D::PickIntent>(intent) != Viewport3D::PickIntent::click) {
         return;
     }
+    // Seen in the log of a window test: what the pick pass answered to the click.
+    qInfo().noquote() << QStringLiteral(
+                             "sketch: click while choosing the plane: body \"%1\", kind %2, "
+                             "number %3")
+                             .arg(body)
+                             .arg(kind)
+                             .arg(number);
     if (body.isEmpty()) {
-        pickGround();
+        if (!pickGround()) {
+            qInfo() << "sketch: the ground plane could not be used";
+        }
     } else if (kind == static_cast<int>(core::SelectableKind::face)) {
         pickFace(body, number);
     }

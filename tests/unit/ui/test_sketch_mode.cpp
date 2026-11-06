@@ -18,11 +18,13 @@
 #include "fission/ui/document_model.h"
 #include "fission/ui/selection_controller.h"
 #include "fission/ui/sketch_controller.h"
+#include "fission/ui/viewport_3d.h"
 
 using Catch::Approx;
 using fission::ui::DocumentModel;
 using fission::ui::SelectionController;
 using fission::ui::SketchController;
+using fission::ui::Viewport3D;
 namespace core = fission::core;
 
 namespace {
@@ -366,4 +368,48 @@ TEST_CASE("sketch mode: the pointer catches on the elements of the sketch", "[ui
     CHECK(snap.value("kind").toString() == "alignment");
     CHECK(snap.value("v").toDouble() == Approx(20.0));
     CHECK(snap.value("guides").toInt() == 1);
+}
+
+TEST_CASE("sketch mode: a click into the empty (the answer of the pick pass) chooses the ground",
+          "[ui][sketchmode]") {
+    Sketching f;
+    Viewport3D view;
+    view.setProperty("animated", false);
+    view.setWidth(700.0);
+    view.setHeight(700.0);
+    f.selection->attach(&view);
+    f.sketch->attach(&view);
+    f.model->addShape("box", false);
+    f.settle();
+
+    f.sketch->start();
+    REQUIRE(f.sketch->picking());
+    // What the view reports for a click on nothing: no body, kind "body", number 0.
+    emit view.picked(static_cast<int>(Viewport3D::PickIntent::click), false, QString(), 0, 0);
+    f.settle();
+    CHECK(f.sketch->active());
+    REQUIRE(f.steps() == 2);
+    CHECK(f.typeAt(1) == "sketch");
+    // The way of the window test: Done, undo, redo, and the ground again.
+    f.sketch->finish();
+    f.settle();
+    CHECK(f.steps() == 1);
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.steps() == 2);
+    REQUIRE(f.model->redo());
+    f.settle();
+    CHECK(f.steps() == 1);
+    f.sketch->start();
+    REQUIRE(f.sketch->picking());
+    emit view.picked(static_cast<int>(Viewport3D::PickIntent::click), false, QString(), 0, 0);
+    f.settle();
+    CHECK(f.sketch->active());
+    f.sketch->escape();
+    f.settle();
+    CHECK_FALSE(f.sketch->engaged());
+    // A hover is not a click.
+    f.sketch->start();
+    emit view.picked(static_cast<int>(Viewport3D::PickIntent::hover), false, QString(), 0, 0);
+    CHECK(f.sketch->picking());
 }

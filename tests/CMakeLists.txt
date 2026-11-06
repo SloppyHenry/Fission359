@@ -285,8 +285,22 @@ if(_fission_run_app_in_tree AND (APPLE OR FISSION_XVFB_RUN))
   add_test(NAME app_sketch_ground
     COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
             --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-ground.png" --language en --size 1280x800
-            --camera=0,90,260 --simulate "search:zeichnen,menu.sketch;search:2D,menu.sketch;search:outline,menu.sketch;runcommand:menu.sketch;expectsketch:picking;expecthint:flat face;click:60,60;expectsketch:active;expectsketchplane:ground;recipe:box,sketch;menu:sketchdone;expectsketch:idle;recipe:box;expectundo:removeFeature;menu:undo;recipe:box,sketch;menu:redo;recipe:box;menu:sketch;click:60,60;expectsketch:active;key:Escape;expectsketch:idle;recipe:box")
+            --camera=0,90,260 --simulate "search:zeichnen,menu.sketch;search:2D,menu.sketch;search:outline,menu.sketch;runcommand:menu.sketch;expectsketch:picking;expecthint:flat face;click:60,60;expectsketch:active;expectsketchplane:ground;recipe:box,sketch;menu:sketchdone;expectsketch:idle;recipe:box;expectundo:removeFeature;menu:undo;recipe:box,sketch;menu:redo;recipe:box")
   set_tests_properties(app_sketch_ground PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # Esc ends the sketch like Done does (an empty sketch goes).
+  add_test(NAME app_sketch_escape
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-escape.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;expectsketch:picking;click:60,60;expectsketch:active;key:Escape;expectsketch:idle;recipe:box")
+  set_tests_properties(app_sketch_escape PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # The ground again after Done, undo and redo.
+  add_test(NAME app_sketch_ground_again
+    COMMAND ${_fission_gui_runner} $<TARGET_FILE:fission359>
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-again.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchdone;menu:undo;menu:redo;recipe:box;menu:sketch;expectsketch:picking;click:60,60;expectsketch:active;recipe:box,sketch")
+  set_tests_properties(app_sketch_ground_again PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-2.1b: a click on the top of the box makes a sketch on that face (it reads the box).
   add_test(NAME app_sketch_face
