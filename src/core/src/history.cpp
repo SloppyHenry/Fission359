@@ -39,6 +39,10 @@ private:
 
 History::History(Document document) : document_(std::move(document)) {}
 
+std::size_t History::mendRefs(const RecomputeResult& result) {
+    return applyHealedRefs(document_, result);
+}
+
 bool History::execute(std::unique_ptr<Command> command) {
     if (!command) {
         return false;

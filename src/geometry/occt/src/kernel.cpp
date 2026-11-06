@@ -56,6 +56,8 @@ public:
         return occt::tessellate(solid, params);
     }
 
+    BodySignatures signatures(const Solid& solid) const override { return occt::signatures(solid); }
+
 private:
     FontBook fonts_;
 };

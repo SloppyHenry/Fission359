@@ -158,7 +158,7 @@
 ---
 
 ### AP-2.10 Persistente Referenzen (produktiv) und Reparatur-UI
-**Status:** offen · **Größe:** XL · **Abhängigkeiten:** AP-0.6, AP-1.1, AP-1.7, AP-1.10
+**Status:** Review (2026-11-03) · **Größe:** XL · **Abhängigkeiten:** AP-0.6, AP-1.1, AP-1.7, AP-1.10
 **Bauanleitung:** [anleitungen/AP-2.10.md](anleitungen/AP-2.10.md)
 
 > Vor dem Start in Teilpakete zerlegen (Naming für jede Feature-Art, Signatur-Matching, Reparatur-UI).
@@ -169,8 +169,20 @@
 - Testsuite mit ≥ 40 Änderungsszenarien (wächst mit jedem neuen Feature-Typ)
 
 **Akzeptanzkriterien:**
-- [ ] 0 stille Fehlzuordnungen in der Testsuite
-- [ ] ≥ 90 % der Szenarien lösen sich automatisch korrekt auf
+- [x] 0 stille Fehlzuordnungen in der Testsuite (550 beurteilte Verweise, davon 70 Szenarien und 480 aus der Zufallsprobe; `scripts/test --release`, Mac)
+- [x] ≥ 90 % der Szenarien lösen sich automatisch korrekt auf (99 %; 4 zu Recht um Hilfe gebeten, 1 unnötig)
+
+**Abschlussvermerk 2026-11-03 (Teile a–e, Gesamtlauf 774 von 774 grün auf dem Mac):**
+- Ergebnis: Kernel beschreibt Flächen und Kanten (`geo::ElementSignature`), Booleans melden die Namens-Historie, Körper merken verbrauchte
+  Elemente; `core::resolve` (strenger Modus, Schwellen benannt); Einbau in die Neuberechnung (Warnung `referenceNeedsHelp` mit Grund, letztes
+  gültiges Ergebnis bleibt); Heilen ohne Undo-Schritt; `makeRef`, `makeSetFeatureRefs`; Produkt-Suite (70 Szenarien, Zufallsprobe, drei
+  Baustein-Gegenproben, Zeile in `scripts/test`); Reparatur-Oberfläche mit Geist und „Neu wählen“.
+- Festlegungen: [ADR-0003](../adr/0003-persistente-referenzen.md) Nachtrag 2026-11-03 (Namen geteilter Flächen, Koordinaten je Schritt,
+  Position wird nicht herausgerechnet). Heilen ohne Undo-Schritt (Entscheidung 2026-11-03).
+- Messwert: Auflösung von 49 Verweisen in einem Lauf ohne Kernel-Aufruf 0,64 ms (Release, Mac; Budget 50 ms).
+- Offene Reste: Szenarien mit Abrunden, Bohren, Skizzen (mit AP-2.5, 2.7, 2.3, in deren Anleitungen eingetragen); Fenster-Test der
+  Reparatur (sichtbar erst mit AP-2.5); Lauf auf Linux steht aus (CI); die Aussehen eines Körpers werden je Lauf einmal berechnet, nicht über
+  Läufe hinweg gespeichert. Details: [anleitungen/AP-2.10.md](anleitungen/AP-2.10.md), Abschnitte „Stand“.
 
 ---
 

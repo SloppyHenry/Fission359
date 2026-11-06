@@ -19,8 +19,10 @@
 #include <set>
 #include <vector>
 
+#include "fission/core/body_looks.h"
 #include "fission/core/commands.h"
 #include "fission/core/cuts.h"
+#include "fission/core/resolve.h"
 #include "fission/core/scaling.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
@@ -62,6 +64,23 @@ QString stateName(const core::FeatureState* state) {
     return QStringLiteral("pending");
 }
 
+QString helpReasonName(core::HelpReason reason) {
+    switch (reason) {
+    case core::HelpReason::split:
+        return QStringLiteral("split");
+    case core::HelpReason::consumed:
+        return QStringLiteral("consumed");
+    case core::HelpReason::turned:
+        return QStringLiteral("turned");
+    case core::HelpReason::swapped:
+        return QStringLiteral("swapped");
+    case core::HelpReason::notFound:
+    case core::HelpReason::none:
+        break;
+    }
+    return QStringLiteral("notFound");
+}
+
 const char* issueCodeName(core::FeatureIssueCode code) {
     switch (code) {
     case core::FeatureIssueCode::unknownType:
@@ -98,6 +117,8 @@ const char* issueCodeName(core::FeatureIssueCode code) {
         return "importFileUnreadable";
     case core::FeatureIssueCode::importFileEmpty:
         return "importFileEmpty";
+    case core::FeatureIssueCode::referenceNeedsHelp:
+        return "referenceNeedsHelp";
     }
     return "kernelFailed";
 }
@@ -158,8 +179,16 @@ QClipboard* systemClipboard() {
 } // namespace
 
 DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel, QObject* parent)
+    : DocumentModel(std::move(kernel), {}, parent) {}
+
+DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel,
+                             std::vector<std::unique_ptr<const core::FeatureType>> extraTypes,
+                             QObject* parent)
     : QObject(parent), m_kernel(std::move(kernel)) {
     features::registerBuiltinFeatures(m_registry);
+    for (auto& type : extraTypes) {
+        m_registry.add(std::move(type));
+    }
     for (const auto& [key, color] : filamentPalette()) {
         m_palette.push_back({key, color, false});
     }
@@ -606,6 +635,18 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
         return;
     }
     m_result = std::move(result);
+    if (repairing()) { // the problem is gone (or the step): nothing left to pick
+        const core::FeatureState* state = m_result->state(m_repairFeature);
+        if (state == nullptr || !state->issue ||
+            state->issue->code != core::FeatureIssueCode::referenceNeedsHelp) {
+            cancelRepair();
+        }
+    }
+    // References that were found again with a new look are refreshed in the document (no undo
+    // step, ADR-0003); the changed document is calculated once more.
+    if (m_history.mendRefs(*m_result) > 0) {
+        requestRecompute();
+    }
     {
         std::set<std::uint64_t> alive;
         for (const auto& [id, body] : m_result->bodies) {
@@ -733,6 +774,18 @@ void DocumentModel::rebuildLists() {
             problem[QStringLiteral("code")] =
                 QString::fromLatin1(issueCodeName(state->issue->code));
             problem[QStringLiteral("field")] = toQString(state->issue->subject);
+            if (state->issue->code == core::FeatureIssueCode::referenceNeedsHelp) {
+                problem[QStringLiteral("reason")] = helpReasonName(state->issue->helpReason);
+                // The recipe number (1-based) of the step that used the element up.
+                for (std::size_t at = 0; at < features.size(); ++at) {
+                    if (features[at].id == state->issue->consumedBy) {
+                        problem[QStringLiteral("step")] = static_cast<int>(at) + 1;
+                    }
+                }
+                problem[QStringLiteral("kind")] = state->issue->refKind == core::ElementKind::edge
+                                                      ? QStringLiteral("edge")
+                                                      : QStringLiteral("face");
+            }
             if (state->issue->expression) {
                 problem[QStringLiteral("detail")] =
                     QString::fromLatin1(expressionCodeName(state->issue->expression->code));
@@ -2669,6 +2722,120 @@ bool DocumentModel::setCutTarget(int holeIndex, int rootIndex, bool cut) {
         documentChanged();
     }
     return true;
+}
+
+QString DocumentModel::repairKind() const {
+    return m_repairElementKind == core::ElementKind::edge ? QStringLiteral("edge")
+                                                          : QStringLiteral("face");
+}
+
+bool DocumentModel::startRepair(int stepIndex) {
+    const auto& features = m_history.document().features();
+    if (stepIndex < 0 || stepIndex >= static_cast<int>(features.size()) || !m_result) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(stepIndex)];
+    const core::FeatureState* state = m_result->state(step.id);
+    if (state == nullptr || !state->issue ||
+        state->issue->code != core::FeatureIssueCode::referenceNeedsHelp) {
+        return false;
+    }
+    const auto slot = step.refs.find(state->issue->subject);
+    if (slot == step.refs.end() || state->issue->refIndex >= slot->second.size()) {
+        return false;
+    }
+    m_repairFeature = step.id;
+    m_repairSlot = state->issue->subject;
+    m_repairIndex = state->issue->refIndex;
+    m_repairElementKind = slot->second[m_repairIndex].kind;
+    emit repairChanged();
+    return true;
+}
+
+void DocumentModel::cancelRepair() {
+    if (!repairing()) {
+        return;
+    }
+    m_repairFeature = {};
+    m_repairSlot.clear();
+    emit repairChanged();
+}
+
+bool DocumentModel::completeRepair(const QString& bodyId, const QString& kind, int number) {
+    if (!repairing() || !m_result || number <= 0 || kind != repairKind()) {
+        return false;
+    }
+    const core::Feature* step = m_history.document().findFeature(m_repairFeature);
+    if (step == nullptr || step->inputs.empty() ||
+        toQString(step->inputs.front().value) != bodyId) {
+        return false; // only the body the step works on
+    }
+    const auto body = m_result->bodies.find(step->inputs.front());
+    const auto slot = step->refs.find(m_repairSlot);
+    if (body == m_result->bodies.end() || slot == step->refs.end() ||
+        m_repairIndex >= slot->second.size()) {
+        return false;
+    }
+    std::optional<core::PersistentRef> picked;
+    try {
+        const core::BodyLooks looks =
+            core::describeBody(body->second.faces, m_kernel->signatures(body->second.solid));
+        const auto& list =
+            m_repairElementKind == core::ElementKind::face ? looks.faces : looks.edges;
+        for (const core::NamedLook& entry : list) {
+            if (entry.id == static_cast<std::uint32_t>(number)) {
+                picked = core::makeRef(looks, m_repairElementKind, entry.id,
+                                       core::placementOf(m_history.document(), m_registry,
+                                                         m_result->features, entry.name));
+            }
+        }
+    } catch (const geo::GeometryError&) {
+        return false;
+    }
+    if (!picked) {
+        return false; // without a name it could not be found again after the next change
+    }
+    std::vector<core::PersistentRef> refs = slot->second;
+    refs[m_repairIndex] = std::move(*picked);
+    core::CommandDescription label{"pickAgain", {{"type", step->type}}};
+    if (!executeWithCuts(core::makeSetFeatureRefs(step->id, m_repairSlot, std::move(refs)),
+                         std::move(label))) {
+        return false;
+    }
+    cancelRepair();
+    documentChanged();
+    return true;
+}
+
+QVariantMap DocumentModel::repairGhost() const {
+    QVariantMap ghost;
+    ghost[QStringLiteral("valid")] = false;
+    if (!repairing() || !m_result) {
+        return ghost;
+    }
+    const core::Feature* step = m_history.document().findFeature(m_repairFeature);
+    if (step == nullptr) {
+        return ghost;
+    }
+    const auto slot = step->refs.find(m_repairSlot);
+    if (slot == step->refs.end() || m_repairIndex >= slot->second.size()) {
+        return ghost;
+    }
+    const core::PersistentRef& ref = slot->second[m_repairIndex];
+    const core::RefGhost drawn = core::ghostOf(
+        ref, core::placementOf(m_history.document(), m_registry, m_result->features, ref.name));
+    QVariantList points;
+    for (const geo::Point3d& point : drawn.points) {
+        QVariantMap entry;
+        entry[QStringLiteral("x")] = point.x;
+        entry[QStringLiteral("y")] = point.y;
+        entry[QStringLiteral("z")] = point.z;
+        points.push_back(entry);
+    }
+    ghost[QStringLiteral("valid")] = !points.isEmpty();
+    ghost[QStringLiteral("kind")] = repairKind();
+    ghost[QStringLiteral("points")] = points;
+    return ghost;
 }
 
 QVariantMap DocumentModel::splitPlane() const {

@@ -1398,7 +1398,7 @@
 <context>
     <name>LeftPanel</name>
     <message>
-        <location filename="../qml/LeftPanel.qml" line="+95"/>
+        <location filename="../qml/LeftPanel.qml" line="+97"/>
         <source>Bodies</source>
         <translation>Bodies</translation>
     </message>
@@ -1547,7 +1547,7 @@
         <translation>Cancel</translation>
     </message>
     <message>
-        <location line="+98"/>
+        <location line="+99"/>
         <source>Every change appears here as a sentence.</source>
         <translation>Every change appears here as a sentence.</translation>
     </message>
@@ -1611,12 +1611,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+689"/>
+        <location line="+703"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-688"/>
+        <location line="-702"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
@@ -1646,7 +1646,7 @@
         <translation>Edit</translation>
     </message>
     <message>
-        <location line="+102"/>
+        <location line="+105"/>
         <source>Undo</source>
         <translation>Undo</translation>
     </message>
@@ -1656,7 +1656,7 @@
         <translation>Redo</translation>
     </message>
     <message>
-        <location line="-102"/>
+        <location line="-105"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Ctrl+Shift+Z</translation>
     </message>
@@ -1837,12 +1837,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1196"/>
+        <location line="+1198"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1195"/>
+        <location line="-1197"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -1873,12 +1873,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1183"/>
+        <location line="+1186"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1181"/>
+        <location line="-1184"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -1908,24 +1908,34 @@
         <translation>About Fission359</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+9"/>
+        <source>Click the edge that was meant. Esc cancels.</source>
+        <translation>Click the edge that was meant. Esc cancels.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click the face that was meant. Esc cancels.</source>
+        <translation>Click the face that was meant. Esc cancels.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</source>
         <translation>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</translation>
     </message>
     <message>
         <location line="+23"/>
-        <location line="+757"/>
+        <location line="+749"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-755"/>
-        <location line="+756"/>
+        <location line="-747"/>
+        <location line="+748"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-750"/>
+        <location line="-742"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -2003,7 +2013,17 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+207"/>
+        <location line="+121"/>
+        <source>Click an edge of the body this step works on.</source>
+        <translation>Click an edge of the body this step works on.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click a face of the body this step works on.</source>
+        <translation>Click a face of the body this step works on.</translation>
+    </message>
+    <message>
+        <location line="+125"/>
         <source>Open</source>
         <translation>Open</translation>
     </message>
@@ -2067,7 +2087,7 @@
         </translation>
     </message>
     <message>
-        <location line="-588"/>
+        <location line="-584"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2102,12 +2122,12 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+792"/>
+        <location line="+785"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+121"/>
         <source>Click a face of the print bed or of another body.</source>
         <translation>Click a face of the print bed or of another body.</translation>
     </message>
@@ -2122,7 +2142,7 @@
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
     <message>
-        <location line="-17"/>
+        <location line="-20"/>
         <source>Next tab</source>
         <translation>Next tab</translation>
     </message>
@@ -2142,7 +2162,7 @@
         <translation>Ctrl+Shift+Tab</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+21"/>
         <source>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</source>
         <translation>Type a distance to move exactly (Tab for the next direction), Enter accepts, Esc puts it back.</translation>
     </message>
@@ -2437,6 +2457,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>%1 step: chose again</source>
+        <translation>%1 step: chose again</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Body renamed to “%1”</source>
         <translation>Body renamed to “%1”</translation>
     </message>
@@ -2543,17 +2568,17 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-308"/>
+        <location line="-306"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1182"/>
+        <location line="-1184"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1217"/>
+        <location line="+1219"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
@@ -2563,12 +2588,12 @@
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+515"/>
+        <location line="+554"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-562"/>
+        <location line="-601"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
@@ -2783,9 +2808,14 @@
         <translation>Change value</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="+1"/>
         <source>Hide this step</source>
         <translation>Hide this step</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Choose again</source>
+        <translation>Choose again</translation>
     </message>
     <message>
         <location line="+11"/>
@@ -2869,6 +2899,46 @@
     </message>
     <message>
         <location line="+2"/>
+        <source>edge</source>
+        <translation>edge</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>face</source>
+        <translation>face</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The %1 was split into pieces, so I cannot tell which one you meant. Choose it again.</source>
+        <translation>The %1 was split into pieces, so I cannot tell which one you meant. Choose it again.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>This %1 does not exist any more after step %2. Choose another one.</source>
+        <translation>This %1 does not exist any more after step %2. Choose another one.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An earlier step used up this %1. Choose another one.</source>
+        <translation>An earlier step used up this %1. Choose another one.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This %1 has turned a lot. Choose it again to be sure.</source>
+        <translation>This %1 has turned a lot. Choose it again to be sure.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Two equal ones seem to have changed places. Choose the %1 you meant.</source>
+        <translation>Two equal ones seem to have changed places. Choose the %1 you meant.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>I cannot find this %1 any more. Choose it again.</source>
+        <translation>I cannot find this %1 any more. Choose it again.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>A cutter does not touch the body, so nothing is cut out. Move it onto the body.</source>
         <translation>A cutter does not touch the body, so nothing is cut out. Move it onto the body.</translation>
     </message>
@@ -2931,7 +3001,7 @@
         <translation>Hidden</translation>
     </message>
     <message>
-        <location line="+109"/>
+        <location line="+110"/>
         <source>Name of the step</source>
         <translation>Name of the step</translation>
     </message>

@@ -15,6 +15,7 @@
 | R21 | Mindest-Schriftgröße | Das **Design-System gilt**: Grundgröße 13 px, kleinste Schrift 12 px bei 100 %; wer größer will, skaliert die Oberfläche (80–200 %) | Entscheidung 2026-10-14 (AP-0.8). UX-Konzept §14 angepasst. Qt Quick kennt nur ganze Pixel: 12,5 und 14,5 px des Mockups werden 13 und 15 px |
 | R19 | Griffe | **Beide Griff-Arten bleiben** und sind einstellbar: „Achsen“ (Pfeile X/Y/Z, Maßbänder) und „Klassisch“ (Eck-Quadrate wie Tinkercad) | **UX §2.2**, Glossar. Beide ändern Maße gleich (Regeln 11–13 gelten für beide; Ablauf D wird mit beiden Griff-Arten geprüft). **Voreinstellung: Achsen** |
 | R16 | Winkeltoleranz beim Export | **5°** statt 0,5° bei 0,01 mm Sehnenabweichung (2026-10-13): 0,5° gibt etwa zehnmal so viele Dreiecke und ist 15- bis 100-mal langsamer, ohne bessere Maßhaltigkeit | Architektur §6; Bericht [kernel-robustheit.md](spikes/kernel-robustheit.md) |
+| R22 | Wer entscheidet und baut bis 1.0? | **Autonomer Ausbau** (2026-11-05): Eine leitende Sitzung entscheidet Haltepunkte, UX, Abhängigkeiten und Dateiformat selbst, lässt Unter-Sitzungen bauen, prüft und mergt bei grüner CI | [orchestrierung.md](arbeitspakete/anleitungen/orchestrierung.md); CLAUDE.md „Zusammenarbeit“ und „Arbeitsweise“; Handbuch §2 und §10. Gefragt wird nur noch bei Geld, Konten, Schlüsseln, Veröffentlichung außerhalb von GitHub, Umschreiben der Git-Geschichte und Eingriffen in Testrechner |
 
 ---
 

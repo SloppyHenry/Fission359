@@ -4,16 +4,19 @@ Jedes offene Arbeitspaket (AP) hat hier eine **Bauanleitung**. Sie ist so geschr
 Projekt nicht kennt und weniger erfahren ist, das AP **in unserem Sinne** umsetzen kann: Schritt für Schritt, mit den Dateien,
 die es anfassen soll, den Tests, die es schreiben muss, und den Stellen, an denen es **anhalten und fragen** muss.
 
+Wer die Arbeit verteilt, Haltepunkte entscheidet und mergt, regelt [orchestrierung.md](orchestrierung.md) (Festlegung 2026-11-05:
+autonomer Ausbau durch eine leitende Sitzung mit Unter-Sitzungen als Umsetzer).
+
 Die Phasendateien (`../phase-*.md`) sagen, **was** ein AP liefern soll (Umfang, Akzeptanzkriterien). Die Anleitung sagt, **wie**.
-Bei Widersprüchen gilt: ADR > Phasendatei > Anleitung. Merkst du einen Widerspruch, halte an und frag.
+Bei Widersprüchen gilt: ADR > Phasendatei > Anleitung. Merkst du einen Widerspruch, halte an und berichte ihn der Orchestrierung.
 
 ## Bevor du anfängst (jedes Mal)
 
-1. Lies [`CLAUDE.md`](../../../CLAUDE.md) (Projektregeln, vor allem die 13 Produktregeln) und das [Handbuch](handbuch.md)
+1. Lies [`CLAUDE.md`](../../../CLAUDE.md) (Projektregeln, vor allem die 13 Produktregeln), [orchestrierung.md](orchestrierung.md) und das [Handbuch](handbuch.md)
    (wie man baut, testet, formatiert, Texte übersetzt, einen Fenster-Test schreibt, einen PR öffnet).
 2. Lies die Anleitung deines APs **ganz**, bevor du Code schreibst. Lies dann die Dateien, die unter „Vorher lesen“ stehen.
 3. Prüfe die Abhängigkeiten: Steht jedes AP aus „Voraussetzungen“ in seiner Phasendatei auf **erledigt**? Wenn nicht: nicht
-   anfangen, sondern dem Maintainer sagen, welches AP zuerst kommt.
+   anfangen, sondern der Orchestrierung sagen, welches AP zuerst kommt.
 4. Leg eine eigene Arbeitskopie an (Handbuch §2). Arbeite **nie** im Hauptordner, dort können andere Sitzungen laufen.
 
 ## Aufbau jeder Anleitung
@@ -25,8 +28,8 @@ Bei Widersprüchen gilt: ADR > Phasendatei > Anleitung. Merkst du einen Widerspr
 | **Vorher lesen** | Dateien und Abschnitte, ohne die du falsch baust. |
 | **Ausgangslage im Code** | Was es schon gibt (Klassen, Funktionen, Dateien), worauf du aufbaust. Prüfe es nach: der Code kann sich seit dem Schreiben geändert haben. |
 | **Festlegungen** | Entscheidungen, die schon getroffen sind. Nicht neu verhandeln. |
-| **Haltepunkte** | Fragen, die der Maintainer entscheiden muss, **bevor** du den betroffenen Teil baust. Jede hat eine Empfehlung. Stell sie gesammelt am Anfang (höchstens 3 Optionen je Frage, mit Empfehlung und Folgen), warte auf die Antwort. |
-| **Schritte** | Nummerierte Arbeitsschritte. Nach jedem Schritt bauen und die genannten Tests **schreiben**, aber nicht laufen lassen (Handbuch §10, Testlauf am Sitzungsende). Jeder Schritt ist ein Commit. |
+| **Haltepunkte** | Fragen, die entschieden sein müssen, **bevor** der betroffene Teil gebaut wird. Jede hat eine Empfehlung. Die Orchestrierung entscheidet sie vor dem Auftrag und trägt das Ergebnis unter „Festlegungen“ ein; der Auftrag nennt die Entscheidungen. |
+| **Schritte** | Nummerierte Arbeitsschritte. Nach jedem Schritt bauen, die genannten Tests **schreiben** und die Unit-Tests laufen lassen (Handbuch §10). Jeder Schritt ist ein Commit. |
 | **Tests** | Konkrete Testfälle mit erwarteten Werten. Sie sind Pflicht, nicht Vorschlag. |
 | **Abnahme** | Wie man prüft, dass das AP fertig ist, und die „So probierst du es aus“-Schritte für den PR. |
 | **Stolperfallen** | Was hier schon schiefging oder leicht schiefgeht. |
@@ -34,20 +37,20 @@ Bei Widersprüchen gilt: ADR > Phasendatei > Anleitung. Merkst du einen Widerspr
 
 ## Regeln für Umsetzer
 
-- **Nichts raten, was der Maintainer entscheiden muss.** Haltepunkte sind Pflicht. Kleine technische Details darfst du
-  selbst entscheiden; schreib sie in die PR-Beschreibung unter „Annahmen“.
-- **Klein anfangen, oft bauen.** Nach jedem Schritt: bauen und `scripts/tools/check_format.py`. Die Tests laufen gesammelt am
-  Sitzungsende (Handbuch §10); jede neue Funktion bringt ihre neuen Tests trotzdem sofort mit.
+- **Nichts raten, was nicht entschieden ist.** Haltepunkte, die der Auftrag nicht entscheidet: anhalten und berichten.
+  Kleine technische Details darfst du selbst entscheiden; schreib sie in den Bericht unter „Annahmen“.
+- **Klein anfangen, oft bauen.** Nach jedem Schritt: bauen, `scripts/tools/check_format.py`, Unit-Tests. Fenster-Tests laufen
+  in der CI (Handbuch §10); jede neue Funktion bringt ihre neuen Tests sofort mit.
 - **Tests zuerst bei Logik.** Für reine Rechnungen (Fangen, Maße, Geometrie) schreib den Test vor dem Code.
 - **Nie still falsch** (Regel 6): Lieber ein Fehler am Schritt als ein falsches Ergebnis. Lieber eine Funktion weniger.
-- **Keine neuen Abhängigkeiten** (Bibliotheken) ohne Haltepunkt und ADR.
-- **Ehrlich berichten:** Was nicht geht, nicht getestet ist oder vom Plan abweicht, steht in der PR-Beschreibung. Nie etwas als
+- **Keine neuen Abhängigkeiten** (Bibliotheken), die der Auftrag nicht nennt. Die Orchestrierung entscheidet sie mit ADR.
+- **Ehrlich berichten:** Was nicht geht, nicht getestet ist oder vom Plan abweicht, steht im Bericht und in der PR-Beschreibung. Nie etwas als
   erledigt markieren, was nicht nachweislich funktioniert.
 - **Wenn du feststeckst** (derselbe Fehler nach drei Versuchen, ein Test, den du nicht verstehst): anhalten, beschreiben was
-  du versucht hast, fragen. Nicht Tests abschwächen, nicht Prüfungen abschalten.
-- **Abschluss:** Status in der Phasendatei setzen (`Review`, erst nach dem OK des Maintainers `erledigt`), knapper
+  du versucht hast, berichten. Nicht Tests abschwächen, nicht Prüfungen abschalten.
+- **Abschluss (Orchestrierung):** nach grüner CI und eigener Prüfung mergen, Status `erledigt` in der Phasendatei, knapper
   Abschlussvermerk dort (Datum, Ergebnis, weiter geltende Festlegungen, offene Reste). Ausführliches in den PR.
-  Danach diese Anleitung löschen oder als „erledigt“ markieren und Folgearbeiten in die passende Anleitung übertragen.
+  Danach die Anleitung nach [erledigt/](erledigt/) verschieben und Folgearbeiten in die passende Anleitung übertragen.
 
 ## Übersicht
 
@@ -59,6 +62,8 @@ Abgeschlossene Anleitungen (AP-1.6c2 bis AP-1.12) liegen zum Nachschlagen in [er
 |---|---|---|
 | 1.13 | [Nutzertest 1](AP-1.13.md) | S |
 | – | [Pflege: Fehler, Politur und Folgearbeiten](pflege.md) | je S |
+
+Nutzertests (AP-1.13, AP-2.15, AP-6.5) bereitet die Orchestrierung vor; sie blockieren den Ausbau nicht ([orchestrierung.md](orchestrierung.md), „Projektstand“).
 
 ### Phase 2 – Präzision
 Einstieg ist AP-2.10. Festlegung 2026-11-03: Phase 2 beginnt, während der Nutzertest 1 (AP-1.13) noch aussteht; AP-2.10 betrifft vor allem den Kern. Liegt die Auswertung vor, gehen ihre Top-3-Probleme jedem weiteren AP vor.
@@ -137,4 +142,4 @@ Einstieg ist AP-2.10. Festlegung 2026-11-03: Phase 2 beginnt, während der Nutze
 
 Wer eine neue Aufgabe anlegt (neues AP, Teilpaket, Folgearbeit), schreibt ihre Anleitung im selben Aufbau. Wer ein AP
 zerlegt, legt je Teilpaket eine Anleitung an. Anleitungen für Pakete, die noch weit weg sind, werden vor dem Start von
-einem erfahrenen Modell gegen den dann aktuellen Code geprüft und nachgeschärft (Abschnitt „Ausgangslage im Code“).
+der Orchestrierung gegen den dann aktuellen Code geprüft und nachgeschärft (Abschnitt „Ausgangslage im Code“).
