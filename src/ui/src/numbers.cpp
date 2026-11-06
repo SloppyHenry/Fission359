@@ -126,6 +126,36 @@ QString Numbers::adjusted(const QString& text, const QString& kind, double delta
     return QString::fromStdString(*moved);
 }
 
+QStringList Numbers::completions(const QString& typed) const {
+    const std::string word = core::foldMeasureName(typed.toStdString());
+    if (word.empty()) {
+        return {};
+    }
+    std::vector<std::pair<std::string, QString>> starts;
+    std::vector<std::pair<std::string, QString>> contains;
+    for (const QString& name : m_measureNames) {
+        const std::string folded = core::foldMeasureName(name.toStdString());
+        if (folded == word) {
+            continue;
+        }
+        if (folded.starts_with(word)) {
+            starts.emplace_back(folded, name);
+        } else if (folded.find(word) != std::string::npos) {
+            contains.emplace_back(folded, name);
+        }
+    }
+    std::sort(starts.begin(), starts.end());
+    std::sort(contains.begin(), contains.end());
+    QStringList found;
+    for (const auto& entry : starts) {
+        found << entry.second;
+    }
+    for (const auto& entry : contains) {
+        found << entry.second;
+    }
+    return found;
+}
+
 QVariantMap Numbers::explain(const QString& text, const QString& kind) const {
     const std::string source = text.toStdString();
     if (source.find_first_not_of(" \t") == std::string::npos) {

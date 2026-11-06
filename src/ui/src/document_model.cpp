@@ -871,6 +871,7 @@ void DocumentModel::rebuildLists() {
     m_stepValues = buildStepValues();
     m_stepTexts = buildStepTexts();
     m_stepHandles = buildStepHandles();
+    rebuildMeasures();
 
     emit recipeChanged();
     emit bodiesChanged();
@@ -2606,6 +2607,295 @@ QStringList DocumentModel::pasteBodies() {
     }
     emit historyChanged();
     return created;
+}
+
+// --- named measures (AP-2.9) -------------------------------------------------------------------
+
+namespace {
+
+QString kindWord(core::QuantityKind kind) {
+    switch (kind) {
+    case core::QuantityKind::angle:
+        return QStringLiteral("angle");
+    case core::QuantityKind::plain:
+        return QStringLiteral("plain");
+    case core::QuantityKind::length:
+        break;
+    }
+    return QStringLiteral("length");
+}
+
+std::optional<core::QuantityKind> kindFromWord(const QString& word) {
+    if (word == QLatin1String("length")) {
+        return core::QuantityKind::length;
+    }
+    if (word == QLatin1String("angle")) {
+        return core::QuantityKind::angle;
+    }
+    if (word == QLatin1String("plain")) {
+        return core::QuantityKind::plain;
+    }
+    return std::nullopt;
+}
+
+// The name made of what a person typed: letters, digits and _ only, not starting with a digit.
+std::string nameFrom(const QString& text) {
+    std::string name;
+    for (const char c : text.toUtf8().toStdString()) {
+        const auto u = static_cast<unsigned char>(c);
+        if (std::isalnum(u) != 0 || u == '_' || u >= 0x80) {
+            name += c;
+        }
+    }
+    if (name.empty() || (std::isdigit(static_cast<unsigned char>(name.front())) != 0)) {
+        name.insert(0, "M");
+    }
+    return name;
+}
+
+} // namespace
+
+void DocumentModel::rebuildMeasures() {
+    const core::Document& document = m_history.document();
+    const auto& parameters = document.parameters();
+    // The values come from the last calculation: only while it knows these very measures.
+    const bool known =
+        m_result != nullptr && m_result->measures.results.size() == parameters.size();
+    QVariantList list;
+    for (std::size_t i = 0; i < parameters.size(); ++i) {
+        const core::Parameter& parameter = parameters[i];
+        QVariantMap entry;
+        entry[QStringLiteral("index")] = static_cast<int>(i);
+        entry[QStringLiteral("name")] = toQString(parameter.name);
+        entry[QStringLiteral("expression")] = toQString(parameter.expression);
+        entry[QStringLiteral("comment")] = toQString(parameter.comment);
+        entry[QStringLiteral("kind")] = kindWord(parameter.kind);
+        entry[QStringLiteral("unit")] =
+            parameter.kind == core::QuantityKind::length  ? QStringLiteral("mm")
+            : parameter.kind == core::QuantityKind::angle ? QStringLiteral("\u00B0")
+                                                          : QString();
+        bool valid = false;
+        if (known) {
+            const core::MeasureResult& result = m_result->measures.results[i];
+            if (result.name == parameter.name && result.value) {
+                valid = true;
+                entry[QStringLiteral("value")] = result.value->value;
+            } else if (result.name == parameter.name && result.error) {
+                QVariantMap error;
+                error[QStringLiteral("code")] =
+                    QString::fromLatin1(expressionCodeName(result.error->code));
+                error[QStringLiteral("subject")] = toQString(result.error->subject);
+                QStringList path;
+                for (const std::string& step : result.error->path) {
+                    path << toQString(step);
+                }
+                error[QStringLiteral("path")] = path;
+                entry[QStringLiteral("error")] = error;
+            }
+        }
+        entry[QStringLiteral("valid")] = valid;
+        const core::Document::MeasureUse use = document.usesOfParameter(parameter.name);
+        QVariantList steps;
+        QVariantList numbers;
+        for (const std::size_t step : use.steps) {
+            steps.push_back(static_cast<int>(step));
+            numbers.push_back(document.features()[step].number);
+        }
+        QStringList byMeasures;
+        for (const std::size_t other : use.measures) {
+            byMeasures << toQString(parameters[other].name);
+        }
+        entry[QStringLiteral("usedIn")] = steps;
+        entry[QStringLiteral("usedInNumbers")] = numbers;
+        entry[QStringLiteral("usedByMeasures")] = byMeasures;
+        if (parameter.slider) {
+            QVariantMap slider;
+            slider[QStringLiteral("min")] = parameter.slider->min;
+            slider[QStringLiteral("max")] = parameter.slider->max;
+            slider[QStringLiteral("step")] = parameter.slider->step;
+            entry[QStringLiteral("slider")] = slider;
+        }
+        list.push_back(entry);
+    }
+    if (m_numbers != nullptr) {
+        QStringList names;
+        for (const core::Parameter& parameter : parameters) {
+            names << toQString(parameter.name);
+        }
+        m_numbers->setMeasureNames(names);
+    }
+    if (list != m_measureList) {
+        m_measureList = list;
+        emit measuresChanged();
+    }
+}
+
+QString DocumentModel::addMeasure(const QString& name, const QString& expression,
+                                  const QString& kind) {
+    const std::string typed = name.toStdString();
+    const auto quantity = kindFromWord(kind);
+    if (!core::isValidMeasureName(typed) || !quantity) {
+        return QStringLiteral("invalidName");
+    }
+    if (m_history.document().findParameter(typed) != nullptr) {
+        return QStringLiteral("duplicateName");
+    }
+    if (!m_history.execute(
+            core::makeAddParameter({typed, expression.toStdString(), *quantity, ""}))) {
+        return QStringLiteral("invalidName");
+    }
+    rebuildMeasures();
+    documentChanged(); // its value is worked out by the calculation
+    emit historyChanged();
+    return {};
+}
+
+QString DocumentModel::suggestMeasureName(const QString& base) const {
+    const std::string stem = nameFrom(base);
+    std::string name = stem;
+    for (int n = 2; m_history.document().findParameter(name) != nullptr; ++n) {
+        name = stem + std::to_string(n);
+    }
+    return toQString(name);
+}
+
+QVariantMap DocumentModel::measureUses(const QString& name) const {
+    const core::Document& document = m_history.document();
+    const core::Document::MeasureUse use = document.usesOfParameter(name.toStdString());
+    QVariantList steps;
+    QVariantList numbers;
+    for (const std::size_t step : use.steps) {
+        steps.push_back(static_cast<int>(step));
+        numbers.push_back(document.features()[step].number);
+    }
+    QStringList measures;
+    for (const std::size_t other : use.measures) {
+        measures << toQString(document.parameters()[other].name);
+    }
+    return {{QStringLiteral("steps"), steps},
+            {QStringLiteral("numbers"), numbers},
+            {QStringLiteral("measures"), measures}};
+}
+
+bool DocumentModel::removeMeasure(const QString& name) {
+    if (!m_history.execute(core::makeRemoveParameter(name.toStdString()))) {
+        return false;
+    }
+    rebuildMeasures();
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
+bool DocumentModel::setMeasureExpression(const QString& name, const QString& expression) {
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(
+            core::makeSetParameterExpression(name.toStdString(), expression.toStdString()))) {
+        return false;
+    }
+    if (m_history.document().revision() != before) {
+        rebuildMeasures();
+        documentChanged();
+    }
+    return true;
+}
+
+bool DocumentModel::setMeasureComment(const QString& name, const QString& comment) {
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(
+            core::makeSetParameterComment(name.toStdString(), comment.toStdString()))) {
+        return false;
+    }
+    if (m_history.document().revision() != before) {
+        rebuildMeasures();
+        documentChanged(false); // a comment is no geometry
+    }
+    return true;
+}
+
+QString DocumentModel::renameMeasure(const QString& name, const QString& newName) {
+    const std::string typed = newName.toStdString();
+    if (!core::isValidMeasureName(typed)) {
+        return QStringLiteral("invalidName");
+    }
+    const auto other = m_history.document().indexOfParameter(typed);
+    const auto own = m_history.document().indexOfParameter(name.toStdString());
+    if (other && own && *other != *own) {
+        return QStringLiteral("duplicateName");
+    }
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(core::makeRenameMeasureEverywhere(name.toStdString(), typed))) {
+        return QStringLiteral("invalidName");
+    }
+    if (m_history.document().revision() != before) {
+        rebuildMeasures();
+        documentChanged();
+        emit historyChanged();
+    }
+    return {};
+}
+
+bool DocumentModel::setMeasureSlider(const QString& name, double min, double max, double step) {
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(
+            core::makeSetParameterSlider(name.toStdString(), core::SliderRange{min, max, step}))) {
+        return false;
+    }
+    if (m_history.document().revision() != before) {
+        rebuildMeasures();
+        documentChanged(false);
+        emit historyChanged();
+    }
+    return true;
+}
+
+bool DocumentModel::clearMeasureSlider(const QString& name) {
+    const std::uint64_t before = m_history.document().revision();
+    if (!m_history.execute(core::makeSetParameterSlider(name.toStdString(), std::nullopt))) {
+        return false;
+    }
+    if (m_history.document().revision() != before) {
+        rebuildMeasures();
+        documentChanged(false);
+        emit historyChanged();
+    }
+    return true;
+}
+
+QString DocumentModel::saveStepValueAsMeasure(int stepIndex, const QString& field,
+                                              const QString& suggestedName) {
+    const auto& features = m_history.document().features();
+    if (stepIndex < 0 || stepIndex >= static_cast<int>(features.size())) {
+        return {};
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(stepIndex)];
+    const auto value = step.params.find(field.toStdString());
+    if (value == step.params.end()) {
+        return {};
+    }
+    const QString name = suggestMeasureName(suggestedName);
+    // The measure takes the formula as it stands (a number keeps its unit and its commas).
+    std::string expression = value->second.expression;
+    if (expression.empty()) {
+        expression = "0";
+    }
+    const std::uint64_t before = m_history.document().revision();
+    m_history.beginTransaction({"saveMeasure", {{"name", name.toStdString()}}});
+    const bool added = m_history.execute(core::makeAddParameter(
+        {name.toStdString(), expression, value->second.kind, std::string()}));
+    const bool replaced = added && m_history.execute(core::makeSetFeatureValue(
+                                       step.id, field.toStdString(), name.toStdString()));
+    if (!replaced) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    finishTransaction();
+    if (m_history.document().revision() != before) {
+        rebuildMeasures();
+        documentChanged();
+    }
+    emit historyChanged();
+    return name;
 }
 
 QString DocumentModel::addImportedFile(const QString& fileName, std::vector<std::uint8_t> bytes,

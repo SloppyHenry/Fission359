@@ -419,6 +419,21 @@
     </message>
     <message>
         <location line="+4"/>
+        <source>Named measures</source>
+        <translation>Benannte Maße</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Opens the table of named measures under the recipe. Change a number in one place and everything that uses it follows.</source>
+        <translation>Öffnet die Tabelle der benannten Maße unter dem Rezept. Ändere eine Zahl an einer Stelle, und alles, was sie benutzt, folgt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add a measure with +, use its name in any number field. The sliders view turns the model into a configurator.</source>
+        <translation>Lege ein Maß mit + an und benutze seinen Namen in jedem Zahlenfeld. Mit der Regler-Ansicht wird das Modell zum Konfigurator.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Import…</source>
         <translation>Importieren…</translation>
     </message>
@@ -1556,7 +1571,7 @@
         <translation>Herz</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+53"/>
         <source>Recipe</source>
         <translation>Rezept</translation>
     </message>
@@ -1566,7 +1581,7 @@
         <translation>Strg+Z</translation>
     </message>
     <message>
-        <location line="+66"/>
+        <location line="+81"/>
         <source>Delete anyway</source>
         <translation>Trotzdem löschen</translation>
     </message>
@@ -1680,7 +1695,7 @@
         <translation>Bearbeiten</translation>
     </message>
     <message>
-        <location line="+105"/>
+        <location line="+107"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -1690,7 +1705,7 @@
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-105"/>
+        <location line="-107"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Strg+Umschalt+Z</translation>
     </message>
@@ -1768,6 +1783,11 @@
         <location line="+1"/>
         <source>Measure</source>
         <translation>Messen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Named measures</source>
+        <translation>Benannte Maße</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2010,7 +2030,7 @@
         </translation>
     </message>
     <message>
-        <location line="+97"/>
+        <location line="+104"/>
         <location line="+8"/>
         <location line="+9"/>
         <source>This body cannot be copied yet.</source>
@@ -2186,7 +2206,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1133"/>
+        <location line="-1145"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -2246,7 +2266,7 @@
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
     <message>
-        <location line="+1163"/>
+        <location line="+1180"/>
         <source>Unit: mm</source>
         <translation>Einheit: mm</translation>
     </message>
@@ -2349,12 +2369,12 @@
         <translation>%1 hinzugefügt</translation>
     </message>
     <message>
-        <location line="-556"/>
+        <location line="-564"/>
         <source>Outline exported.</source>
         <translation>Umriss exportiert.</translation>
     </message>
     <message>
-        <location line="+519"/>
+        <location line="+527"/>
         <source>Imported body</source>
         <translation>Importierter Körper</translation>
     </message>
@@ -2632,7 +2652,7 @@
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1084"/>
+        <location line="-1095"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
@@ -2732,6 +2752,135 @@
         <location line="+7"/>
         <source>Done</source>
         <translation>Fertig</translation>
+    </message>
+</context>
+<context>
+    <name>MeasuresPanel</name>
+    <message>
+        <location filename="../qml/MeasuresPanel.qml" line="+57"/>
+        <source>Named measures</source>
+        <translation>Benannte Maße</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Measures</source>
+        <translation>Maße</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>View</source>
+        <translation>Ansicht</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Table</source>
+        <translation>Tabelle</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Sliders</source>
+        <translation>Regler</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>New measure</source>
+        <translation>Neues Maß</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Measure</source>
+        <translation>Maß</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>A measure is a number with a name, like Width. Use it in any field and change it in one place. Right click a field and choose “Save as named measure”.</source>
+        <translation>Ein Maß ist eine Zahl mit einem Namen, zum Beispiel Breite. Benutze es in jedem Feld und ändere es an einer Stelle. Mit Rechtsklick auf ein Feld wählst Du „Als benanntes Maß speichern“.</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Delete anyway</source>
+        <translation>Trotzdem löschen</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Keep</source>
+        <translation>Behalten</translation>
+    </message>
+    <message>
+        <location line="+93"/>
+        <source>Another measure has this name already.</source>
+        <translation>Ein anderes Maß heißt schon so.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A name uses letters, digits and _ and starts with a letter.</source>
+        <translation>Ein Name besteht aus Buchstaben, Ziffern und _ und beginnt mit einem Buchstaben.</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Used in</source>
+        <translation>Benutzt in</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Step %1</source>
+        <translation>Schritt %1</translation>
+    </message>
+    <message>
+        <location line="+44"/>
+        <location line="+5"/>
+        <source>More</source>
+        <translation>Mehr</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Delete measure</source>
+        <translation>Maß löschen</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>step %1</source>
+        <translation>Schritt %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>“%1” is used in %2. If you delete it, those places show a mistake until you give them another value.</source>
+        <translation>„%1“ wird benutzt in %2. Wenn Du es löschst, zeigen diese Stellen einen Fehler, bis sie einen anderen Wert haben.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Delete</source>
+        <translation>Löschen</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Comment</source>
+        <translation>Kommentar</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Slider</source>
+        <translation>Regler</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Smallest</source>
+        <translation>Kleinster</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Largest</source>
+        <translation>Größter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Step</source>
+        <translation>Schritt</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>No measure has a slider yet. In the table, open “More” of a measure and switch on “Slider”.</source>
+        <translation>Noch hat kein Maß einen Regler. Öffne in der Tabelle „Mehr“ bei einem Maß und schalte „Regler“ ein.</translation>
     </message>
 </context>
 <context>
@@ -2835,6 +2984,26 @@
         <translation>Die Datei konnte nicht gelesen werden.</translation>
     </message>
     <message>
+        <location line="+8"/>
+        <source>These measures use each other: %1.</source>
+        <translation>Diese Maße benutzen sich gegenseitig: %1.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>I don’t know the unit “%1”.</source>
+        <translation>Die Einheit „%1“ kenne ich nicht.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The result is not the right kind of value (a length, an angle or a plain number).</source>
+        <translation>Das Ergebnis ist nicht von der richtigen Art (Länge, Winkel oder einfache Zahl).</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This formula cannot be calculated.</source>
+        <translation>Diese Formel lässt sich nicht berechnen.</translation>
+    </message>
+    <message>
         <location line="+21"/>
         <source>This kind of file cannot be imported. Fission359 reads STEP and IGES files.</source>
         <translation>Diese Dateiart lässt sich nicht importieren. Fission359 liest STEP- und IGES-Dateien.</translation>
@@ -2936,12 +3105,14 @@
         <translation>„%1“ kenne ich nicht.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-111"/>
+        <location line="+114"/>
         <source>“%1” has a problem itself.</source>
         <translation>Bei „%1“ gibt es selbst ein Problem.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-112"/>
+        <location line="+115"/>
         <source>That divides by zero.</source>
         <translation>Das teilt durch null.</translation>
     </message>
@@ -3097,6 +3268,15 @@
     </message>
 </context>
 <context>
+    <name>NumberField</name>
+    <message>
+        <location filename="../qml/NumberField.qml" line="+337"/>
+        <location line="+12"/>
+        <source>Save as named measure</source>
+        <translation>Als benanntes Maß speichern</translation>
+    </message>
+</context>
+<context>
     <name>RecipeRow</name>
     <message>
         <location filename="../qml/RecipeRow.qml" line="+37"/>
@@ -3244,7 +3424,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+149"/>
+        <location filename="../qml/RightPanel.qml" line="+151"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -3279,7 +3459,7 @@
         <translation>Quer schneiden</translation>
     </message>
     <message>
-        <location line="+307"/>
+        <location line="+317"/>
         <source>Hole</source>
         <translation>Loch</translation>
     </message>
@@ -3304,12 +3484,12 @@
         <translation>Bündig machen (schließt Spalten unter 0,001 mm)</translation>
     </message>
     <message>
-        <location line="-286"/>
+        <location line="-294"/>
         <source>Text</source>
         <translation>Text</translation>
     </message>
     <message numerus="yes">
-        <location line="-154"/>
+        <location line="-156"/>
         <source>%n body(ies) selected</source>
         <translation>
             <numerusform>%n Körper ausgewählt</numerusform>
@@ -3332,7 +3512,7 @@
         <translation>Farbe</translation>
     </message>
     <message>
-        <location line="+136"/>
+        <location line="+138"/>
         <source>Words</source>
         <translation>Worte</translation>
     </message>
@@ -3352,13 +3532,13 @@
         <translation>Kursiv</translation>
     </message>
     <message>
-        <location line="-150"/>
-        <location line="+160"/>
+        <location line="-152"/>
+        <location line="+162"/>
         <source>Size</source>
         <translation>Größe</translation>
     </message>
     <message>
-        <location line="-173"/>
+        <location line="-175"/>
         <source>Facts</source>
         <translation>Eckdaten</translation>
     </message>
@@ -3419,23 +3599,23 @@
         <translation>Im Slicer wird es meist weniger: Füllung und Wände bestimmen das echte Gewicht.</translation>
     </message>
     <message>
-        <location line="+154"/>
+        <location line="+158"/>
         <source>Position</source>
         <translation>Lage</translation>
     </message>
     <message>
-        <location line="+44"/>
+        <location line="+46"/>
         <source>Rotation</source>
         <translation>Drehung</translation>
     </message>
     <message>
-        <location line="+57"/>
+        <location line="+59"/>
         <location line="+8"/>
         <source>More</source>
         <translation>Mehr</translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+92"/>
         <source>Get new shapes from “Shapes” in the tool bar on the left – or press %1 and describe what you want to build.</source>
         <translation>Neue Formen holst du dir links über „Formen“ in der Werkzeugleiste – oder du drückst %1 und beschreibst, was du bauen willst.</translation>
     </message>

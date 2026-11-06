@@ -161,4 +161,11 @@ std::string foldMeasureName(std::string_view name);
 /// and underscores (umlauts and other non-ASCII letters count as letters).
 bool isValidMeasureName(std::string_view name);
 
+/// The formula with every use of the measure `oldName` written as `newName` (AP-2.9). Only whole
+/// names count (`Breite` does not touch `Breite2` or `Halterbreite`), case and umlauts do not
+/// matter for finding it, the rest of the text stays exactly as typed. A formula that does not
+/// parse is returned unchanged.
+std::string renameInExpression(std::string_view expression, std::string_view oldName,
+                               std::string_view newName);
+
 } // namespace fission::core

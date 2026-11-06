@@ -88,5 +88,15 @@ std::unique_ptr<Command> makeAddParameter(Parameter parameter);
 std::unique_ptr<Command> makeRemoveParameter(std::string name);
 std::unique_ptr<Command> makeSetParameterExpression(std::string name, std::string expression);
 std::unique_ptr<Command> makeRenameParameter(std::string name, std::string newName);
+/// Renames a measure **and** every formula of steps and other measures that uses it, as one step
+/// of the history (AP-2.9). Refused when the new name is not a valid name or another measure has
+/// it already. Description key `renameMeasure`.
+std::unique_ptr<Command> makeRenameMeasureEverywhere(std::string name, std::string newName);
+/// Changes the comment of a measure. Description key `setMeasureComment`.
+std::unique_ptr<Command> makeSetParameterComment(std::string name, std::string comment);
+/// Sets (or, with nothing, takes away) the slider range of a measure. Description key
+/// `setMeasureSlider`.
+std::unique_ptr<Command> makeSetParameterSlider(std::string name,
+                                                std::optional<SliderRange> slider);
 
 } // namespace fission::core
