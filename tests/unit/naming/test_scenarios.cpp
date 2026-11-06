@@ -378,3 +378,48 @@ TEST_CASE("naming-product: a face that was joined into another", "[naming-produc
         "joined: the top of the second box", f,
         [&](const BodyLooks& looks) { return facesLookingAt(looks, kTop, 10.0); }, Expect::any);
 }
+
+namespace {
+
+// The right wall of the box is pulled out (or the box is stretched there) by a step of its own; the
+// reference points into the body that step made (AP-2.4).
+Fixture pulledFixture(const char* type, const std::string& markRole) {
+    Fixture f;
+    f.plate = f.world.plate("40", "30", "10");
+    const RecomputeResult first = f.world.run();
+    FeatureDraft draft = defaultDraft(*f.world.registry.find(type));
+    draft.inputs = {f.world.bodyOf(f.plate)};
+    draft.refs["face"] = {f.world.pick(first, f.plate, ElementKind::face, faceName("right"))};
+    draft.params.at("distance").expression = "5";
+    if (std::string(type) == "stretch") {
+        draft.params.at("position").expression = "0"; // the middle of the box: nothing there
+    }
+    f.extra = *f.world.document.addFeature(std::move(draft));
+    f.target = f.extra;
+    const RecomputeResult second = f.world.run();
+    f.mark = f.world.mark_(f.target,
+                           f.world.pick(second, f.target, ElementKind::face, faceName(markRole)));
+    return f;
+}
+
+} // namespace
+
+TEST_CASE("naming-product: pulling and stretching faces keep every name", "[naming-product]") {
+    const Flush flush;
+    for (const char* type : {"pushFace", "stretch"}) {
+        for (const char* role : {"top", "right", "left", "front"}) {
+            const std::string label = std::string(type) + ": " + role;
+            Fixture longer = pulledFixture(type, role);
+            REQUIRE(longer.world.document.setFeatureValue(longer.extra, "distance", "20"));
+            judged(
+                label + " after pulling further", longer,
+                [&](const BodyLooks& looks) { return faceTruth(looks, role); }, Expect::found);
+
+            Fixture wider = pulledFixture(type, role);
+            REQUIRE(wider.world.document.setFeatureValue(wider.plate, "width", "60"));
+            judged(
+                label + " after the box got wider", wider,
+                [&](const BodyLooks& looks) { return faceTruth(looks, role); }, Expect::found);
+        }
+    }
+}

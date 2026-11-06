@@ -41,6 +41,7 @@ struct SolidReport {
     Point3d boxMin;      ///< Bounding box corner with the smallest coordinates.
     Point3d boxMax;      ///< Bounding box corner with the largest coordinates.
     int solids = 0;
+    int shells = 0; ///< Closed surfaces: 1 for a plain solid, 2 for a closed hollow one.
     int faces = 0;
     int edges = 0;
     int vertices = 0;

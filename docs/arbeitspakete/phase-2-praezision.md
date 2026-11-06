@@ -62,7 +62,7 @@
 ---
 
 ### AP-2.4 Direktes Bearbeiten von Flächen
-**Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-2.10 (Basis)
+**Status:** in Arbeit (Teile a–e gebaut: Fläche ziehen, intelligentes Strecken, Fläche drehen, entfernen, versetzen, mit Befehlen und Pfeil; Tests aus dem Kern und der Oberfläche; Bogen-Griff zum Drehen, Fenster-Test, Körper ohne Verlauf offen) · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-2.10 (Basis)
 **Bauanleitung:** [anleitungen/AP-2.4.md](anleitungen/AP-2.4.md)
 
 **Umfang:**
@@ -97,7 +97,7 @@
 ---
 
 ### AP-2.6 Aushöhlen und Schräge
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-2.4, AP-2.10
+**Status:** in Arbeit (Kern mit Plausibilitätsprüfung, Schritte, Befehle, Meldungen gebaut; Rezept-Neubau des Innenkörpers, Wand je Fläche, Winkel-Griff, Fenster-Test offen) · **Größe:** M · **Abhängigkeiten:** AP-2.4, AP-2.10
 **Bauanleitung:** [anleitungen/AP-2.6.md](anleitungen/AP-2.6.md)
 
 **Umfang:**

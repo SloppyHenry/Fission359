@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -46,6 +47,13 @@ struct BlendSpec {
     BlendKind kind = BlendKind::round;
     double size = 1.0;
     double size2 = 0.0;
+};
+
+/// A place on a face and the way the face looks out of the body there (unit vector): where the
+/// grip for pushing the face stands (AP-2.4a).
+struct FaceAnchor {
+    Point3d point;
+    Point3d way;
 };
 
 /// What features may ask of the geometry kernel (docs/03-architektur.md §4). The core and the
@@ -138,6 +146,136 @@ public:
         (void)solid;
         (void)edge;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot follow edges");
+    }
+
+    /// Moves one face by `distance` (mm) along the way it looks out of the body: positive makes
+    /// the body larger there, negative smaller. A flat face moves flat (its neighbours must stand
+    /// square on it), the wall of a round hole or pin gets a new radius (a hole's wall looks into
+    /// the hole, so positive makes the hole narrower). The face keeps its role; faces that
+    /// have to be made are named after it (`role` + "[push]"). Throws `GeometryError`:
+    /// `invalidInput` for a distance that is zero or not a number or a radius that would drop to
+    /// zero, `kernelFailure` for a face that cannot be moved. The default refuses.
+    virtual NamedSolid offsetFace(const NamedSolid& solid, std::uint32_t faceId,
+                                  double distance) const {
+        (void)solid;
+        (void)faceId;
+        (void)distance;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
+    }
+
+    /// Where to put the grip for `offsetFace`: a point on the face (its middle for a flat one, a
+    /// point of the wall for a round one) and the way it looks out of the body. Throws
+    /// `GeometryError` for a face that `offsetFace` cannot move. The default refuses.
+    virtual FaceAnchor faceAnchor(const Solid& solid, std::uint32_t faceId) const {
+        (void)solid;
+        (void)faceId;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
+    }
+
+    /// Removes faces and lets the body heal: the neighbours grow until they meet (a hole closes,
+    /// a rounding becomes a sharp edge again). Faces keep their roles; the removed ones are listed
+    /// as deleted in the history. Throws `GeometryError`: `invalidInput` for a face that is not
+    /// there or a list without faces, `kernelFailure` when the body cannot heal (the kernel's
+    /// answer is not used then). The default refuses.
+    virtual NamedSolid removeFaces(const NamedSolid& solid,
+                                   const std::vector<std::uint32_t>& faceIds) const {
+        (void)solid;
+        (void)faceIds;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot remove faces");
+    }
+
+    /// Moves all of the given faces by `distance`, each as `offsetFace` does (outward: the body
+    /// gets larger). Faces keep their roles. Throws what `offsetFace` throws. The default refuses.
+    virtual NamedSolid offsetFaces(const NamedSolid& solid,
+                                   const std::vector<std::uint32_t>& faceIds,
+                                   double distance) const {
+        (void)solid;
+        (void)faceIds;
+        (void)distance;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
+    }
+
+    /// Turns a flat face by `degrees` around the line through `pivot` along `axis` (both in the
+    /// face's plane; a hinge, like an edge of the face). Material is cut where the face dips into
+    /// the body and added where it swings out; the walls beside the face stand square on it and
+    /// are extended or shortened. The face keeps its role. Positive angles turn right-handed
+    /// around `axis`. Throws `GeometryError`: `invalidInput` (subject "pivot") when the line is not
+    /// in the face's plane, "distance" for an angle that is zero or not a number, `kernelFailure`
+    /// for a face that is not flat or has slanted neighbours. The default refuses.
+    virtual NamedSolid tiltFace(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot,
+                                Point3d axis, double degrees) const {
+        (void)solid;
+        (void)faceId;
+        (void)pivot;
+        (void)axis;
+        (void)degrees;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot turn faces");
+    }
+
+    /// Makes the body hollow with walls `wall` thick, inside the body or (`outside`) around it. The
+    /// faces in `openFaces` are left open (a lid taken off); none gives a closed hollow body with
+    /// two shells. Faces of the body keep their roles; the faces of the cavity are named
+    /// `rolePrefix` + "[" + the place + "]". A box (with round vertical corners) and a cylinder are
+    /// built anew from the formula (a rounding r becomes r - wall); every other body goes through
+    /// the kernel's own offset, and its result is believed only when a plausibility check passes
+    /// (the kernel can return valid but wrong bodies for this). Throws `GeometryError`:
+    /// `invalidInput` with subject "thickness" when the wall is too thick (numbers: "thinnest",
+    /// and "maxValue" for the largest that works), "unsure" when the result could not be made sure
+    /// of (nothing is returned then), "face" for an open face that cannot be left open. The
+    /// default refuses.
+    virtual NamedSolid hollow(const NamedSolid& solid, const std::vector<std::uint32_t>& openFaces,
+                              double wall, bool outside, const std::string& rolePrefix) const {
+        (void)solid;
+        (void)openFaces;
+        (void)wall;
+        (void)outside;
+        (void)rolePrefix;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot hollow bodies");
+    }
+
+    /// Tilts faces by `degrees` about the neutral plane through `neutralPoint` that stands square
+    /// to `pull` (a draft: a mould lets go of the body when pulled along `pull`). Positive angles
+    /// make the body narrower along `pull`, away from the neutral plane. Faces keep their roles.
+    /// Throws `GeometryError`: `invalidInput` for an angle that is zero or not below 45 degrees
+    /// (subject "angle") and a face that cannot be tilted (subject "face"; one that stands square
+    /// to the pull cannot), `kernelFailure` / `invalidResult` when the kernel cannot do it. The
+    /// default refuses.
+    virtual NamedSolid draftFaces(const NamedSolid& solid,
+                                  const std::vector<std::uint32_t>& faceIds, Point3d neutralPoint,
+                                  Point3d pull, double degrees) const {
+        (void)solid;
+        (void)faceIds;
+        (void)neutralPoint;
+        (void)pull;
+        (void)degrees;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot draft faces");
+    }
+
+    /// A place to cut `solid` for `stretch`: a coordinate along `way` (an axis direction, as for
+    /// `stretch`) where the cut crosses nothing but flat faces along the way and round walls around
+    /// it (no rounding, no hole across, no step). Of the free stretches the one closest to `near`
+    /// wins, the place is its middle. None when `way` is no axis direction or there is no place.
+    virtual std::optional<double> plainCut(const Solid& solid, Point3d way, double near) const {
+        (void)solid;
+        (void)way;
+        (void)near;
+        return std::nullopt;
+    }
+
+    /// Stretches the body: cut at `position` (a coordinate along `way`, a unit vector along x, y
+    /// or z), the part beyond it moved by `distance` along `way` (negative: the stretch between
+    /// the planes is taken out), the gap filled with the cross-section. Everything else stays
+    /// exactly as it is. Faces keep their roles. Throws `GeometryError`: `invalidInput` with
+    /// subject "position" when the cut would cross a rounding, a hole or a step (the person
+    /// chooses the place), "distance" for zero or a body that would vanish, "face" for a way that
+    /// is not an axis. The default refuses.
+    virtual NamedSolid stretch(const NamedSolid& solid, Point3d way, double position,
+                               double distance) const {
+        (void)solid;
+        (void)way;
+        (void)position;
+        (void)distance;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot stretch bodies");
     }
 
     /// The names of the fonts lettering can use (bundled and installed), sorted. Takes a moment

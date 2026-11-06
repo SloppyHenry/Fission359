@@ -287,6 +287,9 @@ QtObject {
             }
         case "parameterOutOfRange":
         case "kernelRejected":
+            if (problem.field === "unsure") {
+                return qsTr("Hollowing did not work for sure.")
+            }
             return problem.numbers && problem.numbers.maxValue !== undefined && problem.field !== ""
                 ? qsTr("%1 does not work here.").arg(valueLabel(problem.field))
                 : qsTr("These values do not work.")
@@ -321,6 +324,16 @@ QtObject {
             return qsTr("That divides by zero.")
         }
         const largest = problem.numbers ? problem.numbers.maxValue : undefined
+        if (problem.code === "kernelRejected" && problem.field === "thickness"
+                && problem.numbers && problem.numbers.thinnest !== undefined) {
+            const thin = qsTr("The wall is thicker than the body at its thinnest place (%1 mm).").arg(mm(problem.numbers.thinnest))
+            return largest !== undefined
+                ? thin + " " + qsTr("The largest wall that works is %1 mm.").arg(mm(largest))
+                : thin
+        }
+        if (problem.code === "kernelRejected" && problem.field === "unsure") {
+            return qsTr("Hollowing did not work here for sure, so nothing was made. Try another wall thickness or leave other faces open.")
+        }
         if (largest !== undefined && problem.field !== ""
                 && (problem.code === "parameterOutOfRange" || problem.code === "kernelRejected")) {
             const given = problem.numbers.given
@@ -347,11 +360,18 @@ QtObject {
             case "tubeRadius": return qsTr("The tube must be thinner than the ring radius.")
             case "innerRadius": return qsTr("The notches must lie closer to the middle than the tips.")
             case "topRadius": return qsTr("The top radius cannot be negative.")
+            case "distance":
+            case "angle": return qsTr("Type a value that is not zero.")
             default: return qsTr("%1 must be bigger than zero.").arg(valueLabel(problem.field))
             }
         case "kernelRejected":
             if (problem.field === "position") {
-                return qsTr("The cutting plane does not touch the body. Move it into the body.")
+                return step && step.type === "stretch"
+                    ? qsTr("There is no place here without a rounding or a hole. Choose the place yourself: move the cutting plane to a flat stretch.")
+                    : qsTr("The cutting plane does not touch the body. Move it into the body.")
+            }
+            if (problem.field === "face") {
+                return qsTr("This face cannot be moved this way. Choose another face or another tool.")
             }
             return qsTr("The shape cannot be built with these values. Try changing a value a little.")
         case "referenceNeedsHelp": {

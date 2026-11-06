@@ -52,7 +52,11 @@ Item {
                 { id: "dropToBed", text: qsTr("To the bed"), icon: "ground" }
             ]
         case "face":
-            return [{ id: "view.lookat", text: qsTr("Look at face"), icon: "eye" }]
+            return [
+                { id: "pushFace", text: qsTr("Pull"), icon: "move" },
+                { id: "removeFaces", text: qsTr("Remove"), icon: "scissors" },
+                { id: "view.lookat", text: qsTr("Look at face"), icon: "eye" }
+            ]
         default:
             return []
         }

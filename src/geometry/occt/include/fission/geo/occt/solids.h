@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include "fission/geo/kernel.h"
@@ -53,6 +54,37 @@ NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,
 /// Rounds or bevels edges (see `GeometryKernel::blendEdges`). Throws GeometryError.
 NamedSolid blendEdgesNamed(const NamedSolid& solid, const std::vector<BlendEdge>& edges,
                            const BlendSpec& spec, const std::string& rolePrefix);
+
+/// Moves a face along its normal (see `GeometryKernel::offsetFace`). Throws GeometryError.
+NamedSolid offsetFaceNamed(const NamedSolid& solid, std::uint32_t faceId, double distance);
+
+/// Where the grip of a face stands (see `GeometryKernel::faceAnchor`). Throws GeometryError.
+FaceAnchor faceAnchorOf(const Solid& solid, std::uint32_t faceId);
+
+/// Removes faces and heals the body (see `GeometryKernel::removeFaces`). Throws GeometryError.
+NamedSolid removeFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds);
+
+/// Moves several faces (see `GeometryKernel::offsetFaces`). Throws GeometryError.
+NamedSolid offsetFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
+                            double distance);
+
+/// Turns a flat face about a hinge line (see `GeometryKernel::tiltFace`). Throws GeometryError.
+NamedSolid tiltFaceNamed(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot, Point3d axis,
+                         double degrees);
+
+/// Hollows a body (see `GeometryKernel::hollow`). Throws GeometryError.
+NamedSolid hollowNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& openFaces,
+                       double wall, bool outside, const std::string& rolePrefix);
+
+/// Drafts faces (see `GeometryKernel::draftFaces`). Throws GeometryError.
+NamedSolid draftFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
+                           Point3d neutralPoint, Point3d pull, double degrees);
+
+/// A place to cut for stretching (see `GeometryKernel::plainCut`).
+std::optional<double> plainCutOf(const Solid& solid, Point3d way, double near);
+
+/// Stretches a body (see `GeometryKernel::stretch`). Throws GeometryError.
+NamedSolid stretchNamed(const NamedSolid& solid, Point3d way, double position, double distance);
 
 /// The edges rounded together with `edge` (see `GeometryKernel::tangentChain`).
 std::vector<std::uint32_t> tangentChainOf(const Solid& solid, std::uint32_t edge);

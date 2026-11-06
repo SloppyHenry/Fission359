@@ -71,6 +71,31 @@ QtObject {
         if (step.type === "chamfer" && v.length === 2) {
             return qsTr("Bevelled %n edge(s), distance %1 mm", "", v[0]).arg(n(v[1]))
         }
+        if (step.type === "pushFace" && v.length === 1) {
+            return v[0] >= 0 ? qsTr("Face pulled out by %1 mm").arg(n(v[0]))
+                             : qsTr("Face pushed in by %1 mm").arg(n(-v[0]))
+        }
+        if (step.type === "stretch" && v.length === 2) {
+            return v[0] >= 0 ? qsTr("Stretched by %1 mm").arg(n(v[0])) : qsTr("Shortened by %1 mm").arg(n(-v[0]))
+        }
+        if (step.type === "removeFaces" && v.length === 1) {
+            return qsTr("Removed %n face(s)", "", v[0])
+        }
+        if (step.type === "offsetFaces" && v.length === 2) {
+            return v[1] >= 0 ? qsTr("Moved %n face(s) out by %1 mm", "", v[0]).arg(n(v[1]))
+                             : qsTr("Moved %n face(s) in by %1 mm", "", v[0]).arg(n(-v[1]))
+        }
+        if (step.type === "tiltFace" && v.length === 1) {
+            return qsTr("Face tilted by %1°").arg(n(v[0]))
+        }
+        if (step.type === "shell" && v.length === 2) {
+            const outside = step.texts !== undefined && step.texts.side === "outside"
+            return outside ? qsTr("Wall of %1 mm added around the body, %n face(s) left open", "", v[0]).arg(n(v[1]))
+                           : qsTr("Hollowed out with a wall of %1 mm, %n face(s) left open", "", v[0]).arg(n(v[1]))
+        }
+        if (step.type === "draft" && v.length === 2) {
+            return qsTr("Draft of %1° on %n face(s)", "", v[0]).arg(n(v[1]))
+        }
         if (step.type === "place" && v.length === 3) {
             return qsTr("Part placed, moved by %1, %2, %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
         }
@@ -85,7 +110,7 @@ QtObject {
             }
         }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "fillet", "chamfer"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "tiltFace", "shell", "draft"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)
