@@ -166,7 +166,7 @@ TEST_CASE("sketch mode: a sketch with something in it stays when it is left", "[
     f.settle();
     const QString id = f.sketch->step();
 
-    // Something drawn in it (the drawing tools come with AP-2.1c): a line, by the command.
+    // Something drawn in it (the drawing tools have their own tests): a line, by the command.
     core::Document document = f.model->document();
     REQUIRE(document.addSketchElement(core::FeatureId{id.toStdString()},
                                       core::SketchElementKind::line, {{0.0, 0.0}, {30.0, 0.0}}));
@@ -335,7 +335,7 @@ TEST_CASE("sketch mode: the pointer catches on the elements of the sketch", "[ui
     f.sketch->start();
     REQUIRE(f.sketch->pickGround());
     f.settle();
-    // A line in the sketch (the drawing tools come with AP-2.1c): added to a copy of the
+    // A line in the sketch (the drawing tools have their own tests): added to a copy of the
     // document, which replaces the open one.
     core::Document document = f.model->document();
     REQUIRE(document.addSketchElement(core::FeatureId{f.sketch->step().toStdString()},

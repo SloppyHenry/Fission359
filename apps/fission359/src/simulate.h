@@ -22,6 +22,7 @@ class Preferences;
 class RotateController;
 class ScaleController;
 class SelectionController;
+class SketchController;
 class Viewport3D;
 } // namespace fission::ui
 
@@ -32,9 +33,10 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                  fission::ui::HandleController* handles, fission::ui::GizmoController* gizmo,
                  fission::ui::RotateController* rotate, fission::ui::ScaleController* scale,
                  fission::ui::DistanceController* distances, fission::ui::AlignController* align,
-                 fission::ui::SelectionController* selection, fission::ui::FileController* files,
-                 fission::ui::ExportController* exporter, fission::ui::Preferences* preferences,
-                 const QString& actions, std::function<void()> done);
+                 fission::ui::SelectionController* selection, fission::ui::SketchController* sketch,
+                 fission::ui::FileController* files, fission::ui::ExportController* exporter,
+                 fission::ui::Preferences* preferences, const QString& actions,
+                 std::function<void()> done);
 
 /// 0 while all checks of the actions held; else the code of the first one that failed (becomes
 /// the exit code of the program, for the tests).

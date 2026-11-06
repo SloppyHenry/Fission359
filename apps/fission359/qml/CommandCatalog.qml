@@ -19,6 +19,7 @@ QtObject {
 
     property var tools: null    // ToolCatalog
     property var shapes: null   // ShapeCatalog
+    property var sketchTools: null // SketchToolCatalog
     property bool isMac: false
     property string primaryKey: ""
 
@@ -360,7 +361,13 @@ QtObject {
         hint: shapes.dragTip, shortcut: "", synonyms: shape.synonyms,
         run: { kind: "shape", id: shape.type } }))
 
-    readonly property var commands: toolCommands.concat(shapeCommands, menuCommands, soonCommands)
+    // The drawing tools of the sketch mode; they run only while a sketch is open (needs "sketch").
+    readonly property var sketchCommands: sketchTools === null ? [] : sketchTools.tools.map(tool => ({
+        id: "sketch." + tool.id, group: "tool", name: tool.name, tip: tool.tip, hint: tool.hint,
+        shortcut: tool.key, synonyms: tool.synonyms, needs: "sketch",
+        run: { kind: "menu", id: "sketchtool." + tool.id } }))
+
+    readonly property var commands: toolCommands.concat(shapeCommands, sketchCommands, menuCommands, soonCommands)
 
     // The words to search by: the name and the synonyms of both languages.
     function wordsOf(command) {

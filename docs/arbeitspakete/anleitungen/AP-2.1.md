@@ -108,6 +108,22 @@ Punkt, Hilfslinie (Schalter oder ⌥ beim Zeichnen; gestrichelt, bildet keine Be
 - Jedes Werkzeug: Regel 10 (Hinweis, Tooltip, Synonyme).
 - Tests je Werkzeug: Klickfolge (simuliert über die Controller-Funktionen) erzeugt genau die erwarteten Elemente mit Koordinaten.
 
+### Teil 2.1c1 – gebaut 2026-11-06
+Gebaut: Festlegungen 13–19. Wo es im Code liegt: Zustandsautomat `interaction::SketchTool` (`src/interaction`, reine Logik: Klick, Zeiger, Tippen →
+Vorschau und fertige Elementgruppen), verdrahtet in `SketchController` (`chooseTool`, `clickAt`, `doubleClick`, `setTyped`/`acceptTyped`, `toggleHelperLine`);
+je Elementgruppe ein Command-Schritt über `DocumentModel::addSketchElements` (eine Transaktion, Rezeptzeile „… zur Skizze hinzugefügt“, Rechteck = ein Schritt).
+Oberfläche: `SketchToolCatalog.qml` (Name, Tooltip, Hinweis, Synonyme; von `check_commands.py` geprüft), `SketchFlyout.qml` (neben der Gruppe „Skizze“,
+Pfeil am Knopf öffnet die Varianten), `SketchLayer.qml` (Zahlen am Zeiger, Tippen mit Tab/Enter/Esc), Tasten L/R/C/P/X nur im Skizzen-Modus
+(P ist dort Punkt, sonst Ansicht Perspektive/Parallel), Ziffern gehen bei aktivem Werkzeug ins Zahlenfeld. Neue `--simulate`-Aktionen: `sketchmove`, `sketchclick`,
+`sketchdouble`, `expectsketchtool`, `expectsketchelements`, `expectsketchsize`, `expectsketchtyping` (Menü-Ids `sketchtool.line|rectangle|circle|point|helper`).
+Weiter geltende Annahmen: Klick und Doppelklick kommen als eigene Signale der Ansicht (`leftClicked`, `leftDoubleClicked`), nicht über den Auswahl-Durchlauf; der
+3-Punkte-Kreis behält bei kollinearen Punkten die ersten zwei Punkte (ein anderer dritter geht); beim 3-Punkte-Kreis gibt es nichts zu tippen (Ziffern werden
+verschluckt); bei Rechteck Mitte+Ecke sind getippte Breite/Höhe die ganzen Maße; getippte Werte gehen auf die Seite des Zeigers, negative Werte kehren sie um.
+Offene Reste für 2.1c2: Bogen (3 Punkte; Mitte+Start+Ende), tangentialer Bogen durch Ziehen am Linienende (die Linienkette weiß das Ende der letzten Linie:
+`SketchTool::placed_`), Langloch, Polygon (Seitenzahl tippbar) – jeweils als weitere Werte von `SketchToolKind` mit eigener Form in `SketchTool::shape`; Werkzeug-Katalog,
+Flyout und Tasten (A Bogen, S Langloch, G Polygon als Vorschlag) in derselben Weise ergänzen. Fenster-Tests: `app_sketch_rectangle`, `app_sketch_line_circle`,
+`app_sketch_helper_line`, `app_sketch_digits` (laufen nur in der CI).
+
 ## Teil 2.1d – Spline
 Kubischer B-Spline durch Klickpunkte (Interpolation) oder mit Kontrollpunkten (Haltepunkt: Empfehlung Durchgangspunkte, verständlicher).
 Umsetzung der Kurve in `geometry/occt` (`Geom2dAPI_Interpolate`), Anzeige als feine Polylinie.

@@ -193,6 +193,15 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "it, menu:sketch.open.2 opens the sketch of step 2 again), expectsketchplane:face "
             "(fail "
             "unless the last sketch lies on a face of a body; expectsketchplane:ground), "
+            "sketchmove:600,400 / sketchclick:600,400 / sketchdouble:600,400 (the pointer, a click "
+            "or a double click in the sketch mode, for the drawing tools; menu:sketchtool.line, "
+            "sketchtool.rectangle, sketchtool.circle, sketchtool.point and sketchtool.helper "
+            "choose "
+            "a tool; type:40,tab,25,enter types the numbers of the element being drawn), "
+            "expectsketchtool:line (the drawing tool in use; empty for none), "
+            "expectsketchtyping:yes (the number fields of the element being drawn are open; no), "
+            "expectsketchelements:line=4,circle=1 (the elements of the sketches in the "
+            "recipe, by kind), expectsketchsize:40,25 (the box round them is that large, mm), "
             "filtermenu (open the "
             "choice menu of the 3D view), snap:off (snapping off as "
             "with Shift held; snap:on), grid:0.1 (the step of "
@@ -720,8 +729,8 @@ int main(int argc, char* argv[]) {
         const auto started = std::make_shared<bool>(false);
         auto grab = [window, viewport, placementController, &documentModel, handleController,
                      gizmoController, rotateController, scaleController, distanceController,
-                     alignController, selectionController, filesController, exporterPointer,
-                     preferencesPointer, path, simulate, started] {
+                     alignController, selectionController, &sketch, filesController,
+                     exporterPointer, preferencesPointer, path, simulate, started] {
             if (*started) {
                 return; // the first frame can be reported more than once
             }
@@ -736,8 +745,8 @@ int main(int argc, char* argv[]) {
             if (viewport != nullptr && !simulate.isEmpty()) {
                 playActions(window, viewport, placementController, &documentModel, handleController,
                             gizmoController, rotateController, scaleController, distanceController,
-                            alignController, selectionController, filesController, exporterPointer,
-                            preferencesPointer, simulate, shoot);
+                            alignController, selectionController, &sketch, filesController,
+                            exporterPointer, preferencesPointer, simulate, shoot);
             } else {
                 shoot();
             }
