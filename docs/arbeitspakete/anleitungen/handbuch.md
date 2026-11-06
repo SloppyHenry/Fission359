@@ -167,6 +167,7 @@ Bild für den PR: `build/<preset>/window-<name>.png`, oder manuell
 - **Fenster-Tests** (`app_*`) öffnen auf dem Mac echte Fenster und laufen dort **nicht** lokal. Sie laufen in der CI (macOS und
   Linux mit Xvfb) oder auf einem Linux-Testrechner unter Xvfb (`docs/testumgebung.md`). Lokal auf dem Mac nur gezielt einen
   einzelnen, um einen roten CI-Fall zu verstehen, im Hintergrund.
+  Fenster-Tests laufen in der CI unter Linux mit Xvfb und auf macOS gegen das paketierte Programm (`FISSION_APP_UNDER_TEST`, nur von der CI gesetzt; Job „Window tests (macOS arm64, packaged app)“).
 - **Die CI ist der Richter:** Ein PR wird erst gemergt, wenn alle Checks grün sind. Ablauf D wird nie abgeschwächt.
 - **Neue Tests gehören zu jeder Änderung** und entstehen sofort mit: neue Funktion oder Werkzeug → Unit-, Golden- und Fenster-Tests wie unten.
 

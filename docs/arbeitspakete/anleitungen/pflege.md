@@ -1,7 +1,7 @@
 # Pflege: Fehler, Politur und Folgearbeiten
 
 Kleine Aufgaben außerhalb der APs. Jede ist für sich ein PR (Branch `pflege-<nummer>-<stichwort>`). Allgemeine Regeln: [README](README.md), [Handbuch](handbuch.md).
-Stand: 2026-11-06 (P17 erledigt mit PR #99), gegen den Code auf `main` geprüft.
+Stand: 2026-11-06 (P17 erledigt mit PR #99, P22 umgesetzt), gegen den Code auf `main` geprüft.
 
 ## Reihenfolge
 **Nach Bedarf**, der Nutzertest 1 (AP-1.13) kann die Reihenfolge ändern. P18, P2 und P3 sind vor dem Nutzertest erledigt worden.
@@ -75,6 +75,11 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 
 ## P21 Wacklige Fenster-Tests beobachten
 **Größe:** S · Ursache von `app_ring_turn` und `app_snap_corner_handle` wohl behoben (2026-10-28, `pressAndPull`). Fällt einer in der CI erneut aus: Meldung dort ansehen, nicht abschwächen. Prüfungen von `--simulate` warten auf das Ende der Aktion, nie auf feste Zeiten (PR #51).
+
+
+## P22 Fenster-Tests auch auf dem Mac in der CI
+**Größe:** S · **Was:** Die Fenster-Tests (`app_*`) laufen in der CI auf macOS gegen das fertig paketierte Programm, mit dem Fenstersystem des Runners (nicht `offscreen`, das gibt auf dem Mac falsche grüne Ergebnisse). **Warum:** Im Build-Baum findet das Programm mit dem Qt aus vcpkg die QML-Plugins nicht; deshalb waren die Tests auf dem Mac abgeschaltet und ein Fehler nur der Mac-Oberfläche fiel nicht auf. **Wie:** Die Cache-Variable `FISSION_APP_UNDER_TEST` (Pfad der ausführbaren Datei im `.app`) meldet die `app_*`-Tests an und startet diese Datei statt des Build-Ziels. Nur die CI setzt sie: Der Schritt „Window tests against the packaged app (macOS)“ im Job „Package“ nimmt `build/package/stage/Fission359.app` und lässt `ctest -R '^app_'` laufen; der Job „Window tests (macOS arm64, packaged app)“ zeigt das Ergebnis als eigenen Check. Ohne die Variable bleibt lokal alles wie zuvor.
+**Stand:** Umgesetzt, noch kein CI-Lauf. Der Check ist nicht Pflicht für das Mergen; ob er es wird, nach einigen grünen Läufen entscheiden. Ausnahmen (Tests, die auf dem Mac fachlich nicht passen) stehen in `tests/CMakeLists.txt` in `_fission_app_tests_not_on_macos` mit Begründung (bisher leer) und gehören hier als Rest eingetragen. **Rest:** Rote Fälle aus den ersten Läufen ansehen und plattformgerecht machen, nicht abschwächen; danach den Check zum Pflicht-Check machen.
 
 ---
 
