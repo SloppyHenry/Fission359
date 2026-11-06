@@ -66,10 +66,9 @@ Abgeschlossene Anleitungen (AP-1.6c2 bis AP-1.12) liegen zum Nachschlagen in [er
 Nutzertests (AP-1.13, AP-2.15, AP-6.5) bereitet die Orchestrierung vor; sie blockieren den Ausbau nicht ([orchestrierung.md](orchestrierung.md), „Projektstand“).
 
 ### Phase 2 – Präzision
-Einstieg ist AP-2.10. Festlegung 2026-11-03: Phase 2 beginnt, während der Nutzertest 1 (AP-1.13) noch aussteht; AP-2.10 betrifft vor allem den Kern. Liegt die Auswertung vor, gehen ihre Top-3-Probleme jedem weiteren AP vor.
+Erledigt (Anleitungen in [erledigt/](erledigt/)): AP-2.10, AP-2.13, AP-2.9. Teil 1 in main: AP-2.14, AP-2.5, AP-2.4, AP-2.6, AP-2.11 (ohne Schnittansicht). Festlegung 2026-11-03: Phase 2 beginnt, während der Nutzertest 1 (AP-1.13) noch aussteht; AP-2.10 betrifft vor allem den Kern. Liegt die Auswertung vor, gehen ihre Top-3-Probleme jedem weiteren AP vor.
 | AP | Anleitung | Größe |
 |---|---|---|
-| 2.10 | [Persistente Referenzen produktiv, Reparatur-UI](AP-2.10.md) | XL |
 | 2.14 | [Meldungskatalog und Fehler-UX](AP-2.14.md) | M |
 | 2.1 | [Skizzen-Modus: Zeichnen](AP-2.1.md) | L |
 | 2.2 | [Skizzen-Regeln und Maße (Solver)](AP-2.2.md) | XL |
@@ -80,9 +79,7 @@ Einstieg ist AP-2.10. Festlegung 2026-11-03: Phase 2 beginnt, während der Nutze
 | 2.6 | [Aushöhlen und Schräge](AP-2.6.md) | M |
 | 2.7 | [Bohrungen, Gewinde, Schraubverbindungen](AP-2.7.md) | L |
 | 2.8 | [Muster und Spiegeln](AP-2.8.md) | M |
-| 2.9 | [Benannte Maße und Konfigurator](AP-2.9.md) | M |
 | 2.11 | [Messen und Analysieren](AP-2.11.md) | M |
-| 2.13 | [STEP und weitere Formate](AP-2.13.md) | M |
 | 2.15 | [Nutzertest 2](AP-2.15.md) | S |
 
 ### Phase 3 – Druckbereit
