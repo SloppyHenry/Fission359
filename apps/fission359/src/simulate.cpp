@@ -135,6 +135,66 @@ void checkAfter(int delay, QObject* context, fission::ui::DocumentModel* model,
     });
 }
 
+// Calls `then` after the window has drawn `frames` more frames; after `patience` milliseconds
+// anyway (a window that has nothing to draw sends no frame). `then` runs exactly once.
+void afterFrames(fission::ui::Viewport3D* viewport, int frames, int patience,
+                 std::function<void()> then) {
+    struct State {
+        int left;
+        bool done = false;
+        std::function<void()> then;
+        QMetaObject::Connection connection;
+    };
+    auto state = std::make_shared<State>();
+    state->left = frames;
+    state->then = std::move(then);
+    QQuickWindow* window = viewport->window();
+    const auto finish = [state, viewport] {
+        if (state->done) {
+            return;
+        }
+        state->done = true;
+        QObject::disconnect(state->connection);
+        // Not from inside the signal of the window: the next event of the loop.
+        QTimer::singleShot(0, viewport, state->then);
+    };
+    if (window != nullptr) {
+        // The connection holds `finish` (and `state`), not the other way round: `state` keeps
+        // only the handle of the connection, so there is no ring that is never freed.
+        state->connection =
+            QObject::connect(window, &QQuickWindow::frameSwapped, viewport, [state, finish] {
+                if (--state->left <= 0) {
+                    finish();
+                }
+            });
+    }
+    QTimer::singleShot(patience, viewport, finish);
+    if (window != nullptr) {
+        window->update();
+    }
+}
+
+// The row named `name` is being renamed (checked again every 100 ms for `patience` ms); otherwise
+// the program ends with an error. Each step schedules the next one with copies: nothing refers
+// to itself.
+void waitForRowEditing(QObject* context, std::function<QQuickItem*()> findRow, QString name,
+                       int patience) {
+    const QQuickItem* row = findRow();
+    if (row != nullptr && row->property("editing").toBool()) {
+        return;
+    }
+    if (patience > 0) {
+        QTimer::singleShot(
+            100, context,
+            [context, findRow = std::move(findRow), name = std::move(name), patience] {
+                waitForRowEditing(context, findRow, name, patience - 100);
+            });
+        return;
+    }
+    qWarning().noquote() << QStringLiteral("expected %1 to be renamed now").arg(name);
+    g_simulationFailure = 5;
+}
+
 // One pull of the pointer. Every timer holds the pull, so it lives until its last move.
 struct Pull : std::enable_shared_from_this<Pull> {
     QQuickWindow* window = nullptr;
@@ -178,7 +238,8 @@ struct Pull : std::enable_shared_from_this<Pull> {
 };
 
 int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int delay,
-                 std::function<QPointF()> start, QPointF pull, int steps, bool hold = false) {
+                 std::function<QPointF()> start, QPointF pull, int steps, bool hold,
+                 fission::ui::DocumentModel* waitFor) {
     auto action = std::make_shared<Pull>();
     action->window = window;
     action->viewport = viewport;
@@ -187,9 +248,17 @@ int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int de
     action->steps = steps;
     action->hold = hold;
     delay += 350;
-    QTimer::singleShot(delay, viewport, [action] {
-        ++g_pullsRunning;
-        action->press(5000);
+    QTimer::singleShot(delay, viewport, [action, viewport, waitFor] {
+        const auto begin = [action] {
+            ++g_pullsRunning;
+            action->press(5000);
+        };
+        // The press comes once the pulls before it are over, the model has worked out their
+        // result and the view has drawn it, as when a person looks and then takes the handle (the
+        // handles and the parts of a gizmo are where they were before while a result is on its
+        // way, and the dot a mouse press must hit is only moved when the view is drawn).
+        whenCalculated(
+            viewport, waitFor, [viewport, begin] { afterFrames(viewport, 2, 400, begin); }, 2000);
     });
     // The planned end of the pull; a check after it waits for the real one (`g_pullsRunning`).
     delay += 90 * steps;
@@ -303,7 +372,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     }
                     return QPointF();
                 },
-                QPointF(spec.value(1).toDouble(), spec.value(2).toDouble()), steps);
+                QPointF(spec.value(1).toDouble(), spec.value(2).toDouble()), steps, false, model);
             continue;
         }
         if (kind == QLatin1String("gizmo")) {
@@ -323,7 +392,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     return QPointF();
                 },
                 QPointF(spec.value(1).toDouble(), spec.value(2).toDouble()), steps,
-                spec.value(4) == QLatin1String("hold"));
+                spec.value(4) == QLatin1String("hold"), model);
             continue;
         }
         if (kind == QLatin1String("ring")) {
@@ -372,7 +441,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     return QPointF(entry["x"].toDouble(), entry["y"].toDouble());
                 },
                 QPointF(spec.value(1).toDouble(), spec.value(2).toDouble()), steps,
-                spec.value(4).trimmed() == QLatin1String("hold"));
+                spec.value(4).trimmed() == QLatin1String("hold"), model);
             continue;
         }
         if (kind == QLatin1String("drag")) {
@@ -382,7 +451,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             const QPointF at(spec.value(0).toDouble(), spec.value(1).toDouble());
             delay = pressAndPull(
                 window, viewport, delay, [at] { return at; },
-                QPointF(spec.value(2).toDouble(), spec.value(3).toDouble()), steps);
+                QPointF(spec.value(2).toDouble(), spec.value(3).toDouble()), steps, false, model);
             continue;
         }
         if (action.trimmed() == QLatin1String("filtermenu")) { // opens "Choose: ..."
@@ -567,20 +636,19 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             };
             if (kind == QLatin1String("rowediting")) {
                 delay += 350;
-                QTimer::singleShot(delay, viewport, [findRow, name] {
-                    QQuickItem* row = findRow();
-                    if (row == nullptr || !row->property("editing").toBool()) {
-                        qWarning().noquote()
-                            << QStringLiteral("expected %1 to be renamed now").arg(name);
-                        g_simulationFailure = 5;
-                    }
+                // The double click is played back in real time and the program may be busy for a
+                // moment: wait up to 3 s for the row to switch to renaming, then fail.
+                QTimer::singleShot(delay, viewport, [viewport, findRow, name] {
+                    waitForRowEditing(viewport, findRow, name, 3000);
                 });
                 continue;
             }
+            auto clock = std::make_shared<QElapsedTimer>();
+            clock->start();
             for (const QEvent::Type type : {QEvent::MouseButtonPress, QEvent::MouseButtonRelease,
                                             QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
                 delay += type == QEvent::MouseButtonPress ? 120 : 40;
-                QTimer::singleShot(delay, viewport, [window, findRow, type] {
+                QTimer::singleShot(delay, viewport, [window, findRow, type, clock] {
                     QQuickItem* row = findRow();
                     if (row == nullptr) {
                         return;
@@ -591,6 +659,9 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()),
                                       Qt::LeftButton, press ? Qt::LeftButton : Qt::NoButton,
                                       Qt::NoModifier);
+                    // Real events carry the time they happened; the handler of a double tap
+                    // measures the time between the two taps with it.
+                    event.setTimestamp(static_cast<ulong>(clock->elapsed()));
                     QCoreApplication::sendEvent(window, &event);
                 });
             }
@@ -659,7 +730,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     return viewport->mapFromScene(
                         line->mapToScene(QPointF(line->width() / 2, line->height() / 2)));
                 },
-                QPointF(0.0, spec.value(0).toDouble()), steps);
+                QPointF(0.0, spec.value(0).toDouble()), steps, false, model);
             continue;
         }
         if (kind == QLatin1String("markerset")) { // markerset - the time marker is pulled back

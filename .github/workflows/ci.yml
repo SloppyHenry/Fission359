@@ -320,6 +320,55 @@ jobs:
           cp "$RUNNER_TEMP/dmg-window.png" build/package/ || true
           hdiutil detach "$mount_point"
 
+      # P22: the window tests (app_*) against the finished package, with the window system of the
+      # runner (no offscreen: that gives false greens on macOS). The package carries the QML
+      # plugins that the build tree lacks. The build tree of scripts/package is reused; only the
+      # test helper is built in addition. The step does not stop the package: the job "Window
+      # tests (macOS arm64, packaged app)" below turns its outcome into a check of its own.
+      - name: Window tests against the packaged app (macOS)
+        id: window_tests
+        if: runner.os == 'macOS'
+        continue-on-error: true
+        shell: bash
+        run: |
+          app="$PWD/build/package/stage/Fission359.app/Contents/MacOS/fission359"
+          test -x "$app"
+          # The window tests have fixed pixel positions and ask for a window of 1280x800; a runner
+          # screen smaller than that shrinks the window. Log the screen, and try to give it more room
+          # (best effort; the program also keeps the asked-for size by itself in test mode).
+          system_profiler SPDisplaysDataType | grep -i -E "resolution|displays|metal" || true
+          if brew install displayplacer >/dev/null 2>&1; then
+            displayplacer list || true
+            screen_id="$(displayplacer list | awk '/Persistent screen id/ {print $4; exit}')"
+            if [ -n "$screen_id" ]; then
+              displayplacer "id:$screen_id res:1920x1080" || echo "Resolution not changed."
+              displayplacer list | grep -i -E "resolution|current" || true
+            fi
+          fi
+          cmake --preset macos-release -DFISSION_APP_UNDER_TEST="$app"
+          cmake --build --preset macos-release --target fission_screenshot_check
+          ctest --preset macos-release -R '^app_' --no-tests=error --timeout 600 \
+            2>&1 | tee build/window-tests.log
+
+      - name: Note the outcome of the window tests (macOS)
+        if: always() && runner.os == 'macOS'
+        shell: bash
+        run: |
+          mkdir -p build/window-tests-result
+          echo "${{ steps.window_tests.outcome }}" > build/window-tests-result/outcome.txt
+          cp build/window-tests.log build/window-tests-result/ 2>/dev/null || true
+          cp build/macos-release/Testing/Temporary/LastTest.log build/window-tests-result/ 2>/dev/null || true
+          cp build/macos-release/window-*.png build/window-tests-result/ 2>/dev/null || true
+
+      - name: Upload the window test result (macOS)
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: window-tests-macos
+          retention-days: 14
+          if-no-files-found: ignore
+          path: build/window-tests-result
+
       # ---- Linux ----------------------------------------------------------------------
       - name: Packaging tools (Linux)
         if: runner.os == 'Linux'
@@ -432,6 +481,27 @@ jobs:
             build/package/*.AppImage
             build/package/*.flatpak
             build/package/*-window.png
+
+  # P22: shows the outcome of the macOS window tests of the job "package" as a check of its own.
+  # Not (yet) a required check of the protected branch.
+  window-tests-macos:
+    name: Window tests (macOS arm64, packaged app)
+    if: always() && needs.package.result != 'skipped'
+    needs: package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: window-tests-macos
+          path: window-tests
+
+      - name: Report the outcome
+        run: |
+          outcome="$(cat window-tests/outcome.txt 2>/dev/null || echo missing)"
+          echo "Outcome of the window tests on macOS: $outcome"
+          tail -n 60 window-tests/window-tests.log 2>/dev/null || true
+          test "$outcome" = success
 
   # A tag like v0.1.0-alpha.1 publishes the packages of this run as a GitHub pre-release
   # (ADR-0006: unsigned, so macOS needs the Gatekeeper detour described in docs/paketierung.md).

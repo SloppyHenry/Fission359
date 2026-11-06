@@ -23,6 +23,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QSaveFile>
+#include <QScreen>
 #include <QStandardPaths>
 #include <QString>
 #include <QTemporaryDir>
@@ -607,6 +608,23 @@ int main(int argc, char* argv[]) {
         return 2;
     }
     if (options.size.isValid()) {
+        // Window tests (FISSION_GUI_TEST, set by CTest on macOS) have fixed pixel positions, so the
+        // window must really get the size asked for. macOS shrinks a window with a title bar to
+        // the screen (a CI runner has a small one); a window without frame is not shrunk. (Rule:
+        // the test is never bent to the screen.)
+        const QScreen* screen = window->screen();
+        if (qEnvironmentVariableIsSet("FISSION_GUI_TEST") && screen != nullptr) {
+            const QRect screenArea = screen->availableGeometry();
+            spdlog::info("screen {}x{} (usable {}x{}), window asked for {}x{}",
+                         screen->geometry().width(), screen->geometry().height(),
+                         screenArea.width(), screenArea.height(), options.size.width(),
+                         options.size.height());
+            if (options.size.width() > screenArea.width() ||
+                options.size.height() > screenArea.height()) {
+                window->setFlags(window->flags() | Qt::FramelessWindowHint);
+                window->setPosition(screen->geometry().topLeft());
+            }
+        }
         window->resize(options.size);
     }
     files.setPreviewGrabber([window] { return previewPng(window); });

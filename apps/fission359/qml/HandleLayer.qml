@@ -214,8 +214,11 @@ Item {
                     }
                     onReleased: {
                         if (Handles.editing && !bubble.typing) {
+                            // Ending the drag rebuilds the handles and may destroy this very dot
+                            // (and its scope) before the next line: take the bubble first.
+                            const b = bubble
                             Handles.endDrag()
-                            bubble.hide()
+                            b.hide()
                         }
                     }
                     // The grab was taken away (a gesture of the system, a window that lost the
@@ -223,8 +226,11 @@ Item {
                     // takes back.
                     onCanceled: {
                         if (Handles.editing && !bubble.typing) {
+                            // Ending the drag rebuilds the handles and may destroy this very dot
+                            // (and its scope) before the next line: take the bubble first.
+                            const b = bubble
                             Handles.endDrag()
-                            bubble.hide()
+                            b.hide()
                         }
                     }
                 }
