@@ -681,6 +681,25 @@ bool isValidMeasureName(std::string_view name) {
                        [](char c) { return isNameByte(static_cast<unsigned char>(c)); });
 }
 
+std::string renameInExpression(std::string_view expression, std::string_view oldName,
+                               std::string_view newName) {
+    const Outcome<Expression> parsed = Expression::parse(expression);
+    if (!parsed) {
+        return std::string(expression);
+    }
+    const std::string wanted = foldMeasureName(oldName);
+    std::string result(expression);
+    const auto& references = parsed.value().references();
+    // From the back, so that the places of the earlier ones stay right.
+    for (auto reference = references.rbegin(); reference != references.rend(); ++reference) {
+        if (foldMeasureName(reference->name) == wanted) {
+            result.replace(reference->where.begin, reference->where.end - reference->where.begin,
+                           newName);
+        }
+    }
+    return result;
+}
+
 std::optional<double> evaluateExpression(std::string_view text, QuantityKind kind,
                                          const NamedMeasures& names,
                                          double defaultUnitMillimetres) {

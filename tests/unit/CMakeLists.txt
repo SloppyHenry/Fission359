@@ -4,6 +4,7 @@
 add_executable(fission_unit_tests
   core/test_version.cpp
   core/test_expression.cpp
+  core/test_measure_names.cpp
   core/test_measures.cpp
   core/test_document.cpp
   core/test_recompute.cpp
@@ -23,9 +24,11 @@ add_executable(fission_unit_tests
   features/test_split.cpp
   features/test_blend.cpp
   features/test_text_feature.cpp
+  features/test_import.cpp
   services/test_settings.cpp
   io/test_fission_file.cpp
   io/test_export.cpp
+  io/test_formats.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp
@@ -35,6 +38,9 @@ add_executable(fission_unit_tests
   geometry/test_blends.cpp
   geometry/test_seat.cpp
   geometry/test_text.cpp
+  geometry/test_exchange.cpp
+  geometry/test_measuring.cpp
+  analysis/test_material.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
   render/test_picking.cpp
@@ -48,6 +54,9 @@ add_executable(fission_unit_tests
   ui/test_preferences.cpp
   ui/test_command_search.cpp
   ui/test_export_controller.cpp
+  ui/test_import_controller.cpp
+  ui/test_measure_controller.cpp
+  ui/test_measures_model.cpp
   ui/test_selection_controller.cpp
   ui/test_placement.cpp
   ui/test_handles.cpp
@@ -69,7 +78,7 @@ add_executable(fission_unit_tests
   interaction/test_align.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
-  fission_core fission_services fission_io lib3mf::lib3mf fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
+  fission_core fission_services fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
 fission_apply_compiler_options(fission_unit_tests)
 
 target_include_directories(fission_unit_tests SYSTEM PRIVATE "${FISSION_LIB3MF_CPP_INCLUDE_DIR}")

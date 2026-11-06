@@ -21,6 +21,7 @@
 #include "fission/services/recent_files.h"
 #include "fission/services/recovery_store.h"
 #include "fission/ui/document_model.h"
+#include "fission/ui/viewport_3d.h"
 
 namespace fission::ui {
 
@@ -339,6 +340,10 @@ QVariantList FileController::tabs() const {
     return list;
 }
 
+void FileController::attachViewport(Viewport3D* viewport) {
+    m_viewport = viewport;
+}
+
 bool FileController::switchTab(int index) {
     if (index < 0 || index >= static_cast<int>(m_tabs.size())) {
         return false;
@@ -351,6 +356,10 @@ bool FileController::switchTab(int index) {
         writeRecoverySync(); // what is not saved yet is safe while the tab is put aside
     }
     Tab& incoming = m_tabs[static_cast<std::size_t>(index)];
+    if (m_viewport != nullptr) {
+        cur().camera = m_viewport->cameraPose();
+        m_viewport->restoreCameraPose(incoming.camera.value_or(m_viewport->defaultCameraPose()));
+    }
     m_tabs[static_cast<std::size_t>(m_current)].slot = m_model->exchange(std::move(incoming.slot));
     m_current = index;
     m_lastPosition = m_model->historyPosition();
@@ -402,6 +411,10 @@ bool FileController::closeTab(int index) {
         settings.defaultUnitMillimetres = m_newDocumentUnit;
         fresh.setSettings(settings);
         m_model->replaceDocument(std::move(fresh));
+        cur().camera.reset();
+        if (m_viewport != nullptr) {
+            m_viewport->restoreCameraPose(m_viewport->defaultCameraPose());
+        }
         setPath(QString());
         refreshModified();
         emit tabsChanged();

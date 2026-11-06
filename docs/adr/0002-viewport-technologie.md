@@ -23,9 +23,9 @@ macOS (Metal) und Linux (Wayland/X11, Vulkan/OpenGL), vollständig testbar. Tech
 ## Entscheidung
 Wir wählen **Option A (Qt RHI)**, weil
 
-- beide Optionen das Leistungsbudget erfüllen (M1: 2 Mio. Dreiecke mit 163 Bildern/s, Auswahl unter 2 ms;
-  RTX 3060: 5 Mio. mit 496 Bildern/s), die Leistung also nicht trennt; A erfüllt es auch auf der
-  integrierten Intel HD 620 (2 Mio. Dreiecke mit 165 Bildern/s, Auswahl 6 ms);
+- beide Optionen das Leistungsbudget erfüllen (Apple Silicon: 2 Mio. Dreiecke mit 163 Bildern/s, Auswahl unter 2 ms;
+  eigene Grafikkarte der Mittelklasse: 5 Mio. mit 496 Bildern/s), die Leistung also nicht trennt; A erfüllt es auch auf der
+  integrierten Intel-Grafik eines älteren Notebooks (2 Mio. Dreiecke mit 165 Bildern/s, Auswahl 6 ms);
 - A unabhängig von OpenGL ist und damit den Wegfall von OpenGL auf macOS überlebt, B nicht;
 - A die Optik der Architektur (Bett, Schatten, Kanten, später SSAO) in unseren eigenen Shadern liefert;
 - A sich vollständig headless messen und testen lässt (Metal, Vulkan), was für die CI wichtig ist;
@@ -39,7 +39,7 @@ Wir wählen **Option A (Qt RHI)**, weil
   Qt-Update ist ein bewusster Schritt mit Test der Ansicht.
 - **Revisionskriterium:** Wenn A für Kanten-/Eckenauswahl oder SSAO deutlich mehr als geplant kostet oder die
   Bildrate auf integrierter Grafik das Budget verfehlt, wird B oder der Hybrid neu bewertet. Der Test auf
-  Intel HD 620 (2026-10-13) hat das Budget erfüllt; bei 5 Mio. Dreiecken liegt die Auswahl dort mit 10 ms
+  integrierter Intel-Grafik (2026-10-13) hat das Budget erfüllt; bei 5 Mio. Dreiecken liegt die Auswahl dort mit 10 ms
   nahe am Limit (Vereinfachung für die Auswahl einplanen).
 
 ## Belege

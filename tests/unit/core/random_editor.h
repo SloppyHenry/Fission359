@@ -35,7 +35,7 @@ public:
         const auto& features = document.features();
         const auto& bodies = document.bodies();
         const auto& parameters = document.parameters();
-        switch (pick(15)) {
+        switch (pick(17)) {
         case 0:
         case 1: { // add (sometimes in the middle, sometimes working on an earlier body)
             FeatureDraft draft = boxDraft(std::to_string(pick(50)));
@@ -112,6 +112,20 @@ public:
             if (!parameters.empty()) {
                 return makeRenameParameter(parameters[pick(parameters.size())].name,
                                            "M" + std::to_string(pick(3)));
+            }
+            break;
+        case 15: // rename everywhere (formulas follow); a name taken by another is refused
+            if (!parameters.empty()) {
+                return makeRenameMeasureEverywhere(parameters[pick(parameters.size())].name,
+                                                   "N" + std::to_string(pick(4)));
+            }
+            break;
+        case 16: // a slider range, or none
+            if (!parameters.empty()) {
+                return makeSetParameterSlider(parameters[pick(parameters.size())].name,
+                                              pick(3) == 0 ? std::nullopt
+                                                           : std::optional<SliderRange>(SliderRange{
+                                                                 0.0, 10.0 + pick(90), 1.0}));
             }
             break;
         default: // the time marker anywhere, or back at the end

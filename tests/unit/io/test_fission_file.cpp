@@ -6,12 +6,14 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <map>
 #include <string>
 #include <unistd.h>
+#include <vector>
 
 #include "fission/core/body_looks.h"
 #include "fission/core/feature_type.h"
@@ -263,6 +265,20 @@ fs::path fixtureFolder(const char* version) {
     return fs::path(FISSION_TEST_FIXTURES_DIR) / "files" / version;
 }
 
+using Content = std::vector<std::uint8_t>;
+
+/// The small STEP file of tests/fixtures/step, as text.
+const std::string& blockStep() {
+    static const std::string text = [] {
+        std::ifstream stream(fs::path(FISSION_TEST_FIXTURES_DIR) / "step" / "block-with-hole.step",
+                             std::ios::binary);
+        REQUIRE(stream);
+        return std::string(std::istreambuf_iterator<char>(stream),
+                           std::istreambuf_iterator<char>());
+    }();
+    return text;
+}
+
 /// One document per feature type: the type alone, with what it needs to work on.
 Document fixtureDocument(World& world, const std::string& type) {
     Document document(1000);
@@ -293,6 +309,13 @@ Document fixtureDocument(World& world, const std::string& type) {
         draft.inputs = {bodies.front()};
         draft.refs["edges"] = {*ref};
         REQUIRE(document.addFeature(std::move(draft)));
+    } else if (type == "import") { // carries its file, a small STEP block
+        const std::string name =
+            document.addAsset("block.step", Content(blockStep().begin(), blockStep().end()));
+        FeatureDraft draft = defaultDraft(*world.registry.find("import"));
+        draft.texts["asset"] = name;
+        const auto made = document.addFeature(std::move(draft));
+        REQUIRE(made);
     } else if (type == "combine" || type == "split" || type == "place") {
         bodies = add("box", {});
         const auto second = add("cylinder", {});
@@ -311,9 +334,12 @@ TEST_CASE("write the version 1 fixture files", "[.generate-fixtures]") {
     World world;
     fs::create_directories(fixtureFolder("v1"));
     for (const std::string& type : world.registry.ids()) {
+        const fs::path target = fixtureFolder("v1") / (type + ".fission");
+        if (fs::exists(target)) {
+            continue; // a fixture is written once and never changed
+        }
         SaveExtras fixed{{}, "0.1.0", "2026-10-26T12:00:00Z"};
-        REQUIRE(save(fixtureDocument(world, type), fixtureFolder("v1") / (type + ".fission"), fixed)
-                    .ok);
+        REQUIRE(save(fixtureDocument(world, type), target, fixed).ok);
     }
 }
 
@@ -444,4 +470,114 @@ TEST_CASE("the preview of a file can be read alone", "[fission-file]") {
     REQUIRE(save(world.model(), file, SaveExtras{{}, "0.1.0", ""}).ok);
     CHECK(readPreview(file).empty());
     CHECK(readPreview(folder.path / "missing.fission").empty());
+}
+
+// --- embedded files (assets/) --------------------------------------------------------------
+
+namespace {
+
+Content bytesOfText(const std::string& text) {
+    return {text.begin(), text.end()};
+}
+
+/// The model with a step that names each of the files, as an import does.
+Document withAssets(World& world, const std::map<std::string, Content>& files) {
+    Document document = world.model();
+    for (const auto& [name, content] : files) {
+        const std::string given = document.addAsset(name, content);
+        REQUIRE(given == name);
+        FeatureDraft draft = defaultDraft(*world.registry.find("import"));
+        draft.texts["asset"] = given;
+        REQUIRE(document.addFeature(std::move(draft)));
+    }
+    return document;
+}
+
+const std::map<std::string, Content>& someFiles() {
+    static const std::map<std::string, Content> files = {
+        {"part.step", bytesOfText("ISO-10303-21;\nDATA;\nENDSEC;\n")},
+        {"binary.bin", {0, 1, 2, 255, 254, 0, 0, 7}},
+        {"empty.txt", {}},
+    };
+    return files;
+}
+
+} // namespace
+
+TEST_CASE("embedded files come back byte for byte after saving and opening", "[fission-file]") {
+    World world;
+    TempFolder folder;
+    const Document original = withAssets(world, someFiles());
+    const fs::path file = folder.path / "model.fission";
+
+    REQUIRE(save(original, file, extras()).ok);
+    const OpenResult opened = open(file);
+
+    REQUIRE(opened.document);
+    CHECK(opened.problems.empty());
+    CHECK(opened.document->sameContentAs(original));
+    REQUIRE(opened.document->assets().size() == someFiles().size());
+    for (const auto& [name, content] : someFiles()) {
+        REQUIRE(opened.document->assets().contains(name));
+        CHECK(*opened.document->assets().at(name) == content);
+    }
+    CHECK(opened.previewPng == extras().previewPng);
+}
+
+TEST_CASE("a file without embedded files opens with none", "[fission-file]") {
+    World world;
+    TempFolder folder;
+    const fs::path file = folder.path / "model.fission";
+    REQUIRE(save(world.model(), file, extras()).ok);
+    const OpenResult opened = open(file);
+    REQUIRE(opened.document);
+    CHECK(opened.document->assets().empty());
+}
+
+TEST_CASE("a file that no step names any more is not saved", "[fission-file]") {
+    World world;
+    TempFolder folder;
+    const fs::path file = folder.path / "model.fission";
+    Document document = withAssets(world, someFiles());
+    document.addAsset("forgotten.step", bytesOfText("no step uses me"));
+    REQUIRE(save(document, file, extras()).ok);
+    const OpenResult opened = open(file);
+    REQUIRE(opened.document);
+    CHECK(opened.document->assets().size() == someFiles().size());
+    CHECK_FALSE(opened.document->assets().contains("forgotten.step"));
+}
+
+TEST_CASE("names that could leave the assets folder are refused", "[fission-file]") {
+    const std::vector<std::string> badNames = {"",          "../evil", "a/b.step",
+                                               "a\\b.step", ".hidden", std::string("x\0y", 3)};
+    for (const std::string& name : badNames) {
+        CAPTURE(name);
+        CHECK_FALSE(isValidAssetName(name));
+    }
+    CHECK(isValidAssetName("part 1 (final).step"));
+
+    // The document makes names safe itself, so a bad name never reaches the file.
+    World world;
+    Document document = world.model();
+    CHECK(document.addAsset("../evil/part.step", {1}) == "_evil_part.step");
+    CHECK(document.addAsset(".hidden", {1}) == "hidden");
+    CHECK(document.addAsset("", {1}) == "file");
+}
+
+TEST_CASE("a flipped byte never hands out a wrong embedded file silently", "[fission-file]") {
+    World world;
+    TempFolder folder;
+    const fs::path file = folder.path / "model.fission";
+    const Document original = withAssets(world, someFiles());
+    REQUIRE(save(original, file, extras()).ok);
+    const std::string whole = slurp(file);
+    for (std::size_t at = 0; at < whole.size(); at += 5) {
+        std::string copy = whole;
+        copy[at] ^= 0x10;
+        spit(file, copy);
+        const OpenResult opened = open(file);
+        if (opened.document) {
+            CHECK(opened.document->sameContentAs(original));
+        }
+    }
 }

@@ -42,6 +42,7 @@ Float {
         case "edit": return qsTr("Edit")
         case "body": return qsTr("Body")
         case "view": return qsTr("View")
+        case "check": return qsTr("Check")
         case "soon": return qsTr("Soon")
         default: return ""
         }

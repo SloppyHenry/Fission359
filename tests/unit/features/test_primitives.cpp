@@ -111,8 +111,8 @@ TEST_CASE("the built-in feature types are registered", "[features]") {
     Setup setup;
     CHECK(setup.registry.ids() ==
           std::vector<std::string>{"box", "chamfer", "combine", "cone", "cylinder", "fillet",
-                                   "hemisphere", "place", "prism", "pyramid", "sphere", "split",
-                                   "star", "text", "torus", "tube", "wedge"});
+                                   "hemisphere", "import", "place", "prism", "pyramid", "sphere",
+                                   "split", "star", "text", "torus", "tube", "wedge"});
 }
 
 TEST_CASE("box: size, place, faces and their names", "[features]") {

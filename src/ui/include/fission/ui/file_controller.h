@@ -7,6 +7,7 @@
 #include <QDateTime>
 #include <QFileInfo>
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include <QStringList>
 #include <QThreadPool>
@@ -15,9 +16,11 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <vector>
 
 #include "fission/core/document.h"
+#include "fission/render/camera.h"
 #include "fission/ui/document_model.h"
 
 namespace fission::services {
@@ -29,6 +32,7 @@ class Autosave;
 namespace fission::ui {
 
 class DocumentModel;
+class Viewport3D;
 
 /// Save, open, new project and the list of recent files (AP-1.10c). The file format itself is
 /// `fission::io`; this class connects it to the document of the interface.
@@ -93,6 +97,10 @@ public:
     Q_INVOKABLE bool newDocument();
     /// Shows another open document (its undo list stays with it).
     Q_INVOKABLE bool switchTab(int index);
+    /// Lets every tab keep its own camera: it is noted when a tab is left and put back when the
+    /// tab is shown again; a tab that was never left starts with the standard view. The camera
+    /// is no part of the document (no command, not in the file) and is forgotten with the tab.
+    Q_INVOKABLE void attachViewport(fission::ui::Viewport3D* viewport);
     /// Closes a document: a project with a file is saved first, one without is set aside as rescue
     /// work. Closing the last one leaves an empty project. False when the work could not be
     /// secured.
@@ -160,7 +168,8 @@ private:
         QString path;
         QString created; ///< ISO time of the first save, handed on when saving over the file
         int recoverySlot = 0;
-        std::uint64_t recoveryStamp = 0; ///< the state its rescue file was written from
+        std::uint64_t recoveryStamp = 0;          ///< the state its rescue file was written from
+        std::optional<render::CameraPose> camera; ///< as it was left; empty = standard view
     };
     Tab& cur();
     const Tab& cur() const;
@@ -174,6 +183,7 @@ private:
     PreviewGrabber m_previewGrabber;
     QThreadPool m_pool;
     std::vector<Tab> m_tabs;
+    QPointer<Viewport3D> m_viewport;
     int m_current = 0;
     int m_nextRecoverySlot = 1;
     bool m_modified = false;

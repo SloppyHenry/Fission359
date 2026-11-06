@@ -74,6 +74,9 @@ QtObject {
         if (step.type === "place" && v.length === 3) {
             return qsTr("Part placed, moved by %1, %2, %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
         }
+        if (step.type === "import" && v.length === 1) {
+            return qsTr("Imported from “%1”, part %2").arg(step.texts.asset).arg(n(v[0]))
+        }
         if (step.type === "combine" && v.length === 1) {
             switch (step.texts.mode) {
             case "subtract": return qsTr("Cut out %n body(ies)", "", v[0])
@@ -82,7 +85,7 @@ QtObject {
             }
         }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "fillet", "chamfer"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "fillet", "chamfer"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)

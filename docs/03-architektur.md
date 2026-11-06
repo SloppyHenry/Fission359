@@ -179,13 +179,14 @@ ZIP-Container, menschenlesbar wo möglich:
 projekt.fission
  ├─ manifest.json        Format-Version, App-Version, Checksummen
  ├─ document.json        Parameter, Features, Referenzen, Körper-Metadaten
- ├─ assets/              eingebettete Schriften, SVGs, Bilder, importierte Netze (.bin / .3mf)
+ ├─ assets/              eingebettete Dateien: importierte STEP/IGES-Dateien (AP-2.13), später Schriften, SVGs, Bilder
  ├─ cache/               optional: BREP- und Netz-Cache für schnelles Öffnen
  └─ preview.png          Vorschaubild (für Dateimanager und Startbildschirm)
 ```
 
 - **Quelle der Wahrheit** ist `document.json`. Der Cache darf fehlen oder veraltet sein.
-- **Versionierung:** `formatVersion` als Ganzzahl. Für jede Erhöhung gibt es eine Migrationsfunktion, getestet mit archivierten Altdateien.
+- **Eingebettete Dateien** (`assets/<Name>`) haben je eine Prüfsumme im Manifest; ein Schritt nennt sie im Wort `asset`. Es werden nur Dateien gespeichert, die ein Schritt noch nennt ([ADR-0012](adr/0012-eingebettete-dateien-und-import.md)).
+- **Versionierung:** `formatVersion` als Ganzzahl (derzeit 2: Version 2 fügt jedem Maß das Feld `slider` hinzu, AP-2.9). Für jede Erhöhung gibt es eine Migrationsfunktion, getestet mit archivierten Altdateien.
 - **Atomisches Speichern:** in eine temporäre Datei schreiben, dann umbenennen. Autosave alle 60 s und nach jedem 20. Command in ein Wiederherstellungsverzeichnis.
 - Import und Export: **3MF** (lib3mf, inkl. Farben/Objekte), **STL** (ASCII/Binär), **STEP** (OCCT XCAF, inkl. Farben), **OBJ**, **SVG** und **DXF** (für Skizzen), Bilder (PNG/JPG) für Reliefs.
 

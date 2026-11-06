@@ -143,6 +143,11 @@ public:
     /// Moves the face under the point to the middle and zooms to fit it, without turning the
     /// view (Smart Zoom of the trackpad).
     Q_INVOKABLE bool zoomToSurface(double x, double y);
+    /// Where the camera stands now, and the pose it started with (the view of a new project).
+    render::CameraPose cameraPose() const { return m_camera.pose(); }
+    render::CameraPose defaultCameraPose() const { return m_defaultPose; }
+    /// Puts the camera at once (no animation, no command) at a pose, e.g. when a tab comes back.
+    void restoreCameraPose(const render::CameraPose& pose);
     /// Puts the camera at once (no animation) at the given angles and distance from its target.
     Q_INVOKABLE void setCamera(double yaw, double pitch, double distance);
     /// Shows or hides one body of the scene (the eye in the body list).
@@ -242,7 +247,8 @@ public:
         corners = 3,
         placement = 4,
         distances = 5,
-        align = 6
+        align = 6,
+        measure = 7
     };
     void setHandleGraphics(render::HandleGraphics graphics,
                            HandleSource source = HandleSource::size);
@@ -359,7 +365,7 @@ private:
 
     core::SelectionFilter m_filter;
     std::vector<render::Highlight> m_selectionHighlights;
-    std::array<render::HandleGraphics, 7> m_handleGraphics;
+    std::array<render::HandleGraphics, 8> m_handleGraphics;
     std::optional<render::Highlight> m_hover;
     std::vector<render::Highlight> m_listHover; ///< lit up from a list, see `lightUpBodies`
     std::deque<PickRequest> m_pickQueue;
@@ -389,6 +395,7 @@ private:
     quint64 m_sceneVersion = 1;
     quint64 m_paletteVersion = 1;
     render::OrbitCamera m_camera;
+    render::CameraPose m_defaultPose;
     QPointF m_lastMouse;
     bool m_bedVisible = true;
     bool m_snapGridShown = true;

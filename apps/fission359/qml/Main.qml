@@ -85,6 +85,7 @@ Window {
             { id: "save", text: qsTr("Save"), shortcut: primaryKey + "S", nativeShortcut: "Ctrl+S", enabled: Files.modified || Files.fileName === "" },
             { id: "saveas", text: qsTr("Save as…"), shortcut: isMac ? "⇧⌘S" : qsTr("Ctrl+Shift+S"), nativeShortcut: "Ctrl+Shift+S" },
             { separator: true },
+            { id: "import", text: qsTr("Import…") },
             { id: "export", text: qsTr("Export…"), shortcut: primaryKey + "E", nativeShortcut: "Ctrl+E" },
             { separator: true },
             { id: "close", text: qsTr("Close"), shortcut: primaryKey + "W", nativeShortcut: "Ctrl+W" },
@@ -106,6 +107,8 @@ Window {
             { id: "settings", text: qsTr("Settings…"), shortcut: primaryKey + ",", nativeShortcut: "Ctrl+,", role: "preferences" }
         ] },
         { title: qsTr("View"), items: [
+            { id: "measure", text: qsTr("Measure"), checked: Measure.enabled },
+            { id: "measures", text: qsTr("Named measures"), shortcut: primaryKey + "M", nativeShortcut: "Ctrl+M", checked: root.measuresOpen },
             { id: "orthographic", text: qsTr("Orthographic"), shortcut: "P", checked: root.orthographic },
             { id: "bed", text: qsTr("Print bed"), checked: root.bedVisible },
             { id: "softshadows", text: qsTr("Soft shadows"), checked: viewport.ambientOcclusion },
@@ -173,6 +176,8 @@ Window {
             : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
             : root.flyout === "combine" ? qsTr("Choose two or more bodies (Shift+click), then merge them, subtract the others from the first or keep only what they share. One body can be split in two.")
+            : Measure.enabled ? qsTr("Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.")
+            : root.flyout === "check" ? qsTr("Check: measure faces, edges and corners.")
             : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.")
             : root.hoverText !== "" ? root.hoverText
             : Selection.count > 0 ? toolCatalog.find(root.tool).hint
@@ -191,6 +196,7 @@ Window {
     readonly property bool redoAvailable: DocumentModel.canRedo && !textHasHistory
     property bool historyOpen: false
     property bool exportOpen: false
+    property bool measuresOpen: false      // the named measures under the recipe (⌘M)
     property bool settingsOpen: false
     property bool startOpen: AppOptions.startPage
     property bool searchOpen: false
@@ -396,7 +402,22 @@ Window {
             }
             break
         case "saveas": saveDialog.open(); break
+        case "import": importDialog.open(); break
         case "export": exportOpen = !exportOpen; break
+        case "measures":
+            if (root.leftWidth <= 0) {
+                root.focusMode = false
+            }
+            root.leftTab = "bodies"
+            root.measuresOpen = !root.measuresOpen
+            break
+        case "measure":
+            Measure.enabled = !Measure.enabled
+            root.flyout = ""
+            if (Measure.enabled && Selection.filter === "body") {
+                Selection.filter = "all"
+            }
+            break
         case "about": aboutWindow.show(); aboutWindow.raise(); break
         case "settings": settingsOpen = !settingsOpen; break
         case "search": searchOpen = !searchOpen; break
@@ -652,7 +673,12 @@ Window {
     }
     Shortcut {
         sequence: "Escape"
-        enabled: DocumentModel.repairing
+        enabled: Measure.enabled && !root.seating
+        onActivated: Measure.enabled = false
+    }
+    Shortcut {
+        sequence: "Escape"
+        enabled: DocumentModel.repairing && !Measure.enabled && !root.seating
         onActivated: DocumentModel.cancelRepair()
     }
 
@@ -692,10 +718,11 @@ Window {
     }
     Shortcut {
         sequence: "Escape"
-        enabled: Selection.count > 0 && !root.typing && !Handles.editing && !Gizmo.editing
-                 && !Rotate.editing && !Scale.editing && !root.seating
+        enabled: Selection.count > 0 && !root.typing && !Measure.enabled && !DocumentModel.repairing
+                 && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !root.seating
         onActivated: root.run("selectnone")
     }
+    Shortcut { sequence: "Ctrl+M"; enabled: !root.isMac && !root.typing; onActivated: root.run("measures") }
     Shortcut { sequence: "P"; onActivated: root.run("orthographic") }
     Shortcut { sequence: "Home"; onActivated: root.run("view.home") }
     Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("view.front") }
@@ -818,6 +845,33 @@ Window {
     }
 
     FileDialog {
+        id: importDialog
+
+        title: qsTr("Import")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [qsTr("STEP and IGES files (*.step *.stp *.iges *.igs)")]
+        currentFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+        onAccepted: Importer.importFrom(selectedFile)
+    }
+
+    // A file dropped on the window: a project opens, a STEP or IGES file is imported.
+    DropArea {
+        anchors.fill: parent
+        keys: ["text/uri-list"]
+        onDropped: drop => {
+            for (let i = 0; i < drop.urls.length; ++i) {
+                const url = drop.urls[i]
+                if (url.toString().toLowerCase().endsWith(".fission")) {
+                    Files.openFrom(url)
+                } else {
+                    Importer.importFrom(url)
+                }
+            }
+            drop.accept()
+        }
+    }
+
+    FileDialog {
         id: saveDialog
 
         title: qsTr("Save")
@@ -839,9 +893,25 @@ Window {
         title: qsTr("Export")
         fileMode: FileDialog.SaveFile
         defaultSuffix: root.exportFormat
-        nameFilters: root.exportFormat === "stl" ? [qsTr("STL files (*.stl)")] : [qsTr("3MF files (*.3mf)")]
+        nameFilters: {
+            switch (root.exportFormat) {
+            case "stl": return [qsTr("STL files (*.stl)")]
+            case "obj": return [qsTr("OBJ files (*.obj)")]
+            case "step": return [qsTr("STEP files (*.step *.stp)")]
+            case "svg": return [qsTr("SVG files (*.svg)")]
+            case "dxf": return [qsTr("DXF files (*.dxf)")]
+            default: return [qsTr("3MF files (*.3mf)")]
+            }
+        }
         currentFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
         onAccepted: {
+            if (root.exportFormat === "svg" || root.exportFormat === "dxf") {
+                const face = Selection.items.length === 1 ? Selection.items[0] : null
+                if (face !== null) {
+                    Exporter.startOutline(root.exportFormat, face.body, face.number, selectedFile)
+                }
+                return
+            }
             const names = {}
             for (let i = 0; i < DocumentModel.bodies.length; ++i) {
                 names[DocumentModel.bodyIdAt(i)] = root.bodyName(i)
@@ -855,11 +925,26 @@ Window {
         target: Exporter
 
         function onFinished(code, path, bodies) {
-            if (code === "") {
+            if (code === "" && root.exportFormat !== "svg" && root.exportFormat !== "dxf") {
                 root.showHint(qsTr("%n body(ies) exported.", "", bodies))
+                root.exportOpen = false
+            } else if (code === "") {
+                root.showHint(qsTr("Outline exported."))
                 root.exportOpen = false
             }
         }
+    }
+
+    MeasureCard {
+        id: measureCard
+
+        visible: Measure.enabled
+        anchors.top: docTabs.bottom
+        anchors.topMargin: 10
+        anchors.right: parent.right
+        anchors.rightMargin: 16
+        z: 19
+        onCloseRequested: Measure.enabled = false
     }
 
     ExportCard {
@@ -872,6 +957,7 @@ Window {
         anchors.rightMargin: 16
         z: 19
         anyChosen: root.chosenBodies.length > 0
+        faceChosen: Selection.singleFaceChosen
         onCloseRequested: root.exportOpen = false
         onExportRequested: (format, quality, onlyChosen) => {
             root.exportFormat = format
@@ -1010,6 +1096,9 @@ Window {
             bedText: root.bedText
             recipe: root.recipeList
             currentStep: DocumentModel.currentStep
+            measuresOpen: root.measuresOpen
+            catalog: messageCatalog
+            onMeasuresOpenRequested: open => root.measuresOpen = open
             onTabRequested: tab => root.leftTab = tab
             onAddRequested: root.flyout = "shapes"
             deletion: root.pendingDeletion
@@ -1080,6 +1169,7 @@ Window {
                 animated: !AppOptions.reduceMotion
                 mouseStyle: root.mouseStyle
                 bodiesMovable: root.tool !== "select"
+                Component.onCompleted: Files.attachViewport(viewport) // each tab keeps its camera
                 onAmbientOcclusionTurnedOff: root.showHint(
                     qsTr("Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu."))
             }
@@ -1166,6 +1256,11 @@ Window {
 
                 anchors.fill: parent
                 obstacles: viewOverlay.obstacles
+            }
+
+            MeasureLayer {
+                anchors.fill: parent
+                text: measureCard.mainNumber
             }
 
             // The cutting plane of the chosen split, as a translucent sheet.
@@ -1287,6 +1382,8 @@ Window {
                 onDisplayRequested: mode => root.display = mode
                 onToolRequested: tool => root.tool = tool
                 flyout: root.flyout
+                measuring: Measure.enabled
+                onMeasureRequested: root.run("measure")
                 chosenCount: root.chosenBodies.length
                 onCombineRequested: way => root.combine(way)
                 onFlyoutCloseRequested: root.flyout = ""
@@ -1295,6 +1392,8 @@ Window {
                         root.flyout = root.flyout === "shapes" ? "" : "shapes"
                     } else if (group === "combine") {
                         root.flyout = root.flyout === "combine" ? "" : "combine"
+                    } else if (group === "check") {
+                        root.flyout = root.flyout === "check" ? "" : "check"
                     } else {
                         root.flyout = ""
                         root.showHint(qsTr("This tool group arrives in a later version."))
@@ -1341,6 +1440,7 @@ Window {
             stepTitle: root.currentStepTitle
             mode: root.panelMode
             bodyName: root.bodyName(root.panelBodyIndex)
+            factsBodyId: root.panelMode === "body" && root.panelBodyIndex >= 0 ? DocumentModel.bodyIdAt(root.panelBodyIndex) : ""
             renamable: root.panelBodyIndex >= 0
             partText: Selection.items.length === 1 ? root.partName(Selection.items[0].kind, Selection.items[0].bodyIndex) : ""
             bodyCount: root.chosenBodies.length
@@ -1348,6 +1448,11 @@ Window {
             bodyColor: root.chosenColor
             onColorChosen: color => DocumentModel.setBodiesColor(root.colorTargets, color)
             onNameCommitted: name => DocumentModel.setBodyName(root.panelBodyIndex, name)
+            onSaveMeasureRequested: (field, name) => {
+                if (DocumentModel.saveStepValueAsMeasure(DocumentModel.currentStep, field, name) !== "") {
+                    root.measuresOpen = true
+                }
+            }
             onCombineRequested: way => root.combine(way)
             stepValues: root.stepValueList
             isHole: root.currentStepIsHole
@@ -1400,6 +1505,7 @@ Window {
         if (type === "fillet") { return qsTr("Rounding") }
         if (type === "chamfer") { return qsTr("Bevelling") }
         if (type === "place") { return qsTr("Placing") }
+        if (type === "import") { return qsTr("Imported body") }
         const name = shapeCatalog.nameOf(type)
         return name !== "" ? name : qsTr("Body")
     }
@@ -1467,6 +1573,8 @@ Window {
                 ? qsTr("%1 made smaller to %2 %").arg(body).arg(Numbers.format(Number(step.value), 1))
                 : qsTr("%1 made larger to %2 %").arg(body).arg(Numbers.format(Number(step.value), 1))
         case "solidBody": return qsTr("%1 made a part again").arg(body)
+        case "importFile": return step.count === "1" ? qsTr("“%1” imported").arg(step.file) : qsTr("“%1” imported with %2 bodies").arg(step.file).arg(step.count)
+        case "importUnit": return qsTr("Unit of “%1” put right").arg(step.file)
         case "setLabel": return qsTr("Step renamed")
         case "setRollback": return step.count === "" ? qsTr("Time marker put back to now") : qsTr("Time marker moved")
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))
