@@ -45,7 +45,7 @@ Die Haltepunkte von Teil a sind entschieden; die Begründungen stehen in [ADR-00
 2. Commands (`commands.h`): `AddSketchElementCommand`, `makeRemoveSketchElement`, `makeMoveSketchPoints` (eine Transaktion je Zug),
    `makeSetSketchConstruction`. Tests: `tests/unit/core/test_sketch.cpp`, Zufallstest in `test_history.cpp` (über `random_editor.h`).
 3. Dateiformat 3 (AP-1.10): Feld `sketch` je Schritt vom Typ `sketch`; Tests in `test_serialize.cpp` und `test_fission_file.cpp`.
-4. Für 2.1b: Die Ebene aus `refs["plane"]` (Fläche) fehlt im `SketchResult` noch (`plane` leer); den Schritt braucht dann einen Eingang (`inputs`) mit
+4. Für 2.1b: Die Ebene aus `refs["plane"]` (Fläche) fehlt im `SketchResult` noch (`plane` leer); der Schritt braucht dann einen Eingang (`inputs`) mit
    dem Körper der Fläche. Texte für „Letzte Aktionen“ (`addSketchElement`, `removeSketchElement`, `moveSketchPoints`, `sketchConstructionOn/Off`)
    und der Meldungstext für einen Fehler auf dem Skizzenschritt (Wort `basePlane`) fehlen noch.
 
