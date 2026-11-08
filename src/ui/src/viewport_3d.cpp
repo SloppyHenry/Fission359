@@ -562,6 +562,7 @@ void Viewport3D::mousePressEvent(QMouseEvent* event) {
     m_dragged = false;
     m_rubberBanding = false;
     m_bodyDragging = false;
+    m_drawDrag = false;
     m_pressBody.clear();
     if (m_bodiesMovable && event->button() == Qt::LeftButton &&
         event->modifiers() == Qt::NoModifier) {
@@ -570,6 +571,9 @@ void Viewport3D::mousePressEvent(QMouseEvent* event) {
         }
     }
     setHover(std::nullopt); // while the view is being moved, nothing lights up
+    if (event->button() == Qt::LeftButton) {
+        emit leftPressed(event->position().x(), event->position().y());
+    }
     event->accept();
 }
 
@@ -588,7 +592,9 @@ void Viewport3D::mouseMoveEvent(QMouseEvent* event) {
         // on, or else draws a rectangle.
         if (m_dragged && m_pressButton == Qt::LeftButton && event->buttons() == Qt::LeftButton &&
             action == render::NavigationAction::none) {
-            if (!m_pressBody.isEmpty() && !m_rubberBanding) {
+            if (m_drawDrag) {
+                emit leftDragged(event->position().x(), event->position().y());
+            } else if (!m_pressBody.isEmpty() && !m_rubberBanding) {
                 if (!m_bodyDragging) {
                     m_bodyDragging = true;
                     emit bodyDragStarted(m_pressBody, m_pressPosition.x(), m_pressPosition.y());
@@ -609,6 +615,10 @@ void Viewport3D::mouseReleaseEvent(QMouseEvent* event) {
         return;
     }
     const bool extend = (event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier)) != 0;
+    if (m_pressButton == Qt::LeftButton && m_drawDrag) {
+        m_drawDrag = false;
+        emit leftReleased(event->position().x(), event->position().y(), m_dragged);
+    }
     if (m_pressButton == Qt::LeftButton && !m_dragged) {
         requestPick(PickIntent::click, event->position(), extend);
         emit leftClicked(event->position().x(), event->position().y());

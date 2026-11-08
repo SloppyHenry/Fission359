@@ -32,7 +32,8 @@ constexpr float kElementWidth = 2.5F;
 constexpr float kDraftWidth = 3.5F; // the element being pulled is stronger
 constexpr float kGuideWidth = 1.25F;
 constexpr double kDashPixels = 6.0;
-constexpr int kMaxGridLines = 160; // per direction
+constexpr double kArcDragPixels = 6.0; // pulling further than this from a line end makes an arc
+constexpr int kMaxGridLines = 160;     // per direction
 
 QVector3D at(const core::SketchPlane& plane, double u, double v) {
     const geo::Point3d world = plane.toWorld({u, v});
@@ -169,6 +170,12 @@ const char* toolWord(interaction::SketchToolKind kind) {
         return "circle";
     case interaction::SketchToolKind::point:
         return "point";
+    case interaction::SketchToolKind::arc:
+        return "arc";
+    case interaction::SketchToolKind::slot:
+        return "slot";
+    case interaction::SketchToolKind::polygon:
+        return "polygon";
     case interaction::SketchToolKind::none:
         break;
     }
@@ -215,6 +222,9 @@ void SketchController::attach(Viewport3D* viewport) {
     connect(viewport, &Viewport3D::pointerMoved, this, &SketchController::onPointerMoved);
     connect(viewport, &Viewport3D::leftClicked, this, &SketchController::onClicked);
     connect(viewport, &Viewport3D::leftDoubleClicked, this, &SketchController::onDoubleClicked);
+    connect(viewport, &Viewport3D::leftPressed, this, &SketchController::onPressed);
+    connect(viewport, &Viewport3D::leftDragged, this, &SketchController::onDragged);
+    connect(viewport, &Viewport3D::leftReleased, this, &SketchController::onReleased);
     connect(viewport, &Viewport3D::cameraChanged, this, [this] {
         if (m_mode == Mode::sketching) {
             refresh();
@@ -280,6 +290,7 @@ void SketchController::beginOn(const QString& stepId) {
     m_snapMap = {};
     m_tool.select(interaction::SketchToolKind::none);
     m_tool.setHelperLine(false);
+    m_tool.setPolygonSides(interaction::kSketchDefaultSides); // the last number lasts one sketch
     updateDraft();
     if (m_viewport != nullptr && !m_previousPose) {
         m_previousPose = m_viewport->cameraPose();
@@ -572,8 +583,10 @@ void SketchController::chooseTool(const QString& name, int variant) {
     }
     using interaction::SketchToolKind;
     SketchToolKind kind = SketchToolKind::none;
-    for (const SketchToolKind candidate : {SketchToolKind::line, SketchToolKind::rectangle,
-                                           SketchToolKind::circle, SketchToolKind::point}) {
+    for (const SketchToolKind candidate :
+         {SketchToolKind::line, SketchToolKind::rectangle, SketchToolKind::circle,
+          SketchToolKind::point, SketchToolKind::arc, SketchToolKind::slot,
+          SketchToolKind::polygon}) {
         if (name == QLatin1String(toolWord(candidate))) {
             kind = candidate;
         }
@@ -616,6 +629,69 @@ void SketchController::clickAt(const interaction::PlaneRay& ray, double pixelsPe
     applyStep(m_tool.click(m_caught->position, alt));
 }
 
+void SketchController::onPressed(double x, double y) {
+    if (m_mode != Mode::sketching || !m_planeReady || m_viewport == nullptr || !toolActive()) {
+        return;
+    }
+    const auto ray = m_viewport->rayAt(x, y);
+    if (ray) {
+        pressAt({{ray->origin.x(), ray->origin.y(), ray->origin.z()},
+                 {ray->direction.x(), ray->direction.y(), ray->direction.z()}},
+                m_viewport->pixelsPerMillimetre());
+    }
+}
+
+void SketchController::onDragged(double x, double y) {
+    onPointerMoved(x, y);
+}
+
+void SketchController::onReleased(double x, double y) {
+    if (m_viewport == nullptr) {
+        return;
+    }
+    const auto ray = m_viewport->rayAt(x, y);
+    if (ray) {
+        releaseAt({{ray->origin.x(), ray->origin.y(), ray->origin.z()},
+                   {ray->direction.x(), ray->direction.y(), ray->direction.z()}},
+                  m_viewport->pixelsPerMillimetre(), altHeld());
+    }
+    m_viewport->setDrawDrag(false);
+}
+
+void SketchController::pressAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre) {
+    if (!toolActive() || !m_planeReady) {
+        return;
+    }
+    pointAt(ray, pixelsPerMillimetre);
+    if (!m_caught) {
+        return;
+    }
+    const double ppm = std::max(pixelsPerMillimetre, 1e-6);
+    const bool armed = m_tool.press(m_caught->position, kCatchPixels / ppm, kArcDragPixels / ppm);
+    if (m_viewport != nullptr) {
+        m_viewport->setDrawDrag(armed);
+    }
+}
+
+void SketchController::dragTo(const interaction::PlaneRay& ray, double pixelsPerMillimetre) {
+    if (!toolActive() || !m_planeReady) {
+        return;
+    }
+    pointAt(ray, pixelsPerMillimetre);
+}
+
+void SketchController::releaseAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre,
+                                 bool alt) {
+    if (!toolActive() || !m_planeReady) {
+        return;
+    }
+    pointAt(ray, pixelsPerMillimetre);
+    if (!m_caught) {
+        return;
+    }
+    applyStep(m_tool.release(m_caught->position, alt));
+}
+
 void SketchController::doubleClick() {
     if (!toolActive()) {
         return;
@@ -627,13 +703,18 @@ void SketchController::setTyped(int field, double value) {
     if (!drawing()) {
         return;
     }
-    m_tool.setTyped(field, std::isfinite(value) ? std::optional<double>(value) : std::nullopt);
+    const auto result =
+        m_tool.setTyped(field, std::isfinite(value) ? std::optional<double>(value) : std::nullopt);
+    if (result == interaction::SketchToolNotice::badSides) {
+        emit notice(QStringLiteral("badSides"));
+    }
     updateDraft();
 }
 
 void SketchController::clearTyped() {
     m_tool.setTyped(0, std::nullopt);
     m_tool.setTyped(1, std::nullopt);
+    m_tool.setTyped(2, std::nullopt);
     updateDraft();
 }
 
@@ -641,12 +722,19 @@ void SketchController::acceptTyped() {
     if (!drawing()) {
         return;
     }
+    const std::size_t placedBefore = m_tool.placedCount();
     applyStep(m_tool.accept(altHeld()));
+    if (m_tool.placedCount() > placedBefore) {
+        emit elementDone(); // the second middle of a slot: the typing of its length is over
+    }
 }
 
 void SketchController::applyStep(const interaction::SketchToolStep& step) {
-    const QString kind = toolName();
     for (const interaction::SketchBatch& batch : step.done) {
+        // the recipe names what was drawn: a lone arc is an arc, also when a line tool drew it
+        const bool loneArc =
+            batch.size() == 1 && batch.front().kind == core::SketchElementKind::arc;
+        const QString kind = loneArc ? QStringLiteral("arc") : toolName();
         if (m_model != nullptr && m_model->addSketchElements(m_step, batch, kind)) {
             m_elements = m_model->sketchElements(m_step);
         }
@@ -656,6 +744,8 @@ void SketchController::applyStep(const interaction::SketchToolStep& step) {
         emit notice(QStringLiteral("collinear"));
     } else if (step.notice == SketchToolNotice::tooSmall) {
         emit notice(QStringLiteral("tooSmall"));
+    } else if (step.notice == SketchToolNotice::badSides) {
+        emit notice(QStringLiteral("badSides"));
     }
     updateDraft();
     if (!step.done.empty()) {
