@@ -309,9 +309,21 @@ Window {
         return ""
     }
 
+    // The ids the search ranks. While a sketch is open its drawing tools come first, otherwise
+    // they come after what can run now: "Sechseck" means the polygon of the sketch there and the
+    // prism outside (a tool that cannot run is never the top answer).
+    function rankedCommands(text) {
+        const ids = CommandSearch.search(text, commandCatalog.searchables())
+        const sketching = Sketch.active
+        const isSketchTool = id => id.startsWith("sketch.")
+        const first = ids.filter(id => isSketchTool(id) === sketching)
+        const then = ids.filter(id => isSketchTool(id) !== sketching)
+        return first.concat(then)
+    }
+
     // The results for the command search: the ids the search ranks, with what the list shows.
     function searchResults(text) {
-        const ids = CommandSearch.search(text, commandCatalog.searchables())
+        const ids = root.rankedCommands(text)
         return ids.slice(0, text === "" ? 8 : 30).map(id => {
             const command = commandCatalog.find(id)
             return { id: id, name: command.name, shortcut: command.shortcut || "",
@@ -321,7 +333,7 @@ Window {
 
     // The best match for a text (the tests use it); empty when nothing fits.
     function topCommand(text) {
-        const ids = CommandSearch.search(text, commandCatalog.searchables())
+        const ids = root.rankedCommands(text)
         return ids.length > 0 ? ids[0] : ""
     }
 
