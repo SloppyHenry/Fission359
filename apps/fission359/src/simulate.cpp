@@ -1085,6 +1085,17 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                         window->requestActivate();
                     }
                     QTimer::singleShot(wasActive ? 0 : 150, viewport, [window, key] {
+                        // Seen in the log of a window test: where the key goes.
+                        const QQuickItem* focus = window->activeFocusItem();
+                        qInfo().noquote()
+                            << QStringLiteral("key %1: window active %2, focus window %3, "
+                                              "focus item %4")
+                                   .arg(QKeySequence(key).toString())
+                                   .arg(window->isActive())
+                                   .arg(QGuiApplication::focusWindow() == window)
+                                   .arg(focus != nullptr
+                                            ? QString::fromLatin1(focus->metaObject()->className())
+                                            : QStringLiteral("none"));
                         QKeyEvent press(QEvent::KeyPress, key.key(), key.keyboardModifiers());
                         QCoreApplication::sendEvent(window, &press);
                         QKeyEvent release(QEvent::KeyRelease, key.key(), key.keyboardModifiers());

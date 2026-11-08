@@ -864,6 +864,8 @@ Window {
         enabled: Sketch.engaged && !root.typing && !root.seating && !Placement.active
                  && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing
         onActivated: Sketch.escape()
+        // Two enabled Esc shortcuts fire neither; say so in the log of a window test.
+        onActivatedAmbiguously: console.warn("Esc of the sketch mode is ambiguous")
     }
 
     // Choosing again (AP-2.10e): while a step is repaired only faces (or edges) can be picked, and
