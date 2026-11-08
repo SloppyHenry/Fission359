@@ -515,3 +515,22 @@ TEST_CASE("sketch tools: a rectangle and a circle in a sketch keep their ids apa
     f.settle();
     CHECK(f.model->recipe().size() == 1);
 }
+
+TEST_CASE("sketch tools: after a typed value Esc still ends the tool and then the sketch",
+          "[ui][sketchtools]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("circle"));
+    f.click(0, 0);
+    f.move(3, 0);
+    f.sketch->setTyped(0, 12.5);
+    f.sketch->acceptTyped();
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->escape(); // nothing is being drawn: the tool ends
+    CHECK_FALSE(f.sketch->toolActive());
+    CHECK(f.sketch->active());
+    f.sketch->escape(); // the sketch ends (it has a circle, so it stays)
+    CHECK_FALSE(f.sketch->engaged());
+    f.settle();
+    CHECK(f.model->recipe().size() == 1);
+}

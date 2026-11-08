@@ -56,6 +56,7 @@ Item {
     }
 
     function endTyping() {
+        const wasTyping = bubble.typing
         bubble.typing = false
         for (const key in inputs) {
             if (inputs[key]) {
@@ -63,6 +64,12 @@ Item {
                 inputs[key].invalid = false
                 inputs[key].focus = false
             }
+        }
+        // The keyboard goes to the layer itself, which keeps no keys: a number field that is
+        // hidden must not hold on to it (it would swallow Esc and make the Esc shortcut of the
+        // sketch mode wait for "typing" to end).
+        if (wasTyping) {
+            root.forceActiveFocus()
         }
     }
 
@@ -219,9 +226,9 @@ Item {
                         onTextEdited: root.apply(entry.index)
                         onActiveFocusChanged: if (activeFocus) root.current = entry.index
                         Keys.onTabPressed: root.next()
-                        Keys.onReturnPressed: root.accept()
-                        Keys.onEnterPressed: root.accept()
-                        Keys.onEscapePressed: root.cancel()
+                        Keys.onReturnPressed: event => { if (bubble.typing) { root.accept() } else { event.accepted = false } }
+                        Keys.onEnterPressed: event => { if (bubble.typing) { root.accept() } else { event.accepted = false } }
+                        Keys.onEscapePressed: event => { if (bubble.typing) { root.cancel() } else { event.accepted = false } }
                     }
 
                     Txt {
