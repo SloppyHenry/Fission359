@@ -1076,31 +1076,36 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             delay += 350;
             if (!sequence.isEmpty()) {
                 const QKeyCombination key = sequence[0];
-                QTimer::singleShot(delay, viewport, [window, viewport, key] {
-                    // Shortcuts only answer in the window that is active; right after the start
-                    // it may not be yet, so it is asked to be, and given a moment. A window that
-                    // is active is left alone: asking again would move the focus out of a field.
-                    const bool wasActive = window->isActive();
-                    if (!wasActive) {
-                        window->requestActivate();
+                // Shortcuts only answer in the window that is active; right after the start it
+                // may not be yet, so it is asked to be, and given a moment. A window that is
+                // active is left alone: asking again would move the focus out of a field.
+                const auto send = [window, key] {
+                    // Seen in the log of a window test: where the key goes.
+                    const QQuickItem* focus = window->activeFocusItem();
+                    qInfo().noquote()
+                        << QStringLiteral("key %1: window active %2, focus window %3, "
+                                          "focus item %4")
+                               .arg(QKeySequence(key).toString())
+                               .arg(window->isActive())
+                               .arg(QGuiApplication::focusWindow() == window)
+                               .arg(focus != nullptr
+                                        ? QString::fromLatin1(focus->metaObject()->className())
+                                        : QStringLiteral("none"));
+                    QKeyEvent press(QEvent::KeyPress, key.key(), key.keyboardModifiers());
+                    QCoreApplication::sendEvent(window, &press);
+                    QKeyEvent release(QEvent::KeyRelease, key.key(), key.keyboardModifiers());
+                    QCoreApplication::sendEvent(window, &release);
+                };
+                QTimer::singleShot(delay, viewport, [window, viewport, send] {
+                    // An active window gets the key at once: a further zero timer would queue it
+                    // behind a check that is already due when the program was busy, and the
+                    // check would look before the key was pressed.
+                    if (window->isActive()) {
+                        send();
+                        return;
                     }
-                    QTimer::singleShot(wasActive ? 0 : 150, viewport, [window, key] {
-                        // Seen in the log of a window test: where the key goes.
-                        const QQuickItem* focus = window->activeFocusItem();
-                        qInfo().noquote()
-                            << QStringLiteral("key %1: window active %2, focus window %3, "
-                                              "focus item %4")
-                                   .arg(QKeySequence(key).toString())
-                                   .arg(window->isActive())
-                                   .arg(QGuiApplication::focusWindow() == window)
-                                   .arg(focus != nullptr
-                                            ? QString::fromLatin1(focus->metaObject()->className())
-                                            : QStringLiteral("none"));
-                        QKeyEvent press(QEvent::KeyPress, key.key(), key.keyboardModifiers());
-                        QCoreApplication::sendEvent(window, &press);
-                        QKeyEvent release(QEvent::KeyRelease, key.key(), key.keyboardModifiers());
-                        QCoreApplication::sendEvent(window, &release);
-                    });
+                    window->requestActivate();
+                    QTimer::singleShot(150, viewport, send);
                 });
             }
             continue;
