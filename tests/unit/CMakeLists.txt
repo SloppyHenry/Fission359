@@ -90,6 +90,7 @@ add_executable(fission_unit_tests
   interaction/test_distances.cpp
   interaction/test_align.cpp
   interaction/test_sketch_snap.cpp
+  interaction/test_sketch_shapes.cpp
   interaction/test_sketch_tool.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
