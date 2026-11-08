@@ -27,6 +27,12 @@ Item {
     property bool sketching: false         // choosing the plane of a sketch, or drawing in one
     property bool sketchActive: false      // drawing in a sketch: "Done" shows
     signal sketchDoneRequested
+    property var sketchTools: null         // SketchToolCatalog
+    property string sketchTool: ""         // the drawing tool that is on
+    property int sketchVariant: 0
+    property bool sketchHelper: false      // the switch "Helper line"
+    signal sketchToolRequested(string id, int variant)
+    signal sketchHelperToggled
     signal measureRequested()
     signal flyoutCloseRequested
     /// More than one body is chosen: the ways to combine can be used.
@@ -56,7 +62,9 @@ Item {
         Qt.rect(cubeColumn.x, cubeColumn.y, cubeColumn.width, cubeColumn.height),
         Qt.rect(navBar.x, navBar.y, navBar.width, navBar.height),
         sketchBar.visible ? Qt.rect(sketchBar.x, sketchBar.y, sketchBar.width, sketchBar.height)
-                          : Qt.rect(0, 0, 0, 0)
+                          : Qt.rect(0, 0, 0, 0),
+        sketchFlyout.visible ? Qt.rect(sketchFlyout.x, sketchFlyout.y, sketchFlyout.width, sketchFlyout.height)
+                             : Qt.rect(0, 0, 0, 0)
     ]
 
     // How the mouse does it depends on the style chosen in the View menu.
@@ -432,6 +440,25 @@ Item {
             return Math.max(60, Math.min(wanted, root.height - height - 12))
         }
         onWayChosen: way => root.combineRequested(way)
+    }
+
+    // --- the drawing tools of "Sketch", next to its button in the palette (AP-2.1c1) -----------------
+    SketchFlyout {
+        id: sketchFlyout
+
+        visible: root.sketchActive && root.sketchTools !== null
+        catalog: root.sketchTools
+        tool: root.sketchTool
+        variant: root.sketchVariant
+        helper: root.sketchHelper
+        onToolChosen: (id, variant) => root.sketchToolRequested(id, variant)
+        onHelperToggled: root.sketchHelperToggled()
+        x: palette.x + palette.width + 10
+        y: {
+            const button = groupRepeater.itemAt(1)
+            const wanted = button ? button.mapToItem(root, 0, 0).y - 6 : 60
+            return Math.max(60, Math.min(wanted, root.height - height - 12))
+        }
     }
 
     // --- the tools of "Check", next to their button in the palette ---------------------------------

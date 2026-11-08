@@ -611,6 +611,7 @@ void Viewport3D::mouseReleaseEvent(QMouseEvent* event) {
     const bool extend = (event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier)) != 0;
     if (m_pressButton == Qt::LeftButton && !m_dragged) {
         requestPick(PickIntent::click, event->position(), extend);
+        emit leftClicked(event->position().x(), event->position().y());
     } else if (m_bodyDragging) {
         emit bodyDragFinished();
     } else if (m_rubberBanding) {
@@ -633,6 +634,7 @@ void Viewport3D::mouseDoubleClickEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         const bool extend = (event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier)) != 0;
         requestPick(PickIntent::doubleClick, event->position(), extend);
+        emit leftDoubleClicked(event->position().x(), event->position().y());
     }
     m_pressButton = Qt::NoButton; // the release that follows is not a click
     event->accept();

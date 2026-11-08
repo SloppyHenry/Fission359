@@ -77,6 +77,8 @@ QtObject {
         case "curvedFace": return qsTr("Sketches only go on flat faces. Tip: helper planes come later.")
         case "faceUnusable": return qsTr("This face cannot be drawn on. Choose another flat face or the ground plane.")
         case "needsHelp": return qsTr("This sketch has no plane at the moment. Its face may be gone: choose it again in the recipe.")
+        case "collinear": return qsTr("These three points lie on one line, so no circle fits through them. Click another third point.")
+        case "tooSmall": return qsTr("That is too small to draw (under 0.01 mm). Pull a little further.")
         default: return ""
         }
     }

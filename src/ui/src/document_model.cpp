@@ -3796,6 +3796,33 @@ std::vector<core::SketchElement> DocumentModel::sketchElements(const QString& st
     return step->sketch->elements;
 }
 
+bool DocumentModel::addSketchElements(const QString& stepId,
+                                      const std::vector<core::SketchElement>& elements,
+                                      const QString& kind) {
+    const core::FeatureId id{stepId.toStdString()};
+    const core::Feature* step = m_history.document().findFeature(id);
+    if (step == nullptr || !step->sketch || elements.empty()) {
+        return false;
+    }
+    m_history.beginTransaction(
+        {"addSketchElement",
+         {{"type", "sketch"},
+          {"number", std::to_string(m_history.document().indexOf(id).value_or(0) + 1)},
+          {"kind", kind.toStdString()}}});
+    for (const core::SketchElement& element : elements) {
+        if (!m_history.execute(std::make_unique<core::AddSketchElementCommand>(
+                id, element.kind, element.points, element.construction))) {
+            m_history.cancelTransaction();
+            documentChanged();
+            return false;
+        }
+    }
+    finishTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
 QString DocumentModel::removeFaces(const QString& bodyId, const QVariantList& faceNumbers) {
     std::vector<std::uint32_t> numbers;
     for (const QVariant& number : faceNumbers) {
