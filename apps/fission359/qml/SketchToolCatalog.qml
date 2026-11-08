@@ -6,12 +6,12 @@ import QtQuick
 // The drawing tools of the sketch mode (AP-2.1c1): the name on the button, the sentence of its
 // tooltip card, what the hint line says, and the words the command search finds it by (German and
 // English at once). Rule 10 of the master prompt: every tool brings these along. `key` is the key
-// that chooses the tool while a sketch is open. `variants` are the ways to draw it (the first is
+// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G). `variants` are the ways to draw it (the first is
 // the standard); "helper" is a switch, not a tool.
 QtObject {
     readonly property var tools: [
         { id: "line", name: qsTr("Line"), icon: "sketchline", key: "L",
-          tip: qsTr("Draws straight lines. Every click adds the next line of a chain; a double click or Esc ends the chain. Type a length while you draw."),
+          tip: qsTr("Draws straight lines. Every click adds the next line of a chain; a double click or Esc ends the chain. Type a length while you draw. Pull on the end of the last line to make an arc that joins it."),
           hint: qsTr("Click where the line starts."),
           synonyms: { de: ["linie", "strich", "kante zeichnen", "gerade", "strecke"],
                       en: ["line", "segment", "draw edge", "straight line", "stroke"] },
@@ -28,6 +28,24 @@ QtObject {
           synonyms: { de: ["kreis", "rund", "loch-umriss", "rund zeichnen", "ring"],
                       en: ["circle", "round", "hole outline", "disc", "ring"] },
           variants: [qsTr("Middle and radius"), qsTr("Three points")] },
+        { id: "arc", name: qsTr("Arc"), icon: "sketcharc", key: "A",
+          tip: qsTr("Draws a piece of a circle: by its start, its end and a point on it, or by its middle, its start and its end. Type the radius or the angle while you draw."),
+          hint: qsTr("Click where the arc starts."),
+          synonyms: { de: ["bogen", "kreisbogen", "rundung zeichnen", "kurve", "rundung"],
+                      en: ["arc", "curve segment", "circular arc", "curve", "bow"] },
+          variants: [qsTr("Three points"), qsTr("Middle, start and end")] },
+        { id: "slot", name: qsTr("Slot"), icon: "sketchslot", key: "S",
+          tip: qsTr("Draws a slot with round ends: click both middles, then pull the width. Type the length, the angle and the width while you draw."),
+          hint: qsTr("Click the middle of one end of the slot."),
+          synonyms: { de: ["langloch", "schlitz", "nut", "langes loch", "oval"],
+                      en: ["slot", "oblong", "obround", "slotted hole", "stadium"] },
+          variants: [] },
+        { id: "polygon", name: qsTr("Polygon"), icon: "sketchpolygon", key: "G",
+          tip: qsTr("Draws a regular polygon from its middle and a corner, or from its middle and the middle of a side. Tab switches to the number of sides (3 to 64) and the angle."),
+          hint: qsTr("Click the middle of the polygon."),
+          synonyms: { de: ["polygon", "vieleck", "sechseck", "mehreck", "fünfeck"],
+                      en: ["polygon", "hexagon", "n-gon", "regular polygon", "pentagon"] },
+          variants: [qsTr("Corner (outer circle)"), qsTr("Side middle (inner circle)")] },
         { id: "point", name: qsTr("Point"), icon: "sketchpoint", key: "P",
           tip: qsTr("Places a point, as a mark to catch on later."),
           hint: qsTr("Click where the point goes."),
@@ -53,11 +71,14 @@ QtObject {
 
     // What the hint line says while the tool `id` (in `variant`) is on and `placed` clicks of the
     // element are made.
-    function hintFor(id, variant, placed) {
+    function hintFor(id, variant, placed, pullingArc) {
+        if (pullingArc) {
+            return qsTr("Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.")
+        }
         switch (id) {
         case "line":
             return placed === 0 ? qsTr("Click where the line starts. Esc ends the tool.")
-                                : qsTr("Click the next point, or type a length (Tab: the angle). Double-click or Esc ends the chain.")
+                                : qsTr("Click the next point, or type a length (Tab: the angle). Pulling on the end of the last line makes an arc that joins it. Double-click or Esc ends the chain.")
         case "rectangle":
             if (variant === 1) {
                 return placed === 0 ? qsTr("Click the middle of the rectangle. Esc ends the tool.")
@@ -73,6 +94,22 @@ QtObject {
             }
             return placed === 0 ? qsTr("Click the middle of the circle. Esc ends the tool.")
                                 : qsTr("Click a point on the circle, or type the radius. Enter sets it, Esc cancels.")
+        case "arc":
+            if (variant === 1) {
+                return placed === 0 ? qsTr("Click the middle of the arc. Esc ends the tool.")
+                     : placed === 1 ? qsTr("Click where the arc starts. Esc cancels.")
+                                    : qsTr("Move to turn the arc, click where it ends, or type the angle. Enter sets it, Esc cancels.")
+            }
+            return placed === 0 ? qsTr("Click where the arc starts. Esc ends the tool.")
+                 : placed === 1 ? qsTr("Click where the arc ends. Esc cancels.")
+                                : qsTr("Click a point on the arc, or type the radius. Enter sets it, Esc cancels.")
+        case "slot":
+            return placed === 0 ? qsTr("Click the middle of one end of the slot. Esc ends the tool.")
+                 : placed === 1 ? qsTr("Click the middle of the other end, or type the length (Tab: the angle). Esc cancels.")
+                                : qsTr("Pull the width and click, or type the width. Enter sets it, Esc cancels.")
+        case "polygon":
+            return placed === 0 ? qsTr("Click the middle of the polygon. Esc ends the tool.")
+                                : qsTr("Click a corner, or type the radius (Tab: the number of sides, then the angle). Enter sets it, Esc cancels.")
         case "point":
             return qsTr("Click where the point goes. Esc ends the tool.")
         }

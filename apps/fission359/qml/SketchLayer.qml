@@ -5,7 +5,8 @@ import QtQuick
 import Fission359.Ui
 
 // The numbers of the element being drawn in a sketch (AP-2.1c1): a small bubble at the pointer
-// with the length (line), the width and height (rectangle) or the radius (circle). A digit (or
+// with the length (line), the width and height (rectangle), the radius (circle, arc), the angle
+// (arc), the width (slot) or the radius, the number of sides and the angle (polygon). A digit (or
 // minus, comma, point) turns it into number fields: typing replaces the value the pointer made
 // (rule 2). Tab goes to the next number, Enter sets the element, Esc takes the typing back.
 Item {
@@ -29,12 +30,13 @@ Item {
         case "width": return qsTr("Width")
         case "height": return qsTr("Height")
         case "radius": return qsTr("Radius")
+        case "sides": return qsTr("Sides")
         default: return name
         }
     }
 
     function unitOf(name) {
-        return name === "angle" ? "°" : qsTr("mm")
+        return name === "angle" ? "°" : name === "sides" ? "" : qsTr("mm")
     }
 
     // A digit was pressed while an element is pulled: the number fields open with it. With nothing
@@ -86,7 +88,8 @@ Item {
             input.invalid = false
             return
         }
-        const kind = fields[index] && fields[index].name === "angle" ? "angle" : "length"
+        const name = fields[index] ? fields[index].name : ""
+        const kind = name === "angle" ? "angle" : name === "sides" ? "plain" : "length"
         const value = Numbers.evaluate(text, kind)
         if (isNaN(value)) {
             input.errorInfo = Numbers.explain(text, kind)
@@ -203,8 +206,8 @@ Item {
                     Txt {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: !bubble.typing
-                        text: Numbers.format(entry.field.value, entry.field.name === "angle" ? 1 : 2)
-                              + (entry.field.name === "angle" ? " °" : " " + qsTr("mm"))
+                        text: Numbers.format(entry.field.value, entry.field.name === "angle" ? 1 : entry.field.name === "sides" ? 0 : 2)
+                              + (entry.field.name === "angle" ? " °" : entry.field.name === "sides" ? "" : " " + qsTr("mm"))
                         mono: true
                         color: entry.field.typed ? Theme.accentText : Theme.fg
                         font.weight: Font.Medium
@@ -217,7 +220,7 @@ Item {
 
                         visible: bubble.typing
                         anchors.verticalCenter: parent.verticalCenter
-                        kind: entry.field.name === "angle" ? "angle" : "length"
+                        kind: entry.field.name === "angle" ? "angle" : entry.field.name === "sides" ? "plain" : "length"
                         font.pixelSize: Theme.fontSize
                         Accessible.name: root.labelOf(entry.field.name)
                         Component.onCompleted: root.inputs[entry.index] = input

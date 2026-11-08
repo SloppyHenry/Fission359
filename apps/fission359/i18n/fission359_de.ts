@@ -2735,8 +2735,8 @@
     </message>
     <message>
         <location line="+2"/>
-        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
-        <translation>Du skizzierst: Wähle links ein Werkzeug (L Linie, R Rechteck, C Kreis, P Punkt, X Hilfslinie). Der Zeiger rastet an Punkten, Mitten und am Raster ein; mit Umschalt gedrückt rastet er nicht ein. „Fertig“ oder Esc verlässt die Skizze.</translation>
+        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
+        <translation>Du skizzierst: Wähle links ein Werkzeug (L Linie, R Rechteck, C Kreis, A Bogen, S Langloch, G Polygon, P Punkt, X Hilfslinie). Der Zeiger rastet an Punkten, Mitten und am Raster ein; mit Umschalt gedrückt rastet er nicht ein. „Fertig“ oder Esc verlässt die Skizze.</translation>
     </message>
     <message>
         <location line="+90"/>
@@ -3157,6 +3157,14 @@
         <location line="-859"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
+    </message>
+    <message>
+        <source>Slot</source>
+        <translation>Langloch</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation>Polygon</translation>
     </message>
 </context>
 <context>
@@ -3714,8 +3722,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>These three points lie on one line, so no circle fits through them. Click another third point.</source>
-        <translation>Diese drei Punkte liegen auf einer Linie, deshalb passt kein Kreis durch sie. Klicke einen anderen dritten Punkt an.</translation>
+        <source>These points lie on one straight line, so no circle or arc fits through them. Click another point.</source>
+        <translation>Diese Punkte liegen auf einer Geraden, deshalb passt kein Kreis und kein Bogen durch sie. Klicke einen anderen Punkt an.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3939,6 +3947,10 @@
         <location line="+2"/>
         <source>The calculation was replaced by a newer change.</source>
         <translation>Die Berechnung wurde durch eine neuere Änderung ersetzt.</translation>
+    </message>
+    <message>
+        <source>A polygon has a whole number of sides from 3 to 64. The number before stays.</source>
+        <translation>Ein Polygon hat eine ganze Zahl von Seiten, von 3 bis 64. Die Zahl davor bleibt.</translation>
     </message>
 </context>
 <context>
@@ -4825,6 +4837,10 @@
         <source>mm</source>
         <translation>mm</translation>
     </message>
+    <message>
+        <source>Sides</source>
+        <translation>Seiten</translation>
+    </message>
 </context>
 <context>
     <name>SketchToolCatalog</name>
@@ -4835,8 +4851,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Draws straight lines. Every click adds the next line of a chain; a double click or Esc ends the chain. Type a length while you draw.</source>
-        <translation>Zeichnet gerade Linien. Jeder Klick fügt die nächste Linie einer Kette an; ein Doppelklick oder Esc beendet die Kette. Tippe beim Zeichnen eine Länge.</translation>
+        <source>Draws straight lines. Every click adds the next line of a chain; a double click or Esc ends the chain. Type a length while you draw. Pull on the end of the last line to make an arc that joins it.</source>
+        <translation>Zeichnet gerade Linien. Jeder Klick fügt die nächste Linie einer Kette an; ein Doppelklick oder Esc beendet die Kette. Tippe beim Zeichnen eine Länge. Zieh am Ende der letzten Linie, dann entsteht ein Bogen, der anschließt.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -4930,8 +4946,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Click the next point, or type a length (Tab: the angle). Double-click or Esc ends the chain.</source>
-        <translation>Klicke den nächsten Punkt an oder tippe eine Länge (Tab: der Winkel). Doppelklick oder Esc beendet die Kette.</translation>
+        <source>Click the next point, or type a length (Tab: the angle). Pulling on the end of the last line makes an arc that joins it. Double-click or Esc ends the chain.</source>
+        <translation>Klicke den nächsten Punkt an oder tippe eine Länge (Tab: der Winkel). Am Ende der letzten Linie ziehen ergibt einen Bogen, der anschließt. Doppelklick oder Esc beendet die Kette.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4982,6 +4998,102 @@
         <location line="+2"/>
         <source>Click where the point goes. Esc ends the tool.</source>
         <translation>Klicke dorthin, wo der Punkt hin soll. Esc beendet das Werkzeug.</translation>
+    </message>
+    <message>
+        <source>Arc</source>
+        <translation>Bogen</translation>
+    </message>
+    <message>
+        <source>Draws a piece of a circle: by its start, its end and a point on it, or by its middle, its start and its end. Type the radius or the angle while you draw.</source>
+        <translation>Zeichnet ein Stück Kreis: mit Anfang, Ende und einem Punkt darauf oder mit Mitte, Anfang und Ende. Tippe beim Zeichnen den Radius oder den Winkel.</translation>
+    </message>
+    <message>
+        <source>Click where the arc starts.</source>
+        <translation>Klicke dorthin, wo der Bogen beginnt.</translation>
+    </message>
+    <message>
+        <source>Middle, start and end</source>
+        <translation>Mitte, Anfang, Ende</translation>
+    </message>
+    <message>
+        <source>Slot</source>
+        <translation>Langloch</translation>
+    </message>
+    <message>
+        <source>Draws a slot with round ends: click both middles, then pull the width. Type the length, the angle and the width while you draw.</source>
+        <translation>Zeichnet ein Langloch mit runden Enden: Klicke beide Mitten an, dann ziehe die Breite auf. Tippe beim Zeichnen die Länge, den Winkel und die Breite.</translation>
+    </message>
+    <message>
+        <source>Click the middle of one end of the slot.</source>
+        <translation>Klicke die Mitte des einen Endes des Langlochs an.</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation>Polygon</translation>
+    </message>
+    <message>
+        <source>Draws a regular polygon from its middle and a corner, or from its middle and the middle of a side. Tab switches to the number of sides (3 to 64) and the angle.</source>
+        <translation>Zeichnet ein regelmäßiges Polygon aus seiner Mitte und einer Ecke oder aus seiner Mitte und der Mitte einer Seite. Mit Tab geht es zur Seitenzahl (3 bis 64) und zum Winkel.</translation>
+    </message>
+    <message>
+        <source>Click the middle of the polygon.</source>
+        <translation>Klicke die Mitte des Polygons an.</translation>
+    </message>
+    <message>
+        <source>Corner (outer circle)</source>
+        <translation>Ecke (Umkreis)</translation>
+    </message>
+    <message>
+        <source>Side middle (inner circle)</source>
+        <translation>Seitenmitte (Inkreis)</translation>
+    </message>
+    <message>
+        <source>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</source>
+        <translation>Lass los, um den anschließenden Bogen zu setzen, oder tippe seinen Radius. Enter setzt ihn, Esc verwirft ihn.</translation>
+    </message>
+    <message>
+        <source>Click the middle of the arc. Esc ends the tool.</source>
+        <translation>Klicke die Mitte des Bogens an. Esc beendet das Werkzeug.</translation>
+    </message>
+    <message>
+        <source>Click where the arc starts. Esc cancels.</source>
+        <translation>Klicke dorthin, wo der Bogen beginnt. Esc bricht ab.</translation>
+    </message>
+    <message>
+        <source>Move to turn the arc, click where it ends, or type the angle. Enter sets it, Esc cancels.</source>
+        <translation>Bewege den Zeiger, um den Bogen zu drehen, und klicke dorthin, wo er endet, oder tippe den Winkel. Enter setzt ihn, Esc bricht ab.</translation>
+    </message>
+    <message>
+        <source>Click where the arc starts. Esc ends the tool.</source>
+        <translation>Klicke dorthin, wo der Bogen beginnt. Esc beendet das Werkzeug.</translation>
+    </message>
+    <message>
+        <source>Click where the arc ends. Esc cancels.</source>
+        <translation>Klicke dorthin, wo der Bogen endet. Esc bricht ab.</translation>
+    </message>
+    <message>
+        <source>Click a point on the arc, or type the radius. Enter sets it, Esc cancels.</source>
+        <translation>Klicke einen Punkt auf dem Bogen an oder tippe den Radius. Enter setzt ihn, Esc bricht ab.</translation>
+    </message>
+    <message>
+        <source>Click the middle of one end of the slot. Esc ends the tool.</source>
+        <translation>Klicke die Mitte des einen Endes des Langlochs an. Esc beendet das Werkzeug.</translation>
+    </message>
+    <message>
+        <source>Click the middle of the other end, or type the length (Tab: the angle). Esc cancels.</source>
+        <translation>Klicke die Mitte des anderen Endes an oder tippe die Länge (Tab: der Winkel). Esc bricht ab.</translation>
+    </message>
+    <message>
+        <source>Pull the width and click, or type the width. Enter sets it, Esc cancels.</source>
+        <translation>Ziehe die Breite auf und klicke, oder tippe die Breite. Enter setzt es, Esc bricht ab.</translation>
+    </message>
+    <message>
+        <source>Click the middle of the polygon. Esc ends the tool.</source>
+        <translation>Klicke die Mitte des Polygons an. Esc beendet das Werkzeug.</translation>
+    </message>
+    <message>
+        <source>Click a corner, or type the radius (Tab: the number of sides, then the angle). Enter sets it, Esc cancels.</source>
+        <translation>Klicke eine Ecke an oder tippe den Radius (Tab: die Seitenzahl, dann der Winkel). Enter setzt es, Esc bricht ab.</translation>
     </message>
 </context>
 <context>

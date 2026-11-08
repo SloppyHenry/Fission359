@@ -105,7 +105,7 @@ Die Planung dazu:
 
 ## Teil 2.1c – Grundwerkzeuge (geteilt, Entscheidung 2026-11-06)
 - **2.1c1 (dieser Teil):** Linie (Klick-Klick-Kette; Doppelklick oder Esc beendet die Kette), Rechteck (2 Ecken; Mitte+Ecke), Kreis (Mitte+Radius; 3 Punkte), Punkt, Hilfslinie. Festlegungen 13–19.
-- **2.1c2 (später):** Bogen (3 Punkte; Mitte+Start+Ende), tangentialer Bogen durch Ziehen am Linienende, Langloch, Polygon.
+- **2.1c2 (gebaut 2026-11-08):** Bogen (3 Punkte; Mitte+Start+Ende), tangentialer Bogen durch Ziehen am Linienende, Langloch, Polygon. Festlegungen 20–25.
 
 Ursprüngliche Beschreibung für beide Teile:
 Linie (Klick-Klick-Kette, Doppelklick/Esc beendet, Ziehen am Ende einer Linie macht einen tangentialen Bogen), Rechteck (2 Ecken; Mitte+Ecke),
@@ -131,6 +131,27 @@ Offene Reste für 2.1c2: Bogen (3 Punkte; Mitte+Start+Ende), tangentialer Bogen 
 `SketchTool::placed_`), Langloch, Polygon (Seitenzahl tippbar) – jeweils als weitere Werte von `SketchToolKind` mit eigener Form in `SketchTool::shape`; Werkzeug-Katalog,
 Flyout und Tasten (A Bogen, S Langloch, G Polygon als Vorschlag) in derselben Weise ergänzen. Fenster-Tests: `app_sketch_rectangle`, `app_sketch_line_circle`,
 `app_sketch_helper_line`, `app_sketch_digits` (laufen nur in der CI).
+
+### Teil 2.1c2 – gebaut 2026-11-08
+Gebaut: Festlegungen 20–25. Wo es im Code liegt: die Geometrie als reine Funktionen in `src/interaction/include/fission/interaction/sketch_shapes.h`
+(`arcThroughThreePoints`, `arcOverChord`, `arcBySweep`, `tangentArc`, `slotElements`, `polygonLines`; `circleThroughThreePoints` zog dorthin um). Der Zustandsautomat
+`interaction::SketchTool` kennt `SketchToolKind::arc | slot | polygon`; neu sind `press`/`release`/`dragging` (tangentialer Bogen am Ende der Linienkette,
+`lastDirection_`), `setTyped` liefert einen Hinweis (`badSides`), `polygonSides`. Im Controller: `pressAt`/`dragTo`/`releaseAt` (der Ansicht kommen die neuen Signale
+`leftPressed`/`leftDragged`/`leftReleased` und `Viewport3D::setDrawDrag`), Eigenschaft `pullingArc`. Oberfläche: drei neue Einträge in `SketchToolCatalog.qml`
+(Tasten A, S, G; Varianten Bogen „3 Punkte / Mitte, Anfang, Ende“, Polygon „Ecke / Seitenmitte“), Symbole `sketcharc|sketchslot|sketchpolygon`, Feld „Seiten“
+in `SketchLayer.qml`. Neue `--simulate`-Aktion `sketchdrag:x1,y1,x2,y2[,hold]`; Menü-Ids `sketchtool.arc|slot|polygon`. Fenster-Tests (nur CI): `app_sketch_slot_polygon`,
+`app_sketch_tangent_arc`.
+Weiter geltende Annahmen: Der Bogen „3 Punkte“ mit getipptem Radius ist immer der kürzere Bogen (Mitte liegt auf der abgewandten Seite), die Seite folgt dem Zeiger (genau auf
+der Sehne gilt links); beim Bogen „Mitte, Anfang, Ende“ verfolgt der Automat die Drehung des Zeigers stückweise (über 180° hinaus, beide Richtungen, höchstens knapp 360°);
+getippte 360° oder mehr sind „zu klein“. Beim tangentialen Bogen gilt als „Ziehen“ ein Abstand über 6 Bildschirm-Pixeln vom Druckpunkt, der Druck muss innerhalb des Fangradius
+am Ende der letzten Linie liegen; zielt der Zeiger genau in Richtung der Linie, kommt der Hinweis `collinear` (der Text sagt jetzt „Punkte auf einer Geraden“); die Kette geht nach einem
+Bogen in der Richtung weiter, in der er endet, auch ein weiterer Bogen schließt an. Esc während des Ziehens verwirft nur den Bogen. Das Langloch fragt nach dem zweiten Klick die
+ganze Breite (doppelter Abstand des Zeigers von der Mittellinie); Enter nach der getippten Länge setzt die zweite Mitte (Feld wird danach leer). Polygon: Drehwinkel getippt gilt
+für die Ecke (Variante Ecke) bzw. die Seitenmitte (Variante Seitenmitte); die Seitenzahl bleibt bis zum Ende der Skizze (`beginOn` setzt auf 6 zurück). Rezeptzeile eines
+einzelnen Bogens heißt immer „Bogen“, auch wenn das Linienwerkzeug ihn zeichnete; ein Langloch/Polygon heißt „Langloch“/„Polygon“.
+Offene Reste für 2.1d/e: Bögen, Langlöcher und Polygone haben noch keine gemeinsamen Punkte oder Regeln (AP-2.2: Tangentialität bleibt als Regel „tangential“ zu
+ergänzen, jetzt nur geometrisch); Trimmen/Versetzen/Spiegeln müssen mit Bögen umgehen (Bogen = {Mitte, Anfang, Ende} gegen den Uhrzeigersinn); der Spline (2.1d) hängt sich als
+weiteres `SketchToolKind` in `SketchTool::shape` ein; Symbole der drei Werkzeuge sind einfache Umrisse und sollten mit der Gestaltung (`docs/08-gestaltung.md`) abgeglichen werden.
 
 ## Teil 2.1d – Spline
 Kubischer B-Spline durch Klickpunkte (Interpolation) oder mit Kontrollpunkten (Haltepunkt: Empfehlung Durchgangspunkte, verständlicher).

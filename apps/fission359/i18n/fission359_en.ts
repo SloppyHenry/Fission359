@@ -2735,8 +2735,8 @@
     </message>
     <message>
         <location line="+2"/>
-        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
-        <translation>Sketching: choose a tool at the left (L line, R rectangle, C circle, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</translation>
+        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
+        <translation>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</translation>
     </message>
     <message>
         <location line="+90"/>
@@ -3157,6 +3157,14 @@
         <location line="-859"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
+    </message>
+    <message>
+        <source>Slot</source>
+        <translation>Slot</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation>Polygon</translation>
     </message>
 </context>
 <context>
@@ -3714,8 +3722,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>These three points lie on one line, so no circle fits through them. Click another third point.</source>
-        <translation>These three points lie on one line, so no circle fits through them. Click another third point.</translation>
+        <source>These points lie on one straight line, so no circle or arc fits through them. Click another point.</source>
+        <translation>These points lie on one straight line, so no circle or arc fits through them. Click another point.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3939,6 +3947,10 @@
         <location line="+2"/>
         <source>The calculation was replaced by a newer change.</source>
         <translation>The calculation was replaced by a newer change.</translation>
+    </message>
+    <message>
+        <source>A polygon has a whole number of sides from 3 to 64. The number before stays.</source>
+        <translation>A polygon has a whole number of sides from 3 to 64. The number before stays.</translation>
     </message>
 </context>
 <context>
@@ -4825,6 +4837,10 @@
         <source>mm</source>
         <translation>mm</translation>
     </message>
+    <message>
+        <source>Sides</source>
+        <translation>Sides</translation>
+    </message>
 </context>
 <context>
     <name>SketchToolCatalog</name>
@@ -4835,8 +4851,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Draws straight lines. Every click adds the next line of a chain; a double click or Esc ends the chain. Type a length while you draw.</source>
-        <translation>Draws straight lines. Every click adds the next line of a chain; a double click or Esc ends the chain. Type a length while you draw.</translation>
+        <source>Draws straight lines. Every click adds the next line of a chain; a double click or Esc ends the chain. Type a length while you draw. Pull on the end of the last line to make an arc that joins it.</source>
+        <translation>Draws straight lines. Every click adds the next line of a chain; a double click or Esc ends the chain. Type a length while you draw. Pull on the end of the last line to make an arc that joins it.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -4930,8 +4946,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Click the next point, or type a length (Tab: the angle). Double-click or Esc ends the chain.</source>
-        <translation>Click the next point, or type a length (Tab: the angle). Double-click or Esc ends the chain.</translation>
+        <source>Click the next point, or type a length (Tab: the angle). Pulling on the end of the last line makes an arc that joins it. Double-click or Esc ends the chain.</source>
+        <translation>Click the next point, or type a length (Tab: the angle). Pulling on the end of the last line makes an arc that joins it. Double-click or Esc ends the chain.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4982,6 +4998,102 @@
         <location line="+2"/>
         <source>Click where the point goes. Esc ends the tool.</source>
         <translation>Click where the point goes. Esc ends the tool.</translation>
+    </message>
+    <message>
+        <source>Arc</source>
+        <translation>Arc</translation>
+    </message>
+    <message>
+        <source>Draws a piece of a circle: by its start, its end and a point on it, or by its middle, its start and its end. Type the radius or the angle while you draw.</source>
+        <translation>Draws a piece of a circle: by its start, its end and a point on it, or by its middle, its start and its end. Type the radius or the angle while you draw.</translation>
+    </message>
+    <message>
+        <source>Click where the arc starts.</source>
+        <translation>Click where the arc starts.</translation>
+    </message>
+    <message>
+        <source>Middle, start and end</source>
+        <translation>Middle, start and end</translation>
+    </message>
+    <message>
+        <source>Slot</source>
+        <translation>Slot</translation>
+    </message>
+    <message>
+        <source>Draws a slot with round ends: click both middles, then pull the width. Type the length, the angle and the width while you draw.</source>
+        <translation>Draws a slot with round ends: click both middles, then pull the width. Type the length, the angle and the width while you draw.</translation>
+    </message>
+    <message>
+        <source>Click the middle of one end of the slot.</source>
+        <translation>Click the middle of one end of the slot.</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation>Polygon</translation>
+    </message>
+    <message>
+        <source>Draws a regular polygon from its middle and a corner, or from its middle and the middle of a side. Tab switches to the number of sides (3 to 64) and the angle.</source>
+        <translation>Draws a regular polygon from its middle and a corner, or from its middle and the middle of a side. Tab switches to the number of sides (3 to 64) and the angle.</translation>
+    </message>
+    <message>
+        <source>Click the middle of the polygon.</source>
+        <translation>Click the middle of the polygon.</translation>
+    </message>
+    <message>
+        <source>Corner (outer circle)</source>
+        <translation>Corner (outer circle)</translation>
+    </message>
+    <message>
+        <source>Side middle (inner circle)</source>
+        <translation>Side middle (inner circle)</translation>
+    </message>
+    <message>
+        <source>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</source>
+        <translation>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</translation>
+    </message>
+    <message>
+        <source>Click the middle of the arc. Esc ends the tool.</source>
+        <translation>Click the middle of the arc. Esc ends the tool.</translation>
+    </message>
+    <message>
+        <source>Click where the arc starts. Esc cancels.</source>
+        <translation>Click where the arc starts. Esc cancels.</translation>
+    </message>
+    <message>
+        <source>Move to turn the arc, click where it ends, or type the angle. Enter sets it, Esc cancels.</source>
+        <translation>Move to turn the arc, click where it ends, or type the angle. Enter sets it, Esc cancels.</translation>
+    </message>
+    <message>
+        <source>Click where the arc starts. Esc ends the tool.</source>
+        <translation>Click where the arc starts. Esc ends the tool.</translation>
+    </message>
+    <message>
+        <source>Click where the arc ends. Esc cancels.</source>
+        <translation>Click where the arc ends. Esc cancels.</translation>
+    </message>
+    <message>
+        <source>Click a point on the arc, or type the radius. Enter sets it, Esc cancels.</source>
+        <translation>Click a point on the arc, or type the radius. Enter sets it, Esc cancels.</translation>
+    </message>
+    <message>
+        <source>Click the middle of one end of the slot. Esc ends the tool.</source>
+        <translation>Click the middle of one end of the slot. Esc ends the tool.</translation>
+    </message>
+    <message>
+        <source>Click the middle of the other end, or type the length (Tab: the angle). Esc cancels.</source>
+        <translation>Click the middle of the other end, or type the length (Tab: the angle). Esc cancels.</translation>
+    </message>
+    <message>
+        <source>Pull the width and click, or type the width. Enter sets it, Esc cancels.</source>
+        <translation>Pull the width and click, or type the width. Enter sets it, Esc cancels.</translation>
+    </message>
+    <message>
+        <source>Click the middle of the polygon. Esc ends the tool.</source>
+        <translation>Click the middle of the polygon. Esc ends the tool.</translation>
+    </message>
+    <message>
+        <source>Click a corner, or type the radius (Tab: the number of sides, then the angle). Enter sets it, Esc cancels.</source>
+        <translation>Click a corner, or type the radius (Tab: the number of sides, then the angle). Enter sets it, Esc cancels.</translation>
     </message>
 </context>
 <context>

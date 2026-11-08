@@ -151,7 +151,7 @@ Vorhandene Aktionen (Doku in `apps/fission359/src/simulate.cpp`, Funktion `playA
 `hover:x,y` · `click:x,y` · `shiftclick:x,y` · `doubleclick:x,y` · `frame:x1,y1,x2,y2` · `drop:form,x,y[,alt]` · `drophole:…` ·
 `put:form` · `puthole:form` · `type:50,tab,20,enter` · `set:feld,wert` · `grab:parameter,dx,dy,schritte` · `point:parameter` ·
 `gizmo:teil,dx,dy,schritte[,halten]` · `ring:achse,…` · `corner:i,dx,dy,schritte[,halten]` · `drag:…` · `tool:select|move|rotate|size` ·
-`key:…` · `grid:0.1` · `snap:off|on` · Skizzen-Werkzeuge `menu:sketchtool.line|rectangle|circle|point|helper` · `sketchmove:x,y` · `sketchclick:x,y` · `sketchdouble:x,y` (das getippte Maß kommt wie sonst über `type:…`) · Prüfungen `expectsketch…` (siehe `--help`) · Prüfungen `expect:feld,min` · `least:…` · `near:feld,wert` (warten die Neuberechnung ab und
+`key:…` · `grid:0.1` · `snap:off|on` · Skizzen-Werkzeuge `menu:sketchtool.line|rectangle|circle|arc|slot|polygon|point|helper` · `sketchmove:x,y` · `sketchclick:x,y` · `sketchdouble:x,y` · `sketchdrag:x1,y1,x2,y2[,hold]` (Ziehen mit gedrückter Taste, z. B. der Bogen am Linienende; `hold` lässt die Taste unten, damit `type:…` noch das Maß setzen kann) (das getippte Maß kommt wie sonst über `type:…`) · Prüfungen `expectsketch…` (siehe `--help`) · Prüfungen `expect:feld,min` · `least:…` · `near:feld,wert` (warten die Neuberechnung ab und
 beenden das Programm mit Fehler, wenn sie nicht stimmen).
 Eine **neue Aktion** kommt in `playActions` in `simulate.cpp` (gleiches Muster: Zeit `delay += 350`, dann `QTimer::singleShot`), plus
 eine Zeile in der `--simulate`-Hilfe. Fenster-Tests, die die Maus ziehen, bekommen `RUN_SERIAL TRUE` (macOS stiehlt sonst den Fokus).

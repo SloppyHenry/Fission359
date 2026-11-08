@@ -547,6 +547,28 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("sketchdrag")) {
+            // sketchdrag:600,300,700,200 - the left button goes down at the first point, is pulled
+            // to the second and let go (in the sketch mode: an arc from the end of the last
+            // line). A fifth word "hold" leaves the button down, so that numbers can be typed
+            // (type:12,enter) before the element is set.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const double x1 = spec.value(0).toDouble();
+            const double y1 = spec.value(1).toDouble();
+            const double x2 = spec.value(2).toDouble();
+            const double y2 = spec.value(3).toDouble();
+            const bool hold = spec.value(4).trimmed() == QLatin1String("hold");
+            delay += 350;
+            QTimer::singleShot(delay, viewport, [viewport, x1, y1, x2, y2, hold] {
+                viewport->hoverAt(x1, y1);
+                emit viewport->leftPressed(x1, y1);
+                emit viewport->leftDragged(x2, y2);
+                if (!hold) {
+                    emit viewport->leftReleased(x2, y2, true);
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("expectsketchtool")) {
             // expectsketchtool:line - the drawing tool in use (empty: none).
             const QString tool = action.mid(colon + 1).trimmed();

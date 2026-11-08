@@ -17,7 +17,7 @@ Window {
     property string tool: "move"
     // The sketch mode (AP-2.1b): "idle", "picking" (waiting for the click on a plane) or "active".
     readonly property string sketchState: Sketch.picking ? "picking" : Sketch.active ? "active" : "idle"
-    // The drawing tool of the sketch mode (AP-2.1c1): "" or line | rectangle | circle | point.
+    // The drawing tool of the sketch mode (AP-2.1c1): "" or line | rectangle | circle | point | arc | slot | polygon.
     readonly property string sketchToolName: Sketch.active ? Sketch.tool : ""
     // "Lay on face": the next click on a face puts the chosen body on it (Esc leaves it).
     property bool seating: false
@@ -201,10 +201,10 @@ Window {
     readonly property string sketchHint: {
         const helper = Sketch.helperLine ? " " + qsTr("Helper lines are on: what you draw is only an aid.") : ""
         if (Sketch.toolActive) {
-            return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed)
+            return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed, Sketch.pullingArc)
                    + " " + qsTr("Shift switches catching off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
         }
-        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
+        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
     }
 
     // ---- undo and redo ---------------------------------------------------------------------
@@ -832,6 +832,9 @@ Window {
     Shortcut { sequence: "L"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.line") }
     Shortcut { sequence: "R"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.rectangle") }
     Shortcut { sequence: "C"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.circle") }
+    Shortcut { sequence: "A"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.arc") }
+    Shortcut { sequence: "S"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.slot") }
+    Shortcut { sequence: "G"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.polygon") }
     Shortcut { sequence: "P"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.point") }
     Shortcut { sequence: "X"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.helper") }
     Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
@@ -1809,6 +1812,8 @@ Window {
         case "circle": return qsTr("Circle")
         case "rectangle": return qsTr("Rectangle")
         case "arc": return qsTr("Arc")
+        case "slot": return qsTr("Slot")
+        case "polygon": return qsTr("Polygon")
         case "spline": return qsTr("Curve")
         default: return qsTr("Sketch part")
         }
