@@ -190,6 +190,32 @@ Polylinie selbst); Spiegeln/Muster einer Kurve sind einfach (Punkte spiegeln/ver
 Polylinie ausdünnen). 2.1g: Bereiche brauchen die Kurve als Kante (`sketchSpline().polyline` oder die B-Spline selbst); die Kurve einer Skizze wird bisher nur zum Zeichnen berechnet, nicht im
 `SketchResult`. Das Symbol `sketchspline` ist ein einfacher Umriss und sollte mit `docs/08-gestaltung.md` abgeglichen werden.
 
+## Teil 2.1e1 – Schnittpunkte, Trimmen, Verlängern, gebaut 2026-11-09
+Gebaut: Festlegungen 32–37. Wo es im Code liegt: Die GAL kann Schnittpunkte: `GeometryKernel::sketchIntersections(curves)` (je Kurve alle Schnittpunkte mit den anderen, nach Parameter sortiert,
+Berührungen eingeschlossen, Punkte näher als 1e-6 mm sind einer) und `sketchCarrierCrossings(träger, andere)` (Gerade bzw. voller Kreis des Trägers, schneidet mit den Anderen wie gezeichnet; fürs
+Verlängern); Typen in `src/geometry/gal/include/fission/geo/sketch_intersections.h` (`SketchCurve`, `SketchCrossing`, Parameter: Linie = Abstand vom Start in mm, Kreis/Bogen = Winkel gegen den
+Uhrzeigersinn ab Richtung Mitte→zweiter Punkt bzw. Start, Kurve = Sehnenlänge), Umsetzung `src/geometry/occt/src/sketch_intersections.cpp` (Linie/Kreis/Bogen analytisch, alles mit einer Kurve über
+`Geom2dAPI_InterCurveCurve` auf der interpolierten B-Spline; die Interpolation zog dafür in `interpolateSketchSpline` um, privater Kopf `sketch_spline_curve.h`). Die Logik liegt als reine Funktionen in
+`interaction/sketch_edit.h`: `SketchTrimmer` (Stücke je Element zwischen Schnittpunkten, `pieceAt`, `outline`, `trim(markierte Stücke)`), `findExtension` / `extensionEdit`; Ergebnis ist ein `SketchEdit`
+(Punkte verschieben, Elemente entfernen, neue Elemente). `DocumentModel::applySketchEdit` führt ihn als **eine** Transaktion aus (Rezeptzeilen „Skizze getrimmt“ / „Skizze verlängert“, Schlüssel
+`trimSketch` / `extendSketch`). Im `SketchController`: Werkzeuge `trim` (Taste T) und `extend` (Taste E) als `SketchToolKind` (zeichnen nichts), Hervorheben des Stücks unter dem Zeiger in `trimColour`
+(rot, `Theme.bad`), Streichen = Drücken, Ziehen, Loslassen (`pressAt`/`dragTo`/`releaseAt(…, dragged)`); ein Klick ohne Ziehen trimmt über `clickAt`. Katalogeinträge, Hinweise, Tooltip-Karten und Synonyme
+in `SketchToolCatalog.qml`, neue Hinweise `curvePartial`, `nothingToExtend`, `editFailed` in `MessageCatalog.qml`. Neue `--simulate`-Aktionen `sketchmovemm`, `sketchclickmm`, `sketchdragmm` (Orte in mm auf der
+Grundebene, unabhängig vom Zoom); Menü-Ids `sketchtool.trim|extend`. Fenster-Tests (nur CI): `app_sketch_trim`, `app_sketch_extend`. T und E haben im Skizzen-Modus keinen anderen aktiven Kurzbefehl (geprüft:
+Strg/Cmd+E ist „Exportieren“, sonst keine Einzeltaste T/E; die Skizzen-Kurzbefehle gelten nur bei `Sketch.active`).
+Weiter geltende Annahmen: Alle Stücke eines Streichens werden gegen die Skizze **vor** dem Streichen berechnet; aufeinanderfolgende bleibende Stücke bleiben ein Element; ein Kreis wird zum Bogen mit
+neuer Id (`A…`, die Art steckt in der Id), nur Linien und Bögen behalten die Id ihres ersten Stücks; Schnittpunkte näher als 0,01 mm an einem Ende oder am vorigen Schnittpunkt schneiden nicht (keine
+Stücke unter der Mindestgröße); Linien, die aufeinander liegen, schneiden sich nicht (kein Punkt); Punkte lassen sich nicht trimmen; Hilfslinien werden wie normale Elemente getrimmt und bleiben Hilfslinien;
+beim Streichen gewinnt an Ecken das Element, auf dem der Strich schon liegt; Trimmen erreicht Elemente innerhalb von 12 Bildschirm-Pixeln, Verlängern nimmt die Linie oder den Bogen in dieser Nähe und
+dort das Ende, das dem Klick näher ist (nicht nur ganz nahe am Ende); bei einem Streichen über Kurve und Linien werden die Linien getrimmt und für die Kurve kommt der Hinweis `curvePartial`; die Anzeige
+der Verlängerung ist eine gestrichelte Vorschau mit Punkt am Ziel.
+Offene Reste: Kurven (Splines) lassen sich nur ganz trimmen (Festlegung 34; teilweise bräuchte entweder zwei neue Interpolationskurven durch andere Punkte, was die Form ändert, oder eine B-Spline als
+Elementart: Dateiformat-Entscheidung); Kreise und Kurven werden nicht verlängert; ein Element schneidet sich nicht mit sich selbst (Kurve mit Schleife); eine Berührung Kurve–Linie ohne Durchgang
+findet OpenCASCADE nicht immer. Für e2/e3: `SketchEdit` und `applySketchEdit` sind der Weg für Versetzen, Ecke runden, Spiegeln und Muster (Bögen: Mitte, Anfang, Ende gegen den Uhrzeigersinn); für den
+Versatz einer Kurve braucht die GAL die Polylinie (`sketchSpline`) oder eine „Kurve auswerten“-Funktion; die Ecke runden braucht den Schnitt zweier Elemente (`sketchIntersections`, Berührpunkt am gemeinsamen
+Ende). Für 2.1f: übernommene Kanten sind Elemente wie die anderen und schneiden mit; für 2.1g: die Bereichserkennung kann `sketchIntersections` zum Zerschneiden der Kanten nutzen. Die Symbole
+`sketchtrim`/`sketchextend` sind einfache Umrisse und sollten mit `docs/08-gestaltung.md` abgeglichen werden.
+
 ## Teil 2.1e – Bearbeiten (geteilt, Festlegung 32)
 - **2.1e1:** Schnittpunkte, Trimmen, Verlängern. Festlegungen 33–37.
 - **2.1e2:** Versetzen (Kette, Abstand tippbar; `BRepOffsetAPI_MakeOffset` oder `Geom2d_OffsetCurve`), Ecke abrunden/abschrägen (Radius/Abstand).
