@@ -3796,6 +3796,28 @@ std::vector<core::SketchElement> DocumentModel::sketchElements(const QString& st
     return step->sketch->elements;
 }
 
+std::optional<std::vector<core::SketchPoint>>
+DocumentModel::sketchSplineLine(const std::vector<core::SketchPoint>& through) const {
+    constexpr double kTolerance = 0.005; // mm: well within the 0.01 mm of rule 12
+    std::vector<geo::Point2d> points;
+    points.reserve(through.size());
+    for (const core::SketchPoint& point : through) {
+        points.push_back({point.u, point.v});
+    }
+    try {
+        const geo::SketchSplineCurve curve = m_kernel->sketchSpline(points, kTolerance);
+        std::vector<core::SketchPoint> line;
+        line.reserve(curve.polyline.size());
+        for (const geo::Point2d& point : curve.polyline) {
+            line.push_back({point.x, point.y});
+        }
+        return line;
+    } catch (const geo::GeometryError& error) {
+        qWarning().noquote() << "sketch: no curve through the points:" << error.what();
+        return std::nullopt;
+    }
+}
+
 bool DocumentModel::addSketchElements(const QString& stepId,
                                       const std::vector<core::SketchElement>& elements,
                                       const QString& kind) {
@@ -3803,6 +3825,12 @@ bool DocumentModel::addSketchElements(const QString& stepId,
     const core::Feature* step = m_history.document().findFeature(id);
     if (step == nullptr || !step->sketch || elements.empty()) {
         return false;
+    }
+    for (const core::SketchElement& element : elements) {
+        // a curve the kernel cannot make is not added: the document never holds one it refuses
+        if (element.kind == core::SketchElementKind::spline && !sketchSplineLine(element.points)) {
+            return false;
+        }
     }
     m_history.beginTransaction(
         {"addSketchElement",

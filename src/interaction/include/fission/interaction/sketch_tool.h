@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// The drawing tools of the sketch mode (AP-2.1c1, AP-2.1c2): line (a chain of clicks, with the arc
-// that joins its end tangentially), rectangle, circle, point, arc, slot and polygon. A state
+// The drawing tools of the sketch mode (AP-2.1c1, AP-2.1c2, AP-2.1d): line (a chain of clicks, with
+// the arc that joins its end tangentially), rectangle, circle, point, arc, slot, polygon and the
+// curve (a spline through the clicked points). A state
 // machine in plane coordinates (mm) with no window and no document: clicks, the pointer and typed
 // numbers go in; the preview and the finished elements come out. The sketch controller wires it to
 // the view and turns each finished batch into one command.
@@ -18,7 +19,7 @@
 
 namespace fission::interaction {
 
-enum class SketchToolKind { none, line, rectangle, circle, point, arc, slot, polygon };
+enum class SketchToolKind { none, line, rectangle, circle, point, arc, slot, polygon, spline };
 
 /// Variants of a tool: the rectangle by two corners (0) or by its middle and a corner (1); the
 /// circle by its middle and a point on it (0, the radius) or by three points on it (1); the arc by
@@ -79,8 +80,14 @@ public:
     void moveTo(const core::SketchPoint& position, bool alt = false);
     /// A click at `position`.
     SketchToolStep click(const core::SketchPoint& position, bool alt = false);
-    /// A double click: ends a chain of lines (the click that came first has put its point).
+    /// A double click: ends a chain of lines (the click that came first has put its point), or
+    /// sets the curve through the points clicked so far.
     SketchToolStep doubleClick();
+    /// Backspace: takes the last point of the curve back (the curve is the only tool that has
+    /// points to take back). False when there was nothing to take back.
+    bool undoPoint();
+    /// The points clicked so far of the element being pulled (not yet in the sketch).
+    const std::vector<core::SketchPoint>& placedPoints() const noexcept { return placed_; }
     /// A typed number (mm; degrees for the angle) for field 0, 1 or 2; nothing clears it. A
     /// number of sides that is not allowed is not taken (`badSides`); the old number stays.
     SketchToolNotice setTyped(int field, std::optional<double> value);
@@ -127,6 +134,8 @@ private:
     Shape arcShape(const core::SketchPoint& pointer) const;
     Shape slotShape(const core::SketchPoint& pointer) const;
     Shape polygonShape(const core::SketchPoint& pointer) const;
+    Shape splineShape(const core::SketchPoint& pointer) const;
+    SketchToolStep finishSpline(std::vector<core::SketchPoint> points, bool alt);
     SketchToolStep advanceSlot(const core::SketchPoint& pointer, bool alt);
     void clearTyped() noexcept;
 

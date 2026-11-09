@@ -5,6 +5,7 @@
 
 #include "fission/geo/occt/exchange.h"
 #include "fission/geo/occt/measuring.h"
+#include "fission/geo/occt/sketch_curve.h"
 #include "fission/geo/occt/solids.h"
 
 namespace fission::geo::occt {
@@ -96,6 +97,10 @@ public:
     }
     Outline faceOutline(const Solid& solid, std::uint32_t faceId) const override {
         return occt::faceOutline(solid, faceId);
+    }
+    SketchSplineCurve sketchSpline(const std::vector<Point2d>& through,
+                                   double tolerance) const override {
+        return occt::sketchSpline(through, tolerance);
     }
     SolidReport measure(const Solid& solid) const override { return occt::measure(solid); }
     Bounds bounds(const Solid& solid) const override { return occt::bounds(solid); }

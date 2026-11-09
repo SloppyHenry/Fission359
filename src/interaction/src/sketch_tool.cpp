@@ -94,6 +94,8 @@ int SketchTool::fieldCount() const {
         return placed_.size() == 1 ? 2 : placed_.size() == 2 ? 1 : 0;
     case SketchToolKind::polygon:
         return 3;
+    case SketchToolKind::spline:
+        return 2;
     case SketchToolKind::point:
     case SketchToolKind::none:
         break;
@@ -302,6 +304,29 @@ SketchTool::Shape SketchTool::polygonShape(const SketchPoint& pointer) const {
     return out;
 }
 
+// The curve through the points clicked so far and the pointer (or the length and angle typed for
+// the next stretch). The pointer on the first point of a curve with three or more points shows
+// the curve closed.
+SketchTool::Shape SketchTool::splineShape(const SketchPoint& pointer) const {
+    Shape out;
+    const SketchPoint& last = placed_.back();
+    const SketchPoint end = pulledEnd(last, pointer, out);
+    out.at = end;
+    std::vector<SketchPoint> through = placed_;
+    if (!hasTyped() && placed_.size() >= 3 && distance(end, placed_.front()) < kSketchMinimumSize) {
+        through.push_back(placed_.front());
+        out.at = placed_.front();
+    } else if (distance(last, end) >= kSketchMinimumSize) {
+        through.push_back(end);
+    }
+    if (through.size() >= 2) {
+        out.elements = {made(SketchElementKind::spline, std::move(through))};
+    } else {
+        out.tooSmall = true;
+    }
+    return out;
+}
+
 SketchTool::Shape SketchTool::shape(const SketchPoint& pointer, bool alt) const {
     Shape out;
     out.at = pointer;
@@ -388,6 +413,9 @@ SketchTool::Shape SketchTool::shape(const SketchPoint& pointer, bool alt) const 
     case SketchToolKind::polygon:
         out = polygonShape(pointer);
         break;
+    case SketchToolKind::spline:
+        out = splineShape(pointer);
+        break;
     case SketchToolKind::point:
     case SketchToolKind::none:
         break;
@@ -449,6 +477,35 @@ SketchToolStep SketchTool::advanceSlot(const SketchPoint& pointer, bool) {
         return step;
     }
     placed_.push_back(result.at);
+    return step;
+}
+
+// Sets the curve through `points` (the clicks of the curve, the first again at the end when it
+// closes). Following points that are one are taken once; fewer than two different points make
+// nothing (`tooSmall`), and so does a closed curve through only two. Either way the curve is over.
+SketchToolStep SketchTool::finishSpline(std::vector<SketchPoint> points, bool alt) {
+    SketchToolStep step;
+    std::vector<SketchPoint> through;
+    for (const SketchPoint& point : points) {
+        if (through.empty() || distance(through.back(), point) >= kSketchMinimumSize) {
+            through.push_back(point);
+        }
+    }
+    const bool closed =
+        through.size() >= 3 && distance(through.front(), through.back()) < kSketchMinimumSize;
+    if (closed) {
+        through.back() = through.front(); // exactly: the data says "closed" by equal ends
+    }
+    placed_.clear();
+    clearTyped();
+    lastDirection_.reset();
+    if (through.size() < 2 || (closed && through.size() < 4)) {
+        step.notice = SketchToolNotice::tooSmall;
+        return step;
+    }
+    SketchBatch batch{made(SketchElementKind::spline, std::move(through))};
+    markHelper(batch, alt);
+    step.done.push_back(std::move(batch));
     return step;
 }
 
@@ -517,6 +574,24 @@ SketchToolStep SketchTool::click(const SketchPoint& position, bool alt) {
             step = finish(position, alt);
         }
         break;
+    case SketchToolKind::spline:
+        if (!busy()) {
+            placed_ = {position};
+        } else if (distance(position, placed_.back()) < kSketchMinimumSize) {
+            break; // the same point twice (the click of a double click): one is enough
+        } else if (distance(position, placed_.front()) < kSketchMinimumSize) {
+            if (placed_.size() >= 3) { // back on the first point: the curve closes
+                std::vector<SketchPoint> through = placed_;
+                through.push_back(placed_.front());
+                step = finishSpline(std::move(through), alt);
+            } else {
+                step.notice = SketchToolNotice::tooSmall; // a closed curve needs three points
+            }
+        } else {
+            placed_.push_back(position);
+            clearTyped();
+        }
+        break;
     }
     return step;
 }
@@ -524,8 +599,19 @@ SketchToolStep SketchTool::click(const SketchPoint& position, bool alt) {
 SketchToolStep SketchTool::doubleClick() {
     if (kind_ == SketchToolKind::line) {
         cancel();
+    } else if (kind_ == SketchToolKind::spline && busy()) {
+        return finishSpline(placed_, alt_);
     }
     return {};
+}
+
+bool SketchTool::undoPoint() {
+    if (kind_ != SketchToolKind::spline || !busy()) {
+        return false;
+    }
+    placed_.pop_back();
+    clearTyped();
+    return true;
 }
 
 SketchToolStep SketchTool::accept(bool alt) {
@@ -534,6 +620,21 @@ SketchToolStep SketchTool::accept(bool alt) {
     }
     if (kind_ == SketchToolKind::slot && placed_.size() == 1) {
         return advanceSlot(pointer_, alt);
+    }
+    if (kind_ == SketchToolKind::spline) {
+        // Numbers typed: they make the next point (Enter again sets the curve); else Enter sets it.
+        if (!hasTyped()) {
+            return finishSpline(placed_, alt);
+        }
+        SketchToolStep step;
+        const Shape next = splineShape(pointer_);
+        clearTyped();
+        if (distance(placed_.back(), next.at) < kSketchMinimumSize) {
+            step.notice = SketchToolNotice::tooSmall;
+        } else {
+            placed_.push_back(next.at);
+        }
+        return step;
     }
     return finish(pointer_, alt);
 }

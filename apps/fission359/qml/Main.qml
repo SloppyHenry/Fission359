@@ -17,7 +17,7 @@ Window {
     property string tool: "move"
     // The sketch mode (AP-2.1b): "idle", "picking" (waiting for the click on a plane) or "active".
     readonly property string sketchState: Sketch.picking ? "picking" : Sketch.active ? "active" : "idle"
-    // The drawing tool of the sketch mode (AP-2.1c1): "" or line | rectangle | circle | point | arc | slot | polygon.
+    // The drawing tool of the sketch mode (AP-2.1c1): "" or line | rectangle | circle | point | arc | slot | polygon | spline.
     readonly property string sketchToolName: Sketch.active ? Sketch.tool : ""
     // "Lay on face": the next click on a face puts the chosen body on it (Esc leaves it).
     property bool seating: false
@@ -204,7 +204,7 @@ Window {
             return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed, Sketch.pullingArc)
                    + " " + qsTr("Shift switches catching off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
         }
-        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
+        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
     }
 
     // ---- undo and redo ---------------------------------------------------------------------
@@ -847,13 +847,20 @@ Window {
     Shortcut { sequence: "A"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.arc") }
     Shortcut { sequence: "S"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.slot") }
     Shortcut { sequence: "G"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.polygon") }
+    Shortcut { sequence: "K"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.spline") }
     Shortcut { sequence: "P"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.point") }
     Shortcut { sequence: "X"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.helper") }
     Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
     Shortcut { sequence: "Ctrl+C"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("copy") }
     Shortcut { sequence: "Ctrl+V"; enabled: !root.isMac && DocumentModel.canPaste && !root.typing; onActivated: root.run("paste") }
     Shortcut { sequence: "Delete"; enabled: Selection.count > 0 && !root.typing && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("delete") }
-    Shortcut { sequence: "Backspace"; enabled: Selection.count > 0 && !root.typing && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("delete") }
+    // The curve (AP-2.1d): Backspace takes its last point back, Enter sets it. Backspace is "Delete"
+    // otherwise, so the two are never on together (two active shortcuts on one key fire neither);
+    // a sketch has nothing chosen to delete anyway.
+    readonly property bool drawingCurve: Sketch.drawing && Sketch.tool === "spline"
+    Shortcut { sequence: "Backspace"; enabled: root.drawingCurve && !root.typing; onActivated: Sketch.removeLastPoint() }
+    Shortcut { sequences: ["Return", "Enter"]; enabled: root.drawingCurve && !root.typing && !Handles.armed; onActivated: Sketch.acceptTyped() }
+    Shortcut { sequence: "Backspace"; enabled: Selection.count > 0 && !root.drawingCurve && !root.typing && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("delete") }
     Shortcut { sequence: "Ctrl+X"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("cut") }
     Shortcut { sequence: "Ctrl+D"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("duplicate") }
     Shortcut { sequence: "D"; enabled: Selection.count > 0 && !root.typing && !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("dropToBed") }
@@ -989,7 +996,7 @@ Window {
     }
     Shortcut {
         sequences: ["Tab", "Return", "Enter"]
-        enabled: Handles.armed && !Handles.editing && !root.typing
+        enabled: Handles.armed && !Handles.editing && !root.typing && !root.drawingCurve
         onActivated: handleLayer.startTyping("")
     }
     // Arrow keys move the chosen body by 1 mm (with Shift 10 mm) along the axis of the bed that

@@ -1779,12 +1779,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1004"/>
+        <location line="+1028"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-1003"/>
+        <location line="-1027"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
@@ -2015,12 +2015,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1631"/>
+        <location line="+1655"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1630"/>
+        <location line="-1654"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -2051,12 +2051,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1608"/>
+        <location line="+1632"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1606"/>
+        <location line="-1630"/>
         <source>Round edges</source>
         <translation>Round edges</translation>
     </message>
@@ -2097,12 +2097,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1606"/>
+        <location line="+1630"/>
         <source>Draft</source>
         <translation>Draft</translation>
     </message>
     <message>
-        <location line="-1604"/>
+        <location line="-1628"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -2162,19 +2162,24 @@
         <translation>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</translation>
     </message>
     <message>
-        <location line="+34"/>
-        <location line="+1053"/>
+        <location line="+10"/>
+        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
+        <translation>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <location line="+1077"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-1051"/>
-        <location line="+1052"/>
+        <location line="-1075"/>
+        <location line="+1076"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-1046"/>
+        <location line="-1070"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -2204,7 +2209,7 @@
         <translation>Choose faces or one body first.</translation>
     </message>
     <message numerus="yes">
-        <location line="+86"/>
+        <location line="+98"/>
         <source>%n step(s) use what you delete: %1. They will need help.</source>
         <translation>
             <numerusform>%n step uses what you delete: %1. It will need help.</numerusform>
@@ -2357,7 +2362,7 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+154"/>
+        <location line="+166"/>
         <source>Click an edge of the body this step works on.</source>
         <translation>Click an edge of the body this step works on.</translation>
     </message>
@@ -2431,7 +2436,7 @@
         </translation>
     </message>
     <message>
-        <location line="-867"/>
+        <location line="-891"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2466,7 +2471,7 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+1083"/>
+        <location line="+1107"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -2481,7 +2486,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1503"/>
+        <location line="-1527"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -2541,7 +2546,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1536"/>
+        <location line="+1560"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2636,7 +2641,7 @@
         <translation>Position</translation>
     </message>
     <message numerus="yes">
-        <location line="+57"/>
+        <location line="+59"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>Cut out %n body</numerusform>
@@ -2649,12 +2654,12 @@
         <translation>%1 added</translation>
     </message>
     <message>
-        <location line="-1146"/>
+        <location line="-1160"/>
         <source>This body cannot be hollowed: it may already be part of another body.</source>
         <translation>This body cannot be hollowed: it may already be part of another body.</translation>
     </message>
     <message>
-        <location line="+840"/>
+        <location line="+852"/>
         <source>Bevelled. Drag the grip or type a distance.</source>
         <translation>Bevelled. Drag the grip or type a distance.</translation>
     </message>
@@ -2724,7 +2729,7 @@
         <translation>Outline exported.</translation>
     </message>
     <message>
-        <location line="-946"/>
+        <location line="-970"/>
         <source>Helper lines are on: what you draw is only an aid.</source>
         <translation>Helper lines are on: what you draw is only an aid.</translation>
     </message>
@@ -2734,17 +2739,12 @@
         <translation>Shift switches catching off, %1 draws a helper line.</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
-        <translation>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</translation>
-    </message>
-    <message>
-        <location line="+90"/>
+        <location line="+92"/>
         <source>Open a sketch first (the tool “Sketch”).</source>
         <translation>Open a sketch first (the tool “Sketch”).</translation>
     </message>
     <message>
-        <location line="+1469"/>
+        <location line="+1493"/>
         <source>Imported body</source>
         <translation>Imported body</translation>
     </message>
@@ -2779,7 +2779,7 @@
         <translation>Arc</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>Curve</source>
         <translation>Curve</translation>
     </message>
@@ -3129,40 +3129,42 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-373"/>
+        <location line="-375"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1603"/>
+        <location line="-1627"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1638"/>
+        <location line="+1662"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1441"/>
+        <location line="-1465"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+799"/>
+        <location line="+823"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-859"/>
+        <location line="-883"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
     <message>
+        <location line="+1650"/>
         <source>Slot</source>
         <translation>Slot</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Polygon</source>
         <translation>Polygon</translation>
     </message>
@@ -3414,7 +3416,7 @@
 <context>
     <name>MessageCatalog</name>
     <message>
-        <location filename="../qml/MessageCatalog.qml" line="+95"/>
+        <location filename="../qml/MessageCatalog.qml" line="+97"/>
         <source>It was inches</source>
         <translation>It was inches</translation>
     </message>
@@ -3706,7 +3708,7 @@
         <translation>I don’t know “%1”.</translation>
     </message>
     <message>
-        <location line="-257"/>
+        <location line="-259"/>
         <source>Sketches only go on flat faces. Tip: helper planes come later.</source>
         <translation>Sketches only go on flat faces. Tip: helper planes come later.</translation>
     </message>
@@ -3729,6 +3731,11 @@
         <location line="+1"/>
         <source>That is too small to draw (under 0.01 mm). Pull a little further.</source>
         <translation>That is too small to draw (under 0.01 mm). Pull a little further.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No smooth curve goes through these points. Move a point a little, or draw fewer.</source>
+        <translation>No smooth curve goes through these points. Move a point a little, or draw fewer.</translation>
     </message>
     <message>
         <location line="+69"/>
@@ -3949,6 +3956,7 @@
         <translation>The calculation was replaced by a newer change.</translation>
     </message>
     <message>
+        <location line="-353"/>
         <source>A polygon has a whole number of sides from 3 to 64. The number before stays.</source>
         <translation>A polygon has a whole number of sides from 3 to 64. The number before stays.</translation>
     </message>
@@ -4807,7 +4815,7 @@
 <context>
     <name>SketchLayer</name>
     <message>
-        <location filename="../qml/SketchLayer.qml" line="+27"/>
+        <location filename="../qml/SketchLayer.qml" line="+28"/>
         <source>Length</source>
         <translation>Length</translation>
     </message>
@@ -4832,12 +4840,13 @@
         <translation>Radius</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <location line="+163"/>
+        <location line="+7"/>
+        <location line="+171"/>
         <source>mm</source>
         <translation>mm</translation>
     </message>
     <message>
+        <location line="-177"/>
         <source>Sides</source>
         <translation>Sides</translation>
     </message>
@@ -4906,11 +4915,27 @@
     </message>
     <message>
         <location line="+0"/>
+        <location line="+6"/>
         <source>Three points</source>
         <translation>Three points</translation>
     </message>
     <message>
+        <location line="+13"/>
+        <source>Curve</source>
+        <translation>Curve</translation>
+    </message>
+    <message>
         <location line="+1"/>
+        <source>Draws a smooth curve that goes through the points you click. A double click or Enter sets it, Backspace takes the last point back. Click the first point again to close the curve.</source>
+        <translation>Draws a smooth curve that goes through the points you click. A double click or Enter sets it, Backspace takes the last point back. Click the first point again to close the curve.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click where the curve starts.</source>
+        <translation>Click where the curve starts.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Point</source>
         <translation>Point</translation>
     </message>
@@ -4940,7 +4965,7 @@
         <translation>Helper lines are dashed aids. Press the key again to draw normal lines.</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+23"/>
         <source>Click where the line starts. Esc ends the tool.</source>
         <translation>Click where the line starts. Esc ends the tool.</translation>
     </message>
@@ -4995,103 +5020,142 @@
         <translation>Click a point on the circle, or type the radius. Enter sets it, Esc cancels.</translation>
     </message>
     <message>
+        <location line="+18"/>
+        <source>Click where the curve starts. Esc ends the tool.</source>
+        <translation>Click where the curve starts. Esc ends the tool.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click the next point of the curve, or type a length (Tab: the angle). Esc throws the curve away.</source>
+        <translation>Click the next point of the curve, or type a length (Tab: the angle). Esc throws the curve away.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click the next point. Double-click or Enter sets the curve, Backspace takes the last point back, a click on the first point closes it. Esc throws it away.</source>
+        <translation>Click the next point. Double-click or Enter sets the curve, Backspace takes the last point back, a click on the first point closes it. Esc throws it away.</translation>
+    </message>
+    <message>
         <location line="+2"/>
         <source>Click where the point goes. Esc ends the tool.</source>
         <translation>Click where the point goes. Esc ends the tool.</translation>
     </message>
     <message>
+        <location line="-93"/>
         <source>Arc</source>
         <translation>Arc</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Draws a piece of a circle: by its start, its end and a point on it, or by its middle, its start and its end. Type the radius or the angle while you draw.</source>
         <translation>Draws a piece of a circle: by its start, its end and a point on it, or by its middle, its start and its end. Type the radius or the angle while you draw.</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Click where the arc starts.</source>
         <translation>Click where the arc starts.</translation>
     </message>
     <message>
+        <location line="+3"/>
         <source>Middle, start and end</source>
         <translation>Middle, start and end</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Slot</source>
         <translation>Slot</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Draws a slot with round ends: click both middles, then pull the width. Type the length, the angle and the width while you draw.</source>
         <translation>Draws a slot with round ends: click both middles, then pull the width. Type the length, the angle and the width while you draw.</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Click the middle of one end of the slot.</source>
         <translation>Click the middle of one end of the slot.</translation>
     </message>
     <message>
+        <location line="+4"/>
         <source>Polygon</source>
         <translation>Polygon</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Draws a regular polygon from its middle and a corner, or from its middle and the middle of a side. Tab switches to the number of sides (3 to 64) and the angle.</source>
         <translation>Draws a regular polygon from its middle and a corner, or from its middle and the middle of a side. Tab switches to the number of sides (3 to 64) and the angle.</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Click the middle of the polygon.</source>
         <translation>Click the middle of the polygon.</translation>
     </message>
     <message>
+        <location line="+3"/>
         <source>Corner (outer circle)</source>
         <translation>Corner (outer circle)</translation>
     </message>
     <message>
+        <location line="+0"/>
         <source>Side middle (inner circle)</source>
         <translation>Side middle (inner circle)</translation>
     </message>
     <message>
+        <location line="+34"/>
         <source>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</source>
         <translation>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</translation>
     </message>
     <message>
+        <location line="+23"/>
         <source>Click the middle of the arc. Esc ends the tool.</source>
         <translation>Click the middle of the arc. Esc ends the tool.</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Click where the arc starts. Esc cancels.</source>
         <translation>Click where the arc starts. Esc cancels.</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Move to turn the arc, click where it ends, or type the angle. Enter sets it, Esc cancels.</source>
         <translation>Move to turn the arc, click where it ends, or type the angle. Enter sets it, Esc cancels.</translation>
     </message>
     <message>
+        <location line="+2"/>
         <source>Click where the arc starts. Esc ends the tool.</source>
         <translation>Click where the arc starts. Esc ends the tool.</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Click where the arc ends. Esc cancels.</source>
         <translation>Click where the arc ends. Esc cancels.</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Click a point on the arc, or type the radius. Enter sets it, Esc cancels.</source>
         <translation>Click a point on the arc, or type the radius. Enter sets it, Esc cancels.</translation>
     </message>
     <message>
+        <location line="+2"/>
         <source>Click the middle of one end of the slot. Esc ends the tool.</source>
         <translation>Click the middle of one end of the slot. Esc ends the tool.</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Click the middle of the other end, or type the length (Tab: the angle). Esc cancels.</source>
         <translation>Click the middle of the other end, or type the length (Tab: the angle). Esc cancels.</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Pull the width and click, or type the width. Enter sets it, Esc cancels.</source>
         <translation>Pull the width and click, or type the width. Enter sets it, Esc cancels.</translation>
     </message>
     <message>
+        <location line="+2"/>
         <source>Click the middle of the polygon. Esc ends the tool.</source>
         <translation>Click the middle of the polygon. Esc ends the tool.</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Click a corner, or type the radius (Tab: the number of sides, then the angle). Enter sets it, Esc cancels.</source>
         <translation>Click a corner, or type the radius (Tab: the number of sides, then the angle). Enter sets it, Esc cancels.</translation>
     </message>

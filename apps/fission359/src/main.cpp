@@ -199,7 +199,7 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "pulls with the button down from the first point to the second, [,hold] keeps it down "
             "(the arc from the end of a line); menu:sketchtool.line, "
             "sketchtool.rectangle, sketchtool.circle, sketchtool.arc, sketchtool.slot, "
-            "sketchtool.polygon, sketchtool.point and sketchtool.helper "
+            "sketchtool.polygon, sketchtool.spline, sketchtool.point and sketchtool.helper "
             "choose "
             "a tool; type:40,tab,25,enter types the numbers of the element being drawn), "
             "expectsketchtool:line (the drawing tool in use; empty for none), "

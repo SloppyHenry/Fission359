@@ -7,6 +7,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <numbers>
 
@@ -815,4 +816,248 @@ TEST_CASE("sketch tool: a typed polygon radius and angle", "[sketchtool][polygon
     const auto tiny = tool.click({0.001, 0});
     CHECK(tiny.done.empty());
     CHECK(tiny.notice == SketchToolNotice::tooSmall);
+}
+
+// --- the curve (AP-2.1d) ---------------------------------------------------------------------
+
+namespace {
+
+SketchTool curveTool() {
+    SketchTool tool;
+    tool.select(SketchToolKind::spline);
+    return tool;
+}
+
+} // namespace
+
+TEST_CASE("sketch tool: a curve takes a click per point and a double click sets it",
+          "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    CHECK(tool.click({0, 0}).done.empty());
+    CHECK(tool.busy());
+    CHECK(tool.click({10, 5}).done.empty());
+    CHECK(tool.click({20, -5}).done.empty());
+    CHECK(tool.placedCount() == 3);
+    const auto step = tool.doubleClick(); // the click that came first has put its point
+    REQUIRE(step.done.size() == 1);
+    REQUIRE(step.done[0].size() == 1);
+    const SketchElement& curve = step.done[0][0];
+    CHECK(curve.kind == SketchElementKind::spline);
+    REQUIRE(curve.points.size() == 3);
+    checkPoint(curve.points[0], 0, 0);
+    checkPoint(curve.points[1], 10, 5);
+    checkPoint(curve.points[2], 20, -5);
+    CHECK_FALSE(tool.busy()); // the next click starts another curve
+    tool.click({3, 3});
+    CHECK(tool.placedCount() == 1);
+}
+
+TEST_CASE("sketch tool: Enter sets the curve through the points so far", "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({0, 0});
+    tool.click({10, 5});
+    tool.moveTo({30, 30}); // the pointer is not a point yet
+    const auto step = tool.accept();
+    REQUIRE(step.done.size() == 1);
+    CHECK(step.done[0][0].points.size() == 2);
+    CHECK_FALSE(tool.busy());
+}
+
+TEST_CASE("sketch tool: the preview shows the curve to the pointer", "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({0, 0});
+    tool.click({10, 5});
+    tool.moveTo({20, 0});
+    const SketchDraft draft = tool.draft();
+    const auto curve = std::ranges::find_if(draft.elements, [](const SketchElement& element) {
+        return element.kind == SketchElementKind::spline;
+    });
+    REQUIRE(curve != draft.elements.end());
+    REQUIRE(curve->points.size() == 3);
+    checkPoint(curve->points[2], 20, 0);
+    // the points clicked so far show as dots
+    CHECK(std::ranges::count_if(draft.elements, [](const SketchElement& element) {
+              return element.kind == SketchElementKind::point;
+          }) == 2);
+    REQUIRE(draft.fields.size() == 2);
+    CHECK(draft.fields[0].name == "length");
+    CHECK(draft.fields[0].value == Approx(std::hypot(10.0, 5.0)));
+}
+
+TEST_CASE("sketch tool: Esc throws the unfinished curve away", "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({0, 0});
+    tool.click({10, 5});
+    tool.click({20, 0});
+    CHECK(tool.cancel());
+    CHECK_FALSE(tool.busy());
+    CHECK(tool.placedCount() == 0);
+    CHECK(tool.doubleClick().done.empty()); // nothing is left to set
+    CHECK_FALSE(tool.cancel());             // the next Esc is for the tool (the controller)
+    CHECK(tool.kind() == SketchToolKind::spline);
+}
+
+TEST_CASE("sketch tool: Backspace takes the last point back", "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    CHECK_FALSE(tool.undoPoint());
+    tool.click({0, 0});
+    tool.click({10, 5});
+    tool.click({20, 0});
+    CHECK(tool.undoPoint());
+    CHECK(tool.placedCount() == 2);
+    checkPoint(tool.placedPoints().back(), 10, 5);
+    CHECK(tool.undoPoint());
+    CHECK(tool.undoPoint()); // the first point too: then nothing is pulled
+    CHECK_FALSE(tool.busy());
+    CHECK_FALSE(tool.undoPoint());
+    // a point taken back can be put again somewhere else
+    tool.click({1, 1});
+    tool.click({5, 5});
+    tool.undoPoint();
+    tool.click({6, 0});
+    const auto step = tool.doubleClick();
+    REQUIRE(step.done.size() == 1);
+    checkPoint(step.done[0][0].points[1], 6, 0);
+}
+
+TEST_CASE("sketch tool: other tools have no point to take back", "[sketchtool][spline]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::line);
+    tool.click({0, 0});
+    CHECK_FALSE(tool.undoPoint());
+    CHECK(tool.busy());
+}
+
+TEST_CASE("sketch tool: a click on the first point closes the curve and sets it",
+          "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({0, 0});
+    tool.click({10, 0});
+    tool.click({10, 10});
+    tool.click({0, 10});
+    const auto step = tool.click({0, 0});
+    REQUIRE(step.done.size() == 1);
+    const SketchElement& curve = step.done[0][0];
+    CHECK(curve.kind == SketchElementKind::spline);
+    REQUIRE(curve.points.size() == 5);
+    CHECK(curve.points.front() == curve.points.back()); // closed = the last point is the first
+    CHECK_FALSE(tool.busy());
+}
+
+TEST_CASE("sketch tool: the pointer on the first point shows the closed curve",
+          "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({0, 0});
+    tool.click({10, 0});
+    tool.click({10, 10});
+    tool.moveTo({0, 0});
+    const SketchDraft draft = tool.draft();
+    const auto curve = std::ranges::find_if(draft.elements, [](const SketchElement& element) {
+        return element.kind == SketchElementKind::spline;
+    });
+    REQUIRE(curve != draft.elements.end());
+    REQUIRE(curve->points.size() == 4);
+    CHECK(curve->points.front() == curve->points.back());
+}
+
+TEST_CASE("sketch tool: a curve of two points cannot close on its first", "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({0, 0});
+    tool.click({10, 0});
+    const auto step = tool.click({0, 0});
+    CHECK(step.done.empty());
+    CHECK(step.notice == SketchToolNotice::tooSmall);
+    CHECK(tool.placedCount() == 2); // the curve goes on
+}
+
+TEST_CASE("sketch tool: two points make a straight curve, one point nothing",
+          "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({0, 0});
+    tool.click({10, 4});
+    const auto two = tool.doubleClick();
+    REQUIRE(two.done.size() == 1);
+    CHECK(two.done[0][0].points.size() == 2);
+
+    tool.click({5, 5});
+    const auto one = tool.doubleClick();
+    CHECK(one.done.empty());
+    CHECK(one.notice == SketchToolNotice::tooSmall);
+    CHECK_FALSE(tool.busy());
+    tool.click({5, 5});
+    const auto enter = tool.accept();
+    CHECK(enter.done.empty());
+    CHECK(enter.notice == SketchToolNotice::tooSmall);
+}
+
+TEST_CASE("sketch tool: points that repeat are one point when the curve is set",
+          "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({0, 0});
+    tool.click({10, 0});
+    tool.click({10, 0});         // a double click leaves the same point twice: it is taken once
+    tool.click({10.004, 0.003}); // nearer than 0.01 mm
+    tool.click({20, 5});
+    CHECK(tool.placedCount() == 3);
+    const auto step = tool.doubleClick();
+    REQUIRE(step.done.size() == 1);
+    CHECK(step.done[0][0].points.size() == 3);
+}
+
+TEST_CASE("sketch tool: only duplicates of one point make nothing", "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({4, 4});
+    tool.click({4, 4});
+    tool.click({4.001, 4});
+    CHECK(tool.placedCount() == 1);
+    const auto step = tool.doubleClick();
+    CHECK(step.done.empty());
+    CHECK(step.notice == SketchToolNotice::tooSmall);
+}
+
+TEST_CASE("sketch tool: typing the length and angle gives the next point of the curve",
+          "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({0, 0});
+    CHECK(tool.fieldCount() == 2);
+    tool.moveTo({3, 1});
+    tool.setTyped(0, 10.0);
+    tool.setTyped(1, 90.0);
+    const SketchDraft draft = tool.draft();
+    REQUIRE(draft.fields.size() == 2);
+    CHECK(draft.fields[0].typed);
+    checkPoint(draft.at, 0, 10);
+    const auto next = tool.accept(); // Enter with numbers adds the point ...
+    CHECK(next.done.empty());
+    CHECK(tool.placedCount() == 2);
+    checkPoint(tool.placedPoints().back(), 0, 10);
+    CHECK_FALSE(tool.hasTyped());
+    tool.moveTo({20, 10});
+    tool.setTyped(0, 5.0);
+    tool.setTyped(1, 0.0);
+    tool.accept();
+    checkPoint(tool.placedPoints().back(), 5, 10);
+    const auto step = tool.accept(); // ... and Enter again sets the curve
+    REQUIRE(step.done.size() == 1);
+    CHECK(step.done[0][0].points.size() == 3);
+}
+
+TEST_CASE("sketch tool: a helper switch makes the curve an aid", "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.setHelperLine(true);
+    tool.click({0, 0});
+    tool.click({10, 5});
+    const auto step = tool.doubleClick();
+    REQUIRE(step.done.size() == 1);
+    CHECK(step.done[0][0].construction);
+}
+
+TEST_CASE("sketch tool: choosing another tool drops the running curve", "[sketchtool][spline]") {
+    SketchTool tool = curveTool();
+    tool.click({0, 0});
+    tool.click({10, 5});
+    tool.select(SketchToolKind::line);
+    CHECK_FALSE(tool.busy());
+    tool.select(SketchToolKind::spline);
+    CHECK(tool.placedCount() == 0);
 }

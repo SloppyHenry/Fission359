@@ -81,6 +81,7 @@ var paths = {
     sketcharc: "M5 17a9 9 0 0 1 14 0 M5 17h.01 M19 17h.01",
     sketchslot: "M8 8h8a4 4 0 0 1 0 8H8a4 4 0 0 1 0-8z",
     sketchpolygon: "M12 4l7 4v8l-7 4l-7-4V8z",
+    sketchspline: "M4 16C8 4 11 4 12 12S17 20 20 8 M4 16h.01 M12 12h.01 M20 8h.01",
     sketchpoint: "M12 14.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5z M12 4v3 M12 17v3 M4 12h3 M17 12h3",
     sketchhelper: "M4 20l3-3 M10 14l4-4 M17 7l3-3"
 };

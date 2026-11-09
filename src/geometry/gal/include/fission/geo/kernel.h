@@ -17,6 +17,7 @@
 #include "fission/geo/primitives.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/signature.h"
+#include "fission/geo/sketch_curve.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
 
@@ -339,6 +340,21 @@ public:
         (void)solid;
         (void)faceId;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot draw outlines");
+    }
+
+    /// The smooth curve through the points of a sketch spline (AP-2.1d): cubic, through every
+    /// point exactly. If the last point equals the first the curve is closed and periodic (no
+    /// corner at the join). Following points nearer than `kSketchSplineMergeDistance` count as
+    /// one. `tolerance` (mm, > 0) is how far the returned chain of lines may stray from the curve.
+    /// Two points give a straight curve. Throws `GeometryError`: `invalidInput` for a number that
+    /// is not finite, a tolerance that is not positive, fewer than two different points (a closed
+    /// curve needs three), `kernelFailure` when the kernel cannot interpolate. The default
+    /// refuses.
+    virtual SketchSplineCurve sketchSpline(const std::vector<Point2d>& through,
+                                           double tolerance) const {
+        (void)through;
+        (void)tolerance;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot draw splines");
     }
 
     /// Measures one element (corner: position; edge: length, radius of a circle or arc; face:

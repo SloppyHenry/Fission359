@@ -14,6 +14,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <chrono>
 #include <cmath>
 #include <memory>
 #include <numbers>
@@ -811,4 +812,216 @@ TEST_CASE(
     f.click(0, 0);
     f.move(10, 0);
     CHECK(f.sketch->readout().value("fields").toList().at(1).toMap().value("value").toInt() == 6);
+}
+
+// --- the curve (AP-2.1d) ---------------------------------------------------------------------
+
+TEST_CASE("sketch tools: a curve through clicked points is one element and one undo step",
+          "[ui][sketchtools][spline]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("spline"));
+    CHECK(f.sketch->toolName() == "spline");
+    f.click(0, 0);
+    f.click(10, 8);
+    f.click(20, -4);
+    f.click(35, 6);
+    CHECK(f.elements().empty());
+    CHECK(f.sketch->drawing());
+    CHECK(f.sketch->placed() == 4);
+    f.sketch->doubleClick();
+    const auto elements = f.elements();
+    REQUIRE(elements.size() == 1);
+    CHECK(elements[0].kind == core::SketchElementKind::spline);
+    CHECK(elements[0].id == "S1");
+    REQUIRE(elements[0].points.size() == 4);
+    checkPoint(elements[0].points[0], 0, 0);
+    checkPoint(elements[0].points[3], 35, 6);
+    CHECK(f.nextUndo() == "addSketchElement");
+    CHECK_FALSE(f.sketch->drawing());
+    CHECK(f.sketch->toolActive()); // the tool stays on for the next curve
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements().empty());
+    REQUIRE(f.model->redo());
+    f.settle();
+    CHECK(f.elements().size() == 1);
+}
+
+TEST_CASE("sketch tools: Enter sets the curve, and a click on the first point closes it",
+          "[ui][sketchtools][spline]") {
+    Drawing f; // the pointer catches: the click near the first point lands on it
+    f.sketch->chooseTool(QStringLiteral("spline"));
+    f.click(0, 0);
+    f.click(20, 0);
+    f.click(20, 20);
+    f.sketch->acceptTyped(); // Enter
+    REQUIRE(f.elements().size() == 1);
+    CHECK(f.elements()[0].points.size() == 3);
+
+    f.click(40, 0);
+    f.click(60, 0);
+    f.click(60, 20);
+    f.click(40, 20);
+    f.click(41, 1); // within the catching radius of the first point
+    REQUIRE(f.elements().size() == 2);
+    const auto closed = f.elements()[1];
+    REQUIRE(closed.points.size() == 5);
+    CHECK(closed.points.front() == closed.points.back()); // closed: the last point is the first
+    CHECK_FALSE(f.sketch->drawing());
+    CHECK(f.nextUndo() == "addSketchElement");
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements().size() == 1); // the closed curve was one step
+}
+
+TEST_CASE("sketch tools: Esc throws away the unfinished curve, then ends the tool",
+          "[ui][sketchtools][spline]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("spline"));
+    f.click(0, 0);
+    f.click(10, 10);
+    f.click(20, 0);
+    f.sketch->escape();
+    CHECK_FALSE(f.sketch->drawing());
+    CHECK(f.elements().empty());
+    CHECK(f.sketch->toolActive());
+    f.sketch->escape();
+    CHECK_FALSE(f.sketch->toolActive());
+    CHECK(f.sketch->active()); // the sketch itself is still open
+}
+
+TEST_CASE("sketch tools: Backspace takes the last point of the curve back",
+          "[ui][sketchtools][spline]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("spline"));
+    f.click(0, 0);
+    f.click(10, 10);
+    f.click(20, 0);
+    f.sketch->removeLastPoint();
+    CHECK(f.sketch->placed() == 2);
+    f.click(15, -5);
+    f.sketch->doubleClick();
+    REQUIRE(f.elements().size() == 1);
+    REQUIRE(f.elements()[0].points.size() == 3);
+    checkPoint(f.elements()[0].points[2], 15, -5);
+    // nothing to take back: nothing happens
+    f.sketch->removeLastPoint();
+    CHECK(f.elements().size() == 1);
+    // other tools ignore it
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.sketch->removeLastPoint();
+    CHECK(f.sketch->drawing());
+}
+
+TEST_CASE("sketch tools: numbers typed for the curve make its next point",
+          "[ui][sketchtools][spline]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("spline"));
+    f.click(0, 0);
+    f.move(5, 1);
+    CHECK(f.sketch->fieldCount() == 2);
+    f.sketch->setTyped(0, 12.0);
+    f.sketch->setTyped(1, 90.0);
+    f.sketch->acceptTyped();
+    CHECK(f.sketch->placed() == 2);
+    f.click(20, 12);
+    f.sketch->acceptTyped(); // Enter sets it
+    REQUIRE(f.elements().size() == 1);
+    REQUIRE(f.elements()[0].points.size() == 3);
+    checkPoint(f.elements()[0].points[1], 0, 12);
+}
+
+TEST_CASE(
+    "sketch tools: a curve of one distinct point is not drawn, two points make a straight one",
+    "[ui][sketchtools][spline]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("spline"));
+    f.click(5, 5);
+    f.sketch->doubleClick();
+    CHECK(f.elements().empty());
+    CHECK(f.notices.contains("tooSmall"));
+    CHECK_FALSE(f.sketch->drawing());
+
+    f.click(0, 0);
+    f.click(10, 0);
+    f.sketch->doubleClick();
+    REQUIRE(f.elements().size() == 1);
+    CHECK(f.elements()[0].points.size() == 2);
+}
+
+TEST_CASE("sketch tools: the points of a curve are catching points afterwards",
+          "[ui][sketchtools][spline]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("spline"));
+    f.click(1.5, 2.5);
+    f.click(11.5, 8.5);
+    f.click(21.5, 2.5);
+    f.sketch->doubleClick();
+    REQUIRE(f.elements().size() == 1);
+    fission::ui::setSnappingSuppressedForTests(false);
+    f.sketch->chooseTool(QStringLiteral("point"));
+    f.move(11.7, 8.6); // the middle point of the curve
+    const QVariantMap snap = f.sketch->snap();
+    CHECK(snap.value("kind").toString() == "point");
+    CHECK(snap.value("element").toString() == "S1");
+    CHECK(snap.value("u").toDouble() == Approx(11.5));
+    fission::ui::setSnappingSuppressedForTests(true);
+}
+
+TEST_CASE("sketch tools: the helper line switch makes the curve an aid",
+          "[ui][sketchtools][spline]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->setHelperLine(true);
+    f.sketch->chooseTool(QStringLiteral("spline"));
+    f.click(0, 0);
+    f.click(10, 10);
+    f.sketch->doubleClick();
+    REQUIRE(f.elements().size() == 1);
+    CHECK(f.elements()[0].construction);
+}
+
+TEST_CASE("sketch tools: the document never takes a curve the kernel refuses",
+          "[ui][sketchtools][spline]") {
+    NoCatching free;
+    Drawing f;
+    // two equal points: the kernel finds no curve through them
+    core::SketchElement bad;
+    bad.kind = core::SketchElementKind::spline;
+    bad.points = {{3, 3}, {3, 3}};
+    CHECK_FALSE(f.model->sketchSplineLine(bad.points).has_value());
+    CHECK_FALSE(f.model->addSketchElements(f.sketch->step(), {bad}, QStringLiteral("spline")));
+    CHECK(f.elements().empty());
+    CHECK(f.model->sketchSplineLine({{0, 0}, {10, 5}, {20, 0}}).has_value());
+}
+
+TEST_CASE("sketch tools: a curve of 50 points follows the pointer without lag",
+          "[ui][sketchtools][spline]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("spline"));
+    for (int i = 0; i < 50; ++i) {
+        f.click(i * 3.0, 20.0 * std::sin(i * 0.5));
+    }
+    REQUIRE(f.sketch->placed() == 50);
+    constexpr int kMoves = 20;
+    const auto start = std::chrono::steady_clock::now();
+    for (int i = 0; i < kMoves; ++i) {
+        f.move(150.0 + i, 5.0 + i); // each move calculates the curve afresh
+    }
+    const double each =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start)
+            .count() /
+        kMoves;
+    CHECK(each < 40.0);
+    f.sketch->doubleClick();
+    CHECK(f.elements().size() == 1);
+    CHECK(f.elements()[0].points.size() == 50);
 }

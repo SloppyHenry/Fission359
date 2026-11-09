@@ -94,9 +94,43 @@ void arcLines(render::HandleGraphics& out, const core::SketchPlane& plane, core:
     }
 }
 
+// A chain of lines through `points`. Dashed: strokes of `dash` mm with gaps of the same length,
+// counted along the whole chain (not afresh on every short line).
+void chain(render::HandleGraphics& out, const core::SketchPlane& plane,
+           const std::vector<core::SketchPoint>& points, float width, const QColor& colour,
+           bool isDashed, double dash) {
+    double travelled = 0.0;
+    for (std::size_t i = 1; i < points.size(); ++i) {
+        const core::SketchPoint& a = points[i - 1];
+        const core::SketchPoint& b = points[i];
+        if (!isDashed) {
+            line(out, plane, a, b, width, colour);
+            continue;
+        }
+        const double length = std::hypot(b.u - a.u, b.v - a.v);
+        const auto along = [&](double at) {
+            return core::SketchPoint{a.u + (b.u - a.u) * at / length,
+                                     a.v + (b.v - a.v) * at / length};
+        };
+        double position = 0.0;
+        while (position < length) {
+            const double phase = std::fmod(travelled + position, 2.0 * dash);
+            const bool on = phase < dash;
+            const double next = std::min(length, position + (on ? dash : 2.0 * dash) - phase);
+            if (on) {
+                line(out, plane, along(position), along(next), width, colour);
+            }
+            position = next;
+        }
+        travelled += length;
+    }
+}
+
+// `curve`: the line chain of a spline as the kernel calculated it (null: the points themselves).
 void drawElement(render::HandleGraphics& out, const core::SketchPlane& plane,
                  const core::SketchElement& element, double pixelsPerMm, const QColor& colour,
-                 float width = kElementWidth) {
+                 float width = kElementWidth,
+                 const std::vector<core::SketchPoint>* curve = nullptr) {
     if (!core::sketchPointsUsable(element.kind, element.points)) {
         return;
     }
@@ -142,14 +176,8 @@ void drawElement(render::HandleGraphics& out, const core::SketchPlane& plane,
         break;
     }
     case core::SketchElementKind::spline:
-        // Until the curve is calculated (AP-2.1d) the chain of its points.
-        for (std::size_t i = 1; i < p.size(); ++i) {
-            if (element.construction) {
-                dashed(out, plane, p[i - 1], p[i], dash, width, shown);
-            } else {
-                line(out, plane, p[i - 1], p[i], width, shown);
-            }
-        }
+        chain(out, plane, curve != nullptr && curve->size() >= 2 ? *curve : p, width, shown,
+              element.construction, dash);
         break;
     }
 }
@@ -176,6 +204,8 @@ const char* toolWord(interaction::SketchToolKind kind) {
         return "slot";
     case interaction::SketchToolKind::polygon:
         return "polygon";
+    case interaction::SketchToolKind::spline:
+        return "spline";
     case interaction::SketchToolKind::none:
         break;
     }
@@ -464,7 +494,19 @@ void SketchController::pointAt(const interaction::PlaneRay& ray, double pixelsPe
     settings.pixelsPerMillimetre = pixelsPerMillimetre;
     settings.gridStep = interaction::sketchGridStep(baseStep(), pixelsPerMillimetre);
     settings.enabled = !snappingSuppressed();
-    m_caught = interaction::sketchSnap(*onPlane, m_elements, settings);
+    if (toolActive() && m_tool.kind() == interaction::SketchToolKind::spline && m_tool.busy()) {
+        // the points of the curve being drawn catch too (the first one closes the curve)
+        std::vector<core::SketchElement> withPending = m_elements;
+        for (const core::SketchPoint& point : m_tool.placedPoints()) {
+            core::SketchElement mark;
+            mark.kind = core::SketchElementKind::point;
+            mark.points = {point};
+            withPending.push_back(std::move(mark));
+        }
+        m_caught = interaction::sketchSnap(*onPlane, withPending, settings);
+    } else {
+        m_caught = interaction::sketchSnap(*onPlane, m_elements, settings);
+    }
 
     QVariantMap map;
     map[QStringLiteral("valid")] = true;
@@ -487,6 +529,33 @@ void SketchController::pointerGone() {
     m_snapMap = {};
     refresh();
     emit snapChanged();
+}
+
+// The curve of a spline as the kernel calculates it; the last ones are kept, so that a redraw
+// (the camera moves) does not ask the kernel again. Null for other elements, and for a curve the
+// kernel refuses (then the points themselves are drawn).
+const std::vector<core::SketchPoint>*
+SketchController::curveOf(const core::SketchElement& element) {
+    constexpr std::size_t kKept = 64;
+    if (element.kind != core::SketchElementKind::spline || m_model == nullptr ||
+        !core::sketchPointsUsable(element.kind, element.points)) {
+        return nullptr;
+    }
+    for (const CachedCurve& cached : m_curves) {
+        if (cached.through == element.points) {
+            return cached.line.empty() ? nullptr : &cached.line;
+        }
+    }
+    if (m_curves.size() >= kKept) {
+        m_curves.erase(m_curves.begin());
+    }
+    CachedCurve made;
+    made.through = element.points;
+    if (auto line = m_model->sketchSplineLine(element.points)) {
+        made.line = std::move(*line);
+    }
+    m_curves.push_back(std::move(made));
+    return m_curves.back().line.empty() ? nullptr : &m_curves.back().line;
 }
 
 void SketchController::refresh() {
@@ -528,11 +597,13 @@ void SketchController::refresh() {
         graphics.hiddenAlpha = 0.5F;
 
         for (const core::SketchElement& element : m_elements) {
-            drawElement(graphics, m_plane, element, ppm, m_elementColour);
+            drawElement(graphics, m_plane, element, ppm, m_elementColour, kElementWidth,
+                        curveOf(element));
         }
         if (toolActive()) {
             for (const core::SketchElement& element : m_draft.elements) {
-                drawElement(graphics, m_plane, element, ppm, m_draftColour, kDraftWidth);
+                drawElement(graphics, m_plane, element, ppm, m_draftColour, kDraftWidth,
+                            curveOf(element));
             }
         }
         if (m_caught) {
@@ -585,8 +656,8 @@ void SketchController::chooseTool(const QString& name, int variant) {
     SketchToolKind kind = SketchToolKind::none;
     for (const SketchToolKind candidate :
          {SketchToolKind::line, SketchToolKind::rectangle, SketchToolKind::circle,
-          SketchToolKind::point, SketchToolKind::arc, SketchToolKind::slot,
-          SketchToolKind::polygon}) {
+          SketchToolKind::point, SketchToolKind::arc, SketchToolKind::slot, SketchToolKind::polygon,
+          SketchToolKind::spline}) {
         if (name == QLatin1String(toolWord(candidate))) {
             kind = candidate;
         }
@@ -699,6 +770,13 @@ void SketchController::doubleClick() {
     applyStep(m_tool.doubleClick());
 }
 
+void SketchController::removeLastPoint() {
+    if (!drawing() || !m_tool.undoPoint()) {
+        return;
+    }
+    updateDraft();
+}
+
 void SketchController::setTyped(int field, double value) {
     if (!drawing()) {
         return;
@@ -737,6 +815,10 @@ void SketchController::applyStep(const interaction::SketchToolStep& step) {
         const QString kind = loneArc ? QStringLiteral("arc") : toolName();
         if (m_model != nullptr && m_model->addSketchElements(m_step, batch, kind)) {
             m_elements = m_model->sketchElements(m_step);
+        } else if (std::ranges::any_of(batch, [](const core::SketchElement& element) {
+                       return element.kind == core::SketchElementKind::spline;
+                   })) {
+            emit notice(QStringLiteral("curveFailed")); // the kernel found no curve through them
         }
     }
     using interaction::SketchToolNotice;

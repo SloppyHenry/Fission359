@@ -465,10 +465,16 @@ public:
     std::optional<core::SketchResult> sketchResult(const QString& stepId) const;
     /// The elements of a sketch as they are in the document now (also before the calculation).
     std::vector<core::SketchElement> sketchElements(const QString& stepId) const;
+    /// The curve of a spline through these points (the last equal to the first: closed) as a
+    /// chain of short lines within 0.005 mm of it, as the kernel calculates it. Nothing when the
+    /// kernel cannot make a curve through them. Quick enough for every move of the pointer.
+    std::optional<std::vector<core::SketchPoint>>
+    sketchSplineLine(const std::vector<core::SketchPoint>& through) const;
     /// Adds elements that belong together (the four sides of a rectangle) to a sketch as ONE step
     /// of the history; `kind` ("line", "rectangle", "circle", "point") names it in the history.
     /// The ids in `elements` are ignored, the sketch gives them out. False (nothing changed) when
-    /// the step has no sketch, `elements` is empty or an element cannot be used.
+    /// the step has no sketch, `elements` is empty, an element cannot be used or the kernel cannot
+    /// make the curve of a spline among them.
     bool addSketchElements(const QString& stepId, const std::vector<core::SketchElement>& elements,
                            const QString& kind);
 
