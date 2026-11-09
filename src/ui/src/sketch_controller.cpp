@@ -232,6 +232,8 @@ const char* toolWord(interaction::SketchToolKind kind) {
         return "mirror";
     case interaction::SketchToolKind::pattern:
         return "pattern";
+    case interaction::SketchToolKind::takeOver:
+        return "takeover";
     case interaction::SketchToolKind::none:
         break;
     }
@@ -382,6 +384,13 @@ void SketchController::leave(bool removeIfEmpty) {
     if (m_selection != nullptr) {
         m_selection->overrideViewportFilter(std::nullopt);
     }
+    if (m_viewport != nullptr) {
+        m_viewport->setPickableBodies(std::nullopt);
+    }
+    if (!m_blocked.empty()) {
+        m_blocked.clear();
+        emit blockedChanged();
+    }
     if (m_model != nullptr) {
         m_model->setActiveSketch(QString()); // the other bodies are solid again
         if (removeIfEmpty && wasSketching) {
@@ -502,6 +511,13 @@ void SketchController::onModelChanged() {
     m_planeReady = ready;
     m_elements = m_model->sketchElements(m_step);
     m_trimmer.reset(); // the pieces depend on the elements
+    if (!m_blocked.empty()) {
+        m_blocked.clear();
+        emit blockedChanged();
+    }
+    if (takeOverActive()) {
+        applyPickFilter(); // the bodies in front of the sketch may have changed
+    }
     m_hoverPiece.reset();
     m_hoverExtension.reset();
     m_chain.reset();
@@ -524,6 +540,16 @@ void SketchController::onModelChanged() {
 }
 
 void SketchController::onPicked(int intent, bool, const QString& body, int kind, int number) {
+    if (m_mode == Mode::sketching && takeOverActive() &&
+        static_cast<Viewport3D::PickIntent>(intent) == Viewport3D::PickIntent::click) {
+        if (!body.isEmpty()) {
+            takeOver(body, kind, number);
+        }
+        if (m_selection != nullptr) {
+            m_selection->clear(); // the click took the edge over; it is not "chosen" as well
+        }
+        return;
+    }
     if (m_mode != Mode::picking ||
         static_cast<Viewport3D::PickIntent>(intent) != Viewport3D::PickIntent::click) {
         return;
@@ -702,7 +728,8 @@ void SketchController::refresh() {
         graphics.hiddenAlpha = 0.5F;
 
         for (const core::SketchElement& element : m_elements) {
-            drawElement(graphics, m_plane, element, ppm, m_elementColour, kElementWidth,
+            drawElement(graphics, m_plane, element, ppm,
+                        element.link ? m_linkedColour : m_elementColour, kElementWidth,
                         curveOf(element));
         }
         if (toolActive()) {
@@ -828,7 +855,7 @@ void SketchController::chooseTool(const QString& name, int variant) {
           SketchToolKind::point, SketchToolKind::arc, SketchToolKind::slot, SketchToolKind::polygon,
           SketchToolKind::spline, SketchToolKind::trim, SketchToolKind::extend,
           SketchToolKind::offset, SketchToolKind::fillet, SketchToolKind::mirror,
-          SketchToolKind::pattern}) {
+          SketchToolKind::pattern, SketchToolKind::takeOver}) {
         if (name == QLatin1String(toolWord(candidate))) {
             kind = candidate;
         }
@@ -843,8 +870,32 @@ void SketchController::chooseTool(const QString& name, int variant) {
     }
     m_tool.select(kind, remembered);
     forgetEdit();
+    applyPickFilter();
+    if (!m_blocked.empty()) {
+        m_blocked.clear();
+        emit blockedChanged();
+    }
     emit toolChanged();
     updateDraft();
+}
+
+// The tool "takeover" lets the pointer find edges and faces of the bodies in front of the sketch;
+// every other tool lets it find nothing but the plane.
+void SketchController::applyPickFilter() {
+    if (m_selection == nullptr || m_mode != Mode::sketching) {
+        return;
+    }
+    core::SelectionFilter filter;
+    filter.bodies = filter.faces = filter.edges = filter.vertices = false;
+    std::optional<QStringList> only;
+    if (takeOverActive() && m_model != nullptr) {
+        filter.faces = filter.edges = true;
+        only = m_model->takeableBodies(m_step);
+    }
+    m_selection->overrideViewportFilter(filter);
+    if (m_viewport != nullptr) {
+        m_viewport->setPickableBodies(std::move(only));
+    }
 }
 
 void SketchController::onClicked(double x, double y) {
@@ -1275,6 +1326,18 @@ void SketchController::commitExtend() {
 
 bool SketchController::applyEdit(const interaction::SketchEdit& edit, const QString& action) {
     bool applied = false;
+    // An element that follows an edge of a body is not changed (AP-2.1f, decision 48): nothing is
+    // done and the hint offers to let go of the link.
+    if (const std::vector<std::string> linked = linkedIn(edit); !linked.empty()) {
+        m_blocked = linked;
+        emit blockedChanged();
+        say(QStringLiteral("linked"));
+        m_stroking = false;
+        m_marked.clear();
+        m_hoverPiece.reset();
+        updateDraft();
+        return false;
+    }
     if (edit.notice == interaction::SketchEditNotice::curvePartial) {
         emit notice(QStringLiteral("curvePartial"));
     }
@@ -1300,6 +1363,88 @@ bool SketchController::applyEdit(const interaction::SketchEdit& edit, const QStr
 }
 
 // --- offsetting and corners (AP-2.1e2) --------------------------------------------------
+
+std::vector<std::string> SketchController::linkedIn(const interaction::SketchEdit& edit) const {
+    std::vector<std::string> ids;
+    const auto note = [&](const std::string& id) {
+        const auto found = std::ranges::find_if(
+            m_elements, [&](const core::SketchElement& e) { return e.id == id; });
+        if (found != m_elements.end() && found->link && std::ranges::find(ids, id) == ids.end()) {
+            ids.push_back(id);
+        }
+    };
+    for (const core::SketchPointMove& move : edit.moves) {
+        note(move.element);
+    }
+    for (const std::string& removed : edit.removed) {
+        note(removed);
+    }
+    return ids;
+}
+
+bool SketchController::takeOver(const QString& body, int kind, int number) {
+    if (!takeOverActive() || !m_planeReady || m_model == nullptr) {
+        return false;
+    }
+    const bool face = kind == static_cast<int>(core::SelectableKind::face);
+    if (!face && kind != static_cast<int>(core::SelectableKind::edge)) {
+        return false;
+    }
+    const auto result = m_model->takeOverEdges(m_step, body, face, number);
+    if (!result) {
+        say(QStringLiteral("cannotTake"));
+        return false;
+    }
+    if (result->taken == 0) {
+        say(QString::fromLatin1(result->already > 0 ? "edgeTaken" : "cannotTake"));
+        return false;
+    }
+    m_elements = m_model->sketchElements(m_step);
+    m_trimmer.reset();
+    updateDraft();
+    emit elementDone();
+    if (result->skipped > 0) {
+        say(QStringLiteral("edgesSome"));
+    }
+    return true;
+}
+
+bool SketchController::takeOverNamed(const QString& name) {
+    if (!takeOverActive() || !m_planeReady || m_model == nullptr) {
+        return false;
+    }
+    // the same path as a click, by name
+    const std::size_t before = m_elements.size();
+    const auto result = m_model->takeOverNamed(m_step, name);
+    if (!result || result->taken == 0) {
+        say(QString::fromLatin1(result && result->already > 0 ? "edgeTaken" : "cannotTake"));
+        return false;
+    }
+    m_elements = m_model->sketchElements(m_step);
+    m_trimmer.reset();
+    updateDraft();
+    emit elementDone();
+    if (result->skipped > 0) {
+        say(QStringLiteral("edgesSome"));
+    }
+    return m_elements.size() > before;
+}
+
+bool SketchController::releaseLinks() {
+    if (m_blocked.empty() || m_model == nullptr) {
+        return false;
+    }
+    const std::vector<std::string> ids = std::move(m_blocked);
+    m_blocked.clear();
+    emit blockedChanged();
+    const bool done = m_model->unlinkSketchElements(m_step, ids);
+    if (done) {
+        m_elements = m_model->sketchElements(m_step);
+        m_trimmer.reset();
+        updateDraft();
+    }
+    return done;
+}
 
 void SketchController::say(const QString& code, double number) {
     m_noticeNumber = number;

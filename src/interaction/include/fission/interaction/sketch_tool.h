@@ -34,10 +34,11 @@ enum class SketchToolKind {
     spline,
     trim,
     extend,
-    offset, ///< AP-2.1e2: a copy of a chain at a distance
-    fillet, ///< AP-2.1e2: round (variant 0) or chamfer (1) a corner
-    mirror, ///< AP-2.1e3: copies mirrored at a line
-    pattern ///< AP-2.1e3: copies in a row (variant 0) or round a point (1)
+    offset,  ///< AP-2.1e2: a copy of a chain at a distance
+    fillet,  ///< AP-2.1e2: round (variant 0) or chamfer (1) a corner
+    mirror,  ///< AP-2.1e3: copies mirrored at a line
+    pattern, ///< AP-2.1e3: copies in a row (variant 0) or round a point (1)
+    takeOver ///< AP-2.1f: edges of bodies taken over as linked elements (the controller does it)
 };
 
 /// Variants of a tool: the rectangle by two corners (0) or by its middle and a corner (1); the

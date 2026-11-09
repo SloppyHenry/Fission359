@@ -30,6 +30,23 @@ public:
     int newBodies() const override { return 0; }
     bool carriesSketch() const override { return true; }
 
+    // The face the sketch lies on is looked up in the first input; an edge taken over in the body
+    // its element names (AP-2.1f). An edge no element uses any more is left alone.
+    std::optional<std::size_t> refInput(const Feature& feature, const std::string& slot,
+                                        std::size_t index) const override {
+        if (slot != kSketchEdgeSlot) {
+            return std::size_t{0};
+        }
+        if (feature.sketch) {
+            for (const SketchElement& element : feature.sketch->elements) {
+                if (element.link && element.link->ref == index) {
+                    return element.link->input;
+                }
+            }
+        }
+        return std::nullopt;
+    }
+
     std::vector<ParamSpec> parameters() const override { return withPlace({}); }
 
     std::vector<TextFieldSpec> texts() const override {
@@ -80,9 +97,48 @@ public:
                                             valueOf(input.params, "z")},
                                            turnOf(input.params));
         }
+        followEdges(input, context, sketch);
         FeatureResult result;
         result.sketch = std::move(sketch);
         return result;
+    }
+
+    // Elements taken over from a body (AP-2.1f) are worked out from their edge every time: the
+    // line moves with the body. An edge that cannot be projected exactly any more (the body was
+    // turned so that a circle would be an ellipse) is an error on the step, never a guess.
+    static void followEdges(const ExecuteInput& input, const ExecuteContext& context,
+                            SketchResult& sketch) {
+        const auto edges = input.refs.find(std::string(kSketchEdgeSlot));
+        for (SketchElement& element : sketch.data.elements) {
+            if (!element.link) {
+                continue;
+            }
+            const SketchLink link = *element.link;
+            if (!sketch.plane || link.input >= input.inputs.size() || edges == input.refs.end() ||
+                link.ref >= edges->second.size() || edges->second[link.ref].id == 0) {
+                throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                         "sketch: the edge of " + element.id + " is not there",
+                                         std::string(kSketchEdgeSlot));
+            }
+            const SketchPlane& plane = *sketch.plane;
+            const geo::SketchFrame frame{plane.origin(), plane.uAxis(), plane.vAxis()};
+            const geo::SketchEdgeShape shape = context.kernel.projectEdgeToSketch(
+                input.inputs[link.input].solid, edges->second[link.ref].id, frame);
+            const auto expected =
+                element.kind == SketchElementKind::line     ? geo::SketchCurveKind::line
+                : element.kind == SketchElementKind::circle ? geo::SketchCurveKind::circle
+                                                            : geo::SketchCurveKind::arc;
+            if (shape.status != geo::SketchEdgeStatus::ok || shape.kind != expected ||
+                shape.points.size() != element.points.size()) {
+                throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                         "sketch: the edge of " + element.id +
+                                             " cannot be taken over exactly any more",
+                                         std::string(kSketchEdgeSlot));
+            }
+            for (std::size_t i = 0; i < shape.points.size(); ++i) {
+                element.points[i] = {shape.points[i].x, shape.points[i].y};
+            }
+        }
     }
 
     Description describe(const ResolvedParams&) const override { return {"sketch", {}}; }

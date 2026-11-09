@@ -6,7 +6,7 @@ import QtQuick
 // The drawing tools of the sketch mode (AP-2.1c1): the name on the button, the sentence of its
 // tooltip card, what the hint line says, and the words the command search finds it by (German and
 // English at once). Rule 10 of the master prompt: every tool brings these along. `key` is the key
-// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G; AP-2.1d the curve K, AP-2.1e1 Trim T and Extend E, AP-2.1e2 Offset O and Round corner F, AP-2.1e3 Mirror M and Pattern W (Row or Circle); Round corner has the way "Chamfer"; the entry "chamfer" is only a second name for it in the command search and is not listed in the tool palette). `variants` are the ways to draw it (the first is
+// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G; AP-2.1d the curve K, AP-2.1e1 Trim T and Extend E, AP-2.1e2 Offset O and Round corner F, AP-2.1e3 Mirror M and Pattern W (Row or Circle), AP-2.1f Take over edge U; Round corner has the way "Chamfer"; the entry "chamfer" is only a second name for it in the command search and is not listed in the tool palette). `variants` are the ways to draw it (the first is
 // the standard); "helper" is a switch, not a tool.
 QtObject {
     readonly property var tools: [
@@ -94,6 +94,12 @@ QtObject {
           synonyms: { de: ["Reihe", "Kreismuster", "wiederholen", "vervielfältigen", "Raster"],
                       en: ["pattern", "array", "repeat", "circular pattern", "linear pattern"] },
           variants: [qsTr("Row"), qsTr("Circle")] },
+        { id: "takeover", name: qsTr("Take over edge"), icon: "sketchtakeover", key: "U",
+          tip: qsTr("Takes an edge of a body into the sketch: it is projected straight onto the sketch plane and follows the body when the body changes. Click an edge, or click a face away from its edges to take over its whole border."),
+          hint: qsTr("Click an edge of a body, or a face for its whole border."),
+          synonyms: { de: ["kante übernehmen", "projizieren", "kante holen", "körperkante", "umriss übernehmen"],
+                      en: ["take over edge", "project edge", "use edge", "include edge", "project"] },
+          variants: [] },
         { id: "point", name: qsTr("Point"), icon: "sketchpoint", key: "P",
           tip: qsTr("Places a point, as a mark to catch on later."),
           hint: qsTr("Click where the point goes."),
@@ -192,6 +198,8 @@ QtObject {
             }
             return placed === 2 ? qsTr("Click where the row starts. Esc goes back to choosing.")
                                 : qsTr("Move to set the direction and the distance, or type the count (Tab: the distance). Click or Enter sets it. Esc goes back to choosing.")
+        case "takeover":
+            return qsTr("Click an edge of a body to take it over, or a face away from its edges to take over its whole border. Only bodies from before this sketch count. Esc ends the tool.")
         case "point":
             return qsTr("Click where the point goes. Esc ends the tool.")
         }

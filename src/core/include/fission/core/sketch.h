@@ -12,6 +12,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "fission/geo/rotation.h"
@@ -87,6 +88,20 @@ enum class SketchElementKind { point, line, circle, arc, spline };
 
 inline constexpr std::size_t sketchElementKindCount = 5;
 
+/// Where a taken-over element comes from (AP-2.1f, ADR-0013 addendum): an edge of a body that the
+/// sketch step points to. `input` is the position of the body in the step's inputs, `ref` the
+/// position of the reference in the step's slot `edges` (`kSketchEdgeSlot`). Both positions only
+/// ever grow: a reference that nobody uses any more stays in its place and is not looked up.
+struct SketchLink {
+    std::size_t input = 0;
+    std::size_t ref = 0;
+
+    bool operator==(const SketchLink&) const = default;
+};
+
+/// The slot of the step's references that holds the edges taken over (AP-2.1f).
+inline constexpr std::string_view kSketchEdgeSlot = "edges";
+
 /// One thing in a sketch. All geometry is points, so that moving a point is the only way to
 /// change an element and one command covers all of them:
 ///  - point:  `points` = {the point}
@@ -95,6 +110,8 @@ inline constexpr std::size_t sketchElementKindCount = 5;
 ///  - arc:    {middle, start, end}: from start to end counter-clockwise about the middle; the
 ///            radius is the distance middle-start, `end` only gives the direction
 ///  - spline: {the points it goes through, in order} (two or more)
+/// An element taken over from a body (a line, circle or arc) has a `link`: its points are worked
+/// out from the edge every time the step is calculated, and the person cannot move them.
 /// A line, circle or arc with `construction` set is an aid ("Hilfslinie"): drawn dashed, never
 /// forms an area.
 struct SketchElement {
@@ -102,6 +119,14 @@ struct SketchElement {
     SketchElementKind kind = SketchElementKind::line;
     std::vector<SketchPoint> points;
     bool construction = false;
+    std::optional<SketchLink> link; ///< Set for an element that follows an edge of a body.
+
+    SketchElement() = default;
+    SketchElement(std::string elementId, SketchElementKind elementKind,
+                  std::vector<SketchPoint> elementPoints, bool isConstruction = false,
+                  std::optional<SketchLink> elementLink = std::nullopt)
+        : id(std::move(elementId)), kind(elementKind), points(std::move(elementPoints)),
+          construction(isConstruction), link(elementLink) {}
 
     bool operator==(const SketchElement&) const = default;
 };

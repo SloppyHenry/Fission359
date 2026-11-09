@@ -17,7 +17,7 @@
 namespace fission::core {
 
 /// The version of `document.json` this program writes (docs/03-architektur.md §7).
-inline constexpr int currentFormatVersion = 3;
+inline constexpr int currentFormatVersion = 4;
 
 /// What went wrong or looked odd while reading. Codes only: the interface turns them into
 /// sentences (rule 5), nothing is built as text here.

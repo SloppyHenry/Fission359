@@ -63,7 +63,7 @@ std::unique_ptr<Command> makeImportFile(std::string fileName, Bytes bytes,
 class AddSketchElementCommand final : public Command {
 public:
     AddSketchElementCommand(FeatureId step, SketchElementKind kind, std::vector<SketchPoint> points,
-                            bool construction = false);
+                            bool construction = false, std::optional<SketchLink> link = {});
 
     ApplyResult apply(Document& document) override;
     void revert(Document& document) override;
@@ -77,6 +77,7 @@ private:
     SketchElementKind kind_;
     std::vector<SketchPoint> points_;
     bool construction_;
+    std::optional<SketchLink> link_;
     std::optional<std::string> element_;
     int numberBefore_ = 0;
     CommandDescription description_;
@@ -105,6 +106,13 @@ std::unique_ptr<Command> makeMoveSketchPoints(FeatureId step, std::vector<Sketch
 /// `sketchConstructionOff`, values `type`, `number`, `element`.
 std::unique_ptr<Command> makeSetSketchConstruction(FeatureId step, std::string element,
                                                    bool construction);
+
+/// Makes an element a plain one again (`std::nullopt`): it keeps its points and stops following
+/// its edge; the reference it pointed to stays in its place but is not used any more (AP-2.1f).
+/// Description key `unlinkSketchElement` (or `linkSketchElement` when a link is put back), values
+/// `type`, `number`, `element`.
+std::unique_ptr<Command> makeSetSketchLink(FeatureId step, std::string element,
+                                           std::optional<SketchLink> link);
 
 /// Removes a step and the bodies it made.
 std::unique_ptr<Command> makeRemoveFeature(FeatureId id);

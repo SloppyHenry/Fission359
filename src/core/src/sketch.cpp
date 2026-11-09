@@ -258,6 +258,10 @@ std::string SketchData::fingerprint() const {
     for (const SketchElement& element : elements) {
         text += element.id;
         text += element.construction ? "~" : "=";
+        if (element.link) {
+            text +=
+                "&" + std::to_string(element.link->input) + "." + std::to_string(element.link->ref);
+        }
         for (const SketchPoint& point : element.points) {
             text += number(point.u);
             text += ',';

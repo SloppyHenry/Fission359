@@ -3157,11 +3157,16 @@ bool DocumentModel::completeRepair(const QString& bodyId, const QString& kind, i
         return false;
     }
     const core::Feature* step = m_history.document().findFeature(m_repairFeature);
-    if (step == nullptr || step->inputs.empty() ||
-        toQString(step->inputs.front().value) != bodyId) {
-        return false; // only the body the step works on
+    // The body the reference points into: mostly the first input, for an edge taken over into a
+    // sketch the body of that edge (AP-2.1f).
+    const core::FeatureType* type = step != nullptr ? m_registry.find(step->type) : nullptr;
+    const std::optional<std::size_t> input =
+        type != nullptr ? type->refInput(*step, m_repairSlot, m_repairIndex) : std::nullopt;
+    if (step == nullptr || !input || *input >= step->inputs.size() ||
+        toQString(step->inputs[*input].value) != bodyId) {
+        return false; // only the body the reference points into
     }
-    const auto body = m_result->bodies.find(step->inputs.front());
+    const auto body = m_result->bodies.find(step->inputs[*input]);
     const auto slot = step->refs.find(m_repairSlot);
     if (body == m_result->bodies.end() || slot == step->refs.end() ||
         m_repairIndex >= slot->second.size()) {
@@ -3873,6 +3878,229 @@ bool DocumentModel::applySketchEdit(const QString& stepId, const interaction::Sk
     for (const core::SketchElement& element : edit.added) {
         done = done && m_history.execute(std::make_unique<core::AddSketchElementCommand>(
                            id, element.kind, element.points, element.construction));
+    }
+    if (!done) {
+        m_history.cancelTransaction();
+        documentChanged();
+        return false;
+    }
+    finishTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
+// --- taking over edges (AP-2.1f) --------------------------------------------------------
+
+QStringList DocumentModel::takeableBodies(const QString& stepId) const {
+    QStringList list;
+    const core::Document& document = m_history.document();
+    const auto sketchAt = document.indexOf(core::FeatureId{stepId.toStdString()});
+    if (!m_result || !sketchAt) {
+        return list;
+    }
+    for (const core::Body& body : document.bodies()) {
+        const auto made = m_result->bodies.find(body.id);
+        if (made == m_result->bodies.end() || document.consumerOf(body.id)) {
+            continue;
+        }
+        const auto producedAt = document.indexOf(made->second.producer);
+        if (producedAt && *producedAt < *sketchAt) {
+            list << toQString(body.id.value);
+        }
+    }
+    return list;
+}
+
+std::optional<DocumentModel::EdgesTaken> DocumentModel::takeOverEdges(const QString& stepId,
+                                                                      const QString& bodyId,
+                                                                      bool wholeFace, int number) {
+    const core::FeatureId id{stepId.toStdString()};
+    const core::Feature* step = m_history.document().findFeature(id);
+    const core::Body* body = findBody(bodyId);
+    if (step == nullptr || !step->sketch || body == nullptr || number < 1 || !m_result ||
+        !takeableBodies(stepId).contains(bodyId)) {
+        return std::nullopt;
+    }
+    const auto plane = sketchResult(stepId);
+    const auto made = m_result->bodies.find(body->id);
+    if (!plane || !plane->plane || made == m_result->bodies.end()) {
+        return std::nullopt;
+    }
+    const core::SketchPlane& where = *plane->plane;
+    const geo::SketchFrame frame{where.origin(), where.uAxis(), where.vAxis()};
+
+    // Where the body sits among the step's inputs, and the references it has already.
+    std::vector<core::BodyId> inputs = step->inputs;
+    auto at = std::find(inputs.begin(), inputs.end(), body->id);
+    if (at == inputs.end()) {
+        inputs.push_back(body->id);
+        at = inputs.end() - 1;
+    }
+    const auto inputIndex = static_cast<std::size_t>(at - inputs.begin());
+    const std::string slot(core::kSketchEdgeSlot);
+    std::vector<core::PersistentRef> refs;
+    if (const auto found = step->refs.find(slot); found != step->refs.end()) {
+        refs = found->second;
+    }
+    const auto taken = [&](const std::string& name) {
+        return std::ranges::any_of(step->sketch->elements, [&](const core::SketchElement& e) {
+            return e.link && e.link->input == inputIndex && e.link->ref < refs.size() &&
+                   refs[e.link->ref].name == name;
+        });
+    };
+
+    EdgesTaken outcome;
+    struct Made {
+        core::SketchElementKind kind = core::SketchElementKind::line;
+        std::vector<core::SketchPoint> points;
+        core::PersistentRef ref;
+    };
+    std::vector<Made> found;
+    try {
+        const geo::BodySignatures signatures = m_kernel->signatures(made->second.solid);
+        const core::BodyLooks looks = core::describeBody(made->second.faces, signatures);
+        std::vector<std::uint32_t> numbers;
+        if (wholeFace) {
+            for (const geo::ElementSignature& edge : signatures.edges) {
+                if (edge.id != 0 &&
+                    std::ranges::find(edge.faces, static_cast<std::uint32_t>(number)) !=
+                        edge.faces.end()) {
+                    numbers.push_back(edge.id);
+                }
+            }
+        } else {
+            numbers.push_back(static_cast<std::uint32_t>(number));
+        }
+        for (const std::uint32_t edge : numbers) {
+            const auto look = std::ranges::find_if(
+                looks.edges, [&](const core::NamedLook& entry) { return entry.id == edge; });
+            if (look == looks.edges.end() || look->name.empty()) {
+                ++outcome.skipped; // without a name it could not be found again
+                continue;
+            }
+            if (taken(look->name) || std::ranges::any_of(found, [&](const Made& m) {
+                    return m.ref.name == look->name;
+                })) {
+                ++outcome.already;
+                continue;
+            }
+            geo::SketchEdgeShape shape;
+            try {
+                shape = m_kernel->projectEdgeToSketch(made->second.solid, edge, frame);
+            } catch (const geo::GeometryError& error) {
+                qWarning().noquote() << "sketch: an edge could not be projected:" << error.what();
+                ++outcome.skipped;
+                continue;
+            }
+            auto ref = core::makeRef(looks, core::ElementKind::edge, edge,
+                                     core::placementOf(m_history.document(), m_registry,
+                                                       m_result->features, look->name));
+            if (shape.status != geo::SketchEdgeStatus::ok || !ref) {
+                ++outcome.skipped;
+                continue;
+            }
+            Made one;
+            one.kind = shape.kind == geo::SketchCurveKind::line ? core::SketchElementKind::line
+                       : shape.kind == geo::SketchCurveKind::circle
+                           ? core::SketchElementKind::circle
+                           : core::SketchElementKind::arc;
+            for (const geo::Point2d& point : shape.points) {
+                one.points.push_back({point.x, point.y});
+            }
+            one.ref = std::move(*ref);
+            found.push_back(std::move(one));
+        }
+    } catch (const geo::GeometryError& error) {
+        qWarning().noquote() << "sketch: the edges of the body could not be read:" << error.what();
+        return std::nullopt;
+    }
+    if (found.empty()) {
+        return outcome;
+    }
+
+    for (const Made& one : found) {
+        refs.push_back(one.ref);
+    }
+    const std::size_t firstRef = refs.size() - found.size();
+    m_history.beginTransaction(
+        {"takeOverEdges",
+         {{"type", "sketch"},
+          {"number", std::to_string(m_history.document().indexOf(id).value_or(0) + 1)},
+          {"count", std::to_string(found.size())}}});
+    bool done = m_history.execute(core::makeSetFeatureInputs(id, inputs)) &&
+                m_history.execute(core::makeSetFeatureRefs(id, slot, refs));
+    for (std::size_t i = 0; done && i < found.size(); ++i) {
+        done = m_history.execute(std::make_unique<core::AddSketchElementCommand>(
+            id, found[i].kind, found[i].points, false, core::SketchLink{inputIndex, firstRef + i}));
+    }
+    if (!done) {
+        m_history.cancelTransaction();
+        documentChanged();
+        return std::nullopt;
+    }
+    finishTransaction();
+    documentChanged();
+    emit historyChanged();
+    outcome.taken = static_cast<int>(found.size());
+    return outcome;
+}
+
+std::optional<DocumentModel::EdgesTaken> DocumentModel::takeOverNamed(const QString& stepId,
+                                                                      const QString& name) {
+    if (!m_result) {
+        return std::nullopt;
+    }
+    const std::string wanted = name.toStdString();
+    const bool isEdge = wanted.starts_with("edge[");
+    for (const QString& bodyId : takeableBodies(stepId)) {
+        const core::Body* body = findBody(bodyId);
+        const auto made =
+            body != nullptr ? m_result->bodies.find(body->id) : m_result->bodies.end();
+        if (made == m_result->bodies.end()) {
+            continue;
+        }
+        try {
+            const core::BodyLooks looks =
+                core::describeBody(made->second.faces, m_kernel->signatures(made->second.solid));
+            const auto& list = isEdge ? looks.edges : looks.faces;
+            const auto hit = std::ranges::find_if(
+                list, [&](const core::NamedLook& entry) { return entry.name == wanted; });
+            if (hit != list.end()) {
+                return takeOverEdges(stepId, bodyId, !isEdge, static_cast<int>(hit->id));
+            }
+        } catch (const geo::GeometryError&) {
+            continue;
+        }
+    }
+    return std::nullopt;
+}
+
+bool DocumentModel::unlinkSketchElements(const QString& stepId,
+                                         const std::vector<std::string>& elementIds) {
+    const core::FeatureId id{stepId.toStdString()};
+    const core::Feature* step = m_history.document().findFeature(id);
+    if (step == nullptr || !step->sketch) {
+        return false;
+    }
+    std::vector<std::string> linked;
+    for (const std::string& element : elementIds) {
+        const core::SketchElement* found = step->sketch->find(element);
+        if (found != nullptr && found->link) {
+            linked.push_back(element);
+        }
+    }
+    if (linked.empty()) {
+        return false;
+    }
+    m_history.beginTransaction(
+        {"unlinkSketchElement",
+         {{"type", "sketch"},
+          {"number", std::to_string(m_history.document().indexOf(id).value_or(0) + 1)},
+          {"count", std::to_string(linked.size())}}});
+    bool done = true;
+    for (const std::string& element : linked) {
+        done = done && m_history.execute(core::makeSetSketchLink(id, element, std::nullopt));
     }
     if (!done) {
         m_history.cancelTransaction();

@@ -87,6 +87,11 @@ class SketchController : public QObject {
     Q_PROPERTY(QColor draftColour MEMBER m_draftColour NOTIFY coloursChanged)
     /// The piece that trimming would take away (AP-2.1e1).
     Q_PROPERTY(QColor trimColour MEMBER m_trimColour NOTIFY coloursChanged)
+    /// Elements that follow an edge of a body (AP-2.1f).
+    Q_PROPERTY(QColor linkedColour MEMBER m_linkedColour NOTIFY coloursChanged)
+    /// The last edit was refused because it touches elements that follow an edge: the hint offers
+    /// "Let go of the link" (`releaseLinks`).
+    Q_PROPERTY(bool linkedBlocked READ linkedBlocked NOTIFY blockedChanged)
     /// A number that belongs to the last `notice` (the biggest radius that fits, in mm).
     Q_PROPERTY(double noticeNumber READ noticeNumber NOTIFY noticeNumberChanged)
 
@@ -116,6 +121,7 @@ public:
                    : static_cast<int>(m_tool.placedCount());
     }
     double noticeNumber() const noexcept { return m_noticeNumber; }
+    bool linkedBlocked() const noexcept { return !m_blocked.empty(); }
     bool pullingArc() const noexcept { return drawing() && m_tool.dragging(); }
     QVariantMap readout() const { return m_readout; }
     bool planeReady() const noexcept { return m_mode == Mode::sketching && m_planeReady; }
@@ -170,6 +176,18 @@ public:
     /// Enter in the mirror and pattern tools (the button "Continue" of the hint line): goes on from
     /// choosing the elements to the second step. Nothing without a choice (AP-2.1e3).
     Q_INVOKABLE void proceed();
+    // --- taking over edges (AP-2.1f) ---
+    /// With the tool "takeover": a click on an edge of a body takes it over (a line, circle or arc
+    /// that follows the edge), a click on a face away from its edges takes over every edge of its
+    /// border. `kind` is a `core::SelectableKind` (edge or face). One step of the history. Says
+    /// why when nothing was taken ("cannotTake", "edgeTaken", "edgesSome"). The view calls this
+    /// for the click of the pick pass; tests call it directly.
+    Q_INVOKABLE bool takeOver(const QString& body, int kind, int number);
+    /// The same for the face or edge with this name ("F1/box/top"), for tests and `--simulate`.
+    Q_INVOKABLE bool takeOverNamed(const QString& name);
+    /// "Let go of the link": the elements the last refused edit touched stop following their edges
+    /// (one step of the history). False when there are none.
+    Q_INVOKABLE bool releaseLinks();
     /// Backspace: takes the last point of the curve being drawn back (AP-2.1d).
     Q_INVOKABLE void removeLastPoint();
     /// Takes all typed numbers back (the element follows the pointer again).
@@ -205,6 +223,7 @@ signals:
     /// "chamferTooBig" (with `noticeNumber`: the biggest that fits).
     void notice(const QString& code);
     void noticeNumberChanged();
+    void blockedChanged();
 
 private:
     enum class Mode { idle, picking, sketching };
@@ -255,6 +274,13 @@ private:
     int copyPlaced() const noexcept {
         return !m_second ? (m_picked.empty() ? 0 : 1) : (m_anchor ? 3 : 2);
     }
+    // taking over edges (AP-2.1f)
+    bool takeOverActive() const noexcept {
+        return toolActive() && m_tool.kind() == interaction::SketchToolKind::takeOver;
+    }
+    void applyPickFilter();
+    /// The ids among the moved and removed elements of `edit` that follow an edge.
+    std::vector<std::string> linkedIn(const interaction::SketchEdit& edit) const;
     std::vector<std::string> chainIds(const std::string& id) const;
     void updateCopyHover(const core::SketchPoint& raw);
     interaction::SketchCopyResult patternResult(const core::SketchPoint& pointer);
@@ -325,6 +351,7 @@ private:
     std::array<int, 2> m_patCount{3, 6};       ///< the count used last: row, circle
     int m_shownCount = 0;
     double m_noticeNumber = 0.0;
+    std::vector<std::string> m_blocked; ///< linked elements the last refused edit touched
 
     QColor m_gridColour{0x3A, 0x3D, 0x43};
     QColor m_gridMajorColour{0x55, 0x59, 0x61};
@@ -333,6 +360,7 @@ private:
     QColor m_markerColour{0x4C, 0x8D, 0xFF};
     QColor m_draftColour{0x4C, 0x8D, 0xFF};
     QColor m_trimColour{0xF0, 0x5A, 0x5A};
+    QColor m_linkedColour{0x7F, 0xB0, 0xFF};
 };
 
 } // namespace fission::ui

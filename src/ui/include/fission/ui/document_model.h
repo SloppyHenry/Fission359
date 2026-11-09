@@ -490,6 +490,30 @@ public:
     /// The kernel, for the sketch tools that need crossings (trim, extend).
     const geo::GeometryKernel& sketchKernel() const { return *m_kernel; }
 
+    // --- taking over edges (AP-2.1f) ---
+    /// What `takeOverEdges` did: how many elements it made, how many edges could not be taken over
+    /// exactly (or have no name to be found again by), and how many were taken over before.
+    struct EdgesTaken {
+        int taken = 0;
+        int skipped = 0;
+        int already = 0;
+    };
+    /// The bodies whose edges the sketch step can take over: bodies that are finished before the
+    /// step in the recipe (no step after it changes them, so what is seen is what the step sees)
+    /// and not used up by another body.
+    QStringList takeableBodies(const QString& stepId) const;
+    /// Takes over the edge `number` of the body (or, with `wholeFace`, every edge of the border of
+    /// the face `number`) into the sketch as linked elements (decisions 45-47), as ONE step of
+    /// the history. Nothing when the step, body or element is not usable.
+    std::optional<EdgesTaken> takeOverEdges(const QString& stepId, const QString& bodyId,
+                                            bool wholeFace, int number);
+    /// The same for the face or edge with this name ("F1/box/top", "edge[F1/box/right|F1/box/top]")
+    /// on any takeable body (for tests and `--simulate`).
+    std::optional<EdgesTaken> takeOverNamed(const QString& stepId, const QString& name);
+    /// Lets elements go: they stay as they are but stop following their edges, as ONE step of the
+    /// history. False when none of them is linked.
+    bool unlinkSketchElements(const QString& stepId, const std::vector<std::string>& elementIds);
+
     /// Removes faces and lets the body heal (a hole closes, a rounding goes sharp): a new step.
     /// Returns the id of the new body, empty when nothing can be done.
     Q_INVOKABLE QString removeFaces(const QString& bodyId, const QVariantList& faceNumbers);

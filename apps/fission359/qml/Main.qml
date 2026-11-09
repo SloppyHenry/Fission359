@@ -204,7 +204,7 @@ Window {
             return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed, Sketch.pullingArc)
                    + " " + qsTr("Shift switches catching off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
         }
-        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
+        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
     }
 
     // ---- undo and redo ---------------------------------------------------------------------
@@ -857,6 +857,8 @@ Window {
     // sequences and do not clash.
     Shortcut { sequence: "M"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.mirror") }
     Shortcut { sequence: "W"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.pattern") }
+    // Take over edge U (AP-2.1f): plain U is unused elsewhere (checked: no other single-key shortcut).
+    Shortcut { sequence: "U"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.takeover") }
     Shortcut { sequence: "P"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.point") }
     Shortcut { sequence: "X"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.helper") }
     Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
@@ -932,6 +934,8 @@ Window {
     Binding { target: Sketch; property: "markerColour"; value: Theme.accentLine }
     Binding { target: Sketch; property: "draftColour"; value: Theme.accent }
     Binding { target: Sketch; property: "trimColour"; value: Theme.bad }
+    // Elements that follow an edge of a body: the accent text colour (docs/08-gestaltung.md §2).
+    Binding { target: Sketch; property: "linkedColour"; value: Theme.accentText }
     Connections {
         target: Selection
 
@@ -1767,6 +1771,9 @@ Window {
         continueVisible: Sketch.toolActive && Sketch.placed === 1
                          && (Sketch.tool === "mirror" || Sketch.tool === "pattern")
         onContinueClicked: Sketch.proceed()
+        // "This edge follows the body": the one-click solution is to let go of the link (AP-2.1f).
+        releaseVisible: Sketch.linkedBlocked && hintTimer.running
+        onReleaseClicked: Sketch.releaseLinks()
         gridStep: viewport.snapStep
         gridAutomatic: viewport.fixedSnapStep === 0
         onGridStepChosen: step => {
@@ -1907,6 +1914,8 @@ Window {
         case "patternSketch": return qsTr("Pattern in the sketch")
         case "roundCorner": return qsTr("Corner rounded")
         case "chamferCorner": return qsTr("Corner chamfered")
+        case "takeOverEdges": return qsTr("%n edge(s) taken over into the sketch", "", Number(step.count))
+        case "unlinkSketchElement": return qsTr("%n sketch element(s) let go of the body", "", Number(step.count))
         case "sketchConstructionOn": return qsTr("%1 made a helper line").arg(sketchElementLabel(step.kind))
         case "sketchConstructionOff": return qsTr("%1 made a normal line again").arg(sketchElementLabel(step.kind))
         case "setLabel": return qsTr("Step renamed")

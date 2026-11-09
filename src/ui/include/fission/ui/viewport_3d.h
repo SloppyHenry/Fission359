@@ -239,6 +239,10 @@ public:
     /// Which kinds of things can be hovered and chosen right now.
     void setSelectionFilter(core::SelectionFilter filter);
     core::SelectionFilter selectionFilter() const { return m_filter; }
+    /// Only these bodies (`RenderBody::id`) can be hovered and chosen; the others count as not
+    /// there for the pointer (AP-2.1f: the sketch tool "take over an edge" takes edges only of
+    /// bodies that come before the sketch). `std::nullopt`: every body, as usual.
+    void setPickableBodies(std::optional<QStringList> bodies);
     /// The chosen elements, drawn highlighted. The hovered one is added by the view itself.
     void setSelectionHighlights(std::vector<render::Highlight> highlights);
     /// Who draws handles into the scene: the size handles (`HandleController`) and the gizmo
@@ -391,6 +395,7 @@ private:
     void hoverAgain();
 
     core::SelectionFilter m_filter;
+    std::optional<QStringList> m_pickable; ///< see `setPickableBodies`
     std::vector<render::Highlight> m_selectionHighlights;
     std::array<render::HandleGraphics, 9> m_handleGraphics;
     std::optional<render::Highlight> m_hover;

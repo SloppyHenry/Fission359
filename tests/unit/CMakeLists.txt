@@ -30,6 +30,7 @@ add_executable(fission_unit_tests
   features/test_text_feature.cpp
   features/test_import.cpp
   features/test_sketch_feature.cpp
+  features/test_sketch_edges.cpp
   services/test_settings.cpp
   io/test_fission_file.cpp
   io/test_export.cpp
@@ -52,6 +53,7 @@ add_executable(fission_unit_tests
   geometry/test_measuring.cpp
   geometry/test_sketch_curve.cpp
   geometry/test_sketch_intersections.cpp
+  geometry/test_sketch_edge.cpp
   analysis/test_material.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
@@ -72,6 +74,7 @@ add_executable(fission_unit_tests
   ui/test_selection_controller.cpp
   ui/test_sketch_mode.cpp
   ui/test_sketch_tools.cpp
+  ui/test_sketch_takeover.cpp
   ui/test_placement.cpp
   ui/test_handles.cpp
   ui/test_shape_previews.cpp

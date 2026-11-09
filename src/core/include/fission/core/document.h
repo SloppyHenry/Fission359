@@ -290,7 +290,8 @@ public:
     /// Adds an element at the end and returns the id it got (the kind's counter counts up).
     std::optional<std::string> addSketchElement(const FeatureId& id, SketchElementKind kind,
                                                 std::vector<SketchPoint> points,
-                                                bool construction = false);
+                                                bool construction = false,
+                                                std::optional<SketchLink> link = std::nullopt);
     /// Takes an element out. Its number stays used (the counter is not touched).
     std::optional<RemovedSketchElement> takeSketchElement(const FeatureId& id,
                                                           std::string_view elementId);
@@ -301,6 +302,9 @@ public:
     bool setSketchPoints(const FeatureId& id, std::string_view elementId,
                          std::vector<SketchPoint> points);
     bool setSketchConstruction(const FeatureId& id, std::string_view elementId, bool construction);
+    /// Sets or clears the link of an element to an edge of a body (AP-2.1f).
+    bool setSketchLink(const FeatureId& id, std::string_view elementId,
+                       std::optional<SketchLink> link);
 
     // --- the time marker ("jetzt", AP-1.9) -------------------------------------------------
     /// How many steps of the recipe count, or nullopt for all of them. The steps after the

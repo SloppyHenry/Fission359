@@ -555,7 +555,8 @@ bool Document::setFeatureRefs(const FeatureId& id, std::string_view name,
 
 std::optional<std::string> Document::addSketchElement(const FeatureId& id, SketchElementKind kind,
                                                       std::vector<SketchPoint> points,
-                                                      bool construction) {
+                                                      bool construction,
+                                                      std::optional<SketchLink> link) {
     Feature* feature = mutableFeature(id);
     if (feature == nullptr || !feature->sketch || !sketchPointsUsable(kind, points)) {
         return std::nullopt;
@@ -565,6 +566,7 @@ std::optional<std::string> Document::addSketchElement(const FeatureId& id, Sketc
     element.kind = kind;
     element.points = std::move(points);
     element.construction = construction;
+    element.link = link;
     std::string made = element.id;
     feature->sketch->elements.push_back(std::move(element));
     touch();
@@ -621,6 +623,21 @@ bool Document::setSketchPoints(const FeatureId& id, std::string_view elementId,
     }
     if (element->points != points) {
         element->points = std::move(points);
+        touch();
+    }
+    return true;
+}
+
+bool Document::setSketchLink(const FeatureId& id, std::string_view elementId,
+                             std::optional<SketchLink> link) {
+    Feature* feature = mutableFeature(id);
+    SketchElement* element =
+        feature != nullptr && feature->sketch ? feature->sketch->find(elementId) : nullptr;
+    if (element == nullptr) {
+        return false;
+    }
+    if (element->link != link) {
+        element->link = link;
         touch();
     }
     return true;

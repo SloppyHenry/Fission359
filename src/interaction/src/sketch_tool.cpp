@@ -103,6 +103,7 @@ int SketchTool::fieldCount() const {
     case SketchToolKind::fillet:
     case SketchToolKind::mirror:
     case SketchToolKind::pattern:
+    case SketchToolKind::takeOver:
     case SketchToolKind::none:
         break;
     }
@@ -429,6 +430,7 @@ SketchTool::Shape SketchTool::shape(const SketchPoint& pointer, bool alt) const 
     case SketchToolKind::fillet:
     case SketchToolKind::mirror:
     case SketchToolKind::pattern:
+    case SketchToolKind::takeOver:
     case SketchToolKind::none:
         break;
     }
@@ -532,6 +534,7 @@ SketchToolStep SketchTool::click(const SketchPoint& position, bool alt) {
     case SketchToolKind::fillet:
     case SketchToolKind::mirror:
     case SketchToolKind::pattern:
+    case SketchToolKind::takeOver:
         break;
     case SketchToolKind::point: {
         SketchBatch batch{made(SketchElementKind::point, {position})};

@@ -2735,8 +2735,8 @@
     </message>
     <message>
         <location line="+2"/>
-        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
-        <translation>Skizzieren: Wähle links ein Werkzeug (L Linie, R Rechteck, C Kreis, A Bogen, S Langloch, G Vieleck, K Kurve, T Trimmen, E Verlängern, O Versetzen, F Ecke abrunden, M Spiegeln, W Muster, P Punkt, X Hilfslinie). Der Zeiger rastet an Punkten, Mitten und am Raster ein; mit Shift rastet er nicht ein. „Fertig“ oder Esc verlässt die Skizze.</translation>
+        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
+        <translation>Skizzieren: Wähle links ein Werkzeug (L Linie, R Rechteck, C Kreis, A Bogen, S Langloch, G Vieleck, K Kurve, T Trimmen, E Verlängern, O Versetzen, F Ecke abrunden, M Spiegeln, W Muster, U Kante übernehmen, P Punkt, X Hilfslinie). Der Zeiger rastet an Punkten, Mitten und am Raster ein; mit Shift rastet er nicht ein. „Fertig“ oder Esc verlässt die Skizze.</translation>
     </message>
     <message>
         <location line="+90"/>
@@ -3005,6 +3005,22 @@
         <location line="+1"/>
         <source>Pattern in the sketch</source>
         <translation>Muster in der Skizze</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n edge(s) taken over into the sketch</source>
+        <translation>
+            <numerusform>%n Kante in die Skizze übernommen</numerusform>
+            <numerusform>%n Kanten in die Skizze übernommen</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n sketch element(s) let go of the body</source>
+        <translation>
+            <numerusform>%n Skizzenelement vom Körper gelöst</numerusform>
+            <numerusform>%n Skizzenelemente vom Körper gelöst</numerusform>
+        </translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3865,6 +3881,11 @@
         <translation>Diese Skizze hat keine Ebene.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>An edge of this sketch cannot be followed.</source>
+        <translation>Eine Kante dieser Skizze lässt sich nicht verfolgen.</translation>
+    </message>
+    <message>
         <location line="+38"/>
         <source>The wall is thicker than the body at its thinnest place (%1 mm).</source>
         <translation>Die Wand ist dicker als der Körper an seiner dünnsten Stelle (%1 mm).</translation>
@@ -3975,6 +3996,11 @@
         <translation>Die Ebene dieser Skizze ist nicht brauchbar. Blende den Schritt aus und zeichne eine neue Skizze.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>A taken-over edge is no straight line, circle or arc seen from straight above any more, so the sketch cannot follow it exactly. Undo the change to the body, or open the sketch and let go of the link.</source>
+        <translation>Eine übernommene Kante ist keine Gerade und kein Kreis oder Bogen mehr, auf den man senkrecht schaut, deshalb kann die Skizze ihr nicht genau folgen. Mache die Änderung am Körper rückgängig, oder öffne die Skizze und löse die Verknüpfung.</translation>
+    </message>
+    <message>
         <location line="+2"/>
         <source>The shape cannot be built with these values. Try changing a value a little.</source>
         <translation>Die Form lässt sich mit diesen Werten nicht bauen. Ändere einen Wert ein wenig.</translation>
@@ -4069,6 +4095,26 @@
         <location line="-368"/>
         <source>A polygon has a whole number of sides from 3 to 64. The number before stays.</source>
         <translation>Ein Polygon hat eine ganze Zahl von Seiten, von 3 bis 64. Die Zahl davor bleibt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This edge cannot be taken over yet. Straight edges, and circles and arcs seen from straight above, can.</source>
+        <translation>Diese Kante lässt sich noch nicht übernehmen. Gerade Kanten sowie Kreise und Bögen, auf die man senkrecht schaut, gehen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This edge is taken over already.</source>
+        <translation>Diese Kante ist schon übernommen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Some edges of this face cannot be taken over yet. The others are in the sketch.</source>
+        <translation>Einige Kanten dieser Fläche lassen sich noch nicht übernehmen. Die anderen sind in der Skizze.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This edge follows the body. Let go of the link to change it.</source>
+        <translation>Diese Kante folgt dem Körper. Löse die Verknüpfung, um sie zu ändern.</translation>
     </message>
 </context>
 <context>
@@ -5412,6 +5458,21 @@
         <translation>Seitenmitte (Inkreis)</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Take over edge</source>
+        <translation>Kante übernehmen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Takes an edge of a body into the sketch: it is projected straight onto the sketch plane and follows the body when the body changes. Click an edge, or click a face away from its edges to take over its whole border.</source>
+        <translation>Holt eine Kante eines Körpers in die Skizze: Sie wird senkrecht auf die Skizzenebene projiziert und folgt dem Körper, wenn er sich ändert. Klicke eine Kante, oder eine Fläche abseits ihrer Kanten, um ihren ganzen Rand zu holen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click an edge of a body, or a face for its whole border.</source>
+        <translation>Klicke eine Kante eines Körpers, oder eine Fläche für ihren ganzen Rand.</translation>
+    </message>
+    <message>
         <location line="+76"/>
         <source>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</source>
         <translation>Lass los, um den anschließenden Bogen zu setzen, oder tippe seinen Radius. Enter setzt ihn, Esc verwirft ihn.</translation>
@@ -5470,6 +5531,11 @@
         <location line="+1"/>
         <source>Click a corner, or type the radius (Tab: the number of sides, then the angle). Enter sets it, Esc cancels.</source>
         <translation>Klicke eine Ecke an oder tippe den Radius (Tab: die Seitenzahl, dann der Winkel). Enter setzt es, Esc bricht ab.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click an edge of a body to take it over, or a face away from its edges to take over its whole border. Only bodies from before this sketch count. Esc ends the tool.</source>
+        <translation>Klicke eine Kante eines Körpers, um sie zu übernehmen, oder eine Fläche abseits ihrer Kanten für ihren ganzen Rand. Es zählen nur Körper von vor dieser Skizze. Esc beendet das Werkzeug.</translation>
     </message>
 </context>
 <context>
@@ -5555,6 +5621,11 @@
         <location line="+31"/>
         <source>Continue</source>
         <translation>Weiter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Let go of the link</source>
+        <translation>Verknüpfung lösen</translation>
     </message>
 </context>
 <context>

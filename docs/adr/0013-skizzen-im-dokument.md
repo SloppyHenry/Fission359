@@ -64,3 +64,29 @@ Option 1.
 ## Belege
 Befehls- und Rückgängig-Tests: `tests/unit/core/test_sketch.cpp`, `test_history.cpp` (Zufallstest mit Skizzen);
 Datei: `tests/unit/core/test_serialize.cpp`, `tests/unit/io/test_fission_file.cpp`.
+
+## Nachtrag 2.1f (2026-11-09): übernommene Kanten, Dateiformat 4
+Kanten eines Körpers lassen sich in eine Skizze übernehmen (AP-2.1, Festlegungen 45–49). Das Element bleibt mit seiner Kante verknüpft
+und folgt dem Körper.
+
+1. **Das Feld `link` im Element** (`SketchElement::link`, optional): `{input, ref}`. `input` ist die Stelle des Körpers in den Eingängen
+   (`Feature::inputs`) des Skizzen-Schritts, `ref` die Stelle des Verweises im Slot `edges` der Verweise (`Feature::refs["edges"]`).
+   Nur Linie, Kreis und Bogen werden verknüpft (Festlegung 46). Ein Element ohne Feld ist gewöhnlich.
+2. **Stabile Stellen:** Die Liste im Slot `edges` wird nur verlängert. Löst die Person die Verknüpfung oder wird das Element entfernt, bleibt
+   der Verweis an seiner Stelle liegen und wird nicht mehr nachgeschlagen (`FeatureType::refInput` liefert dafür „nicht benutzt“); Undo
+   stellt Element und Verweis mit denselben Stellen wieder her. Eine Stelle wird nie neu vergeben. Der Preis sind übrig gebliebene Verweise
+   in der Datei, klein und ohne Wirkung. Verworfen: Verweise bei jedem Entfernen aus der Liste nehmen (Stellen verschieben sich, jede
+   Verknüpfung müsste umnummeriert werden, Undo wäre fehleranfällig).
+3. **Mehrere Körper:** Der Verweis wird im Körper nachgeschlagen, den `input` nennt, nicht nur im ersten Eingang (der bleibt für die
+   Ebene `refs["plane"]` zuständig). Nur Körper, die in der Reihenfolge vor dem Skizzen-Schritt fertig sind, sind wählbar (keine Zyklen,
+   ADR-0010).
+4. **Folgen beim Neuberechnen:** `SketchType::execute` rechnet die Punkte verknüpfter Elemente aus der Kante neu
+   (`GeometryKernel::projectEdgeToSketch`) und liefert sie im `SketchResult`. Nach jedem Lauf schreibt `applyHealedRefs` die gefolgten
+   Punkte als technische Pflege (wie aufgefrischte Verweise, kein Undo-Schritt) in das Dokument, damit ein Schritt, der seine Kante später
+   nicht mehr findet, die zuletzt gültigen Punkte behält. Wird die Kante nicht sicher gefunden, ist der Schritt „braucht Hilfe“ (Regel 6),
+   die Elemente bewegen sich nicht. Lässt sich die Kante nach einer Änderung nicht mehr exakt projizieren (der Körper wurde gekippt, ein
+   Kreis würde eine Ellipse), ist das ein Fehler auf dem Schritt, nie eine Näherung.
+5. **Geschützt:** Der Befehl „Punkte verschieben“ lehnt verknüpfte Elemente ab. „Verknüpfung lösen“ (`makeSetSketchLink`) ist ein eigener Befehl.
+6. **Dateiformat Version 4:** neues optionales Feld `link` am Element (`{"input": n, "ref": m}`). Die Migration 3 → 4 hat nichts umzuschreiben
+   (kein Feld = nicht verknüpft); 1 → 2 → 3 → 4 bleibt lückenlos. Ein Programm mit Version 3 öffnet eine Version-4-Datei mit dem Hinweis
+   „neuere Fassung“, die Verknüpfung geht damit nicht still verloren, weil es die Datei nicht als gleichwertig behandelt.
