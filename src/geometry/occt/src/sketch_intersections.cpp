@@ -238,7 +238,7 @@ occ::handle<Geom2d_Curve> geometryOf(const Carrier& c) {
                                                    gp_Dir2d(std::cos(c.start), std::sin(c.start))),
                                            c.radius));
     case Carrier::Shape::spline:
-        return c.spline.curve;
+        return occ::handle<Geom2d_Curve>(c.spline.curve);
     }
     return {};
 }
