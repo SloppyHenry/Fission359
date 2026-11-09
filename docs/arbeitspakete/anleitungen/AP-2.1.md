@@ -85,6 +85,14 @@ Die Haltepunkte von Teil a sind entschieden; die Begründungen stehen in [ADR-00
 30. **Regel 10 (2.1d):** Hinweis, Tooltip-Karte, Synonyme DE+EN: Kurve: Spline, Freiform, Schwung, geschwungene Linie / spline, curve, freeform. Hinweiszeile nennt Doppelklick/Enter, ⌫ und Klick auf den ersten Punkt.
 31. **Tests (2.1d):** Unit-Tests der GAL-Funktion (Kurve geht exakt durch alle Punkte, offen/geschlossen, geschlossen ist am Übergang glatt: Tangenten gleich auf 1e-9, Polylinien-Abweichung ≤ 0,01 mm bei engen Bögen, 2 Punkte = Gerade, doppelte Punkte), Zustandsautomat (Doppelklick, Enter, Esc verwirft, ⌫, Schließen am ersten Punkt, Tippen), Controller (ein Undo-Schritt). Fenster-Test „Kurve klicken und schließen“ (nur CI).
 
+## Festlegungen Teil 2.1e1 (2026-11-09)
+32. **Zerlegung von 2.1e (2026-11-09):** e1 Trimmen und Verlängern (beide brauchen Schnittpunkte), e2 Versetzen und Ecke abrunden/abschrägen, e3 Spiegeln und Muster. Jedes Teilpaket ein PR.
+33. **Schnittpunkte (e1):** GAL-Funktion `GeometryKernel::sketchIntersections` (Umsetzung in `src/geometry/occt`, `Geom2dAPI_InterCurveCurve` bzw. analytisch für Linie/Kreis), liefert je Element die Parameter aller Schnittpunkte mit anderen Elementen, Berührungen eingeschlossen; Toleranz laut Architektur (Punkte näher als 1e-6 mm gelten als gleich). Kurven (Splines) werden über dieselbe Interpolation wie in 2.1d einbezogen. Hilfslinien schneiden mit.
+34. **Trimmen (e1, Taste T):** Überfahren hebt das Stück zwischen den benachbarten Schnittpunkten (bzw. Endpunkten) rot hervor; Klick entfernt es; mit gedrückter Maus über mehrere Stücke streichen entfernt alle berührten in **einem** Command. Element ohne Schnittpunkt → ganz entfernt. Kreis mit weniger als 2 Schnittpunkten → ganz entfernt, sonst wird der Rest ein Bogen. Linie in der Mitte getrimmt → zwei Linien. Das erste übrig bleibende Stück behält die Id des Elements, weitere Stücke bekommen neue Ids. **Kurven (Splines) nur ganz:** Ein Stück einer Kurve zu trimmen ist nicht exakt darstellbar (die Kurve läuft durch Punkte); dann wird nur die ganze Kurve entfernt, wenn sie keinen Schnittpunkt hat, sonst Hinweis „Kurven lassen sich noch nicht teilweise trimmen“ (Rest in AP-2.1, nie still falsch).
+35. **Verlängern (e1, Taste E):** Klick nahe am Ende einer Linie oder eines Bogens verlängert dieses Ende bis zum nächsten Schnitt mit einem anderen Element (Linie gerade weiter, Bogen auf seinem Kreis); Überfahren zeigt die Verlängerung als Vorschau. Kein Ziel → Hinweis „Hier ist nichts zum Verlängern“. Kurven und Kreise werden nicht verlängert. Ein Command je Klick.
+36. **Commands (e1):** Trimmen und Verlängern ändern Elemente über die vorhandenen Skizzen-Commands (entfernen, hinzufügen, Punkte verschieben) in einer Transaktion je Aktion, mit Rezeptzeile („… getrimmt“, „… verlängert“); Undo/Redo stellt Ids und Koordinaten exakt wieder her.
+37. **Regel 10 und Tests (e1):** Hinweis, Tooltip-Karte, Synonyme DE+EN (Trimmen: abschneiden, kürzen, Überstand weg / trim, cut back, remove segment; Verlängern: verlängern bis, strecken bis, anschließen / extend, lengthen, extend to). Tests: GAL-Schnittpunkte (Linie/Linie, Linie/Kreis tangential und zwei Punkte, Kreis/Kreis, Bogen, Kurve, keine), Trimmen (Stück in der Mitte, Ende, ohne Schnitt, Kreis → Bogen, Streichen über drei Stücke = ein Undo-Schritt, Kurve mit Schnitt → Hinweis), Verlängern (Linie bis Linie, Bogen bis Linie, kein Ziel), Ids nach Undo/Redo; Fenster-Test „Rechteck mit Kreis, Überstände trimmen“ (nur CI).
+
 ## Teil 2.1a – Datenmodell und Commands (gebaut 2026-11-06)
 1. `SketchData` in `src/core/include/fission/core/sketch.h` (Form im ADR-0013): `SketchElement { id, kind, points, construction }` mit Punkt, Linie,
    Kreis {Mitte, Randpunkt}, Bogen {Mitte, Anfang, Ende}, Spline {Durchgangspunkte}; `SketchPlane`; Ids zählen je Skizze und Art hoch;
@@ -182,11 +190,11 @@ Polylinie selbst); Spiegeln/Muster einer Kurve sind einfach (Punkte spiegeln/ver
 Polylinie ausdünnen). 2.1g: Bereiche brauchen die Kurve als Kante (`sketchSpline().polyline` oder die B-Spline selbst); die Kurve einer Skizze wird bisher nur zum Zeichnen berechnet, nicht im
 `SketchResult`. Das Symbol `sketchspline` ist ein einfacher Umriss und sollte mit `docs/08-gestaltung.md` abgeglichen werden.
 
-## Teil 2.1e – Bearbeiten
-Trimmen (über Linien streichen: Teile zwischen Schnittpunkten löschen), Verlängern (bis zur nächsten Kurve), Versetzen (Kette, Abstand
-tippbar), Ecke abrunden/abschrägen (Radius/Abstand), Spiegeln (an Linie), Muster (Reihe/Kreis). Schnittpunkte 2D über OCCT
-(`Geom2dAPI_InterCurveCurve`) in einer GAL-Funktion `geo::sketchIntersections(curves)`; Versatz über `BRepOffsetAPI_MakeOffset` oder
-`Geom2d_OffsetCurve`. Jede Operation ein Command, Undo-Test.
+## Teil 2.1e – Bearbeiten (geteilt, Festlegung 32)
+- **2.1e1:** Schnittpunkte, Trimmen, Verlängern. Festlegungen 33–37.
+- **2.1e2:** Versetzen (Kette, Abstand tippbar; `BRepOffsetAPI_MakeOffset` oder `Geom2d_OffsetCurve`), Ecke abrunden/abschrägen (Radius/Abstand).
+- **2.1e3:** Spiegeln (an Linie), Muster (Reihe/Kreis).
+Jede Operation ein Command, Undo-Test.
 
 ## Teil 2.1f – Kanten übernehmen
 Kanten eines Körpers auf die Skizzenebene projizieren (OCCT `BRepProj_Projection` bzw. Kurven projizieren); Ergebnis sind **verknüpfte**
