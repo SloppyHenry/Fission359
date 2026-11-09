@@ -3219,6 +3219,22 @@
         <source>Polygon</source>
         <translation>Polygon</translation>
     </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n closed area(s). One is chosen: Esc or a click beside lets go.</source>
+        <translation>
+            <numerusform>%n geschlossener Bereich. Einer ist gewählt: Esc oder ein Klick daneben lässt ihn los.</numerusform>
+            <numerusform>%n geschlossene Bereiche. Einer ist gewählt: Esc oder ein Klick daneben lässt ihn los.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n closed area(s). Click one to choose it.</source>
+        <translation>
+            <numerusform>%n geschlossener Bereich. Klicke einen an, um ihn zu wählen.</numerusform>
+            <numerusform>%n geschlossene Bereiche. Klicke einen an, um ihn zu wählen.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>MarkerLine</name>
@@ -4115,6 +4131,11 @@
         <location line="+1"/>
         <source>This edge follows the body. Let go of the link to change it.</source>
         <translation>Diese Kante folgt dem Körper. Löse die Verknüpfung, um sie zu ändern.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The closed areas of this sketch could not be worked out. Move a point a little, or take away the last element. You can keep drawing.</source>
+        <translation>Die geschlossenen Bereiche dieser Skizze ließen sich nicht berechnen. Verschiebe einen Punkt ein wenig oder nimm das letzte Element weg. Du kannst weiterzeichnen.</translation>
     </message>
 </context>
 <context>

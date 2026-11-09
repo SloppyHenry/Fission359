@@ -96,6 +96,7 @@ QtObject {
         case "edgeTaken": return qsTr("This edge is taken over already.")
         case "edgesSome": return qsTr("Some edges of this face cannot be taken over yet. The others are in the sketch.")
         case "linked": return qsTr("This edge follows the body. Let go of the link to change it.")
+        case "regionsFailed": return qsTr("The closed areas of this sketch could not be worked out. Move a point a little, or take away the last element. You can keep drawing.")
         case "mirrorAxis": return qsTr("Click a line or a helper line as the mirror axis.")
         case "copiesNone": return qsTr("Nothing was added: the copies would lie exactly on elements that are there already.")
         case "patternTooMany": return qsTr("At most 200 copies. Nothing was added: choose a smaller number.")

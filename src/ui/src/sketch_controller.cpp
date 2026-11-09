@@ -260,7 +260,9 @@ QString kindName(interaction::SketchSnapKind kind) {
 
 SketchController::SketchController(DocumentModel* model, SelectionController* selection,
                                    QObject* parent)
-    : QObject(parent), m_model(model), m_selection(selection) {
+    : QObject(parent), m_model(model), m_selection(selection), m_regionWorker(this) {
+    connect(&m_regionWorker, &SketchRegionWorker::changed, this,
+            &SketchController::onRegionsChanged);
     connect(model, &DocumentModel::elementsChanged, this, &SketchController::onModelChanged);
     connect(model, &DocumentModel::recipeChanged, this, &SketchController::onModelChanged);
     connect(model, &DocumentModel::documentReplaced, this, [this] {
@@ -349,6 +351,10 @@ void SketchController::beginOn(const QString& stepId) {
     m_tool.select(interaction::SketchToolKind::none);
     m_tool.setHelperLine(false);
     forgetEdit();
+    m_selectedRegion.clear();
+    m_hoverRegion.clear();
+    m_regionsFailedSaid = false;
+    m_regionWorker.reset();
     m_tool.setPolygonSides(interaction::kSketchDefaultSides); // the last number lasts one sketch
     updateDraft();
     if (m_viewport != nullptr && !m_previousPose) {
@@ -378,6 +384,11 @@ void SketchController::leave(bool removeIfEmpty) {
     m_tool.setHelperLine(false);
     forgetEdit();
     m_trimmer.reset();
+    m_selectedRegion.clear();
+    m_hoverRegion.clear();
+    m_regionsFailedSaid = false;
+    m_regionWorker.reset();
+    emit regionsChanged();
     if (m_viewport != nullptr) {
         m_viewport->setHandleGraphics({}, Viewport3D::HandleSource::sketch);
     }
@@ -418,7 +429,12 @@ void SketchController::escape() {
     if (m_mode == Mode::idle) {
         return;
     }
-    // First the element being pulled, then the tool, then the sketch (decision 10 and 13).
+    // First the element being pulled, then the tool, then the chosen region, then the sketch
+    // (decision 10, 13 and 53).
+    if (!toolActive() && !m_selectedRegion.empty()) {
+        clearRegionSelection();
+        return;
+    }
     if (toolActive()) {
         if (m_stroking) { // a stroke of trimming is dropped first
             forgetEdit();
@@ -510,6 +526,7 @@ void SketchController::onModelChanged() {
     const bool changed = ready != m_planeReady;
     m_planeReady = ready;
     m_elements = m_model->sketchElements(m_step);
+    m_regionWorker.request(m_model->sketchKernelShared(), m_elements);
     m_trimmer.reset(); // the pieces depend on the elements
     if (!m_blocked.empty()) {
         m_blocked.clear();
@@ -634,12 +651,20 @@ void SketchController::pointAt(const interaction::PlaneRay& ray, double pixelsPe
     if (editingTool()) {
         updateEditHover(*onPlane);
     }
+    if (!toolActive()) {
+        hoverRegionAt({onPlane->u, onPlane->v});
+    }
     updateDraft(); // draws, too
     emit snapChanged();
 }
 
 void SketchController::pointerGone() {
     m_rawPointer.reset();
+    if (!m_hoverRegion.empty()) {
+        m_hoverRegion.clear();
+        emit regionsChanged();
+        refresh();
+    }
     if (m_hoverPiece || m_hoverExtension || !m_hoverIds.empty() || m_hoverCorner ||
         (!m_chain && !m_preview.empty())) {
         m_hoverPiece.reset();
@@ -726,6 +751,7 @@ void SketchController::refresh() {
             }
         }
         graphics.hiddenAlpha = 0.5F;
+        drawRegions(graphics, 0.03);
 
         for (const core::SketchElement& element : m_elements) {
             drawElement(graphics, m_plane, element, ppm,
@@ -823,6 +849,102 @@ void SketchController::refresh() {
     }
 }
 
+// --- regions (AP-2.1g) -------------------------------------------------------------------
+
+void SketchController::drawRegions(render::HandleGraphics& out, double lift) const {
+    const interaction::SketchRegionSet& set = m_regionWorker.regions();
+    const geo::Point3d& n = m_plane.normal();
+    const auto place = [&](const geo::Point2d& p) {
+        const geo::Point3d world = m_plane.toWorld({p.x, p.y});
+        return QVector3D(static_cast<float>(world.x + n.x * lift),
+                         static_cast<float>(world.y + n.y * lift),
+                         static_cast<float>(world.z + n.z * lift));
+    };
+    for (const interaction::SketchRegionInfo& info : set.regions) {
+        // light shading; the one under the pointer stronger, the chosen one strongest (decision 53)
+        int alpha = 34;
+        if (info.id == m_selectedRegion) {
+            alpha = 120;
+        } else if (info.id == m_hoverRegion && !toolActive()) {
+            alpha = 76;
+        }
+        QColor fill = m_regionColour;
+        fill.setAlpha(alpha);
+        const std::vector<geo::Point2d>& t = info.shape.triangles;
+        for (std::size_t i = 0; i + 2 < t.size(); i += 3) {
+            render::HandleTriangle triangle;
+            triangle.corners[0] = place(t[i]);
+            triangle.corners[1] = place(t[i + 1]);
+            triangle.corners[2] = place(t[i + 2]);
+            triangle.fill = fill;
+            out.fills.push_back(triangle);
+        }
+    }
+}
+
+void SketchController::onRegionsChanged() {
+    if (m_mode != Mode::sketching) {
+        return;
+    }
+    const interaction::SketchRegionSet& set = m_regionWorker.regions();
+    const auto has = [&set](const std::string& id) {
+        return std::ranges::any_of(
+            set.regions, [&](const interaction::SketchRegionInfo& info) { return info.id == id; });
+    };
+    if (!m_selectedRegion.empty() && !has(m_selectedRegion)) {
+        m_selectedRegion.clear(); // the region is gone (an element was removed or moved away)
+    }
+    if (!m_hoverRegion.empty() && !has(m_hoverRegion)) {
+        m_hoverRegion.clear();
+    }
+    if (m_regionWorker.failed() || set.rejected > 0) {
+        if (!m_regionsFailedSaid) {
+            m_regionsFailedSaid = true;
+            emit notice(QStringLiteral("regionsFailed"));
+        }
+    } else {
+        m_regionsFailedSaid = false;
+    }
+    emit regionsChanged();
+    refresh();
+}
+
+void SketchController::hoverRegionAt(const core::SketchPoint& at) {
+    const interaction::SketchRegionSet& set = m_regionWorker.regions();
+    const int index = interaction::regionAt(set, at);
+    const std::string id = index >= 0 ? set.regions[static_cast<std::size_t>(index)].id : "";
+    if (id != m_hoverRegion) {
+        m_hoverRegion = id;
+        emit regionsChanged();
+    }
+}
+
+void SketchController::clickRegion(const interaction::PlaneRay& ray, double pixelsPerMillimetre) {
+    pointAt(ray, pixelsPerMillimetre);
+    const auto onPlane = interaction::planePoint(ray, m_plane);
+    std::string chosen;
+    if (onPlane) {
+        const interaction::SketchRegionSet& set = m_regionWorker.regions();
+        const int index = interaction::regionAt(set, {onPlane->u, onPlane->v});
+        if (index >= 0) {
+            chosen = set.regions[static_cast<std::size_t>(index)].id;
+        }
+    }
+    if (chosen != m_selectedRegion) { // a click beside every region lets go
+        m_selectedRegion = chosen;
+        emit regionsChanged();
+        refresh();
+    }
+}
+
+void SketchController::clearRegionSelection() {
+    if (!m_selectedRegion.empty()) {
+        m_selectedRegion.clear();
+        emit regionsChanged();
+        refresh();
+    }
+}
+
 // --- drawing (AP-2.1c1) -----------------------------------------------------------------
 
 QString SketchController::toolName() const {
@@ -917,6 +1039,10 @@ void SketchController::onDoubleClicked(double, double) {
 
 void SketchController::clickAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre,
                                bool alt) {
+    if (m_mode == Mode::sketching && m_planeReady && !toolActive()) {
+        clickRegion(ray, pixelsPerMillimetre); // no tool: a click chooses a region (decision 53)
+        return;
+    }
     if (!toolActive() || !m_planeReady) {
         return;
     }

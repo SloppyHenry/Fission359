@@ -334,6 +334,7 @@ UI-Texte verwenden ausschließlich die Begriffe in der mittleren Spalte. Englisc
 | Pattern | Muster | Repeat | Etwas mehrfach anordnen |
 | Mirror | Spiegeln | Mirror | Spiegelbildlich kopieren |
 | Sketch | Skizze | Sketch | 2D-Zeichnung als Grundlage |
+| Profile / Region | Bereich | Area | Geschlossene Fläche in einer Skizze, aus der ein Körper werden kann |
 | Constraint | Regel | Rule | z. B. „parallel“, „gleich lang“ |
 | Dimension | Maß | Measure | Länge, Abstand oder Winkel festlegen |
 | Fully Constrained | steht fest | locked | Die Skizze kann sich nicht mehr bewegen |

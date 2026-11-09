@@ -17,9 +17,15 @@
 #include "fission/interaction/sketch_edit.h"
 #include "fission/interaction/sketch_offset.h"
 #include "fission/interaction/sketch_pattern.h"
+#include "fission/interaction/sketch_regions.h"
 #include "fission/interaction/sketch_snap.h"
 #include "fission/interaction/sketch_tool.h"
 #include "fission/render/camera.h"
+#include "fission/ui/sketch_region_worker.h"
+
+namespace fission::render {
+struct HandleGraphics;
+}
 
 namespace fission::ui {
 
@@ -92,6 +98,15 @@ class SketchController : public QObject {
     /// The last edit was refused because it touches elements that follow an edge: the hint offers
     /// "Let go of the link" (`releaseLinks`).
     Q_PROPERTY(bool linkedBlocked READ linkedBlocked NOTIFY blockedChanged)
+    /// The regions of the sketch (AP-2.1g): closed areas, calculated in the background (the old
+    /// ones stay until the new ones are there). The one under the pointer (no tool on) is
+    /// `hoveredRegion`, the one a click chose is `selectedRegion` (ids, see
+    /// `interaction::SketchRegionInfo`; empty: none). Choosing is a state of the view, not a step.
+    Q_PROPERTY(int regionCount READ regionCount NOTIFY regionsChanged)
+    Q_PROPERTY(QString selectedRegion READ selectedRegion NOTIFY regionsChanged)
+    Q_PROPERTY(QString hoveredRegion READ hoveredRegion NOTIFY regionsChanged)
+    /// The shading of the regions (the accent; the controller sets the see-through).
+    Q_PROPERTY(QColor regionColour MEMBER m_regionColour NOTIFY coloursChanged)
     /// A number that belongs to the last `notice` (the biggest radius that fits, in mm).
     Q_PROPERTY(double noticeNumber READ noticeNumber NOTIFY noticeNumberChanged)
 
@@ -198,6 +213,22 @@ public:
     Q_INVOKABLE int fieldCount() const {
         return editDrafting() ? (patternReadout() ? 2 : 1) : drawing() ? m_tool.fieldCount() : 0;
     }
+    // --- regions (AP-2.1g) ---
+    int regionCount() const noexcept {
+        return static_cast<int>(m_regionWorker.regions().regions.size());
+    }
+    QString selectedRegion() const { return QString::fromStdString(m_selectedRegion); }
+    QString hoveredRegion() const { return QString::fromStdString(m_hoverRegion); }
+    const interaction::SketchRegionSet& regions() const noexcept {
+        return m_regionWorker.regions();
+    }
+    /// The regions are being worked out.
+    bool regionsBusy() const noexcept { return m_regionWorker.busy(); }
+    /// Waits for the background calculation (tests, `--simulate`); true when it is done.
+    bool waitForRegions(int milliseconds) { return m_regionWorker.waitUntilIdle(milliseconds); }
+    double regionMilliseconds() const noexcept { return m_regionWorker.lastMilliseconds(); }
+    /// Esc with no tool, or a click beside every region: lets go of the chosen region.
+    void clearRegionSelection();
     /// The elements of the sketch as the controller knows them (the document's; for tests).
     const std::vector<core::SketchElement>& elements() const noexcept { return m_elements; }
 
@@ -224,6 +255,8 @@ signals:
     void notice(const QString& code);
     void noticeNumberChanged();
     void blockedChanged();
+    /// The regions, the chosen one or the one under the pointer changed.
+    void regionsChanged();
 
 private:
     enum class Mode { idle, picking, sketching };
@@ -294,6 +327,11 @@ private:
     void commitOffset();
     void commitCorner();
     void say(const QString& code, double number = 0.0);
+    // regions (AP-2.1g)
+    void onRegionsChanged();
+    void hoverRegionAt(const core::SketchPoint& at);
+    void clickRegion(const interaction::PlaneRay& ray, double pixelsPerMillimetre);
+    void drawRegions(render::HandleGraphics& out, double lift) const;
     void forgetEdit();
     void onClicked(double x, double y);
     void onPressed(double x, double y);
@@ -361,6 +399,11 @@ private:
     QColor m_draftColour{0x4C, 0x8D, 0xFF};
     QColor m_trimColour{0xF0, 0x5A, 0x5A};
     QColor m_linkedColour{0x7F, 0xB0, 0xFF};
+    QColor m_regionColour{0x4C, 0x8D, 0xFF};
+    SketchRegionWorker m_regionWorker;
+    std::string m_selectedRegion;
+    std::string m_hoverRegion;
+    bool m_regionsFailedSaid = false;
 };
 
 } // namespace fission::ui
