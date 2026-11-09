@@ -7,8 +7,8 @@
 ---
 
 ### AP-2.1 Skizzen-Modus: Zeichnen
-**Status:** in Arbeit (2.1a Datenmodell, 2.1b Skizzen-Modus gebaut) · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-1.6, AP-1.10, AP-2.10 (Teile a–c)
-**Bauanleitung:** [anleitungen/AP-2.1.md](anleitungen/AP-2.1.md)
+**Status:** erledigt (2026-11-09; Akzeptanzkriterium 1 noch von Hand zu messen, siehe Abschlussvermerk) · **Größe:** L · **Abhängigkeiten:** AP-1.4, AP-1.6, AP-1.10, AP-2.10 (Teile a–c)
+**Bauanleitung:** [anleitungen/erledigt/AP-2.1.md](anleitungen/erledigt/AP-2.1.md)
 
 **Umfang:**
 - Skizze starten: Fläche, Grundebene oder Hilfsebene anklicken → animierte Draufsicht, Skizzenraster
@@ -19,7 +19,18 @@
 
 **Akzeptanzkriterien:**
 - [ ] Ein L-Profil mit Rundung lässt sich ohne Regel-Kenntnisse in < 1 min zeichnen
-- [ ] Bereichserkennung funktioniert bei überlappenden Kreisen und Rechtecken (Golden-Tests)
+- [x] Bereichserkennung funktioniert bei überlappenden Kreisen und Rechtecken (Golden-Tests, `test_sketch_regions.cpp`)
+
+**Abschlussvermerk 2026-11-09 (AP-2.1 komplett, Teile a–g):**
+- Ergebnis: Skizzen-Modus mit Linie, Rechteck, Kreis, Bogen (auch tangential), Langloch, Polygon, Kurve, Punkt, Hilfslinie; Trimmen, Verlängern, Versetzen, Ecken runden/abschrägen, Spiegeln, Muster;
+  Kanten von Körpern übernehmen (verknüpft, folgen dem Körper, Dateiformat 4); **geschlossene Bereiche** werden im Hintergrund erkannt (`GeometryKernel::sketchRegions`), leicht schattiert, beim Überfahren hervorgehoben,
+  per Klick wählbar; Ids stabil aus den begrenzenden Elementen. Golden-Tests: zwei Kreise → 3 Bereiche (Linsenformel auf 1e-6), Rechteck mit Kreis innen → 2, Kreis am Rand → 3, offene Kette → 0, L-Profil → 1.
+  100 Elemente in 30–50 ms (Mac, Budget 200 ms).
+- Weiter geltende Festlegungen: [AP-2.1.md](anleitungen/erledigt/AP-2.1.md) Festlegungen 1–55; [ADR-0013](../adr/0013-skizzen-im-dokument.md) mit Nachtrag 2.1f. Bereiche sind abgeleitet, nicht gespeichert.
+- Offene Reste: **Akzeptanzkriterium 1** (L-Profil mit Rundung in unter einer Minute) misst der Maintainer von Hand mit der Stoppuhr; Fenster-Tests der Teile c–g laufen nur in der CI (nie lokal);
+  aus 2.1d: Kurven werden nur zum Zeichnen berechnet, Kurven, die sich selbst schneiden, sind beim Bereichsrechnen ungeprüft; aus 2.1e: ein änderbares, verknüpftes Muster und eine gehaltene Spiegelung gehören zu 2.2 (Regeln);
+  aus 2.1f: Freiformkanten und schräge Kreise (Ellipsen) werden nicht übernommen (neue Elementart, Formatwechsel), „Verknüpfung wiederherstellen“ nach dem Lösen fehlt; aus 2.1g: mehrere Bereiche gleichzeitig wählen,
+  Schattierung zwischenspeichern bei sehr vielen Bereichen.
 
 **Vermerk 2026-11-06 (Teil 2.1a, Datenmodell und Befehle):**
 - Ergebnis: Schritt-Typ `sketch` (kein Körper) mit `Feature::sketch`; `SketchPlane` (`toWorld`/`toPlane`), Elemente Punkt, Linie, Kreis, Bogen, Spline mit stabilen Ids je Art

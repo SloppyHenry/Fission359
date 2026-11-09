@@ -26,7 +26,7 @@ AP-1.4, AP-1.6 (erledigt), AP-1.10 (Skizzen müssen gespeichert werden), AP-2.10
 - Die Ansicht kann senkrecht auf eine Fläche schauen (`lookAtFace`), Linien und Punkte in 3D zeichnen (Griff-Grafik).
 
 ## Festlegungen (2026-11-06)
-Die Haltepunkte von Teil a sind entschieden; die Begründungen stehen in [ADR-0013](../../adr/0013-skizzen-im-dokument.md).
+Die Haltepunkte von Teil a sind entschieden; die Begründungen stehen in [ADR-0013](../../../adr/0013-skizzen-im-dokument.md).
 1. **Skizzen im Dokument:** Feature-Typ `sketch`, Feld `Feature::sketch` (`SketchData`), stabile Ids je Art (`P1`, `L3`, `C2`, `A1`,
    `S1`), Zahlen in mm in Ebenen-Koordinaten, Kennzeichen „Hilfslinie“, leere Liste für Regeln und Maße (AP-2.2), kein Körper,
    `RecomputeResult::sketches`, Namens-Vertrag `F7/sketch/L3`. Verworfen: Skizze als JSON-Wörter in `texts` (kein Undo je Element).
@@ -312,14 +312,24 @@ Jede Operation ein Command, Undo-Test.
 Kanten eines Körpers auf die Skizzenebene projizieren (OCCT `BRepProj_Projection` bzw. Kurven projizieren); Ergebnis sind **verknüpfte**
 Elemente (Verweis auf die Kante, AP-2.10) – ändern sich mit dem Körper. Kennzeichnung im Element (`projectedFrom`).
 
-## Teil 2.1g – Bereichserkennung
-1. GAL `std::vector<SketchRegion> sketchRegions(const SketchCurves&)`: alle geschlossenen Bereiche, auch bei Überlappung einzeln
-   (Rechteck und Kreis, die sich schneiden → 3 Bereiche). OCCT: alle Kanten als planare Edges, große Grundfläche mit `BRepAlgoAPI_Splitter`
-   (oder `BOPAlgo_Builder`) teilen, die entstandenen Faces sind die Bereiche; Hilfslinien ausgenommen.
-2. Bereiche schattiert zeichnen (Akzent, leicht), überfahren hebt hervor, Klick wählt (für AP-2.3). Bereich-Ids aus den begrenzenden
-   Elementen (stabil gegen Verschieben).
-3. **Golden-Tests** (Akzeptanzkriterium 2): zwei überlappende Kreise → 3 Bereiche mit richtigen Flächeninhalten (Formel für Kreis-Linse);
-   Rechteck mit Kreis innen → 2 Bereiche (Ring + Kreis); Rechteck + überlappender Kreis am Rand → 3; offene Linienkette → 0; L-Profil → 1.
+## Teil 2.1g – Bereichserkennung, gebaut 2026-11-09
+Gebaut: Festlegungen 51–55. GAL `GeometryKernel::sketchRegions(curves)` (`geo/sketch_regions.h`: `SketchRegion` mit äußerem Rand, Löchern, Randstücken je Element mit Seite, exaktem Flächeninhalt, Schwerpunkt,
+einem Punkt innen, Dreiecken zum Schattieren, `rejected`); OCCT in `occt/src/sketch_regions.cpp`: jede Kurve eine Kante in einer Ebene, eine große Grundfläche wird mit `BRepAlgoAPI_Splitter` geteilt, die Fläche mit den Ecken
+des Rahmens fällt weg, jede andere wird mit `BRepCheck_Analyzer` geprüft (ungültig → `rejected`, nie gezeichnet), Fläche und Schwerpunkt mit `GProp` exakt, Rand als Polygon mit Abweichung 0,005 mm (Regel 12), Schattierung aus `BRepMesh`;
+welche Kurven ein Randstück tragen, kommt aus der Historie des Splitters (übereinanderliegende Kurven zählen beide). `interaction::computeSketchRegions` (`interaction/sketch_regions.h`) lässt Hilfslinien und Punkte weg,
+vergibt die Ids (Festlegung 52: sortierte Element-Ids mit „+“; teilen sich Bereiche dieselben Elemente, folgt „/“ und je Element `l`, `r` oder `b` für „links“, „rechts“, „beide“ der Kurve, zuletzt „#2“ …) und findet den Bereich
+unter einem Punkt (`regionAt`, kleinster gewinnt). `ui::SketchRegionWorker` rechnet in einem Hintergrund-Thread (ein Auftrag läuft, nur der neueste wartet; Ergebnis per Queued-Aufruf, bis dahin gelten die alten Bereiche);
+der `SketchController` fragt nach jeder Änderung der Elemente an, zeichnet die Bereiche mit `HandleGraphics::fills` (neu: gefüllte Dreiecke, unter allen Linien; Akzent, Deckkraft 13 % / Überfahren 30 % / gewählt 47 %),
+Überfahren und Klick ohne Werkzeug (`hoveredRegion`, `selectedRegion`; Ansichtszustand, kein Command), Esc löst zuerst die Wahl, dann die Skizze; lehnt der Kernel ab oder fällt ein Bereich durch die Prüfung,
+kommt der Hinweis `regionsFailed`. Hinweiszeile „N geschlossene Bereiche …“, Glossar „Bereich / Area“ (UX §12). Neue `--simulate`-Aktion `expectsketchregions:N[,selected|none]` (wartet bis zu 5 s auf die Hintergrund-Rechnung).
+Tests: `test_sketch_regions.cpp` (GAL: Kreislinse nach Formel, Ring, Kreis am Rand, offene Kette, L-Profil, abgerundete Ecke, Kurve, Hilfslinie/Stichlinie, übereinanderliegende Kurven, Fehler, Dreiecke),
+`interaction/test_sketch_regions.cpp` (Ids), `ui/test_sketch_regions_ui.cpp` (Hintergrund, alte Bereiche bleiben, Ids nach Verschieben/Undo/Redo, Überfahren, Wählen, Esc), Fenster-Test `app_sketch_regions` (nur CI).
+Messung auf dem Mac (Release): 100 Elemente (50 Kreise, 50 Linien, 100 Bereiche) in 30–50 ms, Budget 200 ms.
+Weiter geltende Annahmen: Kurven, die sich selbst schneiden (Spline mit Schleife), teilt der Splitter nicht; der Bereich kann dann abgelehnt werden (Hinweis) – offen für eine Prüfung mit Selbstschnitt; Randstücke einer Kurve, die an einem
+Punkt berührt, bleiben ein Stück, wenn beide Nachbarn auf denselben Kurven liegen; eine Kreisnaht ist keine Ecke (Stücke gleicher Kurven werden zusammengefasst); Id eines Bereichs mit gleichem Rand wird nur dann um die Seiten ergänzt,
+wenn zwei Bereiche sich dieselben Elemente teilen.
+Offene Reste: für 2.3 – aus der Auswahl entsteht ein echter Verweis auf den Bereich (die Id ist die Grundlage); mehrere Bereiche gleichzeitig wählen (Umschalt-Klick) fehlt; Bereiche sind noch nicht im Dokument gespeichert (abgeleitet,
+jedes Neuberechnen rechnet neu im Hintergrund); die Schattierung wird bei jedem Neuzeichnen neu aus den Dreiecken aufgebaut (bei Tausenden Bereichen zwischenspeichern).
 
 ## Abnahme
 - Akzeptanzkriterium 1: L-Profil mit Rundung in < 1 min – von Hand messen (Stoppuhr), Ergebnis in den PR.

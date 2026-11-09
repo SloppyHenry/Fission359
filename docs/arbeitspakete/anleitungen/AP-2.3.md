@@ -17,7 +17,9 @@ AP-2.2 (gelöste Skizzen mit Bereichen), AP-2.10 (Bezüge), AP-1.7 (Booleans fü
 - AP-1.7-Anleitung (`combine`), `tests/geometry/test_sweeps.cpp` (AP-0.5, Wendel-Sweep)
 
 ## Ausgangslage im Code
-Skizzen liefern Bereiche (Flächen in der Ebene) mit Ids aus ihren Kanten. Booleans gibt es (`GeometryKernel::boolean`).
+Skizzen liefern Bereiche (Flächen in der Ebene) mit Ids aus ihren Kanten (AP-2.1g: `interaction::computeSketchRegions`, `SketchRegionInfo` mit Id, Elementen, Rand, Löchern, Fläche; die Id ist die Grundlage
+für den Verweis „dieser Bereich“; Bereiche sind abgeleitet und nicht gespeichert, der Verweis muss in 2.3 entstehen, siehe [erledigt/AP-2.1.md](erledigt/AP-2.1.md) „Teil 2.1g – gebaut“; offen: mehrere Bereiche wählen,
+Selbstschnitt von Kurven ungeprüft). Booleans gibt es (`GeometryKernel::boolean`).
 
 ## Haltepunkte
 1. **Ein Schritt oder zwei bei „Ziehen + Ausschneiden“?** Empfehlung: **ein** Schritt `extrude` mit Wort `mode` (new | merge | subtract |
