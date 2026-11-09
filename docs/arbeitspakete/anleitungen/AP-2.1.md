@@ -251,10 +251,29 @@ Fase als Begrenzung; das Ergebnis des Versetzens wird nicht gegen vorhandene Ele
 abgeglichen werden. Für e3 (Spiegeln, Muster): `SketchEdit.added` mit Bögen (Mitte, Anfang, Ende gegen den Uhrzeigersinn; beim Spiegeln Anfang und Ende tauschen); `findChain` kann die Auswahl einer Kette liefern.
 Für 2.1f/g: übernommene Kanten sind Elemente wie die anderen und bilden Ketten; die Bereichserkennung kann `findChain` zum Prüfen geschlossener Ketten nutzen.
 
-## Teil 2.1e – Bearbeiten (geteilt, Festlegung 32)
+## Teil 2.1e3 – Spiegeln und Muster, gebaut 2026-11-09
+Gebaut: Festlegungen 41–44. Die Rechnung ist rein und exakt (analytisch, ohne OCCT, ohne Qt) in `src/interaction/sketch_pattern.h`: `mirrorElements` (Achse = unendliche Verlängerung einer Linie oder Hilfslinie; Punkte, Linien,
+Kreise am Mittelpunkt, Bögen mit vertauschtem Anfang und Ende über den Endpunkt auf dem Kreis, Kurven über ihre Durchgangspunkte; Hilfslinien bleiben Hilfslinien; die Achse wird nie gespiegelt), `linearPattern` (Schrittvektor,
+Anzahl gesamt mit Original), `circularPattern` (Mittelpunkt, Anzahl, Winkel: 360° gleichmäßig verteilt, darunter Original und letzte Kopie am Ende, negativ im Uhrzeigersinn, über 360° nichts), `pickElementNear` (wie
+`elementNear`, nimmt aber auch Punkte). Kopien auf einem vorhandenen oder schon erzeugten Element (1e-6 mm, Art und Hilfslinien-Marke gleich) werden nicht angelegt; Obergrenze 200 Stück je Muster (`kSketchMaxPatternCount`,
+Original eingeschlossen) in Rechnung, Vorschau und Ergebnis. Ergebnis ist ein `SketchEdit` mit nur `added`, über `DocumentModel::applySketchEdit` als **eine** Transaktion (Rezeptzeilen `mirrorSketch`, `patternSketch`).
+Im `SketchController`: Werkzeuge `mirror` (Taste M) und `pattern` (Taste W; Variante 0 Reihe, 1 Kreis). Erster Schritt: Klick wählt die Kette (`findChain`; Kurven und Punkte allein), Klick auf Gewähltes nimmt die Kette
+heraus, Enter oder die Schaltfläche „Weiter“ in der Statuszeile (`StatusBar.continueVisible`, `Sketch.proceed()`) geht weiter. Spiegeln: Überfahren einer Linie zeigt die Vorschau, Klick setzt. Reihe: Klick setzt den Start, der
+Zeiger (gefangen, mit Ausrichtung zum Start) gibt Richtung und Abstand, Felder „Anzahl“ und „Abstand“ (Tab, tippbar; getippter Abstand behält die Richtung des Zeigers), Klick oder Enter setzt. Kreis: Klick setzt den
+Mittelpunkt, Felder „Anzahl“ (Start 6) und „Winkel“ (Start 360°). Die zuletzt benutzte Anzahl bleibt je Variante. Nach dem Anlegen beginnt das Wählen von vorn, das Werkzeug bleibt an. Esc: getippte Zahlen, dann zweiter
+Schritt → Wählen, dann Werkzeug aus. `SketchController::placed()` liefert für die Hinweiszeile 0 nichts gewählt, 1 gewählt, 2 zweiter Schritt, 3 mit Start. Neue Hinweise `mirrorAxis`, `copiesNone`, `patternTooMany`,
+`patternNothing`. Keine neuen `--simulate`-Aktionen nötig (`key:M`, `key:W`, `key:Return`, `sketchclickmm`, `type:3,tab,30,enter`). Tasten: M und W sind außerhalb der Skizze unbelegt (Ctrl+M und Ctrl+W sind andere
+Folgen), kein Ausschluss nötig. `soon.mirror` (Körper spiegeln) bleibt unverändert. Fenster-Test (nur CI): `app_sketch_mirror_pattern`.
+Weiter geltende Annahmen: die Kopien eines Musters sind unabhängige Elemente; „Anzahl“ zählt das Original mit; der Zeiger rastet beim Reihenabstand wie bei Linien (kein eigener Winkelfang); ein Winkel über 360° oder 0
+und ein Abstand 0 ergeben den Hinweis „patternNothing“ (nichts angelegt); die Vorschau von Kurven in Kopien ist ein Linienzug durch die Punkte (nicht die Kurve des Kerns); Hover und Gewähltes sind gleich hervorgehoben.
+Offene Reste: für 2.2 (Regeln/Solver): ein änderbares, verknüpftes Muster (Anzahl und Abstand nachträglich ändern) und eine gehaltene Spiegelung (Symmetrie-Regel); für 2.1f/g: übernommene Kanten und Bereiche sind Elemente
+wie andere und lassen sich spiegeln und vervielfältigen; Muster und Spiegeln von Körpern (`soon.mirror`) und Muster auf Flächen sind eigene Aufgaben; die Symbole `sketchmirror`/`sketchpattern` sind einfache Umrisse und
+sollten mit `docs/08-gestaltung.md` abgeglichen werden.
+
+## Teil 2.1e – Bearbeiten (geteilt, Festlegung 32), fertig 2026-11-09
 - **2.1e1:** Schnittpunkte, Trimmen, Verlängern. Festlegungen 33–37.
 - **2.1e2:** Versetzen (Kette, Abstand tippbar), Ecke abrunden/abschrägen (Radius/Abstand), gebaut, Festlegungen 38–40.
-- **2.1e3:** Spiegeln (an Linie), Muster (Reihe/Kreis).
+- **2.1e3:** Spiegeln (an Linie), Muster (Reihe/Kreis), gebaut, Festlegungen 41–44.
 Jede Operation ein Command, Undo-Test.
 
 ## Teil 2.1f – Kanten übernehmen
