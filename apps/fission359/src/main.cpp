@@ -203,6 +203,7 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "menu:sketchtool.line, "
             "sketchtool.rectangle, sketchtool.circle, sketchtool.arc, sketchtool.slot, "
             "sketchtool.polygon, sketchtool.spline, sketchtool.trim, sketchtool.extend, "
+            "sketchtool.offset, sketchtool.fillet, sketchtool.chamfer, "
             "sketchtool.point and sketchtool.helper "
             "choose "
             "a tool; type:40,tab,25,enter types the numbers of the element being drawn), "

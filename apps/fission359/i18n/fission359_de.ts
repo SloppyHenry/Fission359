@@ -1779,12 +1779,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1031"/>
+        <location line="+1034"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location line="-1030"/>
+        <location line="-1033"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
@@ -2015,12 +2015,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1658"/>
+        <location line="+1661"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1657"/>
+        <location line="-1660"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -2051,12 +2051,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1635"/>
+        <location line="+1638"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1633"/>
+        <location line="-1636"/>
         <source>Round edges</source>
         <translation>Kanten abrunden</translation>
     </message>
@@ -2097,12 +2097,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1633"/>
+        <location line="+1636"/>
         <source>Draft</source>
         <translation>Schräge</translation>
     </message>
     <message>
-        <location line="-1631"/>
+        <location line="-1634"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -2162,19 +2162,24 @@
         <translation>Fang mit einer Form an: Öffne „Formen“ in der Werkzeugleiste oder drücke %1 und sag, was du bauen willst.</translation>
     </message>
     <message>
-        <location line="+34"/>
-        <location line="+1080"/>
+        <location line="+10"/>
+        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
+        <translation>Skizzieren: Wähle links ein Werkzeug (L Linie, R Rechteck, C Kreis, A Bogen, S Langloch, G Polygon, K Kurve, T Trimmen, E Verlängern, O Versetzen, F Ecke abrunden, P Punkt, X Hilfslinie). Der Zeiger rastet an Punkten, Mitten und am Raster ein; mit Umschalt rastet er nicht ein. „Fertig“ oder Esc verlässt die Skizze.</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <location line="+1083"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-1078"/>
-        <location line="+1079"/>
+        <location line="-1081"/>
+        <location line="+1082"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-1073"/>
+        <location line="-1076"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -2357,7 +2362,7 @@
         <translation>normal</translation>
     </message>
     <message>
-        <location line="+169"/>
+        <location line="+172"/>
         <source>Click an edge of the body this step works on.</source>
         <translation>Klicke eine Kante des Körpers, auf dem dieser Schritt arbeitet.</translation>
     </message>
@@ -2431,7 +2436,7 @@
         </translation>
     </message>
     <message>
-        <location line="-894"/>
+        <location line="-897"/>
         <source>Arrives in a later version.</source>
         <translation>Kommt in einer späteren Version.</translation>
     </message>
@@ -2466,7 +2471,7 @@
         <translation>Kopiere zuerst etwas.</translation>
     </message>
     <message>
-        <location line="+1110"/>
+        <location line="+1113"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
@@ -2481,7 +2486,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1530"/>
+        <location line="-1533"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -2541,7 +2546,7 @@
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
     <message>
-        <location line="+1563"/>
+        <location line="+1566"/>
         <source>Unit: mm</source>
         <translation>Einheit: mm</translation>
     </message>
@@ -2649,12 +2654,12 @@
         <translation>%1 hinzugefügt</translation>
     </message>
     <message>
-        <location line="-1163"/>
+        <location line="-1166"/>
         <source>This body cannot be hollowed: it may already be part of another body.</source>
         <translation>Dieser Körper lässt sich nicht aushöhlen: Er gehört vielleicht schon zu einem anderen Körper.</translation>
     </message>
     <message>
-        <location line="+855"/>
+        <location line="+858"/>
         <source>Bevelled. Drag the grip or type a distance.</source>
         <translation>Abgeschrägt. Ziehe am Griff oder tippe einen Abstand.</translation>
     </message>
@@ -2724,7 +2729,7 @@
         <translation>Umriss exportiert.</translation>
     </message>
     <message>
-        <location line="-973"/>
+        <location line="-976"/>
         <source>Helper lines are on: what you draw is only an aid.</source>
         <translation>Hilfslinien sind an: Was du zeichnest, ist nur eine Hilfe.</translation>
     </message>
@@ -2734,17 +2739,12 @@
         <translation>Mit Umschalt rastet der Zeiger nicht ein, mit %1 zeichnest du eine Hilfslinie.</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
-        <translation>Du skizzierst: Wähle links ein Werkzeug (L Linie, R Rechteck, C Kreis, A Bogen, S Langloch, G Polygon, K Kurve, T Trimmen, E Verlängern, P Punkt, X Hilfslinie). Der Zeiger rastet an Punkten, Mitten und am Raster ein; mit Umschalt gedrückt rastet er nicht ein. „Fertig“ oder Esc verlässt die Skizze.</translation>
-    </message>
-    <message>
-        <location line="+90"/>
+        <location line="+92"/>
         <source>Open a sketch first (the tool “Sketch”).</source>
         <translation>Öffne zuerst eine Skizze (Werkzeug „Skizze“).</translation>
     </message>
     <message>
-        <location line="+1496"/>
+        <location line="+1499"/>
         <source>Imported body</source>
         <translation>Importierter Körper</translation>
     </message>
@@ -2993,6 +2993,21 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Sketch offset</source>
+        <translation>Skizze versetzt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Corner rounded</source>
+        <translation>Ecke abgerundet</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Corner chamfered</source>
+        <translation>Ecke abgeschrägt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>%1 made a helper line</source>
         <translation>%1 zur Hilfslinie gemacht</translation>
     </message>
@@ -3139,37 +3154,37 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-377"/>
+        <location line="-380"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1630"/>
+        <location line="-1633"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1665"/>
+        <location line="+1668"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1468"/>
+        <location line="-1471"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+826"/>
+        <location line="+829"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-886"/>
+        <location line="-889"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
     <message>
-        <location line="+1653"/>
+        <location line="+1656"/>
         <source>Slot</source>
         <translation>Langloch</translation>
     </message>
@@ -3426,7 +3441,7 @@
 <context>
     <name>MessageCatalog</name>
     <message>
-        <location filename="../qml/MessageCatalog.qml" line="+100"/>
+        <location filename="../qml/MessageCatalog.qml" line="+108"/>
         <source>It was inches</source>
         <translation>Es waren Zoll</translation>
     </message>
@@ -3718,7 +3733,7 @@
         <translation>„%1“ kenne ich nicht.</translation>
     </message>
     <message>
-        <location line="-262"/>
+        <location line="-270"/>
         <source>Sketches only go on flat faces. Tip: helper planes come later.</source>
         <translation>Skizzen gehen nur auf ebenen Flächen. Tipp: Hilfsebenen kommen später.</translation>
     </message>
@@ -3761,6 +3776,46 @@
         <location line="+1"/>
         <source>That could not be worked out. Nothing was changed.</source>
         <translation>Das ließ sich nicht berechnen. Es wurde nichts geändert.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Curves cannot be offset yet. Lines, arcs and circles can.</source>
+        <translation>Kurven lassen sich noch nicht versetzen. Linien, Bögen und Kreise gehen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The distance is bigger than the rounding. Nothing was added: choose a smaller distance.</source>
+        <translation>Der Abstand ist größer als die Rundung. Es wurde nichts angelegt: Wähle einen kleineren Abstand.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The copy would cross itself at this distance. Nothing was added: choose a smaller distance.</source>
+        <translation>Die Kopie würde sich bei diesem Abstand selbst überschneiden. Es wurde nichts angelegt: Wähle einen kleineren Abstand.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Corners at curves cannot be rounded or chamfered yet.</source>
+        <translation>Ecken an Kurven lassen sich noch nicht abrunden oder abschrägen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>There is no corner here. Click where two lines or arcs meet.</source>
+        <translation>Hier ist keine Ecke. Klicke dorthin, wo zwei Linien oder Bögen aufeinandertreffen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>These two go on smoothly, so there is no corner to round.</source>
+        <translation>Die beiden gehen glatt ineinander über, hier gibt es keine Ecke zum Abrunden.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The radius is too big for this corner. The biggest that fits is %1 mm.</source>
+        <translation>Der Radius ist zu groß für diese Ecke. Der größte, der passt, ist %1 mm.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The distance is too big for this corner. The biggest that fits is %1 mm.</source>
+        <translation>Der Abstand ist zu groß für diese Ecke. Der größte, der passt, ist %1 mm.</translation>
     </message>
     <message>
         <location line="+69"/>
@@ -3981,7 +4036,7 @@
         <translation>Die Berechnung wurde durch eine neuere Änderung ersetzt.</translation>
     </message>
     <message>
-        <location line="-356"/>
+        <location line="-364"/>
         <source>A polygon has a whole number of sides from 3 to 64. The number before stays.</source>
         <translation>Ein Polygon hat eine ganze Zahl von Seiten, von 3 bis 64. Die Zahl davor bleibt.</translation>
     </message>
@@ -4865,6 +4920,11 @@
         <translation>Radius</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Distance</source>
+        <translation>Abstand</translation>
+    </message>
+    <message>
         <location line="+7"/>
         <location line="+171"/>
         <source>mm</source>
@@ -4991,6 +5051,61 @@
     </message>
     <message>
         <location line="+4"/>
+        <source>Offset</source>
+        <translation>Versetzen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a parallel copy of a line, an arc, a circle or a whole chain of them. Click it, then move to the side and click again, or type the distance.</source>
+        <translation>Macht eine parallele Kopie einer Linie, eines Bogens, eines Kreises oder einer ganzen Kette davon. Klicke darauf, geh zur Seite und klicke noch einmal, oder tippe den Abstand.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click the line, arc or circle to offset.</source>
+        <translation>Klicke die Linie, den Bogen oder den Kreis, der versetzt werden soll.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Round corner</source>
+        <translation>Ecke abrunden</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rounds a corner where two lines or arcs meet, with a tangent arc. Click near the corner, or pull to change the radius, or type it. The arrow switches to chamfering.</source>
+        <translation>Rundet eine Ecke, an der zwei Linien oder Bögen aufeinandertreffen, mit einem Bogen ab. Klicke in die Nähe der Ecke, ziehe, um den Radius zu ändern, oder tippe ihn. Der Pfeil schaltet auf Abschrägen um.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click near the corner to round.</source>
+        <translation>Klicke in die Nähe der Ecke, die abgerundet werden soll.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Round</source>
+        <translation>Abrunden</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Chamfer</source>
+        <translation>Abschrägen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Chamfer corner</source>
+        <translation>Ecke abschrägen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cuts a corner where two lines or arcs meet with a straight line, the same distance from the corner on both sides. Click near the corner, or pull to change the distance, or type it.</source>
+        <translation>Schneidet eine Ecke, an der zwei Linien oder Bögen aufeinandertreffen, mit einer geraden Linie ab, auf beiden Seiten gleich weit von der Ecke. Klicke in die Nähe der Ecke, ziehe, um den Abstand zu ändern, oder tippe ihn.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click near the corner to chamfer.</source>
+        <translation>Klicke in die Nähe der Ecke, die abgeschrägt werden soll.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Point</source>
         <translation>Punkt</translation>
     </message>
@@ -5101,11 +5216,31 @@
     </message>
     <message>
         <location line="+2"/>
+        <source>Click a line, arc or circle: its whole chain is offset. Esc ends the tool.</source>
+        <translation>Klicke eine Linie, einen Bogen oder einen Kreis: Die ganze Kette wird versetzt. Esc beendet das Werkzeug.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Move to the side and click, or type the distance. Enter sets it, Esc takes the chain back.</source>
+        <translation>Geh zur Seite und klicke, oder tippe den Abstand. Enter setzt ihn, Esc nimmt die Kette zurück.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Click near a corner to chamfer it with the last distance, pull to change the distance, or type it. Esc ends the tool.</source>
+        <translation>Klicke in die Nähe einer Ecke, um sie mit dem letzten Abstand abzuschrägen; ziehe, um den Abstand zu ändern, oder tippe ihn. Esc beendet das Werkzeug.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Click near a corner to round it with the last radius, pull to change the radius, or type it. Esc ends the tool.</source>
+        <translation>Klicke in die Nähe einer Ecke, um sie mit dem letzten Radius abzurunden; ziehe, um den Radius zu ändern, oder tippe ihn. Esc beendet das Werkzeug.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Click where the point goes. Esc ends the tool.</source>
         <translation>Klicke dorthin, wo der Punkt hin soll. Esc beendet das Werkzeug.</translation>
     </message>
     <message>
-        <location line="-109"/>
+        <location line="-136"/>
         <source>Arc</source>
         <translation>Bogen</translation>
     </message>
@@ -5165,7 +5300,7 @@
         <translation>Seitenmitte (Inkreis)</translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+64"/>
         <source>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</source>
         <translation>Lass los, um den anschließenden Bogen zu setzen, oder tippe seinen Radius. Enter setzt ihn, Esc verwirft ihn.</translation>
     </message>

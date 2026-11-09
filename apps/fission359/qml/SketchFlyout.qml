@@ -35,7 +35,7 @@ Float {
         spacing: 2
 
         Repeater {
-            model: root.catalog ? root.catalog.tools : []
+            model: root.catalog ? root.catalog.tools.filter(tool => tool.listed !== false) : []
 
             delegate: AbstractButton {
                 id: row

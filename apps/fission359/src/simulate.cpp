@@ -101,7 +101,9 @@ void sendMouse(QQuickWindow* window, fission::ui::Viewport3D* viewport, QEvent::
     const Qt::MouseButton changed = type == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton;
     QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()), changed, buttons,
                       Qt::NoModifier);
+    viewport->setPlayedInput(true);
     QCoreApplication::sendEvent(window, &event);
+    viewport->setPlayedInput(false);
 }
 
 // Pulls that have been started and are not let go yet. A check waits for them, so that it never
@@ -358,7 +360,9 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                         QMouseEvent event(QEvent::MouseMove, scene,
                                           window->mapToGlobal(scene.toPoint()), Qt::NoButton,
                                           Qt::NoButton, Qt::NoModifier);
+                        viewport->setPlayedInput(true);
                         QCoreApplication::sendEvent(window, &event);
+                        viewport->setPlayedInput(false);
                     }
                 });
             continue;

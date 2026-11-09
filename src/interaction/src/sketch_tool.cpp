@@ -99,6 +99,8 @@ int SketchTool::fieldCount() const {
     case SketchToolKind::point:
     case SketchToolKind::trim:
     case SketchToolKind::extend:
+    case SketchToolKind::offset:
+    case SketchToolKind::fillet:
     case SketchToolKind::none:
         break;
     }
@@ -421,6 +423,8 @@ SketchTool::Shape SketchTool::shape(const SketchPoint& pointer, bool alt) const 
     case SketchToolKind::point:
     case SketchToolKind::trim:
     case SketchToolKind::extend:
+    case SketchToolKind::offset:
+    case SketchToolKind::fillet:
     case SketchToolKind::none:
         break;
     }
@@ -520,6 +524,8 @@ SketchToolStep SketchTool::click(const SketchPoint& position, bool alt) {
     case SketchToolKind::none:
     case SketchToolKind::trim: // these two edit what is drawn: the controller does that
     case SketchToolKind::extend:
+    case SketchToolKind::offset:
+    case SketchToolKind::fillet:
         break;
     case SketchToolKind::point: {
         SketchBatch batch{made(SketchElementKind::point, {position})};

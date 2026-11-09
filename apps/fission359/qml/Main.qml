@@ -204,7 +204,7 @@ Window {
             return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed, Sketch.pullingArc)
                    + " " + qsTr("Shift switches catching off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
         }
-        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
+        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
     }
 
     // ---- undo and redo ---------------------------------------------------------------------
@@ -838,7 +838,8 @@ Window {
 
     // ---- shortcuts (the menus of macOS bring their own) ------------------------------------
     Shortcut { sequence: "Shift+F"; onActivated: root.run("focus") }
-    Shortcut { sequence: "F"; onActivated: root.run("view.frame") }
+    // F is "Round corner" in the sketch mode (AP-2.1e2): the two are never on together.
+    Shortcut { sequence: "F"; enabled: !Sketch.active; onActivated: root.run("view.frame") }
     Shortcut { sequence: "L"; enabled: Selection.singleFaceChosen && !Sketch.active; onActivated: root.run("view.lookat") }
     // The drawing tools of the sketch mode (AP-2.1c1); the keys mean something else outside it.
     Shortcut { sequence: "L"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.line") }
@@ -850,6 +851,8 @@ Window {
     Shortcut { sequence: "K"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.spline") }
     Shortcut { sequence: "T"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.trim") }
     Shortcut { sequence: "E"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.extend") }
+    Shortcut { sequence: "O"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.offset") }
+    Shortcut { sequence: "F"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.fillet") }
     Shortcut { sequence: "P"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.point") }
     Shortcut { sequence: "X"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.helper") }
     Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
@@ -913,7 +916,7 @@ Window {
         target: Sketch
 
         function onNotice(code) {
-            root.showHint(messageCatalog.sketchNotice(code))
+            root.showHint(messageCatalog.sketchNotice(code, Sketch.noticeNumber))
         }
     }
     Binding { target: Sketch; property: "gridColour"; value: Theme.gridMajor }
@@ -1890,6 +1893,9 @@ Window {
         case "moveSketchPoints": return qsTr("Sketch changed")
         case "trimSketch": return qsTr("Sketch trimmed")
         case "extendSketch": return qsTr("Sketch extended")
+        case "offsetSketch": return qsTr("Sketch offset")
+        case "roundCorner": return qsTr("Corner rounded")
+        case "chamferCorner": return qsTr("Corner chamfered")
         case "sketchConstructionOn": return qsTr("%1 made a helper line").arg(sketchElementLabel(step.kind))
         case "sketchConstructionOff": return qsTr("%1 made a normal line again").arg(sketchElementLabel(step.kind))
         case "setLabel": return qsTr("Step renamed")

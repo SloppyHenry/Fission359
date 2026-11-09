@@ -651,7 +651,12 @@ void Viewport3D::mouseDoubleClickEvent(QMouseEvent* event) {
 }
 
 void Viewport3D::hoverMoveEvent(QHoverEvent* event) {
-    m_hoverSimulated = false;
+    if (m_hoverSimulated && !m_playedInput) {
+        // The played pointer (--simulate) rules; the real one is ignored.
+        QQuickRhiItem::hoverMoveEvent(event);
+        return;
+    }
+    m_hoverSimulated = m_playedInput;
     m_hoverPosition = event->position();
     hoverAgain();
     emit pointerMoved(event->position().x(), event->position().y());
