@@ -1548,3 +1548,252 @@ TEST_CASE("sketch corner: a curve and a click far from any corner give hints",
     CHECK(f.notices.contains(QStringLiteral("noCorner")));
     CHECK(f.elements() == before);
 }
+
+// --- mirror and pattern (AP-2.1e3) ----------------------------------------------------------
+
+namespace {
+
+// A rectangle 40 x 20 from (0,0) and a vertical axis at u = -10.
+void putRectangleAndAxis(Drawing& f) {
+    putRectangle(f);
+    put(f, {lineOf(-10, -10, -10, 30)});
+}
+
+} // namespace
+
+TEST_CASE("sketch mirror: choose a chain, go on, click the axis: four new lines, one undo step",
+          "[ui][sketchtools][mirror]") {
+    NoCatching free;
+    Drawing f;
+    putRectangleAndAxis(f);
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("mirror"));
+    CHECK(f.sketch->toolName() == "mirror");
+    CHECK(f.sketch->placed() == 0);
+    f.sketch->acceptTyped(); // Enter without a choice does nothing
+    CHECK(f.sketch->placed() == 0);
+
+    f.click(20, 0.2); // the whole chain is chosen
+    CHECK(f.sketch->placed() == 1);
+    f.click(20, 0.2); // a click on a chosen chain takes it out again
+    CHECK(f.sketch->placed() == 0);
+    f.click(20, 0.2);
+    CHECK(f.sketch->placed() == 1);
+    CHECK(f.elements() == before); // nothing is made yet
+
+    f.sketch->acceptTyped(); // Enter: the second step
+    CHECK(f.sketch->placed() == 2);
+    f.move(-10, 5); // over the axis: the preview shows
+    f.click(-10, 5);
+    const auto after = f.elements();
+    REQUIRE(after.size() == 9);
+    CHECK(f.nextUndo() == "mirrorSketch");
+    CHECK(after[5].id == "L6");
+    checkPoint(after[5].points[0], -20, 0); // L1 (0,0)-(40,0) mirrored at u = -10
+    checkPoint(after[5].points[1], -60, 0);
+    CHECK(f.sketch->placed() == 0); // choosing begins again
+    CHECK(f.sketch->toolActive());
+
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements() == before);
+    REQUIRE(f.model->redo());
+    f.settle();
+    CHECK(f.elements() == after); // the same ids and numbers
+}
+
+TEST_CASE("sketch mirror: Esc goes back one step at a time", "[ui][sketchtools][mirror]") {
+    NoCatching free;
+    Drawing f;
+    putRectangleAndAxis(f);
+    f.sketch->chooseTool(QStringLiteral("mirror"));
+    f.click(20, 0.2);
+    f.sketch->proceed();
+    CHECK(f.sketch->placed() == 2);
+    f.sketch->escape(); // back to choosing, the choice stays
+    CHECK(f.sketch->toolActive());
+    CHECK(f.sketch->placed() == 1);
+    f.sketch->escape(); // the tool ends
+    CHECK_FALSE(f.sketch->toolActive());
+    CHECK(f.sketch->active());
+    CHECK(f.elements().size() == 5);
+}
+
+TEST_CASE("sketch mirror: a click that is no line gives a hint, an element on the axis is skipped",
+          "[ui][sketchtools][mirror]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {circleOf(30, 0, 5), lineOf(0, -20, 0, 20), lineOf(0, 0, 0, 10)});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("mirror"));
+    f.click(35, 0.1); // the circle
+    f.sketch->proceed();
+    f.click(35, 0.1); // the circle again: no axis
+    CHECK(f.notices.contains(QStringLiteral("mirrorAxis")));
+    CHECK(f.elements() == before);
+    // the line on the axis alone: its mirror image lies on it
+    f.sketch->chooseTool(QStringLiteral("mirror")); // choosing begins again
+    f.click(0, 3); // a line on the axis (the last of the two that lie there)
+    f.sketch->proceed();
+    f.click(0, 15);
+    CHECK(f.notices.contains(QStringLiteral("copiesNone")));
+    CHECK(f.elements() == before);
+}
+
+TEST_CASE("sketch pattern: a row of three, the start and the pointer give the distance",
+          "[ui][sketchtools][pattern]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {circleOf(0, 0, 5)});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("pattern"));
+    CHECK(f.sketch->toolVariant() == 0); // the row
+    f.click(5, 0.1);
+    CHECK(f.sketch->placed() == 1);
+    f.sketch->acceptTyped();
+    CHECK(f.sketch->placed() == 2);
+    CHECK(f.sketch->fieldCount() == 0); // nothing to type before the start is set
+    f.click(0, 20);                     // the start
+    CHECK(f.sketch->placed() == 3);
+    CHECK(f.sketch->fieldCount() == 2);
+    f.move(10, 20);
+    const QVariantList fields = f.sketch->readout().value("fields").toList();
+    REQUIRE(fields.size() == 2);
+    CHECK(fields[0].toMap().value("name").toString() == "count");
+    CHECK(fields[0].toMap().value("value").toInt() == 3);
+    CHECK(fields[1].toMap().value("name").toString() == "distance");
+    CHECK(fields[1].toMap().value("value").toDouble() == Approx(10.0));
+    f.click(10, 20);
+    const auto after = f.elements();
+    REQUIRE(after.size() == 3);
+    CHECK(f.nextUndo() == "patternSketch");
+    checkPoint(after[1].points[0], 10, 0);
+    checkPoint(after[2].points[0], 20, 0);
+    CHECK(after[1].id == "C2");
+
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements() == before);
+    REQUIRE(f.model->redo());
+    f.settle();
+    CHECK(f.elements() == after);
+}
+
+TEST_CASE("sketch pattern: typed count and distance replace the pointer's, the direction stays",
+          "[ui][sketchtools][pattern]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {circleOf(0, 0, 5)});
+    f.sketch->chooseTool(QStringLiteral("pattern"));
+    f.click(5, 0.1);
+    f.sketch->proceed();
+    f.click(0, 30);
+    f.move(0, 33); // upwards
+    f.sketch->setTyped(0, 4);
+    f.sketch->setTyped(1, 15);
+    f.sketch->acceptTyped();
+    const auto after = f.elements();
+    REQUIRE(after.size() == 4);
+    checkPoint(after[1].points[0], 0, 15);
+    checkPoint(after[2].points[0], 0, 30);
+    checkPoint(after[3].points[0], 0, 45);
+    // the count is remembered for the next row
+    f.click(5, 0.1);
+    f.sketch->proceed();
+    f.click(0, 60);
+    f.move(10, 60);
+    CHECK(f.sketch->readout().value("fields").toList()[0].toMap().value("value").toInt() == 4);
+}
+
+TEST_CASE("sketch pattern: round a point, 360 degrees and 90 degrees",
+          "[ui][sketchtools][pattern]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(10, 0, 20, 0)});
+    f.sketch->chooseTool(QStringLiteral("pattern"), 1);
+    CHECK(f.sketch->toolVariant() == 1);
+    f.click(15, 0.1);
+    f.sketch->proceed();
+    f.click(0, 0); // the middle
+    const QVariantList fields = f.sketch->readout().value("fields").toList();
+    REQUIRE(fields.size() == 2);
+    CHECK(fields[0].toMap().value("value").toInt() == 6);
+    CHECK(fields[1].toMap().value("name").toString() == "angle");
+    CHECK(fields[1].toMap().value("value").toDouble() == Approx(360.0));
+    f.sketch->acceptTyped();
+    auto after = f.elements();
+    REQUIRE(after.size() == 6);
+    for (std::size_t k = 1; k < 6; ++k) {
+        const double a = static_cast<double>(k) * std::numbers::pi / 3.0;
+        checkPoint(after[k].points[0], 10 * std::cos(a), 10 * std::sin(a));
+        checkPoint(after[k].points[1], 20 * std::cos(a), 20 * std::sin(a));
+    }
+    REQUIRE(f.model->undo());
+    f.settle();
+    REQUIRE(f.elements().size() == 1);
+
+    // 4 pieces over 90 degrees: 30 degrees apart, the last at the end
+    f.click(15, 0.1);
+    f.sketch->proceed();
+    f.click(0, 0);
+    f.sketch->setTyped(0, 4);
+    f.sketch->setTyped(1, 90);
+    f.sketch->acceptTyped();
+    after = f.elements();
+    REQUIRE(after.size() == 4);
+    checkPoint(after[3].points[0], 0, 10);
+    checkPoint(after[3].points[1], 0, 20);
+}
+
+TEST_CASE("sketch pattern: a count of 1, a count over 200 and a distance of 0 make nothing",
+          "[ui][sketchtools][pattern]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {circleOf(0, 0, 5)});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("pattern"));
+    f.click(5, 0.1);
+    f.sketch->proceed();
+    f.click(0, 30);
+    f.move(10, 30);
+    f.sketch->setTyped(0, 201);
+    f.sketch->acceptTyped();
+    CHECK(f.notices.contains(QStringLiteral("patternTooMany")));
+    CHECK(f.elements() == before);
+    f.sketch->setTyped(0, 1);
+    f.sketch->acceptTyped();
+    CHECK(f.notices.contains(QStringLiteral("patternNothing")));
+    CHECK(f.elements() == before);
+    f.notices.clear();
+    f.sketch->setTyped(0, 3);
+    f.sketch->setTyped(1, 0);
+    f.sketch->acceptTyped();
+    CHECK(f.notices.contains(QStringLiteral("patternNothing")));
+    CHECK(f.elements() == before);
+    // 200 is the most and works
+    f.sketch->setTyped(0, 200);
+    f.sketch->setTyped(1, 1);
+    f.sketch->acceptTyped();
+    CHECK(f.elements().size() == 200);
+}
+
+TEST_CASE("sketch pattern: Esc takes typed numbers back, then goes back to choosing",
+          "[ui][sketchtools][pattern]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {circleOf(0, 0, 5)});
+    f.sketch->chooseTool(QStringLiteral("pattern"));
+    f.click(5, 0.1);
+    f.sketch->proceed();
+    f.click(0, 30);
+    f.move(10, 30);
+    f.sketch->setTyped(0, 9);
+    f.sketch->escape(); // the typed number goes
+    CHECK(f.sketch->placed() == 3);
+    CHECK(f.sketch->readout().value("fields").toList()[0].toMap().value("value").toInt() == 3);
+    f.sketch->escape(); // back to choosing
+    CHECK(f.sketch->placed() == 1);
+    f.sketch->escape(); // the tool ends
+    CHECK_FALSE(f.sketch->toolActive());
+    CHECK(f.elements().size() == 1);
+}

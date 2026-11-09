@@ -15,6 +15,9 @@ Rectangle {
     /// The step of snapping in use (mm), and whether it follows the zoom.
     property real gridStep: 1
     property bool gridAutomatic: true
+    /// The button "Continue" (mirror and pattern: from choosing to the second step, AP-2.1e3).
+    property bool continueVisible: false
+    signal continueClicked()
     signal gridStepChosen(real step)
     signal gridAutomaticChosen()
 
@@ -72,6 +75,15 @@ Rectangle {
         anchors.rightMargin: Theme.space3
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.space4
+
+        Btn {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.continueVisible
+            small: true
+            variant: "primary"
+            text: qsTr("Continue")
+            onClicked: root.continueClicked()
+        }
 
         Txt {
             anchors.verticalCenter: parent.verticalCenter

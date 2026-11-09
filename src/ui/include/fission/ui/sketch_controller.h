@@ -16,6 +16,7 @@
 #include "fission/core/sketch.h"
 #include "fission/interaction/sketch_edit.h"
 #include "fission/interaction/sketch_offset.h"
+#include "fission/interaction/sketch_pattern.h"
 #include "fission/interaction/sketch_snap.h"
 #include "fission/interaction/sketch_tool.h"
 #include "fission/render/camera.h"
@@ -50,7 +51,8 @@ class SketchController : public QObject {
     Q_PROPERTY(bool toolActive READ toolActive NOTIFY toolChanged)
     /// The tool: "" (none), "line", "rectangle", "circle", "point", "arc", "slot", "polygon",
     /// "spline" (the curve), "trim" or "extend" (AP-2.1e1), "offset" or "fillet" (AP-2.1e2:
-    /// variant 0 rounds a corner, 1 chamfers it); and
+    /// variant 0 rounds a corner, 1 chamfers it), "mirror" or "pattern" (AP-2.1e3: variant 0 a row,
+    /// 1 round a point); and
     /// its variant (rectangle: 0 two corners, 1 middle and corner; circle: 0 middle and radius,
     /// 1 three points; arc: 0 three points, 1 middle, start and end; polygon: 0 corner, 1 middle
     /// of a side).
@@ -106,6 +108,9 @@ public:
     void setHelperLine(bool on);
     bool drawing() const noexcept { return toolActive() && (m_tool.busy() || editDrafting()); }
     int placed() const noexcept {
+        if (copyTool()) {
+            return copyPlaced();
+        }
         return editDrafting() && m_tool.kind() == interaction::SketchToolKind::offset
                    ? 1
                    : static_cast<int>(m_tool.placedCount());
@@ -162,6 +167,9 @@ public:
     /// A number typed for field 0 or 1 of the element being pulled (millimetres, or degrees for
     /// the angle); the element follows at once. NaN takes the number back.
     Q_INVOKABLE void setTyped(int field, double value);
+    /// Enter in the mirror and pattern tools (the button "Continue" of the hint line): goes on from
+    /// choosing the elements to the second step. Nothing without a choice (AP-2.1e3).
+    Q_INVOKABLE void proceed();
     /// Backspace: takes the last point of the curve being drawn back (AP-2.1d).
     Q_INVOKABLE void removeLastPoint();
     /// Takes all typed numbers back (the element follows the pointer again).
@@ -170,7 +178,7 @@ public:
     Q_INVOKABLE void acceptTyped();
     /// How many numbers can be typed now (0 when nothing is pulled).
     Q_INVOKABLE int fieldCount() const {
-        return editDrafting() ? 1 : drawing() ? m_tool.fieldCount() : 0;
+        return editDrafting() ? (patternReadout() ? 2 : 1) : drawing() ? m_tool.fieldCount() : 0;
     }
     /// The elements of the sketch as the controller knows them (the document's; for tests).
     const std::vector<core::SketchElement>& elements() const noexcept { return m_elements; }
@@ -229,9 +237,31 @@ private:
     bool chamfering() const noexcept { return cornerTool() && m_tool.variant() == 1; }
     /// A chain is picked, or a corner is under the pointer: a number can be typed.
     bool editDrafting() const noexcept {
-        return (offsetTool() && m_chain) ||
+        return (offsetTool() && m_chain) || patternReadout() ||
                (cornerTool() && (m_pressedCorner || (m_hoverCorner && !m_hoverCorner->curve)));
     }
+    // mirroring and patterns (AP-2.1e3)
+    bool copyTool() const noexcept {
+        return toolActive() && (m_tool.kind() == interaction::SketchToolKind::mirror ||
+                                m_tool.kind() == interaction::SketchToolKind::pattern);
+    }
+    bool patternTool() const noexcept {
+        return toolActive() && m_tool.kind() == interaction::SketchToolKind::pattern;
+    }
+    /// The pattern's second step with its start (or middle) set: count and distance can be typed.
+    bool patternReadout() const noexcept { return patternTool() && m_second && m_anchor; }
+    /// For the hint line: 0 nothing chosen, 1 something chosen (Enter goes on), 2 second step, 3
+    /// second step with the start (middle) of the pattern set.
+    int copyPlaced() const noexcept {
+        return !m_second ? (m_picked.empty() ? 0 : 1) : (m_anchor ? 3 : 2);
+    }
+    std::vector<std::string> chainIds(const std::string& id) const;
+    void updateCopyHover(const core::SketchPoint& raw);
+    interaction::SketchCopyResult patternResult(const core::SketchPoint& pointer);
+    std::optional<std::string> axisNear(const core::SketchPoint& raw) const;
+    void commitCopy();
+    void applyCopy(const interaction::SketchCopyResult& result, const QString& action);
+    void forgetCopy();
     void updateOffsetHover(const core::SketchPoint& raw);
     void updateCornerHover(const core::SketchPoint& raw);
     double cornerValue(const interaction::SketchCorner& corner, const core::SketchPoint& raw);
@@ -287,6 +317,13 @@ private:
     double m_lastRadius = 2.0;                  ///< the radius used last (mm)
     double m_lastChamfer = 2.0;                 ///< the chamfer distance used last (mm)
     std::vector<core::SketchElement> m_preview; ///< what the edit would add
+    // mirroring and patterns (AP-2.1e3)
+    std::vector<std::string> m_picked;         ///< the elements to copy
+    bool m_second = false;                     ///< the second step (the axis, the row, the circle)
+    std::optional<core::SketchPoint> m_anchor; ///< pattern: the start of the row, the middle
+    std::optional<double> m_patTyped[2];       ///< count, then distance (row) or angle (circle)
+    std::array<int, 2> m_patCount{3, 6};       ///< the count used last: row, circle
+    int m_shownCount = 0;
     double m_noticeNumber = 0.0;
 
     QColor m_gridColour{0x3A, 0x3D, 0x43};

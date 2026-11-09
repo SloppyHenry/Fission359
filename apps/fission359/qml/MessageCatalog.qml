@@ -92,6 +92,10 @@ QtObject {
         case "notACorner": return qsTr("These two go on smoothly, so there is no corner to round.")
         case "cornerTooBig": return qsTr("The radius is too big for this corner. The biggest that fits is %1 mm.").arg(mm(number))
         case "chamferTooBig": return qsTr("The distance is too big for this corner. The biggest that fits is %1 mm.").arg(mm(number))
+        case "mirrorAxis": return qsTr("Click a line or a helper line as the mirror axis.")
+        case "copiesNone": return qsTr("Nothing was added: the copies would lie exactly on elements that are there already.")
+        case "patternTooMany": return qsTr("At most 200 copies. Nothing was added: choose a smaller number.")
+        case "patternNothing": return qsTr("Nothing was added: a pattern needs at least 2 pieces and a distance or an angle above 0.")
         default: return ""
         }
     }
