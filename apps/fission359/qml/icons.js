@@ -84,6 +84,9 @@ var paths = {
     sketchspline: "M4 16C8 4 11 4 12 12S17 20 20 8 M4 16h.01 M12 12h.01 M20 8h.01",
     sketchtrim: "M4 12h16 M12 4v16 M14 14l6 6 M20 14l-6 6",
     sketchextend: "M4 12h9 M15.5 12h.01 M18 12h.01 M20.5 12h.01 M20 5v14",
+    sketchoffset: "M4 7h16 M4 14h16 M12 17v4 M10 19l2 2l2-2",
+    sketchfillet: "M6 4v9a7 7 0 0 0 7 7h7",
+    sketchchamfer: "M6 4v7l9 9h5",
     sketchpoint: "M12 14.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5z M12 4v3 M12 17v3 M4 12h3 M17 12h3",
     sketchhelper: "M4 20l3-3 M10 14l4-4 M17 7l3-3"
 };

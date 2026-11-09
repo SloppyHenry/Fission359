@@ -224,6 +224,10 @@ const char* toolWord(interaction::SketchToolKind kind) {
         return "trim";
     case interaction::SketchToolKind::extend:
         return "extend";
+    case interaction::SketchToolKind::offset:
+        return "offset";
+    case interaction::SketchToolKind::fillet:
+        return "fillet";
     case interaction::SketchToolKind::none:
         break;
     }
@@ -408,6 +412,16 @@ void SketchController::escape() {
             refresh();
             return;
         }
+        if ((offsetTool() && m_chain) || m_typedValue) { // a picked chain, a typed number
+            m_chain.reset();
+            m_typedValue.reset();
+            m_preview.clear();
+            if (m_rawPointer) {
+                updateEditHover(*m_rawPointer);
+            }
+            updateDraft();
+            return;
+        }
         if (!m_tool.cancel()) {
             chooseTool(QString());
         }
@@ -467,6 +481,11 @@ void SketchController::onModelChanged() {
     m_trimmer.reset(); // the pieces depend on the elements
     m_hoverPiece.reset();
     m_hoverExtension.reset();
+    m_chain.reset();
+    m_hoverCorner.reset();
+    m_pressedCorner.reset();
+    m_hoverIds.clear();
+    m_preview.clear();
     refresh();
     if (changed) {
         emit stateChanged();
@@ -555,10 +574,18 @@ void SketchController::pointAt(const interaction::PlaneRay& ray, double pixelsPe
 
 void SketchController::pointerGone() {
     m_rawPointer.reset();
-    if (m_hoverPiece || m_hoverExtension) {
+    if (m_hoverPiece || m_hoverExtension || !m_hoverIds.empty() || m_hoverCorner ||
+        (!m_chain && !m_preview.empty())) {
         m_hoverPiece.reset();
         m_hoverExtension.reset();
-        refresh();
+        m_hoverIds.clear();
+        if (!m_pressedCorner) {
+            m_hoverCorner.reset();
+        }
+        if (!m_chain) {
+            m_preview.clear();
+        }
+        updateDraft();
     }
     if (!m_caught && m_snapMap.isEmpty()) {
         return;
@@ -670,6 +697,34 @@ void SketchController::refresh() {
             target.ringWidth = 1.5F;
             graphics.dots.push_back(target);
         }
+        if (offsetTool() || cornerTool()) {
+            // what is under the pointer or picked, and what the edit would add
+            std::vector<std::string> shown = m_hoverIds;
+            if (m_chain) {
+                for (const interaction::SketchChainSegment& seg : m_chain->segments) {
+                    shown.push_back(seg.element);
+                }
+            }
+            for (const core::SketchElement& element : m_elements) {
+                if (std::ranges::find(shown, element.id) != shown.end()) {
+                    drawElement(graphics, m_plane, element, ppm, m_draftColour, kDraftWidth,
+                                curveOf(element));
+                }
+            }
+            for (const core::SketchElement& element : m_preview) {
+                drawElement(graphics, m_plane, element, ppm, m_draftColour, kDraftWidth, nullptr);
+            }
+            const auto& corner = m_pressedCorner ? m_pressedCorner : m_hoverCorner;
+            if (cornerTool() && corner) {
+                render::HandleDot mark;
+                mark.centre = at(m_plane, corner->at.u, corner->at.v);
+                mark.radius = 4.5F;
+                mark.fill = m_draftColour;
+                mark.ring = QColor(255, 255, 255, 230);
+                mark.ringWidth = 1.5F;
+                graphics.dots.push_back(mark);
+            }
+        }
         if (m_caught) {
             const double dash = kDashPixels / std::max(ppm, 1e-6);
             for (const interaction::SketchGuide& guide : m_caught->guides) {
@@ -721,10 +776,15 @@ void SketchController::chooseTool(const QString& name, int variant) {
     for (const SketchToolKind candidate :
          {SketchToolKind::line, SketchToolKind::rectangle, SketchToolKind::circle,
           SketchToolKind::point, SketchToolKind::arc, SketchToolKind::slot, SketchToolKind::polygon,
-          SketchToolKind::spline, SketchToolKind::trim, SketchToolKind::extend}) {
+          SketchToolKind::spline, SketchToolKind::trim, SketchToolKind::extend,
+          SketchToolKind::offset, SketchToolKind::fillet}) {
         if (name == QLatin1String(toolWord(candidate))) {
             kind = candidate;
         }
+    }
+    if (name == QLatin1String("chamfer")) { // the chamfer is the second way of the corner tool
+        kind = SketchToolKind::fillet;
+        variant = 1;
     }
     int& remembered = m_variants[static_cast<std::size_t>(kind)];
     if (variant >= 0) {
@@ -763,10 +823,19 @@ void SketchController::clickAt(const interaction::PlaneRay& ray, double pixelsPe
         return; // not over the plane
     }
     if (editingTool()) { // a click on a piece or an end (a stroke was dropped at the release)
-        if (m_tool.kind() == interaction::SketchToolKind::trim) {
+        switch (m_tool.kind()) {
+        case interaction::SketchToolKind::trim:
             commitTrim();
-        } else {
+            break;
+        case interaction::SketchToolKind::offset:
+            commitOffset();
+            break;
+        case interaction::SketchToolKind::fillet:
+            commitCorner();
+            break;
+        default:
             commitExtend();
+            break;
         }
         return;
     }
@@ -810,6 +879,15 @@ void SketchController::pressAt(const interaction::PlaneRay& ray, double pixelsPe
     if (!m_caught) {
         return;
     }
+    if (cornerTool()) { // pressed on a corner and pulled: the radius follows (decision 39)
+        m_pressedCorner = m_hoverCorner && !m_hoverCorner->curve ? m_hoverCorner : std::nullopt;
+        m_pressAt = m_rawPointer;
+        m_cornerDragged = false;
+        if (m_viewport != nullptr) {
+            m_viewport->setDrawDrag(m_pressedCorner.has_value());
+        }
+        return;
+    }
     if (editingTool()) {
         // trimming: the press starts a stroke over pieces; the release sets it (decision 34)
         const bool trim = m_tool.kind() == interaction::SketchToolKind::trim;
@@ -844,6 +922,20 @@ void SketchController::releaseAt(const interaction::PlaneRay& ray, double pixels
         return;
     }
     pointAt(ray, pixelsPerMillimetre);
+    if (cornerTool()) {
+        m_cornerDragged = dragged && m_pressedCorner.has_value();
+        if (m_cornerDragged) {
+            commitCorner();
+        }
+        m_pressedCorner.reset();
+        m_pressAt.reset();
+        m_cornerDragged = false;
+        if (m_rawPointer) {
+            updateEditHover(*m_rawPointer);
+        }
+        updateDraft();
+        return;
+    }
     if (editingTool()) {
         if (m_stroking && dragged) {
             commitTrim();
@@ -874,6 +966,18 @@ void SketchController::removeLastPoint() {
 }
 
 void SketchController::setTyped(int field, double value) {
+    if (editDrafting()) { // the distance or radius of an offset or a corner
+        if (field == 0) {
+            m_typedValue = std::isfinite(value) && value != 0.0
+                               ? std::optional<double>(std::abs(value))
+                               : std::nullopt;
+            if (m_rawPointer) {
+                updateEditHover(*m_rawPointer);
+            }
+            updateDraft();
+        }
+        return;
+    }
     if (!drawing()) {
         return;
     }
@@ -886,6 +990,13 @@ void SketchController::setTyped(int field, double value) {
 }
 
 void SketchController::clearTyped() {
+    if (m_typedValue) {
+        m_typedValue.reset();
+        if (m_rawPointer && editingTool()) {
+            updateEditHover(*m_rawPointer);
+        }
+        updateDraft();
+    }
     m_tool.setTyped(0, std::nullopt);
     m_tool.setTyped(1, std::nullopt);
     m_tool.setTyped(2, std::nullopt);
@@ -893,6 +1004,14 @@ void SketchController::clearTyped() {
 }
 
 void SketchController::acceptTyped() {
+    if (editDrafting()) {
+        if (offsetTool()) {
+            commitOffset();
+        } else {
+            commitCorner();
+        }
+        return;
+    }
     if (!drawing()) {
         return;
     }
@@ -935,7 +1054,9 @@ void SketchController::applyStep(const interaction::SketchToolStep& step) {
 
 bool SketchController::editingTool() const noexcept {
     return toolActive() && (m_tool.kind() == interaction::SketchToolKind::trim ||
-                            m_tool.kind() == interaction::SketchToolKind::extend);
+                            m_tool.kind() == interaction::SketchToolKind::extend ||
+                            m_tool.kind() == interaction::SketchToolKind::offset ||
+                            m_tool.kind() == interaction::SketchToolKind::fillet);
 }
 
 const interaction::SketchTrimmer* SketchController::trimmer() {
@@ -946,6 +1067,13 @@ const interaction::SketchTrimmer* SketchController::trimmer() {
 }
 
 void SketchController::forgetEdit() {
+    m_chain.reset();
+    m_hoverCorner.reset();
+    m_pressedCorner.reset();
+    m_pressAt.reset();
+    m_typedValue.reset();
+    m_hoverIds.clear();
+    m_preview.clear();
     m_stroking = false;
     m_marked.clear();
     m_hoverPiece.reset();
@@ -954,6 +1082,16 @@ void SketchController::forgetEdit() {
 
 void SketchController::updateEditHover(const core::SketchPoint& raw) {
     const double reach = kEditPixels / std::max(m_pixelsPerMillimetre, 1e-6);
+    if (offsetTool()) {
+        updateOffsetHover(raw);
+        m_rawPointer = raw;
+        return;
+    }
+    if (cornerTool()) {
+        updateCornerHover(raw);
+        m_rawPointer = raw;
+        return;
+    }
     if (m_tool.kind() == interaction::SketchToolKind::trim) {
         const interaction::SketchTrimmer* pieces = trimmer();
         if (pieces == nullptr) {
@@ -1034,20 +1172,198 @@ void SketchController::commitExtend() {
     }
 }
 
-void SketchController::applyEdit(const interaction::SketchEdit& edit, const QString& action) {
+bool SketchController::applyEdit(const interaction::SketchEdit& edit, const QString& action) {
+    bool applied = false;
     if (edit.notice == interaction::SketchEditNotice::curvePartial) {
         emit notice(QStringLiteral("curvePartial"));
     }
     if (!edit.empty() && m_model != nullptr && m_model->applySketchEdit(m_step, edit, action)) {
+        applied = true;
         m_elements = m_model->sketchElements(m_step);
         m_trimmer.reset();
         m_hoverPiece.reset();
         m_hoverExtension.reset();
+        m_chain.reset();
+        m_hoverCorner.reset();
+        m_hoverIds.clear();
+        m_preview.clear();
+        m_typedValue.reset();
         if (m_rawPointer) {
             updateEditHover(*m_rawPointer);
         }
         updateDraft();
         emit elementDone();
+    }
+    return applied;
+}
+
+// --- offsetting and corners (AP-2.1e2) --------------------------------------------------
+
+void SketchController::say(const QString& code, double number) {
+    m_noticeNumber = number;
+    emit noticeNumberChanged();
+    emit notice(code);
+}
+
+// Before a chain is picked: the chain under the pointer shows. After: the offset follows the
+// pointer (the side it is on, the distance from the chain), or the typed distance.
+void SketchController::updateOffsetHover(const core::SketchPoint& raw) {
+    m_preview.clear();
+    m_hoverIds.clear();
+    if (!m_chain) {
+        const double reach = kEditPixels / std::max(m_pixelsPerMillimetre, 1e-6);
+        if (const auto id = interaction::elementNear(m_elements, raw, reach)) {
+            if (const auto chain = interaction::findChain(m_elements, *id)) {
+                if (chain->curve) {
+                    m_hoverIds.push_back(*id);
+                }
+                for (const interaction::SketchChainSegment& seg : chain->segments) {
+                    m_hoverIds.push_back(seg.element);
+                }
+            }
+        }
+        return;
+    }
+    const double side = interaction::chainSignedDistance(*m_chain, raw);
+    const double sign = side < 0.0 ? -1.0 : 1.0;
+    const double distance = m_typedValue ? *m_typedValue : std::abs(side);
+    m_editValue = distance;
+    if (m_model != nullptr && distance >= interaction::kSketchMinimumSize) {
+        m_preview =
+            interaction::offsetChain(m_model->sketchKernel(), *m_chain, sign * distance).edit.added;
+    }
+}
+
+double SketchController::cornerValue(const interaction::SketchCorner& corner,
+                                     const core::SketchPoint& raw) {
+    if (m_typedValue) {
+        return *m_typedValue;
+    }
+    if (m_pressedCorner && m_pressAt) {
+        const double moved = std::hypot(raw.u - m_pressAt->u, raw.v - m_pressAt->v) *
+                             std::max(m_pixelsPerMillimetre, 1e-6);
+        if (m_cornerDragged || moved > 6.0) {
+            return chamfering() ? interaction::cornerDistanceAt(m_elements, corner, raw)
+                                : interaction::cornerRadiusAt(m_elements, corner, raw);
+        }
+    }
+    return chamfering() ? m_lastChamfer : m_lastRadius;
+}
+
+void SketchController::updateCornerHover(const core::SketchPoint& raw) {
+    m_preview.clear();
+    if (!m_pressedCorner) {
+        const double reach = kEditPixels / std::max(m_pixelsPerMillimetre, 1e-6);
+        auto found = interaction::findCorner(m_elements, raw, reach);
+        const bool same = found && m_hoverCorner && found->first == m_hoverCorner->first &&
+                          found->second == m_hoverCorner->second &&
+                          found->firstAtEnd == m_hoverCorner->firstAtEnd &&
+                          found->secondAtEnd == m_hoverCorner->secondAtEnd;
+        if (!same) {
+            m_typedValue.reset(); // a number is for one corner
+        }
+        m_hoverCorner = found;
+    }
+    const auto& corner = m_pressedCorner ? m_pressedCorner : m_hoverCorner;
+    if (!corner || corner->curve) {
+        return;
+    }
+    const double value = cornerValue(*corner, raw);
+    m_editValue = value;
+    const auto result = chamfering() ? interaction::chamferCorner(m_elements, *corner, value)
+                                     : interaction::roundCorner(m_elements, *corner, value);
+    if (result.notice == interaction::SketchCornerNotice::none) {
+        m_preview = result.edit.added;
+    }
+}
+
+void SketchController::commitOffset() {
+    if (m_model == nullptr || !m_rawPointer) {
+        return;
+    }
+    if (!m_chain) { // the first click picks the chain
+        const double reach = kEditPixels / std::max(m_pixelsPerMillimetre, 1e-6);
+        const auto id = interaction::elementNear(m_elements, *m_rawPointer, reach);
+        const auto chain = id ? interaction::findChain(m_elements, *id) : std::nullopt;
+        if (!chain) {
+            return;
+        }
+        if (chain->curve) {
+            say(QStringLiteral("curveOffset"));
+            return;
+        }
+        m_chain = chain;
+        m_typedValue.reset();
+        updateEditHover(*m_rawPointer);
+        updateDraft();
+        return;
+    }
+    const double side = interaction::chainSignedDistance(*m_chain, *m_rawPointer);
+    const double distance =
+        (side < 0.0 ? -1.0 : 1.0) * (m_typedValue ? *m_typedValue : std::abs(side));
+    if (std::abs(distance) < interaction::kSketchMinimumSize) {
+        return; // a click on the chain itself
+    }
+    const auto result = interaction::offsetChain(m_model->sketchKernel(), *m_chain, distance);
+    switch (result.notice) {
+    case interaction::SketchOffsetNotice::none:
+        applyEdit(result.edit, QStringLiteral("offsetSketch"));
+        break;
+    case interaction::SketchOffsetNotice::curve:
+        say(QStringLiteral("curveOffset"));
+        break;
+    case interaction::SketchOffsetNotice::tooBig:
+        say(QStringLiteral("offsetTooBig"));
+        break;
+    case interaction::SketchOffsetNotice::crossing:
+        say(QStringLiteral("offsetCrossing"));
+        break;
+    case interaction::SketchOffsetNotice::failed:
+        say(QStringLiteral("editFailed"));
+        break;
+    }
+}
+
+void SketchController::commitCorner() {
+    if (m_model == nullptr || !m_rawPointer) {
+        return;
+    }
+    const auto& corner = m_pressedCorner ? m_pressedCorner : m_hoverCorner;
+    if (!corner) {
+        say(QStringLiteral("noCorner"));
+        return;
+    }
+    if (corner->curve) {
+        say(QStringLiteral("curveCorner"));
+        return;
+    }
+    const double value = cornerValue(*corner, *m_rawPointer);
+    const bool chamfer = chamfering();
+    const auto result = chamfer ? interaction::chamferCorner(m_elements, *corner, value)
+                                : interaction::roundCorner(m_elements, *corner, value);
+    switch (result.notice) {
+    case interaction::SketchCornerNotice::none:
+        if (applyEdit(result.edit,
+                      chamfer ? QStringLiteral("chamferCorner") : QStringLiteral("roundCorner"))) {
+            (chamfer ? m_lastChamfer : m_lastRadius) = value;
+        }
+        break;
+    case interaction::SketchCornerNotice::curve:
+        say(QStringLiteral("curveCorner"));
+        break;
+    case interaction::SketchCornerNotice::noCorner:
+        say(QStringLiteral("notACorner"));
+        break;
+    case interaction::SketchCornerNotice::tooSmall:
+        say(QStringLiteral("tooSmall"));
+        break;
+    case interaction::SketchCornerNotice::tooBig:
+        say(chamfer ? QStringLiteral("chamferTooBig") : QStringLiteral("cornerTooBig"),
+            result.limit);
+        break;
+    case interaction::SketchCornerNotice::failed:
+        say(QStringLiteral("editFailed"));
+        break;
     }
 }
 
@@ -1071,6 +1387,26 @@ void SketchController::updateDraft() {
         map[QStringLiteral("v")] = m_draft.at.v;
         if (m_viewport != nullptr) {
             const geo::Point3d world = m_plane.toWorld(m_draft.at);
+            const QPointF screen = m_viewport->project(world.x, world.y, world.z);
+            map[QStringLiteral("x")] = screen.x();
+            map[QStringLiteral("y")] = screen.y();
+        }
+    }
+    if (editDrafting() && m_planeReady) {
+        QVariantList fields;
+        QVariantMap entry;
+        entry[QStringLiteral("name")] =
+            cornerTool() && !chamfering() ? QStringLiteral("radius") : QStringLiteral("distance");
+        entry[QStringLiteral("value")] = m_editValue;
+        entry[QStringLiteral("typed")] = m_typedValue.has_value();
+        fields << entry;
+        const core::SketchPoint where = m_rawPointer ? *m_rawPointer : core::SketchPoint{};
+        map[QStringLiteral("valid")] = true;
+        map[QStringLiteral("fields")] = fields;
+        map[QStringLiteral("u")] = where.u;
+        map[QStringLiteral("v")] = where.v;
+        if (m_viewport != nullptr) {
+            const geo::Point3d world = m_plane.toWorld(where);
             const QPointF screen = m_viewport->project(world.x, world.y, world.z);
             map[QStringLiteral("x")] = screen.x();
             map[QStringLiteral("y")] = screen.y();

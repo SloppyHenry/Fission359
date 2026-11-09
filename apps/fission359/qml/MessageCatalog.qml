@@ -72,7 +72,7 @@ QtObject {
 
     /// The hint of the sketch mode (AP-2.1b) for a code of `Sketch.notice`: shown as a hint line,
     /// never as a dialog.
-    function sketchNotice(code) {
+    function sketchNotice(code, number) {
         switch (code) {
         case "curvedFace": return qsTr("Sketches only go on flat faces. Tip: helper planes come later.")
         case "faceUnusable": return qsTr("This face cannot be drawn on. Choose another flat face or the ground plane.")
@@ -84,6 +84,14 @@ QtObject {
         case "curvePartial": return qsTr("Curves cannot be trimmed in part yet. Only a curve that nothing crosses can be taken away whole.")
         case "nothingToExtend": return qsTr("There is nothing to extend to here: no line, circle or curve lies in the way.")
         case "editFailed": return qsTr("That could not be worked out. Nothing was changed.")
+        case "curveOffset": return qsTr("Curves cannot be offset yet. Lines, arcs and circles can.")
+        case "offsetTooBig": return qsTr("The distance is bigger than the rounding. Nothing was added: choose a smaller distance.")
+        case "offsetCrossing": return qsTr("The copy would cross itself at this distance. Nothing was added: choose a smaller distance.")
+        case "curveCorner": return qsTr("Corners at curves cannot be rounded or chamfered yet.")
+        case "noCorner": return qsTr("There is no corner here. Click where two lines or arcs meet.")
+        case "notACorner": return qsTr("These two go on smoothly, so there is no corner to round.")
+        case "cornerTooBig": return qsTr("The radius is too big for this corner. The biggest that fits is %1 mm.").arg(mm(number))
+        case "chamferTooBig": return qsTr("The distance is too big for this corner. The biggest that fits is %1 mm.").arg(mm(number))
         default: return ""
         }
     }

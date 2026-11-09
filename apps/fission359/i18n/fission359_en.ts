@@ -1779,12 +1779,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1031"/>
+        <location line="+1034"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location line="-1030"/>
+        <location line="-1033"/>
         <source>Save as…</source>
         <translation>Save as…</translation>
     </message>
@@ -2015,12 +2015,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1658"/>
+        <location line="+1661"/>
         <source>Body</source>
         <translation>Body</translation>
     </message>
     <message>
-        <location line="-1657"/>
+        <location line="-1660"/>
         <source>As hole</source>
         <translation>As hole</translation>
     </message>
@@ -2051,12 +2051,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1635"/>
+        <location line="+1638"/>
         <source>Split</source>
         <translation>Split</translation>
     </message>
     <message>
-        <location line="-1633"/>
+        <location line="-1636"/>
         <source>Round edges</source>
         <translation>Round edges</translation>
     </message>
@@ -2097,12 +2097,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1633"/>
+        <location line="+1636"/>
         <source>Draft</source>
         <translation>Draft</translation>
     </message>
     <message>
-        <location line="-1631"/>
+        <location line="-1634"/>
         <source>Window</source>
         <translation>Window</translation>
     </message>
@@ -2162,19 +2162,24 @@
         <translation>Start with a shape: open “Shapes” in the toolbar, or press %1 and say what you want to build.</translation>
     </message>
     <message>
-        <location line="+34"/>
-        <location line="+1080"/>
+        <location line="+10"/>
+        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
+        <translation>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <location line="+1083"/>
         <source>Undo: %1</source>
         <translation>Undo: %1</translation>
     </message>
     <message>
-        <location line="-1078"/>
-        <location line="+1079"/>
+        <location line="-1081"/>
+        <location line="+1082"/>
         <source>Redo: %1</source>
         <translation>Redo: %1</translation>
     </message>
     <message>
-        <location line="-1073"/>
+        <location line="-1076"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</translation>
     </message>
@@ -2357,7 +2362,7 @@
         <translation>regular</translation>
     </message>
     <message>
-        <location line="+169"/>
+        <location line="+172"/>
         <source>Click an edge of the body this step works on.</source>
         <translation>Click an edge of the body this step works on.</translation>
     </message>
@@ -2431,7 +2436,7 @@
         </translation>
     </message>
     <message>
-        <location line="-894"/>
+        <location line="-897"/>
         <source>Arrives in a later version.</source>
         <translation>Arrives in a later version.</translation>
     </message>
@@ -2466,7 +2471,7 @@
         <translation>Copy something first.</translation>
     </message>
     <message>
-        <location line="+1110"/>
+        <location line="+1113"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</translation>
     </message>
@@ -2481,7 +2486,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1530"/>
+        <location line="-1533"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Click the face the body should lie on. Esc cancels.</translation>
     </message>
@@ -2541,7 +2546,7 @@
         <translation>Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.</translation>
     </message>
     <message>
-        <location line="+1563"/>
+        <location line="+1566"/>
         <source>Unit: mm</source>
         <translation>Unit: mm</translation>
     </message>
@@ -2649,12 +2654,12 @@
         <translation>%1 added</translation>
     </message>
     <message>
-        <location line="-1163"/>
+        <location line="-1166"/>
         <source>This body cannot be hollowed: it may already be part of another body.</source>
         <translation>This body cannot be hollowed: it may already be part of another body.</translation>
     </message>
     <message>
-        <location line="+855"/>
+        <location line="+858"/>
         <source>Bevelled. Drag the grip or type a distance.</source>
         <translation>Bevelled. Drag the grip or type a distance.</translation>
     </message>
@@ -2724,7 +2729,7 @@
         <translation>Outline exported.</translation>
     </message>
     <message>
-        <location line="-973"/>
+        <location line="-976"/>
         <source>Helper lines are on: what you draw is only an aid.</source>
         <translation>Helper lines are on: what you draw is only an aid.</translation>
     </message>
@@ -2734,17 +2739,12 @@
         <translation>Shift switches catching off, %1 draws a helper line.</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
-        <translation>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</translation>
-    </message>
-    <message>
-        <location line="+90"/>
+        <location line="+92"/>
         <source>Open a sketch first (the tool “Sketch”).</source>
         <translation>Open a sketch first (the tool “Sketch”).</translation>
     </message>
     <message>
-        <location line="+1496"/>
+        <location line="+1499"/>
         <source>Imported body</source>
         <translation>Imported body</translation>
     </message>
@@ -2993,6 +2993,21 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Sketch offset</source>
+        <translation>Sketch offset</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Corner rounded</source>
+        <translation>Corner rounded</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Corner chamfered</source>
+        <translation>Corner chamfered</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>%1 made a helper line</source>
         <translation>%1 made a helper line</translation>
     </message>
@@ -3139,37 +3154,37 @@
         <translation>%1 – click chooses it.</translation>
     </message>
     <message>
-        <location line="-377"/>
+        <location line="-380"/>
         <source>This tool group arrives in a later version.</source>
         <translation>This tool group arrives in a later version.</translation>
     </message>
     <message>
-        <location line="-1630"/>
+        <location line="-1633"/>
         <source>My printer</source>
         <translation>My printer</translation>
     </message>
     <message>
-        <location line="+1665"/>
+        <location line="+1668"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1468"/>
+        <location line="-1471"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</translation>
     </message>
     <message>
-        <location line="+826"/>
+        <location line="+829"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-886"/>
+        <location line="-889"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</translation>
     </message>
     <message>
-        <location line="+1653"/>
+        <location line="+1656"/>
         <source>Slot</source>
         <translation>Slot</translation>
     </message>
@@ -3426,7 +3441,7 @@
 <context>
     <name>MessageCatalog</name>
     <message>
-        <location filename="../qml/MessageCatalog.qml" line="+100"/>
+        <location filename="../qml/MessageCatalog.qml" line="+108"/>
         <source>It was inches</source>
         <translation>It was inches</translation>
     </message>
@@ -3718,7 +3733,7 @@
         <translation>I don’t know “%1”.</translation>
     </message>
     <message>
-        <location line="-262"/>
+        <location line="-270"/>
         <source>Sketches only go on flat faces. Tip: helper planes come later.</source>
         <translation>Sketches only go on flat faces. Tip: helper planes come later.</translation>
     </message>
@@ -3761,6 +3776,46 @@
         <location line="+1"/>
         <source>That could not be worked out. Nothing was changed.</source>
         <translation>That could not be worked out. Nothing was changed.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Curves cannot be offset yet. Lines, arcs and circles can.</source>
+        <translation>Curves cannot be offset yet. Lines, arcs and circles can.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The distance is bigger than the rounding. Nothing was added: choose a smaller distance.</source>
+        <translation>The distance is bigger than the rounding. Nothing was added: choose a smaller distance.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The copy would cross itself at this distance. Nothing was added: choose a smaller distance.</source>
+        <translation>The copy would cross itself at this distance. Nothing was added: choose a smaller distance.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Corners at curves cannot be rounded or chamfered yet.</source>
+        <translation>Corners at curves cannot be rounded or chamfered yet.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>There is no corner here. Click where two lines or arcs meet.</source>
+        <translation>There is no corner here. Click where two lines or arcs meet.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>These two go on smoothly, so there is no corner to round.</source>
+        <translation>These two go on smoothly, so there is no corner to round.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The radius is too big for this corner. The biggest that fits is %1 mm.</source>
+        <translation>The radius is too big for this corner. The biggest that fits is %1 mm.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The distance is too big for this corner. The biggest that fits is %1 mm.</source>
+        <translation>The distance is too big for this corner. The biggest that fits is %1 mm.</translation>
     </message>
     <message>
         <location line="+69"/>
@@ -3981,7 +4036,7 @@
         <translation>The calculation was replaced by a newer change.</translation>
     </message>
     <message>
-        <location line="-356"/>
+        <location line="-364"/>
         <source>A polygon has a whole number of sides from 3 to 64. The number before stays.</source>
         <translation>A polygon has a whole number of sides from 3 to 64. The number before stays.</translation>
     </message>
@@ -4865,6 +4920,11 @@
         <translation>Radius</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Distance</source>
+        <translation>Distance</translation>
+    </message>
+    <message>
         <location line="+7"/>
         <location line="+171"/>
         <source>mm</source>
@@ -4991,6 +5051,61 @@
     </message>
     <message>
         <location line="+4"/>
+        <source>Offset</source>
+        <translation>Offset</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a parallel copy of a line, an arc, a circle or a whole chain of them. Click it, then move to the side and click again, or type the distance.</source>
+        <translation>Makes a parallel copy of a line, an arc, a circle or a whole chain of them. Click it, then move to the side and click again, or type the distance.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click the line, arc or circle to offset.</source>
+        <translation>Click the line, arc or circle to offset.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Round corner</source>
+        <translation>Round corner</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rounds a corner where two lines or arcs meet, with a tangent arc. Click near the corner, or pull to change the radius, or type it. The arrow switches to chamfering.</source>
+        <translation>Rounds a corner where two lines or arcs meet, with a tangent arc. Click near the corner, or pull to change the radius, or type it. The arrow switches to chamfering.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click near the corner to round.</source>
+        <translation>Click near the corner to round.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Round</source>
+        <translation>Round</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Chamfer</source>
+        <translation>Chamfer</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Chamfer corner</source>
+        <translation>Chamfer corner</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cuts a corner where two lines or arcs meet with a straight line, the same distance from the corner on both sides. Click near the corner, or pull to change the distance, or type it.</source>
+        <translation>Cuts a corner where two lines or arcs meet with a straight line, the same distance from the corner on both sides. Click near the corner, or pull to change the distance, or type it.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click near the corner to chamfer.</source>
+        <translation>Click near the corner to chamfer.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Point</source>
         <translation>Point</translation>
     </message>
@@ -5101,11 +5216,31 @@
     </message>
     <message>
         <location line="+2"/>
+        <source>Click a line, arc or circle: its whole chain is offset. Esc ends the tool.</source>
+        <translation>Click a line, arc or circle: its whole chain is offset. Esc ends the tool.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Move to the side and click, or type the distance. Enter sets it, Esc takes the chain back.</source>
+        <translation>Move to the side and click, or type the distance. Enter sets it, Esc takes the chain back.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Click near a corner to chamfer it with the last distance, pull to change the distance, or type it. Esc ends the tool.</source>
+        <translation>Click near a corner to chamfer it with the last distance, pull to change the distance, or type it. Esc ends the tool.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Click near a corner to round it with the last radius, pull to change the radius, or type it. Esc ends the tool.</source>
+        <translation>Click near a corner to round it with the last radius, pull to change the radius, or type it. Esc ends the tool.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Click where the point goes. Esc ends the tool.</source>
         <translation>Click where the point goes. Esc ends the tool.</translation>
     </message>
     <message>
-        <location line="-109"/>
+        <location line="-136"/>
         <source>Arc</source>
         <translation>Arc</translation>
     </message>
@@ -5165,7 +5300,7 @@
         <translation>Side middle (inner circle)</translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+64"/>
         <source>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</source>
         <translation>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</translation>
     </message>

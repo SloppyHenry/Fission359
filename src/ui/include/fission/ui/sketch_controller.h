@@ -15,6 +15,7 @@
 
 #include "fission/core/sketch.h"
 #include "fission/interaction/sketch_edit.h"
+#include "fission/interaction/sketch_offset.h"
 #include "fission/interaction/sketch_snap.h"
 #include "fission/interaction/sketch_tool.h"
 #include "fission/render/camera.h"
@@ -48,7 +49,8 @@ class SketchController : public QObject {
     /// A drawing tool is on; Esc ends it before it ends the sketch.
     Q_PROPERTY(bool toolActive READ toolActive NOTIFY toolChanged)
     /// The tool: "" (none), "line", "rectangle", "circle", "point", "arc", "slot", "polygon",
-    /// "spline" (the curve), "trim" or "extend" (AP-2.1e1); and
+    /// "spline" (the curve), "trim" or "extend" (AP-2.1e1), "offset" or "fillet" (AP-2.1e2:
+    /// variant 0 rounds a corner, 1 chamfers it); and
     /// its variant (rectangle: 0 two corners, 1 middle and corner; circle: 0 middle and radius,
     /// 1 three points; arc: 0 three points, 1 middle, start and end; polygon: 0 corner, 1 middle
     /// of a side).
@@ -83,6 +85,8 @@ class SketchController : public QObject {
     Q_PROPERTY(QColor draftColour MEMBER m_draftColour NOTIFY coloursChanged)
     /// The piece that trimming would take away (AP-2.1e1).
     Q_PROPERTY(QColor trimColour MEMBER m_trimColour NOTIFY coloursChanged)
+    /// A number that belongs to the last `notice` (the biggest radius that fits, in mm).
+    Q_PROPERTY(double noticeNumber READ noticeNumber NOTIFY noticeNumberChanged)
 
 public:
     SketchController(DocumentModel* model, SelectionController* selection,
@@ -100,8 +104,13 @@ public:
     int toolVariant() const noexcept { return m_tool.variant(); }
     bool helperLine() const noexcept { return m_tool.helperLine(); }
     void setHelperLine(bool on);
-    bool drawing() const noexcept { return toolActive() && m_tool.busy(); }
-    int placed() const noexcept { return static_cast<int>(m_tool.placedCount()); }
+    bool drawing() const noexcept { return toolActive() && (m_tool.busy() || editDrafting()); }
+    int placed() const noexcept {
+        return editDrafting() && m_tool.kind() == interaction::SketchToolKind::offset
+                   ? 1
+                   : static_cast<int>(m_tool.placedCount());
+    }
+    double noticeNumber() const noexcept { return m_noticeNumber; }
     bool pullingArc() const noexcept { return drawing() && m_tool.dragging(); }
     QVariantMap readout() const { return m_readout; }
     bool planeReady() const noexcept { return m_mode == Mode::sketching && m_planeReady; }
@@ -160,7 +169,9 @@ public:
     /// Enter: sets the element as the typed numbers and the pointer make it.
     Q_INVOKABLE void acceptTyped();
     /// How many numbers can be typed now (0 when nothing is pulled).
-    Q_INVOKABLE int fieldCount() const { return drawing() ? m_tool.fieldCount() : 0; }
+    Q_INVOKABLE int fieldCount() const {
+        return editDrafting() ? 1 : drawing() ? m_tool.fieldCount() : 0;
+    }
     /// The elements of the sketch as the controller knows them (the document's; for tests).
     const std::vector<core::SketchElement>& elements() const noexcept { return m_elements; }
 
@@ -181,7 +192,11 @@ signals:
     /// "curveFailed" (the kernel could make no curve through the points; nothing was added),
     /// "curvePartial" (a curve that is crossed cannot be trimmed in part yet), "nothingToExtend"
     /// (no curve in the way of the end), "editFailed" (the crossings could not be calculated).
+    /// AP-2.1e2: "curveOffset", "offsetTooBig", "offsetCrossing" (offsetting), "curveCorner",
+    /// "noCorner" (nothing near), "notACorner" (they go on smoothly), "cornerTooBig" and
+    /// "chamferTooBig" (with `noticeNumber`: the biggest that fits).
     void notice(const QString& code);
+    void noticeNumberChanged();
 
 private:
     enum class Mode { idle, picking, sketching };
@@ -203,7 +218,26 @@ private:
     void markAlong(const core::SketchPoint& from, const core::SketchPoint& to);
     void commitTrim();
     void commitExtend();
-    void applyEdit(const interaction::SketchEdit& edit, const QString& action);
+    bool applyEdit(const interaction::SketchEdit& edit, const QString& action);
+    // offsetting and rounding or chamfering corners (AP-2.1e2)
+    bool offsetTool() const noexcept {
+        return toolActive() && m_tool.kind() == interaction::SketchToolKind::offset;
+    }
+    bool cornerTool() const noexcept {
+        return toolActive() && m_tool.kind() == interaction::SketchToolKind::fillet;
+    }
+    bool chamfering() const noexcept { return cornerTool() && m_tool.variant() == 1; }
+    /// A chain is picked, or a corner is under the pointer: a number can be typed.
+    bool editDrafting() const noexcept {
+        return (offsetTool() && m_chain) ||
+               (cornerTool() && (m_pressedCorner || (m_hoverCorner && !m_hoverCorner->curve)));
+    }
+    void updateOffsetHover(const core::SketchPoint& raw);
+    void updateCornerHover(const core::SketchPoint& raw);
+    double cornerValue(const interaction::SketchCorner& corner, const core::SketchPoint& raw);
+    void commitOffset();
+    void commitCorner();
+    void say(const QString& code, double number = 0.0);
     void forgetEdit();
     void onClicked(double x, double y);
     void onPressed(double x, double y);
@@ -241,6 +275,19 @@ private:
     std::optional<interaction::SketchExtension> m_hoverExtension;
     std::optional<core::SketchPoint> m_rawPointer; ///< the pointer on the plane, not caught
     bool m_stroking = false;
+    // offsetting and corners (AP-2.1e2)
+    std::optional<interaction::SketchChain> m_chain; ///< the chain picked to offset
+    std::vector<std::string> m_hoverIds;             ///< the elements to show under the pointer
+    std::optional<interaction::SketchCorner> m_hoverCorner;
+    std::optional<interaction::SketchCorner> m_pressedCorner;
+    std::optional<core::SketchPoint> m_pressAt;
+    bool m_cornerDragged = false;
+    std::optional<double> m_typedValue;         ///< the number typed (distance, radius)
+    double m_editValue = 0.0;                   ///< the number shown in the bubble
+    double m_lastRadius = 2.0;                  ///< the radius used last (mm)
+    double m_lastChamfer = 2.0;                 ///< the chamfer distance used last (mm)
+    std::vector<core::SketchElement> m_preview; ///< what the edit would add
+    double m_noticeNumber = 0.0;
 
     QColor m_gridColour{0x3A, 0x3D, 0x43};
     QColor m_gridMajorColour{0x55, 0x59, 0x61};

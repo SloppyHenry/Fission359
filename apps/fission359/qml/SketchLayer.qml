@@ -30,6 +30,7 @@ Item {
         case "width": return qsTr("Width")
         case "height": return qsTr("Height")
         case "radius": return qsTr("Radius")
+        case "distance": return qsTr("Distance")
         case "sides": return qsTr("Sides")
         default: return name
         }

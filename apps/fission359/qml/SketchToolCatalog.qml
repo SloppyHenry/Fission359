@@ -6,7 +6,7 @@ import QtQuick
 // The drawing tools of the sketch mode (AP-2.1c1): the name on the button, the sentence of its
 // tooltip card, what the hint line says, and the words the command search finds it by (German and
 // English at once). Rule 10 of the master prompt: every tool brings these along. `key` is the key
-// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G; AP-2.1d the curve K, AP-2.1e1 Trim T and Extend E). `variants` are the ways to draw it (the first is
+// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G; AP-2.1d the curve K, AP-2.1e1 Trim T and Extend E, AP-2.1e2 Offset O and Round corner F, which has the way "Chamfer"; the entry "chamfer" is only a second name for it in the command search and is not listed in the tool palette). `variants` are the ways to draw it (the first is
 // the standard); "helper" is a switch, not a tool.
 QtObject {
     readonly property var tools: [
@@ -63,6 +63,24 @@ QtObject {
           hint: qsTr("Click near the end to extend."),
           synonyms: { de: ["verlängern", "verlängern bis", "strecken bis", "anschließen", "weiterführen"],
                       en: ["extend", "lengthen", "extend to", "stretch to", "reach"] },
+          variants: [] },
+        { id: "offset", name: qsTr("Offset"), icon: "sketchoffset", key: "O",
+          tip: qsTr("Makes a parallel copy of a line, an arc, a circle or a whole chain of them. Click it, then move to the side and click again, or type the distance."),
+          hint: qsTr("Click the line, arc or circle to offset."),
+          synonyms: { de: ["versetzen", "parallel", "abstand", "kontur versetzen", "wandstärke"],
+                      en: ["offset", "parallel copy", "outline offset", "wall thickness", "inset"] },
+          variants: [] },
+        { id: "fillet", name: qsTr("Round corner"), icon: "sketchfillet", key: "F",
+          tip: qsTr("Rounds a corner where two lines or arcs meet, with a tangent arc. Click near the corner, or pull to change the radius, or type it. The arrow switches to chamfering."),
+          hint: qsTr("Click near the corner to round."),
+          synonyms: { de: ["ecke abrunden", "rundung", "radius an ecke", "verrunden", "ecke runden"],
+                      en: ["round corner", "fillet", "corner radius", "round off", "round the corner"] },
+          variants: [qsTr("Round"), qsTr("Chamfer")] },
+        { id: "chamfer", name: qsTr("Chamfer corner"), icon: "sketchchamfer", key: "", listed: false,
+          tip: qsTr("Cuts a corner where two lines or arcs meet with a straight line, the same distance from the corner on both sides. Click near the corner, or pull to change the distance, or type it."),
+          hint: qsTr("Click near the corner to chamfer."),
+          synonyms: { de: ["ecke abschrägen", "fase", "schräge an ecke", "abschrägen", "ecke kappen"],
+                      en: ["chamfer corner", "chamfer", "bevel corner", "cut corner", "bevel"] },
           variants: [] },
         { id: "point", name: qsTr("Point"), icon: "sketchpoint", key: "P",
           tip: qsTr("Places a point, as a mark to catch on later."),
@@ -136,6 +154,15 @@ QtObject {
             return qsTr("Click a piece to take it away, or drag across several pieces. Esc ends the tool.")
         case "extend":
             return qsTr("Click near the end of a line or an arc to extend it up to the next curve. Esc ends the tool.")
+        case "offset":
+            return placed === 0 ? qsTr("Click a line, arc or circle: its whole chain is offset. Esc ends the tool.")
+                                : qsTr("Move to the side and click, or type the distance. Enter sets it, Esc takes the chain back.")
+        case "fillet":
+        case "chamfer":
+            if (id === "chamfer" || variant === 1) {
+                return qsTr("Click near a corner to chamfer it with the last distance, pull to change the distance, or type it. Esc ends the tool.")
+            }
+            return qsTr("Click near a corner to round it with the last radius, pull to change the radius, or type it. Esc ends the tool.")
         case "point":
             return qsTr("Click where the point goes. Esc ends the tool.")
         }
