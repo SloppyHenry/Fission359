@@ -595,6 +595,105 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                                });
             continue;
         }
+        if (kind == QLatin1String("sketchtake")) {
+            // sketchtake:F1/box/top - the tool "take over edge" takes over the face or edge with
+            // this name (a face gives its whole border, an edge gives itself), through the same
+            // path as a click on it. Fails when nothing was taken over.
+            const QString name = action.mid(colon + 1).trimmed();
+            delay += 350;
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [sketch, name] {
+                if (sketch == nullptr || !sketch->takeOverNamed(name)) {
+                    qWarning().noquote()
+                        << QStringLiteral("sketchtake: nothing was taken over from \"%1\"")
+                               .arg(name);
+                    g_simulationFailure = 17;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("expectsketchlinked") ||
+            kind == QLatin1String("expectsketchfollow")) {
+            // expectsketchlinked:4 - the sketches of the recipe hold exactly that many elements
+            // that follow an edge of a body; expectsketchfollow:30,20 - the box round those
+            // elements is that wide and high (mm), once the calculation that follows a change of
+            // the body has finished (it waits for it, up to four seconds).
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const bool follow = kind == QLatin1String("expectsketchfollow");
+            delay += 500;
+            const auto measure = [model] {
+                struct Found {
+                    int linked = 0;
+                    double width = 0.0;
+                    double height = 0.0;
+                };
+                Found found;
+                double low[2] = {1e300, 1e300};
+                double high[2] = {-1e300, -1e300};
+                for (const fission::core::Feature& step : model->document().features()) {
+                    if (!step.sketch) {
+                        continue;
+                    }
+                    for (const fission::core::SketchElement& element : step.sketch->elements) {
+                        if (!element.link) {
+                            continue;
+                        }
+                        ++found.linked;
+                        for (const fission::core::SketchPoint& point : element.points) {
+                            low[0] = std::min(low[0], point.u);
+                            low[1] = std::min(low[1], point.v);
+                            high[0] = std::max(high[0], point.u);
+                            high[1] = std::max(high[1], point.v);
+                        }
+                    }
+                }
+                if (found.linked > 0) {
+                    found.width = high[0] - low[0];
+                    found.height = high[1] - low[1];
+                }
+                return found;
+            };
+            const auto right = [measure, spec, follow] {
+                const auto found = measure();
+                return follow ? std::abs(found.width - spec.value(0).toDouble()) < 1e-6 &&
+                                    std::abs(found.height - spec.value(1).toDouble()) < 1e-6
+                              : found.linked == spec.value(0).toInt();
+            };
+            QTimer::singleShot(
+                delay, Qt::PreciseTimer, viewport, [viewport, model, right, measure, spec, follow] {
+                    whenCalculated(viewport, model, [viewport, right, measure, spec, follow] {
+                        // The followed points are written after the calculation and calculated
+                        // once more: look every 100 ms, at most 40 times. The timer belongs to the
+                        // view and deletes itself when done.
+                        auto* look = new QTimer(viewport);
+                        look->setInterval(100);
+                        look->setTimerType(Qt::PreciseTimer);
+                        QObject::connect(look, &QTimer::timeout, look,
+                                         [look, right, measure, spec, follow, tries = 0]() mutable {
+                                             if (!right() && ++tries < 40) {
+                                                 return;
+                                             }
+                                             look->stop();
+                                             look->deleteLater();
+                                             if (!right()) {
+                                                 const auto found = measure();
+                                                 qWarning().noquote()
+                                                     << QStringLiteral(
+                                                            "linked sketch elements: %1, box "
+                                                            "%2 x %3; expected %4 (%5)")
+                                                            .arg(found.linked)
+                                                            .arg(found.width)
+                                                            .arg(found.height)
+                                                            .arg(spec.join(QLatin1Char(',')),
+                                                                 follow ? QStringLiteral("box")
+                                                                        : QStringLiteral("count"));
+                                                 g_simulationFailure = 18;
+                                             }
+                                         });
+                        look->start();
+                    });
+                });
+            continue;
+        }
         if (kind == QLatin1String("expectsketchtool")) {
             // expectsketchtool:line - the drawing tool in use (empty: none).
             const QString tool = action.mid(colon + 1).trimmed();

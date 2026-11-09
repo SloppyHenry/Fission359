@@ -2735,8 +2735,8 @@
     </message>
     <message>
         <location line="+2"/>
-        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
-        <translation>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</translation>
+        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
+        <translation>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</translation>
     </message>
     <message>
         <location line="+90"/>
@@ -3005,6 +3005,22 @@
         <location line="+1"/>
         <source>Pattern in the sketch</source>
         <translation>Pattern in the sketch</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n edge(s) taken over into the sketch</source>
+        <translation>
+            <numerusform>%n edge taken over into the sketch</numerusform>
+            <numerusform>%n edges taken over into the sketch</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n sketch element(s) let go of the body</source>
+        <translation>
+            <numerusform>%n sketch element let go of the body</numerusform>
+            <numerusform>%n sketch elements let go of the body</numerusform>
+        </translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3865,6 +3881,11 @@
         <translation>This sketch has no plane.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>An edge of this sketch cannot be followed.</source>
+        <translation>An edge of this sketch cannot be followed.</translation>
+    </message>
+    <message>
         <location line="+38"/>
         <source>The wall is thicker than the body at its thinnest place (%1 mm).</source>
         <translation>The wall is thicker than the body at its thinnest place (%1 mm).</translation>
@@ -3975,6 +3996,11 @@
         <translation>The plane of this sketch cannot be used. Hide the step and draw a new sketch.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>A taken-over edge is no straight line, circle or arc seen from straight above any more, so the sketch cannot follow it exactly. Undo the change to the body, or open the sketch and let go of the link.</source>
+        <translation>A taken-over edge is no straight line, circle or arc seen from straight above any more, so the sketch cannot follow it exactly. Undo the change to the body, or open the sketch and let go of the link.</translation>
+    </message>
+    <message>
         <location line="+2"/>
         <source>The shape cannot be built with these values. Try changing a value a little.</source>
         <translation>The shape cannot be built with these values. Try changing a value a little.</translation>
@@ -4069,6 +4095,26 @@
         <location line="-368"/>
         <source>A polygon has a whole number of sides from 3 to 64. The number before stays.</source>
         <translation>A polygon has a whole number of sides from 3 to 64. The number before stays.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This edge cannot be taken over yet. Straight edges, and circles and arcs seen from straight above, can.</source>
+        <translation>This edge cannot be taken over yet. Straight edges, and circles and arcs seen from straight above, can.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This edge is taken over already.</source>
+        <translation>This edge is taken over already.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Some edges of this face cannot be taken over yet. The others are in the sketch.</source>
+        <translation>Some edges of this face cannot be taken over yet. The others are in the sketch.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This edge follows the body. Let go of the link to change it.</source>
+        <translation>This edge follows the body. Let go of the link to change it.</translation>
     </message>
 </context>
 <context>
@@ -5412,6 +5458,21 @@
         <translation>Side middle (inner circle)</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Take over edge</source>
+        <translation>Take over edge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Takes an edge of a body into the sketch: it is projected straight onto the sketch plane and follows the body when the body changes. Click an edge, or click a face away from its edges to take over its whole border.</source>
+        <translation>Takes an edge of a body into the sketch: it is projected straight onto the sketch plane and follows the body when the body changes. Click an edge, or click a face away from its edges to take over its whole border.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click an edge of a body, or a face for its whole border.</source>
+        <translation>Click an edge of a body, or a face for its whole border.</translation>
+    </message>
+    <message>
         <location line="+76"/>
         <source>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</source>
         <translation>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</translation>
@@ -5470,6 +5531,11 @@
         <location line="+1"/>
         <source>Click a corner, or type the radius (Tab: the number of sides, then the angle). Enter sets it, Esc cancels.</source>
         <translation>Click a corner, or type the radius (Tab: the number of sides, then the angle). Enter sets it, Esc cancels.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click an edge of a body to take it over, or a face away from its edges to take over its whole border. Only bodies from before this sketch count. Esc ends the tool.</source>
+        <translation>Click an edge of a body to take it over, or a face away from its edges to take over its whole border. Only bodies from before this sketch count. Esc ends the tool.</translation>
     </message>
 </context>
 <context>
@@ -5555,6 +5621,11 @@
         <location line="+31"/>
         <source>Continue</source>
         <translation>Continue</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Let go of the link</source>
+        <translation>Let go of the link</translation>
     </message>
 </context>
 <context>

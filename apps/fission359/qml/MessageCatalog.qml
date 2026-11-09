@@ -92,6 +92,10 @@ QtObject {
         case "notACorner": return qsTr("These two go on smoothly, so there is no corner to round.")
         case "cornerTooBig": return qsTr("The radius is too big for this corner. The biggest that fits is %1 mm.").arg(mm(number))
         case "chamferTooBig": return qsTr("The distance is too big for this corner. The biggest that fits is %1 mm.").arg(mm(number))
+        case "cannotTake": return qsTr("This edge cannot be taken over yet. Straight edges, and circles and arcs seen from straight above, can.")
+        case "edgeTaken": return qsTr("This edge is taken over already.")
+        case "edgesSome": return qsTr("Some edges of this face cannot be taken over yet. The others are in the sketch.")
+        case "linked": return qsTr("This edge follows the body. Let go of the link to change it.")
         case "mirrorAxis": return qsTr("Click a line or a helper line as the mirror axis.")
         case "copiesNone": return qsTr("Nothing was added: the copies would lie exactly on elements that are there already.")
         case "patternTooMany": return qsTr("At most 200 copies. Nothing was added: choose a smaller number.")
@@ -323,6 +327,9 @@ QtObject {
             if (problem.field === "basePlane" || problem.field === "plane" || problem.field === "sketch") {
                 return qsTr("This sketch has no plane.")
             }
+            if (problem.field === "edges") {
+                return qsTr("An edge of this sketch cannot be followed.")
+            }
             return problem.numbers && problem.numbers.maxValue !== undefined && problem.field !== ""
                 ? qsTr("%1 does not work here.").arg(valueLabel(problem.field))
                 : qsTr("These values do not work.")
@@ -411,6 +418,9 @@ QtObject {
             }
             if (problem.field === "basePlane" || problem.field === "sketch") {
                 return qsTr("The plane of this sketch cannot be used. Hide the step and draw a new sketch.")
+            }
+            if (problem.field === "edges") {
+                return qsTr("A taken-over edge is no straight line, circle or arc seen from straight above any more, so the sketch cannot follow it exactly. Undo the change to the body, or open the sketch and let go of the link.")
             }
             return qsTr("The shape cannot be built with these values. Try changing a value a little.")
         case "referenceNeedsHelp": {

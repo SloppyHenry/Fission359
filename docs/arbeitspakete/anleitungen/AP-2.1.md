@@ -278,6 +278,23 @@ Offene Reste: für 2.2 (Regeln/Solver): ein änderbares, verknüpftes Muster (An
 wie andere und lassen sich spiegeln und vervielfältigen; Muster und Spiegeln von Körpern (`soon.mirror`) und Muster auf Flächen sind eigene Aufgaben; die Symbole `sketchmirror`/`sketchpattern` sind einfache Umrisse und
 sollten mit `docs/08-gestaltung.md` abgeglichen werden.
 
+## Teil 2.1f – Kanten übernehmen, gebaut 2026-11-09
+Gebaut: Festlegungen 45–50, alles in einem Teil. Wo es im Code liegt: Datenmodell `SketchElement::link` (`SketchLink {input, ref}`, `kSketchEdgeSlot`) in `core/sketch.h`, Dateiformat 4 (Migration 3 → 4,
+Nachtrag in ADR-0013). Die GAL kann `GeometryKernel::projectEdgeToSketch` (`geo/sketch_edge.h`, `occt/src/sketch_edge.cpp`): Linie → Linie, Kreis/Bogen mit Achse senkrecht zur Ebene (1e-9) → Kreis/Bogen gegen den Uhrzeigersinn,
+senkrechte Kante → `perpendicular`, alles andere → `notExact`. `FeatureType::refInput` sagt, in welchem Eingang ein Verweis gesucht wird (Skizze: Slot `edges` im Körper des Elements, unbenutzte Verweise nicht);
+`SketchType::execute` rechnet verknüpfte Elemente aus der Kante, `applyHealedRefs` schreibt die gefolgten Punkte ins Dokument (kein Undo-Schritt). Befehle: `AddSketchElementCommand` mit Link, `makeSetSketchLink`
+(Verknüpfung lösen), „Punkte verschieben“ lehnt verknüpfte Elemente ab. UI: `DocumentModel::takeableBodies` / `takeOverEdges` / `takeOverNamed` / `unlinkSketchElements`, Werkzeug `takeover` (Taste U) im
+`SketchController` (`takeOver`, `releaseLinks`; Klick kommt aus dem Pick-Durchlauf, `Viewport3D::setPickableBodies` hält ungeeignete Körper unsichtbar für den Zeiger), verknüpfte Elemente in `linkedColour`
+(`Theme.accentText`), Hinweis `linked` mit Knopf „Verknüpfung lösen“ in der Statuszeile für Trimmen, Verlängern, Ecke runden/abschrägen (`applyEdit` verweigert, nichts wird geändert). Neue `--simulate`-Aktionen
+`sketchtake`, `expectsketchlinked`, `expectsketchfollow`. Fenster-Test (nur CI): `app_sketch_take_over`.
+Weiter geltende Annahmen: Taste U war frei (kein Ausschluss nötig); „verknüpft“ hat im Design-System keine eigene Farbe, genommen ist `accent-text`; der Klick auf eine Kante gilt, wenn der Pick-Durchlauf eine Kante liefert,
+sonst die Fläche; ein Verweis, den kein Element mehr braucht, bleibt in der Liste (Stellen werden nie neu vergeben); ein Kreis ohne Anfang/Ende wird als Kreis übernommen, Bögen immer als Viertel/Stück gegen den Uhrzeigersinn
+der Ebene; eine Kante, die nach einer Änderung nicht mehr exakt projizierbar ist (Körper gekippt), ist ein Fehler auf dem Skizzen-Schritt (Meldung zu `edges`), kein Raten; „Pick-again“ eines verlorenen Kantenverweises
+nimmt den Körper des Elements (`refInput`); ein Streichen beim Trimmen, das ein verknüpftes Element trifft, wird ganz verweigert; Kopien (Versetzen, Spiegeln, Muster) sind gewöhnlich.
+Offene Reste: Splines/Freiformkanten und schräge Kreise (Ellipsen) werden nicht übernommen (brauchen eine neue Elementart, Formatwechsel); für 2.1g: verknüpfte Elemente sind Kanten wie andere; für 2.2: Regeln auf
+verknüpften Elementen (feste Punkte), „Verknüpfung wiederherstellen“ nach dem Lösen (jetzt nur Undo); für 2.3: Körper aus Skizzen mit verknüpften Kanten folgen dem Körper über den Schritt; Ein Klick auf eine Kante
+hebt die Kante nur über die normale Hervorhebung des Pick-Durchlaufs hervor (kein eigenes Vorschau-Bild der Projektion).
+
 ## Teil 2.1e – Bearbeiten (geteilt, Festlegung 32), fertig 2026-11-09
 - **2.1e1:** Schnittpunkte, Trimmen, Verlängern. Festlegungen 33–37.
 - **2.1e2:** Versetzen (Kette, Abstand tippbar), Ecke abrunden/abschrägen (Radius/Abstand), gebaut, Festlegungen 38–40.

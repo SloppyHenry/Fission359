@@ -689,6 +689,15 @@ void Viewport3D::setSelectionFilter(core::SelectionFilter filter) {
     }
 }
 
+void Viewport3D::setPickableBodies(std::optional<QStringList> bodies) {
+    if (m_pickable == bodies) {
+        return;
+    }
+    m_pickable = std::move(bodies);
+    setHover(std::nullopt);
+    hoverAgain();
+}
+
 void Viewport3D::setSelectionHighlights(std::vector<render::Highlight> highlights) {
     m_selectionHighlights = std::move(highlights);
     emit highlightsChanged();
@@ -803,8 +812,12 @@ void Viewport3D::reportPicked(PickResult result) {
         this, [this, result = std::move(result)] { finishPick(result); }, Qt::QueuedConnection);
 }
 
-void Viewport3D::finishPick(const PickResult& result) {
+void Viewport3D::finishPick(const PickResult& answer) {
     --m_picksInFlight;
+    PickResult result = answer;
+    if (m_pickable && result.hit() && !m_pickable->contains(result.body)) {
+        result.body.clear(); // a body that is not to be touched is not there for the pointer
+    }
     emit pickTimed(result.workMilliseconds);
     const PickRequest& request = result.request;
     if (request.intent == PickIntent::region) {

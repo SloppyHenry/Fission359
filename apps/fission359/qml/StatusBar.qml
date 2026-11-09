@@ -18,6 +18,9 @@ Rectangle {
     /// The button "Continue" (mirror and pattern: from choosing to the second step, AP-2.1e3).
     property bool continueVisible: false
     signal continueClicked()
+    /// The button "Let go of the link" (a sketch element that follows an edge was to be changed).
+    property bool releaseVisible: false
+    signal releaseClicked()
     signal gridStepChosen(real step)
     signal gridAutomaticChosen()
 
@@ -75,6 +78,15 @@ Rectangle {
         anchors.rightMargin: Theme.space3
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.space4
+
+        Btn {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.releaseVisible
+            small: true
+            variant: "primary"
+            text: qsTr("Let go of the link")
+            onClicked: root.releaseClicked()
+        }
 
         Btn {
             anchors.verticalCenter: parent.verticalCenter

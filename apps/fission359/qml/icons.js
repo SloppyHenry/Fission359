@@ -89,6 +89,7 @@ var paths = {
     sketchchamfer: "M6 4v7l9 9h5",
     sketchmirror: "M12 3v18 M9 7l-5 5l5 5z M15 7l5 5l-5 5z",
     sketchpattern: "M3 9h5v6H3z M9.5 9h5v6h-5z M16 9h5v6h-5z",
+    sketchtakeover: "M5 19V9l4-4h10v14z M9 5v10h10",
     sketchpoint: "M12 14.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5z M12 4v3 M12 17v3 M4 12h3 M17 12h3",
     sketchhelper: "M4 20l3-3 M10 14l4-4 M17 7l3-3"
 };

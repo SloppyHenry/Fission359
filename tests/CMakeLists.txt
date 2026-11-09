@@ -422,6 +422,15 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:umklappen,sketch.mirror;search:mirror image,sketch.mirror;search:kreismuster,sketch.pattern;search:circular pattern,sketch.pattern;menu:sketchtool.helper;menu:sketchtool.line;sketchclickmm:0,-40;sketchclickmm:0,40;key:Escape;menu:sketchtool.helper;menu:sketchtool.circle;sketchclickmm:30,0;sketchclickmm:40,0;expectsketchelements:line=1,circle=1,helper=1;key:M;expectsketchtool:mirror;sketchclickmm:40,0;key:Return;sketchmovemm:0,10;sketchclickmm:0,10;expectsketchelements:line=1,circle=2,helper=1;expectundo:mirrorSketch;key:W;expectsketchtool:pattern;sketchclickmm:40,0;key:Return;sketchclickmm:60,20;sketchmovemm:60,50;type:3,tab,30,enter;expectsketchelements:line=1,circle=4,helper=1;expectundo:patternSketch;menu:undo;expectsketchelements:line=1,circle=2,helper=1;menu:undo;expectsketchelements:line=1,circle=1,helper=1;menu:redo;menu:redo;expectsketchelements:line=1,circle=4,helper=1;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_mirror_pattern PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.1f: a sketch on the top of the box, the border taken over with the tool U (found by words
+  # only this tool carries), one undo step; the box is made wider by a typed value and the border
+  # follows (20 x 20 becomes 30 x 20). Nothing is clicked on a grid: the edges come by name.
+  add_test(NAME app_sketch_take_over
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-take-over.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;expectsketch:picking;click:366,341;expectsketch:active;expectsketchplane:face;search:körperkante,sketch.takeover;search:include edge,sketch.takeover;key:U;expectsketchtool:takeover;sketchtake:F1/box/top;expectsketchlinked:4;expectundo:takeOverEdges;menu:undo;expectsketchlinked:0;menu:redo;expectsketchlinked:4;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;step:0;value:width,30;expectsketchfollow:30,20;recipe:box,sketch")
+  set_tests_properties(app_sketch_take_over PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-1.7e: one body is split through the menu Body: the cut, and one placing step per part.
   add_test(NAME app_split_menu
     COMMAND ${_fission_gui_runner} ${_fission_app_exe}
