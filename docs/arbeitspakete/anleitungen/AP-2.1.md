@@ -221,9 +221,33 @@ Versatz einer Kurve braucht die GAL die Polylinie (`sketchSpline`) oder eine „
 Ende). Für 2.1f: übernommene Kanten sind Elemente wie die anderen und schneiden mit; für 2.1g: die Bereichserkennung kann `sketchIntersections` zum Zerschneiden der Kanten nutzen. Die Symbole
 `sketchtrim`/`sketchextend` sind einfache Umrisse und sollten mit `docs/08-gestaltung.md` abgeglichen werden.
 
+## Teil 2.1e2 – Versetzen, Ecke abrunden/abschrägen, gebaut 2026-11-09
+Gebaut: Festlegungen 38–40. Die Rechnung ist rein und exakt (analytisch, ohne OCCT) in `src/interaction`: `sketch_offset.h` mit `findChain` (Kette aus Elementen, deren Enden auf 1e-6 mm zusammenliegen; Kreis und
+geschlossene Kette; Verzweigung, wo drei Enden zusammentreffen; Hilfslinien verbinden sich nur mit Hilfslinien), `chainSignedDistance` (Seite und Abstand des Zeigers), `offsetChain` (Linien parallel,
+Ecken als Schnitt der versetzten Linien, an Außenecken mit Bogen Linie/Bogen ein Bogen um die alte Ecke, tangentiale Übergänge bleiben glatt, Bögen und Kreise ändern nur den Radius; Radius < 0,01 →
+`tooBig`, umgekehrte oder verschwundene Stücke → `crossing`; die GAL (`sketchIntersections`) prüft nur, dass sich das Ergebnis nicht selbst schneidet), `elementNear`, `findCorner` (genau zwei Enden an
+einem Punkt; mit Kurve → `curve`), `roundCorner` / `chamferCorner` (Mittelpunkt = Schnitt der verschobenen Träger, Berührpunkte = Lotfußpunkte; Rest von mindestens 0,01 mm muss bleiben; zu groß → `tooBig`
+mit größtmöglichem Wert, abgerundet auf 0,01; Halbieren, begrenzt auf 100 Schritte), `cornerRadiusAt` / `cornerDistanceAt` (was der Zeiger beim Ziehen bedeutet). Gemeinsame Ebenen-Mathematik privat in
+`src/interaction/src/plane_math.h`. Ergebnis ist ein `SketchEdit` (Versetzen: nur `added`; Ecke: zwei `moves` und ein neues Element), der über `DocumentModel::applySketchEdit` als **eine** Transaktion läuft (Rezeptzeilen
+`offsetSketch`, `roundCorner`, `chamferCorner`). Im `SketchController`: Werkzeuge `offset` (Taste O) und `fillet` (Taste F; Variante 0 abrunden, 1 abschrägen; der Name `chamfer` wählt `fillet` Variante 1, im
+Katalog ein nicht aufgelisteter Eintrag `chamfer` mit `listed: false` nur für die Befehlssuche). Versetzen: erster Klick wählt die Kette, Zeiger bestimmt Seite und Abstand (Vorschau in `draftColour`), Klick setzt, Tippen
+ersetzt den Abstand, Esc nimmt erst die getippte Zahl, dann die Kette zurück. Ecke: Überfahren zeigt die Ecke mit Punkt und die Vorschau mit dem zuletzt benutzten Radius (Start 2 mm; getrennt für Abschrägen), Klick
+setzt, Drücken und Ziehen auf der Ecke ändert den Radius live (Mitte des Bogens folgt dem Zeiger), Tippen setzt ihn (Eingabefeld „Radius“ bzw. „Abstand“ am Zeiger über das vorhandene `readout`). Neue Hinweise
+`curveOffset`, `offsetTooBig`, `offsetCrossing`, `curveCorner`, `noCorner`, `notACorner`, `cornerTooBig`, `chamferTooBig` (die letzten beiden mit `Sketch.noticeNumber`, dem größtmöglichen Wert). Keine neuen
+`--simulate`-Aktionen nötig (`key:O`, `key:F`, `sketchclickmm`, `type:…`, `menu:sketchtool.offset|fillet|chamfer`). Tasten: O ist sonst unbelegt; **F war „Ansicht einpassen“ und ist im Skizzen-Modus
+ausgeschlossen** (`enabled: !Sketch.active`), Shift+F bleibt. Fenster-Test (nur CI): `app_sketch_offset_round`.
+Weiter geltende Annahmen: Ketten-Richtung ist die des angeklickten Elements, die Seite folgt immer dem Zeiger; Splines in der Nähe zählen beim Hinweis „Kurven lassen sich noch nicht versetzen“ nach ihren Sehnen (Näherung); eine
+Ecke ist nur ein Punkt, an dem **genau zwei** Enden liegen (T-Stellen und Ecken mit Kurve ergeben keine Rundung, Kurven den Hinweis); Abrunden/Abschrägen lässt mindestens 0,01 mm Rest, deshalb ist bei einer 20-mm-Seite
+19,99 mm das Größte; Abschrägen auf Bögen misst den Abstand entlang des Bogens; die Abstände und Radien vom Zeiger rasten nicht auf das Raster; Versetzen prüft Selbstüberschneidung nur innerhalb des Ergebnisses, nicht gegen
+die übrigen Elemente der Skizze; jede Außenecke einer Kette aus Linien ergibt eine scharfe Ecke (keine Begrenzung bei sehr spitzen Winkeln).
+Offene Reste: Versetzen von Kurven (braucht Polylinie oder neue Elementart, Festlegung 38) und Ecken an Kurven; Ecke mit einem Element, das sich selbst schließt; Außenecken sehr spitzer Winkel brauchen vielleicht eine
+Fase als Begrenzung; das Ergebnis des Versetzens wird nicht gegen vorhandene Elemente geprüft; die Symbole `sketchoffset`/`sketchfillet`/`sketchchamfer` sind einfache Umrisse und sollten mit `docs/08-gestaltung.md`
+abgeglichen werden. Für e3 (Spiegeln, Muster): `SketchEdit.added` mit Bögen (Mitte, Anfang, Ende gegen den Uhrzeigersinn; beim Spiegeln Anfang und Ende tauschen); `findChain` kann die Auswahl einer Kette liefern.
+Für 2.1f/g: übernommene Kanten sind Elemente wie die anderen und bilden Ketten; die Bereichserkennung kann `findChain` zum Prüfen geschlossener Ketten nutzen.
+
 ## Teil 2.1e – Bearbeiten (geteilt, Festlegung 32)
 - **2.1e1:** Schnittpunkte, Trimmen, Verlängern. Festlegungen 33–37.
-- **2.1e2:** Versetzen (Kette, Abstand tippbar; `BRepOffsetAPI_MakeOffset` oder `Geom2d_OffsetCurve`), Ecke abrunden/abschrägen (Radius/Abstand).
+- **2.1e2:** Versetzen (Kette, Abstand tippbar), Ecke abrunden/abschrägen (Radius/Abstand), gebaut, Festlegungen 38–40.
 - **2.1e3:** Spiegeln (an Linie), Muster (Reihe/Kreis).
 Jede Operation ein Command, Undo-Test.
 

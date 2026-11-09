@@ -404,6 +404,15 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;key:L;sketchclickmm:-40,0;sketchclickmm:0,0;key:Escape;sketchclickmm:30,-20;sketchclickmm:30,20;key:Escape;expectsketchelements:line=2;key:E;expectsketchtool:extend;sketchmovemm:-3,0;sketchclickmm:-3,0;expectundo:extendSketch;expectsketchelements:line=2;sketchclickmm:-3,0;expectundo:extendSketch;menu:undo;expectundo:addSketchElement;menu:redo;expectundo:extendSketch;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_extend PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.1e2: offsetting and rounding a corner. A rectangle 80 x 40 is offset outwards by a typed
+  # 10 mm (a second rectangle, 100 x 60, one undo step), then a corner of the outer one is rounded
+  # with a typed 5 mm. The keys O and F choose the tools (F is "frame" outside the sketch).
+  add_test(NAME app_sketch_offset_round
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-offset-round.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:wandstärke,sketch.offset;search:verrunden,sketch.fillet;search:bevel corner,sketch.chamfer;menu:sketchtool.rectangle;sketchclickmm:-40,-20;sketchclickmm:40,20;expectsketchelements:line=4;expectsketchsize:80,40;key:O;expectsketchtool:offset;sketchclickmm:0,-20;sketchmovemm:0,-30;type:10,enter;expectsketchelements:line=8;expectsketchsize:100,60;expectundo:offsetSketch;key:F;expectsketchtool:fillet;sketchmovemm:50,30;type:5,enter;expectsketchelements:line=8,arc=1;expectundo:roundCorner;menu:undo;expectsketchelements:line=8;menu:undo;expectsketchelements:line=4;menu:redo;menu:redo;expectsketchelements:line=8,arc=1;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
+  set_tests_properties(app_sketch_offset_round PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-1.7e: one body is split through the menu Body: the cut, and one placing step per part.
   add_test(NAME app_split_menu
     COMMAND ${_fission_gui_runner} ${_fission_app_exe}

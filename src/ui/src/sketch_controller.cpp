@@ -413,8 +413,11 @@ void SketchController::escape() {
             return;
         }
         if ((offsetTool() && m_chain) || m_typedValue) { // a picked chain, a typed number
-            m_chain.reset();
-            m_typedValue.reset();
+            if (m_typedValue) {                          // first the typed number, then the chain
+                m_typedValue.reset();
+            } else {
+                m_chain.reset();
+            }
             m_preview.clear();
             if (m_rawPointer) {
                 updateEditHover(*m_rawPointer);

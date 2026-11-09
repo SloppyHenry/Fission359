@@ -1303,3 +1303,222 @@ TEST_CASE("sketch trim: with the tool off nothing is trimmed", "[ui][sketchtools
     f.click(30, 0.3);
     CHECK(f.elements() == before);
 }
+
+// --- offset and corners (AP-2.1e2) ----------------------------------------------------------
+
+namespace {
+
+void putRectangle(Drawing& f) {
+    put(f,
+        {lineOf(0, 0, 40, 0), lineOf(40, 0, 40, 20), lineOf(40, 20, 0, 20), lineOf(0, 20, 0, 0)});
+}
+
+} // namespace
+
+TEST_CASE("sketch offset: pick a chain, move to the side, click: four new lines, one undo step",
+          "[ui][sketchtools][offset]") {
+    NoCatching free;
+    Drawing f;
+    putRectangle(f);
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("offset"));
+    CHECK(f.sketch->toolName() == "offset");
+    CHECK_FALSE(f.sketch->drawing());
+    f.click(20, 0.2); // picks the whole chain, nothing is made yet
+    CHECK(f.elements() == before);
+    CHECK(f.sketch->drawing());
+    CHECK(f.sketch->placed() == 1);
+    f.move(20, -5);
+    CHECK(f.sketch->fieldCount() == 1);
+    CHECK(f.sketch->readout().value("valid").toBool());
+    f.click(20, -5);
+    const auto after = f.elements();
+    REQUIRE(after.size() == 8);
+    CHECK(f.nextUndo() == "offsetSketch");
+    CHECK(f.count(core::SketchElementKind::line) == 8);
+    // the new rectangle is 50 x 30 round the old one
+    double minU = 1e9;
+    double maxU = -1e9;
+    for (std::size_t i = 4; i < after.size(); ++i) {
+        for (const core::SketchPoint& p : after[i].points) {
+            minU = std::min(minU, p.u);
+            maxU = std::max(maxU, p.u);
+        }
+    }
+    CHECK(minU == Approx(-5.0).margin(1e-9));
+    CHECK(maxU == Approx(45.0).margin(1e-9));
+    CHECK_FALSE(f.sketch->drawing()); // the chain is let go
+
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements() == before);
+    REQUIRE(f.model->redo());
+    f.settle();
+    CHECK(f.elements() == after); // the same ids and numbers
+}
+
+TEST_CASE("sketch offset: a typed distance replaces the pointer's, the side follows the pointer",
+          "[ui][sketchtools][offset]") {
+    NoCatching free;
+    Drawing f;
+    putRectangle(f);
+    f.sketch->chooseTool(QStringLiteral("offset"));
+    f.click(20, 0.2);
+    f.move(20, 3); // inside
+    f.sketch->setTyped(0, 7.0);
+    CHECK(f.sketch->readout().value("fields").toList().first().toMap().value("typed").toBool());
+    f.sketch->acceptTyped();
+    const auto after = f.elements();
+    REQUIRE(after.size() == 8);
+    double minU = 1e9;
+    for (std::size_t i = 4; i < after.size(); ++i) {
+        for (const core::SketchPoint& p : after[i].points) {
+            minU = std::min(minU, p.u);
+        }
+    }
+    CHECK(minU == Approx(7.0).margin(1e-9));
+}
+
+TEST_CASE("sketch offset: a curve gives a hint, a distance too big for a circle makes nothing",
+          "[ui][sketchtools][offset]") {
+    NoCatching free;
+    Drawing f;
+    core::SketchElement curve{
+        "", core::SketchElementKind::spline, {{0, 30}, {10, 40}, {20, 30}}, false};
+    core::SketchElement ring{"", core::SketchElementKind::circle, {{0, 0}, {10, 0}}, false};
+    REQUIRE(f.model->addSketchElements(f.sketch->step(), {curve}, QStringLiteral("spline")));
+    put(f, {ring});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("offset"));
+    f.click(0, 30.5); // the end of the curve ... near the chord
+    CHECK(f.notices.contains(QStringLiteral("curveOffset")));
+    CHECK_FALSE(f.sketch->drawing());
+    f.click(10, 0.1);
+    CHECK(f.sketch->drawing());
+    f.move(3, 0);
+    f.sketch->setTyped(0, 12.0);
+    f.sketch->acceptTyped();
+    CHECK(f.notices.contains(QStringLiteral("offsetTooBig")));
+    CHECK(f.elements() == before);
+    // Esc takes the typed number back, then the chain, then the tool
+    f.sketch->escape();
+    CHECK(f.sketch->drawing()); // the chain is still picked
+    f.sketch->escape();
+    CHECK_FALSE(f.sketch->drawing());
+    CHECK(f.sketch->toolActive());
+    f.sketch->escape();
+    CHECK_FALSE(f.sketch->toolActive());
+}
+
+TEST_CASE("sketch corner: a click rounds the corner with the last radius (2 mm at first)",
+          "[ui][sketchtools][corner]") {
+    NoCatching free;
+    Drawing f;
+    putRectangle(f);
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("fillet"));
+    CHECK(f.sketch->toolName() == "fillet");
+    CHECK(f.sketch->toolVariant() == 0);
+    f.click(40, 0);
+    const auto after = f.elements();
+    REQUIRE(after.size() == 5);
+    CHECK(f.nextUndo() == "roundCorner");
+    CHECK(f.count(core::SketchElementKind::arc) == 1);
+    const core::SketchElement& arc = after.back();
+    checkPoint(arc.points[0], 38, 2);
+    checkPoint(arc.points[1], 38, 0);
+    checkPoint(arc.points[2], 40, 2);
+    checkPoint(after[0].points[1], 38, 0); // the bottom side is shorter
+    checkPoint(after[1].points[0], 40, 2);
+
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements() == before);
+    REQUIRE(f.model->redo());
+    f.settle();
+    CHECK(f.elements() == after);
+}
+
+TEST_CASE("sketch corner: pulling sets the radius, typing sets it too, and it is remembered",
+          "[ui][sketchtools][corner]") {
+    NoCatching free;
+    Drawing f;
+    putRectangle(f);
+    f.sketch->chooseTool(QStringLiteral("fillet"));
+    // press on the corner and pull: the middle of the arc follows the pointer
+    f.sketch->pressAt(Drawing::down(40, 0), 2.0);
+    f.sketch->dragTo(Drawing::down(35, 5), 2.0);
+    f.sketch->releaseAt(Drawing::down(35, 5), 2.0, false, true);
+    auto elements = f.elements();
+    REQUIRE(elements.size() == 5);
+    checkPoint(elements.back().points[0], 35, 5);
+    // type a radius for the next corner
+    f.move(40, 20);
+    CHECK(f.sketch->fieldCount() == 1);
+    f.sketch->setTyped(0, 3.0);
+    f.sketch->acceptTyped();
+    elements = f.elements();
+    REQUIRE(elements.size() == 6);
+    checkPoint(elements.back().points[0], 37, 17);
+    // a click on the third corner takes the radius used last
+    f.click(0, 20);
+    elements = f.elements();
+    REQUIRE(elements.size() == 7);
+    checkPoint(elements.back().points[0], 3, 17);
+}
+
+TEST_CASE("sketch corner: too big for the short side says the biggest radius and changes nothing",
+          "[ui][sketchtools][corner]") {
+    NoCatching free;
+    Drawing f;
+    putRectangle(f);
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("fillet"));
+    f.move(40, 0);
+    f.sketch->setTyped(0, 25.0);
+    f.sketch->acceptTyped();
+    CHECK(f.notices.contains(QStringLiteral("cornerTooBig")));
+    CHECK(f.sketch->noticeNumber() == Approx(19.99).margin(1e-9));
+    CHECK(f.elements() == before);
+}
+
+TEST_CASE("sketch corner: chamfer is the second way of the tool and has its own name",
+          "[ui][sketchtools][corner]") {
+    NoCatching free;
+    Drawing f;
+    putRectangle(f);
+    f.sketch->chooseTool(QStringLiteral("chamfer"));
+    CHECK(f.sketch->toolName() == "fillet");
+    CHECK(f.sketch->toolVariant() == 1);
+    f.move(40, 20);
+    f.sketch->setTyped(0, 4.0);
+    f.sketch->acceptTyped();
+    const auto elements = f.elements();
+    REQUIRE(elements.size() == 5);
+    CHECK(f.nextUndo() == "chamferCorner");
+    CHECK(elements.back().kind == core::SketchElementKind::line);
+    CHECK(f.count(core::SketchElementKind::arc) == 0);
+    // the ways are remembered: choosing the tool again chamfers
+    f.sketch->chooseTool(QStringLiteral("fillet"));
+    CHECK(f.sketch->toolVariant() == 1);
+    f.sketch->chooseTool(QStringLiteral("fillet"), 0);
+    CHECK(f.sketch->toolVariant() == 0);
+}
+
+TEST_CASE("sketch corner: a curve and a click far from any corner give hints",
+          "[ui][sketchtools][corner]") {
+    NoCatching free;
+    Drawing f;
+    core::SketchElement curve{
+        "", core::SketchElementKind::spline, {{10, 0}, {15, 5}, {20, 0}}, false};
+    put(f, {lineOf(0, 0, 10, 0)});
+    REQUIRE(f.model->addSketchElements(f.sketch->step(), {curve}, QStringLiteral("spline")));
+    f.settle();
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("fillet"));
+    f.click(10, 0);
+    CHECK(f.notices.contains(QStringLiteral("curveCorner")));
+    f.click(2, 0.1);
+    CHECK(f.notices.contains(QStringLiteral("noCorner")));
+    CHECK(f.elements() == before);
+}
