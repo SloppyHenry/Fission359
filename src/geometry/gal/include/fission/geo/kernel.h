@@ -18,6 +18,7 @@
 #include "fission/geo/rotation.h"
 #include "fission/geo/signature.h"
 #include "fission/geo/sketch_curve.h"
+#include "fission/geo/sketch_intersections.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
 
@@ -355,6 +356,37 @@ public:
         (void)through;
         (void)tolerance;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot draw splines");
+    }
+
+    /// Where the curves of a sketch cross one another (AP-2.1e1), touches included (a line that
+    /// only touches a circle, curves that meet at their ends). Entry i of the result belongs to
+    /// `curves[i]`: every crossing of it with another curve, sorted by parameter, parameters as
+    /// in `SketchCrossing` (all inside the curves as they are drawn: the ends of a line or an arc
+    /// are its limits). Crossings nearer than `kSketchCrossingTolerance` are one (the first
+    /// counts). Curves on top of each other (parallel lines on one line, equal circles) have no
+    /// crossings; a curve does not cross itself. Throws `GeometryError`: `invalidInput` for a
+    /// curve that does not have the right points, a number that is not finite, a radius or a
+    /// length of zero, `kernelFailure` when the kernel cannot calculate. The default refuses.
+    virtual std::vector<std::vector<SketchCrossing>>
+    sketchIntersections(const std::vector<SketchCurve>& curves) const {
+        (void)curves;
+        throw GeometryError(GeometryErrorCode::kernelFailure,
+                            "this kernel cannot cross sketch curves");
+    }
+
+    /// Where the line or the circle that carries `carrier` (a line goes on without end both ways;
+    /// an arc goes on to the whole circle) meets `others`, which count as they are drawn. The
+    /// parameters are those of the carrier without limits: a line's distance from its start
+    /// (negative behind it), the angle of an arc or circle in [0, 2π) from its start. Used to
+    /// extend a line or an arc up to the next curve. Throws like `sketchIntersections`, and
+    /// `invalidInput` when `carrier` is a spline. The default refuses.
+    virtual std::vector<SketchCrossing>
+    sketchCarrierCrossings(const SketchCurve& carrier,
+                           const std::vector<SketchCurve>& others) const {
+        (void)carrier;
+        (void)others;
+        throw GeometryError(GeometryErrorCode::kernelFailure,
+                            "this kernel cannot cross sketch curves");
     }
 
     /// Measures one element (corner: position; edge: length, radius of a circle or arc; face:

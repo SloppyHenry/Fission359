@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "fission/core/sketch.h"
+#include "fission/interaction/sketch_edit.h"
 #include "fission/interaction/sketch_snap.h"
 #include "fission/interaction/sketch_tool.h"
 #include "fission/render/camera.h"
@@ -46,8 +47,8 @@ class SketchController : public QObject {
     Q_PROPERTY(bool engaged READ engaged NOTIFY stateChanged)
     /// A drawing tool is on; Esc ends it before it ends the sketch.
     Q_PROPERTY(bool toolActive READ toolActive NOTIFY toolChanged)
-    /// The tool: "" (none), "line", "rectangle", "circle", "point", "arc", "slot", "polygon" or
-    /// "spline" (the curve); and
+    /// The tool: "" (none), "line", "rectangle", "circle", "point", "arc", "slot", "polygon",
+    /// "spline" (the curve), "trim" or "extend" (AP-2.1e1); and
     /// its variant (rectangle: 0 two corners, 1 middle and corner; circle: 0 middle and radius,
     /// 1 three points; arc: 0 three points, 1 middle, start and end; polygon: 0 corner, 1 middle
     /// of a side).
@@ -80,6 +81,8 @@ class SketchController : public QObject {
     Q_PROPERTY(QColor guideColour MEMBER m_guideColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor markerColour MEMBER m_markerColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor draftColour MEMBER m_draftColour NOTIFY coloursChanged)
+    /// The piece that trimming would take away (AP-2.1e1).
+    Q_PROPERTY(QColor trimColour MEMBER m_trimColour NOTIFY coloursChanged)
 
 public:
     SketchController(DocumentModel* model, SelectionController* selection,
@@ -144,7 +147,9 @@ public:
     /// tangential arc; letting go sets it. The view calls these; tests call them directly.
     void pressAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre);
     void dragTo(const interaction::PlaneRay& ray, double pixelsPerMillimetre);
-    void releaseAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre, bool alt = false);
+    /// `dragged` = the pointer moved far enough to count as a drag (else a click follows).
+    void releaseAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre, bool alt = false,
+                   bool dragged = true);
     /// A number typed for field 0 or 1 of the element being pulled (millimetres, or degrees for
     /// the angle); the element follows at once. NaN takes the number back.
     Q_INVOKABLE void setTyped(int field, double value);
@@ -173,7 +178,9 @@ signals:
     /// on flat faces), "faceUnusable" (this face cannot be drawn on), "needsHelp" (the sketch has
     /// no plane at the moment), "collinear" (three points on one line make no circle), "tooSmall"
     /// (shorter than 0.01 mm: nothing was drawn), "badSides" (the polygon has 3 to 64 sides),
-    /// "curveFailed" (the kernel could make no curve through the points; nothing was added).
+    /// "curveFailed" (the kernel could make no curve through the points; nothing was added),
+    /// "curvePartial" (a curve that is crossed cannot be trimmed in part yet), "nothingToExtend"
+    /// (no curve in the way of the end), "editFailed" (the crossings could not be calculated).
     void notice(const QString& code);
 
 private:
@@ -189,10 +196,19 @@ private:
     double baseStep() const;
     void applyStep(const interaction::SketchToolStep& step);
     void updateDraft();
+    // trimming and extending (AP-2.1e1)
+    bool editingTool() const noexcept;
+    const interaction::SketchTrimmer* trimmer();
+    void updateEditHover(const core::SketchPoint& raw);
+    void markAlong(const core::SketchPoint& from, const core::SketchPoint& to);
+    void commitTrim();
+    void commitExtend();
+    void applyEdit(const interaction::SketchEdit& edit, const QString& action);
+    void forgetEdit();
     void onClicked(double x, double y);
     void onPressed(double x, double y);
     void onDragged(double x, double y);
-    void onReleased(double x, double y);
+    void onReleased(double x, double y, bool dragged);
     void onDoubleClicked(double x, double y);
 
     QPointer<DocumentModel> m_model;
@@ -218,6 +234,13 @@ private:
     std::vector<CachedCurve> m_curves; ///< the curves of splines drawn lately
     interaction::SketchDraft m_draft;
     QVariantMap m_readout;
+    // trimming and extending (AP-2.1e1)
+    std::optional<interaction::SketchTrimmer> m_trimmer; ///< of the elements as they are now
+    std::optional<interaction::SketchPiece> m_hoverPiece;
+    std::vector<interaction::SketchPiece> m_marked; ///< the pieces a stroke has gone over
+    std::optional<interaction::SketchExtension> m_hoverExtension;
+    std::optional<core::SketchPoint> m_rawPointer; ///< the pointer on the plane, not caught
+    bool m_stroking = false;
 
     QColor m_gridColour{0x3A, 0x3D, 0x43};
     QColor m_gridMajorColour{0x55, 0x59, 0x61};
@@ -225,6 +248,7 @@ private:
     QColor m_guideColour{0x4C, 0x8D, 0xFF};
     QColor m_markerColour{0x4C, 0x8D, 0xFF};
     QColor m_draftColour{0x4C, 0x8D, 0xFF};
+    QColor m_trimColour{0xF0, 0x5A, 0x5A};
 };
 
 } // namespace fission::ui

@@ -17,7 +17,7 @@ class Document;
 /// colorBody, showBody, hideBody, addMeasure, removeMeasure, setMeasure, renameMeasure,
 /// group (several changes made as one), moveBody (a body moved; a transaction of the
 /// interface, AP-1.6), addSketchElement, removeSketchElement, moveSketchPoints,
-/// sketchConstructionOn, sketchConstructionOff (AP-2.1).
+/// sketchConstructionOn, sketchConstructionOff, trimSketch, extendSketch (AP-2.1).
 /// Values (all optional, all text): type ("box"), number (feature number), field (value name),
 /// value (new expression), name.
 struct CommandDescription {

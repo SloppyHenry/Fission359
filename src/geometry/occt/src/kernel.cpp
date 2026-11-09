@@ -6,6 +6,7 @@
 #include "fission/geo/occt/exchange.h"
 #include "fission/geo/occt/measuring.h"
 #include "fission/geo/occt/sketch_curve.h"
+#include "fission/geo/occt/sketch_intersections.h"
 #include "fission/geo/occt/solids.h"
 
 namespace fission::geo::occt {
@@ -101,6 +102,15 @@ public:
     SketchSplineCurve sketchSpline(const std::vector<Point2d>& through,
                                    double tolerance) const override {
         return occt::sketchSpline(through, tolerance);
+    }
+    std::vector<std::vector<SketchCrossing>>
+    sketchIntersections(const std::vector<SketchCurve>& curves) const override {
+        return occt::sketchIntersections(curves);
+    }
+    std::vector<SketchCrossing>
+    sketchCarrierCrossings(const SketchCurve& carrier,
+                           const std::vector<SketchCurve>& others) const override {
+        return occt::sketchCarrierCrossings(carrier, others);
     }
     SolidReport measure(const Solid& solid) const override { return occt::measure(solid); }
     Bounds bounds(const Solid& solid) const override { return occt::bounds(solid); }

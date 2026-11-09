@@ -384,6 +384,26 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:Kurve,sketch.spline;search:Freiform,sketch.spline;key:K;expectsketchtool:spline;sketchmove:300,300;sketchclick:300,300;sketchmove:400,200;sketchclick:400,200;sketchmove:500,300;sketchclick:500,300;sketchmove:450,420;sketchclick:450,420;key:Backspace;sketchmove:400,400;sketchclick:400,400;sketchmove:300,300;sketchclick:300,300;expectsketchelements:spline=1;expectundo:addSketchElement;menu:undo;expectsketchelements:;menu:redo;expectsketchelements:spline=1;sketchmove:600,250;sketchclick:600,250;sketchmove:700,350;sketchclick:700,350;sketchmove:800,250;sketchdouble:800,250;expectsketchelements:spline=2;sketchmove:600,500;sketchclick:600,500;sketchmove:700,550;sketchclick:700,550;key:Escape;expectsketchelements:spline=2;expectsketchtool:spline;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_curve_close PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.1e1: trimming. The keys T and E choose the tools (no other shortcut has them), the command
+  # search knows their words. A rectangle with a circle on its right edge: trimming the circle's
+  # outer half leaves an arc (the box round everything gets smaller), trimming the piece of the
+  # edge inside the circle gives two lines; each is one undo step. A stroke over the three pieces of
+  # the edge takes them all in one step. Places are given in millimetres on the ground plane, on
+  # whole tens: clicks snap to the grid.
+  add_test(NAME app_sketch_trim
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-trim.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:abschneiden,sketch.trim;search:trim,sketch.trim;search:anschließen,sketch.extend;search:extend,sketch.extend;menu:sketchtool.rectangle;sketchclickmm:-40,-30;sketchclickmm:40,30;menu:sketchtool.circle;sketchclickmm:40,0;sketchclickmm:60,0;expectsketchelements:line=4,circle=1;expectsketchsize:100,60;key:T;expectsketchtool:trim;sketchmovemm:60,0;sketchclickmm:60,0;expectsketchelements:line=4,arc=1;expectsketchsize:80,60;expectundo:trimSketch;sketchclickmm:40,0;expectsketchelements:line=5,arc=1;expectundo:trimSketch;menu:undo;expectsketchelements:line=4,arc=1;menu:undo;expectsketchelements:line=4,circle=1;menu:redo;expectsketchelements:line=4,arc=1;sketchdragmm:40,-28,40,28;expectsketchelements:line=3,arc=1;expectundo:trimSketch;menu:undo;expectsketchelements:line=4,arc=1;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
+  set_tests_properties(app_sketch_trim PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.1e1: extending. A line goes on up to a wall (one undo step); at the wall there is
+  # nothing further, so a second click changes nothing.
+  add_test(NAME app_sketch_extend
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-extend.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;key:L;sketchclickmm:-40,0;sketchclickmm:0,0;key:Escape;sketchclickmm:30,-20;sketchclickmm:30,20;key:Escape;expectsketchelements:line=2;key:E;expectsketchtool:extend;sketchmovemm:-3,0;sketchclickmm:-3,0;expectundo:extendSketch;expectsketchelements:line=2;sketchclickmm:-3,0;expectundo:extendSketch;menu:undo;expectundo:addSketchElement;menu:redo;expectundo:extendSketch;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
+  set_tests_properties(app_sketch_extend PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-1.7e: one body is split through the menu Body: the cut, and one placing step per part.
   add_test(NAME app_split_menu
     COMMAND ${_fission_gui_runner} ${_fission_app_exe}

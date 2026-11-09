@@ -51,6 +51,7 @@ add_executable(fission_unit_tests
   geometry/test_exchange.cpp
   geometry/test_measuring.cpp
   geometry/test_sketch_curve.cpp
+  geometry/test_sketch_intersections.cpp
   analysis/test_material.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
@@ -92,7 +93,8 @@ add_executable(fission_unit_tests
   interaction/test_align.cpp
   interaction/test_sketch_snap.cpp
   interaction/test_sketch_shapes.cpp
-  interaction/test_sketch_tool.cpp)
+  interaction/test_sketch_tool.cpp
+  interaction/test_sketch_edit.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
   fission_core fission_services fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)

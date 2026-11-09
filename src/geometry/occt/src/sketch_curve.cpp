@@ -12,6 +12,7 @@
 
 #include "fission/geo/error.h"
 
+#include "sketch_spline_curve.h"
 #include <Geom2dAPI_Interpolate.hxx>
 #include <Geom2d_BSplineCurve.hxx>
 #include <NCollection_Array1.hxx>
@@ -94,11 +95,7 @@ Point2d unitDirection(const Geom2d_BSplineCurve& curve, double t) {
 
 } // namespace
 
-SketchSplineCurve sketchSpline(const std::vector<Point2d>& through, double tolerance) {
-    if (!(tolerance > 0.0) || !std::isfinite(tolerance)) {
-        throw GeometryError(GeometryErrorCode::invalidInput, "sketchSpline: tolerance",
-                            "tolerance");
-    }
+InterpolatedSpline interpolateSketchSpline(const std::vector<Point2d>& through) {
     for (const Point2d& point : through) {
         if (!std::isfinite(point.x) || !std::isfinite(point.y)) {
             throw GeometryError(GeometryErrorCode::invalidInput,
@@ -106,39 +103,32 @@ SketchSplineCurve sketchSpline(const std::vector<Point2d>& through, double toler
         }
     }
     // Following points that are one are merged; the last one on the first closes the curve.
-    std::vector<Point2d> points;
+    InterpolatedSpline made;
+    std::vector<Point2d>& points = made.points;
     for (const Point2d& point : through) {
         if (points.empty() || distance(points.back(), point) > kSketchSplineMergeDistance) {
             points.push_back(point);
         }
     }
-    const bool closed =
+    made.closed =
         points.size() >= 2 && distance(points.front(), points.back()) <= kSketchSplineMergeDistance;
-    if (closed) {
+    if (made.closed) {
         points.pop_back();
     }
     const std::size_t count = points.size();
-    if (count < (closed ? 3U : 2U)) {
+    if (count < (made.closed ? 3U : 2U)) {
         throw GeometryError(GeometryErrorCode::invalidInput, "sketchSpline: too few points",
                             "points");
     }
-
-    SketchSplineCurve made;
-    made.closed = closed;
-    if (count == 2) { // a straight curve
-        const double length = distance(points[0], points[1]);
-        const Point2d way{(points[1].x - points[0].x) / length,
-                          (points[1].y - points[0].y) / length};
-        made.polyline = {points[0], points[1]};
-        made.startTangent = way;
-        made.endTangent = way;
+    if (count == 2) { // a straight curve: no B-spline needed
         return made;
     }
 
     try {
         // Parameters by the length of the chords (what a person expects of a curve through points).
         const int n = static_cast<int>(count);
-        std::vector<double> parameters(count + (closed ? 1U : 0U), 0.0);
+        std::vector<double>& parameters = made.parameters;
+        parameters.assign(count + (made.closed ? 1U : 0U), 0.0);
         for (std::size_t i = 1; i < parameters.size(); ++i) {
             parameters[i] = parameters[i - 1] + distance(points[i - 1], points[i % count]);
         }
@@ -152,28 +142,54 @@ SketchSplineCurve sketchSpline(const std::vector<Point2d>& through, double toler
         for (std::size_t i = 0; i < parameters.size(); ++i) {
             times->SetValue(static_cast<int>(i) + 1, parameters[i]);
         }
-        Geom2dAPI_Interpolate interpolation(ends, times, closed, kSketchSplineMergeDistance);
+        Geom2dAPI_Interpolate interpolation(ends, times, made.closed, kSketchSplineMergeDistance);
         interpolation.Perform();
         if (!interpolation.IsDone()) {
             throw GeometryError(GeometryErrorCode::kernelFailure, "sketchSpline: no interpolation");
         }
-        const occ::handle<Geom2d_BSplineCurve> curve = interpolation.Curve();
-        const Sampler sampler(*curve, tolerance);
-
+        made.curve = interpolation.Curve();
         // The curve must really go through the points: never a curve that is quietly different.
         for (std::size_t i = 0; i < count; ++i) {
-            if (distance(sampler.at(parameters[i]), points[i]) > 1e-6) {
+            if (distance(pointOf(made.curve->Value(parameters[i])), points[i]) > 1e-6) {
                 throw GeometryError(GeometryErrorCode::kernelFailure,
                                     "sketchSpline: the curve misses a point");
             }
         }
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "sketchSpline: the kernel failed");
+    }
+    return made;
+}
+
+SketchSplineCurve sketchSpline(const std::vector<Point2d>& through, double tolerance) {
+    if (!(tolerance > 0.0) || !std::isfinite(tolerance)) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "sketchSpline: tolerance",
+                            "tolerance");
+    }
+    const InterpolatedSpline spline = interpolateSketchSpline(through);
+    const std::vector<Point2d>& points = spline.points;
+    const std::size_t count = points.size();
+    SketchSplineCurve made;
+    made.closed = spline.closed;
+    if (count == 2) { // a straight curve
+        const double length = distance(points[0], points[1]);
+        const Point2d way{(points[1].x - points[0].x) / length,
+                          (points[1].y - points[0].y) / length};
+        made.polyline = {points[0], points[1]};
+        made.startTangent = way;
+        made.endTangent = way;
+        return made;
+    }
+    try {
+        const std::vector<double>& parameters = spline.parameters;
+        const Sampler sampler(*spline.curve, tolerance);
         made.polyline.push_back(points.front());
         for (std::size_t i = 0; i + 1 < parameters.size(); ++i) {
             sampler.span(parameters[i], points[i], parameters[i + 1], points[(i + 1) % count], 0,
                          made.polyline);
         }
-        made.startTangent = unitDirection(*curve, parameters.front());
-        made.endTangent = unitDirection(*curve, parameters.back());
+        made.startTangent = unitDirection(*spline.curve, parameters.front());
+        made.endTangent = unitDirection(*spline.curve, parameters.back());
     } catch (const Standard_Failure&) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "sketchSpline: the kernel failed");
     }

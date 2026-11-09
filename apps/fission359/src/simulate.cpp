@@ -534,45 +534,61 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             continue;
         }
         if (kind == QLatin1String("sketchmove") || kind == QLatin1String("sketchclick") ||
-            kind == QLatin1String("sketchdouble")) {
+            kind == QLatin1String("sketchdouble") || kind == QLatin1String("sketchmovemm") ||
+            kind == QLatin1String("sketchclickmm")) {
             // sketchclick:600,400 - the pointer goes there and clicks on the sketch plane (the
             // drawing tools of the sketch mode; the plain click only asks what is under the
             // pointer). sketchdouble: a click and then the double click that follows it.
+            // sketchmovemm:40,25 / sketchclickmm:40,25 - the same at a place of the GROUND plane
+            // given in millimetres (u, v), wherever the view puts it on the screen.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             const double x = spec.value(0).toDouble();
             const double y = spec.value(1).toDouble();
+            const bool millimetres = kind.endsWith(QLatin1String("mm"));
+            const bool click =
+                kind != QLatin1String("sketchmove") && kind != QLatin1String("sketchmovemm");
             delay += 350;
-            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [viewport, kind, x, y] {
-                viewport->hoverAt(x, y);
-                if (kind != QLatin1String("sketchmove")) {
-                    emit viewport->leftClicked(x, y);
-                }
-                if (kind == QLatin1String("sketchdouble")) {
-                    emit viewport->leftDoubleClicked(x, y);
-                }
-            });
+            QTimer::singleShot(
+                delay, Qt::PreciseTimer, viewport, [viewport, kind, x, y, millimetres, click] {
+                    const QPointF at = millimetres ? viewport->project(x, y, 0.0) : QPointF(x, y);
+                    viewport->hoverAt(at.x(), at.y());
+                    if (click) {
+                        emit viewport->leftClicked(at.x(), at.y());
+                    }
+                    if (kind == QLatin1String("sketchdouble")) {
+                        emit viewport->leftDoubleClicked(at.x(), at.y());
+                    }
+                });
             continue;
         }
-        if (kind == QLatin1String("sketchdrag")) {
+        if (kind == QLatin1String("sketchdrag") || kind == QLatin1String("sketchdragmm")) {
             // sketchdrag:600,300,700,200 - the left button goes down at the first point, is pulled
             // to the second and let go (in the sketch mode: an arc from the end of the last
-            // line). A fifth word "hold" leaves the button down, so that numbers can be typed
-            // (type:12,enter) before the element is set.
+            // line; with the tool "trim" a stroke over pieces, as in `sketchdragmm:u1,v1,u2,v2`
+            // which takes places of the ground plane in millimetres). A fifth word "hold" leaves
+            // the button down, so that numbers can be typed (type:12,enter) before the element is
+            // set.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             const double x1 = spec.value(0).toDouble();
             const double y1 = spec.value(1).toDouble();
             const double x2 = spec.value(2).toDouble();
             const double y2 = spec.value(3).toDouble();
             const bool hold = spec.value(4).trimmed() == QLatin1String("hold");
+            const bool millimetres = kind.endsWith(QLatin1String("mm"));
             delay += 350;
-            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [viewport, x1, y1, x2, y2, hold] {
-                viewport->hoverAt(x1, y1);
-                emit viewport->leftPressed(x1, y1);
-                emit viewport->leftDragged(x2, y2);
-                if (!hold) {
-                    emit viewport->leftReleased(x2, y2, true);
-                }
-            });
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport,
+                               [viewport, x1, y1, x2, y2, hold, millimetres] {
+                                   const QPointF from = millimetres ? viewport->project(x1, y1, 0.0)
+                                                                    : QPointF(x1, y1);
+                                   const QPointF to = millimetres ? viewport->project(x2, y2, 0.0)
+                                                                  : QPointF(x2, y2);
+                                   viewport->hoverAt(from.x(), from.y());
+                                   emit viewport->leftPressed(from.x(), from.y());
+                                   emit viewport->leftDragged(to.x(), to.y());
+                                   if (!hold) {
+                                       emit viewport->leftReleased(to.x(), to.y(), true);
+                                   }
+                               });
             continue;
         }
         if (kind == QLatin1String("expectsketchtool")) {

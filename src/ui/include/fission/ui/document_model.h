@@ -31,6 +31,10 @@
 #include "fission/render/scene.h"
 #include "fission/ui/clipboard_payload.h"
 
+namespace fission::interaction {
+struct SketchEdit;
+}
+
 namespace fission::ui {
 
 class Numbers;
@@ -477,6 +481,14 @@ public:
     /// make the curve of a spline among them.
     bool addSketchElements(const QString& stepId, const std::vector<core::SketchElement>& elements,
                            const QString& kind);
+    /// Trims or extends elements of a sketch (AP-2.1e1): the moves, removals and new elements of
+    /// `edit` as ONE step of the history, named by `action` ("trimSketch" or "extendSketch"; the
+    /// recipe says "… trimmed" / "… extended"). False (nothing changed) when the step has no
+    /// sketch, the edit is empty or one of its parts is refused.
+    bool applySketchEdit(const QString& stepId, const interaction::SketchEdit& edit,
+                         const QString& action);
+    /// The kernel, for the sketch tools that need crossings (trim, extend).
+    const geo::GeometryKernel& sketchKernel() const { return *m_kernel; }
 
     /// Removes faces and lets the body heal (a hole closes, a rounding goes sharp): a new step.
     /// Returns the id of the new body, empty when nothing can be done.
