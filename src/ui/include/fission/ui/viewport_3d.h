@@ -117,6 +117,9 @@ public:
     double cameraYaw() const { return m_camera.pose().yaw; }
     double cameraPitch() const { return m_camera.pose().pitch; }
     double pixelsPerMillimetre() const { return m_camera.pixelsPerMillimetre(); }
+    /// For the sketch mode: the drag with the left button that is going on is a drawing drag (no
+    /// rubber band, no body moves). Ended by the release.
+    void setDrawDrag(bool on) noexcept { m_drawDrag = on; }
     double snapStep() const;
     double fixedSnapStep() const { return m_fixedSnapStep; }
     void setFixedSnapStep(double millimetres);
@@ -332,6 +335,12 @@ signals:
     /// point on the plane and not the thing under the pointer.
     void leftClicked(double x, double y);
     void leftDoubleClicked(double x, double y);
+    /// The left button went down at (x, y); and, while `setDrawDrag(true)` was asked for in
+    /// answer, the pointer moved with it held (beyond a click) and the button went up. For the
+    /// arc that is pulled from the end of a line in the sketch mode (AP-2.1c2).
+    void leftPressed(double x, double y);
+    void leftDragged(double x, double y);
+    void leftReleased(double x, double y, bool dragged);
     void highlightsChanged();
     /// A drag with the left button ended: everything in the rectangle (item pixels).
     void rubberBandFinished(const QRectF& area, bool extend);
@@ -396,6 +405,7 @@ private:
     bool m_bodiesMovable = false;
     QString m_pressBody;         ///< the body the left button went down on (to move it)
     bool m_bodyDragging = false; ///< a drag with the left button moves `m_pressBody`
+    bool m_drawDrag = false;     ///< a drag with the left button is for the sketch tools
     QColor m_accent{0x4C, 0x8D, 0xFF};
 
     std::mutex m_statisticsMutex;

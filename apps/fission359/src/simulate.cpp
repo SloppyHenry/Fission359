@@ -132,9 +132,10 @@ void whenCalculated(QObject* context, fission::ui::DocumentModel* model,
 
 void checkAfter(int delay, QObject* context, fission::ui::DocumentModel* model,
                 std::function<void()> check) {
-    QTimer::singleShot(delay, context, [context, model, check = std::move(check)]() mutable {
-        whenCalculated(context, model, std::move(check));
-    });
+    QTimer::singleShot(delay, Qt::PreciseTimer, context,
+                       [context, model, check = std::move(check)]() mutable {
+                           whenCalculated(context, model, std::move(check));
+                       });
 }
 
 // Calls `then` after the window has drawn `frames` more frames; after `patience` milliseconds
@@ -250,7 +251,7 @@ int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int de
     action->steps = steps;
     action->hold = hold;
     delay += 350;
-    QTimer::singleShot(delay, viewport, [action, viewport, waitFor] {
+    QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [action, viewport, waitFor] {
         const auto begin = [action] {
             ++g_pullsRunning;
             action->press(5000);
@@ -282,6 +283,9 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                  fission::ui::FileController* files, fission::ui::ExportController* exporter,
                  fission::ui::Preferences* preferences, const QString& actions,
                  std::function<void()> done) {
+    // All steps are timers counted from now. They are precise timers: a coarse one (Qt's
+    // default above 2 s) may fire up to 5 % late, so a key could come after the check that
+    // follows it.
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
@@ -343,19 +347,20 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // (a real mouse move through the window): what it shows then can be photographed.
             const QString parameter = action.mid(colon + 1);
             delay += 350;
-            QTimer::singleShot(delay, viewport, [window, viewport, handles, parameter] {
-                for (const QVariant& entry : handles->handles()) {
-                    if (entry.toMap()["parameter"].toString() != parameter) {
-                        continue;
+            QTimer::singleShot(
+                delay, Qt::PreciseTimer, viewport, [window, viewport, handles, parameter] {
+                    for (const QVariant& entry : handles->handles()) {
+                        if (entry.toMap()["parameter"].toString() != parameter) {
+                            continue;
+                        }
+                        const QPointF scene = viewport->mapToScene(
+                            QPointF(entry.toMap()["x"].toDouble(), entry.toMap()["y"].toDouble()));
+                        QMouseEvent event(QEvent::MouseMove, scene,
+                                          window->mapToGlobal(scene.toPoint()), Qt::NoButton,
+                                          Qt::NoButton, Qt::NoModifier);
+                        QCoreApplication::sendEvent(window, &event);
                     }
-                    const QPointF scene = viewport->mapToScene(
-                        QPointF(entry.toMap()["x"].toDouble(), entry.toMap()["y"].toDouble()));
-                    QMouseEvent event(QEvent::MouseMove, scene,
-                                      window->mapToGlobal(scene.toPoint()), Qt::NoButton,
-                                      Qt::NoButton, Qt::NoModifier);
-                    QCoreApplication::sendEvent(window, &event);
-                }
-            });
+                });
             continue;
         }
         if (kind == QLatin1String("grab")) {
@@ -408,11 +413,12 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             const bool hold = spec.value(3).trimmed() == QLatin1String("hold");
             auto from = std::make_shared<double>(0.0);
             delay += 350;
-            QTimer::singleShot(delay, viewport, [window, viewport, rotate, part, from] {
-                *from = rotate->grabAngle(part);
-                sendMouse(window, viewport, QEvent::MouseButtonPress,
-                          rotate->ringPoint(part, *from), Qt::LeftButton);
-            });
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport,
+                               [window, viewport, rotate, part, from] {
+                                   *from = rotate->grabAngle(part);
+                                   sendMouse(window, viewport, QEvent::MouseButtonPress,
+                                             rotate->ringPoint(part, *from), Qt::LeftButton);
+                               });
             for (int step = 1; step <= steps; ++step) {
                 delay += 90;
                 QTimer::singleShot(
@@ -459,14 +465,14 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         }
         if (action.trimmed() == QLatin1String("filtermenu")) { // opens "Choose: ..."
             delay += 350;
-            QTimer::singleShot(delay, viewport,
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport,
                                [window] { window->setProperty("filterMenuOpen", true); });
             continue;
         }
         if (kind == QLatin1String("flyout")) { // flyout:combine - opens that group of the palette
             const QString group = action.mid(colon + 1).trimmed();
             delay += 350;
-            QTimer::singleShot(delay, viewport,
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport,
                                [window, group] { window->setProperty("flyout", group); });
             continue;
         }
@@ -475,7 +481,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // none.
             const QString group = action.mid(colon + 1).trimmed();
             delay += 400;
-            QTimer::singleShot(delay, viewport, [window, group] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, group] {
                 const QString open = window->property("flyout").toString();
                 if (open != group) {
                     qWarning().noquote()
@@ -490,7 +496,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // expectsketch:active - the sketch mode is in this state: idle | picking | active.
             const QString state = action.mid(colon + 1).trimmed();
             delay += 500;
-            QTimer::singleShot(delay, viewport, [window, state] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, state] {
                 const QString now = window->property("sketchState").toString();
                 if (now != state) {
                     qWarning().noquote()
@@ -507,7 +513,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // plane of the bed.
             const QString where = action.mid(colon + 1).trimmed();
             delay += 500;
-            QTimer::singleShot(delay, viewport, [model, where] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [model, where] {
                 bool found = false;
                 bool onFace = false;
                 for (const fission::core::Feature& step : model->document().features()) {
@@ -536,7 +542,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             const double x = spec.value(0).toDouble();
             const double y = spec.value(1).toDouble();
             delay += 350;
-            QTimer::singleShot(delay, viewport, [viewport, kind, x, y] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [viewport, kind, x, y] {
                 viewport->hoverAt(x, y);
                 if (kind != QLatin1String("sketchmove")) {
                     emit viewport->leftClicked(x, y);
@@ -547,11 +553,33 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("sketchdrag")) {
+            // sketchdrag:600,300,700,200 - the left button goes down at the first point, is pulled
+            // to the second and let go (in the sketch mode: an arc from the end of the last
+            // line). A fifth word "hold" leaves the button down, so that numbers can be typed
+            // (type:12,enter) before the element is set.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const double x1 = spec.value(0).toDouble();
+            const double y1 = spec.value(1).toDouble();
+            const double x2 = spec.value(2).toDouble();
+            const double y2 = spec.value(3).toDouble();
+            const bool hold = spec.value(4).trimmed() == QLatin1String("hold");
+            delay += 350;
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [viewport, x1, y1, x2, y2, hold] {
+                viewport->hoverAt(x1, y1);
+                emit viewport->leftPressed(x1, y1);
+                emit viewport->leftDragged(x2, y2);
+                if (!hold) {
+                    emit viewport->leftReleased(x2, y2, true);
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("expectsketchtool")) {
             // expectsketchtool:line - the drawing tool in use (empty: none).
             const QString tool = action.mid(colon + 1).trimmed();
             delay += 500;
-            QTimer::singleShot(delay, viewport, [window, tool] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, tool] {
                 const QString now = window->property("sketchToolName").toString();
                 if (now != tool) {
                     qWarning().noquote()
@@ -567,7 +595,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // digit was pressed); expectsketchtyping:no - they are not.
             const bool wanted = action.mid(colon + 1).trimmed() == QLatin1String("yes");
             delay += 500;
-            QTimer::singleShot(delay, viewport, [window, wanted] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, wanted] {
                 const QObject* layer = window->findChild<QObject*>(QStringLiteral("sketchLayer"));
                 const bool typing = layer != nullptr && layer->property("typing").toBool();
                 if (typing != wanted) {
@@ -588,7 +616,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             const bool sizes = kind == QLatin1String("expectsketchsize");
             delay += 500;
-            QTimer::singleShot(delay, viewport, [model, spec, sizes] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [model, spec, sizes] {
                 std::map<QString, int> found;
                 double low[2] = {1e300, 1e300};
                 double high[2] = {-1e300, -1e300};
@@ -645,14 +673,14 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         if (kind == QLatin1String("grid")) { // grid:0.1 - the step of snapping (0: automatic)
             const double step = action.mid(colon + 1).trimmed().toDouble();
             delay += 350;
-            QTimer::singleShot(delay, viewport,
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport,
                                [viewport, step] { viewport->setProperty("fixedSnapStep", step); });
             continue;
         }
         if (kind == QLatin1String("snap")) { // snap:off / snap:on - Shift held, or not
             const bool off = action.mid(colon + 1).trimmed() == QLatin1String("off");
             delay += 350;
-            QTimer::singleShot(delay, viewport, [gizmo, off] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [gizmo, off] {
                 gizmo->setSnapSuppressed(off);
                 fission::ui::setSnappingSuppressedForTests(
                     off); // size handles, corners, putting down
@@ -662,7 +690,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         if (kind == QLatin1String("tool")) { // tool:size - a tool of the palette
             const QString tool = action.mid(colon + 1).trimmed();
             delay += 350;
-            QTimer::singleShot(delay, viewport,
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport,
                                [window, tool] { window->setProperty("tool", tool); });
             continue;
         }
@@ -671,7 +699,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // front | back) of the chosen body, as a click on the number and Enter would.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;
-            QTimer::singleShot(delay, viewport, [distances, model, spec] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [distances, model, spec] {
                 // A person types the number they see: measure what is calculated, not what is
                 // still being calculated (slow builds, e.g. with the address sanitizer).
                 model->waitForCalculation();
@@ -686,13 +714,14 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         }
         if (action.trimmed() == QLatin1String("selectall")) { // all bodies chosen
             delay += 350;
-            QTimer::singleShot(delay, viewport, [selection] { selection->chooseAllBodies(); });
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport,
+                               [selection] { selection->chooseAllBodies(); });
             continue;
         }
         if (kind == QLatin1String("step")) { // step:1 - choose that step of the recipe (from 0)
             const int step = action.mid(colon + 1).trimmed().toInt();
             delay += 350;
-            QTimer::singleShot(delay, viewport, [selection, model, step] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [selection, model, step] {
                 selection->chooseBody(model->bodyIndexOf(model->bodyOfStep(step)), false);
             });
             continue;
@@ -702,7 +731,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // along x (or y, z): min | centre | max.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;
-            QTimer::singleShot(delay, viewport, [align, spec] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [align, spec] {
                 const int index = align->indexOf(spec.value(0).trimmed(), spec.value(1).trimmed());
                 if (index < 0 || !align->align(index)) {
                     qWarning().noquote()
@@ -718,7 +747,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // paste, dropToBed, seatOnFace ...).
             const QString id = action.mid(colon + 1).trimmed();
             delay += 350;
-            QTimer::singleShot(delay, viewport, [window, id] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, id] {
                 QMetaObject::invokeMethod(window, "run", Q_ARG(QVariant, id));
             });
             continue;
@@ -727,7 +756,8 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             QLatin1String("marker")) { // marker:2 - the time marker behind 2 steps (-1: end)
             const int count = action.mid(colon + 1).trimmed().toInt();
             delay += 350;
-            QTimer::singleShot(delay, viewport, [model, count] { model->moveMarker(count); });
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport,
+                               [model, count] { model->moveMarker(count); });
             continue;
         }
         if (kind == QLatin1String("rowdouble") || kind == QLatin1String("rowediting")) {
@@ -756,7 +786,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                 delay += 350;
                 // The double click is played back in real time and the program may be busy for a
                 // moment: wait up to 3 s for the row to switch to renaming, then fail.
-                QTimer::singleShot(delay, viewport, [viewport, findRow, name] {
+                QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [viewport, findRow, name] {
                     waitForRowEditing(viewport, findRow, name, 3000);
                 });
                 continue;
@@ -766,22 +796,23 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             for (const QEvent::Type type : {QEvent::MouseButtonPress, QEvent::MouseButtonRelease,
                                             QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
                 delay += type == QEvent::MouseButtonPress ? 120 : 40;
-                QTimer::singleShot(delay, viewport, [window, findRow, type, clock] {
-                    QQuickItem* row = findRow();
-                    if (row == nullptr) {
-                        return;
-                    }
-                    const QPointF scene =
-                        row->mapToScene(QPointF(row->width() / 3, row->height() / 2));
-                    const bool press = type == QEvent::MouseButtonPress;
-                    QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()),
-                                      Qt::LeftButton, press ? Qt::LeftButton : Qt::NoButton,
-                                      Qt::NoModifier);
-                    // Real events carry the time they happened; the handler of a double tap
-                    // measures the time between the two taps with it.
-                    event.setTimestamp(static_cast<ulong>(clock->elapsed()));
-                    QCoreApplication::sendEvent(window, &event);
-                });
+                QTimer::singleShot(
+                    delay, Qt::PreciseTimer, viewport, [window, findRow, type, clock] {
+                        QQuickItem* row = findRow();
+                        if (row == nullptr) {
+                            return;
+                        }
+                        const QPointF scene =
+                            row->mapToScene(QPointF(row->width() / 3, row->height() / 2));
+                        const bool press = type == QEvent::MouseButtonPress;
+                        QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()),
+                                          Qt::LeftButton, press ? Qt::LeftButton : Qt::NoButton,
+                                          Qt::NoModifier);
+                        // Real events carry the time they happened; the handler of a double tap
+                        // measures the time between the two taps with it.
+                        event.setTimestamp(static_cast<ulong>(clock->elapsed()));
+                        QCoreApplication::sendEvent(window, &event);
+                    });
             }
             continue;
         }
@@ -793,7 +824,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                 kind == QLatin1String("clickitem") ? Qt::LeftButton : Qt::RightButton;
             for (const QEvent::Type type : {QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
                 delay += type == QEvent::MouseButtonPress ? 350 : 60;
-                QTimer::singleShot(delay, viewport, [window, name, type, button] {
+                QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, name, type, button] {
                     std::function<QQuickItem*(QQuickItem*)> find = [&](QQuickItem* item) {
                         if (item->objectName() == name && item->isVisible()) {
                             return item;
@@ -867,7 +898,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // between starts: the next start must find them).
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;
-            QTimer::singleShot(delay, viewport, [preferences, spec] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [preferences, spec] {
                 const QString found = preferences->property(spec.value(0).toUtf8()).toString();
                 if (found != spec.value(1)) {
                     qWarning().noquote() << QStringLiteral("expected the setting %1 = %2; found %3")
@@ -880,7 +911,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         if (kind == QLatin1String("example")) { // example:keychain - opened from the start page
             const QString name = action.mid(colon + 1).trimmed();
             delay += 600;
-            QTimer::singleShot(delay, viewport, [files, name] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [files, name] {
                 if (!files->openExample(name)) {
                     g_simulationFailure = 6;
                 }
@@ -892,7 +923,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // catalogue says for that problem (a part of it).
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 400;
-            QTimer::singleShot(delay, viewport, [window, spec] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, spec] {
                 const QVariantMap problem{{QStringLiteral("code"), spec.value(0)},
                                           {QStringLiteral("field"), spec.value(1)}};
                 QVariant text;
@@ -911,7 +942,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // expecttab:0,2 - the tab shown is number 0 (counted from 0) of 2 open tabs.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 600;
-            QTimer::singleShot(delay, viewport, [files, spec] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [files, spec] {
                 if (files->currentTab() != spec.value(0).toInt() ||
                     files->tabs().size() != spec.value(1).toInt()) {
                     qWarning().noquote()
@@ -929,7 +960,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // (the line under it says this, a part of it).
             const QString part = action.mid(colon + 1).trimmed();
             delay += 400;
-            QTimer::singleShot(delay, viewport, [window, part] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, part] {
                 const QObject* layer = window->findChild<QObject*>(QStringLiteral("handleLayer"));
                 const QString shown =
                     layer != nullptr ? layer->property("bubbleProblem").toString() : QString();
@@ -946,7 +977,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // actions"): a refused input must not have added one.
             const QString key = action.mid(colon + 1).trimmed();
             delay += 400;
-            QTimer::singleShot(delay, viewport, [model, key] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [model, key] {
                 const QString found = model->nextUndo()[QStringLiteral("key")].toString();
                 if (found != key) {
                     qWarning().noquote()
@@ -960,7 +991,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // expecthint:Start with a shape - the hint line says this (a part of it).
             const QString part = action.mid(colon + 1).trimmed();
             delay += 400;
-            QTimer::singleShot(delay, viewport, [window, part] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, part] {
                 const QString hint = window->property("currentHint").toString();
                 if (!hint.contains(part)) {
                     qWarning().noquote()
@@ -976,7 +1007,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // runcommand:tool.rotate - does that command, as a click in the list would.
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 400;
-            QTimer::singleShot(delay, viewport, [window, kind, spec] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, kind, spec] {
                 QVariant found;
                 const bool search = kind == QLatin1String("search");
                 QMetaObject::invokeMethod(window, search ? "topCommand" : "runCommand",
@@ -998,7 +1029,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // now (the language was switched while the program ran).
             const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 500;
-            QTimer::singleShot(delay, viewport, [=] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [=] {
                 bool ok = true;
                 if (kind == QLatin1String("setpref")) {
                     ok = preferences->setProperty(spec.value(0).toUtf8(), spec.value(1));
@@ -1024,7 +1055,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             kind == QLatin1String("export")) {
             const QString argument = action.mid(colon + 1);
             delay += 600; // what came before (a shape put down) is calculated and shown
-            QTimer::singleShot(delay, viewport, [=] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [=] {
                 bool ok = true;
                 if (kind == QLatin1String("save")) { // save:/path/file.fission
                     ok = files->saveTo(QUrl::fromLocalFile(argument));
@@ -1096,7 +1127,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     QKeyEvent release(QEvent::KeyRelease, key.key(), key.keyboardModifiers());
                     QCoreApplication::sendEvent(window, &release);
                 };
-                QTimer::singleShot(delay, viewport, [window, viewport, send] {
+                QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, viewport, send] {
                     // An active window gets the key at once: a further zero timer would queue it
                     // behind a check that is already due when the program was busy, and the
                     // check would look before the key was pressed.
@@ -1113,7 +1144,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         if (kind == QLatin1String("focus")) { // focus:width - the cursor goes into that field
             const QString field = action.mid(colon + 1).trimmed();
             delay += 350;
-            QTimer::singleShot(delay, viewport, [window, field] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, field] {
                 // Fields made by a Repeater are children of the picture, not of the object tree.
                 const QString name = QStringLiteral("field_") + field;
                 const auto find = [&name](auto&& self, QQuickItem* parent) -> QQuickItem* {
@@ -1189,7 +1220,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // been typed into the field of the panel.
             const QStringList pair = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;
-            QTimer::singleShot(delay, viewport, [model, pair] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [model, pair] {
                 if (pair.size() != 2 ||
                     !model->setStepValue(model->currentStep(), pair[0], pair[1])) {
                     qWarning().noquote()
@@ -1203,7 +1234,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // color:#e53935 - the body of the chosen step gets this colour.
             const QString color = action.mid(colon + 1).trimmed();
             delay += 350;
-            QTimer::singleShot(delay, viewport, [model, color] {
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [model, color] {
                 const int body = model->bodyIndexOf(model->bodyOfStep(model->currentStep()));
                 if (!model->setBodiesColor({body}, color)) {
                     qWarning().noquote() << QStringLiteral("colour %1 not accepted").arg(color);
@@ -1216,7 +1247,7 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             const QStringList pair = action.mid(colon + 1).split(QLatin1Char(','));
             delay += 350;
             if (pair.size() == 2 && model != nullptr) {
-                QTimer::singleShot(delay, viewport, [model, pair] {
+                QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [model, pair] {
                     model->setStepText(model->currentStep(), pair[0], pair[1]);
                 });
             }
@@ -1225,19 +1256,22 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         QStringList parts = action.mid(colon + 1).split(QLatin1Char(','));
         if (kind == QLatin1String("type")) { // type:50,tab,20,enter - what the keys would do
             delay += 350;
-            QTimer::singleShot(delay, viewport, [window, gizmo, rotate, scale, sketch, parts] {
-                // While a body is moved, the digits are for the distance, while it is turned for
-                // the angle; else for the sizes. In a sketch they are for the element being drawn.
-                const QString layerName = sketch->drawing()   ? QStringLiteral("sketchLayer")
-                                          : gizmo->editing()  ? QStringLiteral("gizmoLayer")
-                                          : rotate->editing() ? QStringLiteral("rotateLayer")
-                                          : scale->editing()  ? QStringLiteral("scaleLayer")
-                                                              : QStringLiteral("handleLayer");
-                if (QObject* layer = window->findChild<QObject*>(layerName)) {
-                    QMetaObject::invokeMethod(
-                        layer, "simulate", Q_ARG(QVariant, QVariant(QVariant::fromValue(parts))));
-                }
-            });
+            QTimer::singleShot(
+                delay, Qt::PreciseTimer, viewport, [window, gizmo, rotate, scale, sketch, parts] {
+                    // While a body is moved, the digits are for the distance, while it is turned
+                    // for the angle; else for the sizes. In a sketch they are for the element being
+                    // drawn.
+                    const QString layerName = sketch->drawing()   ? QStringLiteral("sketchLayer")
+                                              : gizmo->editing()  ? QStringLiteral("gizmoLayer")
+                                              : rotate->editing() ? QStringLiteral("rotateLayer")
+                                              : scale->editing()  ? QStringLiteral("scaleLayer")
+                                                                  : QStringLiteral("handleLayer");
+                    if (QObject* layer = window->findChild<QObject*>(layerName)) {
+                        QMetaObject::invokeMethod(
+                            layer, "simulate",
+                            Q_ARG(QVariant, QVariant(QVariant::fromValue(parts))));
+                    }
+                });
             continue;
         }
         if (kind.startsWith(QLatin1String("drop")) || kind.startsWith(QLatin1String("put"))) {
@@ -1247,45 +1281,46 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             numbers.push_back(number.toDouble());
         }
         delay += 350;
-        QTimer::singleShot(delay, viewport, [viewport, placement, kind, shape, numbers] {
-            using fission::ui::Viewport3D;
-            // The same calls the gallery makes when a tile is dragged or clicked.
-            if (kind == QLatin1String("drop") || kind == QLatin1String("drophole")) {
-                // A third number other than 0 holds the Alt key: the shape stays upright.
-                const bool upright = numbers.size() >= 3 && numbers[2] != 0.0;
-                if (numbers.size() >= 2 &&
-                    placement->begin(shape, kind == QLatin1String("drophole"), numbers[0],
-                                     numbers[1], upright)) {
-                    // The size of the shape is known a moment after it appeared; from then on it
-                    // catches on other bodies, so the pointer moves once more before it lets go
-                    // (as a hand would).
-                    QTimer::singleShot(250, viewport, [placement, numbers, upright] {
-                        placement->moveTo(numbers[0], numbers[1], upright);
-                        placement->finish();
-                    });
+        QTimer::singleShot(
+            delay, Qt::PreciseTimer, viewport, [viewport, placement, kind, shape, numbers] {
+                using fission::ui::Viewport3D;
+                // The same calls the gallery makes when a tile is dragged or clicked.
+                if (kind == QLatin1String("drop") || kind == QLatin1String("drophole")) {
+                    // A third number other than 0 holds the Alt key: the shape stays upright.
+                    const bool upright = numbers.size() >= 3 && numbers[2] != 0.0;
+                    if (numbers.size() >= 2 &&
+                        placement->begin(shape, kind == QLatin1String("drophole"), numbers[0],
+                                         numbers[1], upright)) {
+                        // The size of the shape is known a moment after it appeared; from then on
+                        // it catches on other bodies, so the pointer moves once more before it lets
+                        // go (as a hand would).
+                        QTimer::singleShot(250, viewport, [placement, numbers, upright] {
+                            placement->moveTo(numbers[0], numbers[1], upright);
+                            placement->finish();
+                        });
+                    }
+                    return;
                 }
-                return;
-            }
-            if (kind == QLatin1String("put") || kind == QLatin1String("puthole")) {
-                placement->add(shape, kind == QLatin1String("puthole"));
-                return;
-            }
-            if (numbers.size() >= 2) {
-                const QPointF at(numbers[0], numbers[1]);
-                if (kind == QLatin1String("hover")) {
-                    viewport->hoverAt(at.x(), at.y());
-                } else if (kind == QLatin1String("click")) {
-                    viewport->requestPick(Viewport3D::PickIntent::click, at, false);
-                } else if (kind == QLatin1String("shiftclick")) {
-                    viewport->requestPick(Viewport3D::PickIntent::click, at, true);
-                } else if (kind == QLatin1String("doubleclick")) {
-                    viewport->requestPick(Viewport3D::PickIntent::doubleClick, at, false);
-                } else if (kind == QLatin1String("frame") && numbers.size() >= 4) {
-                    viewport->requestRegionPick(
-                        QRectF(at, QPointF(numbers[2], numbers[3])).normalized(), false);
+                if (kind == QLatin1String("put") || kind == QLatin1String("puthole")) {
+                    placement->add(shape, kind == QLatin1String("puthole"));
+                    return;
                 }
-            }
-        });
+                if (numbers.size() >= 2) {
+                    const QPointF at(numbers[0], numbers[1]);
+                    if (kind == QLatin1String("hover")) {
+                        viewport->hoverAt(at.x(), at.y());
+                    } else if (kind == QLatin1String("click")) {
+                        viewport->requestPick(Viewport3D::PickIntent::click, at, false);
+                    } else if (kind == QLatin1String("shiftclick")) {
+                        viewport->requestPick(Viewport3D::PickIntent::click, at, true);
+                    } else if (kind == QLatin1String("doubleclick")) {
+                        viewport->requestPick(Viewport3D::PickIntent::doubleClick, at, false);
+                    } else if (kind == QLatin1String("frame") && numbers.size() >= 4) {
+                        viewport->requestRegionPick(
+                            QRectF(at, QPointF(numbers[2], numbers[3])).normalized(), false);
+                    }
+                }
+            });
     }
-    QTimer::singleShot(delay + 500, viewport, std::move(done));
+    QTimer::singleShot(delay + 500, Qt::PreciseTimer, viewport, std::move(done));
 }

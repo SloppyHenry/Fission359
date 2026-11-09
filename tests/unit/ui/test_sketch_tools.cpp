@@ -16,6 +16,7 @@
 
 #include <cmath>
 #include <memory>
+#include <numbers>
 
 #include "fission/geo/occt/kernel.h"
 #include "fission/ui/document_model.h"
@@ -533,4 +534,281 @@ TEST_CASE("sketch tools: after a typed value Esc still ends the tool and then th
     CHECK_FALSE(f.sketch->engaged());
     f.settle();
     CHECK(f.model->recipe().size() == 1);
+}
+
+// --- AP-2.1c2: arc, tangential arc, slot, polygon --------------------------------------------
+
+TEST_CASE("sketch tools: an arc by three points is one element, one undo step",
+          "[ui][sketchtools][arc]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("arc"));
+    CHECK(f.sketch->toolName() == "arc");
+    f.click(10, 0);
+    f.click(-10, 0);
+    CHECK(f.elements().empty());
+    f.click(0, 10); // counter-clockwise from the first to the second point
+    const auto elements = f.elements();
+    REQUIRE(elements.size() == 1);
+    CHECK(elements[0].kind == core::SketchElementKind::arc);
+    CHECK(elements[0].id == "A1");
+    checkPoint(elements[0].points[0], 0, 0);
+    checkPoint(elements[0].points[1], 10, 0);
+    checkPoint(elements[0].points[2], -10, 0);
+    CHECK(f.nextUndo() == "addSketchElement");
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements().empty());
+}
+
+TEST_CASE("sketch tools: an arc drawn clockwise has start and end swapped, collinear points say so",
+          "[ui][sketchtools][arc]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("arc"));
+    f.click(-10, 0);
+    f.click(10, 0);
+    f.click(0, 10);
+    REQUIRE(f.elements().size() == 1);
+    checkPoint(f.elements()[0].points[1], 10, 0);
+    checkPoint(f.elements()[0].points[2], -10, 0);
+
+    f.click(0, 0);
+    f.click(10, 0);
+    f.click(5, 0);
+    CHECK(f.notices.contains("collinear"));
+    CHECK(f.elements().size() == 1);
+    CHECK(f.sketch->placed() == 2);
+    f.click(5, -3);
+    CHECK(f.elements().size() == 2);
+}
+
+TEST_CASE("sketch tools: an arc with a typed radius smaller than half the chord says too small",
+          "[ui][sketchtools][arc]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("arc"));
+    f.click(0, 0);
+    f.click(10, 0);
+    f.move(5, 4);
+    CHECK(f.sketch->fieldCount() == 1);
+    f.sketch->setTyped(0, 4.0);
+    f.sketch->acceptTyped();
+    CHECK(f.notices.contains("tooSmall"));
+    CHECK(f.elements().empty());
+    f.sketch->setTyped(0, 6.5);
+    f.sketch->acceptTyped();
+    REQUIRE(f.elements().size() == 1);
+    CHECK(std::hypot(f.elements()[0].points[1].u - f.elements()[0].points[0].u,
+                     f.elements()[0].points[1].v - f.elements()[0].points[0].v) == Approx(6.5));
+}
+
+TEST_CASE("sketch tools: an arc by middle, start and end, with a typed angle",
+          "[ui][sketchtools][arc]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("arc"), 1);
+    CHECK(f.sketch->toolVariant() == 1);
+    f.click(0, 0);
+    f.click(10, 0);
+    f.move(0, 10);
+    CHECK(f.sketch->readout().value("fields").toList().at(0).toMap().value("name") == "angle");
+    f.sketch->setTyped(0, 120.0);
+    f.sketch->acceptTyped();
+    REQUIRE(f.elements().size() == 1);
+    const auto arc = f.elements()[0];
+    checkPoint(arc.points[0], 0, 0);
+    checkPoint(arc.points[1], 10, 0);
+    checkPoint(arc.points[2], 10 * std::cos(2.0 * std::numbers::pi / 3.0),
+               10 * std::sin(2.0 * std::numbers::pi / 3.0));
+}
+
+TEST_CASE("sketch tools: pulling on the end of a line makes a tangential arc, the chain goes on",
+          "[ui][sketchtools][tangent]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(20, 0);
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->pressAt(Drawing::down(20, 0), 2.0);
+    CHECK_FALSE(f.sketch->pullingArc());
+    f.sketch->dragTo(Drawing::down(21, 1), 2.0); // under 6 screen pixels (3 mm here)
+    CHECK_FALSE(f.sketch->pullingArc());
+    f.sketch->dragTo(Drawing::down(30, 10), 2.0);
+    CHECK(f.sketch->pullingArc());
+    CHECK(f.sketch->readout().value("fields").toList().at(0).toMap().value("name") == "radius");
+    CHECK(f.elements().size() == 1); // nothing yet: a preview
+    f.sketch->releaseAt(Drawing::down(30, 10), 2.0);
+    CHECK_FALSE(f.sketch->pullingArc());
+    const auto elements = f.elements();
+    REQUIRE(elements.size() == 2);
+    CHECK(elements[1].kind == core::SketchElementKind::arc);
+    checkPoint(elements[1].points[0], 20, 10);
+    checkPoint(elements[1].points[1], 20, 0); // starts exactly where the line ended
+    CHECK(elements[1].points[1] == elements[0].points[1]);
+    checkPoint(elements[1].points[2], 30, 10);
+    // the arc starts in the direction of the line, on 1e-9
+    const double ru = elements[1].points[1].u - elements[1].points[0].u;
+    const double rv = elements[1].points[1].v - elements[1].points[0].v;
+    CHECK(-rv / std::hypot(ru, rv) == Approx(1.0).margin(1e-9));
+    CHECK(f.nextUndo() == "addSketchElement");
+
+    // the chain goes on from the end of the arc as a line
+    f.click(30, 30);
+    REQUIRE(f.elements().size() == 3);
+    CHECK(f.elements()[2].kind == core::SketchElementKind::line);
+    CHECK(f.elements()[2].points[0] == f.elements()[1].points[2]);
+
+    REQUIRE(f.model->undo()); // the line
+    REQUIRE(f.model->undo()); // the arc: one step
+    f.settle();
+    CHECK(f.elements().size() == 1);
+}
+
+TEST_CASE("sketch tools: a tangential arc needs a line before it, and Esc drops only the arc",
+          "[ui][sketchtools][tangent]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.sketch->pressAt(Drawing::down(0, 0), 2.0); // no line yet
+    f.sketch->dragTo(Drawing::down(10, 10), 2.0);
+    CHECK_FALSE(f.sketch->pullingArc());
+    f.sketch->releaseAt(Drawing::down(10, 10), 2.0);
+    CHECK(f.elements().empty());
+
+    f.click(20, 0);
+    f.sketch->pressAt(Drawing::down(8, 0), 2.0); // not on the end
+    f.sketch->dragTo(Drawing::down(10, 10), 2.0);
+    CHECK_FALSE(f.sketch->pullingArc());
+    f.sketch->releaseAt(Drawing::down(10, 10), 2.0);
+    CHECK(f.elements().size() == 1);
+
+    f.sketch->pressAt(Drawing::down(20, 0), 2.0);
+    f.sketch->dragTo(Drawing::down(30, 10), 2.0);
+    REQUIRE(f.sketch->pullingArc());
+    f.sketch->escape();
+    CHECK_FALSE(f.sketch->pullingArc());
+    CHECK(f.sketch->drawing()); // the chain stays
+    f.sketch->releaseAt(Drawing::down(30, 10), 2.0);
+    CHECK(f.elements().size() == 1);
+}
+
+TEST_CASE("sketch tools: a tangential arc with a typed radius", "[ui][sketchtools][tangent]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(20, 0);
+    f.sketch->pressAt(Drawing::down(20, 0), 2.0);
+    f.sketch->dragTo(Drawing::down(40, 20), 2.0);
+    REQUIRE(f.sketch->pullingArc());
+    CHECK(f.sketch->fieldCount() == 1);
+    f.sketch->setTyped(0, 5.0);
+    f.sketch->acceptTyped();
+    REQUIRE(f.elements().size() == 2);
+    const auto arc = f.elements()[1];
+    CHECK(std::hypot(arc.points[1].u - arc.points[0].u, arc.points[1].v - arc.points[0].v) ==
+          Approx(5.0));
+}
+
+TEST_CASE("sketch tools: a slot is four elements with closed ends in one undo step",
+          "[ui][sketchtools][slot]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("slot"));
+    f.click(0, 0);
+    f.click(20, 0);
+    CHECK(f.elements().empty());
+    f.move(10, 3);
+    f.click(10, 3);
+    const auto elements = f.elements();
+    REQUIRE(elements.size() == 4);
+    CHECK(f.count(core::SketchElementKind::line) == 2);
+    CHECK(f.count(core::SketchElementKind::arc) == 2);
+    // the ends are exactly the same points all round
+    CHECK(elements[0].points[1] == elements[1].points[1]);
+    CHECK(elements[1].points[2] == elements[2].points[0]);
+    CHECK(elements[2].points[1] == elements[3].points[1]);
+    CHECK(elements[3].points[2] == elements[0].points[0]);
+    CHECK(std::hypot(elements[1].points[1].u - elements[1].points[0].u,
+                     elements[1].points[1].v - elements[1].points[0].v) == Approx(3.0));
+    CHECK(f.nextUndo() == "addSketchElement");
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements().empty()); // one step took all four
+
+    f.sketch->chooseTool(QStringLiteral("slot"));
+    f.click(0, 0);
+    f.move(5, 1);
+    f.sketch->setTyped(0, 12.0);
+    f.sketch->setTyped(1, 90.0);
+    f.sketch->acceptTyped();
+    f.sketch->setTyped(0, 6.0); // the whole width, not the radius
+    f.sketch->acceptTyped();
+    REQUIRE(f.elements().size() == 4);
+    checkPoint(f.elements()[1].points[0], 0, 12);
+    CHECK(std::hypot(f.elements()[1].points[1].u, f.elements()[1].points[1].v - 12) == Approx(3.0));
+}
+
+TEST_CASE("sketch tools: a polygon is n lines in one undo step in both variants",
+          "[ui][sketchtools][polygon]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("polygon"));
+    f.click(0, 0);
+    f.click(10, 0);
+    REQUIRE(f.elements().size() == 6);
+    CHECK(f.count(core::SketchElementKind::line) == 6);
+    CHECK(f.elements()[5].points[1] == f.elements()[0].points[0]);
+    CHECK(f.nextUndo() == "addSketchElement");
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements().empty());
+
+    f.sketch->chooseTool(QStringLiteral("polygon"), 1); // by the middle of a side
+    f.click(0, 0);
+    f.move(0, 10);
+    f.sketch->setTyped(1, 3.0);
+    f.sketch->acceptTyped();
+    CHECK(f.elements().size() == 3);
+    f.sketch->chooseTool(QStringLiteral("polygon"), 0);
+    f.click(50, 50);
+    f.move(60, 50);
+    f.sketch->setTyped(1, 64.0);
+    f.sketch->acceptTyped();
+    CHECK(f.elements().size() == 3 + 64);
+}
+
+TEST_CASE(
+    "sketch tools: a wrong number of sides says so, the last number lasts until the sketch ends",
+    "[ui][sketchtools][polygon]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("polygon"));
+    f.click(0, 0);
+    f.move(10, 0);
+    f.sketch->setTyped(1, 2.0);
+    CHECK(f.notices.contains("badSides"));
+    f.sketch->setTyped(1, 5.0);
+    f.sketch->acceptTyped();
+    CHECK(f.elements().size() == 5);
+    // the next polygon starts with five sides
+    f.click(30, 0);
+    f.move(40, 0);
+    CHECK(f.sketch->readout().value("fields").toList().at(1).toMap().value("value").toInt() == 5);
+    f.click(40, 0);
+    CHECK(f.elements().size() == 10);
+
+    // a new sketch starts with six
+    f.sketch->finish();
+    f.settle();
+    f.sketch->start();
+    REQUIRE(f.sketch->pickGround());
+    f.settle();
+    f.sketch->chooseTool(QStringLiteral("polygon"));
+    f.click(0, 0);
+    f.move(10, 0);
+    CHECK(f.sketch->readout().value("fields").toList().at(1).toMap().value("value").toInt() == 6);
 }

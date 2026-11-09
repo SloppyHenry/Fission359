@@ -8,6 +8,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <cmath>
+#include <numbers>
 
 #include "fission/interaction/sketch_tool.h"
 
@@ -419,4 +420,399 @@ TEST_CASE("sketch tool: accepting with nothing running does nothing", "[sketchto
     tool.select(SketchToolKind::circle, kSketchVariantSecond);
     tool.click({0, 0});
     CHECK(tool.accept().done.empty()); // three points have nothing to type
+}
+
+// --- AP-2.1c2: arc, tangential arc, slot, polygon ---------------------------------------------
+
+TEST_CASE("sketch tool: an arc by three points, counter-clockwise as it is", "[sketchtool][arc]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::arc);
+    CHECK(tool.click({10, 0}).done.empty());
+    CHECK(tool.fieldCount() == 0); // nothing to type before the end is set
+    CHECK(tool.click({-10, 0}).done.empty());
+    CHECK(tool.fieldCount() == 1); // the radius
+    tool.moveTo({0, 10});
+    const SketchDraft draft = tool.draft();
+    REQUIRE_FALSE(draft.fields.empty());
+    CHECK(draft.fields[0].name == "radius");
+    CHECK(draft.fields[0].value == Approx(10.0));
+    const auto step = tool.click({0, 10});
+    REQUIRE(step.done.size() == 1);
+    REQUIRE(step.done[0].size() == 1);
+    const SketchElement& arc = step.done[0][0];
+    CHECK(arc.kind == SketchElementKind::arc);
+    checkPoint(arc.points[0], 0, 0);
+    checkPoint(arc.points[1], 10, 0);
+    checkPoint(arc.points[2], -10, 0);
+    CHECK_FALSE(tool.busy());
+}
+
+TEST_CASE("sketch tool: drawn clockwise the arc has start and end swapped", "[sketchtool][arc]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::arc);
+    tool.click({-10, 0});
+    tool.click({10, 0});
+    const auto step = tool.click({0, 10}); // over the top from the left to the right: clockwise
+    REQUIRE(step.done.size() == 1);
+    const SketchElement& arc = step.done[0][0];
+    checkPoint(arc.points[0], 0, 0);
+    checkPoint(arc.points[1], 10, 0);
+    checkPoint(arc.points[2], -10, 0);
+}
+
+TEST_CASE("sketch tool: three points on a line make no arc, another third point goes on",
+          "[sketchtool][arc]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::arc);
+    tool.click({0, 0});
+    tool.click({10, 0});
+    const auto step = tool.click({5, 0});
+    CHECK(step.done.empty());
+    CHECK(step.notice == SketchToolNotice::collinear);
+    CHECK(tool.placedCount() == 2);
+    CHECK(tool.click({5, 4}).done.size() == 1);
+}
+
+TEST_CASE("sketch tool: an arc with a typed radius smaller than half the chord is not drawn",
+          "[sketchtool][arc]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::arc);
+    tool.click({0, 0});
+    tool.click({10, 0});
+    tool.moveTo({5, 3});
+    tool.setTyped(0, 4.9);
+    CHECK(tool.draft().fields[0].typed);
+    const auto step = tool.accept();
+    CHECK(step.done.empty());
+    CHECK(step.notice == SketchToolNotice::tooSmall);
+    CHECK(tool.placedCount() == 2);
+
+    tool.setTyped(0, 13.0); // the pointer is above the chord: the arc bulges up
+    const auto done = tool.accept();
+    REQUIRE(done.done.size() == 1);
+    const SketchElement& arc = done.done[0][0];
+    checkPoint(arc.points[0], 5, -12);
+    // walked from (0,0) to (10,0) with the bulge on the left: clockwise, so swapped
+    checkPoint(arc.points[1], 10, 0);
+    checkPoint(arc.points[2], 0, 0);
+}
+
+TEST_CASE("sketch tool: an arc by middle, start and end follows the pointer round",
+          "[sketchtool][arc]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::arc, kSketchVariantSecond);
+    tool.click({0, 0});
+    tool.click({10, 0});
+    CHECK(tool.fieldCount() == 1);
+    // turn the pointer a quarter, then on to 270 degrees: more than a half circle
+    tool.moveTo({7, 7});
+    tool.moveTo({0, 10});
+    tool.moveTo({-10, 0});
+    tool.moveTo({0, -10});
+    const SketchDraft draft = tool.draft();
+    REQUIRE(draft.fields.size() == 1);
+    CHECK(draft.fields[0].name == "angle");
+    CHECK(draft.fields[0].value == Approx(270.0));
+    const auto step = tool.click({0, -10});
+    REQUIRE(step.done.size() == 1);
+    const SketchElement& arc = step.done[0][0];
+    checkPoint(arc.points[0], 0, 0);
+    checkPoint(arc.points[1], 10, 0);
+    checkPoint(arc.points[2], 0, -10);
+}
+
+TEST_CASE("sketch tool: an arc by middle, start and end drawn clockwise swaps, typed angle works",
+          "[sketchtool][arc]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::arc, kSketchVariantSecond);
+    tool.click({0, 0});
+    tool.click({10, 0});
+    tool.moveTo({7, -7});
+    tool.moveTo({0, -10});
+    const auto cw = tool.click({0, -10});
+    REQUIRE(cw.done.size() == 1);
+    checkPoint(cw.done[0][0].points[1], 0, -10);
+    checkPoint(cw.done[0][0].points[2], 10, 0);
+
+    tool.click({0, 0});
+    tool.click({0, 10});
+    tool.moveTo({1, 10});
+    tool.setTyped(0, 90.0); // positive: counter-clockwise
+    const auto typed = tool.accept();
+    REQUIRE(typed.done.size() == 1);
+    checkPoint(typed.done[0][0].points[1], 0, 10);
+    checkPoint(typed.done[0][0].points[2], -10, 0);
+
+    tool.click({0, 0});
+    tool.click({10, 0});
+    tool.setTyped(0, 360.0); // a full circle is no arc
+    const auto full = tool.accept();
+    CHECK(full.done.empty());
+    CHECK(full.notice == SketchToolNotice::tooSmall);
+}
+
+TEST_CASE("sketch tool: pulling on the end of a line makes an arc that joins it",
+          "[sketchtool][tangent]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::line);
+    CHECK_FALSE(tool.press({0, 0}, 5, 3)); // nothing drawn yet
+    tool.click({0, 0});
+    CHECK_FALSE(tool.press({0, 0}, 5, 3)); // no line in the chain yet
+    tool.click({20, 0});
+    CHECK_FALSE(tool.press({10, 0}, 5, 3)); // not on the end
+    REQUIRE(tool.press({20, 0}, 5, 3));
+    CHECK_FALSE(tool.dragging());
+    tool.moveTo({21, 1}); // under the limit
+    CHECK_FALSE(tool.dragging());
+    tool.moveTo({30, 10});
+    REQUIRE(tool.dragging());
+    CHECK(tool.fieldCount() == 1);
+    const SketchDraft draft = tool.draft();
+    REQUIRE(draft.fields.size() == 1);
+    CHECK(draft.fields[0].name == "radius");
+    CHECK(draft.fields[0].value == Approx(10.0));
+    REQUIRE(draft.elements.size() == 1);
+    CHECK(draft.elements[0].kind == SketchElementKind::arc);
+
+    const auto step = tool.release({30, 10});
+    REQUIRE(step.done.size() == 1);
+    REQUIRE(step.done[0].size() == 1);
+    const SketchElement& arc = step.done[0][0];
+    CHECK(arc.kind == SketchElementKind::arc);
+    checkPoint(arc.points[0], 20, 10);
+    checkPoint(arc.points[1], 20, 0);
+    checkPoint(arc.points[2], 30, 10);
+    // the tangent at the start is the direction of the line (1, 0), on 1e-9
+    const double ru = arc.points[1].u - arc.points[0].u;
+    const double rv = arc.points[1].v - arc.points[0].v;
+    const double r = std::hypot(ru, rv);
+    CHECK(-rv / r == Approx(1.0).margin(1e-9));
+    CHECK(ru / r == Approx(0.0).margin(1e-9));
+    CHECK_FALSE(tool.dragging());
+
+    // the chain goes on from the end of the arc, as a line, in the direction the arc ended
+    CHECK(tool.busy());
+    const auto next = tool.click({30, 30});
+    REQUIRE(next.done.size() == 1);
+    CHECK(next.done[0][0].kind == SketchElementKind::line);
+    checkPoint(next.done[0][0].points[0], 30, 10);
+    // and another arc can join that line
+    REQUIRE(tool.press({30, 30}, 5, 3));
+    tool.moveTo({20, 40});
+    const auto second = tool.release({20, 40});
+    REQUIRE(second.done.size() == 1);
+    CHECK(second.done[0][0].kind == SketchElementKind::arc);
+}
+
+TEST_CASE("sketch tool: an arc after an arc keeps the direction of the end of that arc",
+          "[sketchtool][tangent]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::line);
+    tool.click({0, 0});
+    tool.click({20, 0});
+    REQUIRE(tool.press({20, 0}, 5, 3));
+    tool.moveTo({30, -10}); // to the right of the line: clockwise
+    const auto first = tool.release({30, -10});
+    REQUIRE(first.done.size() == 1);
+    const SketchElement& arc = first.done[0][0];
+    // clockwise: the element runs from the end to the start
+    checkPoint(arc.points[0], 20, -10);
+    checkPoint(arc.points[1], 30, -10);
+    checkPoint(arc.points[2], 20, 0);
+    // the walk ends going down: a line to a point straight below goes on in that direction
+    REQUIRE(tool.press({30, -10}, 5, 3));
+    tool.moveTo({30, -30});
+    tool.moveTo({30, -30});
+    const auto straight = tool.release({30, -30});
+    CHECK(straight.done.empty());
+    CHECK(straight.notice == SketchToolNotice::collinear); // straight on: no arc
+}
+
+TEST_CASE("sketch tool: Esc while an arc is pulled drops only the arc; a click without pulling is "
+          "a click",
+          "[sketchtool][tangent]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::line);
+    tool.click({0, 0});
+    tool.click({20, 0});
+    REQUIRE(tool.press({20, 0}, 5, 3));
+    tool.moveTo({30, 10});
+    REQUIRE(tool.dragging());
+    CHECK(tool.cancel());
+    CHECK_FALSE(tool.dragging());
+    CHECK(tool.busy()); // the chain stays
+    CHECK(tool.release({30, 10}).done.empty());
+
+    REQUIRE(tool.press({20, 0}, 5, 3));
+    CHECK(tool.release({20, 0}).done.empty()); // no pulling: nothing, the click follows
+    CHECK(tool.busy());
+}
+
+TEST_CASE("sketch tool: an arc from a line with a typed radius", "[sketchtool][tangent]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::line);
+    tool.click({0, 0});
+    tool.click({20, 0});
+    REQUIRE(tool.press({20, 0}, 5, 3));
+    tool.moveTo({40, 20});
+    tool.setTyped(0, 5.0);
+    const auto step = tool.accept();
+    REQUIRE(step.done.size() == 1);
+    const SketchElement& arc = step.done[0][0];
+    checkPoint(arc.points[0], 20, 5);
+    CHECK(std::hypot(arc.points[1].u - arc.points[0].u, arc.points[1].v - arc.points[0].v) ==
+          Approx(5.0));
+    CHECK_FALSE(tool.dragging());
+    CHECK(tool.release({40, 20}).done.empty()); // the button comes up later: nothing more
+}
+
+TEST_CASE("sketch tool: a slot is four elements, typed length, angle and width",
+          "[sketchtool][slot]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::slot);
+    CHECK(tool.click({0, 0}).done.empty());
+    CHECK(tool.fieldCount() == 2); // length, angle
+    CHECK(tool.click({10, 0}).done.empty());
+    CHECK(tool.fieldCount() == 1); // width
+    tool.moveTo({5, 3});
+    const SketchDraft draft = tool.draft();
+    REQUIRE(draft.fields.size() == 1);
+    CHECK(draft.fields[0].name == "width");
+    CHECK(draft.fields[0].value == Approx(6.0)); // the whole width, twice the distance
+    const auto step = tool.click({5, 3});
+    REQUIRE(step.done.size() == 1);
+    CHECK(step.done[0].size() == 4); // one batch: one undo step
+    CHECK(step.done[0][0].kind == SketchElementKind::line);
+    CHECK(step.done[0][1].kind == SketchElementKind::arc);
+
+    tool.click({0, 0});
+    tool.moveTo({1, 1});
+    tool.setTyped(0, 8.0);
+    tool.setTyped(1, 90.0);
+    CHECK(tool.accept().done.empty()); // Enter sets the second middle, the width follows
+    CHECK(tool.placedCount() == 2);
+    tool.moveTo({1, 1});
+    tool.setTyped(0, 5.0);
+    const auto typed = tool.accept();
+    REQUIRE(typed.done.size() == 1);
+    REQUIRE(typed.done[0].size() == 4);
+    checkPoint(typed.done[0][1].points[0], 0, 8); // the middle of the round end
+    CHECK(std::hypot(typed.done[0][1].points[1].u - 0, typed.done[0][1].points[1].v - 8) ==
+          Approx(2.5));
+}
+
+TEST_CASE("sketch tool: a slot that is too short or too narrow is not drawn",
+          "[sketchtool][slot]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::slot);
+    tool.click({0, 0});
+    const auto tooShort = tool.click({0.001, 0});
+    CHECK(tooShort.notice == SketchToolNotice::tooSmall);
+    CHECK(tool.placedCount() == 1);
+    tool.click({10, 0});
+    const auto tooNarrow = tool.click({5, 0.001});
+    CHECK(tooNarrow.done.empty());
+    CHECK(tooNarrow.notice == SketchToolNotice::tooSmall);
+    CHECK(tool.placedCount() == 2);
+}
+
+TEST_CASE("sketch tool: a polygon from the middle and a corner, six sides to begin with",
+          "[sketchtool][polygon]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::polygon);
+    CHECK(tool.polygonSides() == 6);
+    tool.click({0, 0});
+    CHECK(tool.fieldCount() == 3);
+    tool.moveTo({10, 0});
+    const SketchDraft draft = tool.draft();
+    REQUIRE(draft.fields.size() == 3);
+    CHECK(draft.fields[0].name == "radius");
+    CHECK(draft.fields[1].name == "sides");
+    CHECK(draft.fields[1].value == Approx(6.0));
+    CHECK(draft.fields[2].name == "angle");
+    const auto step = tool.click({10, 0});
+    REQUIRE(step.done.size() == 1);
+    REQUIRE(step.done[0].size() == 6);
+    checkPoint(step.done[0][0].points[0], 10, 0);
+    checkPoint(step.done[0][0].points[1], 5, 10 * std::sin(std::numbers::pi / 3));
+    CHECK(step.done[0][5].points[1] == step.done[0][0].points[0]);
+}
+
+TEST_CASE("sketch tool: a polygon by the middle of a side has the inner circle as radius",
+          "[sketchtool][polygon]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::polygon, kSketchVariantSecond);
+    tool.click({0, 0});
+    tool.moveTo({0, 10}); // the middle of the top side is 10 away
+    const auto step = tool.click({0, 10});
+    REQUIRE(step.done.size() == 1);
+    REQUIRE(step.done[0].size() == 6);
+    // the top side lies flat at v = 10, between two corners
+    const double corner = 10.0 / std::cos(std::numbers::pi / 6.0);
+    bool flatTop = false;
+    for (const SketchElement& line : step.done[0]) {
+        flatTop = flatTop || (std::abs(line.points[0].v - 10.0) < 1e-9 &&
+                              std::abs(line.points[1].v - 10.0) < 1e-9);
+        CHECK(std::hypot(line.points[0].u, line.points[0].v) == Approx(corner));
+    }
+    CHECK(flatTop);
+}
+
+TEST_CASE("sketch tool: the polygon takes 3, 6 and 64 sides, the last number is kept",
+          "[sketchtool][polygon]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::polygon);
+    for (const int sides : {3, 64, 6}) {
+        tool.click({0, 0});
+        tool.moveTo({10, 0});
+        CHECK(tool.setTyped(1, sides) == SketchToolNotice::none);
+        const auto step = tool.accept();
+        REQUIRE(step.done.size() == 1);
+        CHECK(step.done[0].size() == static_cast<std::size_t>(sides));
+        CHECK(tool.polygonSides() == sides);
+    }
+    tool.setPolygonSides(5);
+    tool.click({0, 0});
+    const auto five = tool.click({10, 0});
+    REQUIRE(five.done.size() == 1);
+    CHECK(five.done[0].size() == 5);
+    tool.setPolygonSides(100); // clamped
+    CHECK(tool.polygonSides() == 64);
+}
+
+TEST_CASE("sketch tool: a number of sides that is not 3 to 64 is refused, the old one stays",
+          "[sketchtool][polygon]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::polygon);
+    tool.click({0, 0});
+    tool.moveTo({10, 0});
+    for (const double bad : {2.0, 65.0, 0.0, -6.0, 5.5}) {
+        CHECK(tool.setTyped(1, bad) == SketchToolNotice::badSides);
+        CHECK(tool.draft().fields[1].value == Approx(6.0));
+        CHECK_FALSE(tool.draft().fields[1].typed);
+    }
+    const auto step = tool.accept();
+    REQUIRE(step.done.size() == 1);
+    CHECK(step.done[0].size() == 6);
+}
+
+TEST_CASE("sketch tool: a typed polygon radius and angle", "[sketchtool][polygon]") {
+    SketchTool tool;
+    tool.select(SketchToolKind::polygon);
+    tool.click({1, 1});
+    tool.moveTo({3, 1});
+    tool.setTyped(0, 4.0);
+    tool.setTyped(1, 4.0);
+    tool.setTyped(2, 45.0);
+    const auto step = tool.accept();
+    REQUIRE(step.done.size() == 1);
+    REQUIRE(step.done[0].size() == 4);
+    checkPoint(step.done[0][0].points[0], 1 + 4 * std::cos(std::numbers::pi / 4),
+               1 + 4 * std::sin(std::numbers::pi / 4));
+
+    tool.click({0, 0});
+    tool.moveTo({0.001, 0});
+    const auto tiny = tool.click({0.001, 0});
+    CHECK(tiny.done.empty());
+    CHECK(tiny.notice == SketchToolNotice::tooSmall);
 }

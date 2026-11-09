@@ -46,8 +46,10 @@ class SketchController : public QObject {
     Q_PROPERTY(bool engaged READ engaged NOTIFY stateChanged)
     /// A drawing tool is on; Esc ends it before it ends the sketch.
     Q_PROPERTY(bool toolActive READ toolActive NOTIFY toolChanged)
-    /// The tool: "" (none), "line", "rectangle", "circle" or "point"; and its variant (rectangle:
-    /// 0 two corners, 1 middle and corner; circle: 0 middle and radius, 1 three points).
+    /// The tool: "" (none), "line", "rectangle", "circle", "point", "arc", "slot" or "polygon"; and
+    /// its variant (rectangle: 0 two corners, 1 middle and corner; circle: 0 middle and radius,
+    /// 1 three points; arc: 0 three points, 1 middle, start and end; polygon: 0 corner, 1 middle
+    /// of a side).
     Q_PROPERTY(QString tool READ toolName NOTIFY toolChanged)
     Q_PROPERTY(int toolVariant READ toolVariant NOTIFY toolChanged)
     /// The switch "Helper line": what is drawn is an aid (dashed). Alt does the same while held.
@@ -56,9 +58,11 @@ class SketchController : public QObject {
     Q_PROPERTY(bool drawing READ drawing NOTIFY draftChanged)
     /// How many clicks of the element being pulled are made (0 when none): the hint line.
     Q_PROPERTY(int placed READ placed NOTIFY draftChanged)
+    /// An arc is being pulled from the end of the last line (AP-2.1c2): the hint line.
+    Q_PROPERTY(bool pullingArc READ pullingArc NOTIFY draftChanged)
     /// The numbers of the element being pulled: { valid, x, y (item pixels, where they belong),
     /// fields: [{ name, value, typed }] } with the names "length", "angle", "width", "height",
-    /// "radius"; just { valid: false } when nothing is pulled.
+    /// "radius", "sides"; just { valid: false } when nothing is pulled.
     Q_PROPERTY(QVariantMap readout READ readout NOTIFY draftChanged)
     /// The plane of the sketch is known, grid and catching work.
     Q_PROPERTY(bool planeReady READ planeReady NOTIFY stateChanged)
@@ -94,6 +98,7 @@ public:
     void setHelperLine(bool on);
     bool drawing() const noexcept { return toolActive() && m_tool.busy(); }
     int placed() const noexcept { return static_cast<int>(m_tool.placedCount()); }
+    bool pullingArc() const noexcept { return drawing() && m_tool.dragging(); }
     QVariantMap readout() const { return m_readout; }
     bool planeReady() const noexcept { return m_mode == Mode::sketching && m_planeReady; }
     QString step() const { return m_step; }
@@ -133,6 +138,12 @@ public:
     void clickAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre, bool alt = false);
     /// A double click: ends a chain of lines.
     Q_INVOKABLE void doubleClick();
+    /// The left button goes down / the pointer moves with it held / it goes up (AP-2.1c2). Pressed
+    /// on the end of the last line of a chain and pulled on (more than 6 pixels), the line gets a
+    /// tangential arc; letting go sets it. The view calls these; tests call them directly.
+    void pressAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre);
+    void dragTo(const interaction::PlaneRay& ray, double pixelsPerMillimetre);
+    void releaseAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre, bool alt = false);
     /// A number typed for field 0 or 1 of the element being pulled (millimetres, or degrees for
     /// the angle); the element follows at once. NaN takes the number back.
     Q_INVOKABLE void setTyped(int field, double value);
@@ -158,7 +169,7 @@ signals:
     /// A sentence to tell the person, as a hint (never a dialog): "curvedFace" (sketches only go
     /// on flat faces), "faceUnusable" (this face cannot be drawn on), "needsHelp" (the sketch has
     /// no plane at the moment), "collinear" (three points on one line make no circle), "tooSmall"
-    /// (shorter than 0.01 mm: nothing was drawn).
+    /// (shorter than 0.01 mm: nothing was drawn), "badSides" (the polygon has 3 to 64 sides).
     void notice(const QString& code);
 
 private:
@@ -174,6 +185,9 @@ private:
     void applyStep(const interaction::SketchToolStep& step);
     void updateDraft();
     void onClicked(double x, double y);
+    void onPressed(double x, double y);
+    void onDragged(double x, double y);
+    void onReleased(double x, double y);
     void onDoubleClicked(double x, double y);
 
     QPointer<DocumentModel> m_model;
@@ -191,7 +205,7 @@ private:
     std::optional<interaction::SketchSnap> m_caught;
     QVariantMap m_snapMap;
     interaction::SketchTool m_tool;
-    std::array<int, 5> m_variants{}; ///< the variant last used with each tool
+    std::array<int, 8> m_variants{}; ///< the variant last used with each tool
     interaction::SketchDraft m_draft;
     QVariantMap m_readout;
 

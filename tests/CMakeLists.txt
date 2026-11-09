@@ -357,6 +357,24 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;sketchmove:400,300;sketchclick:400,300;sketchmove:500,300;key:1;expectsketchtyping:yes;key:Escape;expectsketchtyping:no;expectsketchtool:line;expectsketchelements:")
   set_tests_properties(app_sketch_digits PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.1c2: slot and polygon with typed numbers. The keys S and G choose the tools, the command
+  # search knows their words (Schlitz, Sechseck, Kreisbogen); the slot takes its length (Enter sets
+  # the second middle) and its width, the polygon its radius and number of sides (a wrong number is
+  # refused, the last good one stays); one undo step takes a whole slot.
+  add_test(NAME app_sketch_slot_polygon
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-slot-polygon.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:Schlitz,sketch.slot;search:Sechseck,sketch.polygon;search:Kreisbogen,sketch.arc;key:A;expectsketchtool:arc;key:S;expectsketchtool:slot;sketchmove:400,300;sketchclick:400,300;sketchmove:600,300;type:40,enter;sketchmove:500,330;type:10,enter;expectsketchelements:line=2,arc=2;expectundo:addSketchElement;menu:undo;expectsketchelements:;menu:redo;expectsketchelements:line=2,arc=2;key:G;expectsketchtool:polygon;sketchmove:800,500;sketchclick:800,500;sketchmove:900,500;type:15,tab,8,enter;expectsketchelements:line=10,arc=2;sketchmove:800,500;sketchclick:800,500;sketchmove:900,500;type:15,tab,2,enter;expectsketchelements:line=18,arc=2;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
+  set_tests_properties(app_sketch_slot_polygon PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.1c2: pulling on the end of a line makes an arc that joins it (the chain goes on from its
+  # end); a second pull with the button held takes a typed radius.
+  add_test(NAME app_sketch_tangent_arc
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-tangent-arc.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;sketchmove:400,300;sketchclick:400,300;sketchclick:600,300;expectsketchelements:line=1;sketchdrag:600,300,700,200;expectsketchelements:line=1,arc=1;sketchclick:700,100;expectsketchelements:line=2,arc=1;sketchdrag:700,100,800,50,hold;type:20,enter;expectsketchelements:line=2,arc=2;expectundo:addSketchElement;key:Escape;expectsketchtool:line;key:Escape;expectsketchtool:;menu:sketchtool.arc;sketchmove:300,500;sketchclick:300,500;sketchclick:500,500;sketchmove:400,430;sketchclick:400,430;expectsketchelements:line=2,arc=3;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
+  set_tests_properties(app_sketch_tangent_arc PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-1.7e: one body is split through the menu Body: the cut, and one placing step per part.
   add_test(NAME app_split_menu
     COMMAND ${_fission_gui_runner} ${_fission_app_exe}
