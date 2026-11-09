@@ -23,6 +23,7 @@
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
+#include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
 #include <GCPnts_QuasiUniformDeflection.hxx>
@@ -32,10 +33,12 @@
 #include <Geom_Curve.hxx>
 #include <NCollection_DataMap.hxx>
 #include <NCollection_List.hxx>
+#include <Poly_Triangulation.hxx>
 #include <Standard_Failure.hxx>
 #include <TopAbs_Orientation.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
+#include <TopLoc_Location.hxx>
 #include <TopTools_ShapeMapHasher.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
@@ -375,6 +378,27 @@ Point2d insidePoint(const SketchRegion& region, const Point2d& centroid) {
     return best;
 }
 
+// The triangles that shade the face; false when the kernel makes none.
+bool shade(const TopoDS_Face& face, SketchRegion& region) {
+    BRepMesh_IncrementalMesh mesh(face, kSketchRegionDeflection);
+    TopLoc_Location location;
+    const occ::handle<Poly_Triangulation> triangulation = BRep_Tool::Triangulation(face, location);
+    if (triangulation.IsNull() || triangulation->NbTriangles() == 0) {
+        return false;
+    }
+    for (int i = 1; i <= triangulation->NbTriangles(); ++i) {
+        int a = 0;
+        int b = 0;
+        int c = 0;
+        triangulation->Triangle(i).Get(a, b, c);
+        for (const int node : {a, b, c}) {
+            const gp_Pnt point = triangulation->Node(node).Transformed(location.Transformation());
+            region.triangles.push_back({point.X(), point.Y()});
+        }
+    }
+    return true;
+}
+
 bool atCorner(const TopoDS_Face& face, const std::vector<Point2d>& corners) {
     NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> vertices;
     TopExp::MapShapes(face, TopAbs_VERTEX, vertices);
@@ -504,6 +528,10 @@ SketchRegionResult sketchRegions(const std::vector<SketchCurve>& curves) {
                 continue;
             }
             region.inside = insidePoint(region, region.centroid);
+            if (!shade(face, region)) {
+                ++result.rejected;
+                continue;
+            }
             result.regions.push_back(std::move(region));
         }
     } catch (const Standard_Failure&) {

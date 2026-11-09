@@ -90,7 +90,15 @@ struct HandleQuad {
     float lineWidth = 1.5F;
     bool operator==(const HandleQuad&) const = default;
 };
+/// A flat filled triangle in the scene, without a line (the shading of the areas of a sketch).
+struct HandleTriangle {
+    QVector3D corners[3];
+    QColor fill;
+    bool operator==(const HandleTriangle&) const = default;
+};
 struct HandleGraphics {
+    /// Filled areas, drawn first (under everything else).
+    std::vector<HandleTriangle> fills;
     std::vector<HandleLine> lines;
     std::vector<HandleDot> dots;
     std::vector<HandleArrow> arrows;
@@ -102,7 +110,8 @@ struct HandleGraphics {
     /// window pixels.
     float pixelScale = 1.0F;
     bool empty() const {
-        return lines.empty() && dots.empty() && arrows.empty() && heads.empty() && quads.empty();
+        return fills.empty() && lines.empty() && dots.empty() && arrows.empty() && heads.empty() &&
+               quads.empty();
     }
     /// Adds what `other` draws (one picture of the handles of several controllers).
     void append(const HandleGraphics& other);

@@ -48,6 +48,9 @@ struct SketchRegion {
     std::vector<SketchRegionLoop> holes;
     double area = 0.0; ///< mm², exact (not the polygon's)
     Point2d centroid;
+    /// The area as flat triangles for shading it (three points each, holes left out), within
+    /// `kSketchRegionDeflection` of the boundary.
+    std::vector<Point2d> triangles;
     Point2d
         inside; ///< a point well inside the region (the centroid of a bent region may lie outside)
 };

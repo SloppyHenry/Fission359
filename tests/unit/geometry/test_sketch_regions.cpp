@@ -108,6 +108,18 @@ TEST_CASE("sketch regions: a circle inside a rectangle makes a ring and a disc",
     CHECK(result.regions[1].area == Approx(1200.0 - kPi * 25.0).epsilon(1e-9));
     REQUIRE(result.regions[1].holes.size() == 1);
     CHECK(polygonArea(result.regions[1].holes[0].polygon) < 0.0);
+    // the shading: triangles that add up to the area (the hole is left out)
+    for (const SketchRegion& region : result.regions) {
+        REQUIRE(region.triangles.size() >= 3);
+        REQUIRE(region.triangles.size() % 3 == 0);
+        double sum = 0.0;
+        for (std::size_t i = 0; i < region.triangles.size(); i += 3) {
+            const std::vector<Point2d> t{region.triangles[i], region.triangles[i + 1],
+                                         region.triangles[i + 2], region.triangles[i]};
+            sum += std::abs(polygonArea(t));
+        }
+        CHECK(sum == Approx(region.area).epsilon(2e-3));
+    }
     // the point inside the ring is not in the hole
     const Point2d inside = result.regions[1].inside;
     CHECK(std::hypot(inside.x - 20.0, inside.y - 15.0) > 5.0);
