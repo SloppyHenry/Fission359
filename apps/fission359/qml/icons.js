@@ -87,6 +87,8 @@ var paths = {
     sketchoffset: "M4 7h16 M4 14h16 M12 17v4 M10 19l2 2l2-2",
     sketchfillet: "M6 4v9a7 7 0 0 0 7 7h7",
     sketchchamfer: "M6 4v7l9 9h5",
+    sketchmirror: "M12 3v18 M9 7l-5 5l5 5z M15 7l5 5l-5 5z",
+    sketchpattern: "M3 9h5v6H3z M9.5 9h5v6h-5z M16 9h5v6h-5z",
     sketchpoint: "M12 14.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5z M12 4v3 M12 17v3 M4 12h3 M17 12h3",
     sketchhelper: "M4 20l3-3 M10 14l4-4 M17 7l3-3"
 };

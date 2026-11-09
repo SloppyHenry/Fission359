@@ -6,7 +6,7 @@ import QtQuick
 // The drawing tools of the sketch mode (AP-2.1c1): the name on the button, the sentence of its
 // tooltip card, what the hint line says, and the words the command search finds it by (German and
 // English at once). Rule 10 of the master prompt: every tool brings these along. `key` is the key
-// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G; AP-2.1d the curve K, AP-2.1e1 Trim T and Extend E, AP-2.1e2 Offset O and Round corner F, which has the way "Chamfer"; the entry "chamfer" is only a second name for it in the command search and is not listed in the tool palette). `variants` are the ways to draw it (the first is
+// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G; AP-2.1d the curve K, AP-2.1e1 Trim T and Extend E, AP-2.1e2 Offset O and Round corner F, AP-2.1e3 Mirror M and Pattern W (Row or Circle); Round corner has the way "Chamfer"; the entry "chamfer" is only a second name for it in the command search and is not listed in the tool palette). `variants` are the ways to draw it (the first is
 // the standard); "helper" is a switch, not a tool.
 QtObject {
     readonly property var tools: [
@@ -82,6 +82,18 @@ QtObject {
           synonyms: { de: ["ecke abschrägen", "fase", "schräge an ecke", "abschrägen", "ecke kappen"],
                       en: ["chamfer corner", "chamfer", "bevel corner", "cut corner", "bevel"] },
           variants: [] },
+        { id: "mirror", name: qsTr("Mirror"), icon: "sketchmirror", key: "M",
+          tip: qsTr("Makes mirrored copies of lines, arcs, circles, curves and points. Choose what to mirror, then click the line to mirror at. The originals stay."),
+          hint: qsTr("Click what you want to mirror."),
+          synonyms: { de: ["spiegeln", "symmetrisch", "Spiegelbild", "umklappen", "spiegelachse"],
+                      en: ["mirror", "flip", "symmetric", "reflect", "mirror image"] },
+          variants: [] },
+        { id: "pattern", name: qsTr("Pattern"), icon: "sketchpattern", key: "W",
+          tip: qsTr("Repeats what you choose: in a row (a start, a direction and a distance) or round a point. Type the count and the distance or angle. The copies are separate elements."),
+          hint: qsTr("Click what you want to repeat."),
+          synonyms: { de: ["Reihe", "Kreismuster", "wiederholen", "vervielfältigen", "Raster"],
+                      en: ["pattern", "array", "repeat", "circular pattern", "linear pattern"] },
+          variants: [qsTr("Row"), qsTr("Circle")] },
         { id: "point", name: qsTr("Point"), icon: "sketchpoint", key: "P",
           tip: qsTr("Places a point, as a mark to catch on later."),
           hint: qsTr("Click where the point goes."),
@@ -163,6 +175,23 @@ QtObject {
                 return qsTr("Click near a corner to chamfer it with the last distance, pull to change the distance, or type it. Esc ends the tool.")
             }
             return qsTr("Click near a corner to round it with the last radius, pull to change the radius, or type it. Esc ends the tool.")
+        case "mirror":
+            return placed === 0 ? qsTr("Click what you want to mirror (a click on a chosen chain takes it out again). Esc ends the tool.")
+                 : placed === 1 ? qsTr("Click more, then press Enter or Continue. Esc ends the tool.")
+                                : qsTr("Click the line to mirror at. Esc goes back to choosing.")
+        case "pattern":
+            if (placed === 0) {
+                return qsTr("Click what you want to repeat (a click on a chosen chain takes it out again). Esc ends the tool.")
+            }
+            if (placed === 1) {
+                return qsTr("Click more, then press Enter or Continue. Esc ends the tool.")
+            }
+            if (variant === 1) {
+                return placed === 2 ? qsTr("Click the middle of the circle. Esc goes back to choosing.")
+                                    : qsTr("Type the count (Tab: the angle), then press Enter, or click to set it. Esc goes back to choosing.")
+            }
+            return placed === 2 ? qsTr("Click where the row starts. Esc goes back to choosing.")
+                                : qsTr("Move to set the direction and the distance, or type the count (Tab: the distance). Click or Enter sets it. Esc goes back to choosing.")
         case "point":
             return qsTr("Click where the point goes. Esc ends the tool.")
         }

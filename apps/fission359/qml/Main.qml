@@ -204,7 +204,7 @@ Window {
             return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed, Sketch.pullingArc)
                    + " " + qsTr("Shift switches catching off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
         }
-        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
+        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
     }
 
     // ---- undo and redo ---------------------------------------------------------------------
@@ -853,6 +853,10 @@ Window {
     Shortcut { sequence: "E"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.extend") }
     Shortcut { sequence: "O"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.offset") }
     Shortcut { sequence: "F"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.fillet") }
+    // Mirror M and Pattern W (AP-2.1e3): plain M and W are free; Ctrl+M and Ctrl+W are other
+    // sequences and do not clash.
+    Shortcut { sequence: "M"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.mirror") }
+    Shortcut { sequence: "W"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.pattern") }
     Shortcut { sequence: "P"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.point") }
     Shortcut { sequence: "X"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.helper") }
     Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
@@ -863,8 +867,10 @@ Window {
     // otherwise, so the two are never on together (two active shortcuts on one key fire neither);
     // a sketch has nothing chosen to delete anyway.
     readonly property bool drawingCurve: Sketch.drawing && Sketch.tool === "spline"
+    // Enter in mirror and pattern: on from choosing, or sets the pattern (AP-2.1e3).
+    readonly property bool copyingSketch: Sketch.toolActive && (Sketch.tool === "mirror" || Sketch.tool === "pattern")
     Shortcut { sequence: "Backspace"; enabled: root.drawingCurve && !root.typing; onActivated: Sketch.removeLastPoint() }
-    Shortcut { sequences: ["Return", "Enter"]; enabled: root.drawingCurve && !root.typing && !Handles.armed; onActivated: Sketch.acceptTyped() }
+    Shortcut { sequences: ["Return", "Enter"]; enabled: (root.drawingCurve || root.copyingSketch) && !root.typing && !Handles.armed; onActivated: Sketch.acceptTyped() }
     Shortcut { sequence: "Backspace"; enabled: Selection.count > 0 && !root.drawingCurve && !root.typing && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("delete") }
     Shortcut { sequence: "Ctrl+X"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("cut") }
     Shortcut { sequence: "Ctrl+D"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("duplicate") }
@@ -1758,6 +1764,9 @@ Window {
         toolName: root.toolName(root.tool)
         hint: root.currentHint
         unitText: qsTr("Unit: mm")
+        continueVisible: Sketch.toolActive && Sketch.placed === 1
+                         && (Sketch.tool === "mirror" || Sketch.tool === "pattern")
+        onContinueClicked: Sketch.proceed()
         gridStep: viewport.snapStep
         gridAutomatic: viewport.fixedSnapStep === 0
         onGridStepChosen: step => {
@@ -1894,6 +1903,8 @@ Window {
         case "trimSketch": return qsTr("Sketch trimmed")
         case "extendSketch": return qsTr("Sketch extended")
         case "offsetSketch": return qsTr("Sketch offset")
+        case "mirrorSketch": return qsTr("Sketch mirrored")
+        case "patternSketch": return qsTr("Pattern in the sketch")
         case "roundCorner": return qsTr("Corner rounded")
         case "chamferCorner": return qsTr("Corner chamfered")
         case "sketchConstructionOn": return qsTr("%1 made a helper line").arg(sketchElementLabel(step.kind))

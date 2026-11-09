@@ -32,12 +32,13 @@ Item {
         case "radius": return qsTr("Radius")
         case "distance": return qsTr("Distance")
         case "sides": return qsTr("Sides")
+        case "count": return qsTr("Count")
         default: return name
         }
     }
 
     function unitOf(name) {
-        return name === "angle" ? "°" : name === "sides" ? "" : qsTr("mm")
+        return name === "angle" ? "°" : name === "sides" || name === "count" ? "" : qsTr("mm")
     }
 
     // A digit was pressed while an element is pulled: the number fields open with it. With nothing
@@ -90,7 +91,7 @@ Item {
             return
         }
         const name = fields[index] ? fields[index].name : ""
-        const kind = name === "angle" ? "angle" : name === "sides" ? "plain" : "length"
+        const kind = name === "angle" ? "angle" : name === "sides" || name === "count" ? "plain" : "length"
         const value = Numbers.evaluate(text, kind)
         if (isNaN(value)) {
             input.errorInfo = Numbers.explain(text, kind)
@@ -207,8 +208,8 @@ Item {
                     Txt {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: !bubble.typing
-                        text: Numbers.format(entry.field.value, entry.field.name === "angle" ? 1 : entry.field.name === "sides" ? 0 : 2)
-                              + (entry.field.name === "angle" ? " °" : entry.field.name === "sides" ? "" : " " + qsTr("mm"))
+                        text: Numbers.format(entry.field.value, entry.field.name === "angle" ? 1 : entry.field.name === "sides" || entry.field.name === "count" ? 0 : 2)
+                              + (entry.field.name === "angle" ? " °" : entry.field.name === "sides" || entry.field.name === "count" ? "" : " " + qsTr("mm"))
                         mono: true
                         color: entry.field.typed ? Theme.accentText : Theme.fg
                         font.weight: Font.Medium
@@ -221,7 +222,7 @@ Item {
 
                         visible: bubble.typing
                         anchors.verticalCenter: parent.verticalCenter
-                        kind: entry.field.name === "angle" ? "angle" : entry.field.name === "sides" ? "plain" : "length"
+                        kind: entry.field.name === "angle" ? "angle" : entry.field.name === "sides" || entry.field.name === "count" ? "plain" : "length"
                         font.pixelSize: Theme.fontSize
                         Accessible.name: root.labelOf(entry.field.name)
                         Component.onCompleted: root.inputs[entry.index] = input

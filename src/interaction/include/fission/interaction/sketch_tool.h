@@ -19,9 +19,9 @@
 
 namespace fission::interaction {
 
-/// `trim`, `extend` (AP-2.1e1), `offset` and `fillet` (AP-2.1e2) draw nothing: they edit what is
-/// drawn, which the sketch controller does with `SketchTrimmer` and `findExtension`; here they are
-/// only names that can be chosen.
+/// `trim`, `extend` (AP-2.1e1), `offset`, `fillet` (AP-2.1e2), `mirror` and `pattern` (AP-2.1e3)
+/// draw nothing: they edit what is drawn, which the sketch controller does with `SketchTrimmer` and
+/// `findExtension`; here they are only names that can be chosen.
 enum class SketchToolKind {
     none,
     line,
@@ -35,7 +35,9 @@ enum class SketchToolKind {
     trim,
     extend,
     offset, ///< AP-2.1e2: a copy of a chain at a distance
-    fillet  ///< AP-2.1e2: round (variant 0) or chamfer (1) a corner
+    fillet, ///< AP-2.1e2: round (variant 0) or chamfer (1) a corner
+    mirror, ///< AP-2.1e3: copies mirrored at a line
+    pattern ///< AP-2.1e3: copies in a row (variant 0) or round a point (1)
 };
 
 /// Variants of a tool: the rectangle by two corners (0) or by its middle and a corner (1); the

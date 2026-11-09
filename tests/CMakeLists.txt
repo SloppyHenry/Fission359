@@ -413,6 +413,15 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:wandstärke,sketch.offset;search:verrunden,sketch.fillet;search:bevel corner,sketch.chamfer;menu:sketchtool.rectangle;sketchclickmm:-40,-20;sketchclickmm:40,20;expectsketchelements:line=4;expectsketchsize:80,40;key:O;expectsketchtool:offset;sketchclickmm:0,-20;sketchmovemm:0,-30;type:10,enter;expectsketchelements:line=8;expectsketchsize:100,60;expectundo:offsetSketch;key:F;expectsketchtool:fillet;sketchmovemm:50,30;type:5,enter;expectsketchelements:line=8,arc=1;expectundo:roundCorner;menu:undo;expectsketchelements:line=8;menu:undo;expectsketchelements:line=4;menu:redo;menu:redo;expectsketchelements:line=8,arc=1;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_offset_round PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.1e3: mirror and pattern. A circle is mirrored at a helper line (the keys M and W choose the
+  # tools, Enter goes on from choosing), then the circle is repeated in a row of three with a typed
+  # distance. Each is one undo step. Points sit on whole tens: clicks catch on the grid.
+  add_test(NAME app_sketch_mirror_pattern
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-mirror-pattern.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:umklappen,sketch.mirror;search:mirror image,sketch.mirror;search:kreismuster,sketch.pattern;search:circular pattern,sketch.pattern;menu:sketchtool.helper;menu:sketchtool.line;sketchclickmm:0,-40;sketchclickmm:0,40;key:Escape;menu:sketchtool.helper;menu:sketchtool.circle;sketchclickmm:30,0;sketchclickmm:40,0;expectsketchelements:line=1,circle=1,helper=1;key:M;expectsketchtool:mirror;sketchclickmm:40,0;key:Return;sketchmovemm:0,10;sketchclickmm:0,10;expectsketchelements:line=1,circle=2,helper=1;expectundo:mirrorSketch;key:W;expectsketchtool:pattern;sketchclickmm:40,0;key:Return;sketchclickmm:60,20;sketchmovemm:60,50;type:3,tab,30,enter;expectsketchelements:line=1,circle=4,helper=1;expectundo:patternSketch;menu:undo;expectsketchelements:line=1,circle=2,helper=1;menu:undo;expectsketchelements:line=1,circle=1,helper=1;menu:redo;menu:redo;expectsketchelements:line=1,circle=4,helper=1;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
+  set_tests_properties(app_sketch_mirror_pattern PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-1.7e: one body is split through the menu Body: the cut, and one placing step per part.
   add_test(NAME app_split_menu
     COMMAND ${_fission_gui_runner} ${_fission_app_exe}

@@ -228,6 +228,10 @@ const char* toolWord(interaction::SketchToolKind kind) {
         return "offset";
     case interaction::SketchToolKind::fillet:
         return "fillet";
+    case interaction::SketchToolKind::mirror:
+        return "mirror";
+    case interaction::SketchToolKind::pattern:
+        return "pattern";
     case interaction::SketchToolKind::none:
         break;
     }
@@ -412,6 +416,22 @@ void SketchController::escape() {
             refresh();
             return;
         }
+        if (copyTool() && (m_patTyped[0] || m_patTyped[1] || m_second)) {
+            // first the typed numbers, then the second step goes back to choosing (decision 41)
+            if (m_patTyped[0] || m_patTyped[1]) {
+                m_patTyped[0].reset();
+                m_patTyped[1].reset();
+            } else {
+                m_second = false;
+                m_anchor.reset();
+            }
+            m_preview.clear();
+            if (m_rawPointer) {
+                updateEditHover(*m_rawPointer);
+            }
+            updateDraft();
+            return;
+        }
         if ((offsetTool() && m_chain) || m_typedValue) { // a picked chain, a typed number
             if (m_typedValue) {                          // first the typed number, then the chain
                 m_typedValue.reset();
@@ -489,6 +509,14 @@ void SketchController::onModelChanged() {
     m_pressedCorner.reset();
     m_hoverIds.clear();
     m_preview.clear();
+    std::erase_if(m_picked, [this](const std::string& id) {
+        return std::ranges::none_of(m_elements,
+                                    [&](const core::SketchElement& e) { return e.id == id; });
+    });
+    if (m_picked.empty()) { // what was chosen is gone (undone)
+        m_second = false;
+        m_anchor.reset();
+    }
     refresh();
     if (changed) {
         emit stateChanged();
@@ -545,10 +573,19 @@ void SketchController::pointAt(const interaction::PlaneRay& ray, double pixelsPe
     settings.pixelsPerMillimetre = pixelsPerMillimetre;
     settings.gridStep = interaction::sketchGridStep(baseStep(), pixelsPerMillimetre);
     settings.enabled = !snappingSuppressed();
-    if (toolActive() && m_tool.kind() == interaction::SketchToolKind::spline && m_tool.busy()) {
-        // the points of the curve being drawn catch too (the first one closes the curve)
+    const bool curveDrawn =
+        toolActive() && m_tool.kind() == interaction::SketchToolKind::spline && m_tool.busy();
+    if (curveDrawn || (copyTool() && m_anchor)) {
+        // the points of the curve being drawn catch too (the first one closes the curve), and the
+        // start of a pattern (its direction lines up like that of a line)
         std::vector<core::SketchElement> withPending = m_elements;
-        for (const core::SketchPoint& point : m_tool.placedPoints()) {
+        std::vector<core::SketchPoint> pending;
+        if (curveDrawn) {
+            pending = m_tool.placedPoints();
+        } else {
+            pending.push_back(*m_anchor);
+        }
+        for (const core::SketchPoint& point : pending) {
             core::SketchElement mark;
             mark.kind = core::SketchElementKind::point;
             mark.points = {point};
@@ -700,9 +737,10 @@ void SketchController::refresh() {
             target.ringWidth = 1.5F;
             graphics.dots.push_back(target);
         }
-        if (offsetTool() || cornerTool()) {
+        if (offsetTool() || cornerTool() || copyTool()) {
             // what is under the pointer or picked, and what the edit would add
             std::vector<std::string> shown = m_hoverIds;
+            shown.insert(shown.end(), m_picked.begin(), m_picked.end());
             if (m_chain) {
                 for (const interaction::SketchChainSegment& seg : m_chain->segments) {
                     shown.push_back(seg.element);
@@ -716,6 +754,15 @@ void SketchController::refresh() {
             }
             for (const core::SketchElement& element : m_preview) {
                 drawElement(graphics, m_plane, element, ppm, m_draftColour, kDraftWidth, nullptr);
+            }
+            if (copyTool() && m_anchor) {
+                render::HandleDot start;
+                start.centre = at(m_plane, m_anchor->u, m_anchor->v);
+                start.radius = 4.5F;
+                start.fill = m_draftColour;
+                start.ring = QColor(255, 255, 255, 230);
+                start.ringWidth = 1.5F;
+                graphics.dots.push_back(start);
             }
             const auto& corner = m_pressedCorner ? m_pressedCorner : m_hoverCorner;
             if (cornerTool() && corner) {
@@ -780,7 +827,8 @@ void SketchController::chooseTool(const QString& name, int variant) {
          {SketchToolKind::line, SketchToolKind::rectangle, SketchToolKind::circle,
           SketchToolKind::point, SketchToolKind::arc, SketchToolKind::slot, SketchToolKind::polygon,
           SketchToolKind::spline, SketchToolKind::trim, SketchToolKind::extend,
-          SketchToolKind::offset, SketchToolKind::fillet}) {
+          SketchToolKind::offset, SketchToolKind::fillet, SketchToolKind::mirror,
+          SketchToolKind::pattern}) {
         if (name == QLatin1String(toolWord(candidate))) {
             kind = candidate;
         }
@@ -835,6 +883,10 @@ void SketchController::clickAt(const interaction::PlaneRay& ray, double pixelsPe
             break;
         case interaction::SketchToolKind::fillet:
             commitCorner();
+            break;
+        case interaction::SketchToolKind::mirror:
+        case interaction::SketchToolKind::pattern:
+            commitCopy();
             break;
         default:
             commitExtend();
@@ -969,6 +1021,20 @@ void SketchController::removeLastPoint() {
 }
 
 void SketchController::setTyped(int field, double value) {
+    if (patternReadout()) { // count, then distance or angle (AP-2.1e3)
+        if (field == 0 || field == 1) {
+            if (!std::isfinite(value)) {
+                m_patTyped[field].reset();
+            } else {
+                m_patTyped[field] = field == 1 && !m_tool.variant() ? std::abs(value) : value;
+            }
+            if (m_rawPointer) {
+                updateEditHover(*m_rawPointer);
+            }
+            updateDraft();
+        }
+        return;
+    }
     if (editDrafting()) { // the distance or radius of an offset or a corner
         if (field == 0) {
             m_typedValue = std::isfinite(value) && value != 0.0
@@ -993,6 +1059,14 @@ void SketchController::setTyped(int field, double value) {
 }
 
 void SketchController::clearTyped() {
+    if (m_patTyped[0] || m_patTyped[1]) {
+        m_patTyped[0].reset();
+        m_patTyped[1].reset();
+        if (m_rawPointer && editingTool()) {
+            updateEditHover(*m_rawPointer);
+        }
+        updateDraft();
+    }
     if (m_typedValue) {
         m_typedValue.reset();
         if (m_rawPointer && editingTool()) {
@@ -1007,6 +1081,14 @@ void SketchController::clearTyped() {
 }
 
 void SketchController::acceptTyped() {
+    if (copyTool()) {
+        if (!m_second) {
+            proceed();
+        } else if (patternReadout()) {
+            commitCopy();
+        }
+        return;
+    }
     if (editDrafting()) {
         if (offsetTool()) {
             commitOffset();
@@ -1059,7 +1141,9 @@ bool SketchController::editingTool() const noexcept {
     return toolActive() && (m_tool.kind() == interaction::SketchToolKind::trim ||
                             m_tool.kind() == interaction::SketchToolKind::extend ||
                             m_tool.kind() == interaction::SketchToolKind::offset ||
-                            m_tool.kind() == interaction::SketchToolKind::fillet);
+                            m_tool.kind() == interaction::SketchToolKind::fillet ||
+                            m_tool.kind() == interaction::SketchToolKind::mirror ||
+                            m_tool.kind() == interaction::SketchToolKind::pattern);
 }
 
 const interaction::SketchTrimmer* SketchController::trimmer() {
@@ -1081,6 +1165,15 @@ void SketchController::forgetEdit() {
     m_marked.clear();
     m_hoverPiece.reset();
     m_hoverExtension.reset();
+    forgetCopy();
+}
+
+void SketchController::forgetCopy() {
+    m_picked.clear();
+    m_second = false;
+    m_anchor.reset();
+    m_patTyped[0].reset();
+    m_patTyped[1].reset();
 }
 
 void SketchController::updateEditHover(const core::SketchPoint& raw) {
@@ -1093,6 +1186,11 @@ void SketchController::updateEditHover(const core::SketchPoint& raw) {
     if (cornerTool()) {
         updateCornerHover(raw);
         m_rawPointer = raw;
+        return;
+    }
+    if (copyTool()) {
+        m_rawPointer = raw;
+        updateCopyHover(raw);
         return;
     }
     if (m_tool.kind() == interaction::SketchToolKind::trim) {
@@ -1191,6 +1289,7 @@ bool SketchController::applyEdit(const interaction::SketchEdit& edit, const QStr
         m_hoverIds.clear();
         m_preview.clear();
         m_typedValue.reset();
+        forgetCopy(); // after a mirroring or a pattern the choosing begins again
         if (m_rawPointer) {
             updateEditHover(*m_rawPointer);
         }
@@ -1370,6 +1469,185 @@ void SketchController::commitCorner() {
     }
 }
 
+// --- mirroring and patterns (AP-2.1e3) --------------------------------------------------
+
+// The elements one click chooses: the whole chain of a line, arc or circle; a curve or a point
+// alone.
+std::vector<std::string> SketchController::chainIds(const std::string& id) const {
+    std::vector<std::string> ids;
+    if (const auto chain = interaction::findChain(m_elements, id)) {
+        for (const interaction::SketchChainSegment& seg : chain->segments) {
+            ids.push_back(seg.element);
+        }
+    }
+    if (ids.empty()) {
+        ids.push_back(id);
+    }
+    return ids;
+}
+
+std::optional<std::string> SketchController::axisNear(const core::SketchPoint& raw) const {
+    const double reach = kEditPixels / std::max(m_pixelsPerMillimetre, 1e-6);
+    const auto id = interaction::elementNear(m_elements, raw, reach);
+    if (!id) {
+        return std::nullopt;
+    }
+    const auto element =
+        std::ranges::find_if(m_elements, [&](const core::SketchElement& e) { return e.id == *id; });
+    if (element == m_elements.end() || element->kind != core::SketchElementKind::line) {
+        return std::nullopt;
+    }
+    return id;
+}
+
+// The pattern the pointer and the typed numbers make (the pointer is where it catches). Also sets
+// the numbers shown in the bubble.
+interaction::SketchCopyResult SketchController::patternResult(const core::SketchPoint& pointer) {
+    const std::size_t way = m_tool.variant() == 0 ? 0 : 1;
+    const double typedCount = m_patTyped[0] ? std::clamp(std::round(*m_patTyped[0]), -1.0, 1000.0)
+                                            : static_cast<double>(m_patCount[way]);
+    const int count = static_cast<int>(typedCount);
+    m_shownCount = count;
+    if (way == 0) {
+        core::SketchPoint step{pointer.u - m_anchor->u, pointer.v - m_anchor->v};
+        const double length = std::hypot(step.u, step.v);
+        double shown = length;
+        if (m_patTyped[1]) {
+            shown = *m_patTyped[1];
+            if (length > 1e-9) {
+                step = {step.u / length * shown, step.v / length * shown};
+            } else {
+                step = {0.0, 0.0};
+            }
+        }
+        m_editValue = shown;
+        return interaction::linearPattern(m_elements, m_picked, step, count);
+    }
+    const double angle = m_patTyped[1] ? *m_patTyped[1] : 360.0;
+    m_editValue = angle;
+    return interaction::circularPattern(m_elements, m_picked, *m_anchor, count, angle);
+}
+
+// Choosing: the chain under the pointer shows. Second step: the axis under the pointer and what
+// would be made, or the pattern as the pointer and the numbers make it.
+void SketchController::updateCopyHover(const core::SketchPoint& raw) {
+    m_preview.clear();
+    m_hoverIds.clear();
+    if (!m_second) {
+        const double reach = kEditPixels / std::max(m_pixelsPerMillimetre, 1e-6);
+        if (const auto id = interaction::pickElementNear(m_elements, raw, reach)) {
+            m_hoverIds = chainIds(*id);
+        }
+        return;
+    }
+    if (m_tool.kind() == interaction::SketchToolKind::mirror) {
+        if (const auto axis = axisNear(raw)) {
+            m_hoverIds.push_back(*axis);
+            const auto result = interaction::mirrorElements(m_elements, m_picked, *axis);
+            if (result.notice == interaction::SketchCopyNotice::none) {
+                m_preview = result.edit.added;
+            }
+        }
+        return;
+    }
+    if (m_anchor) {
+        const core::SketchPoint pointer = m_caught ? m_caught->position : raw;
+        const auto result = patternResult(pointer);
+        if (result.notice == interaction::SketchCopyNotice::none) {
+            m_preview = result.edit.added;
+        }
+    }
+}
+
+void SketchController::proceed() {
+    if (!copyTool() || m_second || m_picked.empty()) {
+        return;
+    }
+    m_second = true;
+    m_anchor.reset();
+    m_patTyped[0].reset();
+    m_patTyped[1].reset();
+    if (m_rawPointer) {
+        updateEditHover(*m_rawPointer);
+    }
+    updateDraft();
+}
+
+void SketchController::applyCopy(const interaction::SketchCopyResult& result,
+                                 const QString& action) {
+    using interaction::SketchCopyNotice;
+    switch (result.notice) {
+    case SketchCopyNotice::none: {
+        const bool pattern = patternTool();
+        const std::size_t way = m_tool.variant() == 0 ? 0 : 1;
+        const int count = m_shownCount;
+        if (applyEdit(result.edit, action) && pattern) {
+            m_patCount[way] = count; // the count used last
+        }
+        break;
+    }
+    case SketchCopyNotice::noAxis:
+        say(QStringLiteral("mirrorAxis"));
+        break;
+    case SketchCopyNotice::tooMany:
+        say(QStringLiteral("patternTooMany"));
+        break;
+    case SketchCopyNotice::nothing:
+        say(QStringLiteral("patternNothing"));
+        break;
+    case SketchCopyNotice::nothingNew:
+    case SketchCopyNotice::noSelection:
+        say(QStringLiteral("copiesNone"));
+        break;
+    }
+}
+
+void SketchController::commitCopy() {
+    if (m_model == nullptr || !m_rawPointer) {
+        return;
+    }
+    if (!m_second) { // choosing: a click takes a chain in or out
+        const double reach = kEditPixels / std::max(m_pixelsPerMillimetre, 1e-6);
+        const auto id = interaction::pickElementNear(m_elements, *m_rawPointer, reach);
+        if (!id) {
+            return;
+        }
+        const std::vector<std::string> ids = chainIds(*id);
+        if (std::ranges::find(m_picked, *id) != m_picked.end()) {
+            std::erase_if(m_picked, [&](const std::string& other) {
+                return std::ranges::find(ids, other) != ids.end();
+            });
+        } else {
+            for (const std::string& other : ids) {
+                if (std::ranges::find(m_picked, other) == m_picked.end()) {
+                    m_picked.push_back(other);
+                }
+            }
+        }
+        updateEditHover(*m_rawPointer);
+        updateDraft();
+        return;
+    }
+    if (m_tool.kind() == interaction::SketchToolKind::mirror) {
+        const auto axis = axisNear(*m_rawPointer);
+        if (!axis) {
+            say(QStringLiteral("mirrorAxis"));
+            return;
+        }
+        applyCopy(interaction::mirrorElements(m_elements, m_picked, *axis),
+                  QStringLiteral("mirrorSketch"));
+        return;
+    }
+    const core::SketchPoint pointer = m_caught ? m_caught->position : *m_rawPointer;
+    if (!m_anchor) { // the first click of the second step: the start of the row, the middle
+        m_anchor = pointer;
+        updateEditHover(*m_rawPointer);
+        updateDraft();
+        return;
+    }
+    applyCopy(patternResult(pointer), QStringLiteral("patternSketch"));
+}
+
 // The element being pulled: its numbers for the view, and the drawing.
 void SketchController::updateDraft() {
     m_draft = toolActive() ? m_tool.draft() : interaction::SketchDraft{};
@@ -1398,10 +1676,22 @@ void SketchController::updateDraft() {
     if (editDrafting() && m_planeReady) {
         QVariantList fields;
         QVariantMap entry;
-        entry[QStringLiteral("name")] =
-            cornerTool() && !chamfering() ? QStringLiteral("radius") : QStringLiteral("distance");
-        entry[QStringLiteral("value")] = m_editValue;
-        entry[QStringLiteral("typed")] = m_typedValue.has_value();
+        if (patternReadout()) {
+            entry[QStringLiteral("name")] = QStringLiteral("count");
+            entry[QStringLiteral("value")] = m_shownCount;
+            entry[QStringLiteral("typed")] = m_patTyped[0].has_value();
+            fields << entry;
+            entry[QStringLiteral("name")] =
+                m_tool.variant() == 0 ? QStringLiteral("distance") : QStringLiteral("angle");
+            entry[QStringLiteral("value")] = m_editValue;
+            entry[QStringLiteral("typed")] = m_patTyped[1].has_value();
+        } else {
+            entry[QStringLiteral("name")] = cornerTool() && !chamfering()
+                                                ? QStringLiteral("radius")
+                                                : QStringLiteral("distance");
+            entry[QStringLiteral("value")] = m_editValue;
+            entry[QStringLiteral("typed")] = m_typedValue.has_value();
+        }
         fields << entry;
         const core::SketchPoint where = m_rawPointer ? *m_rawPointer : core::SketchPoint{};
         map[QStringLiteral("valid")] = true;
