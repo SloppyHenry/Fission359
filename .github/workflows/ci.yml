@@ -98,11 +98,11 @@ jobs:
             vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_IMAGE }}-
 
       - name: Prerequisites (scripts/setup)
-        run: scripts/setup --yes --no-dev-tools
+        run: scripts/tools/retry -- scripts/setup --yes --no-dev-tools
 
       # Configuring runs "vcpkg install" for all libraries (a no-op on a warm cache).
       - name: Build libraries
-        run: cmake --preset ${{ matrix.preset }}
+        run: scripts/tools/retry --clean build/${{ matrix.preset }}/CMakeCache.txt --clean build/${{ matrix.preset }}/CMakeFiles -- cmake --preset ${{ matrix.preset }}
 
       # Saved even when the build failed, so that a retry resumes instead of starting over.
       # Pull requests only read the cache.
@@ -175,7 +175,7 @@ jobs:
             ccache-${{ matrix.preset }}-
 
       - name: Prerequisites (scripts/setup)
-        run: scripts/setup --yes --no-dev-tools
+        run: scripts/tools/retry -- scripts/setup --yes --no-dev-tools
 
       - name: Install ccache
         run: |
@@ -186,7 +186,7 @@ jobs:
 
       - name: Configure and build
         run: |
-          cmake --preset ${{ matrix.preset }}
+          scripts/tools/retry --clean build/${{ matrix.preset }}/CMakeCache.txt --clean build/${{ matrix.preset }}/CMakeFiles -- cmake --preset ${{ matrix.preset }}
           cmake --build --preset ${{ matrix.preset }}
 
       - name: Test
@@ -253,7 +253,7 @@ jobs:
             vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_IMAGE }}-
 
       - name: Prerequisites (scripts/setup)
-        run: scripts/setup --yes --no-dev-tools
+        run: scripts/tools/retry -- scripts/setup --yes --no-dev-tools
 
       # ---- macOS ----------------------------------------------------------------------
       # Developer ID signing: only when the certificate secrets exist (paid Apple account).

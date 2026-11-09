@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Fission359 contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Runs a command again after a pause when it fails. Meant for CI steps that download tools
+# or sources (vcpkg, CMake, port archives) from servers that sometimes answer with timeouts
+# (HTTP 504). Only wrap steps that download; never wrap builds or tests, a real failure
+# would just be repeated.
+#
+# Usage: scripts/tools/retry [--attempts N] [--pause SECONDS] [--clean PATH] -- command [args...]
+#   --clean PATH  removed before each new attempt (e.g. a half-configured CMake cache)
+
+set -uo pipefail
+
+attempts=4
+pause=120
+clean=()
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --attempts) attempts="$2"; shift 2 ;;
+        --pause)    pause="$2"; shift 2 ;;
+        --clean)    clean+=("$2"); shift 2 ;;
+        --)         shift; break ;;
+        *)          echo "retry: unknown option $1" >&2; exit 2 ;;
+    esac
+done
+
+if [ $# -eq 0 ]; then
+    echo "retry: no command given" >&2
+    exit 2
+fi
+
+for ((attempt = 1; attempt <= attempts; attempt++)); do
+    "$@" && exit 0
+    status=$?
+    if [ "$attempt" -eq "$attempts" ]; then
+        echo "retry: giving up after $attempts attempts (exit code $status)" >&2
+        exit "$status"
+    fi
+    echo "::warning::Attempt $attempt of $attempts failed (exit code $status), trying again in ${pause}s: $*"
+    for path in "${clean[@]+"${clean[@]}"}"; do
+        rm -rf -- "$path"
+    done
+    sleep "$pause"
+done
