@@ -19,7 +19,22 @@
 
 namespace fission::interaction {
 
-enum class SketchToolKind { none, line, rectangle, circle, point, arc, slot, polygon, spline };
+/// `trim` and `extend` (AP-2.1e1) draw nothing: they edit what is drawn, which the sketch
+/// controller does with `SketchTrimmer` and `findExtension`; here they are only names that can be
+/// chosen.
+enum class SketchToolKind {
+    none,
+    line,
+    rectangle,
+    circle,
+    point,
+    arc,
+    slot,
+    polygon,
+    spline,
+    trim,
+    extend
+};
 
 /// Variants of a tool: the rectangle by two corners (0) or by its middle and a corner (1); the
 /// circle by its middle and a point on it (0, the radius) or by three points on it (1); the arc by

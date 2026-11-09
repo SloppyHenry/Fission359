@@ -71,8 +71,11 @@ public:
     /// False when the geometry layer could not calculate the crossings: nothing can be trimmed.
     bool usable() const noexcept { return usable_; }
 
-    /// The piece nearest to `at` within `reach` mm (points have no pieces).
-    std::optional<SketchPiece> pieceAt(const core::SketchPoint& at, double reach) const;
+    /// The piece nearest to `at` within `reach` mm (points have no pieces). Where two elements are
+    /// equally near (at a corner), the one with the id `prefer` wins, so that a stroke along an
+    /// element stays on it; else the first.
+    std::optional<SketchPiece> pieceAt(const core::SketchPoint& at, double reach,
+                                       const std::string& prefer = {}) const;
     /// The piece as a chain of short lines, for drawing it (red).
     std::vector<core::SketchPoint> outline(const SketchPiece& piece) const;
     /// Takes the pieces away, all against the sketch as it is now (the crossings of pieces that

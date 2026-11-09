@@ -84,6 +84,17 @@ TEST_CASE("trim: a line crossed twice has three pieces, found under the pointer"
     checkPoint(outline[1], 7, 0);
 }
 
+TEST_CASE("trim: at a corner the element the stroke is on wins", "[sketch][trim]") {
+    const auto k = kernel();
+    const std::vector<SketchElement> sketch{line("L1", {0, 0}, {10, 0}),
+                                            line("L2", {10, 0}, {10, 8})};
+    const SketchTrimmer trimmer(*k, sketch);
+    CHECK(trimmer.pieceAt({10, 0}, 0.5)->element == "L1"); // equally near: the first
+    CHECK(trimmer.pieceAt({10, 0}, 0.5, "L2")->element == "L2");
+    CHECK(trimmer.pieceAt({10, 0}, 0.5, "L1")->element == "L1");
+    CHECK(trimmer.pieceAt({10, 3}, 0.5, "L1")->element == "L2"); // nearer wins over the wish
+}
+
 TEST_CASE("trim: a piece in the middle makes two lines, the first keeps the id", "[sketch][trim]") {
     const auto k = kernel();
     const std::vector<SketchElement> sketch{

@@ -1025,3 +1025,281 @@ TEST_CASE("sketch tools: a curve of 50 points follows the pointer without lag",
     CHECK(f.elements().size() == 1);
     CHECK(f.elements()[0].points.size() == 50);
 }
+
+// --- trimming and extending (AP-2.1e1) ----------------------------------------------------
+
+namespace {
+
+core::SketchElement lineOf(double u1, double v1, double u2, double v2) {
+    return {"", core::SketchElementKind::line, {{u1, v1}, {u2, v2}}, false};
+}
+core::SketchElement circleOf(double u, double v, double radius) {
+    return {"", core::SketchElementKind::circle, {{u, v}, {u + radius, v}}, false};
+}
+
+// Puts elements into the sketch the way a tool would (each one a step), and lets the controller
+// see them.
+void put(Drawing& f, const std::vector<core::SketchElement>& elements) {
+    for (const core::SketchElement& element : elements) {
+        REQUIRE(f.model->addSketchElements(f.sketch->step(), {element}, QStringLiteral("line")));
+    }
+    f.settle();
+}
+
+} // namespace
+
+TEST_CASE("sketch trim: a click on the piece between two crossings shortens the line",
+          "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(0, 0, 40, 0), lineOf(10, -10, 10, 10), lineOf(30, -10, 30, 10)});
+    f.sketch->chooseTool(QStringLiteral("trim"));
+    CHECK(f.sketch->toolName() == "trim");
+    CHECK_FALSE(f.sketch->drawing()); // nothing is pulled: no number to type
+
+    f.move(35, 0.5);
+    f.click(35, 0.5); // the end piece
+    auto elements = f.elements();
+    REQUIRE(elements.size() == 3);
+    CHECK(elements[0].id == "L1");
+    checkPoint(elements[0].points[0], 0, 0);
+    checkPoint(elements[0].points[1], 30, 0);
+    CHECK(f.nextUndo() == "trimSketch");
+    CHECK(f.notices.isEmpty());
+
+    REQUIRE(f.model->undo());
+    f.settle();
+    elements = f.elements();
+    REQUIRE(elements.size() == 3);
+    checkPoint(elements[0].points[1], 40, 0);
+}
+
+TEST_CASE("sketch trim: a piece in the middle makes two lines, undo and redo give the same ids",
+          "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(0, 0, 40, 0), lineOf(10, -10, 10, 10), lineOf(30, -10, 30, 10)});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("trim"));
+    f.click(20, 0.5);
+    auto after = f.elements();
+    REQUIRE(after.size() == 4);
+    CHECK(after[0].id == "L1"); // the first piece keeps the id
+    checkPoint(after[0].points[1], 10, 0);
+    CHECK(after[3].id == "L4"); // the other piece is new
+    checkPoint(after[3].points[0], 30, 0);
+    checkPoint(after[3].points[1], 40, 0);
+
+    REQUIRE(f.model->undo()); // one step takes both back
+    f.settle();
+    CHECK(f.elements() == before);
+    REQUIRE(f.model->redo());
+    f.settle();
+    CHECK(f.elements() == after);
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements() == before);
+}
+
+TEST_CASE("sketch trim: a line nothing crosses goes whole", "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(0, 0, 40, 0), lineOf(0, 20, 40, 20)});
+    f.sketch->chooseTool(QStringLiteral("trim"));
+    f.click(20, 0.5);
+    REQUIRE(f.elements().size() == 1);
+    CHECK(f.elements()[0].id == "L2");
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements().size() == 2);
+}
+
+TEST_CASE("sketch trim: a circle cut twice becomes an arc, uncut it goes whole",
+          "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {circleOf(0, 0, 10), lineOf(0, -20, 0, 20)});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("trim"));
+    f.click(10, 0); // the right half
+    auto elements = f.elements();
+    REQUIRE(elements.size() == 2);
+    CHECK(f.count(core::SketchElementKind::circle) == 0);
+    REQUIRE(f.count(core::SketchElementKind::arc) == 1);
+    const core::SketchElement arc =
+        *std::ranges::find(elements, core::SketchElementKind::arc, &core::SketchElement::kind);
+    CHECK(arc.id == "A1");
+    checkPoint(arc.points[1], 0, 10); // counter-clockwise from the top
+    checkPoint(arc.points[2], 0, -10);
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements() == before);
+
+    // a circle nothing crosses: whole
+    put(f, {circleOf(50, 50, 5)});
+    f.click(55, 50);
+    CHECK(f.count(core::SketchElementKind::circle) == 1);
+}
+
+TEST_CASE("sketch trim: a stroke over three pieces is one undo step", "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(0, 0, 40, 0), lineOf(10, -10, 10, 10), lineOf(30, -10, 30, 10)});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("trim"));
+    f.sketch->pressAt(Drawing::down(4, 0.3), 2.0);
+    f.sketch->dragTo(Drawing::down(20, 0.3), 2.0);
+    f.sketch->dragTo(Drawing::down(36, 0.3), 2.0);
+    f.sketch->releaseAt(Drawing::down(36, 0.3), 2.0, false, true);
+    f.settle();
+    CHECK(f.count(core::SketchElementKind::line) == 2); // L1 is gone, the two walls stay
+    CHECK(f.elements()[0].id == "L2");
+    CHECK(f.nextUndo() == "trimSketch");
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements() == before); // ONE step brings all three pieces back
+}
+
+TEST_CASE("sketch trim: a stroke that jumps over a piece takes it too", "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(0, 0, 40, 0), lineOf(10, -10, 10, 10), lineOf(30, -10, 30, 10)});
+    f.sketch->chooseTool(QStringLiteral("trim"));
+    f.sketch->pressAt(Drawing::down(4, 0.3), 2.0);
+    f.sketch->dragTo(Drawing::down(36, 0.3), 2.0); // one jump over the middle piece
+    f.sketch->releaseAt(Drawing::down(36, 0.3), 2.0, false, true);
+    f.settle();
+    CHECK(f.count(core::SketchElementKind::line) == 2);
+}
+
+TEST_CASE("sketch trim: a press and release without moving is a click, trimming once",
+          "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(0, 0, 40, 0), lineOf(10, -10, 10, 10), lineOf(30, -10, 30, 10)});
+    f.sketch->chooseTool(QStringLiteral("trim"));
+    f.sketch->pressAt(Drawing::down(35, 0.3), 2.0);
+    f.sketch->releaseAt(Drawing::down(35, 0.3), 2.0, false, false); // not dragged
+    CHECK(f.elements()[0].points[1].u == Approx(40));               // nothing happened yet
+    f.click(35, 0.3);                                               // the click that follows
+    f.settle();
+    CHECK(f.elements()[0].points[1].u == Approx(30));
+    // one more step to undo, not two
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements()[0].points[1].u == Approx(40));
+}
+
+TEST_CASE("sketch trim: Esc drops a stroke, then ends the tool", "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(0, 0, 40, 0), lineOf(10, -10, 10, 10)});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("trim"));
+    f.sketch->pressAt(Drawing::down(30, 0.3), 2.0);
+    f.sketch->dragTo(Drawing::down(35, 0.3), 2.0);
+    f.sketch->escape(); // the stroke
+    CHECK(f.sketch->toolActive());
+    f.sketch->releaseAt(Drawing::down(35, 0.3), 2.0, false, true);
+    CHECK(f.elements() == before);
+    f.sketch->escape(); // the tool
+    CHECK_FALSE(f.sketch->toolActive());
+}
+
+TEST_CASE("sketch trim: a curve that is crossed gives a hint and stays",
+          "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    core::SketchElement wave{
+        "", core::SketchElementKind::spline, {{0, 0}, {10, 8}, {20, -4}, {35, 6}}, false};
+    put(f, {wave, lineOf(15, -20, 15, 20)});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("trim"));
+    f.click(10, 8);
+    CHECK(f.elements() == before);
+    CHECK(f.notices.contains(QStringLiteral("curvePartial")));
+    CHECK(f.nextUndo() != "trimSketch");
+}
+
+TEST_CASE("sketch trim: a curve nothing crosses goes whole", "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    core::SketchElement wave{
+        "", core::SketchElementKind::spline, {{0, 0}, {10, 8}, {20, -4}, {35, 6}}, false};
+    put(f, {wave, lineOf(0, 40, 40, 40)});
+    f.sketch->chooseTool(QStringLiteral("trim"));
+    f.click(10, 8);
+    CHECK(f.count(core::SketchElementKind::spline) == 0);
+    CHECK(f.notices.isEmpty());
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.count(core::SketchElementKind::spline) == 1);
+}
+
+TEST_CASE("sketch extend: a click near the end goes on to the next line, undo puts it back",
+          "[ui][sketchtools][extend]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(0, 0, 20, 0), lineOf(50, -10, 50, 10)});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("extend"));
+    CHECK(f.sketch->toolName() == "extend");
+    f.move(19, 0.5); // the preview is there, nothing changed yet
+    CHECK(f.elements() == before);
+    f.click(19, 0.5);
+    auto elements = f.elements();
+    REQUIRE(elements.size() == 2);
+    CHECK(elements[0].id == "L1");
+    checkPoint(elements[0].points[0], 0, 0);
+    checkPoint(elements[0].points[1], 50, 0);
+    CHECK(f.nextUndo() == "extendSketch");
+
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements() == before);
+    REQUIRE(f.model->redo());
+    f.settle();
+    checkPoint(f.elements()[0].points[1], 50, 0);
+}
+
+TEST_CASE("sketch extend: an arc goes on along its circle", "[ui][sketchtools][extend]") {
+    NoCatching free;
+    Drawing f;
+    const double r = 10.0;
+    const double a = std::numbers::pi / 3.0;
+    core::SketchElement arc{"",
+                            core::SketchElementKind::arc,
+                            {{0, 0}, {r, 0}, {r * std::cos(a), r * std::sin(a)}},
+                            false};
+    put(f, {arc, lineOf(-4, -20, -4, 20)});
+    f.sketch->chooseTool(QStringLiteral("extend"));
+    f.click(r * std::cos(a), r * std::sin(a));
+    const auto elements = f.elements();
+    REQUIRE(elements.size() == 2);
+    checkPoint(elements[0].points[1], r, 0);
+    checkPoint(elements[0].points[2], -4, std::sqrt(r * r - 16.0));
+}
+
+TEST_CASE("sketch extend: nothing in the way gives a hint and changes nothing",
+          "[ui][sketchtools][extend]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(0, 0, 20, 0)});
+    const auto before = f.elements();
+    f.sketch->chooseTool(QStringLiteral("extend"));
+    f.click(19, 0.5);
+    CHECK(f.elements() == before);
+    CHECK(f.notices.contains(QStringLiteral("nothingToExtend")));
+    CHECK(f.nextUndo() != "extendSketch");
+}
+
+TEST_CASE("sketch trim: with the tool off nothing is trimmed", "[ui][sketchtools][trim]") {
+    NoCatching free;
+    Drawing f;
+    put(f, {lineOf(0, 0, 40, 0), lineOf(10, -10, 10, 10)});
+    const auto before = f.elements();
+    f.sketch->pressAt(Drawing::down(30, 0.3), 2.0);
+    f.sketch->releaseAt(Drawing::down(30, 0.3), 2.0, false, true);
+    f.click(30, 0.3);
+    CHECK(f.elements() == before);
+}

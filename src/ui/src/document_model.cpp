@@ -32,6 +32,7 @@
 #include "fission/geo/error.h"
 #include "fission/geo/seat.h"
 #include "fission/interaction/align.h"
+#include "fission/interaction/sketch_edit.h"
 #include "fission/render/detail.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/printer_catalog.h"
@@ -3844,6 +3845,39 @@ bool DocumentModel::addSketchElements(const QString& stepId,
             documentChanged();
             return false;
         }
+    }
+    finishTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
+bool DocumentModel::applySketchEdit(const QString& stepId, const interaction::SketchEdit& edit,
+                                    const QString& action) {
+    const core::FeatureId id{stepId.toStdString()};
+    const core::Feature* step = m_history.document().findFeature(id);
+    if (step == nullptr || !step->sketch || edit.empty()) {
+        return false;
+    }
+    m_history.beginTransaction(
+        {action.toStdString(),
+         {{"type", "sketch"},
+          {"number", std::to_string(m_history.document().indexOf(id).value_or(0) + 1)}}});
+    bool done = true;
+    for (const core::SketchPointMove& move : edit.moves) {
+        done = done && m_history.execute(core::makeMoveSketchPoints(id, {move}));
+    }
+    for (const std::string& element : edit.removed) {
+        done = done && m_history.execute(core::makeRemoveSketchElement(id, element));
+    }
+    for (const core::SketchElement& element : edit.added) {
+        done = done && m_history.execute(std::make_unique<core::AddSketchElementCommand>(
+                           id, element.kind, element.points, element.construction));
+    }
+    if (!done) {
+        m_history.cancelTransaction();
+        documentChanged();
+        return false;
     }
     finishTransaction();
     documentChanged();

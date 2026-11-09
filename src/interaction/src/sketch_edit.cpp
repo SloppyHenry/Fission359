@@ -307,7 +307,9 @@ SketchTrimmer::Cut SketchTrimmer::pieceEnd(const Part& part, std::size_t index) 
     return part.cuts[index];
 }
 
-std::optional<SketchPiece> SketchTrimmer::pieceAt(const SketchPoint& at, double reach) const {
+std::optional<SketchPiece> SketchTrimmer::pieceAt(const SketchPoint& at, double reach,
+                                                  const std::string& prefer) const {
+    constexpr double kTie = 1e-9;
     const Part* best = nullptr;
     double bestDistance = reach;
     double bestParameter = 0.0;
@@ -318,7 +320,11 @@ std::optional<SketchPiece> SketchTrimmer::pieceAt(const SketchPoint& at, double 
         } else {
             near = nearestOn(part.shape, at);
         }
-        if (near.distance <= bestDistance) {
+        const bool better =
+            best == nullptr ? near.distance <= reach : near.distance < bestDistance - kTie;
+        const bool tiePreferred =
+            best != nullptr && near.distance <= bestDistance + kTie && part.element.id == prefer;
+        if (better || tiePreferred) {
             best = &part;
             bestDistance = near.distance;
             bestParameter = near.parameter;

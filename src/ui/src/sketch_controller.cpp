@@ -34,6 +34,7 @@ constexpr float kGuideWidth = 1.25F;
 constexpr double kDashPixels = 6.0;
 constexpr double kArcDragPixels = 6.0; // pulling further than this from a line end makes an arc
 constexpr int kMaxGridLines = 160;     // per direction
+constexpr double kEditPixels = 12.0;   // how near the pointer must be to a piece or an end to trim
 
 QVector3D at(const core::SketchPlane& plane, double u, double v) {
     const geo::Point3d world = plane.toWorld({u, v});
@@ -206,6 +207,10 @@ const char* toolWord(interaction::SketchToolKind kind) {
         return "polygon";
     case interaction::SketchToolKind::spline:
         return "spline";
+    case interaction::SketchToolKind::trim:
+        return "trim";
+    case interaction::SketchToolKind::extend:
+        return "extend";
     case interaction::SketchToolKind::none:
         break;
     }
@@ -320,6 +325,7 @@ void SketchController::beginOn(const QString& stepId) {
     m_snapMap = {};
     m_tool.select(interaction::SketchToolKind::none);
     m_tool.setHelperLine(false);
+    forgetEdit();
     m_tool.setPolygonSides(interaction::kSketchDefaultSides); // the last number lasts one sketch
     updateDraft();
     if (m_viewport != nullptr && !m_previousPose) {
@@ -347,6 +353,8 @@ void SketchController::leave(bool removeIfEmpty) {
     m_gridStep = 0.0;
     m_tool.select(interaction::SketchToolKind::none);
     m_tool.setHelperLine(false);
+    forgetEdit();
+    m_trimmer.reset();
     if (m_viewport != nullptr) {
         m_viewport->setHandleGraphics({}, Viewport3D::HandleSource::sketch);
     }
@@ -382,6 +390,11 @@ void SketchController::escape() {
     }
     // First the element being pulled, then the tool, then the sketch (decision 10 and 13).
     if (toolActive()) {
+        if (m_stroking) { // a stroke of trimming is dropped first
+            forgetEdit();
+            refresh();
+            return;
+        }
         if (!m_tool.cancel()) {
             chooseTool(QString());
         }
@@ -438,6 +451,9 @@ void SketchController::onModelChanged() {
     const bool changed = ready != m_planeReady;
     m_planeReady = ready;
     m_elements = m_model->sketchElements(m_step);
+    m_trimmer.reset(); // the pieces depend on the elements
+    m_hoverPiece.reset();
+    m_hoverExtension.reset();
     refresh();
     if (changed) {
         emit stateChanged();
@@ -517,11 +533,20 @@ void SketchController::pointAt(const interaction::PlaneRay& ray, double pixelsPe
     map[QStringLiteral("guides")] = static_cast<int>(m_caught->guides.size());
     m_snapMap = map;
     m_tool.moveTo(m_caught->position, altHeld());
+    if (editingTool()) {
+        updateEditHover(*onPlane);
+    }
     updateDraft(); // draws, too
     emit snapChanged();
 }
 
 void SketchController::pointerGone() {
+    m_rawPointer.reset();
+    if (m_hoverPiece || m_hoverExtension) {
+        m_hoverPiece.reset();
+        m_hoverExtension.reset();
+        refresh();
+    }
     if (!m_caught && m_snapMap.isEmpty()) {
         return;
     }
@@ -606,6 +631,32 @@ void SketchController::refresh() {
                             curveOf(element));
             }
         }
+        if (toolActive() && m_trimmer) {
+            // what trimming would take away: the pieces a stroke went over and the one under the
+            // pointer
+            std::vector<interaction::SketchPiece> shown = m_marked;
+            if (m_hoverPiece) {
+                shown.push_back(*m_hoverPiece);
+            }
+            for (const interaction::SketchPiece& piece : shown) {
+                const std::vector<core::SketchPoint> outline = m_trimmer->outline(piece);
+                for (std::size_t i = 1; i < outline.size(); ++i) {
+                    line(graphics, m_plane, outline[i - 1], outline[i], kDraftWidth, m_trimColour);
+                }
+            }
+        }
+        if (toolActive() && m_hoverExtension) {
+            const std::vector<core::SketchPoint>& way = m_hoverExtension->preview;
+            const double dash = kDashPixels / std::max(ppm, 1e-6);
+            chain(graphics, m_plane, way, kDraftWidth, m_draftColour, true, dash);
+            render::HandleDot target;
+            target.centre = at(m_plane, m_hoverExtension->target.u, m_hoverExtension->target.v);
+            target.radius = 4.5F;
+            target.fill = m_draftColour;
+            target.ring = QColor(255, 255, 255, 230);
+            target.ringWidth = 1.5F;
+            graphics.dots.push_back(target);
+        }
         if (m_caught) {
             const double dash = kDashPixels / std::max(ppm, 1e-6);
             for (const interaction::SketchGuide& guide : m_caught->guides) {
@@ -657,7 +708,7 @@ void SketchController::chooseTool(const QString& name, int variant) {
     for (const SketchToolKind candidate :
          {SketchToolKind::line, SketchToolKind::rectangle, SketchToolKind::circle,
           SketchToolKind::point, SketchToolKind::arc, SketchToolKind::slot, SketchToolKind::polygon,
-          SketchToolKind::spline}) {
+          SketchToolKind::spline, SketchToolKind::trim, SketchToolKind::extend}) {
         if (name == QLatin1String(toolWord(candidate))) {
             kind = candidate;
         }
@@ -667,6 +718,7 @@ void SketchController::chooseTool(const QString& name, int variant) {
         remembered = variant == 0 ? 0 : 1;
     }
     m_tool.select(kind, remembered);
+    forgetEdit();
     emit toolChanged();
     updateDraft();
 }
@@ -697,6 +749,14 @@ void SketchController::clickAt(const interaction::PlaneRay& ray, double pixelsPe
     if (!m_caught) {
         return; // not over the plane
     }
+    if (editingTool()) { // a click on a piece or an end (a stroke was dropped at the release)
+        if (m_tool.kind() == interaction::SketchToolKind::trim) {
+            commitTrim();
+        } else {
+            commitExtend();
+        }
+        return;
+    }
     applyStep(m_tool.click(m_caught->position, alt));
 }
 
@@ -716,7 +776,7 @@ void SketchController::onDragged(double x, double y) {
     onPointerMoved(x, y);
 }
 
-void SketchController::onReleased(double x, double y) {
+void SketchController::onReleased(double x, double y, bool dragged) {
     if (m_viewport == nullptr) {
         return;
     }
@@ -724,7 +784,7 @@ void SketchController::onReleased(double x, double y) {
     if (ray) {
         releaseAt({{ray->origin.x(), ray->origin.y(), ray->origin.z()},
                    {ray->direction.x(), ray->direction.y(), ray->direction.z()}},
-                  m_viewport->pixelsPerMillimetre(), altHeld());
+                  m_viewport->pixelsPerMillimetre(), altHeld(), dragged);
     }
     m_viewport->setDrawDrag(false);
 }
@@ -735,6 +795,20 @@ void SketchController::pressAt(const interaction::PlaneRay& ray, double pixelsPe
     }
     pointAt(ray, pixelsPerMillimetre);
     if (!m_caught) {
+        return;
+    }
+    if (editingTool()) {
+        // trimming: the press starts a stroke over pieces; the release sets it (decision 34)
+        const bool trim = m_tool.kind() == interaction::SketchToolKind::trim;
+        m_stroking = trim;
+        m_marked.clear();
+        if (trim && m_hoverPiece) {
+            m_marked.push_back(*m_hoverPiece);
+        }
+        if (m_viewport != nullptr) {
+            m_viewport->setDrawDrag(trim);
+        }
+        refresh();
         return;
     }
     const double ppm = std::max(pixelsPerMillimetre, 1e-6);
@@ -752,11 +826,20 @@ void SketchController::dragTo(const interaction::PlaneRay& ray, double pixelsPer
 }
 
 void SketchController::releaseAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre,
-                                 bool alt) {
+                                 bool alt, bool dragged) {
     if (!toolActive() || !m_planeReady) {
         return;
     }
     pointAt(ray, pixelsPerMillimetre);
+    if (editingTool()) {
+        if (m_stroking && dragged) {
+            commitTrim();
+        }
+        m_stroking = false; // a stroke that was only a click: the click that follows trims
+        m_marked.clear();
+        refresh();
+        return;
+    }
     if (!m_caught) {
         return;
     }
@@ -831,6 +914,126 @@ void SketchController::applyStep(const interaction::SketchToolStep& step) {
     }
     updateDraft();
     if (!step.done.empty()) {
+        emit elementDone();
+    }
+}
+
+// --- trimming and extending (AP-2.1e1) --------------------------------------------------
+
+bool SketchController::editingTool() const noexcept {
+    return toolActive() && (m_tool.kind() == interaction::SketchToolKind::trim ||
+                            m_tool.kind() == interaction::SketchToolKind::extend);
+}
+
+const interaction::SketchTrimmer* SketchController::trimmer() {
+    if (!m_trimmer && m_model != nullptr) {
+        m_trimmer.emplace(m_model->sketchKernel(), m_elements);
+    }
+    return m_trimmer ? &*m_trimmer : nullptr;
+}
+
+void SketchController::forgetEdit() {
+    m_stroking = false;
+    m_marked.clear();
+    m_hoverPiece.reset();
+    m_hoverExtension.reset();
+}
+
+void SketchController::updateEditHover(const core::SketchPoint& raw) {
+    const double reach = kEditPixels / std::max(m_pixelsPerMillimetre, 1e-6);
+    if (m_tool.kind() == interaction::SketchToolKind::trim) {
+        const interaction::SketchTrimmer* pieces = trimmer();
+        if (pieces == nullptr) {
+            return;
+        }
+        m_hoverPiece = pieces->pieceAt(
+            raw, reach, m_stroking && !m_marked.empty() ? m_marked.back().element : std::string());
+        if (m_stroking) {
+            if (m_rawPointer) {
+                markAlong(*m_rawPointer, raw);
+            }
+            if (m_hoverPiece && std::ranges::find(m_marked, *m_hoverPiece) == m_marked.end()) {
+                m_marked.push_back(*m_hoverPiece);
+            }
+        }
+    } else if (m_model != nullptr) {
+        m_hoverExtension =
+            interaction::findExtension(m_model->sketchKernel(), m_elements, raw, reach);
+    }
+    m_rawPointer = raw;
+}
+
+// A stroke goes over every piece between two positions of the pointer, also when the pointer
+// jumped over some.
+void SketchController::markAlong(const core::SketchPoint& from, const core::SketchPoint& to) {
+    const interaction::SketchTrimmer* pieces = trimmer();
+    if (pieces == nullptr) {
+        return;
+    }
+    const double reach = kEditPixels / std::max(m_pixelsPerMillimetre, 1e-6);
+    const double length = std::hypot(to.u - from.u, to.v - from.v);
+    const int steps = std::clamp(static_cast<int>(std::ceil(length / (reach * 0.5))), 1, 400);
+    for (int i = 1; i <= steps; ++i) {
+        const double t = static_cast<double>(i) / steps;
+        const auto piece = pieces->pieceAt(
+            {from.u + (to.u - from.u) * t, from.v + (to.v - from.v) * t}, reach * 0.5);
+        if (piece && std::ranges::find(m_marked, *piece) == m_marked.end()) {
+            m_marked.push_back(*piece);
+        }
+    }
+}
+
+void SketchController::commitTrim() {
+    const interaction::SketchTrimmer* pieces = trimmer();
+    if (pieces == nullptr) {
+        return;
+    }
+    std::vector<interaction::SketchPiece> taken = m_marked;
+    if (m_hoverPiece && std::ranges::find(taken, *m_hoverPiece) == taken.end()) {
+        taken.push_back(*m_hoverPiece);
+    }
+    m_stroking = false;
+    m_marked.clear();
+    if (!pieces->usable()) {
+        emit notice(QStringLiteral("editFailed"));
+        return;
+    }
+    if (taken.empty()) {
+        return;
+    }
+    applyEdit(pieces->trim(taken), QStringLiteral("trimSketch"));
+}
+
+void SketchController::commitExtend() {
+    if (m_model == nullptr || !m_rawPointer) {
+        return;
+    }
+    const double reach = kEditPixels / std::max(m_pixelsPerMillimetre, 1e-6);
+    bool usable = true;
+    const auto found = interaction::findExtension(m_model->sketchKernel(), m_elements,
+                                                  *m_rawPointer, reach, &usable);
+    if (!usable) {
+        emit notice(QStringLiteral("editFailed"));
+    } else if (!found) {
+        emit notice(QStringLiteral("nothingToExtend"));
+    } else {
+        applyEdit(interaction::extensionEdit(m_elements, *found), QStringLiteral("extendSketch"));
+    }
+}
+
+void SketchController::applyEdit(const interaction::SketchEdit& edit, const QString& action) {
+    if (edit.notice == interaction::SketchEditNotice::curvePartial) {
+        emit notice(QStringLiteral("curvePartial"));
+    }
+    if (!edit.empty() && m_model != nullptr && m_model->applySketchEdit(m_step, edit, action)) {
+        m_elements = m_model->sketchElements(m_step);
+        m_trimmer.reset();
+        m_hoverPiece.reset();
+        m_hoverExtension.reset();
+        if (m_rawPointer) {
+            updateEditHover(*m_rawPointer);
+        }
+        updateDraft();
         emit elementDone();
     }
 }
