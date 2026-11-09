@@ -1779,12 +1779,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1028"/>
+        <location line="+1031"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location line="-1027"/>
+        <location line="-1030"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
@@ -2015,12 +2015,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1655"/>
+        <location line="+1658"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1654"/>
+        <location line="-1657"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -2051,12 +2051,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1632"/>
+        <location line="+1635"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1630"/>
+        <location line="-1633"/>
         <source>Round edges</source>
         <translation>Kanten abrunden</translation>
     </message>
@@ -2097,12 +2097,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1630"/>
+        <location line="+1633"/>
         <source>Draft</source>
         <translation>Schräge</translation>
     </message>
     <message>
-        <location line="-1628"/>
+        <location line="-1631"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -2162,24 +2162,19 @@
         <translation>Fang mit einer Form an: Öffne „Formen“ in der Werkzeugleiste oder drücke %1 und sag, was du bauen willst.</translation>
     </message>
     <message>
-        <location line="+10"/>
-        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
-        <translation>Du skizzierst: Wähle links ein Werkzeug (L Linie, R Rechteck, C Kreis, A Bogen, S Langloch, G Polygon, K Kurve, P Punkt, X Hilfslinie). Der Zeiger rastet an Punkten, Mitten und am Raster ein; mit Umschalt gedrückt rastet er nicht ein. „Fertig“ oder Esc verlässt die Skizze.</translation>
-    </message>
-    <message>
-        <location line="+24"/>
-        <location line="+1077"/>
+        <location line="+34"/>
+        <location line="+1080"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-1075"/>
-        <location line="+1076"/>
+        <location line="-1078"/>
+        <location line="+1079"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-1070"/>
+        <location line="-1073"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -2362,7 +2357,7 @@
         <translation>normal</translation>
     </message>
     <message>
-        <location line="+166"/>
+        <location line="+169"/>
         <source>Click an edge of the body this step works on.</source>
         <translation>Klicke eine Kante des Körpers, auf dem dieser Schritt arbeitet.</translation>
     </message>
@@ -2436,7 +2431,7 @@
         </translation>
     </message>
     <message>
-        <location line="-891"/>
+        <location line="-894"/>
         <source>Arrives in a later version.</source>
         <translation>Kommt in einer späteren Version.</translation>
     </message>
@@ -2471,7 +2466,7 @@
         <translation>Kopiere zuerst etwas.</translation>
     </message>
     <message>
-        <location line="+1107"/>
+        <location line="+1110"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
@@ -2486,7 +2481,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1527"/>
+        <location line="-1530"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -2546,7 +2541,7 @@
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
     <message>
-        <location line="+1560"/>
+        <location line="+1563"/>
         <source>Unit: mm</source>
         <translation>Einheit: mm</translation>
     </message>
@@ -2654,12 +2649,12 @@
         <translation>%1 hinzugefügt</translation>
     </message>
     <message>
-        <location line="-1160"/>
+        <location line="-1163"/>
         <source>This body cannot be hollowed: it may already be part of another body.</source>
         <translation>Dieser Körper lässt sich nicht aushöhlen: Er gehört vielleicht schon zu einem anderen Körper.</translation>
     </message>
     <message>
-        <location line="+852"/>
+        <location line="+855"/>
         <source>Bevelled. Drag the grip or type a distance.</source>
         <translation>Abgeschrägt. Ziehe am Griff oder tippe einen Abstand.</translation>
     </message>
@@ -2729,7 +2724,7 @@
         <translation>Umriss exportiert.</translation>
     </message>
     <message>
-        <location line="-970"/>
+        <location line="-973"/>
         <source>Helper lines are on: what you draw is only an aid.</source>
         <translation>Hilfslinien sind an: Was du zeichnest, ist nur eine Hilfe.</translation>
     </message>
@@ -2739,12 +2734,17 @@
         <translation>Mit Umschalt rastet der Zeiger nicht ein, mit %1 zeichnest du eine Hilfslinie.</translation>
     </message>
     <message>
-        <location line="+92"/>
+        <location line="+2"/>
+        <source>Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.</source>
+        <translation>Du skizzierst: Wähle links ein Werkzeug (L Linie, R Rechteck, C Kreis, A Bogen, S Langloch, G Polygon, K Kurve, T Trimmen, E Verlängern, P Punkt, X Hilfslinie). Der Zeiger rastet an Punkten, Mitten und am Raster ein; mit Umschalt gedrückt rastet er nicht ein. „Fertig“ oder Esc verlässt die Skizze.</translation>
+    </message>
+    <message>
+        <location line="+90"/>
         <source>Open a sketch first (the tool “Sketch”).</source>
         <translation>Öffne zuerst eine Skizze (Werkzeug „Skizze“).</translation>
     </message>
     <message>
-        <location line="+1493"/>
+        <location line="+1496"/>
         <source>Imported body</source>
         <translation>Importierter Körper</translation>
     </message>
@@ -2983,6 +2983,16 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Sketch trimmed</source>
+        <translation>Skizze getrimmt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sketch extended</source>
+        <translation>Skizze verlängert</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>%1 made a helper line</source>
         <translation>%1 zur Hilfslinie gemacht</translation>
     </message>
@@ -3129,37 +3139,37 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-375"/>
+        <location line="-377"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1627"/>
+        <location line="-1630"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1662"/>
+        <location line="+1665"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1465"/>
+        <location line="-1468"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+823"/>
+        <location line="+826"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-883"/>
+        <location line="-886"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
     <message>
-        <location line="+1650"/>
+        <location line="+1653"/>
         <source>Slot</source>
         <translation>Langloch</translation>
     </message>
@@ -3416,7 +3426,7 @@
 <context>
     <name>MessageCatalog</name>
     <message>
-        <location filename="../qml/MessageCatalog.qml" line="+97"/>
+        <location filename="../qml/MessageCatalog.qml" line="+100"/>
         <source>It was inches</source>
         <translation>Es waren Zoll</translation>
     </message>
@@ -3708,7 +3718,7 @@
         <translation>„%1“ kenne ich nicht.</translation>
     </message>
     <message>
-        <location line="-259"/>
+        <location line="-262"/>
         <source>Sketches only go on flat faces. Tip: helper planes come later.</source>
         <translation>Skizzen gehen nur auf ebenen Flächen. Tipp: Hilfsebenen kommen später.</translation>
     </message>
@@ -3736,6 +3746,21 @@
         <location line="+2"/>
         <source>No smooth curve goes through these points. Move a point a little, or draw fewer.</source>
         <translation>Durch diese Punkte geht keine glatte Kurve. Verschiebe einen Punkt ein wenig oder setze weniger Punkte.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Curves cannot be trimmed in part yet. Only a curve that nothing crosses can be taken away whole.</source>
+        <translation>Kurven lassen sich noch nicht teilweise trimmen. Nur eine Kurve, die nichts kreuzt, lässt sich ganz entfernen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>There is nothing to extend to here: no line, circle or curve lies in the way.</source>
+        <translation>Hier ist nichts zum Verlängern: Keine Linie, kein Kreis und keine Kurve liegt im Weg.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>That could not be worked out. Nothing was changed.</source>
+        <translation>Das ließ sich nicht berechnen. Es wurde nichts geändert.</translation>
     </message>
     <message>
         <location line="+69"/>
@@ -3956,7 +3981,7 @@
         <translation>Die Berechnung wurde durch eine neuere Änderung ersetzt.</translation>
     </message>
     <message>
-        <location line="-353"/>
+        <location line="-356"/>
         <source>A polygon has a whole number of sides from 3 to 64. The number before stays.</source>
         <translation>Ein Polygon hat eine ganze Zahl von Seiten, von 3 bis 64. Die Zahl davor bleibt.</translation>
     </message>
@@ -4936,6 +4961,36 @@
     </message>
     <message>
         <location line="+4"/>
+        <source>Trim</source>
+        <translation>Trimmen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Takes away the piece of a line, circle or arc between two crossings. Click a piece, or drag across several to take them all in one step.</source>
+        <translation>Entfernt das Stück einer Linie, eines Kreises oder Bogens zwischen zwei Schnittpunkten. Klicke ein Stück an oder streiche über mehrere, um alle in einem Schritt zu entfernen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click the piece to take away.</source>
+        <translation>Klicke das Stück an, das weg soll.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Extend</source>
+        <translation>Verlängern</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a line or an arc longer, up to the next line, circle or curve in its way. Click near the end you want to extend.</source>
+        <translation>Macht eine Linie oder einen Bogen länger, bis zur nächsten Linie, zum nächsten Kreis oder zur nächsten Kurve im Weg. Klicke nahe an das Ende, das länger werden soll.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click near the end to extend.</source>
+        <translation>Klicke nahe an das Ende, das länger werden soll.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Point</source>
         <translation>Punkt</translation>
     </message>
@@ -5036,11 +5091,21 @@
     </message>
     <message>
         <location line="+2"/>
+        <source>Click a piece to take it away, or drag across several pieces. Esc ends the tool.</source>
+        <translation>Klicke ein Stück an, um es zu entfernen, oder streiche über mehrere Stücke. Esc beendet das Werkzeug.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Click near the end of a line or an arc to extend it up to the next curve. Esc ends the tool.</source>
+        <translation>Klicke nahe an das Ende einer Linie oder eines Bogens, um es bis zur nächsten Kurve zu verlängern. Esc beendet das Werkzeug.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Click where the point goes. Esc ends the tool.</source>
         <translation>Klicke dorthin, wo der Punkt hin soll. Esc beendet das Werkzeug.</translation>
     </message>
     <message>
-        <location line="-93"/>
+        <location line="-109"/>
         <source>Arc</source>
         <translation>Bogen</translation>
     </message>
@@ -5100,7 +5165,7 @@
         <translation>Seitenmitte (Inkreis)</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+46"/>
         <source>Let go to set the arc that joins the line, or type its radius. Enter sets it, Esc drops it.</source>
         <translation>Lass los, um den anschließenden Bogen zu setzen, oder tippe seinen Radius. Enter setzt ihn, Esc verwirft ihn.</translation>
     </message>

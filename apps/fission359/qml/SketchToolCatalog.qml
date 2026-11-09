@@ -6,7 +6,7 @@ import QtQuick
 // The drawing tools of the sketch mode (AP-2.1c1): the name on the button, the sentence of its
 // tooltip card, what the hint line says, and the words the command search finds it by (German and
 // English at once). Rule 10 of the master prompt: every tool brings these along. `key` is the key
-// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G; AP-2.1d the curve K). `variants` are the ways to draw it (the first is
+// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G; AP-2.1d the curve K, AP-2.1e1 Trim T and Extend E). `variants` are the ways to draw it (the first is
 // the standard); "helper" is a switch, not a tool.
 QtObject {
     readonly property var tools: [
@@ -51,6 +51,18 @@ QtObject {
           hint: qsTr("Click where the curve starts."),
           synonyms: { de: ["kurve", "spline", "freiform", "schwung", "geschwungene linie", "schlangenlinie"],
                       en: ["curve", "spline", "freeform", "smooth curve", "wavy line", "bezier"] },
+          variants: [] },
+        { id: "trim", name: qsTr("Trim"), icon: "sketchtrim", key: "T",
+          tip: qsTr("Takes away the piece of a line, circle or arc between two crossings. Click a piece, or drag across several to take them all in one step."),
+          hint: qsTr("Click the piece to take away."),
+          synonyms: { de: ["trimmen", "abschneiden", "kürzen", "überstand weg", "stück entfernen"],
+                      en: ["trim", "cut back", "remove segment", "cut off", "clean up"] },
+          variants: [] },
+        { id: "extend", name: qsTr("Extend"), icon: "sketchextend", key: "E",
+          tip: qsTr("Makes a line or an arc longer, up to the next line, circle or curve in its way. Click near the end you want to extend."),
+          hint: qsTr("Click near the end to extend."),
+          synonyms: { de: ["verlängern", "verlängern bis", "strecken bis", "anschließen", "weiterführen"],
+                      en: ["extend", "lengthen", "extend to", "stretch to", "reach"] },
           variants: [] },
         { id: "point", name: qsTr("Point"), icon: "sketchpoint", key: "P",
           tip: qsTr("Places a point, as a mark to catch on later."),
@@ -120,6 +132,10 @@ QtObject {
             return placed === 0 ? qsTr("Click where the curve starts. Esc ends the tool.")
                  : placed === 1 ? qsTr("Click the next point of the curve, or type a length (Tab: the angle). Esc throws the curve away.")
                                 : qsTr("Click the next point. Double-click or Enter sets the curve, Backspace takes the last point back, a click on the first point closes it. Esc throws it away.")
+        case "trim":
+            return qsTr("Click a piece to take it away, or drag across several pieces. Esc ends the tool.")
+        case "extend":
+            return qsTr("Click near the end of a line or an arc to extend it up to the next curve. Esc ends the tool.")
         case "point":
             return qsTr("Click where the point goes. Esc ends the tool.")
         }

@@ -81,6 +81,9 @@ QtObject {
         case "tooSmall": return qsTr("That is too small to draw (under 0.01 mm). Pull a little further.")
         case "badSides": return qsTr("A polygon has a whole number of sides from 3 to 64. The number before stays.")
         case "curveFailed": return qsTr("No smooth curve goes through these points. Move a point a little, or draw fewer.")
+        case "curvePartial": return qsTr("Curves cannot be trimmed in part yet. Only a curve that nothing crosses can be taken away whole.")
+        case "nothingToExtend": return qsTr("There is nothing to extend to here: no line, circle or curve lies in the way.")
+        case "editFailed": return qsTr("That could not be worked out. Nothing was changed.")
         default: return ""
         }
     }

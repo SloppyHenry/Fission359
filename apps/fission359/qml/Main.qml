@@ -204,7 +204,7 @@ Window {
             return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed, Sketch.pullingArc)
                    + " " + qsTr("Shift switches catching off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
         }
-        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
+        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
     }
 
     // ---- undo and redo ---------------------------------------------------------------------
@@ -848,6 +848,8 @@ Window {
     Shortcut { sequence: "S"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.slot") }
     Shortcut { sequence: "G"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.polygon") }
     Shortcut { sequence: "K"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.spline") }
+    Shortcut { sequence: "T"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.trim") }
+    Shortcut { sequence: "E"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.extend") }
     Shortcut { sequence: "P"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.point") }
     Shortcut { sequence: "X"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.helper") }
     Shortcut { sequence: "Ctrl+A"; enabled: !root.isMac; onActivated: root.run("selectall") }
@@ -920,6 +922,7 @@ Window {
     Binding { target: Sketch; property: "guideColour"; value: Theme.accentLine }
     Binding { target: Sketch; property: "markerColour"; value: Theme.accentLine }
     Binding { target: Sketch; property: "draftColour"; value: Theme.accent }
+    Binding { target: Sketch; property: "trimColour"; value: Theme.bad }
     Connections {
         target: Selection
 
@@ -1885,6 +1888,8 @@ Window {
         case "addSketchElement": return qsTr("%1 added to the sketch").arg(sketchElementLabel(step.kind))
         case "removeSketchElement": return qsTr("%1 removed from the sketch").arg(sketchElementLabel(step.kind))
         case "moveSketchPoints": return qsTr("Sketch changed")
+        case "trimSketch": return qsTr("Sketch trimmed")
+        case "extendSketch": return qsTr("Sketch extended")
         case "sketchConstructionOn": return qsTr("%1 made a helper line").arg(sketchElementLabel(step.kind))
         case "sketchConstructionOff": return qsTr("%1 made a normal line again").arg(sketchElementLabel(step.kind))
         case "setLabel": return qsTr("Step renamed")
