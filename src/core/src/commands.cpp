@@ -166,7 +166,8 @@ public:
             }
             for (const SketchPointMove& move : after_) {
                 const SketchElement* element = feature->sketch->find(move.element);
-                if (element == nullptr) {
+                // an element that follows an edge of a body cannot be moved (AP-2.1f)
+                if (element == nullptr || element->link) {
                     return ApplyResult::refused;
                 }
                 before_.push_back({move.element, element->points});
@@ -782,9 +783,10 @@ std::unique_ptr<Command> makeRenameParameter(std::string name, std::string newNa
 // --- sketches -------------------------------------------------------------------------------
 
 AddSketchElementCommand::AddSketchElementCommand(FeatureId step, SketchElementKind kind,
-                                                 std::vector<SketchPoint> points, bool construction)
-    : step_(std::move(step)), kind_(kind), points_(std::move(points)), construction_(construction) {
-}
+                                                 std::vector<SketchPoint> points, bool construction,
+                                                 std::optional<SketchLink> link)
+    : step_(std::move(step)), kind_(kind), points_(std::move(points)), construction_(construction),
+      link_(link) {}
 
 ApplyResult AddSketchElementCommand::apply(Document& document) {
     const Feature* feature = document.findFeature(step_);
@@ -792,7 +794,7 @@ ApplyResult AddSketchElementCommand::apply(Document& document) {
         return ApplyResult::refused;
     }
     numberBefore_ = feature->sketch->lastNumber[static_cast<std::size_t>(kind_)];
-    element_ = document.addSketchElement(step_, kind_, points_, construction_);
+    element_ = document.addSketchElement(step_, kind_, points_, construction_, link_);
     if (!element_) {
         return ApplyResult::refused;
     }
@@ -838,6 +840,31 @@ std::unique_ptr<Command> makeSetSketchConstruction(FeatureId step, std::string e
         [step, element](const Document& document, const bool& value) {
             CommandDescription description = featureLabel(
                 document, step, value ? "sketchConstructionOn" : "sketchConstructionOff");
+            description.values["element"] = element;
+            return description;
+        });
+}
+
+std::unique_ptr<Command> makeSetSketchLink(FeatureId step, std::string element,
+                                           std::optional<SketchLink> link) {
+    std::string key = "sketchLink/" + step.value + "/" + element;
+    return std::make_unique<SetCommand<std::optional<SketchLink>>>(
+        std::move(key), link,
+        [step, element](const Document& document) -> std::optional<std::optional<SketchLink>> {
+            const Feature* feature = document.findFeature(step);
+            const SketchElement* found =
+                feature != nullptr && feature->sketch ? feature->sketch->find(element) : nullptr;
+            if (found == nullptr) {
+                return std::nullopt;
+            }
+            return std::optional<std::optional<SketchLink>>(found->link);
+        },
+        [step, element](Document& document, const std::optional<SketchLink>& value) {
+            return document.setSketchLink(step, element, value);
+        },
+        [step, element](const Document& document, const std::optional<SketchLink>& value) {
+            CommandDescription description =
+                featureLabel(document, step, value ? "linkSketchElement" : "unlinkSketchElement");
             description.values["element"] = element;
             return description;
         });

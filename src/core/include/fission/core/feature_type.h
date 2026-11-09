@@ -206,6 +206,17 @@ public:
     /// starts with an empty one.
     virtual bool carriesSketch() const { return false; }
 
+    /// Which of the step's input bodies the reference `index` of `slot` points into (by position in
+    /// `Feature::inputs`), or nothing when the reference is not used (any more) and so is not
+    /// looked up. The default: every reference points into the first input.
+    virtual std::optional<std::size_t> refInput(const Feature& feature, const std::string& slot,
+                                                std::size_t index) const {
+        (void)feature;
+        (void)slot;
+        (void)index;
+        return std::size_t{0};
+    }
+
     /// The values the step takes, with their defaults.
     virtual std::vector<ParamSpec> parameters() const = 0;
 

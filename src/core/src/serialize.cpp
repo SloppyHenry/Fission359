@@ -110,10 +110,14 @@ Json sketchJson(const SketchData& sketch) {
         for (const SketchPoint& point : element.points) {
             points.push_back(Json::array({point.u, point.v}));
         }
-        elements.push_back({{"id", element.id},
-                            {"kind", wordOf(sketchKindWords, element.kind)},
-                            {"points", std::move(points)},
-                            {"construction", element.construction}});
+        Json item = {{"id", element.id},
+                     {"kind", wordOf(sketchKindWords, element.kind)},
+                     {"points", std::move(points)},
+                     {"construction", element.construction}};
+        if (element.link) { // only a taken-over edge has the field (format 4)
+            item["link"] = {{"input", element.link->input}, {"ref", element.link->ref}};
+        }
+        elements.push_back(std::move(item));
     }
     Json lastNumber = Json::object();
     for (const auto& [kind, word] : sketchKindWords) {
@@ -430,6 +434,19 @@ SketchData sketchFrom(const Json& json, const std::string& path, Problems& probl
             element.points.push_back({pair[0].get<double>(), pair[1].get<double>()});
         }
         element.construction = item.flag("construction");
+        if (const Json* link = item.optionalField("link")) {
+            ObjectReader linkReader(*link, item.path("link"), problems);
+            SketchLink made;
+            const int input = linkReader.integer("input");
+            const int ref = linkReader.integer("ref");
+            if (input < 0 || ref < 0) {
+                fail(LoadProblemCode::wrongType, item.path("link"));
+            }
+            made.input = static_cast<std::size_t>(input);
+            made.ref = static_cast<std::size_t>(ref);
+            linkReader.finish();
+            element.link = made;
+        }
         item.finish();
         sketch.elements.push_back(std::move(element));
     }
@@ -714,6 +731,8 @@ LoadResult fromJson(std::string_view text) {
     // Version 1 -> 2 (AP-2.9): every measure gets the field `slider`, empty.
     // Version 2 -> 3 (AP-2.1): sketch steps carry the field `sketch`; every other step has none.
     // Nothing to rewrite: a sketch step without the field is an empty sketch on the ground plane.
+    // Version 3 -> 4 (AP-2.1f): a sketch element may have the field `link` (a taken-over edge); a
+    // missing field means not linked, so there is nothing to rewrite either.
     static const MigrationTable builtIn = {{1,
                                             [](Json& root) {
                                                 const auto found = root.find("parameters");
@@ -727,7 +746,8 @@ LoadResult fromJson(std::string_view text) {
                                                     }
                                                 }
                                             }},
-                                           {2, [](Json&) {}}};
+                                           {2, [](Json&) {}},
+                                           {3, [](Json&) {}}};
     return read(text, builtIn, currentFormatVersion);
 }
 

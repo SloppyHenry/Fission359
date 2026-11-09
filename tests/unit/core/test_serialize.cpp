@@ -330,10 +330,10 @@ TEST_CASE("only sketch steps carry the field sketch", "[serialize][sketch]") {
         sketches += feature.contains("sketch") ? 1 : 0;
     }
     CHECK(sketches == 1);
-    CHECK(json.at("formatVersion") == 3);
+    CHECK(json.at("formatVersion") == 4);
 }
 
-TEST_CASE("a file of format 2 opens in format 3, a sketch step is an empty sketch",
+TEST_CASE("a file of format 2 opens in format 4, a sketch step is an empty sketch",
           "[serialize][sketch]") {
     Json json = Json::parse(toJson(everythingDocument()));
     json["formatVersion"] = 2;
@@ -346,12 +346,12 @@ TEST_CASE("a file of format 2 opens in format 3, a sketch step is an empty sketc
     const Feature& step = sketchStep(*loaded.document);
     REQUIRE(step.sketch.has_value());
     CHECK(step.sketch->elements.empty());
-    // Written again it is format 3, with the field.
-    CHECK(Json::parse(toJson(*loaded.document)).at("formatVersion") == 3);
+    // Written again it is the current format, with the field.
+    CHECK(Json::parse(toJson(*loaded.document)).at("formatVersion") == 4);
     CHECK(load(toJson(*loaded.document)).document->sameContentAs(*loaded.document));
 }
 
-TEST_CASE("a file of format 1 is lifted through 2 to 3", "[serialize][sketch]") {
+TEST_CASE("a file of format 1 is lifted through 2 and 3 to 4", "[serialize][sketch]") {
     Json json = Json::parse(toJson(everythingDocument()));
     json["formatVersion"] = 1;
     for (Json& feature : json["features"]) {
@@ -365,6 +365,97 @@ TEST_CASE("a file of format 1 is lifted through 2 to 3", "[serialize][sketch]") 
     CHECK(loaded.problems.empty());
     CHECK(sketchStep(*loaded.document).sketch.has_value());
     CHECK_FALSE(loaded.document->parameters().front().slider);
+}
+
+// --- taken-over edges (AP-2.1f, format 4) ------------------------------------------------------
+
+namespace {
+
+// The document of `everythingDocument` with the sketch's first line linked to an edge.
+Document linkedDocument() {
+    Document document = everythingDocument();
+    const FeatureId step = sketchStep(document).id;
+    document.setSketchLink(step, "L2", SketchLink{1, 3});
+    return document;
+}
+
+} // namespace
+
+TEST_CASE("a link to an edge survives the round trip, and only linked elements have the field",
+          "[serialize][sketch][format4]") {
+    const Document original = linkedDocument();
+    const Json json = Json::parse(toJson(original));
+    CHECK(json.at("formatVersion") == currentFormatVersion);
+    int links = 0;
+    for (const Json& feature : json.at("features")) {
+        if (!feature.contains("sketch")) {
+            continue;
+        }
+        for (const Json& element : feature.at("sketch").at("elements")) {
+            if (element.contains("link")) {
+                ++links;
+                CHECK(element.at("id") == "L2");
+                CHECK(element.at("link").at("input") == 1);
+                CHECK(element.at("link").at("ref") == 3);
+            }
+        }
+    }
+    CHECK(links == 1);
+
+    const LoadResult loaded = load(toJson(original));
+    REQUIRE(loaded.document);
+    CHECK(loaded.problems.empty());
+    const SketchElement* line = sketchStep(*loaded.document).sketch->find("L2");
+    REQUIRE(line != nullptr);
+    CHECK(line->link == SketchLink{1, 3});
+    CHECK(loaded.document->sameContentAs(original));
+    CHECK_FALSE(sketchStep(*loaded.document).sketch->find("C1")->link.has_value());
+}
+
+TEST_CASE("a file of format 3 opens in format 4, nothing is linked",
+          "[serialize][sketch][format4]") {
+    Json json = Json::parse(toJson(everythingDocument()));
+    json["formatVersion"] = 3;
+    const LoadResult loaded = load(json.dump());
+    REQUIRE(loaded.document);
+    CHECK(loaded.problems.empty());
+    for (const SketchElement& element : sketchStep(*loaded.document).sketch->elements) {
+        CHECK_FALSE(element.link.has_value());
+    }
+    CHECK(sketchStep(*loaded.document).sketch->elements.size() == 5);
+    // Written again it is format 4
+    CHECK(Json::parse(toJson(*loaded.document)).at("formatVersion") == 4);
+    CHECK(load(toJson(*loaded.document)).document->sameContentAs(*loaded.document));
+}
+
+TEST_CASE("a program of format 3 would refuse format 4: the file says so", "[serialize][format4]") {
+    // The version number is what older programs check; a file with a link is never written as 3.
+    const Json json = Json::parse(toJson(linkedDocument()));
+    CHECK(json.at("formatVersion") >= 4);
+}
+
+TEST_CASE("a broken link gives a problem and no document", "[serialize][sketch][format4]") {
+    const Json good = Json::parse(toJson(linkedDocument()));
+    std::size_t at = 0;
+    while (good["features"][at].at("type") != "sketch") {
+        ++at;
+    }
+    const auto broken = [&](const std::function<void(Json&)>& change) {
+        Json json = good;
+        for (Json& element : json["features"][at]["sketch"]["elements"]) {
+            if (element.contains("link")) {
+                change(element["link"]);
+            }
+        }
+        return load(json.dump());
+    };
+    CHECK_FALSE(broken([](Json& link) { link["input"] = -1; }).document);
+    CHECK_FALSE(broken([](Json& link) { link["ref"] = "x"; }).document);
+    CHECK_FALSE(broken([](Json& link) { link.erase("ref"); }).document);
+    // an unknown field is only noted
+    const LoadResult extra = broken([](Json& link) { link["later"] = 1; });
+    REQUIRE(extra.document);
+    CHECK(extra.hasFatalProblem() == false);
 }
 
 TEST_CASE("broken sketches give a problem and no document", "[serialize][sketch]") {

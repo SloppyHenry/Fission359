@@ -403,29 +403,40 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
                     help->consumedBy = consumedStep;
                 }
             };
-            const BodyResult* target = inputBodies.empty() ? nullptr : inputBodies.front();
-            const BodyLooks* looksPtr = nullptr;
-            bool described = false;
-            if (target != nullptr) {
-                try {
-                    // Many steps point into the same body: describe it once per run.
-                    const auto key = std::make_pair(target->token, target->outputIndex);
-                    auto known = looksOfBody.find(key);
-                    if (known == looksOfBody.end()) {
-                        known = looksOfBody
+            // What each input body looks like, described once per run (many steps point into the
+            // same body); nullptr when it could not be described.
+            std::map<std::size_t, const BodyLooks*> looksOfInput;
+            const auto looksOf = [&](std::size_t input) -> const BodyLooks* {
+                const auto seen = looksOfInput.find(input);
+                if (seen != looksOfInput.end()) {
+                    return seen->second;
+                }
+                const BodyLooks* looks = nullptr;
+                const BodyResult* target =
+                    input < inputBodies.size() ? inputBodies[input] : nullptr;
+                if (target != nullptr) {
+                    try {
+                        const auto key = std::make_pair(target->token, target->outputIndex);
+                        auto known = looksOfBody.find(key);
+                        if (known == looksOfBody.end()) {
+                            known =
+                                looksOfBody
                                     .emplace(key, describeBody(target->faces,
                                                                kernel.signatures(target->solid)))
                                     .first;
+                        }
+                        looks = &known->second;
+                    } catch (const geo::GeometryError& error) {
+                        const auto& first = *feature.refs.begin();
+                        needHelp(first.first, 0,
+                                 first.second.empty() ? ElementKind::face
+                                                      : first.second.front().kind,
+                                 HelpReason::notFound, error.what());
                     }
-                    looksPtr = &known->second;
-                    described = true;
-                } catch (const geo::GeometryError& error) {
-                    const auto& first = *feature.refs.begin();
-                    needHelp(first.first, 0,
-                             first.second.empty() ? ElementKind::face : first.second.front().kind,
-                             HelpReason::notFound, error.what());
                 }
-            }
+                looksOfInput[input] = looks;
+                return looks;
+            };
             // The place of the step that made an element, worked out once per step.
             std::map<std::string, Placement> places;
             const PlacementFn placement = [&](const std::string& name) {
@@ -439,15 +450,24 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             for (const auto& [slot, list] : feature.refs) {
                 for (std::size_t index = 0; index < list.size(); ++index) {
                     const PersistentRef& ref = list[index];
-                    if (!described) {
+                    // A reference nobody uses (any more) is not looked up; its place stays.
+                    const std::optional<std::size_t> input = type->refInput(feature, slot, index);
+                    if (!input) {
+                        resolvedRefs[slot].push_back({ref.kind, {}, 0});
+                        continue;
+                    }
+                    const BodyLooks* looksPtr = looksOf(*input);
+                    if (looksPtr == nullptr) {
                         needHelp(slot, index, ref.kind, HelpReason::notFound, "no body to look in");
+                        resolvedRefs[slot].push_back({ref.kind, {}, 0});
                         continue;
                     }
                     const ResolveOutcome outcome =
-                        resolve(ref, *looksPtr, target->consumed, placement);
+                        resolve(ref, *looksPtr, inputBodies[*input]->consumed, placement);
                     if (outcome.state != ResolveOutcome::State::found) {
                         needHelp(slot, index, ref.kind, outcome.reason, outcome.detail,
                                  outcome.consumedBy);
+                        resolvedRefs[slot].push_back({ref.kind, {}, 0});
                         continue;
                     }
                     resolvedRefs[slot].push_back({ref.kind, outcome.element, outcome.id});
@@ -565,6 +585,27 @@ std::size_t applyHealedRefs(Document& document, const RecomputeResult& result) {
         list[healed.index] = healed.after;
         if (document.setFeatureRefs(healed.feature, healed.slot, std::move(list))) {
             ++written;
+        }
+    }
+    // Elements taken over from a body follow it (AP-2.1f): the document keeps the points they last
+    // had, so that a step that later cannot find its edge still shows them. Only a sketch that
+    // was calculated without a warning counts, and only an element that still has the same link.
+    for (const auto& [id, sketch] : result.sketches) {
+        const FeatureState* state = result.state(id);
+        const Feature* feature = document.findFeature(id);
+        if (state == nullptr || state->status != FeatureStatus::ok || feature == nullptr ||
+            !feature->sketch) {
+            continue;
+        }
+        for (const SketchElement& followed : sketch.data.elements) {
+            const SketchElement* saved = feature->sketch->find(followed.id);
+            if (!followed.link || saved == nullptr || saved->link != followed.link ||
+                saved->kind != followed.kind || saved->points == followed.points) {
+                continue;
+            }
+            if (document.setSketchPoints(id, followed.id, followed.points)) {
+                ++written;
+            }
         }
     }
     return written;

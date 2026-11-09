@@ -62,7 +62,7 @@ with tempfile.TemporaryDirectory() as data:
         check({"manifest.json", "document.json", "preview.png"} <= set(names), "parts missing: %s" % names)
         check(archive.read("preview.png")[:4] == b"\x89PNG", "the preview is not a picture")
         manifest = json.loads(archive.read("manifest.json"))
-        check(manifest["formatVersion"] == 3 and "document.json" in manifest["checksums"], "manifest")
+        check(manifest["formatVersion"] == 4 and "document.json" in manifest["checksums"], "manifest")
         document = json.loads(archive.read("document.json"))
         check([f["type"] for f in document["features"]] == ["box", "cylinder", "sphere"], "recipe in file")
     run(data, "recipe:box,cylinder,sphere;expectmodified:0", model)       # opened by argument

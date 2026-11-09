@@ -18,6 +18,7 @@
 #include "fission/geo/rotation.h"
 #include "fission/geo/signature.h"
 #include "fission/geo/sketch_curve.h"
+#include "fission/geo/sketch_edge.h"
 #include "fission/geo/sketch_intersections.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
@@ -356,6 +357,22 @@ public:
         (void)through;
         (void)tolerance;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot draw splines");
+    }
+
+    /// The edge `edgeId` of the body projected perpendicularly onto the plane `frame` (AP-2.1f), to
+    /// be taken over into a sketch. Exact: a straight edge gives a line, a circle or arc whose axis
+    /// is perpendicular to the plane gives a circle or arc (counter-clockwise as seen on the
+    /// plane). An edge that would be a point, or whose projection is no line, circle or arc, is
+    /// reported in the status, never approximated. Throws `GeometryError`: `invalidInput` for an
+    /// edge the body does not have or a frame that is not usable, `kernelFailure` when the kernel
+    /// fails. The default refuses.
+    virtual SketchEdgeShape projectEdgeToSketch(const Solid& solid, std::uint32_t edgeId,
+                                                const SketchFrame& frame) const {
+        (void)solid;
+        (void)edgeId;
+        (void)frame;
+        throw GeometryError(GeometryErrorCode::kernelFailure,
+                            "this kernel cannot project edges onto a sketch");
     }
 
     /// Where the curves of a sketch cross one another (AP-2.1e1), touches included (a line that
