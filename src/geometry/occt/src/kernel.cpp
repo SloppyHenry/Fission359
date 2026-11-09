@@ -8,6 +8,7 @@
 #include "fission/geo/occt/sketch_curve.h"
 #include "fission/geo/occt/sketch_edge.h"
 #include "fission/geo/occt/sketch_intersections.h"
+#include "fission/geo/occt/sketch_regions.h"
 #include "fission/geo/occt/solids.h"
 
 namespace fission::geo::occt {
@@ -111,6 +112,9 @@ public:
     std::vector<std::vector<SketchCrossing>>
     sketchIntersections(const std::vector<SketchCurve>& curves) const override {
         return occt::sketchIntersections(curves);
+    }
+    SketchRegionResult sketchRegions(const std::vector<SketchCurve>& curves) const override {
+        return occt::sketchRegions(curves);
     }
     std::vector<SketchCrossing>
     sketchCarrierCrossings(const SketchCurve& carrier,

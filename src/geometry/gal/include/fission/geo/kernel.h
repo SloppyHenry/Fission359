@@ -20,6 +20,7 @@
 #include "fission/geo/sketch_curve.h"
 #include "fission/geo/sketch_edge.h"
 #include "fission/geo/sketch_intersections.h"
+#include "fission/geo/sketch_regions.h"
 #include "fission/geo/solid.h"
 #include "fission/geo/types.h"
 
@@ -404,6 +405,20 @@ public:
         (void)others;
         throw GeometryError(GeometryErrorCode::kernelFailure,
                             "this kernel cannot cross sketch curves");
+    }
+
+    /// All closed areas of a sketch (AP-2.1g): the curves cut each other and a flat area, and every
+    /// piece that a closed boundary encloses is a region, overlaps included (two crossing circles
+    /// give three). Curves are as in `sketchIntersections`; the caller leaves out helper lines and
+    /// points. Open chains enclose nothing. Pieces smaller than `kSketchRegionMinArea` are dropped,
+    /// pieces that fail the validity check are counted in `rejected` and left out. Regions come
+    /// in a fixed order (by area, then position). Throws `GeometryError`: `invalidInput` for
+    /// curves without the right points or a number that is not finite, `kernelFailure` when the
+    /// kernel cannot calculate. The default refuses.
+    virtual SketchRegionResult sketchRegions(const std::vector<SketchCurve>& curves) const {
+        (void)curves;
+        throw GeometryError(GeometryErrorCode::kernelFailure,
+                            "this kernel cannot find sketch regions");
     }
 
     /// Measures one element (corner: position; edge: length, radius of a circle or arc; face:
