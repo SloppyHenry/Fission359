@@ -375,6 +375,15 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;sketchmove:400,300;sketchclick:400,300;sketchclick:600,300;expectsketchelements:line=1;sketchdrag:600,300,700,200;expectsketchelements:line=1,arc=1;sketchclick:700,100;expectsketchelements:line=2,arc=1;sketchdrag:700,100,800,50,hold;type:20,enter;expectsketchelements:line=2,arc=2;expectundo:addSketchElement;key:Escape;expectsketchtool:line;key:Escape;expectsketchtool:;menu:sketchtool.arc;sketchmove:300,500;sketchclick:300,500;sketchclick:500,500;sketchmove:400,430;sketchclick:400,430;expectsketchelements:line=2,arc=3;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_tangent_arc PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.1d: a curve through clicked points. The key K and the words Kurve / Freiform choose the tool;
+  # Backspace takes the last point back; a click on the first point closes the curve (one element);
+  # a double click sets an open one; Esc throws an unfinished curve away; one undo step per curve.
+  add_test(NAME app_sketch_curve_close
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-curve-close.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:Kurve,sketch.spline;search:Freiform,sketch.spline;key:K;expectsketchtool:spline;sketchmove:300,300;sketchclick:300,300;sketchmove:400,200;sketchclick:400,200;sketchmove:500,300;sketchclick:500,300;sketchmove:450,420;sketchclick:450,420;key:Backspace;sketchmove:400,400;sketchclick:400,400;sketchmove:300,300;sketchclick:300,300;expectsketchelements:spline=1;expectundo:addSketchElement;menu:undo;expectsketchelements:;menu:redo;expectsketchelements:spline=1;sketchmove:600,250;sketchclick:600,250;sketchmove:700,350;sketchclick:700,350;sketchmove:800,250;sketchdouble:800,250;expectsketchelements:spline=2;sketchmove:600,500;sketchclick:600,500;sketchmove:700,550;sketchclick:700,550;key:Escape;expectsketchelements:spline=2;expectsketchtool:spline;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
+  set_tests_properties(app_sketch_curve_close PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-1.7e: one body is split through the menu Body: the cut, and one placing step per part.
   add_test(NAME app_split_menu
     COMMAND ${_fission_gui_runner} ${_fission_app_exe}

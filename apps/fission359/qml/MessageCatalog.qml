@@ -80,6 +80,7 @@ QtObject {
         case "collinear": return qsTr("These points lie on one straight line, so no circle or arc fits through them. Click another point.")
         case "tooSmall": return qsTr("That is too small to draw (under 0.01 mm). Pull a little further.")
         case "badSides": return qsTr("A polygon has a whole number of sides from 3 to 64. The number before stays.")
+        case "curveFailed": return qsTr("No smooth curve goes through these points. Move a point a little, or draw fewer.")
         default: return ""
         }
     }

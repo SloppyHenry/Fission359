@@ -6,7 +6,7 @@ import QtQuick
 // The drawing tools of the sketch mode (AP-2.1c1): the name on the button, the sentence of its
 // tooltip card, what the hint line says, and the words the command search finds it by (German and
 // English at once). Rule 10 of the master prompt: every tool brings these along. `key` is the key
-// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G). `variants` are the ways to draw it (the first is
+// that chooses the tool while a sketch is open (AP-2.1c2 added arc A, slot S and polygon G; AP-2.1d the curve K). `variants` are the ways to draw it (the first is
 // the standard); "helper" is a switch, not a tool.
 QtObject {
     readonly property var tools: [
@@ -31,8 +31,8 @@ QtObject {
         { id: "arc", name: qsTr("Arc"), icon: "sketcharc", key: "A",
           tip: qsTr("Draws a piece of a circle: by its start, its end and a point on it, or by its middle, its start and its end. Type the radius or the angle while you draw."),
           hint: qsTr("Click where the arc starts."),
-          synonyms: { de: ["bogen", "kreisbogen", "rundung zeichnen", "kurve", "rundung"],
-                      en: ["arc", "curve segment", "circular arc", "curve", "bow"] },
+          synonyms: { de: ["bogen", "kreisbogen", "rundung zeichnen", "rundung", "viertelkreis"],
+                      en: ["arc", "curve segment", "circular arc", "bow", "quarter circle"] },
           variants: [qsTr("Three points"), qsTr("Middle, start and end")] },
         { id: "slot", name: qsTr("Slot"), icon: "sketchslot", key: "S",
           tip: qsTr("Draws a slot with round ends: click both middles, then pull the width. Type the length, the angle and the width while you draw."),
@@ -46,6 +46,12 @@ QtObject {
           synonyms: { de: ["polygon", "vieleck", "sechseck", "mehreck", "fünfeck"],
                       en: ["polygon", "hexagon", "n-gon", "regular polygon", "pentagon"] },
           variants: [qsTr("Corner (outer circle)"), qsTr("Side middle (inner circle)")] },
+        { id: "spline", name: qsTr("Curve"), icon: "sketchspline", key: "K",
+          tip: qsTr("Draws a smooth curve that goes through the points you click. A double click or Enter sets it, Backspace takes the last point back. Click the first point again to close the curve."),
+          hint: qsTr("Click where the curve starts."),
+          synonyms: { de: ["kurve", "spline", "freiform", "schwung", "geschwungene linie", "schlangenlinie"],
+                      en: ["curve", "spline", "freeform", "smooth curve", "wavy line", "bezier"] },
+          variants: [] },
         { id: "point", name: qsTr("Point"), icon: "sketchpoint", key: "P",
           tip: qsTr("Places a point, as a mark to catch on later."),
           hint: qsTr("Click where the point goes."),
@@ -110,6 +116,10 @@ QtObject {
         case "polygon":
             return placed === 0 ? qsTr("Click the middle of the polygon. Esc ends the tool.")
                                 : qsTr("Click a corner, or type the radius (Tab: the number of sides, then the angle). Enter sets it, Esc cancels.")
+        case "spline":
+            return placed === 0 ? qsTr("Click where the curve starts. Esc ends the tool.")
+                 : placed === 1 ? qsTr("Click the next point of the curve, or type a length (Tab: the angle). Esc throws the curve away.")
+                                : qsTr("Click the next point. Double-click or Enter sets the curve, Backspace takes the last point back, a click on the first point closes it. Esc throws it away.")
         case "point":
             return qsTr("Click where the point goes. Esc ends the tool.")
         }

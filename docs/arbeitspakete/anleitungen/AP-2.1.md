@@ -161,9 +161,26 @@ Offene Reste für 2.1d/e: Bögen, Langlöcher und Polygone haben noch keine geme
 ergänzen, jetzt nur geometrisch); Trimmen/Versetzen/Spiegeln müssen mit Bögen umgehen (Bogen = {Mitte, Anfang, Ende} gegen den Uhrzeigersinn); der Spline (2.1d) hängt sich als
 weiteres `SketchToolKind` in `SketchTool::shape` ein; Symbole der drei Werkzeuge sind einfache Umrisse und sollten mit der Gestaltung (`docs/08-gestaltung.md`) abgeglichen werden.
 
-## Teil 2.1d – Spline
-Kubischer B-Spline durch Klickpunkte (Interpolation) oder mit Kontrollpunkten (Haltepunkt: Empfehlung Durchgangspunkte, verständlicher).
-Umsetzung der Kurve in `geometry/occt` (`Geom2dAPI_Interpolate`), Anzeige als feine Polylinie.
+## Teil 2.1d – Kurve (Spline), gebaut 2026-11-09
+Gebaut: Festlegungen 26–31. Wo es im Code liegt: Die Kurve rechnet der Kern: `GeometryKernel::sketchSpline(punkte, toleranz)` (`src/geometry/gal/include/fission/geo/sketch_curve.h`,
+`SketchSplineCurve`: Polylinie, Anfangs- und Endrichtung, `closed`), Umsetzung `src/geometry/occt/src/sketch_curve.cpp` (`Geom2dAPI_Interpolate`, Parameter nach Sehnenlänge, periodisch,
+wenn der letzte Punkt dem ersten gleicht; die Durchgangspunkte sind genau Ecken der Polylinie; Unterteilung, wo die Kurve mehr als die halbe Toleranz von der Sehne abweicht; Prüfung, dass die
+Kurve wirklich durch alle Punkte geht; `Standard_Failure` wird `GeometryError(kernelFailure)`). Zustandsautomat: `SketchToolKind::spline` in `interaction::SketchTool` (Klick = Punkt, Doppelklick/Enter
+setzt, `undoPoint()` für ⌫, Klick auf den ersten Punkt schließt, `placedPoints()`). Controller: `SketchController::removeLastPoint`, die Punkte der laufenden Kurve fangen mit (der erste schließt), kleiner
+Zwischenspeicher der berechneten Polylinien (`curveOf`, damit Kamerabewegungen den Kern nicht fragen); `DocumentModel::sketchSplineLine` (Anzeige) und die Prüfung in `addSketchElements` (der Kern
+lehnt ab → nichts angelegt, Hinweis `curveFailed`). Oberfläche: Eintrag `spline` in `SketchToolCatalog.qml` (Taste K, Symbol `sketchspline`), Hinweise, Hinweis `curveFailed` im Meldungskatalog,
+Rückschritt-Taste und Enter als eigene Kurzbefehle nur beim Zeichnen einer Kurve (Rückschritt ist sonst „Löschen“, die beiden Kurzbefehle schließen sich gegenseitig aus; die Taste K hat sonst keinen
+Kurzbefehl, nur Strg/Cmd+K ist die Befehlssuche). Das Wort „Kurve“/„curve“ gehört jetzt dem Werkzeug Kurve, nicht mehr dem Bogen (Synonyme des Bogens angepasst). Fenster-Test (nur CI):
+`app_sketch_curve_close`.
+Weiter geltende Annahmen: Anzeige- und Prüftoleranz der Polylinie 0,005 mm (unter den 0,01 mm der Regel 12); Enter mit getippter Länge/Winkel setzt den nächsten Punkt (die Kurve geht weiter), Enter ohne
+Tippen setzt die Kurve durch die bisherigen Punkte (der Zeiger zählt nicht); nach einem Doppelklick auf demselben Punkt wie der letzte wird der doppelte Punkt nur einmal genommen; ein Klick auf den ersten Punkt
+mit nur zwei gesetzten Punkten schließt nicht (Hinweis `tooSmall`); eine geschlossene Kurve braucht drei verschiedene Punkte; Fangen aus (Umschalt) schließt auch nicht, weil das Schließen über das Fangen
+des ersten Punkts läuft; die Hilfslinie (Schalter/Alt) gilt auch für die Kurve (gestrichelt entlang der Polylinie). Die Punkte einer fertigen Kurve lassen sich noch nicht verschieben (kein Werkzeug dafür).
+Offene Reste für 2.1e–g: Trimmen, Verlängern, Versetzen, Spiegeln und Muster müssen Splines kennen (Schnittpunkte Kurve/Linie über OCCT, `Geom2dAPI_InterCurveCurve` auf der interpolierten Kurve; Versatz einer
+Kurve ergibt keine Interpolationskurve durch neue Punkte, sondern wieder eine Punktfolge, die der Kern neu berechnen muss: dafür braucht die GAL dann eine Funktion „Kurve auswerten bei Parameter“ oder die
+Polylinie selbst); Spiegeln/Muster einer Kurve sind einfach (Punkte spiegeln/verschieben), ohne Formatwechsel. 2.1f: projizierte Kanten, die Splines sind, brauchen eine Umrechnung in Durchgangspunkte (aus der
+Polylinie ausdünnen). 2.1g: Bereiche brauchen die Kurve als Kante (`sketchSpline().polyline` oder die B-Spline selbst); die Kurve einer Skizze wird bisher nur zum Zeichnen berechnet, nicht im
+`SketchResult`. Das Symbol `sketchspline` ist ein einfacher Umriss und sollte mit `docs/08-gestaltung.md` abgeglichen werden.
 
 ## Teil 2.1e – Bearbeiten
 Trimmen (über Linien streichen: Teile zwischen Schnittpunkten löschen), Verlängern (bis zur nächsten Kurve), Versetzen (Kette, Abstand

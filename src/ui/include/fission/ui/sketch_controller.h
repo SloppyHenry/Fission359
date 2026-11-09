@@ -46,7 +46,8 @@ class SketchController : public QObject {
     Q_PROPERTY(bool engaged READ engaged NOTIFY stateChanged)
     /// A drawing tool is on; Esc ends it before it ends the sketch.
     Q_PROPERTY(bool toolActive READ toolActive NOTIFY toolChanged)
-    /// The tool: "" (none), "line", "rectangle", "circle", "point", "arc", "slot" or "polygon"; and
+    /// The tool: "" (none), "line", "rectangle", "circle", "point", "arc", "slot", "polygon" or
+    /// "spline" (the curve); and
     /// its variant (rectangle: 0 two corners, 1 middle and corner; circle: 0 middle and radius,
     /// 1 three points; arc: 0 three points, 1 middle, start and end; polygon: 0 corner, 1 middle
     /// of a side).
@@ -147,6 +148,8 @@ public:
     /// A number typed for field 0 or 1 of the element being pulled (millimetres, or degrees for
     /// the angle); the element follows at once. NaN takes the number back.
     Q_INVOKABLE void setTyped(int field, double value);
+    /// Backspace: takes the last point of the curve being drawn back (AP-2.1d).
+    Q_INVOKABLE void removeLastPoint();
     /// Takes all typed numbers back (the element follows the pointer again).
     Q_INVOKABLE void clearTyped();
     /// Enter: sets the element as the typed numbers and the pointer make it.
@@ -169,7 +172,8 @@ signals:
     /// A sentence to tell the person, as a hint (never a dialog): "curvedFace" (sketches only go
     /// on flat faces), "faceUnusable" (this face cannot be drawn on), "needsHelp" (the sketch has
     /// no plane at the moment), "collinear" (three points on one line make no circle), "tooSmall"
-    /// (shorter than 0.01 mm: nothing was drawn), "badSides" (the polygon has 3 to 64 sides).
+    /// (shorter than 0.01 mm: nothing was drawn), "badSides" (the polygon has 3 to 64 sides),
+    /// "curveFailed" (the kernel could make no curve through the points; nothing was added).
     void notice(const QString& code);
 
 private:
@@ -181,6 +185,7 @@ private:
     void onPicked(int intent, bool extend, const QString& body, int kind, int number);
     void onPointerMoved(double x, double y);
     void refresh();
+    const std::vector<core::SketchPoint>* curveOf(const core::SketchElement& element);
     double baseStep() const;
     void applyStep(const interaction::SketchToolStep& step);
     void updateDraft();
@@ -205,7 +210,12 @@ private:
     std::optional<interaction::SketchSnap> m_caught;
     QVariantMap m_snapMap;
     interaction::SketchTool m_tool;
-    std::array<int, 8> m_variants{}; ///< the variant last used with each tool
+    std::array<int, 16> m_variants{}; ///< the variant last used with each tool
+    struct CachedCurve {
+        std::vector<core::SketchPoint> through;
+        std::vector<core::SketchPoint> line; ///< empty: the kernel refused
+    };
+    std::vector<CachedCurve> m_curves; ///< the curves of splines drawn lately
     interaction::SketchDraft m_draft;
     QVariantMap m_readout;
 
