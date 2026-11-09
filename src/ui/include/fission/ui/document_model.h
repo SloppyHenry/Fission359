@@ -489,6 +489,8 @@ public:
                          const QString& action);
     /// The kernel, for the sketch tools that need crossings (trim, extend).
     const geo::GeometryKernel& sketchKernel() const { return *m_kernel; }
+    /// The same kernel to be kept by a worker thread (the kernel does no state of its own).
+    std::shared_ptr<const geo::GeometryKernel> sketchKernelShared() const { return m_kernel; }
 
     // --- taking over edges (AP-2.1f) ---
     /// What `takeOverEdges` did: how many elements it made, how many edges could not be taken over

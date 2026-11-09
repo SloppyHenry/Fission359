@@ -22,7 +22,9 @@ AP-2.1 erledigt.
 
 ## Ausgangslage im Code
 PlaneGCS ist eingebunden und baut (`planegcs`-Bibliothek, darf nur von `fission_geometry_sketch` gelinkt werden). Skizzen haben Elemente
-mit festen Koordinaten (AP-2.1), noch keine Regeln.
+mit festen Koordinaten (AP-2.1), noch keine Regeln. Folgearbeiten aus AP-2.1 ([erledigt/AP-2.1.md](erledigt/AP-2.1.md)): ein änderbares, verknüpftes Muster (Anzahl und Abstand nachträglich ändern)
+und eine gehaltene Spiegelung (Symmetrie-Regel); Regeln auf verknüpften Elementen (feste Punkte); „Verknüpfung wiederherstellen“ nach dem Lösen; Bereiche (`computeSketchRegions`) müssen nach dem Lösen neu gerechnet werden
+(das tut der Hintergrund-Worker bei jeder Änderung der Elemente von selbst).
 
 ## Festlegungen
 - Unterbestimmte Skizzen sind gültig, nie rot. Farben: Blau = „kann sich noch bewegen“, dunkel = „steht fest“; immer mit Worten.

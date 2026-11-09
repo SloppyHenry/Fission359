@@ -611,6 +611,54 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("expectsketchregions")) {
+            // expectsketchregions:3 - the sketch shows exactly that many closed areas;
+            // expectsketchregions:3,selected - and one of them is chosen (",none": none is).
+            // The areas are worked out in the background: this looks every 100 ms until they are
+            // as expected, for at most 5 seconds, instead of guessing a moment.
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            const int wanted = spec.value(0).trimmed().toInt();
+            const QString choice = spec.value(1).trimmed();
+            delay += 500;
+            QTimer::singleShot(
+                delay, Qt::PreciseTimer, viewport, [viewport, sketch, wanted, choice] {
+                    const auto right = [sketch, wanted, choice] {
+                        if (sketch == nullptr || sketch->regionCount() != wanted ||
+                            sketch->regionsBusy()) {
+                            return false;
+                        }
+                        const bool chosen = !sketch->selectedRegion().isEmpty();
+                        return choice.isEmpty() ||
+                               (choice == QLatin1String("selected") ? chosen : !chosen);
+                    };
+                    auto* look = new QTimer(viewport);
+                    look->setInterval(100);
+                    look->setTimerType(Qt::PreciseTimer);
+                    QObject::connect(
+                        look, &QTimer::timeout, look,
+                        [look, right, sketch, wanted, choice, tries = 0]() mutable {
+                            if (!right() && ++tries < 50) {
+                                return;
+                            }
+                            look->stop();
+                            look->deleteLater();
+                            if (!right()) {
+                                qWarning().noquote()
+                                    << QStringLiteral("the sketch shows %1 areas (chosen: \"%2\"), "
+                                                      "expected %3 (%4)")
+                                           .arg(sketch != nullptr ? sketch->regionCount() : -1)
+                                           .arg(sketch != nullptr ? sketch->selectedRegion()
+                                                                  : QString())
+                                           .arg(wanted)
+                                           .arg(choice.isEmpty() ? QStringLiteral("any choice")
+                                                                 : choice);
+                                g_simulationFailure = 19;
+                            }
+                        });
+                    look->start();
+                });
+            continue;
+        }
         if (kind == QLatin1String("expectsketchlinked") ||
             kind == QLatin1String("expectsketchfollow")) {
             // expectsketchlinked:4 - the sketches of the recipe hold exactly that many elements

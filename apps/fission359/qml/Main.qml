@@ -204,7 +204,12 @@ Window {
             return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed, Sketch.pullingArc)
                    + " " + qsTr("Shift switches catching off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
         }
-        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + helper
+        const areas = Sketch.regionCount > 0
+            ? " " + (Sketch.selectedRegion !== ""
+                     ? qsTr("%n closed area(s). One is chosen: Esc or a click beside lets go.", "", Sketch.regionCount)
+                     : qsTr("%n closed area(s). Click one to choose it.", "", Sketch.regionCount))
+            : ""
+        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + areas + helper
     }
 
     // ---- undo and redo ---------------------------------------------------------------------
@@ -934,6 +939,8 @@ Window {
     Binding { target: Sketch; property: "markerColour"; value: Theme.accentLine }
     Binding { target: Sketch; property: "draftColour"; value: Theme.accent }
     Binding { target: Sketch; property: "trimColour"; value: Theme.bad }
+    // The shading of the closed areas (AP-2.1g): the accent, made see-through by the controller.
+    Binding { target: Sketch; property: "regionColour"; value: Theme.accent }
     // Elements that follow an edge of a body: the accent text colour (docs/08-gestaltung.md §2).
     Binding { target: Sketch; property: "linkedColour"; value: Theme.accentText }
     Connections {

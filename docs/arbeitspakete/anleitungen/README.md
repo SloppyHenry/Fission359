@@ -66,11 +66,10 @@ Abgeschlossene Anleitungen (AP-1.6c2 bis AP-1.12) liegen zum Nachschlagen in [er
 Nutzertests (AP-1.13, AP-2.15, AP-6.5) bereitet die Orchestrierung vor; sie blockieren den Ausbau nicht ([orchestrierung.md](orchestrierung.md), „Projektstand“).
 
 ### Phase 2 – Präzision
-Erledigt (Anleitungen in [erledigt/](erledigt/)): AP-2.10, AP-2.13, AP-2.9. Teil 1 in main: AP-2.14, AP-2.5, AP-2.4, AP-2.6, AP-2.11 (ohne Schnittansicht). Festlegung 2026-11-03: Phase 2 beginnt, während der Nutzertest 1 (AP-1.13) noch aussteht; AP-2.10 betrifft vor allem den Kern. Liegt die Auswertung vor, gehen ihre Top-3-Probleme jedem weiteren AP vor.
+Erledigt (Anleitungen in [erledigt/](erledigt/)): AP-2.1, AP-2.10, AP-2.13, AP-2.9. Teil 1 in main: AP-2.14, AP-2.5, AP-2.4, AP-2.6, AP-2.11 (ohne Schnittansicht). Festlegung 2026-11-03: Phase 2 beginnt, während der Nutzertest 1 (AP-1.13) noch aussteht; AP-2.10 betrifft vor allem den Kern. Liegt die Auswertung vor, gehen ihre Top-3-Probleme jedem weiteren AP vor.
 | AP | Anleitung | Größe |
 |---|---|---|
 | 2.14 | [Meldungskatalog und Fehler-UX](AP-2.14.md) | M |
-| 2.1 | [Skizzen-Modus: Zeichnen](AP-2.1.md) | L |
 | 2.2 | [Skizzen-Regeln und Maße (Solver)](AP-2.2.md) | XL |
 | 2.12 | [Hilfsgeometrie](AP-2.12.md) | S |
 | 2.3 | [Aus Skizzen werden Körper](AP-2.3.md) | L |

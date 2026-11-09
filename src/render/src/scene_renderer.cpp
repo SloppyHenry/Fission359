@@ -1431,6 +1431,7 @@ void SceneRenderer::prepareHighlights(QRhiResourceUpdateBatch* updates, const Fr
 }
 
 void HandleGraphics::append(const HandleGraphics& other) {
+    fills.insert(fills.end(), other.fills.begin(), other.fills.end());
     lines.insert(lines.end(), other.lines.begin(), other.lines.end());
     dots.insert(dots.end(), other.dots.begin(), other.dots.end());
     arrows.insert(arrows.end(), other.arrows.begin(), other.arrows.end());
@@ -1451,6 +1452,9 @@ void SceneRenderer::prepareHandles(QRhiResourceUpdateBatch* updates, const Frame
     HighlightShapes builder(
         frame.view, frame.projection,
         std::max(1, static_cast<int>(static_cast<float>(targetSize.height()) / scale)), shapes);
+    for (const HandleTriangle& fill : handles.fills) {
+        builder.triangle(fill.corners[0], fill.corners[1], fill.corners[2], fill.fill);
+    }
     for (const HandleQuad& quad : handles.quads) {
         builder.triangle(quad.corners[0], quad.corners[1], quad.corners[2], quad.fill);
         builder.triangle(quad.corners[0], quad.corners[2], quad.corners[3], quad.fill);

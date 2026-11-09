@@ -422,6 +422,16 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:umklappen,sketch.mirror;search:mirror image,sketch.mirror;search:kreismuster,sketch.pattern;search:circular pattern,sketch.pattern;menu:sketchtool.helper;menu:sketchtool.line;sketchclickmm:0,-40;sketchclickmm:0,40;key:Escape;menu:sketchtool.helper;menu:sketchtool.circle;sketchclickmm:30,0;sketchclickmm:40,0;expectsketchelements:line=1,circle=1,helper=1;key:M;expectsketchtool:mirror;sketchclickmm:40,0;key:Return;sketchmovemm:0,10;sketchclickmm:0,10;expectsketchelements:line=1,circle=2,helper=1;expectundo:mirrorSketch;key:W;expectsketchtool:pattern;sketchclickmm:40,0;key:Return;sketchclickmm:60,20;sketchmovemm:60,50;type:3,tab,30,enter;expectsketchelements:line=1,circle=4,helper=1;expectundo:patternSketch;menu:undo;expectsketchelements:line=1,circle=2,helper=1;menu:undo;expectsketchelements:line=1,circle=1,helper=1;menu:redo;menu:redo;expectsketchelements:line=1,circle=4,helper=1;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_mirror_pattern PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.1g: a rectangle 80 x 40 and a circle of radius 10 over the middle of its right side: three
+  # closed areas (the hint line counts them), a click chooses one, Esc lets it go; undoing the
+  # circle leaves one area, redoing it brings three back. The areas are worked out in the
+  # background: the check waits for them. Points sit on whole tens (clicks catch on the grid).
+  add_test(NAME app_sketch_regions
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-regions.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.rectangle;sketchclickmm:-40,-20;sketchclickmm:40,20;expectsketchregions:1,none;menu:sketchtool.circle;sketchclickmm:40,0;sketchclickmm:50,0;key:Escape;expectsketchtool:;expectsketchregions:3,none;expecthint:3 closed areas;sketchclickmm:-20,0;expectsketchregions:3,selected;expecthint:One is chosen;key:Escape;expectsketch:active;expectsketchregions:3,none;menu:undo;expectsketchregions:1,none;menu:redo;expectsketchregions:3,none;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
+  set_tests_properties(app_sketch_regions PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-2.1f: a sketch on the top of the box, the border taken over with the tool U (found by words
   # only this tool carries), one undo step; the box is made wider by a typed value and the border
   # follows (20 x 20 becomes 30 x 20). Nothing is clicked on a grid: the edges come by name.
