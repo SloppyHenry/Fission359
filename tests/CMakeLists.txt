@@ -388,11 +388,12 @@ if(_fission_run_window_tests)
   # search knows their words. A rectangle with a circle on its right edge: trimming the circle's
   # outer half leaves an arc (the box round everything gets smaller), trimming the piece of the
   # edge inside the circle gives two lines; each is one undo step. A stroke over the three pieces of
-  # the edge takes them all in one step. Places are given in millimetres on the ground plane.
+  # the edge takes them all in one step. Places are given in millimetres on the ground plane, on
+  # whole tens: clicks snap to the grid.
   add_test(NAME app_sketch_trim
     COMMAND ${_fission_gui_runner} ${_fission_app_exe}
             --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-trim.png" --language en --size 1280x800
-            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:abschneiden,sketch.trim;search:trim,sketch.trim;search:anschließen,sketch.extend;search:extend,sketch.extend;menu:sketchtool.rectangle;sketchclickmm:-40,-25;sketchclickmm:40,25;menu:sketchtool.circle;sketchclickmm:40,0;sketchclickmm:55,0;expectsketchelements:line=4,circle=1;expectsketchsize:95,50;key:T;expectsketchtool:trim;sketchmovemm:55,0;sketchclickmm:55,0;expectsketchelements:line=4,arc=1;expectsketchsize:80,50;expectundo:trimSketch;sketchclickmm:40,0;expectsketchelements:line=5,arc=1;expectundo:trimSketch;menu:undo;expectsketchelements:line=4,arc=1;menu:undo;expectsketchelements:line=4,circle=1;menu:redo;expectsketchelements:line=4,arc=1;sketchdragmm:40,-23,40,23;expectsketchelements:line=3,arc=1;expectundo:trimSketch;menu:undo;expectsketchelements:line=4,arc=1;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;search:abschneiden,sketch.trim;search:trim,sketch.trim;search:anschließen,sketch.extend;search:extend,sketch.extend;menu:sketchtool.rectangle;sketchclickmm:-40,-30;sketchclickmm:40,30;menu:sketchtool.circle;sketchclickmm:40,0;sketchclickmm:60,0;expectsketchelements:line=4,circle=1;expectsketchsize:100,60;key:T;expectsketchtool:trim;sketchmovemm:60,0;sketchclickmm:60,0;expectsketchelements:line=4,arc=1;expectsketchsize:80,60;expectundo:trimSketch;sketchclickmm:40,0;expectsketchelements:line=5,arc=1;expectundo:trimSketch;menu:undo;expectsketchelements:line=4,arc=1;menu:undo;expectsketchelements:line=4,circle=1;menu:redo;expectsketchelements:line=4,arc=1;sketchdragmm:40,-28,40,28;expectsketchelements:line=3,arc=1;expectundo:trimSketch;menu:undo;expectsketchelements:line=4,arc=1;key:Escape;expectsketchtool:;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_trim PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-2.1e1: extending. A line goes on up to a wall (one undo step); at the wall there is

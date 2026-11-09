@@ -43,6 +43,9 @@ QVector3D at(const core::SketchPlane& plane, double u, double v) {
             static_cast<float>(world.z + n.z * kLift)};
 }
 
+// More dashes than this on one line are not visible any more; such a line is drawn solid.
+constexpr double kMaxDashes = 2000.0;
+
 void line(render::HandleGraphics& out, const core::SketchPlane& plane, core::SketchPoint from,
           core::SketchPoint to, float width, const QColor& colour) {
     out.lines.push_back({at(plane, from.u, from.v), at(plane, to.u, to.v), width, colour});
@@ -109,21 +112,31 @@ void chain(render::HandleGraphics& out, const core::SketchPlane& plane,
             continue;
         }
         const double length = std::hypot(b.u - a.u, b.v - a.v);
+        if (!(length > 1e-9)) {
+            continue;
+        }
+        // Too fine to dash (or no dash length at all): drawn solid.
+        if (!(dash > 0.0) || length / (2.0 * dash) > kMaxDashes) {
+            line(out, plane, a, b, width, colour);
+            travelled += length;
+            continue;
+        }
         const auto along = [&](double at) {
             return core::SketchPoint{a.u + (b.u - a.u) * at / length,
                                      a.v + (b.v - a.v) * at / length};
         };
-        double position = 0.0;
-        while (position < length) {
-            const double phase = std::fmod(travelled + position, 2.0 * dash);
-            const bool on = phase < dash;
-            const double next = std::min(length, position + (on ? dash : 2.0 * dash) - phase);
-            if (on) {
-                line(out, plane, along(position), along(next), width, colour);
+        // Stroke k covers [2k·dash, 2k·dash + dash] of the whole chain. Counting strokes (instead
+        // of stepping by the remaining phase) always moves on: rounding cannot stall the loop.
+        const double begin = travelled;
+        const double end = travelled + length;
+        for (double k = std::floor(begin / (2.0 * dash)); k * 2.0 * dash < end; k += 1.0) {
+            const double from = std::max(begin, k * 2.0 * dash);
+            const double to = std::min(end, k * 2.0 * dash + dash);
+            if (to > from) {
+                line(out, plane, along(from - begin), along(to - begin), width, colour);
             }
-            position = next;
         }
-        travelled += length;
+        travelled = end;
     }
 }
 
