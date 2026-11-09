@@ -1379,6 +1379,32 @@ TEST_CASE("sketch offset: a typed distance replaces the pointer's, the side foll
     CHECK(minU == Approx(7.0).margin(1e-9));
 }
 
+TEST_CASE("sketch offset: the side follows the pointer however the chain runs",
+          "[ui][sketchtools][offset]") {
+    NoCatching free;
+    Drawing f;
+    // clockwise, the other way round than putRectangle
+    put(f,
+        {lineOf(0, 0, 0, 20), lineOf(0, 20, 40, 20), lineOf(40, 20, 40, 0), lineOf(40, 0, 0, 0)});
+    f.sketch->chooseTool(QStringLiteral("offset"));
+    f.click(20, 0.2);
+    f.move(20, -5); // outside
+    f.sketch->setTyped(0, 10.0);
+    f.sketch->acceptTyped();
+    const auto after = f.elements();
+    REQUIRE(after.size() == 8);
+    double minU = 1e9;
+    double maxU = -1e9;
+    for (std::size_t i = 4; i < after.size(); ++i) {
+        for (const core::SketchPoint& p : after[i].points) {
+            minU = std::min(minU, p.u);
+            maxU = std::max(maxU, p.u);
+        }
+    }
+    CHECK(minU == Approx(-10.0).margin(1e-9));
+    CHECK(maxU == Approx(50.0).margin(1e-9));
+}
+
 TEST_CASE("sketch offset: a curve gives a hint, a distance too big for a circle makes nothing",
           "[ui][sketchtools][offset]") {
     NoCatching free;

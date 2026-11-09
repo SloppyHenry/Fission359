@@ -271,6 +271,10 @@ public:
     void requestPick(PickIntent intent, const QPointF& position, bool extend = false);
     /// The pointer is at a point of the view (item pixels), as if it had moved there.
     Q_INVOKABLE void hoverAt(double x, double y);
+    /// While set, the mouse events being delivered come from --simulate: their hover counts as
+    /// played (like `hoverAt`). Once the pointer is played, real hover moves are ignored, so
+    /// that the pointer of the machine (e.g. the middle of a virtual screen) cannot take over.
+    void setPlayedInput(bool played) noexcept { m_playedInput = played; }
     /// Lights up whole bodies as if the pointer were over them (the pointer is over a row of the
     /// recipe or of the body list). An empty list takes the light away.
     Q_INVOKABLE void lightUpBodies(const QStringList& bodyIds);
@@ -397,6 +401,7 @@ private:
     quint64 m_nextPickId = 1;
     std::optional<QPointF> m_hoverPosition; ///< where the pointer is (no button pressed)
     bool m_hoverSimulated = false;          ///< `hoverAt` put it there, not a real pointer
+    bool m_playedInput = false;             ///< a mouse event of --simulate is being delivered
     QPointF m_pressPosition;
     Qt::MouseButton m_pressButton = Qt::NoButton;
     Qt::KeyboardModifiers m_pressModifiers;
