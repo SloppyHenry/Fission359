@@ -127,6 +127,7 @@ Erledigt (Anleitungen in [erledigt/](erledigt/)): AP-2.1, AP-2.10, AP-2.13, AP-2
 ### Phase 6 – Release 1.0
 | AP | Anleitung | Größe |
 |---|---|---|
+| 6.7 | [Browser-Version](AP-6.7.md) (vorgezogen: direkt nach AP-2.2a) | XL |
 | 6.6 | [Rechtliches](AP-6.6.md) | S |
 | 6.1 | [Automatische Updates](AP-6.1.md) | M |
 | 6.2 | [Absturzberichte und Diagnose](AP-6.2.md) | M |

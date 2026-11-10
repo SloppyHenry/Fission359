@@ -81,3 +81,19 @@
 - Beitragsregeln: Developer Certificate of Origin (DCO, `Signed-off-by`) statt CLA
 - Namens- und Markenprüfung „Fission359“ (Verwechslungsgefahr mit „Fusion“ bewerten), Domain
 - Impressum/Datenschutz für Website und Update-Server
+
+---
+
+### AP-6.7 Browser-Version
+**Status:** offen · **Größe:** XL (6.7a–d) · **Abhängigkeiten:** – (vorgezogen, läuft nach AP-2.2a) · **ADR:** 0014
+**Bauanleitung:** [anleitungen/AP-6.7.md](anleitungen/AP-6.7.md)
+
+**Umfang:**
+- Dieselbe App über Qt for WebAssembly im Browser, rechnet lokal (kein Server, kein Konto)
+- Öffnen/Speichern/Export über Browser-Dialoge und Downloads; Autosave und Wiederherstellung im Browser-Speicher
+- CI-Job „Web“ (ab 6.7d Pflicht), Veröffentlichung über GitHub Pages
+
+**Akzeptanzkriterien:**
+- [ ] Ablauf D läuft im Browser mit denselben Ergebnissen wie auf dem Desktop (Golden-Werte 1e-9)
+- [ ] Tab schließen und wieder öffnen → Wiederherstellung wird angeboten, nichts geht verloren
+- [ ] Seite startet in aktuellem Chrome, Firefox und Safari; ohne nötige Browser-Funktionen erscheint ein verständlicher Hinweis

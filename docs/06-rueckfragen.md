@@ -25,6 +25,7 @@ Jede Frage hat eine **aktuelle Annahme**, auf der die Dokumente beruhen.
 
 ### R3 – Native UI wirklich Pflicht?
 > **Annahme:** Ja. Komplett nativ mit C++/Qt, keine Web-Technik-UI (Tauri/Electron).
+> **Ergänzung 2026-11-10:** Zusätzlich eine Browser-Version aus derselben Codebasis (Qt for WebAssembly), rechnet lokal, ohne Konto (ADR-0014, AP-6.7).
 
 ### R4b – Auch Resin (SLA)?
 > **Annahme:** Nein, nur FDM. Resin bräuchte andere Druckcheck-Regeln (Hohlräume, Ablauflöcher).
