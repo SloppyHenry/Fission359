@@ -46,6 +46,9 @@ Alle entschieden (Festlegungen 1–8). Neue Fragen: anhalten und berichten.
 1. Emscripten-Werkzeugkette in der CI (`emsdk`, Version fest), vcpkg-Triplet `wasm32-emscripten` (ggf. Overlay-Triplet in
    `cmake/triplets/` mit `-pthread`), Preset `web-core` ohne Qt: baut `core`, `geometry` (OCCT, Manifold, PlaneGCS), `features`, `io`,
    `analysis` und deren Unit-Tests.
+   **lib3mf** ist im vcpkg-Port nicht für Emscripten freigegeben (`supports` nennt nur Windows/Linux/macOS): Overlay-Port unter
+   `cmake/ports/lib3mf/` mit erweitertem `supports` und nötigen Patches. 3MF-Export ist für den Druck zentral; scheitert der Bau,
+   anhalten und berichten, nicht weglassen.
 2. Unit-Tests laufen unter Node (`node --experimental-wasm-threads` bzw. aktuelle Node-Version) über CTest (`CMAKE_CROSSCOMPILING_EMULATOR`).
 3. CI-Job „Web“ (noch **nicht** Pflicht), mit Zwischenspeicher für vcpkg-Binärpakete wie die übrigen Jobs (ADR-0005).
 4. Ergebnis: Liste der Tests, die unter WebAssembly scheitern, mit Ursache. Tests werden nicht abgeschaltet; was im Browser
