@@ -360,8 +360,10 @@ void Model::addHeld() {
         }
         GCS::Point& point = gcsPoints_[found->second];
         // Tag -1: a drag the rules may overrule (PlaneGCS treats it as the lower priority).
-        gcs_.addConstraintCoordinateX(point, constant(held.target.x), GCS::DefaultTemporaryConstraint);
-        gcs_.addConstraintCoordinateY(point, constant(held.target.y), GCS::DefaultTemporaryConstraint);
+        gcs_.addConstraintCoordinateX(point, constant(held.target.x),
+                                      GCS::DefaultTemporaryConstraint);
+        gcs_.addConstraintCoordinateY(point, constant(held.target.y),
+                                      GCS::DefaultTemporaryConstraint);
     }
 }
 
@@ -667,7 +669,11 @@ void Model::run(const SolveOptions& options, SolveResult& result) {
         out.erase(std::unique(out.begin(), out.end()), out.end());
     };
 
-    if (options.diagnose) {
+    // Diagnosis at the current values of the unknowns. A linear dependency shows only near the
+    // solution, so this runs again after the solve (for both outcomes).
+    const auto diagnose = [&]() {
+        result.conflicting.clear();
+        result.redundant.clear();
         result.dof = gcs_.diagnose(GCS::DogLeg);
         GCS::VEC_I conflicting;
         GCS::VEC_I redundant;
@@ -678,6 +684,10 @@ void Model::run(const SolveOptions& options, SolveResult& result) {
         redundant.insert(redundant.end(), partlyRedundant.begin(), partlyRedundant.end());
         idsOf(conflicting, result.conflicting);
         idsOf(redundant, result.redundant);
+    };
+
+    if (options.diagnose) {
+        diagnose();
         if (!result.conflicting.empty()) {
             result.status = SolveStatus::conflict;
             return;
@@ -687,18 +697,36 @@ void Model::run(const SolveOptions& options, SolveResult& result) {
     // DogLeg first; when it finds nothing, Levenberg-Marquardt from the same start values
     // (`solve` always starts again from the values given to `initSolution`).
     const auto reached = [&](int status) {
-        return status == GCS::Success || (dragging && status == GCS::Converged);
+        // Converged without Success: redundant rules leave a rank-deficient system. The
+        // diagnosis below tells conflict from redundancy; the caller's checks follow it.
+        return status == GCS::Success ||
+               ((dragging || options.diagnose) && status == GCS::Converged);
     };
     int status = gcs_.solve(true, GCS::DogLeg);
     if (!reached(status) && options.fallback) {
         status = gcs_.solve(true, GCS::LevenbergMarquardt);
     }
+    gcs_.applySolution();
+    for (std::size_t i = 0; i < positions_.size(); ++i) {
+        positions_[i] = {*gcsPoints_[i].x, *gcsPoints_[i].y};
+    }
+    if (options.diagnose) {
+        gcs_.initSolution(GCS::DogLeg);
+        diagnose();
+    }
     if (!reached(status)) {
-        result.status = SolveStatus::failed;
-        result.detail = "the solver found no solution (status " + std::to_string(status) + ")";
+        if (!result.conflicting.empty()) {
+            result.status = SolveStatus::conflict;
+        } else {
+            result.status = SolveStatus::failed;
+            result.detail = "the solver found no solution (status " + std::to_string(status) + ")";
+        }
         return;
     }
-    gcs_.applySolution();
+    if (!result.conflicting.empty()) {
+        result.status = SolveStatus::conflict;
+        return;
+    }
     if (!allFinite(positions_)) {
         result.status = SolveStatus::failed;
         result.detail = "the solution has a coordinate that is not a number";

@@ -615,11 +615,9 @@ std::size_t applyHealedRefs(Document& document, const RecomputeResult& result) {
 // --- worker ------------------------------------------------------------------------------
 
 RecomputeEngine::RecomputeEngine(const FeatureRegistry& registry, const geo::GeometryKernel& kernel,
-                                 RecomputeObserver observer,
-                                 const geo::SketchSolver* sketchSolver)
+                                 RecomputeObserver observer, const geo::SketchSolver* sketchSolver)
     : registry_(registry), kernel_(kernel), sketchSolver_(sketchSolver),
-      observer_(std::move(observer)),
-      worker_([this] { run(); }) {}
+      observer_(std::move(observer)), worker_([this] { run(); }) {}
 
 RecomputeEngine::~RecomputeEngine() {
     {

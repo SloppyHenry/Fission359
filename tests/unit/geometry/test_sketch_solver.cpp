@@ -8,8 +8,6 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include <nlohmann/json.hpp>
-
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -24,6 +22,8 @@
 #include "fission/geo/sketch/planegcs_solver.h"
 #include "fission/geo/sketch_solver.h"
 
+#include <nlohmann/json.hpp>
+
 namespace {
 
 using fission::geo::HeldPoint;
@@ -32,9 +32,9 @@ using fission::geo::SketchMeasureKind;
 using fission::geo::SketchRuleKind;
 using fission::geo::SketchSystem;
 using fission::geo::SolveOptions;
-using fission::geo::SolveResult;
 using fission::geo::SolverCurve;
 using fission::geo::SolverCurveKind;
+using fission::geo::SolveResult;
 using fission::geo::SolverMeasure;
 using fission::geo::SolverPoint;
 using fission::geo::SolverRule;
@@ -42,12 +42,12 @@ using fission::geo::SolveStatus;
 using Json = nlohmann::json;
 
 const std::map<std::string, SketchRuleKind> kRuleKinds = {
-    {"horizontal", SketchRuleKind::horizontal},   {"vertical", SketchRuleKind::vertical},
-    {"parallel", SketchRuleKind::parallel},       {"perpendicular", SketchRuleKind::perpendicular},
-    {"tangent", SketchRuleKind::tangent},         {"equal", SketchRuleKind::equal},
-    {"symmetric", SketchRuleKind::symmetric},     {"midpoint", SketchRuleKind::midpoint},
-    {"fixed", SketchRuleKind::fixed},             {"pointOnCurve", SketchRuleKind::pointOnCurve},
-    {"concentric", SketchRuleKind::concentric},   {"coincident", SketchRuleKind::coincident}};
+    {"horizontal", SketchRuleKind::horizontal}, {"vertical", SketchRuleKind::vertical},
+    {"parallel", SketchRuleKind::parallel},     {"perpendicular", SketchRuleKind::perpendicular},
+    {"tangent", SketchRuleKind::tangent},       {"equal", SketchRuleKind::equal},
+    {"symmetric", SketchRuleKind::symmetric},   {"midpoint", SketchRuleKind::midpoint},
+    {"fixed", SketchRuleKind::fixed},           {"pointOnCurve", SketchRuleKind::pointOnCurve},
+    {"concentric", SketchRuleKind::concentric}, {"coincident", SketchRuleKind::coincident}};
 
 const std::map<std::string, SketchMeasureKind> kMeasureKinds = {
     {"length", SketchMeasureKind::length},
@@ -78,11 +78,12 @@ SketchSystem systemOf(const Json& json) {
         system.curves.push_back(curve);
     }
     for (const Json& r : json.value("rules", Json::array())) {
-        system.rules.push_back({r.at("id"), kRuleKinds.at(r.at("kind")), strings(r.at("elements"))});
+        system.rules.push_back(
+            {r.at("id"), kRuleKinds.at(r.at("kind")), strings(r.at("elements"))});
     }
     for (const Json& m : json.value("measures", Json::array())) {
-        system.measures.push_back({m.at("id"), kMeasureKinds.at(m.at("kind")),
-                                   strings(m.at("elements")), m.at("value")});
+        system.measures.push_back(
+            {m.at("id"), kMeasureKinds.at(m.at("kind")), strings(m.at("elements")), m.at("value")});
     }
     for (const Json& h : json.value("held", Json::array())) {
         system.held.push_back({h.at("point"), {h.at("x"), h.at("y")}});
@@ -127,7 +128,9 @@ public:
     }
 
 private:
-    static double dist(const Point2d& a, const Point2d& b) { return std::hypot(b.x - a.x, b.y - a.y); }
+    static double dist(const Point2d& a, const Point2d& b) {
+        return std::hypot(b.x - a.x, b.y - a.y);
+    }
     static bool near(double a, double b) { return std::abs(a - b) <= kCheckTolerance; }
 
     const SolverCurve& curve(const std::string& id) const {
@@ -139,7 +142,8 @@ private:
         throw std::runtime_error("no curve " + id);
     }
     bool isCurve(const std::string& id) const {
-        return std::ranges::any_of(system_.curves, [&](const SolverCurve& c) { return c.id == id; });
+        return std::ranges::any_of(system_.curves,
+                                   [&](const SolverCurve& c) { return c.id == id; });
     }
     Point2d pt(const std::string& id) const { return at_.at(id); }
     Point2d from(const std::string& line) const { return pt(curve(line).points[0]); }
@@ -159,7 +163,9 @@ private:
         const Point2d b = to(line);
         return std::abs((b.x - a.x) * (a.y - p.y) - (a.x - p.x) * (b.y - a.y)) / dist(a, b);
     }
-    static double angleOf(const Point2d& a, const Point2d& b) { return std::atan2(b.y - a.y, b.x - a.x); }
+    static double angleOf(const Point2d& a, const Point2d& b) {
+        return std::atan2(b.y - a.y, b.x - a.x);
+    }
     static double wrap(double a) { return std::remainder(a, 2.0 * std::numbers::pi); }
 
     bool ruleHolds(const SolverRule& rule) const {
@@ -183,10 +189,12 @@ private:
                 return near(lineDistance(centre(round), line), radius(round));
             }
             const double d = dist(centre(e[0]), centre(e[1]));
-            return near(d, radius(e[0]) + radius(e[1])) || near(d, std::abs(radius(e[0]) - radius(e[1])));
+            return near(d, radius(e[0]) + radius(e[1])) ||
+                   near(d, std::abs(radius(e[0]) - radius(e[1])));
         }
         case SketchRuleKind::equal:
-            return isLine(e[0]) ? near(length(e[0]), length(e[1])) : near(radius(e[0]), radius(e[1]));
+            return isLine(e[0]) ? near(length(e[0]), length(e[1]))
+                                : near(radius(e[0]), radius(e[1]));
         case SketchRuleKind::symmetric: {
             const Point2d a = pt(e[0]);
             const Point2d b = pt(e[1]);
@@ -270,8 +278,8 @@ private:
 
 std::vector<std::filesystem::path> fixtureFiles() {
     std::vector<std::filesystem::path> files;
-    for (const auto& entry :
-         std::filesystem::directory_iterator(std::filesystem::path(FISSION_TEST_FIXTURES_DIR) / "sketches")) {
+    for (const auto& entry : std::filesystem::directory_iterator(
+             std::filesystem::path(FISSION_TEST_FIXTURES_DIR) / "sketches")) {
         if (entry.path().extension() == ".json") {
             files.push_back(entry.path());
         }
@@ -286,8 +294,8 @@ Json readJson(const std::filesystem::path& path) {
     return Json::parse(in);
 }
 
-/// `expected` names exactly the ids, or (`...Within`) a non-empty selection of a group that cannot be told
-/// apart (which of three dependent rules is "the" redundant one is the solver's choice).
+/// `expected` names exactly the ids, or (`...Within`) a non-empty selection of a group that cannot
+/// be told apart (which of three dependent rules is "the" redundant one is the solver's choice).
 void checkIds(const Json& expect, const std::string& key, const std::vector<std::string>& actual) {
     if (expect.contains(key)) {
         CHECK(actual == strings(expect.at(key)));
@@ -351,7 +359,9 @@ TEST_CASE("Reference sketches solve the same way every time", "[sketch][solver]"
                 continue;
             }
             if (system.held.empty()) {
-                CHECK(Checker(system, first).firstViolation().empty());
+                const std::string violation = Checker(system, first).firstViolation();
+                INFO("violation: " << violation);
+                CHECK(violation.empty());
             }
             if (expect.contains("points")) {
                 std::map<std::string, Point2d> got;

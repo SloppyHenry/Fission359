@@ -176,8 +176,8 @@ using RecomputeObserver = std::function<void(const RecomputeEvent&)>;
 /// Recomputes one document in a worker thread. A new request replaces a running calculation:
 /// the old one is asked to stop at once and its result is thrown away.
 ///
-/// The registry, the kernel and the sketch solver (may be null) must outlive the engine. The engine works on a copy of the
-/// document, so the caller can keep editing.
+/// The registry, the kernel and the sketch solver (may be null) must outlive the engine. The engine
+/// works on a copy of the document, so the caller can keep editing.
 class RecomputeEngine {
 public:
     RecomputeEngine(const FeatureRegistry& registry, const geo::GeometryKernel& kernel,
