@@ -1,0 +1,19 @@
+{
+ "name": "invalid_duplicate_id",
+ "description": "Two points with the same id.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "A",
+   "x": 5,
+   "y": 1
+  }
+ ],
+ "expect": {
+  "status": "failed"
+ }
+}

@@ -55,6 +55,7 @@ add_executable(fission_unit_tests
   geometry/test_sketch_intersections.cpp
   geometry/test_sketch_regions.cpp
   geometry/test_sketch_edge.cpp
+  geometry/test_sketch_solver.cpp
   analysis/test_material.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
@@ -105,7 +106,7 @@ add_executable(fission_unit_tests
   interaction/test_sketch_regions.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
-  fission_core fission_services fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
+  fission_core fission_services fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_geometry_sketch fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
 fission_apply_compiler_options(fission_unit_tests)
 
 target_include_directories(fission_unit_tests SYSTEM PRIVATE "${FISSION_LIB3MF_CPP_INCLUDE_DIR}")

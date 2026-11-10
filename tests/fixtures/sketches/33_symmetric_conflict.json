@@ -1,0 +1,77 @@
+{
+ "name": "symmetric_conflict",
+ "description": "A point fixed where its mirror image should be.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 0,
+   "y": 10
+  },
+  {
+   "id": "P",
+   "x": 5,
+   "y": 3
+  },
+  {
+   "id": "Q",
+   "x": -4,
+   "y": 3
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "fixed",
+   "elements": [
+    "P"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "fixed",
+   "elements": [
+    "Q"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "symmetric",
+   "elements": [
+    "P",
+    "Q",
+    "L1"
+   ]
+  }
+ ],
+ "expect": {
+  "status": "conflict",
+  "conflictingWithin": [
+   "R1",
+   "R2",
+   "R3",
+   "R4"
+  ]
+ }
+}

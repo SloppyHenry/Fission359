@@ -1,0 +1,136 @@
+{
+ "name": "arcs_external_tangent",
+ "description": "Two quarter arcs of equal radius that touch from outside.",
+ "points": [
+  {
+   "id": "C1",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "S1",
+   "x": 9,
+   "y": 0.4
+  },
+  {
+   "id": "M",
+   "x": 0.3,
+   "y": 10.2
+  },
+  {
+   "id": "C2",
+   "x": 0.3,
+   "y": 19
+  },
+  {
+   "id": "E2",
+   "x": 9,
+   "y": 20.4
+  }
+ ],
+ "curves": [
+  {
+   "id": "A1",
+   "kind": "arc",
+   "points": [
+    "C1",
+    "S1",
+    "M"
+   ]
+  },
+  {
+   "id": "A2",
+   "kind": "arc",
+   "points": [
+    "C2",
+    "M",
+    "E2"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "C1"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "C1",
+    "S1"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "vertical",
+   "elements": [
+    "C1",
+    "M"
+   ]
+  },
+  {
+   "id": "R5",
+   "kind": "tangent",
+   "elements": [
+    "A1",
+    "A2"
+   ]
+  },
+  {
+   "id": "R6",
+   "kind": "equal",
+   "elements": [
+    "A1",
+    "A2"
+   ]
+  },
+  {
+   "id": "R7",
+   "kind": "horizontal",
+   "elements": [
+    "C2",
+    "E2"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R4",
+   "kind": "radius",
+   "elements": [
+    "A1"
+   ],
+   "value": 10
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "C1": [
+    0,
+    0
+   ],
+   "S1": [
+    10,
+    0
+   ],
+   "M": [
+    0,
+    10
+   ],
+   "C2": [
+    0,
+    20
+   ],
+   "E2": [
+    10,
+    20
+   ]
+  }
+ }
+}

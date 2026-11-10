@@ -1,0 +1,74 @@
+{
+ "name": "same_length_twice",
+ "description": "The same length given twice: the second only repeats the first.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 29,
+   "y": 1
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "A"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R3",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 30
+  },
+  {
+   "id": "R4",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 30
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "B": [
+    30,
+    0
+   ]
+  },
+  "redundantWithin": [
+   "R3",
+   "R4"
+  ]
+ }
+}

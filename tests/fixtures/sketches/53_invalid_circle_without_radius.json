@@ -1,0 +1,38 @@
+{
+ "name": "invalid_circle_without_radius",
+ "description": "A circle whose rim is on its centre.",
+ "points": [
+  {
+   "id": "K",
+   "x": 1,
+   "y": 1
+  },
+  {
+   "id": "Q",
+   "x": 1,
+   "y": 1
+  }
+ ],
+ "curves": [
+  {
+   "id": "C1",
+   "kind": "circle",
+   "points": [
+    "K",
+    "Q"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "K"
+   ]
+  }
+ ],
+ "expect": {
+  "status": "failed"
+ }
+}

@@ -1,0 +1,117 @@
+{
+ "name": "arc_after_line",
+ "description": "A line and an arc that starts at its end, tangent there: a rounded end.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 19,
+   "y": 0.5
+  },
+  {
+   "id": "C",
+   "x": 20.4,
+   "y": 9
+  },
+  {
+   "id": "E",
+   "x": 21,
+   "y": 19
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "A1",
+   "kind": "arc",
+   "points": [
+    "C",
+    "B",
+    "E"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "fixed",
+   "elements": [
+    "A"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "tangent",
+   "elements": [
+    "L1",
+    "A1"
+   ]
+  },
+  {
+   "id": "R6",
+   "kind": "vertical",
+   "elements": [
+    "C",
+    "E"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R2",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 20
+  },
+  {
+   "id": "R5",
+   "kind": "radius",
+   "elements": [
+    "A1"
+   ],
+   "value": 10
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "A": [
+    0,
+    0
+   ],
+   "B": [
+    20,
+    0
+   ],
+   "C": [
+    20,
+    10
+   ],
+   "E": [
+    20,
+    20
+   ]
+  }
+ }
+}

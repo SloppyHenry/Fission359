@@ -1,0 +1,64 @@
+{
+ "name": "drag_circle_rim",
+ "description": "The rim of a circle dragged out: the radius grows.",
+ "points": [
+  {
+   "id": "K",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "Q",
+   "x": 10,
+   "y": 0
+  }
+ ],
+ "curves": [
+  {
+   "id": "C1",
+   "kind": "circle",
+   "points": [
+    "K",
+    "Q"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "K"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "K",
+    "Q"
+   ]
+  }
+ ],
+ "held": [
+  {
+   "point": "Q",
+   "x": 14,
+   "y": 0
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 1,
+  "points": {
+   "K": [
+    0,
+    0
+   ],
+   "Q": [
+    14,
+    0
+   ]
+  }
+ }
+}

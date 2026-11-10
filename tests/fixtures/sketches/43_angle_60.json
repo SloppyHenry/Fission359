@@ -1,0 +1,96 @@
+{
+ "name": "angle_60",
+ "description": "Two lines from one point, 60 degrees apart.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 9.5,
+   "y": 0.3
+  },
+  {
+   "id": "C",
+   "x": 4.5,
+   "y": 8
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "L2",
+   "kind": "line",
+   "points": [
+    "A",
+    "C"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "A"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R3",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 10
+  },
+  {
+   "id": "R4",
+   "kind": "length",
+   "elements": [
+    "L2"
+   ],
+   "value": 10
+  },
+  {
+   "id": "R5",
+   "kind": "angle",
+   "elements": [
+    "L1",
+    "L2"
+   ],
+   "value": 60
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "B": [
+    10,
+    0
+   ],
+   "C": [
+    5,
+    8.660254037844386
+   ]
+  }
+ }
+}

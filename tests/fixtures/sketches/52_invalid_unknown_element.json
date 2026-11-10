@@ -1,0 +1,38 @@
+{
+ "name": "invalid_unknown_element",
+ "description": "A rule that names an element that does not exist.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 5,
+   "y": 1
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "horizontal",
+   "elements": [
+    "L9"
+   ]
+  }
+ ],
+ "expect": {
+  "status": "failed"
+ }
+}

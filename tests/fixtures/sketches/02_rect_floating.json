@@ -1,0 +1,112 @@
+{
+ "name": "rect_floating",
+ "description": "The same rectangle without a fixed corner: it can still move in two directions.",
+ "points": [
+  {
+   "id": "A",
+   "x": 5,
+   "y": 5
+  },
+  {
+   "id": "B",
+   "x": 58,
+   "y": 6
+  },
+  {
+   "id": "C",
+   "x": 66,
+   "y": 47
+  },
+  {
+   "id": "D",
+   "x": 4,
+   "y": 43
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "L2",
+   "kind": "line",
+   "points": [
+    "B",
+    "C"
+   ]
+  },
+  {
+   "id": "L3",
+   "kind": "line",
+   "points": [
+    "C",
+    "D"
+   ]
+  },
+  {
+   "id": "L4",
+   "kind": "line",
+   "points": [
+    "D",
+    "A"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "L3"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "vertical",
+   "elements": [
+    "L2"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "vertical",
+   "elements": [
+    "L4"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R5",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 60
+  },
+  {
+   "id": "R6",
+   "kind": "length",
+   "elements": [
+    "L2"
+   ],
+   "value": 40
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 2
+ }
+}

@@ -1,0 +1,92 @@
+{
+ "name": "angle_180",
+ "description": "Two lines from one point pointing in opposite directions.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 9.5,
+   "y": 0.3
+  },
+  {
+   "id": "C",
+   "x": -9,
+   "y": 0.5
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "L2",
+   "kind": "line",
+   "points": [
+    "A",
+    "C"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "A"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R3",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 10
+  },
+  {
+   "id": "R4",
+   "kind": "length",
+   "elements": [
+    "L2"
+   ],
+   "value": 10
+  },
+  {
+   "id": "R5",
+   "kind": "angle",
+   "elements": [
+    "L1",
+    "L2"
+   ],
+   "value": 180
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "C": [
+    -10,
+    0
+   ]
+  }
+ }
+}
