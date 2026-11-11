@@ -13,6 +13,10 @@
 #   second working tree of the repository (git worktree) has no .vcpkg of its own: it uses the
 #   one of the main working tree, so that the libraries are not built twice.
 
+# WebAssembly build of the Qt-free core (AP-6.7a, ADR-0014): ON builds only the Qt-free
+# libraries and their tests with the Emscripten triplet; Qt is neither probed nor built.
+option(FISSION_WEB_CORE "Build only the Qt-free libraries and their tests for WebAssembly (AP-6.7a)" OFF)
+
 set(FISSION_QT_MIN_VERSION 6.8)
 # The environment variable of the same name sets the default (used by CI: FISSION_QT_SOURCE=vcpkg).
 set(_fission_qt_source_default "auto")
@@ -61,32 +65,60 @@ endif()
 
 # --- triplet ------------------------------------------------------------------------
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_SOURCE_DIR}/cmake/vcpkg-triplets" CACHE STRING "")
-if(NOT DEFINED VCPKG_TARGET_TRIPLET)
-  cmake_host_system_information(RESULT _fission_arch QUERY OS_PLATFORM)
-  if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND _fission_arch STREQUAL "arm64")
-    set(VCPKG_TARGET_TRIPLET "fission-arm64-osx" CACHE STRING "")
-  elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND _fission_arch STREQUAL "x86_64")
-    set(VCPKG_TARGET_TRIPLET "fission-x64-linux" CACHE STRING "")
+# The native triplet of the build host, computed once. The target uses it directly, except
+# for the WebAssembly build (FISSION_WEB_CORE), which cross-compiles with its own triplet
+# while the host tools stay on the native one.
+cmake_host_system_information(RESULT _fission_arch QUERY OS_PLATFORM)
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND _fission_arch STREQUAL "arm64")
+  set(_fission_native_triplet "fission-arm64-osx")
+elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND _fission_arch STREQUAL "x86_64")
+  set(_fission_native_triplet "fission-x64-linux")
+else()
+  message(FATAL_ERROR
+    "Nicht unterstützte Plattform: ${CMAKE_HOST_SYSTEM_NAME}/${_fission_arch} "
+    "(unterstützt: macOS arm64, Linux x86_64).")
+endif()
+
+if(FISSION_WEB_CORE)
+  # WebAssembly (AP-6.7a): Emscripten target triplet plus the overlay ports (e.g. lib3mf
+  # with Emscripten support, cmake/ports).
+  set(VCPKG_TARGET_TRIPLET "fission-wasm32-emscripten" CACHE STRING "")
+  set(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/cmake/ports" CACHE STRING "")
+  # The project itself is compiled with emcc: chainload the Emscripten toolchain.
+  if(DEFINED ENV{EMSCRIPTEN_ROOT} AND NOT "$ENV{EMSCRIPTEN_ROOT}" STREQUAL "")
+    set(_fission_emscripten_root "$ENV{EMSCRIPTEN_ROOT}")
+  elseif(DEFINED ENV{EMSDK} AND NOT "$ENV{EMSDK}" STREQUAL "")
+    set(_fission_emscripten_root "$ENV{EMSDK}/upstream/emscripten")
   else()
     message(FATAL_ERROR
-      "Nicht unterstützte Plattform: ${CMAKE_HOST_SYSTEM_NAME}/${_fission_arch} "
-      "(unterstützt: macOS arm64, Linux x86_64).")
+      "Emscripten wurde nicht gefunden (weder EMSCRIPTEN_ROOT noch EMSDK ist gesetzt). "
+      "Bitte zuerst emsdk aktivieren (source emsdk_env.sh). / "
+      "Emscripten not found: activate emsdk first (source emsdk_env.sh).")
   endif()
+  if(NOT DEFINED VCPKG_CHAINLOAD_TOOLCHAIN_FILE)
+    set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE
+        "${_fission_emscripten_root}/cmake/Modules/Platform/Emscripten.cmake"
+        CACHE FILEPATH "")
+  endif()
+endif()
+if(NOT DEFINED VCPKG_TARGET_TRIPLET)
+  set(VCPKG_TARGET_TRIPLET "${_fission_native_triplet}" CACHE STRING "")
 endif()
 
 # Binaries must run on the oldest macOS we support. The vcpkg triplet builds the libraries
 # for the same version (cmake/vcpkg-triplets/fission-arm64-osx.cmake).
 set(FISSION_MACOS_MIN_VERSION "14.0" CACHE INTERNAL "Minimum macOS version of the app")
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
+if(NOT FISSION_WEB_CORE AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "${FISSION_MACOS_MIN_VERSION}" CACHE STRING
       "Minimum macOS version")
 endif()
 
-# We never cross-compile, so build tools for the host with the same triplet. Without this vcpkg
-# builds a second, full-featured copy of Qt (ICU, OpenSSL, PostgreSQL, Widgets, debug and
-# release) just to run moc and friends, which costs hours and extra system packages.
+# Build tools run on the host, so they always use the native triplet -- also for the
+# WebAssembly build (FISSION_WEB_CORE), where only the target is cross-compiled. Without
+# this vcpkg builds a second, full-featured copy of Qt (ICU, OpenSSL, PostgreSQL, Widgets,
+# debug and release) just to run moc and friends, which costs hours and extra system packages.
 if(NOT DEFINED VCPKG_HOST_TRIPLET)
-  set(VCPKG_HOST_TRIPLET "${VCPKG_TARGET_TRIPLET}" CACHE STRING "")
+  set(VCPKG_HOST_TRIPLET "${_fission_native_triplet}" CACHE STRING "")
 endif()
 
 # --- vcpkg behaviour ------------------------------------------------------------------
@@ -100,7 +132,10 @@ if(NOT FISSION_QT_SOURCE MATCHES "^(auto|system|vcpkg)$")
 endif()
 
 set(_fission_qt_from_vcpkg OFF)
-if(FISSION_QT_SOURCE STREQUAL "vcpkg")
+if(FISSION_WEB_CORE)
+  # WebAssembly core (AP-6.7a): the browser build has no Qt -- skip the system-Qt probe
+  # completely and never build Qt with vcpkg.
+elseif(FISSION_QT_SOURCE STREQUAL "vcpkg")
   set(_fission_qt_from_vcpkg ON)
 elseif(FISSION_QT_SOURCE STREQUAL "auto")
   set(_probe_args "-DFISSION_QT_MIN_VERSION=${FISSION_QT_MIN_VERSION}")

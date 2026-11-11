@@ -25,12 +25,21 @@ option(FISSION_COVERAGE "Instrument the code for test coverage (scripts/coverage
 include(FissionCompilerOptions)
 include(FissionLayers)
 
+# WebAssembly (Emscripten) needs pthreads when compiling and linking.
+if(EMSCRIPTEN)
+  add_compile_options(-pthread)
+  add_link_options(-pthread)
+endif()
+
 # Qt is only allowed in the layers listed in cmake/FissionLayers.cmake.
 # (Where it comes from - system or vcpkg - is decided in cmake/FissionVcpkg.cmake.)
 # LinguistTools provides lrelease/lupdate (translations: qsTr + .ts files, German and English).
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick ShaderTools LinguistTools)
-include(FissionQt)
-qt_standard_project_setup(REQUIRES 6.8)
+# AP-6.7a: the web core build (FISSION_WEB_CORE) has no Qt - only the Qt-free libraries.
+if(NOT FISSION_WEB_CORE)
+  find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick ShaderTools LinguistTools)
+  include(FissionQt)
+  qt_standard_project_setup(REQUIRES 6.8)
+endif()
 
 # Libraries from vcpkg win over same-named libraries elsewhere on the machine. Homebrew's Qt 6.12
 # keeps its headers in /opt/homebrew/include, where Homebrew's own Catch2 (another version) is
@@ -51,11 +60,14 @@ add_subdirectory(src/core)
 add_subdirectory(src/features)
 add_subdirectory(src/io)
 add_subdirectory(src/analysis)
-add_subdirectory(src/services)
-add_subdirectory(src/render)
-add_subdirectory(src/interaction)
-add_subdirectory(src/ui)
-add_subdirectory(apps/fission359)
+# The layers above the kernel need Qt and the app; the web core build stops here.
+if(NOT FISSION_WEB_CORE)
+  add_subdirectory(src/services)
+  add_subdirectory(src/render)
+  add_subdirectory(src/interaction)
+  add_subdirectory(src/ui)
+  add_subdirectory(apps/fission359)
+endif()
 
 # Throw-away prototypes of the spike work packages (AP-0.4). Off by default.
 option(FISSION_BUILD_SPIKES "Build the spike prototypes in spikes/" OFF)

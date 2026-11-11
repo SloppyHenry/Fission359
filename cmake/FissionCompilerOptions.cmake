@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Compiler warnings and sanitizers shared by all Fission359 targets.
+# emcc is Clang, so the warning flags below are also accepted by the WebAssembly build.
 
 function(fission_apply_compiler_options target)
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
@@ -27,5 +28,24 @@ function(fission_apply_compiler_options target)
     target_compile_options(${target} PRIVATE
       -fsanitize=${_sanitizers} -fno-omit-frame-pointer)
     target_link_options(${target} PRIVATE -fsanitize=${_sanitizers})
+  endif()
+endfunction()
+
+# AP-6.7a: link options for the test executables of the WebAssembly build, which run under
+# Node. NODERAWFS lets the tests read the fixtures from the real disk; the pthread pool has
+# 4 workers (ADR-0014). No-op when not cross-compiling with Emscripten.
+function(fission_web_test_options target)
+  if(EMSCRIPTEN)
+    target_link_options(${target} PRIVATE
+      -sPTHREAD_POOL_SIZE=4 -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=4GB -sNODERAWFS=1
+      -sEXIT_RUNTIME=1 -sSTACK_SIZE=5MB)
+    # The emulator that runs the tests: the Node of emsdk, else any node on the PATH.
+    if(DEFINED ENV{EMSDK_NODE} AND NOT "$ENV{EMSDK_NODE}" STREQUAL "")
+      set(_fission_node "$ENV{EMSDK_NODE}")
+    else()
+      find_program(FISSION_NODE node REQUIRED)
+      set(_fission_node "${FISSION_NODE}")
+    endif()
+    set_target_properties(${target} PROPERTIES CROSSCOMPILING_EMULATOR "${_fission_node}")
   endif()
 endfunction()

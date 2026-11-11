@@ -220,6 +220,88 @@ jobs:
             build/${{ matrix.preset }}/Testing/Temporary/LastTest.log
             build/${{ matrix.preset }}/vcpkg-manifest-install.log
 
+  # Cross-compiles the Qt-free core libraries and their Catch2 unit tests to WebAssembly
+  # (CMake preset web-core, ADR-0014). vcpkg builds the dependencies for the wasm triplet
+  # from the overlay ports in cmake/ports/; the tests run under Node via
+  # CMAKE_CROSSCOMPILING_EMULATOR. The Emscripten version is fixed and must match the Qt
+  # version used by the later browser steps. The first run builds OpenCASCADE for wasm.
+  web:
+    name: Web (WebAssembly core)
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      EMSDK_VERSION: "4.0.7"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The runner's image version is no workflow variable; make it one for the cache keys.
+      - name: Note the runner image
+        run: echo "RUNNER_IMAGE=${ImageVersion:-unknown}" >> "$GITHUB_ENV"
+
+      - name: Restore vcpkg binary cache
+        id: vcpkg-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-web-${{ runner.os }}-${{ env.RUNNER_IMAGE }}-${{ env.EMSDK_VERSION }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**', 'cmake/ports/**') }}
+          restore-keys: |
+            vcpkg-web-${{ runner.os }}-${{ env.RUNNER_IMAGE }}-${{ env.EMSDK_VERSION }}-
+
+      - name: Prerequisites (scripts/setup)
+        run: scripts/tools/retry -- scripts/setup --yes --no-dev-tools
+
+      - name: Emscripten SDK
+        run: |
+          git clone --quiet --depth 1 https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
+          scripts/tools/retry -- "$HOME/emsdk/emsdk" install "$EMSDK_VERSION"
+          "$HOME/emsdk/emsdk" activate "$EMSDK_VERSION"
+          source "$HOME/emsdk/emsdk_env.sh"
+          echo "EMSDK=$EMSDK" >> "$GITHUB_ENV"
+          echo "EMSDK_NODE=$EMSDK_NODE" >> "$GITHUB_ENV"
+          echo "EMSCRIPTEN_ROOT=$EMSDK/upstream/emscripten" >> "$GITHUB_ENV"
+          echo "$EMSDK" >> "$GITHUB_PATH"
+          echo "$EMSDK/upstream/emscripten" >> "$GITHUB_PATH"
+          emcc --version
+
+      # Configuring runs "vcpkg install" for the wasm triplet (a no-op on a warm cache) and
+      # configures the core libraries and their tests for WebAssembly.
+      - name: Configure (builds the libraries for WebAssembly)
+        run: scripts/tools/retry --clean build/web-core/CMakeCache.txt --clean build/web-core/CMakeFiles -- cmake --preset web-core
+
+      # Also saved on pull requests: the web job is not a required check yet and would
+      # otherwise rebuild OpenCASCADE for WebAssembly on every pull request.
+      - name: Save vcpkg binary cache
+        if: always() && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-web-${{ runner.os }}-${{ env.RUNNER_IMAGE }}-${{ env.EMSDK_VERSION }}-${{ hashFiles('vcpkg.json', 'cmake/vcpkg-triplets/**', 'cmake/ports/**') }}
+
+      # OpenCASCADE links need a lot of memory per job; 4 jobs stay within the runner's RAM.
+      - name: Build
+        run: cmake --build --preset web-core -j 4
+
+      - name: Test
+        run: ctest --preset web-core -j 2 --output-junit "$GITHUB_WORKSPACE/web-tests.xml"
+        continue-on-error: false
+
+      - name: Sizes
+        if: always()
+        run: find build/web-core -name '*.wasm' -exec ls -l {} + | tee web-sizes.txt || true
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: web-core-report
+          retention-days: 14
+          if-no-files-found: ignore
+          path: |
+            web-tests.xml
+            web-sizes.txt
+            build/web-core/vcpkg-manifest-install.log
+
   # Builds the installable packages from the cached libraries and starts each one once.
   # Packages must be built on the oldest supported system (Ubuntu 24.04: the AppImage and the
   # Flatpak need a glibc at least as old as every machine they should run on, ADR-0006).
