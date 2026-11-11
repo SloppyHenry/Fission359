@@ -37,6 +37,9 @@ ADR-0014 (ganz), ADR-0002 (Renderer), ADR-0004 (vcpkg), ADR-0005 (CI), `docs/03-
    Web-Build aus `main` im lokalen Netz aus (Port 8359, mit COOP/COEP), und Tests (Playwright, Fenster-Tests unter Xvfb) dürfen dort in
    eigenen `fission3d-*`-Containern laufen (`nice -n 19`, höchstens 2 Jobs). Übersetzt wird in der CI (der Rechner hat wenig Speicher);
    der Build kommt als CI-Artefakt. Andere Container auf dem Rechner werden nie angefasst. Zugang und Name stehen nicht im Repo.
+10. **Qt-Version im Browser (2026-11-11):** Qt **6.12.0** `wasm_multithread` mit Emscripten **5.0.5** (von Qt 6.12 vorgegeben).
+    Qt 6.11 verlangt Emscripten 4.0.7, dessen LLVM mit WebAssembly-Ausnahmen ungültigen Code erzeugt (6.7a). Der Desktop bleibt
+    vorerst bei 6.11; QML/C++ nutzt nur API, die beide Versionen haben. 6.7b1 prüft zuerst den Kern unter 5.0.5 im Web-Job.
 9. **Nicht Teil der Browser-Version 1:** Datei-Import über Ziehen aus dem Finder (folgt, wenn Qt es sauber kann), Mehrfenster.
 
 ## Haltepunkte
