@@ -33,6 +33,17 @@ struct SketchRegionSet {
     std::size_t rejected = 0; ///< found by the kernel but failed the check: left out
 };
 
+/// The curves of the elements as the kernel takes them (points and construction elements are
+/// left out), in the order of the elements, with the id of the element each curve comes from.
+struct SketchCurves {
+    std::vector<geo::SketchCurve> curves;
+    std::vector<std::string> ids; ///< id of curve i
+};
+
+/// The curves of the elements (helper lines and points are left out; the others are as the
+/// kernel gets them).
+SketchCurves sketchCurvesOf(const std::vector<core::SketchElement>& elements);
+
 /// The regions of the elements (helper lines and points are left out; the others are as the
 /// kernel gets them). Throws `geo::GeometryError`.
 SketchRegionSet computeSketchRegions(const geo::GeometryKernel& kernel,

@@ -4285,6 +4285,11 @@
     </message>
     <message>
         <location line="+3"/>
+        <source>Pulled %1 mm</source>
+        <translation>Pulled %1 mm</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>Stretched by %1 mm</source>
         <translation>Stretched by %1 mm</translation>
     </message>

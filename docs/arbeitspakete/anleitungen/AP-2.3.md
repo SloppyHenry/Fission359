@@ -48,6 +48,14 @@ außen mit scharfen Ecken (`LocOpe_DPrism` rundet sie, darum bisher abgelehnt), 
    (Volumen nach Pyramidenstumpf-Formel); symmetrisch; durch alles.
 
 ## Teil 2.3b – Ziehen (Bedienung und Modi)
+**Zerlegt:** 2.3b1 (gebaut) = Schritt `extrude` ohne Bedienung. Er liest die Skizze über das Wort `sketch` (Schritt-Id) und den
+Bereich über das Wort `region` (Bereichs-Id aus den Kanten, Festlegung 52); dazu `insideU`/`insideV` (ein Punkt im Bereich, verdeckt).
+Fehlt der Bereich, rechnet der Schritt nicht (Fehler am Schritt, nie geraten). Die Neuberechnung reicht die Skizzen der früheren
+Schritte durch (`ExecuteInput::sketches`, `FeatureType::readsSketch`) und nimmt Skizze und Ebene in den Schlüssel des
+Zwischenspeichers. Seitenflächen heißen nach den Elementen (`side[L3]`). Bereichs-Ids liegen jetzt in `features`
+(`fission/features/sketch_regions.h`). Nur Modus „neu“. Offen für 2.3b2: Pfeil-Griff und Werkzeug, Modi mit Ziel-Körpern, Entfernen
+der Skizze sperren oder melden, Testdatei `v3/extrude.fission`.
+
 1. Feature-Typ `extrude` (Eingang: Skizzen-Schritt per Verweis auf den Bereich, Ziel-Körper bei Modus ≠ new). Werte `distance`, `taper`, Wörter
    `extent`, `mode`.
 2. Pfeil-Griff direkt auf einem Skizzenbereich (Hover zeigt ihn, UX §2.2), Ziehen = Distanz (negative = in die andere Richtung), Tippen

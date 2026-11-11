@@ -75,6 +75,9 @@ QtObject {
             return v[0] >= 0 ? qsTr("Face pulled out by %1 mm").arg(n(v[0]))
                              : qsTr("Face pushed in by %1 mm").arg(n(-v[0]))
         }
+        if (step.type === "extrude" && v.length === 1) {
+            return qsTr("Pulled %1 mm").arg(n(v[0]))
+        }
         if (step.type === "stretch" && v.length === 2) {
             return v[0] >= 0 ? qsTr("Stretched by %1 mm").arg(n(v[0])) : qsTr("Shortened by %1 mm").arg(n(-v[0]))
         }

@@ -392,7 +392,10 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
             CHECK(result->sketches.begin()->second.data.elements.empty());
         }
     }
-    CHECK(count == world.registry.ids().size());
+    // Step types that came after format 1 and have no artificial version 1 file (see the README
+    // of the fixtures); their files live in the folder of their own format.
+    const std::size_t newer = 1; // extrude (AP-2.3b)
+    CHECK(count + newer == world.registry.ids().size());
 }
 
 // The first file that has a sketch with elements (format 3, AP-2.1a). Written once, never changed.
