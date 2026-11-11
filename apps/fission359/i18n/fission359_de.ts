@@ -894,6 +894,36 @@
         <translation>Die Ansicht dreht und zoomt; am Projekt ändert sich nichts.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Heranzoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view closer to the middle of the screen.</source>
+        <translation>Bringt die Ansicht näher an die Bildschirmmitte.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view comes closer; nothing in the project changes.</source>
+        <translation>Die Ansicht kommt näher; am Projekt ändert sich nichts.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Herauszoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view farther away from the middle of the screen.</source>
+        <translation>Rückt die Ansicht weiter von der Bildschirmmitte weg.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view goes farther away; nothing in the project changes.</source>
+        <translation>Die Ansicht rückt weiter weg; am Projekt ändert sich nichts.</translation>
+    </message>
+    <message>
         <location line="+5"/>
         <source>Home view</source>
         <translation>Startansicht</translation>
@@ -1942,6 +1972,16 @@
         <location line="+2"/>
         <source>Show everything</source>
         <translation>Alles zeigen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Heranzoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Herauszoomen</translation>
     </message>
     <message>
         <location line="+1"/>

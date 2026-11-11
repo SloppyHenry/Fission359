@@ -5,7 +5,7 @@ Stand: 2026-11-06 (P17 erledigt mit PR #99, P22 umgesetzt), gegen den Code auf `
 
 ## Reihenfolge
 **Nach Bedarf**, der Nutzertest 1 (AP-1.13) kann die Reihenfolge ändern. P18, P2 und P3 sind vor dem Nutzertest erledigt worden.
-**Braucht eine Entscheidung (trifft die Orchestrierung) oder ein Testsystem:** P1 (Bild oder Video), P5, P8, P10, P11, P14 (Entscheidung oder Rechner).
+**Braucht eine Entscheidung (trifft die Orchestrierung) oder ein Testsystem:** P1 (Bild oder Video), P5, P8, P11, P14 (Entscheidung oder Rechner).
 
 ---
 
@@ -49,10 +49,6 @@ Lösung: Solange der Schritt „frisch abgelegt“ ist (bis zum ersten anderen B
 (Eingänge müssen vorher stehen); sonst Erklärung inline. Neuer Command `makeMoveFeature(id, newIndex)`, Test mit Undo und mit verbotener
 Reihenfolge.
 
-## P10 Tastatur-Zoom
-**Größe:** S · Angeboten am 2026-10-16, keine Antwort. **Haltepunkt:** erst fragen. Vorschlag: `+`/`-` und ⌘+/⌘− zoomen zur Mitte der Ansicht
-(`Viewport3D::zoomBy`); Achtung: ⌘+/⌘− wären sonst UI-Skalierung (AP-1.11) – Belegung mit dem Maintainer klären.
-
 ## P11 ⌥ beim Ablegen unter Linux prüfen
 **Größe:** S · Offen aus AP-1.6b3. Manche Linux-Fenstermanager (KDE, GNOME) nehmen ⌥(Alt)+Maus für sich (Fenster verschieben). Auf einem
 Linux-Desktop prüfen; wenn es nicht geht: Haltepunkt mit Vorschlag einer Ersatztaste
@@ -94,3 +90,4 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 - **P13** Löcher im Hintergrund prüfen: gemessen, ein Zug-Schritt ≈ 31 ms bei 10 Körpern und 20 Löchern, unter der 50-ms-Grenze; kein Umbau. Wieder ansehen bei Loch-Mustern (AP-2.8) oder großen Körpern.
 - **P15** Rezept-Sätze ausgelagert (Rest nach P19 und P21).
 - **Prüfliste T1–T11 vom 2026-10-27:** alles gemergt (PR #68–#80).
+- **P10** Tastatur-Zoom (2026-11-11): +/= und - zoomen zur Bildmitte um 20 %, ohne Strg/⌘ (bleibt für UI-Skalierung frei), aus beim Tippen.
