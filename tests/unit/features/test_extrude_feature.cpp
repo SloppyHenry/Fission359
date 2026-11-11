@@ -181,3 +181,34 @@ TEST_CASE("extrude: an unchanged step is remembered", "[extrude][feature]") {
     CHECK(world.kernel->measure(again.bodies.at(body).solid).volume ==
           Approx(72000.0).epsilon(1e-9));
 }
+
+TEST_CASE("extrude: the grip stands where the region was picked and follows the distance",
+          "[extrude][feature]") {
+    const FeatureRegistry registry = [] {
+        FeatureRegistry made;
+        fission::features::registerBuiltinFeatures(made);
+        return made;
+    }();
+    const FeatureType* type = registry.find("extrude");
+    REQUIRE(type != nullptr);
+    ResolvedParams params;
+    const auto set = [&](const char* name, double value) { params[name] = {value, {}}; };
+    set("distance", 30.0);
+    set("anchorX", 0.0);
+    set("anchorY", 0.0);
+    set("anchorZ", 0.0);
+    set("anchorDx", 0.0);
+    set("anchorDy", 0.0);
+    set("anchorDz", 1.0);
+    const auto handles = type->handles(params);
+    REQUIRE(handles.size() == 1);
+    CHECK(handles[0].parameter == "distance");
+    CHECK(handles[0].origin.x == Approx(0.0));
+    CHECK(handles[0].origin.y == Approx(0.0));
+    CHECK(handles[0].origin.z == Approx(30.0));
+    CHECK(handles[0].direction.z == Approx(1.0));
+
+    // Without a way out of the plane there is no grip.
+    set("anchorDz", 0.0);
+    CHECK(type->handles(params).empty());
+}

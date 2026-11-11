@@ -3716,6 +3716,57 @@ QString DocumentModel::addSketch(const QString& bodyId, int faceNumber) {
     return toQString(id->value);
 }
 
+QString DocumentModel::addExtrude(const QString& sketchStep, const QString& regionId, double u,
+                                  double v) {
+    const core::FeatureType* type = m_registry.find("extrude");
+    if (type == nullptr || !m_result) {
+        return {};
+    }
+    const core::SketchResult* sketch = nullptr;
+    for (const auto& [id, made] : m_result->sketches) {
+        if (toQString(id.value) == sketchStep) {
+            sketch = &made;
+            break;
+        }
+    }
+    if (sketch == nullptr || !sketch->plane) {
+        return {};
+    }
+    const core::SketchPlane& plane = *sketch->plane;
+    const geo::Point3d origin = plane.origin();
+    const geo::Point3d uAxis = plane.uAxis();
+    const geo::Point3d vAxis = plane.vAxis();
+    const geo::Point3d p{origin.x + u * uAxis.x + v * vAxis.x, origin.y + u * uAxis.y + v * vAxis.y,
+                         origin.z + u * uAxis.z + v * vAxis.z};
+    const geo::Point3d n{uAxis.y * vAxis.z - uAxis.z * vAxis.y,
+                         uAxis.z * vAxis.x - uAxis.x * vAxis.z,
+                         uAxis.x * vAxis.y - uAxis.y * vAxis.x};
+
+    core::FeatureDraft draft = core::defaultDraft(*type);
+    draft.texts["sketch"] = sketchStep.toStdString();
+    draft.texts["region"] = regionId.toStdString();
+    const std::map<std::string, double> values{
+        {"insideU", u},    {"insideV", v},    {"anchorX", p.x},
+        {"anchorY", p.y},  {"anchorZ", p.z},  {"anchorDx", n.x},
+        {"anchorDy", n.y}, {"anchorDz", n.z}, {"distance", 10.0}};
+    for (const auto& [name, number] : values) {
+        draft.params.at(name).expression = digits(number);
+    }
+    draft.newBodies = 1;
+
+    m_history.beginTransaction({"extrude", {}});
+    const auto id = m_history.addFeature(std::move(draft));
+    const core::Feature* feature = id ? m_history.document().findFeature(*id) : nullptr;
+    if (feature == nullptr || feature->outputs.empty()) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return toQString(feature->outputs.front().value);
+}
+
 bool DocumentModel::faceIsFlat(const QString& bodyId, int faceNumber) const {
     const core::Body* target = findBody(bodyId);
     if (target == nullptr || faceNumber < 1 || !m_result) {
