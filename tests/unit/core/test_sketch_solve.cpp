@@ -17,8 +17,11 @@
 #include "fission/core/commands.h"
 #include "fission/core/document.h"
 #include "fission/core/history.h"
+#include "fission/core/recompute.h"
 #include "fission/core/sketch.h"
 #include "fission/core/sketch_solve.h"
+#include "fission/features/builtin.h"
+#include "fission/geo/occt/kernel.h"
 #include "fission/geo/sketch/planegcs_solver.h"
 
 using Catch::Approx;
@@ -314,4 +317,84 @@ TEST_CASE("sketch constraints: the commands describe themselves with keys and va
     CHECK(steps[4].key == "addSketchMeasure");
     CHECK(steps[4].values.at("measure") == "length");
     CHECK(steps[4].values.at("value") == "30");
+}
+
+// --- the recompute evaluates the measures and solves the sketch (AP-2.2b) ------------------
+
+namespace {
+
+struct MeasureWorld {
+    FeatureRegistry registry;
+    std::unique_ptr<fission::geo::GeometryKernel> kernel = fission::geo::occt::makeKernel();
+    RecomputeCache cache;
+    Document document{31};
+
+    MeasureWorld() { fission::features::registerBuiltinFeatures(registry); }
+
+    // A sketch step with line L1 (0,0)-(10,1), the rules fixed L1.0 and horizontal L1, and the
+    // length measure R3 on L1 with the given expression.
+    FeatureId addSolvedLine(const std::string& expression, double lastValue) {
+        FeatureDraft draft = defaultDraft(*registry.find("sketch"));
+        SketchData& data = *draft.sketch;
+        data.elements = {line(data.allocateId(SketchElementKind::line), 0, 0, 10, 1)};
+        data.rules = {{data.allocateRuleId(), "fixed", {"L1.0"}},
+                      {data.allocateRuleId(), "horizontal", {"L1"}}};
+        data.measures = {
+            SketchMeasure{data.allocateRuleId(), "length", {"L1"}, {expression}, lastValue}};
+        return *document.addFeature(std::move(draft));
+    }
+
+    RecomputeResult run(const fission::geo::SketchSolver& solver) {
+        const auto result = recompute(document, registry, *kernel, cache, {}, &solver);
+        REQUIRE(result.has_value());
+        return std::move(*result);
+    }
+};
+
+} // namespace
+
+TEST_CASE("recompute: a sketch measure that uses a named measure follows the named measure",
+          "[sketch][solve][recompute]") {
+    MeasureWorld world;
+    world.document.addParameter({"width", "30", QuantityKind::length, ""});
+    const FeatureId step = world.addSolvedLine("width", 30.0);
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+
+    const RecomputeResult first = world.run(*solver);
+    const FeatureState* state = first.state(step);
+    REQUIRE(state != nullptr);
+    CHECK(state->status == FeatureStatus::ok);
+    REQUIRE(first.sketches.contains(step));
+    const SketchResult& sketch = first.sketches.at(step);
+    REQUIRE(sketch.data.elements.size() == 1);
+    CHECK(sketch.data.elements[0].points[1].u == Approx(30.0).margin(1e-9));
+    CHECK(sketch.data.elements[0].points[1].v == Approx(0.0).margin(1e-9));
+    REQUIRE(sketch.data.measures.size() == 1);
+    CHECK(sketch.data.measures[0].lastValue == Approx(30.0).margin(1e-9));
+
+    // The named measure changed: the measure is evaluated again and the step solved again.
+    world.document.setParameterExpression("width", "45");
+    const RecomputeResult second = world.run(*solver);
+    CHECK(second.state(step)->status == FeatureStatus::ok);
+    CHECK(second.executed == 1); // not remembered: the measure values are in the cache key
+    const SketchResult& moved = second.sketches.at(step);
+    CHECK(moved.data.elements[0].points[1].u == Approx(45.0).margin(1e-9));
+    CHECK(moved.data.elements[0].points[1].v == Approx(0.0).margin(1e-9));
+    CHECK(moved.data.measures[0].lastValue == Approx(45.0).margin(1e-9));
+}
+
+TEST_CASE("recompute: a sketch measure with a broken formula is an error on the step",
+          "[sketch][solve][recompute]") {
+    MeasureWorld world;
+    const FeatureId step = world.addSolvedLine("nonsense +", 30.0);
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    const RecomputeResult result = world.run(*solver);
+    const FeatureState* state = result.state(step);
+    REQUIRE(state != nullptr);
+    CHECK(state->status == FeatureStatus::error);
+    REQUIRE(state->issue.has_value());
+    CHECK(state->issue->code == FeatureIssueCode::parameterInvalid);
+    CHECK(state->issue->subject == "R3"); // the measure id
+    REQUIRE(state->issue->expression.has_value());
+    CHECK_FALSE(result.sketches.contains(step));
 }

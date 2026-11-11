@@ -14,6 +14,7 @@
 #include "fission/core/document.h"
 #include "fission/core/expression.h"
 #include "fission/core/help_reason.h"
+#include "fission/core/sketch_solve.h"
 #include "fission/geo/kernel.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/sketch_solver.h"
@@ -175,6 +176,10 @@ struct ExecuteInput {
     /// to the elements found, in the order of the references. Only safely found elements are
     /// here; a step with a reference that needs help is not calculated at all.
     std::map<std::string, std::vector<ResolvedRef>> refs = {};
+    /// The evaluated measures of a sketch step, by measure id (mm, degrees for angles); null for
+    /// other steps or when the step has no measures. A measure's formula may use a named measure
+    /// ("2 * width"), so the recompute evaluates them with the named measures of the document.
+    const SketchMeasureValues* sketchMeasures = nullptr;
 };
 
 struct ExecuteContext {
