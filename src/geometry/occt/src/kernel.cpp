@@ -116,6 +116,10 @@ public:
     SketchRegionResult sketchRegions(const std::vector<SketchCurve>& curves) const override {
         return occt::sketchRegions(curves);
     }
+    NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
+                             const SketchFrame& frame, const ExtrudeSpec& spec) const override {
+        return occt::extrudeRegion(curves, inside, frame, spec);
+    }
     std::vector<SketchCrossing>
     sketchCarrierCrossings(const SketchCurve& carrier,
                            const std::vector<SketchCurve>& others) const override {

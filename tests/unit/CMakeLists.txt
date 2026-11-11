@@ -54,6 +54,7 @@ add_executable(fission_unit_tests
   geometry/test_sketch_curve.cpp
   geometry/test_sketch_intersections.cpp
   geometry/test_sketch_regions.cpp
+  geometry/test_extrude.cpp
   geometry/test_sketch_edge.cpp
   geometry/test_sketch_solver.cpp
   analysis/test_material.cpp
