@@ -48,7 +48,7 @@ public:
     std::vector<TextFieldSpec> texts() const override {
         // "sketch": the id of the sketch step; "region": the region's id ("L1+L2+L3+L4");
         // "extent": "distance" or "symmetric".
-        return {{"sketch", ""}, {"region", ""}, {"extent", "distance"}};
+        return {{"sketch", ""}, {"region", ""}, {"extent", "distance"}, {"mode", "new"}};
     }
 
     std::optional<FeatureId> readsSketch(const Feature& feature) const override {
@@ -78,6 +78,15 @@ public:
     }
 
     FeatureResult execute(const ExecuteInput& input, const ExecuteContext& context) const override {
+        const std::string mode = textOf(input.feature, "mode", "new");
+        if (mode == "new" ? !input.inputs.empty()
+                          : (mode != "merge" && mode != "subtract") || input.inputs.size() != 1) {
+            throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                     mode == "new" || mode == "merge" || mode == "subtract"
+                                         ? "extrude: needs one body to join or cut, or none"
+                                         : "extrude: unknown mode '" + mode + "'",
+                                     "mode");
+        }
         const SketchResult* sketch = nullptr;
         if (input.sketches != nullptr) {
             const auto found = input.sketches->find(FeatureId{textOf(input.feature, "sketch", "")});
@@ -166,14 +175,50 @@ public:
             }
         }
 
+        // The step passes on the names of a body it joins to or cuts from, so it gives its own
+        // faces their full names itself.
+        for (geo::NamedFace& face : made.faces) {
+            face.role = elementName(input.feature, face.role);
+        }
+
         FeatureResult result;
-        result.outputs.push_back({input.feature.outputs.at(0), std::move(made.solid),
-                                  std::move(made.faces), std::move(made.history)});
+        if (mode == "new") {
+            result.outputs.push_back({input.feature.outputs.at(0), std::move(made.solid),
+                                      std::move(made.faces), std::move(made.history)});
+            return result;
+        }
+        const FeatureOutput& target = input.inputs.front();
+        const geo::BooleanOp op =
+            mode == "merge" ? geo::BooleanOp::merge : geo::BooleanOp::subtract;
+        if (op == geo::BooleanOp::subtract) {
+            const geo::Bounds body = context.kernel.bounds(target.solid);
+            const geo::Bounds cut = context.kernel.bounds(made.solid);
+            const bool apart = cut.min.x > body.max.x || cut.max.x < body.min.x ||
+                               cut.min.y > body.max.y || cut.max.y < body.min.y ||
+                               cut.min.z > body.max.z || cut.max.z < body.min.z;
+            if (apart) {
+                throw geo::GeometryError(geo::GeometryErrorCode::noOverlap,
+                                         "extrude: the cut does not touch the body");
+            }
+        }
+        geo::NamedSolid joined = context.kernel.boolean(
+            op, geo::NamedSolid{target.solid, target.faces}, {std::move(made)}, 0.0);
+        result.outputs.push_back({input.feature.outputs.at(0), std::move(joined.solid),
+                                  std::move(joined.faces), std::move(joined.history)});
         return result;
     }
 
+    // A new body, or joined to / cut from the one input body (AP-2.3b3).
+    bool passesOnNames() const override { return true; }
+
     Description describe(const ResolvedParams& params) const override {
         return {"extrude", {params.at("distance")}};
+    }
+
+    Description describeStep(const Feature& feature, const ResolvedParams& params) const override {
+        const std::string mode = textOf(feature, "mode", "new");
+        return {mode == "new" ? std::string("extrude") : "extrude." + mode,
+                {params.at("distance")}};
     }
 
     // The grip stands where the person pointed inside the region, moved out by the distance;

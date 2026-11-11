@@ -212,3 +212,111 @@ TEST_CASE("extrude: the grip stands where the region was picked and follows the 
     set("anchorDz", 0.0);
     CHECK(type->handles(params).empty());
 }
+
+namespace {
+
+// A 100 x 100 x 20 box whose bottom lies on the sketch plane and covers the rectangle 60 x 40.
+FeatureId addBox(ExtrudeWorld& world, const char* x) {
+    FeatureDraft draft = defaultDraft(*world.registry.find("box"));
+    draft.params.at("width").expression = "100";
+    draft.params.at("depth").expression = "100";
+    draft.params.at("height").expression = "20";
+    draft.params.at("x").expression = x;
+    draft.params.at("y").expression = "20";
+    draft.params.at("z").expression = "0";
+    return *world.history.addFeature(std::move(draft));
+}
+
+FeatureId addExtrudeOnto(ExtrudeWorld& world, FeatureId sketch, const FeatureId& box,
+                         const char* mode, const char* distance) {
+    FeatureDraft draft = defaultDraft(*world.registry.find("extrude"));
+    draft.texts["sketch"] = sketch.value;
+    draft.texts["region"] = "L1+L2+L3+L4";
+    draft.texts["mode"] = mode;
+    draft.params.at("distance").expression = distance;
+    draft.params.at("insideU").expression = "30";
+    draft.params.at("insideV").expression = "20";
+    for (const Feature& feature : world.history.document().features()) {
+        if (feature.id == box) {
+            draft.inputs = feature.outputs;
+        }
+    }
+    return *world.history.addFeature(std::move(draft));
+}
+
+double volumeOf(ExtrudeWorld& world, const RecomputeResult& result, const FeatureId& step) {
+    for (const Feature& feature : world.history.document().features()) {
+        if (feature.id == step) {
+            return world.kernel->measure(result.bodies.at(feature.outputs.at(0)).solid).volume;
+        }
+    }
+    FAIL("no such step");
+    return 0.0;
+}
+
+} // namespace
+
+TEST_CASE("extrude: pulled onto a body, the two become one (AP-2.3b3)", "[extrude][feature]") {
+    ExtrudeWorld world;
+    const FeatureId box = addBox(world, "30");
+    const FeatureId sketch = world.addSketch();
+    world.rectangle(sketch, 60, 40);
+    const FeatureId pull = addExtrudeOnto(world, sketch, box, "merge", "30");
+    const RecomputeResult result = world.calculate();
+    const FeatureState* state = result.state(pull);
+    REQUIRE(state != nullptr);
+    CHECK(state->status == FeatureStatus::ok);
+    CHECK(state->description->key == "extrude.merge");
+    // 200000 for the box and 60 x 40 x 10 above it
+    CHECK(volumeOf(world, result, pull) == Approx(224000.0).epsilon(1e-9));
+}
+
+TEST_CASE("extrude: cut into a body, the region is taken away (AP-2.3b3)", "[extrude][feature]") {
+    ExtrudeWorld world;
+    const FeatureId box = addBox(world, "30");
+    const FeatureId sketch = world.addSketch();
+    world.rectangle(sketch, 60, 40);
+    const FeatureId cut = addExtrudeOnto(world, sketch, box, "subtract", "10");
+    const RecomputeResult result = world.calculate();
+    const FeatureState* state = result.state(cut);
+    REQUIRE(state != nullptr);
+    CHECK(state->status == FeatureStatus::ok);
+    CHECK(state->description->key == "extrude.subtract");
+    CHECK(volumeOf(world, result, cut) == Approx(176000.0).epsilon(1e-9));
+}
+
+TEST_CASE("extrude: a cut beside the body and a wrong number of bodies are errors (AP-2.3b3)",
+          "[extrude][feature]") {
+    SECTION("the cut does not touch the body") {
+        ExtrudeWorld world;
+        const FeatureId box = addBox(world, "500");
+        const FeatureId sketch = world.addSketch();
+        world.rectangle(sketch, 60, 40);
+        const FeatureId cut = addExtrudeOnto(world, sketch, box, "subtract", "10");
+        const RecomputeResult result = world.calculate();
+        CHECK(result.state(cut)->status != FeatureStatus::ok);
+    }
+    SECTION("joining needs a body") {
+        ExtrudeWorld world;
+        const FeatureId sketch = world.addSketch();
+        world.rectangle(sketch, 60, 40);
+        FeatureDraft draft = defaultDraft(*world.registry.find("extrude"));
+        draft.texts["sketch"] = sketch.value;
+        draft.texts["region"] = "L1+L2+L3+L4";
+        draft.texts["mode"] = "merge";
+        draft.params.at("insideU").expression = "30";
+        draft.params.at("insideV").expression = "20";
+        const FeatureId pull = *world.history.addFeature(std::move(draft));
+        const RecomputeResult result = world.calculate();
+        CHECK(result.state(pull)->status != FeatureStatus::ok);
+    }
+    SECTION("an unknown mode") {
+        ExtrudeWorld world;
+        const FeatureId box = addBox(world, "30");
+        const FeatureId sketch = world.addSketch();
+        world.rectangle(sketch, 60, 40);
+        const FeatureId pull = addExtrudeOnto(world, sketch, box, "melt", "10");
+        const RecomputeResult result = world.calculate();
+        CHECK(result.state(pull)->status != FeatureStatus::ok);
+    }
+}

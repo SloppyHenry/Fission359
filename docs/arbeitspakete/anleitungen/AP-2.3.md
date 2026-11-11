@@ -55,7 +55,10 @@ Schritte durch (`ExecuteInput::sketches`, `FeatureType::readsSketch`) und nimmt 
 Zwischenspeichers. Seitenflächen heißen nach den Elementen (`side[L3]`). Bereichs-Ids liegen jetzt in `features`
 (`fission/features/sketch_regions.h`). Nur Modus „neu“. 2.3b2 (gebaut) = Bedienung: in der Skizze einen Bereich anklicken, dann „Ziehen“ (Knopf neben „Fertig“, Enter
 oder Befehlssuche) → Skizze schließt, Schritt `extrude` mit 10 mm, neuer Körper gewählt, Werkzeug „Größe“ zeigt den Pfeil-Griff
-(Ziehen oder Tippen). Offen für 2.3b3: Modi mit Ziel-Körpern und automatischer Vorschlag (Haltepunkt 2), Pfeil schon beim Überfahren
+(Ziehen oder Tippen). 2.3b3a (gebaut) = Wort `mode` (`new`, `merge`, `subtract`): bei `merge`/`subtract` genau ein
+Eingangskörper, der wie bei „Vereinen“ in den neuen Körper aufgeht; Schnitt neben dem Körper = `noOverlap`; der Schritt
+gibt Namen weiter (`passesOnNames`), eigene Flächen heißen `F<n>/extrude/…`; Rezept-Sätze „aufgezogen“/„ausgeschnitten“.
+Offen für 2.3b3: Ziel-Körper in der Bedienung und automatischer Vorschlag (Haltepunkt 2), Pfeil schon beim Überfahren
 eines Bereichs ohne Klick, Entfernen einer gelesenen Skizze sperren oder melden, Testdatei `v3/extrude.fission`, Budget der
 Live-Vorschau messen.
 
