@@ -451,7 +451,7 @@ TEST_CASE("handles: pulling the handle on the far side changes the value the sam
 namespace {
 
 // Whether a screen point is inside the outline of the box round the chosen box (its eight
-// corners as seen on screen).
+// corners as seen on screen, turned by the rotZ of the step).
 bool onTheBody(Fixture& f, const QPointF& point) {
     const double w = f.value("width");
     const double d = f.value("depth");
@@ -459,10 +459,14 @@ bool onTheBody(Fixture& f, const QPointF& point) {
     const double x = f.value("x");
     const double y = f.value("y");
     const double z = f.value("z");
+    const double angle = f.value("rotZ") / 180.0 * std::numbers::pi;
+    const double c = std::cos(angle);
+    const double s = std::sin(angle);
     std::vector<QPointF> corners;
     for (int corner = 0; corner < 8; ++corner) {
-        corners.push_back(f.viewport.project(x + ((corner & 1) != 0 ? w : -w) / 2.0,
-                                             y + ((corner & 2) != 0 ? d : -d) / 2.0,
+        const double dx = ((corner & 1) != 0 ? w : -w) / 2.0;
+        const double dy = ((corner & 2) != 0 ? d : -d) / 2.0;
+        corners.push_back(f.viewport.project(x + dx * c - dy * s, y + dx * s + dy * c,
                                              z + ((corner & 4) != 0 ? h : 0.0)));
     }
     // The outline is the convex hull of the corners (monotone chain).
@@ -527,6 +531,42 @@ TEST_CASE("handles: the dot sits on the face it moves, the band and its label be
                 std::hypot(edgeEnd.x() - edgeStart.x(), edgeEnd.y() - edgeStart.y());
             CHECK(band == Approx(edge).epsilon(0.25));
         }
+    }
+}
+
+TEST_CASE("handles: a turned box has its bands along its own sides, off the body",
+          "[ui][handles]") {
+    Fixture f;
+    roundedPlate(f);
+    REQUIRE(f.model->setStepValue(0, QStringLiteral("rotZ"), QStringLiteral("30")));
+    f.refresh();
+    for (const double yaw : {-35.0, 30.0, 150.0}) {
+        f.viewport.setCamera(yaw, 32.0, 260.0);
+        f.refresh();
+        for (const QString& parameter :
+             {QStringLiteral("width"), QStringLiteral("depth"), QStringLiteral("height")}) {
+            CAPTURE(yaw, parameter.toStdString());
+            const QVariantMap shown = f.handle(parameter);
+            REQUIRE(shown["band"].toBool());
+            const QPointF bandStart(shown["bandStartX"].toDouble(), shown["bandStartY"].toDouble());
+            const QPointF bandEnd(shown["bandEndX"].toDouble(), shown["bandEndY"].toDouble());
+            CHECK_FALSE(onTheBody(f, (bandStart + bandEnd) / 2.0));
+            CHECK_FALSE(onTheBody(f, {shown["chipX"].toDouble(), shown["chipY"].toDouble()}));
+            // As long as what it measures.
+            const QPointF edgeStart(shown["edgeStartX"].toDouble(), shown["edgeStartY"].toDouble());
+            const QPointF edgeEnd(shown["edgeEndX"].toDouble(), shown["edgeEndY"].toDouble());
+            const double band =
+                std::hypot(bandEnd.x() - bandStart.x(), bandEnd.y() - bandStart.y());
+            const double edge =
+                std::hypot(edgeEnd.x() - edgeStart.x(), edgeEnd.y() - edgeStart.y());
+            CHECK(band == Approx(edge).epsilon(0.25));
+        }
+        // All three sizes have their band; only the corner radius has none.
+        int withBand = 0;
+        for (const QVariant& entry : f.handles->handles()) {
+            withBand += entry.toMap()["band"].toBool() ? 1 : 0;
+        }
+        CHECK(withBand == 3);
     }
 }
 
