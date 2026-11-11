@@ -626,8 +626,20 @@ void DocumentModel::onEngineEvent(const core::RecomputeEvent& event) {
                 render::tessellationForDetail(0, m_kernel->bounds(body.solid).diagonal());
             auto mesh =
                 std::make_shared<const geo::TriangleMesh>(m_kernel->tessellate(body.solid, params));
+            // The exact points to catch on (pflege P7), worked out next to the mesh. When they
+            // fail, the mesh still stands: the drag then catches on the points of the mesh.
+            std::shared_ptr<const std::vector<geo::SnapPointGal>> snaps;
+            try {
+                snaps = std::make_shared<const std::vector<geo::SnapPointGal>>(
+                    m_kernel->snapPoints(body.solid));
+            } catch (const geo::GeometryError& error) {
+                qWarning() << "the snap points of a body could not be worked out:" << error.what();
+            }
             const std::lock_guard lock(m_meshMutex);
             m_meshes.emplace(key, std::move(mesh));
+            if (snaps) {
+                m_snapPoints.emplace(key, std::move(snaps));
+            }
         } catch (const geo::GeometryError& error) {
             qWarning() << "a body could not be tessellated:" << error.what();
         }
@@ -674,6 +686,7 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
         }
         for (std::size_t i = 0; i + kKeptNewer < others.size(); ++i) { // `others` is ascending
             m_meshes.erase(others[i]);
+            m_snapPoints.erase(others[i]);
         }
         // Finer meshes of bodies that changed are gone; new bodies get theirs again below.
         for (auto it = m_detailMeshes.begin(); it != m_detailMeshes.end();) {
@@ -726,6 +739,9 @@ void DocumentModel::rebuildScene() {
             }
             render::RenderBody drawn;
             drawn.id = body.id.value;
+            if (const auto snaps = m_snapPoints.find(key); snaps != m_snapPoints.end()) {
+                drawn.snapPoints = snaps->second;
+            }
             // The finer mesh of the current zoom if it is ready, otherwise the basic one.
             const auto fine = m_detailMeshes.find(key);
             if (fine != m_detailMeshes.end()) {
