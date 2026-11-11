@@ -91,5 +91,17 @@ var paths = {
     sketchpattern: "M3 9h5v6H3z M9.5 9h5v6h-5z M16 9h5v6h-5z",
     sketchtakeover: "M5 19V9l4-4h10v14z M9 5v10h10",
     sketchpoint: "M12 14.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5z M12 4v3 M12 17v3 M4 12h3 M17 12h3",
-    sketchhelper: "M4 20l3-3 M10 14l4-4 M17 7l3-3"
+    sketchhelper: "M4 20l3-3 M10 14l4-4 M17 7l3-3",
+    ruleHorizontal: "M4 12h16 M4 9v6 M20 9v6",
+    ruleVertical: "M12 4v16 M9 4h6 M9 20h6",
+    ruleParallel: "M7 19L13 5 M11 19L17 5",
+    rulePerpendicular: "M5 19h14 M12 19V5 M12 15h4v4",
+    ruleTangent: "M3 20h18 M12 20a6 6 0 1 0 0-12a6 6 0 0 0 0 12z",
+    ruleEqual: "M5 9h14 M5 15h14",
+    ruleSymmetric: "M12 3v18 M9 8l-4 4 4 4 M15 8l4 4-4 4",
+    ruleMidpoint: "M3 12h18 M3 9v6 M21 9v6 M12 7v10",
+    ruleFixed: "M7 11V8a5 5 0 0 1 10 0v3 M5 11h14v9H5z",
+    rulePointOnCurve: "M3 19c4-9 14-9 18 0 M12 10.5a2 2 0 1 0 0 4a2 2 0 0 0 0-4z",
+    ruleConcentric: "M12 20a8 8 0 1 0 0-16a8 8 0 0 0 0 16z M12 15a3 3 0 1 0 0-6a3 3 0 0 0 0 6z M12 12h.01",
+    ruleCoincident: "M4 20l8-8 M20 20l-8-8 M12 9.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5z"
 };

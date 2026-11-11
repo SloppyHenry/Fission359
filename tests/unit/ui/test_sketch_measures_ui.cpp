@@ -364,3 +364,29 @@ TEST_CASE("a drawn rectangle gets its rules in the same step", "[ui][sketchmeasu
     CHECK(f.elements().empty());
     CHECK(rulesOf() == 0);
 }
+
+TEST_CASE("rule marks show next to their element and a click removes the rule",
+          "[ui][sketchmeasures][rulemarks]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0); // a level line gets the automatic rule "horizontal" (AP-2.2c2)
+    f.settle();
+    const QVariantList marks = f.sketch->ruleMarks();
+    REQUIRE(marks.size() == 1);
+    const QVariantMap mark = marks[0].toMap();
+    CHECK(mark.value(QStringLiteral("kind")).toString() == QStringLiteral("horizontal"));
+    // The anchor is the middle of the line (5, 0); the ground plane maps u → x, v → y.
+    CHECK(mark.value(QStringLiteral("x")).toDouble() == Approx(5.0).margin(1e-9));
+    CHECK(mark.value(QStringLiteral("y")).toDouble() == Approx(0.0).margin(1e-9));
+    CHECK(mark.value(QStringLiteral("slot")).toInt() == 0);
+
+    // A click on the mark removes the rule (one undo step); undo brings it back.
+    CHECK(f.sketch->removeRule(mark.value(QStringLiteral("id")).toString()));
+    f.settle();
+    CHECK(f.sketch->ruleMarks().isEmpty());
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.sketch->ruleMarks().size() == 1);
+}

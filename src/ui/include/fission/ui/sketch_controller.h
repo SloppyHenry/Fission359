@@ -118,6 +118,10 @@ class SketchController : public QObject {
     /// The labels of the measures of the sketch for the view: one map per measure with
     /// { id, kind, expression (as typed), text, x, y, z (the anchor in space), conflict }.
     Q_PROPERTY(QVariantList measureLabels READ measureLabels NOTIFY measuresChanged)
+    /// The marks of the rules of the sketch for the view (AP-2.2c3): one map per rule with
+    /// { id, kind, x, y, z (the anchor in space), slot (how many earlier marks share the same
+    /// anchor element, so the view can place them side by side) }.
+    Q_PROPERTY(QVariantList ruleMarks READ ruleMarks NOTIFY measuresChanged)
     /// How many elements can still move (AP-2.2c1); drawn in `freeColour`.
     Q_PROPERTY(int freeCount READ freeCount NOTIFY freedomChanged)
     /// True when the sketch has elements and nothing can move any more (AP-2.2c1).
@@ -249,6 +253,8 @@ public:
     QStringList selectedElements() const;
     /// The labels of the measures of the sketch, one map per measure (see the property).
     QVariantList measureLabels() const;
+    /// The marks of the rules of the sketch, one map per rule (see the property, AP-2.2c3).
+    QVariantList ruleMarks() const;
     /// How many elements can still move (AP-2.2c1).
     int freeCount() const noexcept { return static_cast<int>(m_movable.size()); }
     /// True when the sketch has elements and nothing can move any more (AP-2.2c1).
@@ -276,6 +282,8 @@ public:
     Q_INVOKABLE bool changeMeasure(const QString& id, const QString& expression);
     /// Removes the rule or measure with this "R" id.
     Q_INVOKABLE bool removeMeasure(const QString& id);
+    /// Removes the rule with this "R" id (AP-2.2c3); one step of the history.
+    Q_INVOKABLE bool removeRule(const QString& id);
 
 signals:
     void stateChanged();
@@ -387,6 +395,12 @@ private:
     bool elementSelected(const std::string& id) const noexcept;
     void clearElementSelection();
     std::optional<core::SketchPoint> measureAnchor(const core::SketchMeasure& measure) const;
+    /// The anchor of a rule on the plane (AP-2.2c3): its first element (a point reference
+    /// "L1.0" gives that point, else the element's own anchor point). Nothing when the element
+    /// is not found.
+    std::optional<core::SketchPoint>
+    ruleAnchor(const core::SketchRule& rule,
+               const std::vector<core::SketchElement>& elements) const;
     void forgetEdit();
     void onClicked(double x, double y);
     void onPressed(double x, double y);

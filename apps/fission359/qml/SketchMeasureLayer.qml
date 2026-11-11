@@ -314,6 +314,69 @@ Item {
         }
     }
 
+    // The marks of the rules (AP-2.2c3): a small stroke symbol next to the element each rule
+    // concerns. Hovering says the rule's name, a click on the symbol removes the rule.
+    Repeater {
+        id: ruleMarks
+
+        model: Sketch.ruleMarks.length
+
+        delegate: Item {
+            id: mark
+
+            required property int index
+            readonly property var info: index < Sketch.ruleMarks.length ? Sketch.ruleMarks[index] : null
+            // Follows the camera: project() reads its values, so this is evaluated again.
+            readonly property point at: mark.info !== null
+                ? root.project(mark.info.x, mark.info.y, mark.info.z)
+                : Qt.point(0, 0)
+            // "horizontal" → "ruleHorizontal", "pointOnCurve" → "rulePointOnCurve"
+            readonly property string iconName: mark.info !== null
+                ? "rule" + mark.info.kind.charAt(0).toUpperCase() + mark.info.kind.slice(1)
+                : ""
+
+            anchors.fill: parent
+            visible: mark.info !== null
+
+            Rectangle {
+                id: badge
+
+                x: Math.max(0, Math.min(root.width - width, mark.at.x + 10 + mark.info.slot * 22))
+                y: Math.max(0, Math.min(root.height - height, mark.at.y + 8))
+                width: 20
+                height: 20
+                radius: Theme.radius
+                color: Theme.panel
+                border.width: 1
+                border.color: area.containsMouse ? Theme.accentLine : Theme.line2
+                z: 2
+
+                Icon {
+                    anchors.centerIn: parent
+                    name: mark.iconName
+                    size: 14
+                    color: Theme.fg
+                }
+
+                MouseArea {
+                    id: area
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    Accessible.role: Accessible.Button
+                    Accessible.name: root.ruleWord(mark.info ? mark.info.kind : "")
+                    onClicked: Sketch.removeRule(mark.info.id)
+                }
+
+                ToolTip.visible: area.containsMouse
+                ToolTip.text: root.ruleWord(mark.info ? mark.info.kind : "") + " – "
+                              + qsTr("click to remove this rule")
+                ToolTip.delay: 700
+            }
+        }
+    }
+
     // The field for a new measure of the chosen elements, with the caption of its kind.
     Rectangle {
         id: creator
@@ -418,6 +481,7 @@ Item {
 
                     small: true
                     text: root.ruleWord(modelData)
+                    iconName: "rule" + modelData.charAt(0).toUpperCase() + modelData.slice(1)
                     ToolTip.visible: ruleButton.hovered
                     ToolTip.text: root.ruleTip(modelData)
                     ToolTip.delay: 700

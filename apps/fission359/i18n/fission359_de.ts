@@ -6228,5 +6228,10 @@
         <source>Makes them touch without crossing</source>
         <translation>Lässt sie sich berühren, ohne sich zu kreuzen</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>click to remove this rule</source>
+        <translation>klicken, um diese Regel zu entfernen</translation>
+    </message>
 </context>
 </TS>

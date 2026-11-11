@@ -1230,11 +1230,104 @@ QVariantList SketchController::measureLabels() const {
     return labels;
 }
 
+std::optional<core::SketchPoint>
+SketchController::ruleAnchor(const core::SketchRule& rule,
+                             const std::vector<core::SketchElement>& elements) const {
+    if (rule.elements.empty()) {
+        return std::nullopt;
+    }
+    // A point reference ("L1.0"): the element id, then "." and the point index.
+    const std::string& ref = rule.elements.front();
+    const std::size_t dot = ref.rfind('.');
+    std::string elementId = ref;
+    std::size_t pointIndex = 0;
+    bool isPointRef = false;
+    if (dot != std::string::npos && dot + 1 < ref.size()) {
+        bool ok = false;
+        const long index = QString::fromStdString(ref.substr(dot + 1)).toLong(&ok);
+        if (ok && index >= 0) {
+            elementId = ref.substr(0, dot);
+            pointIndex = static_cast<std::size_t>(index);
+            isPointRef = true;
+        }
+    }
+    const core::SketchElement* e = elementById(elements, elementId);
+    if (e == nullptr || e->points.empty()) {
+        return std::nullopt;
+    }
+    if (isPointRef) {
+        if (pointIndex >= e->points.size()) {
+            return std::nullopt;
+        }
+        return e->points[pointIndex];
+    }
+    switch (e->kind) {
+    case core::SketchElementKind::line:
+        if (e->points.size() < 2) {
+            return std::nullopt;
+        }
+        return core::SketchPoint{(e->points[0].u + e->points[1].u) / 2.0,
+                                 (e->points[0].v + e->points[1].v) / 2.0};
+    case core::SketchElementKind::circle: {
+        if (e->points.size() < 2) {
+            return std::nullopt;
+        }
+        // the centre moved by the radius to the upper right
+        const double radius =
+            std::hypot(e->points[1].u - e->points[0].u, e->points[1].v - e->points[0].v);
+        return core::SketchPoint{e->points[0].u + radius * 0.7, e->points[0].v + radius * 0.7};
+    }
+    case core::SketchElementKind::arc:
+        if (e->points.size() < 2) {
+            return std::nullopt;
+        }
+        return e->points[1]; // the start point
+    case core::SketchElementKind::point:
+        return e->points.front();
+    case core::SketchElementKind::spline:
+        return e->points.front(); // the first point
+    }
+    return std::nullopt;
+}
+
+QVariantList SketchController::ruleMarks() const {
+    QVariantList marks;
+    if (m_model == nullptr || m_mode != Mode::sketching) {
+        return marks;
+    }
+    const std::vector<core::SketchElement> elements = m_model->sketchElements(m_step);
+    std::vector<std::string> anchorElements; // per mark: the element its anchor belongs to
+    for (const core::SketchRule& rule : m_model->sketchRules(m_step)) {
+        const std::optional<core::SketchPoint> anchor = ruleAnchor(rule, elements);
+        if (!anchor.has_value()) {
+            continue; // a rule whose element is not found gets no mark
+        }
+        const std::string anchorElement =
+            rule.elements.front().substr(0, rule.elements.front().rfind('.'));
+        const int slot = static_cast<int>(std::ranges::count(anchorElements, anchorElement));
+        anchorElements.push_back(anchorElement);
+        const QVector3D world = at(m_plane, anchor->u, anchor->v);
+        QVariantMap mark;
+        mark[QStringLiteral("id")] = QString::fromStdString(rule.id);
+        mark[QStringLiteral("kind")] = QString::fromStdString(rule.kind);
+        mark[QStringLiteral("x")] = world.x();
+        mark[QStringLiteral("y")] = world.y();
+        mark[QStringLiteral("z")] = world.z();
+        mark[QStringLiteral("slot")] = slot;
+        marks << mark;
+    }
+    return marks;
+}
+
 bool SketchController::changeMeasure(const QString& id, const QString& expression) {
     return m_model != nullptr && m_model->setSketchMeasure(m_step, id, expression);
 }
 
 bool SketchController::removeMeasure(const QString& id) {
+    return m_model != nullptr && m_model->removeSketchConstraint(m_step, id);
+}
+
+bool SketchController::removeRule(const QString& id) {
     return m_model != nullptr && m_model->removeSketchConstraint(m_step, id);
 }
 
