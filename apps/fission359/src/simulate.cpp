@@ -110,6 +110,11 @@ void sendMouse(QQuickWindow* window, fission::ui::Viewport3D* viewport, QEvent::
 // sees the middle of a pull (a loaded machine may fire the timer of a check before the last move).
 int g_pullsRunning = 0;
 
+// Pulls that are planned but whose press has not come yet (the press waits for the model on a
+// slow machine). A check waits for them too, so that it does not run while a pull is only waiting
+// to begin.
+int g_pullsWaiting = 0;
+
 // Press at `start()` (asked when the press happens), pull by `pull` view pixels in `steps`
 // moves, let go. Returns the delay after the last event.
 // Runs `check` once the model has worked out the last change, so that a check sees the values of
@@ -118,18 +123,20 @@ int g_pullsRunning = 0;
 // after it at once; without this the check came too early now and then. Gives up waiting after
 // `patience` milliseconds and checks anyway.
 void whenCalculated(QObject* context, fission::ui::DocumentModel* model,
-                    std::function<void()> check, int patience = 5000) {
+                    std::function<void()> check, int patience = 5000, bool countWaiting = true) {
     // Also not while a shape is still being put down: on a slow machine (CI with the memory
     // checker) the check came before the shape was let go, and a hole cuts only then.
-    const bool done = g_pullsRunning == 0 && !model->placing() && !model->calculating() &&
-                      model->result() && model->result()->revision == model->document().revision();
+    const bool done = (!countWaiting || g_pullsWaiting == 0) && g_pullsRunning == 0 &&
+                      !model->placing() && !model->calculating() && model->result() &&
+                      model->result()->revision == model->document().revision();
     if (done || patience <= 0) {
         check();
         return;
     }
-    QTimer::singleShot(50, context, [context, model, check = std::move(check), patience]() mutable {
-        whenCalculated(context, model, std::move(check), patience - 50);
-    });
+    QTimer::singleShot(
+        50, context, [context, model, check = std::move(check), patience, countWaiting]() mutable {
+            whenCalculated(context, model, std::move(check), patience - 50, countWaiting);
+        });
 }
 
 void checkAfter(int delay, QObject* context, fission::ui::DocumentModel* model,
@@ -254,7 +261,9 @@ int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int de
     action->hold = hold;
     delay += 350;
     QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [action, viewport, waitFor] {
+        ++g_pullsWaiting;
         const auto begin = [action] {
+            --g_pullsWaiting;
             ++g_pullsRunning;
             action->press(5000);
         };
@@ -262,8 +271,10 @@ int pressAndPull(QQuickWindow* window, fission::ui::Viewport3D* viewport, int de
         // result and the view has drawn it, as when a person looks and then takes the handle (the
         // handles and the parts of a gizmo are where they were before while a result is on its
         // way, and the dot a mouse press must hit is only moved when the view is drawn).
+        // countWaiting = false: this pull is itself waiting, it must not wait for itself.
         whenCalculated(
-            viewport, waitFor, [viewport, begin] { afterFrames(viewport, 2, 400, begin); }, 2000);
+            viewport, waitFor, [viewport, begin] { afterFrames(viewport, 2, 400, begin); }, 2000,
+            false);
     });
     // The planned end of the pull; a check after it waits for the real one (`g_pullsRunning`).
     delay += 90 * steps;
@@ -914,8 +925,12 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             // paste, dropToBed, seatOnFace ...).
             const QString id = action.mid(colon + 1).trimmed();
             delay += 350;
-            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, id] {
-                QMetaObject::invokeMethod(window, "run", Q_ARG(QVariant, id));
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [viewport, model, window, id] {
+                // Not before the pulls before it are over and their result is in (a slow machine
+                // starts a pull late).
+                whenCalculated(viewport, model, [window, id] {
+                    QMetaObject::invokeMethod(window, "run", Q_ARG(QVariant, id));
+                });
             });
             continue;
         }
@@ -1449,44 +1464,48 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
         }
         delay += 350;
         QTimer::singleShot(
-            delay, Qt::PreciseTimer, viewport, [viewport, placement, kind, shape, numbers] {
-                using fission::ui::Viewport3D;
-                // The same calls the gallery makes when a tile is dragged or clicked.
-                if (kind == QLatin1String("drop") || kind == QLatin1String("drophole")) {
-                    // A third number other than 0 holds the Alt key: the shape stays upright.
-                    const bool upright = numbers.size() >= 3 && numbers[2] != 0.0;
-                    if (numbers.size() >= 2 &&
-                        placement->begin(shape, kind == QLatin1String("drophole"), numbers[0],
-                                         numbers[1], upright)) {
-                        // The size of the shape is known a moment after it appeared; from then on
-                        // it catches on other bodies, so the pointer moves once more before it lets
-                        // go (as a hand would).
-                        QTimer::singleShot(250, viewport, [placement, numbers, upright] {
-                            placement->moveTo(numbers[0], numbers[1], upright);
-                            placement->finish();
-                        });
+            delay, Qt::PreciseTimer, viewport, [viewport, model, placement, kind, shape, numbers] {
+                // Not before the pulls before it are over and their result is in (a slow machine
+                // starts a pull late).
+                whenCalculated(viewport, model, [viewport, placement, kind, shape, numbers] {
+                    using fission::ui::Viewport3D;
+                    // The same calls the gallery makes when a tile is dragged or clicked.
+                    if (kind == QLatin1String("drop") || kind == QLatin1String("drophole")) {
+                        // A third number other than 0 holds the Alt key: the shape stays upright.
+                        const bool upright = numbers.size() >= 3 && numbers[2] != 0.0;
+                        if (numbers.size() >= 2 &&
+                            placement->begin(shape, kind == QLatin1String("drophole"), numbers[0],
+                                             numbers[1], upright)) {
+                            // The size of the shape is known a moment after it appeared; from then
+                            // on it catches on other bodies, so the pointer moves once more before
+                            // it lets go (as a hand would).
+                            QTimer::singleShot(250, viewport, [placement, numbers, upright] {
+                                placement->moveTo(numbers[0], numbers[1], upright);
+                                placement->finish();
+                            });
+                        }
+                        return;
                     }
-                    return;
-                }
-                if (kind == QLatin1String("put") || kind == QLatin1String("puthole")) {
-                    placement->add(shape, kind == QLatin1String("puthole"));
-                    return;
-                }
-                if (numbers.size() >= 2) {
-                    const QPointF at(numbers[0], numbers[1]);
-                    if (kind == QLatin1String("hover")) {
-                        viewport->hoverAt(at.x(), at.y());
-                    } else if (kind == QLatin1String("click")) {
-                        viewport->requestPick(Viewport3D::PickIntent::click, at, false);
-                    } else if (kind == QLatin1String("shiftclick")) {
-                        viewport->requestPick(Viewport3D::PickIntent::click, at, true);
-                    } else if (kind == QLatin1String("doubleclick")) {
-                        viewport->requestPick(Viewport3D::PickIntent::doubleClick, at, false);
-                    } else if (kind == QLatin1String("frame") && numbers.size() >= 4) {
-                        viewport->requestRegionPick(
-                            QRectF(at, QPointF(numbers[2], numbers[3])).normalized(), false);
+                    if (kind == QLatin1String("put") || kind == QLatin1String("puthole")) {
+                        placement->add(shape, kind == QLatin1String("puthole"));
+                        return;
                     }
-                }
+                    if (numbers.size() >= 2) {
+                        const QPointF at(numbers[0], numbers[1]);
+                        if (kind == QLatin1String("hover")) {
+                            viewport->hoverAt(at.x(), at.y());
+                        } else if (kind == QLatin1String("click")) {
+                            viewport->requestPick(Viewport3D::PickIntent::click, at, false);
+                        } else if (kind == QLatin1String("shiftclick")) {
+                            viewport->requestPick(Viewport3D::PickIntent::click, at, true);
+                        } else if (kind == QLatin1String("doubleclick")) {
+                            viewport->requestPick(Viewport3D::PickIntent::doubleClick, at, false);
+                        } else if (kind == QLatin1String("frame") && numbers.size() >= 4) {
+                            viewport->requestRegionPick(
+                                QRectF(at, QPointF(numbers[2], numbers[3])).normalized(), false);
+                        }
+                    }
+                });
             });
     }
     QTimer::singleShot(delay + 500, Qt::PreciseTimer, viewport, std::move(done));
