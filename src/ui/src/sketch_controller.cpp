@@ -396,7 +396,10 @@ void SketchController::leave(bool removeIfEmpty) {
     m_hoverRegion.clear();
     m_regionsFailedSaid = false;
     m_regionWorker.reset();
+    m_movable.clear();
+    m_dof = -1;
     emit regionsChanged();
+    emit freedomChanged();
     if (m_viewport != nullptr) {
         m_viewport->setHandleGraphics({}, Viewport3D::HandleSource::sketch);
     }
@@ -538,6 +541,14 @@ void SketchController::onModelChanged() {
     const bool changed = ready != m_planeReady;
     m_planeReady = ready;
     m_elements = m_model->sketchElements(m_step);
+    if (result) {
+        m_movable = result->movable; // AP-2.2c1: what can still move is drawn in the free colour
+        m_dof = result->dof;
+    } else {
+        m_movable.clear();
+        m_dof = -1;
+    }
+    emit freedomChanged();
     m_regionWorker.request(m_model->sketchKernelShared(), m_elements);
     m_trimmer.reset(); // the pieces depend on the elements
     if (!m_blocked.empty()) {
@@ -775,11 +786,14 @@ void SketchController::refresh() {
         drawRegions(graphics, 0.03);
 
         for (const core::SketchElement& element : m_elements) {
-            // a chosen element is drawn like the hovered and picked ones (AP-2.2b)
+            // a chosen element is drawn like the hovered and picked ones (AP-2.2b); one that can
+            // still move is drawn in the free colour (AP-2.2c1)
             const bool selected = elementSelected(element.id);
+            const bool free = std::ranges::find(m_movable, element.id) != m_movable.end();
             drawElement(graphics, m_plane, element, ppm,
                         selected ? m_draftColour
-                                 : (element.link ? m_linkedColour : m_elementColour),
+                                 : (element.link ? m_linkedColour
+                                                 : (free ? m_freeColour : m_elementColour)),
                         selected ? kDraftWidth : kElementWidth, curveOf(element));
         }
         if (toolActive()) {

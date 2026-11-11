@@ -135,6 +135,11 @@ struct SketchResult {
     /// plane (rule 6): a face that cannot be found again safely means no result at all.
     std::optional<SketchPlane> plane;
     SketchData data;
+    /// The elements that can still move (ids), after solving (AP-2.2c1). Without rules and
+    /// measures every element that does not follow a body edge.
+    std::vector<std::string> movable;
+    /// Directions the sketch can still move in; 0 = fully fixed, -1 = not worked out.
+    int dof = -1;
 
     bool operator==(const SketchResult&) const = default;
 };

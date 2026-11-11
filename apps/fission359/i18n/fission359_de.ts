@@ -3257,6 +3257,19 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>The sketch is fully fixed.</source>
+        <translation>Die Skizze steht fest.</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n element(s) can still move (blue). Tip: click one and type a number to fix its size.</source>
+        <translation>
+            <numerusform>%n Element kann sich noch bewegen (blau). Tipp: eines anklicken und eine Zahl tippen, um seine Größe festzulegen.</numerusform>
+            <numerusform>%n Elemente können sich noch bewegen (blau). Tipp: eines anklicken und eine Zahl tippen, um seine Größe festzulegen.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Type a number to set the %1</source>
         <translation>Zahl tippen: %1 setzen</translation>
     </message>

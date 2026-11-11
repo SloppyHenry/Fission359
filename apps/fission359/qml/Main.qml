@@ -211,10 +211,12 @@ Window {
             : ""
         // Elements chosen with no tool on (AP-2.2b): a digit opens the field for a measure of them.
         const measureKind = Sketch.selectedElements.length > 0 ? Sketch.measureKindForSelection() : ""
+        // What can still move (AP-2.2c1): drawn blue, and the hint says how many.
+        const freedom = Sketch.fullyFixed ? " " + qsTr("The sketch is fully fixed.") : Sketch.freeCount > 0 ? " " + qsTr("%n element(s) can still move (blue). Tip: click one and type a number to fix its size.", "", Sketch.freeCount) : ""
         if (measureKind !== "") {
-            return qsTr("Type a number to set the %1").arg(measureKindWord(measureKind)) + areas + helper
+            return qsTr("Type a number to set the %1").arg(measureKindWord(measureKind)) + areas + freedom + helper
         }
-        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + areas + helper
+        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + areas + freedom + helper
     }
 
     // ---- undo and redo ---------------------------------------------------------------------
@@ -940,6 +942,8 @@ Window {
     Binding { target: Sketch; property: "gridColour"; value: Theme.gridMajor }
     Binding { target: Sketch; property: "gridMajorColour"; value: Theme.fg4 }
     Binding { target: Sketch; property: "elementColour"; value: Theme.fg }
+    // Elements that can still move (AP-2.2c1): the accent.
+    Binding { target: Sketch; property: "freeColour"; value: Theme.accent }
     Binding { target: Sketch; property: "guideColour"; value: Theme.accentLine }
     Binding { target: Sketch; property: "markerColour"; value: Theme.accentLine }
     Binding { target: Sketch; property: "draftColour"; value: Theme.accent }

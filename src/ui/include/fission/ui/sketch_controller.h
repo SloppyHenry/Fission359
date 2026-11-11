@@ -90,6 +90,8 @@ class SketchController : public QObject {
     Q_PROPERTY(QColor gridColour MEMBER m_gridColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor gridMajorColour MEMBER m_gridMajorColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor elementColour MEMBER m_elementColour NOTIFY coloursChanged)
+    /// The colour of the elements that can still move (AP-2.2c1).
+    Q_PROPERTY(QColor freeColour MEMBER m_freeColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor guideColour MEMBER m_guideColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor markerColour MEMBER m_markerColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor draftColour MEMBER m_draftColour NOTIFY coloursChanged)
@@ -116,6 +118,10 @@ class SketchController : public QObject {
     /// The labels of the measures of the sketch for the view: one map per measure with
     /// { id, kind, expression (as typed), text, x, y, z (the anchor in space), conflict }.
     Q_PROPERTY(QVariantList measureLabels READ measureLabels NOTIFY measuresChanged)
+    /// How many elements can still move (AP-2.2c1); drawn in `freeColour`.
+    Q_PROPERTY(int freeCount READ freeCount NOTIFY freedomChanged)
+    /// True when the sketch has elements and nothing can move any more (AP-2.2c1).
+    Q_PROPERTY(bool fullyFixed READ fullyFixed NOTIFY freedomChanged)
 
 public:
     SketchController(DocumentModel* model, SelectionController* selection,
@@ -243,6 +249,12 @@ public:
     QStringList selectedElements() const;
     /// The labels of the measures of the sketch, one map per measure (see the property).
     QVariantList measureLabels() const;
+    /// How many elements can still move (AP-2.2c1).
+    int freeCount() const noexcept { return static_cast<int>(m_movable.size()); }
+    /// True when the sketch has elements and nothing can move any more (AP-2.2c1).
+    bool fullyFixed() const noexcept {
+        return !m_elements.empty() && m_dof == 0 && m_movable.empty();
+    }
     /// The measure kind for the chosen elements (AP-2.2b): "length" for one line, "diameter" for
     /// one circle, "radius" for one arc; for two lines "distance" when they are parallel, else
     /// "angle"; "" otherwise.
@@ -294,6 +306,8 @@ signals:
     void selectionChanged();
     /// The measures of the sketch changed (AP-2.2b).
     void measuresChanged();
+    /// The elements that can still move changed (AP-2.2c1).
+    void freedomChanged();
 
 private:
     enum class Mode { idle, picking, sketching };
@@ -389,6 +403,8 @@ private:
     bool m_cameraTurned = false;
     core::SketchPlane m_plane;
     std::vector<core::SketchElement> m_elements;
+    std::vector<std::string> m_movable; ///< the elements that can still move (AP-2.2c1)
+    int m_dof = -1;                     ///< directions the sketch can still move in (-1: unknown)
     std::optional<render::CameraPose> m_previousPose;
     double m_gridStep = 0.0;
     double m_pixelsPerMillimetre = 2.0;
@@ -435,6 +451,7 @@ private:
     QColor m_gridColour{0x3A, 0x3D, 0x43};
     QColor m_gridMajorColour{0x55, 0x59, 0x61};
     QColor m_elementColour{0xE8, 0xEA, 0xED};
+    QColor m_freeColour{0x4C, 0x8D, 0xF6};
     QColor m_guideColour{0x4C, 0x8D, 0xFF};
     QColor m_markerColour{0x4C, 0x8D, 0xFF};
     QColor m_draftColour{0x4C, 0x8D, 0xFF};

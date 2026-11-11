@@ -318,3 +318,26 @@ TEST_CASE("sketch rules: the rules that fit the chosen elements through the cont
     const double by = line2->points[1].v - line2->points[0].v;
     CHECK(std::abs(ax * by - ay * bx) == Approx(0.0).margin(1e-9));
 }
+
+TEST_CASE("free elements are known and get fixed by measures", "[ui][sketchmeasures][dof]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0);
+    REQUIRE(f.elements().size() == 1);
+    f.settle();
+
+    // No rules and no measures yet: the one line can still move (AP-2.2c1).
+    CHECK(f.sketch->freeCount() == 1);
+    CHECK_FALSE(f.sketch->fullyFixed());
+
+    // A "fixed" rule on the chosen line: nothing can move any more.
+    f.sketch->chooseTool(QString()); // no tool: a click chooses an element
+    f.click(5, 0);
+    CHECK(f.sketch->selectedElements() == QStringList{QStringLiteral("L1")});
+    CHECK(f.sketch->addRuleForSelection(QStringLiteral("fixed")));
+    f.settle();
+    CHECK(f.sketch->freeCount() == 0);
+    CHECK(f.sketch->fullyFixed());
+}
