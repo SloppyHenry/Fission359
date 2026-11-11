@@ -33,7 +33,8 @@ KERNELS = {
         re.compile(r'#\s*include\s*[<"]manifold[/.][^>"]*[>"]|\bmanifold::')),
     "PlaneGCS": (
         "src/geometry/sketch/",
-        re.compile(r'#\s*include\s*[<"][^>"]*(planegcs|GCS\.h)[^>"]*[>"]|\bGCS::')),
+        # The project's own facade fission/geo/sketch/planegcs_solver.h is not PlaneGCS itself.
+        re.compile(r'#\s*include\s*[<"](?!fission/)[^>"]*(planegcs|GCS\.h)[^>"]*[>"]|\bGCS::')),
 }
 
 CODE_SUFFIXES = {".cpp", ".cc", ".h", ".hpp", ".hxx"}

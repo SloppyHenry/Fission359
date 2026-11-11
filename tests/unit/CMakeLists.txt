@@ -77,6 +77,7 @@ add_executable(fission_unit_tests
   ui/test_selection_controller.cpp
   ui/test_sketch_mode.cpp
   ui/test_sketch_tools.cpp
+  ui/test_sketch_measures_ui.cpp
   ui/test_sketch_takeover.cpp
   ui/test_sketch_regions_ui.cpp
   ui/test_placement.cpp
