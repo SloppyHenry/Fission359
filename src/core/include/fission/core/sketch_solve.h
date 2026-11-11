@@ -45,4 +45,20 @@ geo::SolveResult solveSketch(SketchData& sketch, const SketchMeasureValues& valu
 /// not count. Elements that are linked to an edge are fixed. Sorted.
 std::vector<std::string> movableElements(const SketchData& sketch, const geo::SolveResult& result);
 
+/// A rule the drawing fulfils exactly (AP-2.2c2).
+struct AutoRule {
+    std::string kind;
+    std::vector<std::string> elements;
+    bool operator==(const AutoRule&) const = default;
+};
+
+/// Rules the new elements (`newIds`, already part of `sketch`) fulfil exactly (within 1e-9 mm), to
+/// be added when they are drawn: "horizontal"/"vertical" {line} for a level/upright line;
+/// "coincident" {"<new>.<i>", "<other>.<j>"} for an end point on an end point of another element
+/// (between two new ones each pair once); "tangent" {arc, line} for an arc that starts or ends at
+/// an end of a line and runs on along it. Elements with a `link` and circles take no part. Rules
+/// the sketch already has (same kind, same elements in any order) are left out.
+std::vector<AutoRule> autoSketchRules(const SketchData& sketch,
+                                      const std::vector<std::string>& newIds);
+
 } // namespace fission::core

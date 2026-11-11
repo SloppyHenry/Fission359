@@ -202,7 +202,7 @@ Window {
         const helper = Sketch.helperLine ? " " + qsTr("Helper lines are on: what you draw is only an aid.") : ""
         if (Sketch.toolActive) {
             return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed, Sketch.pullingArc)
-                   + " " + qsTr("Shift switches catching off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
+                   + " " + qsTr("Shift switches catching and automatic rules off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
         }
         const areas = Sketch.regionCount > 0
             ? " " + (Sketch.selectedRegion !== ""

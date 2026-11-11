@@ -487,9 +487,10 @@ public:
     /// of the history; `kind` ("line", "rectangle", "circle", "point") names it in the history.
     /// The ids in `elements` are ignored, the sketch gives them out. False (nothing changed) when
     /// the step has no sketch, `elements` is empty, an element cannot be used or the kernel cannot
-    /// make the curve of a spline among them.
+    /// make the curve of a spline among them. With `autoRules` the rules the new elements fulfil
+    /// exactly are added in the same step of the history (AP-2.2c2).
     bool addSketchElements(const QString& stepId, const std::vector<core::SketchElement>& elements,
-                           const QString& kind);
+                           const QString& kind, bool autoRules = false);
     /// Trims or extends elements of a sketch (AP-2.1e1): the moves, removals and new elements of
     /// `edit` as ONE step of the history, named by `action` ("trimSketch" or "extendSketch"; the
     /// recipe says "… trimmed" / "… extended"). False (nothing changed) when the step has no

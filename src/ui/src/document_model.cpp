@@ -28,6 +28,7 @@
 #include "fission/core/expression.h"
 #include "fission/core/resolve.h"
 #include "fission/core/scaling.h"
+#include "fission/core/sketch_solve.h"
 #include "fission/core/version.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
@@ -3832,7 +3833,7 @@ DocumentModel::sketchSplineLine(const std::vector<core::SketchPoint>& through) c
 
 bool DocumentModel::addSketchElements(const QString& stepId,
                                       const std::vector<core::SketchElement>& elements,
-                                      const QString& kind) {
+                                      const QString& kind, bool autoRules) {
     const core::FeatureId id{stepId.toStdString()};
     const core::Feature* step = m_history.document().findFeature(id);
     if (step == nullptr || !step->sketch || elements.empty()) {
@@ -3855,6 +3856,24 @@ bool DocumentModel::addSketchElements(const QString& stepId,
             m_history.cancelTransaction();
             documentChanged();
             return false;
+        }
+    }
+    if (autoRules && m_sketchSolver != nullptr) {
+        // The rules the drawing fulfils exactly (level, upright, joined ends, tangent arcs) come
+        // with it, in the same step of the history; a rule the solver refuses is left out.
+        const core::Feature* drawn = m_history.document().findFeature(id);
+        if (drawn != nullptr && drawn->sketch &&
+            drawn->sketch->elements.size() >= elements.size()) {
+            std::vector<std::string> newIds;
+            const auto& all = drawn->sketch->elements;
+            for (std::size_t i = all.size() - elements.size(); i < all.size(); ++i) {
+                newIds.push_back(all[i].id);
+            }
+            const std::vector<core::AutoRule> rules = core::autoSketchRules(*drawn->sketch, newIds);
+            for (const core::AutoRule& rule : rules) {
+                m_history.execute(
+                    core::makeAddSketchRule(id, rule.kind, rule.elements, *m_sketchSolver));
+            }
         }
     }
     finishTransaction();

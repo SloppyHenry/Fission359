@@ -441,3 +441,55 @@ TEST_CASE("recompute: a sketch measure with a broken formula is an error on the 
     REQUIRE(state->issue->expression.has_value());
     CHECK_FALSE(result.sketches.contains(step));
 }
+
+// --- the rules the drawing fulfils are added when the elements are drawn (AP-2.2c2) --------
+
+TEST_CASE("drawing adds the rules it fulfils", "[core][sketch][autorules]") {
+    const auto hasRule = [](const std::vector<AutoRule>& rules, const AutoRule& rule) {
+        return std::ranges::find(rules, rule) != rules.end();
+    };
+
+    SECTION("a level line is horizontal") {
+        SketchData sketch;
+        sketch.elements = {line("L1", 0, 0, 10, 0)};
+        const std::vector<AutoRule> rules = autoSketchRules(sketch, {"L1"});
+        CHECK(rules == std::vector<AutoRule>{{"horizontal", {"L1"}}});
+    }
+
+    SECTION("a rectangle drawn in one go is closed") {
+        SketchData sketch;
+        sketch.elements = {line("L1", 0, 0, 40, 0), line("L2", 40, 0, 40, 30),
+                           line("L3", 40, 30, 0, 30), line("L4", 0, 30, 0, 0)};
+        const std::vector<AutoRule> rules = autoSketchRules(sketch, {"L1", "L2", "L3", "L4"});
+        const auto count = [&](const std::string& kind) {
+            return std::ranges::count_if(rules, [&](const AutoRule& r) { return r.kind == kind; });
+        };
+        CHECK(count("horizontal") == 2);
+        CHECK(count("vertical") == 2);
+        CHECK(count("coincident") == 4);
+        CHECK(rules.size() == 8);
+    }
+
+    SECTION("a slanted line fulfils no rule") {
+        SketchData sketch;
+        sketch.elements = {line("L1", 0, 0, 10, 3)};
+        CHECK(autoSketchRules(sketch, {"L1"}).empty());
+    }
+
+    SECTION("a rule the sketch already has is left out") {
+        SketchData sketch;
+        sketch.elements = {line("L1", 0, 0, 10, 0)};
+        sketch.rules = {{"R1", "horizontal", {"L1"}}};
+        CHECK(autoSketchRules(sketch, {"L1"}).empty());
+    }
+
+    SECTION("an arc starting at the end of a line is coincident and tangent") {
+        SketchData sketch;
+        sketch.elements = {
+            line("L1", 0, 0, 10, 0),
+            SketchElement{"A1", SketchElementKind::arc, {{10, 5}, {10, 0}, {15, 5}}}};
+        const std::vector<AutoRule> rules = autoSketchRules(sketch, {"A1"});
+        CHECK(hasRule(rules, {"coincident", {"A1.1", "L1.1"}}));
+        CHECK(hasRule(rules, {"tangent", {"A1", "L1"}}));
+    }
+}

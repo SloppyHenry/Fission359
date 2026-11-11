@@ -1610,7 +1610,8 @@ void SketchController::applyStep(const interaction::SketchToolStep& step) {
         const bool loneArc =
             batch.size() == 1 && batch.front().kind == core::SketchElementKind::arc;
         const QString kind = loneArc ? QStringLiteral("arc") : toolName();
-        if (m_model != nullptr && m_model->addSketchElements(m_step, batch, kind)) {
+        // Shift switches catching off and with it the automatic rules (AP-2.2c2)
+        if (m_model != nullptr && m_model->addSketchElements(m_step, batch, kind, !shiftHeld())) {
             m_elements = m_model->sketchElements(m_step);
         } else if (std::ranges::any_of(batch, [](const core::SketchElement& element) {
                        return element.kind == core::SketchElementKind::spline;

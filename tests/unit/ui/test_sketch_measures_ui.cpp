@@ -122,9 +122,9 @@ TEST_CASE("sketch measures: rules and measures through the model solve the sketc
     checkPoint(elements[0].points[0], 0, 0);  // the fixed start stays where it was
     checkPoint(elements[0].points[1], 30, 0); // horizontal, 30 mm from the start
 
-    // b) The measure (the third "R" id: two rules came first) takes a new formula; undo brings
-    //    the old value back.
-    CHECK(f.model->setSketchMeasure(step, QStringLiteral("R3"), QStringLiteral("2 * 20")));
+    // b) The measure (the fourth "R" id: the drawn level line got "horizontal" by itself, AP-2.2c2,
+    //    then two rules came) takes a new formula; undo brings the old value back.
+    CHECK(f.model->setSketchMeasure(step, QStringLiteral("R4"), QStringLiteral("2 * 20")));
     f.settle();
     elements = f.elements();
     REQUIRE(elements.size() == 1);
@@ -176,7 +176,8 @@ TEST_CASE("sketch measures: choosing elements and setting a measure through the 
     QVariantList labels = f.sketch->measureLabels();
     REQUIRE(labels.size() == 1);
     const QVariantMap label = labels.first().toMap();
-    CHECK(label.value(QStringLiteral("id")).toString() == QStringLiteral("R1"));
+    // R1 is the rule "horizontal" the level line got when it was drawn (AP-2.2c2)
+    CHECK(label.value(QStringLiteral("id")).toString() == QStringLiteral("R2"));
     CHECK(label.value(QStringLiteral("kind")).toString() == QStringLiteral("length"));
     CHECK(label.value(QStringLiteral("expression")).toString() == QStringLiteral("30"));
     CHECK(label.value(QStringLiteral("text")).toString() == QStringLiteral("30"));
@@ -184,7 +185,7 @@ TEST_CASE("sketch measures: choosing elements and setting a measure through the 
     CHECK(f.sketch->selectedElements() == QStringList{QStringLiteral("L1")}); // the choice stays
 
     // c) The measure takes a new value; the label follows.
-    CHECK(f.sketch->changeMeasure(QStringLiteral("R1"), QStringLiteral("45")));
+    CHECK(f.sketch->changeMeasure(QStringLiteral("R2"), QStringLiteral("45")));
     f.settle();
     CHECK(f.sketch->measureLabels().first().toMap().value(QStringLiteral("text")).toString() ==
           QStringLiteral("45"));
@@ -340,4 +341,26 @@ TEST_CASE("free elements are known and get fixed by measures", "[ui][sketchmeasu
     f.settle();
     CHECK(f.sketch->freeCount() == 0);
     CHECK(f.sketch->fullyFixed());
+}
+
+TEST_CASE("a drawn rectangle gets its rules in the same step", "[ui][sketchmeasures][autorules]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("rectangle"));
+    f.click(0, 0);
+    f.click(40, 30);
+    f.settle();
+    REQUIRE(f.elements().size() == 4);
+    const auto rulesOf = [&f] {
+        const fission::core::Feature* step = f.model->document().findFeature(
+            fission::core::FeatureId{f.sketch->step().toStdString()});
+        REQUIRE(step != nullptr);
+        REQUIRE(step->sketch.has_value());
+        return step->sketch->rules.size();
+    };
+    CHECK(rulesOf() == 8); // 2 level, 2 upright, 4 joined corners
+    REQUIRE(f.model->undo());
+    f.settle();
+    CHECK(f.elements().empty());
+    CHECK(rulesOf() == 0);
 }

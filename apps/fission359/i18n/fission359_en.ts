@@ -2730,8 +2730,8 @@
     </message>
     <message>
         <location line="+3"/>
-        <source>Shift switches catching off, %1 draws a helper line.</source>
-        <translation>Shift switches catching off, %1 draws a helper line.</translation>
+        <source>Shift switches catching and automatic rules off, %1 draws a helper line.</source>
+        <translation>Shift switches catching and automatic rules off, %1 draws a helper line.</translation>
     </message>
     <message>
         <location line="+2"/>

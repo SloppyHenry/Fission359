@@ -2730,8 +2730,8 @@
     </message>
     <message>
         <location line="+3"/>
-        <source>Shift switches catching off, %1 draws a helper line.</source>
-        <translation>Mit Umschalt rastet der Zeiger nicht ein, mit %1 zeichnest du eine Hilfslinie.</translation>
+        <source>Shift switches catching and automatic rules off, %1 draws a helper line.</source>
+        <translation>Shift schaltet Einrasten und automatische Regeln aus, %1 zeichnet eine Hilfslinie.</translation>
     </message>
     <message>
         <location line="+2"/>

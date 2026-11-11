@@ -5,7 +5,9 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cmath>
 #include <limits>
+#include <set>
 #include <utility>
 
 namespace fission::core {
@@ -241,6 +243,180 @@ std::vector<std::string> movableElements(const SketchData& sketch, const geo::So
     }
     std::ranges::sort(movable, elementIdLess);
     return movable;
+}
+
+namespace {
+
+/// An end point of an element that takes part in the automatic rules: its point id, its position
+/// and the id of the element it belongs to.
+struct EndPoint {
+    std::string ref;
+    SketchPoint point;
+    std::string elementId;
+};
+
+/// The end points of an element: a point element has its point, a line its start and end, an arc
+/// its start and end (not the centre), a spline its first and last point. Circles and elements
+/// with a link take no part.
+std::vector<EndPoint> endPointsOf(const SketchElement& element) {
+    std::vector<EndPoint> endPoints;
+    if (element.link || element.kind == SketchElementKind::circle) {
+        return endPoints;
+    }
+    const auto add = [&](std::size_t index) {
+        if (index < element.points.size()) {
+            endPoints.push_back({pointId(element.id, index), element.points[index], element.id});
+        }
+    };
+    switch (element.kind) {
+    case SketchElementKind::point:
+        add(0);
+        break;
+    case SketchElementKind::line:
+        add(0);
+        add(1);
+        break;
+    case SketchElementKind::arc:
+        add(1);
+        add(2);
+        break;
+    case SketchElementKind::spline:
+        add(0);
+        add(element.points.size() - 1); // first and last (the same point when there is only one)
+        break;
+    case SketchElementKind::circle:
+        break;
+    }
+    return endPoints;
+}
+
+double distance(const SketchPoint& a, const SketchPoint& b) {
+    return std::sqrt((a.u - b.u) * (a.u - b.u) + (a.v - b.v) * (a.v - b.v));
+}
+
+} // namespace
+
+std::vector<AutoRule> autoSketchRules(const SketchData& sketch,
+                                      const std::vector<std::string>& newIds) {
+    constexpr double tol = 1e-9;
+
+    // The end points of every element that takes part.
+    std::vector<EndPoint> endPoints;
+    for (const SketchElement& element : sketch.elements) {
+        const std::vector<EndPoint> own = endPointsOf(element);
+        endPoints.insert(endPoints.end(), own.begin(), own.end());
+    }
+
+    // A rule is the same rule when kind and elements (in any order) match, so the key marks the
+    // rules the sketch already has and the ones emitted earlier as seen; for a coincident pair
+    // between two new elements the sorted refs make the pair count once.
+    const auto keyOf = [](const std::string& kind, std::vector<std::string> elements) {
+        std::ranges::sort(elements);
+        std::string key = kind;
+        for (const std::string& element : elements) {
+            key += '\n';
+            key += element;
+        }
+        return key;
+    };
+    std::set<std::string> seen;
+    for (const SketchRule& rule : sketch.rules) {
+        seen.insert(keyOf(rule.kind, rule.elements));
+    }
+
+    std::vector<AutoRule> rules;
+    const auto add = [&](const std::string& kind, std::vector<std::string> elements) {
+        if (seen.insert(keyOf(kind, elements)).second) {
+            rules.push_back(AutoRule{kind, std::move(elements)});
+        }
+    };
+
+    for (const std::string& newId : newIds) {
+        const SketchElement* element = sketch.find(newId);
+        if (element == nullptr || element->link) {
+            continue; // not in the sketch, or follows a body edge: takes no part
+        }
+
+        // (a) a level or upright line
+        if (element->kind == SketchElementKind::line && element->points.size() == 2) {
+            const double du = element->points[1].u - element->points[0].u;
+            const double dv = element->points[1].v - element->points[0].v;
+            if (std::sqrt(du * du + dv * dv) > tol) {
+                if (std::abs(dv) <= tol) {
+                    add("horizontal", {newId});
+                } else if (std::abs(du) <= tol) {
+                    add("vertical", {newId});
+                }
+            }
+        }
+
+        // (b) an end point of the new element on an end point of another element
+        for (const EndPoint& ownEnd : endPointsOf(*element)) {
+            for (const EndPoint& other : endPoints) {
+                if (other.elementId == newId) {
+                    continue; // the same element
+                }
+                if (distance(ownEnd.point, other.point) <= tol) {
+                    add("coincident", {ownEnd.ref, other.ref});
+                }
+            }
+        }
+
+        // (c) an arc that starts or ends at an end of a line and runs on along it: the radius to
+        // that end is perpendicular to the line
+        if (element->kind == SketchElementKind::arc && element->points.size() == 3) {
+            const SketchPoint centre = element->points[0];
+            for (std::size_t i = 1; i <= 2; ++i) {
+                const SketchPoint p = element->points[i];
+                for (const SketchElement& other : sketch.elements) {
+                    if (other.kind != SketchElementKind::line || other.link ||
+                        other.points.size() != 2) {
+                        continue;
+                    }
+                    if (distance(p, other.points[0]) > tol && distance(p, other.points[1]) > tol) {
+                        continue; // no end of the line at p
+                    }
+                    const SketchPoint r{p.u - centre.u, p.v - centre.v};
+                    const SketchPoint d{other.points[1].u - other.points[0].u,
+                                        other.points[1].v - other.points[0].v};
+                    const double dot = r.u * d.u + r.v * d.v;
+                    const double lenR = std::sqrt(r.u * r.u + r.v * r.v);
+                    const double lenD = std::sqrt(d.u * d.u + d.v * d.v);
+                    if (std::abs(dot) <= tol * lenR * lenD) {
+                        add("tangent", {newId, other.id}); // once per line
+                    }
+                }
+            }
+        }
+        // the other way round: a new line an arc starts or ends on
+        if (element->kind == SketchElementKind::line && element->points.size() == 2) {
+            const SketchPoint d{element->points[1].u - element->points[0].u,
+                                element->points[1].v - element->points[0].v};
+            const double lenD = std::sqrt(d.u * d.u + d.v * d.v);
+            for (std::size_t i = 0; i < 2; ++i) {
+                const SketchPoint q = element->points[i];
+                for (const SketchElement& arc : sketch.elements) {
+                    if (arc.kind != SketchElementKind::arc || arc.link || arc.points.size() != 3) {
+                        continue;
+                    }
+                    for (std::size_t j = 1; j <= 2; ++j) {
+                        const SketchPoint p = arc.points[j];
+                        if (distance(p, q) > tol) {
+                            continue; // no end of the arc at q
+                        }
+                        const SketchPoint r{p.u - arc.points[0].u, p.v - arc.points[0].v};
+                        const double dot = r.u * d.u + r.v * d.v;
+                        const double lenR = std::sqrt(r.u * r.u + r.v * r.v);
+                        if (std::abs(dot) <= tol * lenR * lenD) {
+                            add("tangent", {arc.id, newId}); // once per arc
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return rules;
 }
 
 } // namespace fission::core
