@@ -440,6 +440,14 @@ void SketchController::escape() {
     if (m_mode == Mode::idle) {
         return;
     }
+    if (m_pointDrag) { // AP-2.2c4: Esc during a drag puts everything back, nothing is changed
+        resetPointDrag();
+        refresh();
+        if (m_viewport != nullptr) {
+            m_viewport->setDrawDrag(false);
+        }
+        return;
+    }
     // First the chosen elements, then the element being pulled, then the tool, then the chosen
     // region, then the sketch (decision 10, 13 and 53).
     if (!m_selectedElements.empty()) {
@@ -1488,7 +1496,9 @@ void SketchController::clickAt(const interaction::PlaneRay& ray, double pixelsPe
 }
 
 void SketchController::onPressed(double x, double y) {
-    if (m_mode != Mode::sketching || !m_planeReady || m_viewport == nullptr || !toolActive()) {
+    // No tool on as well: the press may start a drag of a sketch point (AP-2.2c4), pressAt sorts
+    // that out.
+    if (m_mode != Mode::sketching || !m_planeReady || m_viewport == nullptr) {
         return;
     }
     const auto ray = m_viewport->rayAt(x, y);
@@ -1500,6 +1510,15 @@ void SketchController::onPressed(double x, double y) {
 }
 
 void SketchController::onDragged(double x, double y) {
+    if (m_pointDrag && m_viewport != nullptr) { // AP-2.2c4: the drag follows the pointer
+        const auto ray = m_viewport->rayAt(x, y);
+        if (ray) {
+            dragTo({{ray->origin.x(), ray->origin.y(), ray->origin.z()},
+                    {ray->direction.x(), ray->direction.y(), ray->direction.z()}},
+                   m_viewport->pixelsPerMillimetre());
+        }
+        return;
+    }
     onPointerMoved(x, y);
 }
 
@@ -1516,7 +1535,109 @@ void SketchController::onReleased(double x, double y, bool dragged) {
     m_viewport->setDrawDrag(false);
 }
 
+// What a press at `at` holds for a drag (AP-2.2c4), as solver point ids ("L1.1"): first the
+// nearest point of an element that can still move, within the catch radius; else, when the
+// pointer is near such an element itself, a whole line (both its points) or the point on the rim
+// of a circle (dragging the rim changes the size); else nothing.
+std::vector<std::string> SketchController::dragPointsAt(const core::SketchPoint& at,
+                                                        double pixelsPerMillimetre) const {
+    const double ppm = std::max(pixelsPerMillimetre, 1e-6);
+    const auto movable = [this](const core::SketchElement& element) {
+        return !element.link && std::ranges::find(m_movable, element.id) != m_movable.end();
+    };
+    const core::SketchElement* nearest = nullptr;
+    std::size_t nearestIndex = 0;
+    double nearestDistance = kCatchPixels / ppm;
+    for (const core::SketchElement& element : m_elements) {
+        if (!movable(element)) {
+            continue;
+        }
+        for (std::size_t i = 0; i < element.points.size(); ++i) {
+            const double distance =
+                std::hypot(element.points[i].u - at.u, element.points[i].v - at.v);
+            if (distance < nearestDistance) { // within the catch radius only
+                nearest = &element;
+                nearestIndex = i;
+                nearestDistance = distance;
+            }
+        }
+    }
+    if (nearest != nullptr) {
+        return {nearest->id + "." + std::to_string(nearestIndex)};
+    }
+    if (const auto hit = interaction::elementNear(m_elements, at, kSelectPixels / ppm)) {
+        const auto element = std::ranges::find_if(
+            m_elements, [&](const core::SketchElement& e) { return e.id == *hit; });
+        if (element != m_elements.end() && movable(*element)) {
+            if (element->kind == core::SketchElementKind::line) {
+                return {element->id + ".0", element->id + ".1"}; // the whole line moves
+            }
+            if (element->kind == core::SketchElementKind::circle && element->points.size() > 1) {
+                return {element->id + ".1"};
+            }
+        }
+    }
+    return {};
+}
+
+// Ends a point drag (AP-2.2c4): the state goes and the elements go back to before the drag.
+void SketchController::resetPointDrag() {
+    m_pointDrag.reset();
+    m_pointDragStart.clear();
+    m_pointDragFrom = core::SketchPoint{};
+    m_elements = m_pointDragElements;
+    m_pointDragElements.clear();
+    m_pointDragMoved = false;
+}
+
 void SketchController::pressAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre) {
+    // AP-2.2c4: no tool on — a press on a point of the sketch starts a live drag of it.
+    if (m_mode == Mode::sketching && m_planeReady && !toolActive() && m_model != nullptr &&
+        m_model->sketchSolver() != nullptr) {
+        if (const auto onPlane = interaction::planePoint(ray, m_plane)) {
+            const std::vector<std::string> ids =
+                dragPointsAt(*onPlane, std::max(pixelsPerMillimetre, 1e-6));
+            if (!ids.empty()) {
+                const core::Feature* step =
+                    m_model->document().findFeature(core::FeatureId{m_step.toStdString()});
+                if (step != nullptr && step->sketch) {
+                    auto drag = std::make_unique<core::SketchDragging>(
+                        *step->sketch, core::storedMeasureValues(*step->sketch),
+                        *m_model->sketchSolver(), ids);
+                    if (drag->started()) {
+                        // where the held points are now, in the order moveTo expects its targets
+                        std::vector<core::SketchPoint> start;
+                        bool allFound = true;
+                        for (const std::string& id : drag->held()) {
+                            const std::size_t dot = id.rfind('.');
+                            const auto element =
+                                std::ranges::find_if(m_elements, [&](const core::SketchElement& e) {
+                                    return e.id == id.substr(0, dot);
+                                });
+                            const std::size_t index =
+                                dot == std::string::npos ? 0 : std::stoul(id.substr(dot + 1));
+                            if (element == m_elements.end() || index >= element->points.size()) {
+                                allFound = false;
+                                break;
+                            }
+                            start.push_back(element->points[index]);
+                        }
+                        if (allFound) {
+                            m_pointDrag = std::move(drag);
+                            m_pointDragStart = std::move(start);
+                            m_pointDragFrom = *onPlane;
+                            m_pointDragElements = m_elements;
+                            m_pointDragMoved = false;
+                            if (m_viewport != nullptr) {
+                                m_viewport->setDrawDrag(true);
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
     if (!toolActive() || !m_planeReady) {
         return;
     }
@@ -1555,6 +1676,24 @@ void SketchController::pressAt(const interaction::PlaneRay& ray, double pixelsPe
 }
 
 void SketchController::dragTo(const interaction::PlaneRay& ray, double pixelsPerMillimetre) {
+    if (m_pointDrag) { // AP-2.2c4: the held points follow the pointer, the sketch is solved live
+        const auto onPlane = interaction::planePoint(ray, m_plane);
+        if (!onPlane) {
+            return;
+        }
+        std::vector<geo::Point2d> targets;
+        targets.reserve(m_pointDragStart.size());
+        for (const core::SketchPoint& start : m_pointDragStart) {
+            targets.push_back({start.u + onPlane->u - m_pointDragFrom.u,
+                               start.v + onPlane->v - m_pointDragFrom.v});
+        }
+        if (auto moved = m_pointDrag->moveTo(targets)) { // a failed solve keeps the last picture
+            m_elements = moved->elements;
+            m_pointDragMoved = true;
+            refresh();
+        }
+        return;
+    }
     if (!toolActive() || !m_planeReady) {
         return;
     }
@@ -1563,6 +1702,28 @@ void SketchController::dragTo(const interaction::PlaneRay& ray, double pixelsPer
 
 void SketchController::releaseAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre,
                                  bool alt, bool dragged) {
+    if (m_pointDrag) { // AP-2.2c4: letting go makes one undo step ("Sketch changed")
+        interaction::SketchEdit edit;
+        if (m_pointDragMoved && dragged) {
+            for (const core::SketchElement& element : m_elements) {
+                const auto before =
+                    std::ranges::find_if(m_pointDragElements, [&](const core::SketchElement& e) {
+                        return e.id == element.id;
+                    });
+                if (before != m_pointDragElements.end() && before->points != element.points) {
+                    edit.moves.push_back(core::SketchPointMove{element.id, element.points});
+                }
+            }
+        }
+        resetPointDrag(); // the state goes first, the elements go back to before the drag
+        if (!edit.empty()) {
+            // applyEdit reloads m_elements from the model when it worked
+            applyEdit(edit, QStringLiteral("moveSketchPoints"));
+        } else {
+            refresh();
+        }
+        return;
+    }
     if (!toolActive() || !m_planeReady) {
         return;
     }

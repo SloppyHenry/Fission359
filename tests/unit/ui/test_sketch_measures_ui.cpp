@@ -390,3 +390,103 @@ TEST_CASE("rule marks show next to their element and a click removes the rule",
     f.settle();
     CHECK(f.sketch->ruleMarks().size() == 1);
 }
+
+TEST_CASE("dragging a free end point moves it and is one undo step", "[ui][sketchmeasures][drag]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0); // L1, with the automatic rule "horizontal" (AP-2.2c2)
+    f.settle();
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->chooseTool(QString()); // no tool: a press on a point drags it
+    f.settle();
+
+    f.sketch->pressAt(Drawing::down(10, 0), 2.0);
+    CHECK(f.sketch->draggingPoint());
+    f.sketch->dragTo(Drawing::down(15, 0), 2.0);
+    f.sketch->dragTo(Drawing::down(20, 0), 2.0);
+    f.sketch->releaseAt(Drawing::down(20, 0), 2.0, false, true);
+    f.settle();
+    CHECK_FALSE(f.sketch->draggingPoint());
+    auto elements = f.elements();
+    REQUIRE(elements.size() == 1);
+    CHECK(elements[0].points[0].u == Approx(0.0).margin(1e-6));
+    CHECK(elements[0].points[0].v == Approx(0.0).margin(1e-6));
+    CHECK(elements[0].points[1].u == Approx(20.0).margin(1e-6)); // L1.1 was dragged to (20, 0)
+    CHECK(elements[0].points[1].v == Approx(0.0).margin(1e-6));
+    CHECK(f.nextUndo() == QStringLiteral("moveSketchPoints")); // one undo step "Sketch changed"
+    REQUIRE(f.model->undo());
+    f.settle();
+    elements = f.elements();
+    REQUIRE(elements.size() == 1);
+    CHECK(elements[0].points[1].u == Approx(10.0).margin(1e-6)); // back where it was
+    CHECK(elements[0].points[1].v == Approx(0.0).margin(1e-6));
+}
+
+TEST_CASE("a horizontal line stays horizontal while its end is dragged",
+          "[ui][sketchmeasures][drag]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0); // L1, horizontal by the automatic rule
+    f.settle();
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->chooseTool(QString());
+    f.settle();
+
+    f.sketch->pressAt(Drawing::down(10, 0), 2.0);
+    CHECK(f.sketch->draggingPoint());
+    f.sketch->dragTo(Drawing::down(20, 8), 2.0); // pulled off the level: the rule wins
+    f.sketch->releaseAt(Drawing::down(20, 8), 2.0, false, true);
+    f.settle();
+    CHECK_FALSE(f.sketch->draggingPoint());
+    const auto elements = f.elements();
+    REQUIRE(elements.size() == 1);
+    CHECK(elements[0].points[0].v == Approx(elements[0].points[1].v).margin(1e-6));
+}
+
+TEST_CASE("Esc during a drag puts everything back", "[ui][sketchmeasures][drag]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0); // L1
+    f.settle();
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->chooseTool(QString());
+    f.settle();
+
+    f.sketch->pressAt(Drawing::down(10, 0), 2.0);
+    CHECK(f.sketch->draggingPoint());
+    f.sketch->dragTo(Drawing::down(20, 5), 2.0);
+    f.sketch->escape();
+    CHECK_FALSE(f.sketch->draggingPoint());
+    f.settle();
+    const auto elements = f.elements(); // the model never saw the drag
+    REQUIRE(elements.size() == 1);
+    checkPoint(elements[0].points[0], 0, 0);
+    checkPoint(elements[0].points[1], 10, 0);
+    CHECK(f.nextUndo() != QStringLiteral("moveSketchPoints"));
+}
+
+TEST_CASE("a fixed point is not dragged", "[ui][sketchmeasures][drag]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0); // L1
+    f.settle();
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->chooseTool(QString());
+    f.settle();
+    const QString step = f.sketch->step();
+    CHECK(f.model->addSketchRule(step, QStringLiteral("fixed"), {QStringLiteral("L1.0")}));
+    CHECK(f.model->addSketchRule(step, QStringLiteral("fixed"), {QStringLiteral("L1.1")}));
+    f.settle();
+    CHECK(f.sketch->freeCount() == 0); // nothing can move any more
+
+    f.sketch->pressAt(Drawing::down(10, 0), 2.0);
+    CHECK_FALSE(f.sketch->draggingPoint());
+}

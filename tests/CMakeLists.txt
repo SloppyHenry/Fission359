@@ -441,6 +441,14 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;sketchclickmm:-20,0;sketchclickmm:20,0;key:Escape;key:Escape;expectsketchtool:;expectsketchelements:line=1;expectsketchsize:40,0;sketchclickmm:0,0;key:3;key:0;key:Return;expectundo:addSketchMeasure;expectsketchsize:30,0;menu:undo;expectsketchsize:40,0")
   set_tests_properties(app_sketch_measure_typed PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.2c4: live dragging. A level line 40 mm long, the tool off, its end pulled 10 mm further
+  # with the mouse: the line is 50 mm long and still level (one undo step); undo makes it 40 mm.
+  add_test(NAME app_sketch_point_drag
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-point-drag.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;sketchclickmm:-20,0;sketchclickmm:20,0;key:Escape;key:Escape;expectsketchtool:;expectsketchsize:40,0;sketchdragmm:20,0,30,0;expectundo:moveSketchPoints;expectsketchsize:50,0;menu:undo;expectsketchsize:40,0")
+  set_tests_properties(app_sketch_point_drag PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-2.1f: a sketch on the top of the box, the border taken over with the tool U (found by words
   # only this tool carries), one undo step; the box is made wider by a typed value and the border
   # follows (20 x 20 becomes 30 x 20). Nothing is clicked on a grid: the edges come by name.

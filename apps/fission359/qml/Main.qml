@@ -212,7 +212,7 @@ Window {
         // Elements chosen with no tool on (AP-2.2b): a digit opens the field for a measure of them.
         const measureKind = Sketch.selectedElements.length > 0 ? Sketch.measureKindForSelection() : ""
         // What can still move (AP-2.2c1): drawn blue, and the hint says how many.
-        const freedom = Sketch.fullyFixed ? " " + qsTr("The sketch is fully fixed.") : Sketch.freeCount > 0 ? " " + qsTr("%n element(s) can still move (blue). Tip: click one and type a number to fix its size.", "", Sketch.freeCount) : ""
+        const freedom = Sketch.fullyFixed ? " " + qsTr("The sketch is fully fixed.") : Sketch.freeCount > 0 ? " " + qsTr("%n element(s) can still move (blue): drag them to try, or click one and type a number to fix its size.", "", Sketch.freeCount) : ""
         if (measureKind !== "") {
             return qsTr("Type a number to set the %1").arg(measureKindWord(measureKind)) + areas + freedom + helper
         }

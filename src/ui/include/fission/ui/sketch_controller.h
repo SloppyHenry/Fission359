@@ -12,10 +12,12 @@
 #include <QVariantMap>
 
 #include <array>
+#include <memory>
 #include <optional>
 #include <vector>
 
 #include "fission/core/sketch.h"
+#include "fission/core/sketch_solve.h"
 #include "fission/interaction/sketch_edit.h"
 #include "fission/interaction/sketch_offset.h"
 #include "fission/interaction/sketch_pattern.h"
@@ -158,6 +160,8 @@ public:
     QVariantMap readout() const { return m_readout; }
     bool planeReady() const noexcept { return m_mode == Mode::sketching && m_planeReady; }
     QString step() const { return m_step; }
+    /// A point of the sketch is being dragged live (no tool on, AP-2.2c4).
+    bool draggingPoint() const noexcept { return m_pointDrag != nullptr; }
     QVariantMap snap() const { return m_snapMap; }
     double gridStep() const noexcept { return m_gridStep; }
 
@@ -407,6 +411,14 @@ private:
     void onDragged(double x, double y);
     void onReleased(double x, double y, bool dragged);
     void onDoubleClicked(double x, double y);
+    // a live drag of sketch points with no tool on (AP-2.2c4)
+    /// What a press at `at` holds, as solver point ids ("L1.1"): the nearest point of a movable
+    /// element within the catch radius, else a whole line or the rim point of a circle near the
+    /// pointer, else nothing.
+    std::vector<std::string> dragPointsAt(const core::SketchPoint& at,
+                                          double pixelsPerMillimetre) const;
+    /// Ends a point drag: the state goes and the elements go back to before the drag.
+    void resetPointDrag();
 
     QPointer<DocumentModel> m_model;
     QPointer<SelectionController> m_selection;
@@ -477,6 +489,13 @@ private:
     std::string m_hoverRegion;
     bool m_regionsFailedSaid = false;
     std::vector<std::string> m_selectedElements; ///< the chosen elements (no tool on, AP-2.2b)
+    // a live drag of points with no tool on (AP-2.2c4)
+    std::unique_ptr<core::SketchDragging> m_pointDrag;
+    /// Where the held points were at the press, in the order of `m_pointDrag->held()`.
+    std::vector<core::SketchPoint> m_pointDragStart;
+    core::SketchPoint m_pointDragFrom;                    ///< the pointer on the plane at the press
+    std::vector<core::SketchElement> m_pointDragElements; ///< the elements before the drag
+    bool m_pointDragMoved = false;
 };
 
 } // namespace fission::ui

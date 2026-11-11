@@ -3262,10 +3262,10 @@
     </message>
     <message numerus="yes">
         <location line="+1"/>
-        <source>%n element(s) can still move (blue). Tip: click one and type a number to fix its size.</source>
+        <source>%n element(s) can still move (blue): drag them to try, or click one and type a number to fix its size.</source>
         <translation>
-            <numerusform>%n Element kann sich noch bewegen (blau). Tipp: eines anklicken und eine Zahl tippen, um seine Größe festzulegen.</numerusform>
-            <numerusform>%n Elemente können sich noch bewegen (blau). Tipp: eines anklicken und eine Zahl tippen, um seine Größe festzulegen.</numerusform>
+            <numerusform>%n Element kann sich noch bewegen (blau): zum Ausprobieren ziehen, oder anklicken und eine Zahl tippen, um seine Größe festzulegen.</numerusform>
+            <numerusform>%n Elemente können sich noch bewegen (blau): zum Ausprobieren ziehen, oder eines anklicken und eine Zahl tippen, um seine Größe festzulegen.</numerusform>
         </translation>
     </message>
     <message>
