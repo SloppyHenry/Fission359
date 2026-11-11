@@ -10,6 +10,7 @@ add_executable(fission_unit_tests
   core/test_recompute.cpp
   core/test_history.cpp
   core/test_sketch.cpp
+  core/test_sketch_solve.cpp
   core/test_selection.cpp
   core/test_scaling.cpp
   core/test_cuts.cpp
