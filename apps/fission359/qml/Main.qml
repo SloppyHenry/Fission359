@@ -66,17 +66,15 @@ Window {
     title: (Files.fileName !== "" ? Files.fileName + ".fission" : root.documentName)
            + (Files.modified ? " •" : "") + " – " + qsTr("Fission359")
 
-    // The files opened last, as entries of the File menu (a flat list under a heading).
+    // The files opened last, as the submenu "Open recent" of the File menu (greyed with an
+    // empty submenu when there are none).
     readonly property var recentItems: {
         const files = Files.recentFiles
-        if (files.length === 0) {
-            return []
-        }
-        const list = [{ separator: true }, { id: "recent.header", text: qsTr("Open recent"), enabled: false }]
+        const submenu = []
         for (let i = 0; i < files.length; ++i) {
-            list.push({ id: "recent." + i, text: "    " + Files.baseName(files[i]) })
+            submenu.push({ id: "recent." + i, text: Files.baseName(files[i]) })
         }
-        return list
+        return [{ id: "recent", text: qsTr("Open recent"), submenu: submenu, enabled: files.length > 0 }]
     }
 
     // ---- the menus: one model for the system menu bar and the in-window menus ------------
