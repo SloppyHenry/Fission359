@@ -25,10 +25,11 @@ option(FISSION_COVERAGE "Instrument the code for test coverage (scripts/coverage
 include(FissionCompilerOptions)
 include(FissionLayers)
 
-# WebAssembly (Emscripten) needs pthreads when compiling and linking.
+# WebAssembly (Emscripten) needs pthreads, and native exceptions so that errors can be caught
+# (the same flags as cmake/vcpkg-triplets/fission-wasm32-emscripten.cmake).
 if(EMSCRIPTEN)
-  add_compile_options(-pthread)
-  add_link_options(-pthread)
+  add_compile_options(-pthread -fwasm-exceptions)
+  add_link_options(-pthread -fwasm-exceptions)
 endif()
 
 # Qt is only allowed in the layers listed in cmake/FissionLayers.cmake.
