@@ -414,3 +414,43 @@ TEST_CASE("sketch regions: pulled from the ground, a new body (AP-2.3b3)",
     CHECK(modeOf(*f.model, last.value(QStringLiteral("id")).toString()) == "new");
     CHECK(shownBodies(*f.model) == bodiesBefore + 1);
 }
+
+TEST_CASE("sketch regions: deleting a sketch that is pulled names the pull as needing help "
+          "(AP-2.3b3)",
+          "[ui][sketchregions][extrude]") {
+    NoCatching free;
+    Sketching f;
+    f.sketch->chooseTool(QStringLiteral("rectangle"));
+    f.click(0, 0);
+    f.click(40, 30);
+    f.sketch->chooseTool(QString());
+    REQUIRE(f.regionsReady());
+    REQUIRE(f.ids().size() == 1);
+    const QString region = QString::fromStdString(f.ids().front());
+    f.sketch->finish();
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    int sketchIndex = -1;
+    const QVariantList recipe = f.model->recipe();
+    for (int i = 0; i < recipe.size(); ++i) {
+        const QVariantMap entry = recipe.at(i).toMap();
+        if (entry.value(QStringLiteral("type")).toString() == QStringLiteral("sketch")) {
+            sketchIndex = i;
+        }
+    }
+    REQUIRE(sketchIndex >= 0);
+    const QString sketchId = recipe.at(sketchIndex).toMap().value(QStringLiteral("id")).toString();
+
+    const QString body = f.model->addExtrude(sketchId, region, 20, 15);
+    REQUIRE_FALSE(body.isEmpty());
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QVariantList after = f.model->recipe();
+    REQUIRE(after.size() == sketchIndex + 2);
+    const int extrudeIndex = static_cast<int>(after.size()) - 1;
+    CHECK(after.back().toMap().value(QStringLiteral("type")).toString() ==
+          QStringLiteral("extrude"));
+
+    const QVariantMap plan = f.model->deletionOfStep(sketchIndex);
+    CHECK(plan.value(QStringLiteral("dependents")).toList().contains(QVariant(extrudeIndex)));
+}

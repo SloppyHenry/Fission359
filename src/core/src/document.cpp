@@ -469,18 +469,25 @@ std::vector<FeatureId> Document::dependentsOf(const FeatureId& id) const {
             bodies.push_back(body.id);
         }
     }
+    std::vector<std::string> steps{id.value};
     std::vector<FeatureId> result;
     for (const Feature& other : features_) {
         if (other.id == id) {
             continue;
         }
+        // A step that reads a sketch (its word `sketch`) depends on it like on a body.
+        const auto read = other.texts.find("sketch");
         const bool uses =
-            std::any_of(other.inputs.begin(), other.inputs.end(), [&](const BodyId& b) {
-                return std::find(bodies.begin(), bodies.end(), b) != bodies.end();
-            });
+            std::any_of(other.inputs.begin(), other.inputs.end(),
+                        [&](const BodyId& b) {
+                            return std::find(bodies.begin(), bodies.end(), b) != bodies.end();
+                        }) ||
+            (read != other.texts.end() &&
+             std::find(steps.begin(), steps.end(), read->second) != steps.end());
         if (uses) {
             result.push_back(other.id);
             bodies.insert(bodies.end(), other.outputs.begin(), other.outputs.end());
+            steps.push_back(other.id.value);
         }
     }
     return result;
