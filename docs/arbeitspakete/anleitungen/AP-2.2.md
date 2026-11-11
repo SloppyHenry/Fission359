@@ -30,12 +30,20 @@ und eine gehaltene Spiegelung (Symmetrie-Regel); Regeln auf verknüpften Element
 - Unterbestimmte Skizzen sind gültig, nie rot. Farben: Blau = „kann sich noch bewegen“, dunkel = „steht fest“; immer mit Worten.
 - Maße sind Ausdrücke (wie überall, Regel 2).
 
+## Festlegungen (2026-11-09)
+1. **Zerlegung (2026-11-09):** wie in dieser Anleitung: 2.2a Solver-Anbindung hinter der GAL (ohne Bedienung), 2.2b Maße und Regeln setzen (Datenmodell, Dateiformat, Bedienung), 2.2c Auto-Regeln und Freiheitsgrade (inkl. Live-Ziehen), 2.2d Konfliktdiagnose. Jedes Teilpaket ein PR. Ist ein Teil über ~3000 geänderte Zeilen, wird er vor dem Bau weiter geteilt.
+2. **Koordinaten beim Lösen (Haltepunkt 2):** wie empfohlen. Die gelösten Koordinaten stehen im Dokument (Startwerte für das nächste Lösen); Regeln und Maße sind die Wahrheit. Ändert sich ein Maß oder eine Regel, wird von den gespeicherten Koordinaten aus neu gelöst; das Ergebnis geht als Teil desselben Commands ins Dokument (Undo stellt die alten Koordinaten exakt wieder her). Deterministisch: Constraints nach Id sortiert, feste Algorithmus-Reihenfolge (DogLeg, Rückfall LM), keine Zufallsstartwerte.
+3. **Symbole für Regeln (Haltepunkt 3):** kein eigenes Mockup. Die 12 Regel-Symbole entstehen in 2.2b/c als einfache Strichsymbole im Stil der vorhandenen Werkzeug-Symbole (`icons.js`, Design-System `docs/08-gestaltung.md`: Strichstärke, Farben, Mindestgröße); jedes Symbol hat einen Tooltip mit dem Glossarbegriff. Ein Screenshot aller Symbole gehört in den PR von 2.2b.
+4. **Kreis + Zahl (2.2b):** setzt den **Durchmesser** (Maker denken in Ø); Anzeige „Ø 12“; Radius über die Kontextleiste umschaltbar.
+5. **Schnittstelle (2.2a):** Der Solver ist eine zweite GAL-Schnittstelle `geo::SketchSolver` neben `GeometryKernel` (nicht im Kernel), erreichbar über `ExecuteContext`; Umsetzung `src/geometry/sketch` (PlaneGCS darf nur dort gelinkt werden). Festgehalten als Nachtrag in ADR-0013 („Nachtrag 2.2a“). Bögen: PlaneGCS-Bogen (Mitte, Radius, Start-/Endwinkel) wird aus unseren Punkten {Mitte, Anfang, Ende gegen den Uhrzeigersinn} gebildet und zurückgerechnet; Kurven (Splines) nehmen in 2.2 nur über ihre Durchgangspunkte teil (Punkte als Punkte im System, Regeln an Kurven selbst sind Rest).
+6. **2.2a Tests:** 50 Referenzskizzen als JSON in `tests/fixtures/sketches/` (L-Profil, Langloch, Rechteck mit Kreisen, Bogenketten, symmetrische Formen, unterbestimmte, redundante, widersprüchliche); je Skizze die erwartete Art des Ergebnisses (ok mit dof, redundant mit Ids, conflict mit Ids) und für bestimmte Skizzen die erwarteten Koordinaten. Determinismus: zweimal lösen → bitgleich; erwartete Koordinaten auf 1e-9 (Mac und Linux in der CI).
+
 ## Haltepunkte
-1. **Zerlegung** (a–d unten) bestätigen.
+1. **Zerlegung** (a–d unten) bestätigen. (Entschieden, siehe Festlegung 1.)
 2. **Was passiert mit Koordinaten beim Lösen?** Empfehlung: Die gelösten Koordinaten werden im Dokument gespeichert (als Startwerte für das
    nächste Lösen, deterministisch); Regeln und Maße sind die Wahrheit. Ändert sich ein Maß, wird neu gelöst. Alternative: Koordinaten nicht
-   speichern (Lösung von null hängt vom Startwert ab → nicht deterministisch, verworfen).
-3. **Symbole für Regeln:** Mockup mit den 12 Regel-Symbolen zeigen lassen.
+   speichern (Lösung von null hängt vom Startwert ab → nicht deterministisch, verworfen). (Entschieden, siehe Festlegung 2.)
+3. **Symbole für Regeln:** Mockup mit den 12 Regel-Symbolen zeigen lassen. (Entschieden, siehe Festlegung 3.)
 
 ## Teil 2.2a – Solver-Anbindung hinter der GAL
 1. GAL: `src/geometry/gal/include/fission/geo/sketch_solver.h`: abstrakte Schnittstelle `SketchSolver` mit

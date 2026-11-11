@@ -1,0 +1,51 @@
+{
+ "name": "radius_vs_diameter_conflict",
+ "description": "Radius 5 and diameter 12 for one circle.",
+ "points": [
+  {
+   "id": "K",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "Q",
+   "x": 5,
+   "y": 0
+  }
+ ],
+ "curves": [
+  {
+   "id": "C1",
+   "kind": "circle",
+   "points": [
+    "K",
+    "Q"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R1",
+   "kind": "radius",
+   "elements": [
+    "C1"
+   ],
+   "value": 5
+  },
+  {
+   "id": "R2",
+   "kind": "diameter",
+   "elements": [
+    "C1"
+   ],
+   "value": 12
+  }
+ ],
+ "expect": {
+  "status": "conflict",
+  "conflictingWithin": [
+   "R1",
+   "R2"
+  ]
+ }
+}

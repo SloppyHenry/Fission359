@@ -1,0 +1,103 @@
+{
+ "name": "parallel_lines_distance",
+ "description": "A line parallel to a fixed one at 5 mm, 6 mm long, starting 2 mm along.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 10,
+   "y": 0
+  },
+  {
+   "id": "C",
+   "x": 2.3,
+   "y": 4.6
+  },
+  {
+   "id": "D",
+   "x": 8.3,
+   "y": 4.7
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "L2",
+   "kind": "line",
+   "points": [
+    "C",
+    "D"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "parallel",
+   "elements": [
+    "L1",
+    "L2"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R3",
+   "kind": "distance",
+   "elements": [
+    "L1",
+    "L2"
+   ],
+   "value": 5
+  },
+  {
+   "id": "R4",
+   "kind": "horizontalDistance",
+   "elements": [
+    "A",
+    "C"
+   ],
+   "value": 2
+  },
+  {
+   "id": "R5",
+   "kind": "length",
+   "elements": [
+    "L2"
+   ],
+   "value": 6
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "C": [
+    2,
+    5
+   ],
+   "D": [
+    8,
+    5
+   ]
+  }
+ }
+}

@@ -1,0 +1,117 @@
+{
+ "name": "circles_tangent_outside",
+ "description": "Two circles that touch from outside, on one horizontal.",
+ "points": [
+  {
+   "id": "K1",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "Q1",
+   "x": 5.4,
+   "y": 0.3
+  },
+  {
+   "id": "K2",
+   "x": 7.6,
+   "y": 0.3
+  },
+  {
+   "id": "Q2",
+   "x": 11.3,
+   "y": 0.4
+  }
+ ],
+ "curves": [
+  {
+   "id": "C1",
+   "kind": "circle",
+   "points": [
+    "K1",
+    "Q1"
+   ]
+  },
+  {
+   "id": "C2",
+   "kind": "circle",
+   "points": [
+    "K2",
+    "Q2"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "K1"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "horizontal",
+   "elements": [
+    "K1",
+    "Q1"
+   ]
+  },
+  {
+   "id": "R5",
+   "kind": "horizontal",
+   "elements": [
+    "K1",
+    "K2"
+   ]
+  },
+  {
+   "id": "R6",
+   "kind": "tangent",
+   "elements": [
+    "C1",
+    "C2"
+   ]
+  },
+  {
+   "id": "R7",
+   "kind": "horizontal",
+   "elements": [
+    "K2",
+    "Q2"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R2",
+   "kind": "radius",
+   "elements": [
+    "C1"
+   ],
+   "value": 5
+  },
+  {
+   "id": "R4",
+   "kind": "radius",
+   "elements": [
+    "C2"
+   ],
+   "value": 3
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "K2": [
+    8,
+    0
+   ],
+   "Q2": [
+    11,
+    0
+   ]
+  }
+ }
+}

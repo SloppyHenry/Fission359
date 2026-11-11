@@ -1,0 +1,109 @@
+{
+ "name": "circles_concentric",
+ "description": "Two concentric circles.",
+ "points": [
+  {
+   "id": "K1",
+   "x": 3,
+   "y": 4
+  },
+  {
+   "id": "Q1",
+   "x": 8.4,
+   "y": 4.3
+  },
+  {
+   "id": "K2",
+   "x": 3.5,
+   "y": 4.5
+  },
+  {
+   "id": "Q2",
+   "x": 11,
+   "y": 4.7
+  }
+ ],
+ "curves": [
+  {
+   "id": "C1",
+   "kind": "circle",
+   "points": [
+    "K1",
+    "Q1"
+   ]
+  },
+  {
+   "id": "C2",
+   "kind": "circle",
+   "points": [
+    "K2",
+    "Q2"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "K1"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "horizontal",
+   "elements": [
+    "K1",
+    "Q1"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "concentric",
+   "elements": [
+    "C1",
+    "C2"
+   ]
+  },
+  {
+   "id": "R6",
+   "kind": "horizontal",
+   "elements": [
+    "K2",
+    "Q2"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R2",
+   "kind": "radius",
+   "elements": [
+    "C1"
+   ],
+   "value": 5
+  },
+  {
+   "id": "R5",
+   "kind": "radius",
+   "elements": [
+    "C2"
+   ],
+   "value": 8
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "K2": [
+    3,
+    4
+   ],
+   "Q2": [
+    11,
+    4
+   ]
+  }
+ }
+}

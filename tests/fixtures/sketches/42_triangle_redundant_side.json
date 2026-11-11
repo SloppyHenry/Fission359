@@ -1,0 +1,118 @@
+{
+ "name": "triangle_redundant_side",
+ "description": "A right triangle with all three sides and the right angle: the last side follows.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 3.8,
+   "y": 0.2
+  },
+  {
+   "id": "C",
+   "x": 3.6,
+   "y": 2.8
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "L2",
+   "kind": "line",
+   "points": [
+    "B",
+    "C"
+   ]
+  },
+  {
+   "id": "L3",
+   "kind": "line",
+   "points": [
+    "C",
+    "A"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "A"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "vertical",
+   "elements": [
+    "L2"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R3",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 4
+  },
+  {
+   "id": "R5",
+   "kind": "length",
+   "elements": [
+    "L2"
+   ],
+   "value": 3
+  },
+  {
+   "id": "R6",
+   "kind": "length",
+   "elements": [
+    "L3"
+   ],
+   "value": 5
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "B": [
+    4,
+    0
+   ],
+   "C": [
+    4,
+    3
+   ]
+  },
+  "redundantWithin": [
+   "R1",
+   "R2",
+   "R3",
+   "R4",
+   "R5",
+   "R6"
+  ]
+ }
+}

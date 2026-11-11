@@ -90,3 +90,19 @@ und folgt dem Körper.
 6. **Dateiformat Version 4:** neues optionales Feld `link` am Element (`{"input": n, "ref": m}`). Die Migration 3 → 4 hat nichts umzuschreiben
    (kein Feld = nicht verknüpft); 1 → 2 → 3 → 4 bleibt lückenlos. Ein Programm mit Version 3 öffnet eine Version-4-Datei mit dem Hinweis
    „neuere Fassung“, die Verknüpfung geht damit nicht still verloren, weil es die Datei nicht als gleichwertig behandelt.
+
+## Nachtrag 2.2a (2026-11-10): Skizzen-Löser hinter der GAL
+Skizzen mit Regeln und Maßen brauchen einen Löser (AP-2.2, Festlegung 5).
+
+1. **Zweite GAL-Schnittstelle:** `geo::SketchSolver` (`src/geometry/gal/include/fission/geo/sketch_solver.h`) steht neben `GeometryKernel`,
+   nicht in ihm: Der Löser rechnet nur in der Skizzenebene (u, v) und braucht keinen Körper. Eingabe `SketchSystem` (Punkte, Kurven,
+   Regeln, Maße, gehaltene Punkte), Ausgabe `SolveResult` (Koordinaten, `dof`, `conflicting`, `redundant`, `status` ok | conflict | failed).
+2. **Erreichbar über `ExecuteContext::sketchSolver`** (Zeiger, darf leer sein) und über `RecomputeEngine`; der Core kennt nur die Schnittstelle.
+3. **Umsetzung** `src/geometry/sketch` (`makePlaneGcsSolver`): nur dort wird PlaneGCS gelinkt. DogLeg, bei Misserfolg Levenberg-Marquardt
+   vom selben Startwert. Die Diagnose (`diagnose`, `getConflicting`, `getRedundant`) läuft vor und nach dem Lösen, weil sich lineare
+   Abhängigkeiten oft erst nahe der Lösung zeigen. Unbestimmte Eingaben (unbekannte Ids, Kreis ohne Radius, doppelte Ids, falsche Elementarten)
+   liefern `failed` mit Text, nie einen Absturz; bei `conflict` und `failed` bewegt sich nichts (Regel 6).
+4. **Bögen:** aus {Mitte, Anfang, Ende gegen den Uhrzeigersinn} wird ein PlaneGCS-Bogen (Mitte, Radius, Start-/Endwinkel, Winkel intern in
+   Radiant) gebildet und über die Punkte zurückgerechnet. Kurven (Splines) nehmen nur über ihre Durchgangspunkte teil.
+5. **Deterministisch:** Unbekannte werden in der Reihenfolge der Ids angelegt, nicht der Eingabe; zweimal lösen liefert bitgleiche Werte.
+   Belege: 50+ Referenzskizzen `tests/fixtures/sketches/*.json`, `tests/unit/geometry/test_sketch_solver.cpp`.

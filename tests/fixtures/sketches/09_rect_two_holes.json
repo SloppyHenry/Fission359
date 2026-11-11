@@ -1,0 +1,257 @@
+{
+ "name": "rect_two_holes",
+ "description": "Plate 80 x 50 with two holes of diameter 10, placed by distances.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 78,
+   "y": 1
+  },
+  {
+   "id": "C",
+   "x": 81,
+   "y": 49
+  },
+  {
+   "id": "D",
+   "x": 1,
+   "y": 52
+  },
+  {
+   "id": "K1",
+   "x": 20.5,
+   "y": 24
+  },
+  {
+   "id": "Q1",
+   "x": 25.3,
+   "y": 25.4
+  },
+  {
+   "id": "K2",
+   "x": 60.5,
+   "y": 24
+  },
+  {
+   "id": "Q2",
+   "x": 65.3,
+   "y": 25.4
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "L2",
+   "kind": "line",
+   "points": [
+    "B",
+    "C"
+   ]
+  },
+  {
+   "id": "L3",
+   "kind": "line",
+   "points": [
+    "C",
+    "D"
+   ]
+  },
+  {
+   "id": "L4",
+   "kind": "line",
+   "points": [
+    "D",
+    "A"
+   ]
+  },
+  {
+   "id": "C1",
+   "kind": "circle",
+   "points": [
+    "K1",
+    "Q1"
+   ]
+  },
+  {
+   "id": "C2",
+   "kind": "circle",
+   "points": [
+    "K2",
+    "Q2"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "L3"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "vertical",
+   "elements": [
+    "L2"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "vertical",
+   "elements": [
+    "L4"
+   ]
+  },
+  {
+   "id": "R7",
+   "kind": "fixed",
+   "elements": [
+    "A"
+   ]
+  },
+  {
+   "id": "R11",
+   "kind": "horizontal",
+   "elements": [
+    "K1",
+    "Q1"
+   ]
+  },
+  {
+   "id": "R15",
+   "kind": "horizontal",
+   "elements": [
+    "K2",
+    "Q2"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R5",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 80
+  },
+  {
+   "id": "R6",
+   "kind": "length",
+   "elements": [
+    "L2"
+   ],
+   "value": 50
+  },
+  {
+   "id": "R8",
+   "kind": "diameter",
+   "elements": [
+    "C1"
+   ],
+   "value": 10
+  },
+  {
+   "id": "R9",
+   "kind": "horizontalDistance",
+   "elements": [
+    "A",
+    "K1"
+   ],
+   "value": 20
+  },
+  {
+   "id": "R10",
+   "kind": "verticalDistance",
+   "elements": [
+    "A",
+    "K1"
+   ],
+   "value": 25
+  },
+  {
+   "id": "R12",
+   "kind": "diameter",
+   "elements": [
+    "C2"
+   ],
+   "value": 10
+  },
+  {
+   "id": "R13",
+   "kind": "horizontalDistance",
+   "elements": [
+    "A",
+    "K2"
+   ],
+   "value": 60
+  },
+  {
+   "id": "R14",
+   "kind": "verticalDistance",
+   "elements": [
+    "A",
+    "K2"
+   ],
+   "value": 25
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "A": [
+    0,
+    0
+   ],
+   "B": [
+    80,
+    0
+   ],
+   "C": [
+    80,
+    50
+   ],
+   "D": [
+    0,
+    50
+   ],
+   "K1": [
+    20,
+    25
+   ],
+   "Q1": [
+    25,
+    25
+   ],
+   "K2": [
+    60,
+    25
+   ],
+   "Q2": [
+    65,
+    25
+   ]
+  }
+ }
+}

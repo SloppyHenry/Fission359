@@ -1,0 +1,39 @@
+{
+ "name": "invalid_wrong_elements",
+ "description": "A parallel rule on a point and a line.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 5,
+   "y": 1
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "parallel",
+   "elements": [
+    "A",
+    "L1"
+   ]
+  }
+ ],
+ "expect": {
+  "status": "failed"
+ }
+}

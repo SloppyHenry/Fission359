@@ -1,0 +1,70 @@
+{
+ "name": "point_to_line_distance",
+ "description": "A point 4 mm from a fixed line and 3 mm along it.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 10,
+   "y": 0
+  },
+  {
+   "id": "Q",
+   "x": 3.2,
+   "y": 3
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "L1"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R2",
+   "kind": "distance",
+   "elements": [
+    "Q",
+    "L1"
+   ],
+   "value": 4
+  },
+  {
+   "id": "R3",
+   "kind": "horizontalDistance",
+   "elements": [
+    "A",
+    "Q"
+   ],
+   "value": 3
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "Q": [
+    3,
+    4
+   ]
+  }
+ }
+}

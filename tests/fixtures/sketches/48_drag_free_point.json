@@ -1,0 +1,42 @@
+{
+ "name": "drag_free_point",
+ "description": "A free point dragged to (35, 25).",
+ "points": [
+  {
+   "id": "O",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "F",
+   "x": 30,
+   "y": 20
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "O"
+   ]
+  }
+ ],
+ "held": [
+  {
+   "point": "F",
+   "x": 35,
+   "y": 25
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 2,
+  "points": {
+   "F": [
+    35,
+    25
+   ]
+  }
+ }
+}

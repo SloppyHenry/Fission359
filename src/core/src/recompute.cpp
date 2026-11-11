@@ -256,7 +256,8 @@ std::vector<ConsumedElement> consumedBy(const Feature& feature, const FeatureTyp
 
 std::optional<RecomputeResult> recompute(const Document& document, const FeatureRegistry& registry,
                                          const geo::GeometryKernel& kernel, RecomputeCache& cache,
-                                         CancelToken cancel) {
+                                         CancelToken cancel,
+                                         const geo::SketchSolver* sketchSolver) {
     RecomputeResult result;
     result.revision = document.revision();
     result.measures =
@@ -503,7 +504,7 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             std::vector<Output> outputs;
             std::optional<SketchResult> sketch;
             try {
-                const ExecuteContext context{kernel, cancel, &document.assets()};
+                const ExecuteContext context{kernel, cancel, &document.assets(), sketchSolver};
                 FeatureResult made = type->execute(
                     {feature, state.params, inputs, std::move(producers), resolvedRefs}, context);
                 if (cancel.stop_requested()) {
@@ -614,9 +615,9 @@ std::size_t applyHealedRefs(Document& document, const RecomputeResult& result) {
 // --- worker ------------------------------------------------------------------------------
 
 RecomputeEngine::RecomputeEngine(const FeatureRegistry& registry, const geo::GeometryKernel& kernel,
-                                 RecomputeObserver observer)
-    : registry_(registry), kernel_(kernel), observer_(std::move(observer)),
-      worker_([this] { run(); }) {}
+                                 RecomputeObserver observer, const geo::SketchSolver* sketchSolver)
+    : registry_(registry), kernel_(kernel), sketchSolver_(sketchSolver),
+      observer_(std::move(observer)), worker_([this] { run(); }) {}
 
 RecomputeEngine::~RecomputeEngine() {
     {
@@ -682,7 +683,7 @@ void RecomputeEngine::run() {
         emit(started);
 
         std::optional<RecomputeResult> result =
-            recompute(snapshot, registry_, kernel_, cache_, mine.token());
+            recompute(snapshot, registry_, kernel_, cache_, mine.token(), sketchSolver_);
         if (!result || mine.stop_requested()) {
             RecomputeEvent cancelled;
             cancelled.type = RecomputeEventType::cancelled;

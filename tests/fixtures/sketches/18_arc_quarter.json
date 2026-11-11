@@ -1,0 +1,85 @@
+{
+ "name": "arc_quarter",
+ "description": "Quarter circle of radius 10 about the origin.",
+ "points": [
+  {
+   "id": "C",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "S",
+   "x": 9,
+   "y": 0.5
+  },
+  {
+   "id": "E",
+   "x": 0.4,
+   "y": 11
+  }
+ ],
+ "curves": [
+  {
+   "id": "A1",
+   "kind": "arc",
+   "points": [
+    "C",
+    "S",
+    "E"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "C"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "C",
+    "S"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "vertical",
+   "elements": [
+    "C",
+    "E"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R4",
+   "kind": "radius",
+   "elements": [
+    "A1"
+   ],
+   "value": 10
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "C": [
+    0,
+    0
+   ],
+   "S": [
+    10,
+    0
+   ],
+   "E": [
+    0,
+    10
+   ]
+  }
+ }
+}

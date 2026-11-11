@@ -1,0 +1,85 @@
+{
+ "name": "point_on_circle",
+ "description": "A point on a circle, 6 mm right of its centre.",
+ "points": [
+  {
+   "id": "K1",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "Q1",
+   "x": 10.4,
+   "y": 0.3
+  },
+  {
+   "id": "T",
+   "x": 5.5,
+   "y": 7
+  }
+ ],
+ "curves": [
+  {
+   "id": "C1",
+   "kind": "circle",
+   "points": [
+    "K1",
+    "Q1"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "K1"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "horizontal",
+   "elements": [
+    "K1",
+    "Q1"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "pointOnCurve",
+   "elements": [
+    "T",
+    "C1"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R2",
+   "kind": "radius",
+   "elements": [
+    "C1"
+   ],
+   "value": 10
+  },
+  {
+   "id": "R5",
+   "kind": "horizontalDistance",
+   "elements": [
+    "K1",
+    "T"
+   ],
+   "value": 6
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "T": [
+    6,
+    8
+   ]
+  }
+ }
+}
