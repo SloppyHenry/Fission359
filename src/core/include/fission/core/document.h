@@ -305,6 +305,10 @@ public:
     /// Sets or clears the link of an element to an edge of a body (AP-2.1f).
     bool setSketchLink(const FeatureId& id, std::string_view elementId,
                        std::optional<SketchLink> link);
+    /// Replaces the whole sketch of a sketch step (rules, measures, coordinates); used by the
+    /// commands that solve the sketch. False when the step has no sketch or `sketch` is not
+    /// consistent().
+    bool setSketchData(const FeatureId& id, SketchData sketch);
 
     // --- the time marker ("jetzt", AP-1.9) -------------------------------------------------
     /// How many steps of the recipe count, or nullopt for all of them. The steps after the

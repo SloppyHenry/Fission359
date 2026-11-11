@@ -3044,6 +3044,26 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Rule added to the sketch</source>
+        <translation>Regel zur Skizze hinzugefügt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Measure %1 added to the sketch</source>
+        <translation>Maß %1 zur Skizze hinzugefügt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sketch measure changed to %1</source>
+        <translation>Skizzenmaß auf %1 geändert</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rule or measure removed from the sketch</source>
+        <translation>Regel oder Maß aus der Skizze entfernt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Step renamed</source>
         <translation>Schritt umbenannt</translation>
     </message>

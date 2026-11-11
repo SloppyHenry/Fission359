@@ -4,7 +4,10 @@
 #include "fission/core/commands.h"
 
 #include <functional>
+#include <map>
 #include <utility>
+
+#include "fission/core/sketch_solve.h"
 
 namespace fission::core {
 
@@ -220,6 +223,58 @@ private:
     std::vector<SketchPointMove> before_;
     std::vector<SketchPointMove> after_;
     bool known_ = false;
+    CommandDescription description_;
+};
+
+/// Changes the rules and measures of a sketch and solves it (AP-2.2b). The first apply computes
+/// the sketch after the change once; redo writes that again and undo writes the sketch before,
+/// so coordinates come back bit for bit and nothing is solved twice.
+class EditSketchConstraintsCommand final : public Command {
+public:
+    using Change = std::function<bool(SketchData&)>; // false = refused (unknown id, ...)
+
+    EditSketchConstraintsCommand(FeatureId step, Change change, const geo::SketchSolver* solver,
+                                 std::string key, std::map<std::string, std::string> values)
+        : step_(std::move(step)), change_(std::move(change)), solver_(solver), key_(std::move(key)),
+          values_(std::move(values)) {}
+
+    ApplyResult apply(Document& document) override {
+        if (!known_) {
+            const Feature* feature = document.findFeature(step_);
+            if (feature == nullptr || !feature->sketch) {
+                return ApplyResult::refused;
+            }
+            before_ = *feature->sketch;
+            after_ = before_;
+            if (!change_(after_)) {
+                return ApplyResult::refused;
+            }
+            if (solver_ != nullptr) {
+                solveSketch(after_, storedMeasureValues(after_), *solver_);
+            }
+            description_ = featureLabel(document, step_, key_);
+            description_.values.merge(values_);
+            known_ = true;
+            if (after_ == before_) {
+                return ApplyResult::unchanged;
+            }
+        }
+        return document.setSketchData(step_, after_) ? ApplyResult::applied : ApplyResult::refused;
+    }
+
+    void revert(Document& document) override { document.setSketchData(step_, before_); }
+
+    CommandDescription describe() const override { return description_; }
+
+private:
+    FeatureId step_;
+    Change change_;
+    const geo::SketchSolver* solver_;
+    std::string key_;
+    std::map<std::string, std::string> values_;
+    bool known_ = false;
+    SketchData before_;
+    SketchData after_;
     CommandDescription description_;
 };
 
@@ -868,6 +923,91 @@ std::unique_ptr<Command> makeSetSketchLink(FeatureId step, std::string element,
             description.values["element"] = element;
             return description;
         });
+}
+
+std::unique_ptr<Command> makeAddSketchRule(FeatureId step, std::string kind,
+                                           std::vector<std::string> elements,
+                                           const geo::SketchSolver& solver) {
+    std::map<std::string, std::string> values{{"rule", kind}};
+    return std::make_unique<EditSketchConstraintsCommand>(
+        std::move(step),
+        [kind, elements](SketchData& sketch) {
+            if (!sketchRuleKindFromWord(kind)) {
+                return false;
+            }
+            for (const std::string& element : elements) {
+                if (!sketchReferenceExists(sketch, element)) {
+                    return false;
+                }
+            }
+            sketch.rules.push_back(SketchRule{sketch.allocateRuleId(), kind, elements});
+            return true;
+        },
+        &solver, "addSketchRule", std::move(values));
+}
+
+std::unique_ptr<Command> makeAddSketchMeasure(FeatureId step, std::string kind,
+                                              std::vector<std::string> elements,
+                                              std::string expression, double evaluated,
+                                              const geo::SketchSolver& solver) {
+    std::map<std::string, std::string> values{{"measure", kind}, {"value", expression}};
+    return std::make_unique<EditSketchConstraintsCommand>(
+        std::move(step),
+        [kind, elements, expression, evaluated](SketchData& sketch) {
+            if (!sketchMeasureKindFromWord(kind)) {
+                return false;
+            }
+            for (const std::string& element : elements) {
+                if (!sketchReferenceExists(sketch, element)) {
+                    return false;
+                }
+            }
+            sketch.measures.push_back(
+                SketchMeasure{sketch.allocateRuleId(), kind, elements, {expression}, evaluated});
+            return true;
+        },
+        &solver, "addSketchMeasure", std::move(values));
+}
+
+std::unique_ptr<Command> makeSetSketchMeasure(FeatureId step, std::string measureId,
+                                              std::string expression, double evaluated,
+                                              const geo::SketchSolver& solver) {
+    std::map<std::string, std::string> values{{"id", measureId}, {"value", expression}};
+    return std::make_unique<EditSketchConstraintsCommand>(
+        std::move(step),
+        [measureId, expression, evaluated](SketchData& sketch) {
+            for (SketchMeasure& measure : sketch.measures) {
+                if (measure.id == measureId) {
+                    measure.value.expression = expression;
+                    measure.lastValue = evaluated;
+                    return true;
+                }
+            }
+            return false;
+        },
+        &solver, "setSketchMeasure", std::move(values));
+}
+
+std::unique_ptr<Command> makeRemoveSketchConstraint(FeatureId step, std::string id) {
+    std::map<std::string, std::string> values{{"id", id}};
+    return std::make_unique<EditSketchConstraintsCommand>(
+        std::move(step),
+        [id](SketchData& sketch) {
+            for (auto it = sketch.rules.begin(); it != sketch.rules.end(); ++it) {
+                if (it->id == id) {
+                    sketch.rules.erase(it);
+                    return true;
+                }
+            }
+            for (auto it = sketch.measures.begin(); it != sketch.measures.end(); ++it) {
+                if (it->id == id) {
+                    sketch.measures.erase(it);
+                    return true;
+                }
+            }
+            return false;
+        },
+        nullptr, "removeSketchConstraint", std::move(values));
 }
 
 } // namespace fission::core

@@ -14,6 +14,9 @@
 #include <string>
 #include <vector>
 
+#include "fission/core/commands.h"
+#include "fission/core/document.h"
+#include "fission/core/history.h"
 #include "fission/core/sketch.h"
 #include "fission/core/sketch_solve.h"
 #include "fission/geo/sketch/planegcs_solver.h"
@@ -202,4 +205,113 @@ TEST_CASE("storedMeasureValues reads the last values of the measures", "[sketch]
     REQUIRE(values.size() == 2);
     CHECK(values.at("R1") == Approx(30.0).margin(1e-9));
     CHECK(values.at("R2") == Approx(40.5).margin(1e-9));
+}
+
+// --- the commands that change rules and measures (AP-2.2b) -------------------------------
+
+namespace {
+
+FeatureDraft sketchDraft() {
+    FeatureDraft draft;
+    draft.type = "sketch";
+    draft.sketch = SketchData{};
+    return draft;
+}
+
+std::vector<SketchPoint> linePoints(const Document& document, const FeatureId& step) {
+    return document.findFeature(step)->sketch->elements.front().points;
+}
+
+// Adds a line L1 (0,0)-(10,1), the rules fixed L1.0 and horizontal L1 and the length measure
+// R3 = 30, so the line is solved to (30, 0). Returns the step id.
+FeatureId solvedLineStep(History& history, const fission::geo::SketchSolver& solver) {
+    REQUIRE(history.addFeature(sketchDraft()));
+    const FeatureId step = history.document().features().front().id;
+    history.execute(std::make_unique<AddSketchElementCommand>(
+        step, SketchElementKind::line, std::vector<SketchPoint>{{0, 0}, {10, 1}}));
+    history.execute(makeAddSketchRule(step, "fixed", {"L1.0"}, solver));
+    history.execute(makeAddSketchRule(step, "horizontal", {"L1"}, solver));
+    history.execute(makeAddSketchMeasure(step, "length", {"L1"}, "30", 30.0, solver));
+    return step;
+}
+
+} // namespace
+
+TEST_CASE("sketch constraints: a measure solves the sketch, undo restores the points exactly",
+          "[sketch][solve][history]") {
+    History history{Document(9)};
+    REQUIRE(history.addFeature(sketchDraft()));
+    const FeatureId step = history.document().features().front().id;
+    history.execute(std::make_unique<AddSketchElementCommand>(
+        step, SketchElementKind::line, std::vector<SketchPoint>{{0, 0}, {10, 1}}));
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    REQUIRE(history.execute(makeAddSketchRule(step, "fixed", {"L1.0"}, *solver)));
+    REQUIRE(history.execute(makeAddSketchRule(step, "horizontal", {"L1"}, *solver)));
+    const std::vector<SketchPoint> beforeMeasure = linePoints(history.document(), step);
+    REQUIRE(history.execute(makeAddSketchMeasure(step, "length", {"L1"}, "30", 30.0, *solver)));
+    const std::vector<SketchPoint> solved = linePoints(history.document(), step);
+    REQUIRE(solved.size() == 2);
+    CHECK(solved[1].u == Approx(30.0).margin(1e-9));
+    CHECK(solved[1].v == Approx(0.0).margin(1e-9));
+    REQUIRE(history.undo());
+    CHECK(linePoints(history.document(), step) == beforeMeasure);
+}
+
+TEST_CASE("sketch constraints: setSketchMeasure solves again, undo and redo are exact",
+          "[sketch][solve][history]") {
+    History history{Document(9)};
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    const FeatureId step = solvedLineStep(history, *solver);
+    const std::vector<SketchPoint> at30 = linePoints(history.document(), step);
+    REQUIRE(history.execute(makeSetSketchMeasure(step, "R3", "45", 45.0, *solver)));
+    const std::vector<SketchPoint> at45 = linePoints(history.document(), step);
+    REQUIRE(at45.size() == 2);
+    CHECK(at45[1].u == Approx(45.0).margin(1e-9));
+    CHECK(at45[1].v == Approx(0.0).margin(1e-9));
+    REQUIRE(history.undo());
+    CHECK(linePoints(history.document(), step) == at30);
+    REQUIRE(history.redo());
+    CHECK(linePoints(history.document(), step) == at45);
+}
+
+TEST_CASE("sketch constraints: removeSketchConstraint takes the measure out, undo brings it back",
+          "[sketch][solve][history]") {
+    History history{Document(9)};
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    const FeatureId step = solvedLineStep(history, *solver);
+    const std::vector<SketchPoint> at30 = linePoints(history.document(), step);
+    REQUIRE(history.execute(makeRemoveSketchConstraint(step, "R3")));
+    const SketchData& removed = *history.document().findFeature(step)->sketch;
+    CHECK(removed.measures.empty());
+    CHECK(removed.elements.front().points == at30); // no solving: the points stay
+    REQUIRE(history.undo());
+    CHECK(history.document().findFeature(step)->sketch->measures.size() == 1);
+}
+
+TEST_CASE("sketch constraints: a conflicting measure is stored but changes no points",
+          "[sketch][solve][history]") {
+    History history{Document(9)};
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    const FeatureId step = solvedLineStep(history, *solver);
+    const std::vector<SketchPoint> before = linePoints(history.document(), step);
+    REQUIRE(history.execute(makeAddSketchMeasure(step, "length", {"L1"}, "40", 40.0, *solver)));
+    const SketchData& after = *history.document().findFeature(step)->sketch;
+    CHECK(after.measures.size() == 2);
+    CHECK(after.elements.front().points == before);
+}
+
+TEST_CASE("sketch constraints: the commands describe themselves with keys and values",
+          "[sketch][solve][history]") {
+    History history{Document(9)};
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    solvedLineStep(history, *solver);
+    const auto& steps = history.steps();
+    REQUIRE(steps.size() == 5);
+    CHECK(steps[2].key == "addSketchRule");
+    CHECK(steps[2].values.at("rule") == "fixed");
+    CHECK(steps[3].key == "addSketchRule");
+    CHECK(steps[3].values.at("rule") == "horizontal");
+    CHECK(steps[4].key == "addSketchMeasure");
+    CHECK(steps[4].values.at("measure") == "length");
+    CHECK(steps[4].values.at("value") == "30");
 }
