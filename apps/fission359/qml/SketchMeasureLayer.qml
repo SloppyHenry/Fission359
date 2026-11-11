@@ -267,7 +267,12 @@ Item {
                                 event.accepted = false // the field deletes a character
                             }
                         }
-                        Keys.onBackspacePressed: event => {
+                        // Backspace has no handler of its own in every Qt version: onPressed.
+                        Keys.onPressed: event => {
+                            if (event.key !== Qt.Key_Backspace) {
+                                event.accepted = false
+                                return
+                            }
                             if (part.info !== null && input.text.trim() === "") {
                                 Sketch.removeMeasure(part.info.id)
                                 root.closeEdit()
@@ -358,7 +363,12 @@ Item {
                         event.accepted = false
                     }
                 }
-                Keys.onBackspacePressed: event => {
+                // Backspace has no handler of its own in every Qt version: onPressed.
+                Keys.onPressed: event => {
+                    if (event.key !== Qt.Key_Backspace) {
+                        event.accepted = false
+                        return
+                    }
                     if (createInput.text.trim() === "") {
                         root.cancelCreate()
                     } else {
