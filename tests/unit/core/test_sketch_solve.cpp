@@ -78,7 +78,7 @@ TEST_CASE("toSolverSystem maps elements, rules and measures to the solver", "[sk
     const SketchSystem system = toSolverSystem(sketch, {{"R3", 30.0}});
 
     // every point exists under "<element id>.<index>"
-    for (const std::string& id : {"L1.0", "L1.1", "C1.0", "C1.1", "P1.0"}) {
+    for (const char* id : {"L1.0", "L1.1", "C1.0", "C1.1", "P1.0"}) {
         CHECK(findPoint(system, id) != nullptr);
     }
     REQUIRE(findPoint(system, "L1.0") != nullptr);
@@ -347,7 +347,7 @@ struct MeasureWorld {
     RecomputeResult run(const fission::geo::SketchSolver& solver) {
         const auto result = recompute(document, registry, *kernel, cache, {}, &solver);
         REQUIRE(result.has_value());
-        return std::move(*result);
+        return *result;
     }
 };
 
