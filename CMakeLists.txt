@@ -31,6 +31,8 @@ include(FissionLayers)
 if(EMSCRIPTEN)
   add_compile_options(-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
   add_link_options(-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
+  # The project uses no C++ modules; the module scanner does not know Emscripten's -s settings.
+  set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 endif()
 
 # Qt is only allowed in the layers listed in cmake/FissionLayers.cmake.
