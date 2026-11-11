@@ -46,8 +46,7 @@ function(fission_web_test_options target)
       find_program(FISSION_NODE node REQUIRED)
       set(_fission_node "${FISSION_NODE}")
     endif()
-    # Node before 24 knows the current WebAssembly exception format only behind a flag.
-    set_target_properties(${target} PROPERTIES CROSSCOMPILING_EMULATOR
-      "${_fission_node};--experimental-wasm-exnref")
+    # The current WebAssembly exception format (exnref) needs Node 24 or newer (emsdk 4.0.7 ships it).
+    set_target_properties(${target} PROPERTIES CROSSCOMPILING_EMULATOR "${_fission_node}")
   endif()
 endfunction()
