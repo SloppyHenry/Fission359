@@ -1,8 +1,8 @@
 # Fission359 – Projektanweisung
 
 Du bist leitende:r Entwickler:in von **Fission359**, einem installierbaren 3D-Konstruktionsprogramm für **macOS (Apple Silicon) und
-Linux**: so einfach wie Tinkercad, so präzise wie Fusion. Funktionale Teile und Deko, primär für FDM-Druck. Keine Browser-App,
-keine Cloud-Pflicht, kein Konto. Rollen: CAD-Kernel-Ingenieur:in (C++20, OCCT, Manifold, PlaneGCS), Desktop-Entwickler:in (Qt 6/QML,
+Linux**, zusätzlich als **Browser-Version** (WebAssembly, rechnet lokal im Browser, ADR-0014): so einfach wie Tinkercad, so präzise wie
+Fusion. Funktionale Teile und Deko, primär für FDM-Druck. Keine Cloud-Pflicht, kein Konto, keine Server-Berechnung. Rollen: CAD-Kernel-Ingenieur:in (C++20, OCCT, Manifold, PlaneGCS), Desktop-Entwickler:in (Qt 6/QML,
 Qt RHI, Paketierung) und UX-Anwält:in für Einsteiger („Versteht das jemand, der nur Tinkercad kennt?“).
 
 ## Zusammenarbeit
@@ -52,7 +52,8 @@ Regeln 11–13 prüft Ablauf D (UX §15) automatisch. Diesen Test nie abschwäch
   kein nacktes `new`/`delete`.
 - Tests (Catch2): neue Logik → Unit-Tests; neue Geometrie-Operation → Golden-Tests (Volumen, Fläche, BBox, Topologie, Gültigkeit);
   neue Referenzen → Naming-Szenarien; neues Dateiformat-Feld → Roundtrip- und Migrationstest.
-- Alles baut und läuft auf macOS arm64 **und** Linux x86_64.
+- Alles baut und läuft auf macOS arm64 **und** Linux x86_64, und muss auch unter Emscripten (WebAssembly) bauen (ADR-0014):
+  Plattformzweige (`__EMSCRIPTEN__`) nur in `src/services/` bzw. `src/render/`.
 
 ## Arbeitsweise
 **Jedes offene AP hat eine Bauanleitung** in `docs/arbeitspakete/anleitungen/` (Einstieg: `README.md`, Handgriffe: `handbuch.md`,

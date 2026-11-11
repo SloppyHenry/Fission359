@@ -6,7 +6,7 @@
 
 | Entscheidung | Wahl | Begründung |
 |---|---|---|
-| App-Typ | **Native Desktop-App**, kein Browser, keine Web-UI | Ausdrücklicher Wunsch; volle GPU-Leistung; offline; native Menüs und Trackpad-Gesten |
+| App-Typ | **Native Desktop-App**, zusätzlich dieselbe App als **Browser-Version** über Qt for WebAssembly (ADR-0014), keine eigene Web-UI | Desktop: volle GPU-Leistung, offline, native Menüs und Trackpad-Gesten. Browser: ohne Installation ausprobieren, rechnet trotzdem lokal |
 | Sprache | **C++20** | Alle relevanten Geometrie-Bibliotheken (OCCT, Manifold, PlaneGCS) sind C++. Keine Binding-Schicht, maximale Performance. |
 | UI-Framework | **Qt 6 (LTS, ≥ 6.8) mit Qt Quick/QML** | Plattformübergreifend (macOS, Linux, später Windows); modernes, animiertes UI möglich; reife Barrierefreiheit und i18n; LGPL |
 | Geometrie-Kern (präzise) | **OpenCASCADE Technology (OCCT) ≥ 7.9** | Einziger reifer, freier B-Rep-Kern: Booleans, Abrunden, Aushöhlen, Offset, STEP. Grundlage von FreeCAD, KiCad 3D, CadQuery |

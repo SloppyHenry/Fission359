@@ -92,7 +92,8 @@ Kann CAD, will aber ein schnelles, lokales Werkzeug ohne Cloud, gern auf Linux.
 
 ## Bewusst NICHT im Umfang (Version 1)
 
-- Browser- oder Cloud-Version, Kontozwang
+- Cloud-Version, Kontozwang, Berechnung auf Servern (eine **Browser-Version**, die lokal im Browser rechnet, gibt es seit
+  2026-11-10 zusätzlich, ADR-0014)
 - CAM/CNC-Werkzeugwege, FEM-Simulation, generatives Design
 - Fotorealistisches Rendering-Studio (ein schöner Viewport und Screenshots reichen)
 - Technische Zeichnungen (später, siehe Backlog)
