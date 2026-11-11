@@ -5,7 +5,7 @@ Stand: 2026-11-06 (P17 erledigt mit PR #99, P22 umgesetzt), gegen den Code auf `
 
 ## Reihenfolge
 **Nach Bedarf**, der Nutzertest 1 (AP-1.13) kann die Reihenfolge ändern. P18, P2 und P3 sind vor dem Nutzertest erledigt worden.
-**Braucht eine Entscheidung (trifft die Orchestrierung) oder ein Testsystem:** P1 (Bild oder Video), P5, P8, P10, P11, P14 (Entscheidung oder Rechner).
+**Braucht eine Entscheidung (trifft die Orchestrierung) oder ein Testsystem:** P1 (Bild oder Video), P5, P10, P11, P14 (Entscheidung oder Rechner).
 
 ---
 
@@ -37,12 +37,6 @@ Fangpunkte kommen heute aus dem Anzeige-Netz (Rauschen ~1e-5 mm, gebogene Kanten
 `std::vector<SnapPointGal> snapPoints(const Solid&)` (Ecken, Kantenmitten, Kreismitten, Mitten ebener Flächen, exakt aus OCCT), im
 Hintergrund je Ergebnis berechnet, in `SnapSession` statt der Netzpunkte. Test: Zylinder Ø 6,3 → Kreismitte exakt, Kantenmitte eines Bogens
 exakt auf dem Kreis.
-
-## P8 Lage beim Tippen von Maßen nach dem Ablegen an einer Wand mitführen
-**Größe:** S · Idee aus AP-1.6b3. **Haltepunkt:** erst fragen, ob gewünscht.
-Problem: Nach dem Ablegen an einer Wand und `50 ⇥ 20 ⇥ 4` ändert sich die Höhe um die Körpermitte; die Form rutscht von der Wand.
-Lösung: Solange der Schritt „frisch abgelegt“ ist (bis zum ersten anderen Befehl), Lage so nachführen, dass die Unterseite auf der Wand bleibt
-(`geo::seatOnFace` mit der gemerkten Fläche).
 
 ## P9 Rezept umsortieren per Ziehen
 **Größe:** M · UX §4 erlaubt es, AP-1.9 hat es ausgelassen. Ziehen einer Zeile; erlaubt nur, wenn keine Abhängigkeit verletzt wird
@@ -86,6 +80,7 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 ---
 
 ## Erledigt
+- **P8** Lage beim Tippen nach dem Ablegen an einer Wand (2026-11-11): solange nichts anderes geschah, hält ein getipptes Maß die Unterseite an der Wand, im selben Schritt; mit benannten Maßen im Wert wird nicht nachgeführt.
 - **P18** Abstandsmaß auf einer Platte (2026-11-03, PR #83): Ohne Nachbarn misst das Maß bis zum Rand des kleinsten Körpers, der die Grundfläche umfasst und auf dem der Körper steht oder in dem er steckt (nicht ein Körper darüber, z. B. Schrift über dem Loch); danach bis zum Bettrand. Festlegung ohne Umschalter. `app_flow_a_keychain` tippt den Abstand.
 - **P2** Formen-Galerie schließt bei Klick auf leeren Grund (2026-11-03, PR #84), Simulations-Prüfung `expectflyout:`.
 - **P3** Abstände der Grundbausteine aus `Theme.space1..6`, Elide in Statuszeile und Tabs (2026-11-03, PR #85). Bildschirmfotos vorher/nachher fehlen; nachholen mit P20.

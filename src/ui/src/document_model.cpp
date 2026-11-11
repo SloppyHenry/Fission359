@@ -1594,6 +1594,7 @@ bool DocumentModel::goToHistory(int position) {
 }
 
 void DocumentModel::beginChange(const QString& field) {
+    m_changeStartRevision = m_history.document().revision();
     m_history.beginTransaction({"setValue", {{"field", field.toStdString()}}});
 }
 
@@ -1644,8 +1645,64 @@ bool DocumentModel::executeWithCuts(std::unique_ptr<core::Command> command,
 }
 
 void DocumentModel::commitChange() {
+    // Pflege P8: a size typed right after the shape was put down on a wall re-seats it, so that
+    // its underside stays on the wall; inside this step, so that undo takes both together.
+    const std::uint64_t before = m_history.document().revision();
+    const bool reseated = reseatFresh();
     finishTransaction();
+    if (m_freshSeat) {
+        if (reseated) {
+            m_freshSeat->revision = m_history.document().revision();
+        } else if (m_changeStartRevision != m_freshSeat->revision) {
+            m_freshSeat.reset(); // another command happened in between: the seat is forgotten
+        }
+    }
+    if (reseated && m_history.document().revision() != before) {
+        documentChanged();
+    }
     emit historyChanged();
+}
+
+bool DocumentModel::reseatFresh() {
+    if (!m_freshSeat || m_changeStartRevision != m_freshSeat->revision ||
+        m_currentFeature != m_freshSeat->feature) {
+        return false; // only a size of the shape that was just put down, nothing in between
+    }
+    const core::Feature* feature = m_history.document().findFeature(m_freshSeat->feature);
+    const core::FeatureType* type = feature != nullptr ? m_registry.find(feature->type) : nullptr;
+    if (type == nullptr || !feature->params.contains("rotX") || !feature->params.contains("rotY") ||
+        !feature->params.contains("rotZ")) {
+        return false;
+    }
+    // The sizes as they are now, worked out from the formulas as typed. A formula that uses a
+    // named measure does not evaluate here: no re-seat then, never a guessed size.
+    core::ResolvedParams params;
+    for (const core::ParamSpec& spec : type->parameters()) {
+        const auto found = feature->params.find(spec.name);
+        const std::string& expression =
+            found != feature->params.end() ? found->second.expression : spec.defaultExpression;
+        const std::optional<double> value = core::evaluateExpression(
+            expression, spec.kind, {}, m_history.document().settings().defaultUnitMillimetres);
+        if (!value) {
+            return false;
+        }
+        params[spec.name] = core::Quantity{*value, core::dimensionOf(spec.kind)};
+    }
+    for (const char* place : {"x", "y", "z"}) {
+        const auto found = params.find(place);
+        if (found != params.end()) {
+            found->second.value = 0.0; // measured from the foot
+        }
+    }
+    const geo::Point3d centre = type->bodyCentre(params);
+    const auto angleOf = [&params](const char* name) {
+        const auto found = params.find(name);
+        return found != params.end() ? found->second.value : 0.0;
+    };
+    const geo::Angles hint{angleOf("rotX"), angleOf("rotY"), angleOf("rotZ")};
+    writeSeat(m_freshSeat->feature,
+              geo::seatOnFace(m_freshSeat->point, m_freshSeat->normal, centre, hint));
+    return true;
 }
 
 void DocumentModel::cancelChange() {
@@ -2218,6 +2275,7 @@ int DocumentModel::startPlacing(const QString& type, bool asHole, double x, doub
     m_placingZ = z;
     m_placingSurface.clear();
     m_placingOnFace = false;
+    m_freshSeat.reset();
     m_placingCentre = centreOffsetOfDefaults(*featureType);
     const int step = stepIndexOf(*id);
     m_currentFeature = *id;
@@ -2266,6 +2324,8 @@ void DocumentModel::placeOnFace(const geo::Point3d& point, const geo::Point3d& n
         return;
     }
     const std::uint64_t before = m_history.document().revision();
+    m_placingSeatPoint = point;
+    m_placingSeatNormal = normal;
     writeSeat(m_placingFeature, geo::seatOnFace(point, normal, m_placingCentre));
     m_placingOnFace = true;
     // The work plane is a height; a wall does not move it.
@@ -2280,6 +2340,7 @@ bool DocumentModel::finishPlacing() {
     if (!m_placing) {
         return false;
     }
+    const bool onFace = m_placingOnFace; // read before anything resets it
     finishTransaction();
     m_placing = false;
     const int placedStep = stepIndexOf(m_placingFeature);
@@ -2291,6 +2352,13 @@ bool DocumentModel::finishPlacing() {
     emit placingChanged();
     emit workplaneChanged();
     emit shapePlaced(placedStep, placedType);
+    // Pflege P8: while nothing else happens, a typed size keeps the underside on the wall.
+    if (onFace) {
+        m_freshSeat = FreshSeat{m_placingFeature, m_placingSeatPoint, m_placingSeatNormal,
+                                m_history.document().revision()};
+    } else {
+        m_freshSeat.reset();
+    }
     return true;
 }
 
@@ -2301,6 +2369,7 @@ void DocumentModel::cancelPlacing() {
     m_liveCutTimer.stop();
     m_history.cancelTransaction();
     m_placing = false;
+    m_freshSeat.reset();
     documentChanged();
     emit placingChanged();
 }
