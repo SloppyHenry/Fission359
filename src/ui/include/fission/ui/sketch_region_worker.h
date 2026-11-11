@@ -13,8 +13,8 @@
 #include <vector>
 
 #include "fission/core/sketch.h"
+#include "fission/features/sketch_regions.h"
 #include "fission/geo/kernel.h"
-#include "fission/interaction/sketch_regions.h"
 
 namespace fission::ui {
 
@@ -38,7 +38,7 @@ public:
     /// Forgets everything (the sketch mode was left); a running calculation's result is dropped.
     void reset();
 
-    const interaction::SketchRegionSet& regions() const noexcept { return m_regions; }
+    const features::SketchRegionSet& regions() const noexcept { return m_regions; }
     /// The kernel refused the last sketch (no regions are shown, a hint is due).
     bool failed() const noexcept { return m_failed; }
     /// A calculation is running or waiting.
@@ -59,11 +59,11 @@ private:
         std::vector<core::SketchElement> elements;
     };
     void start(Job job);
-    void finished(std::uint64_t generation, interaction::SketchRegionSet set, bool failed,
+    void finished(std::uint64_t generation, features::SketchRegionSet set, bool failed,
                   double milliseconds);
 
     QThreadPool m_pool;
-    interaction::SketchRegionSet m_regions;
+    features::SketchRegionSet m_regions;
     bool m_failed = false;
     bool m_running = false;
     double m_lastMilliseconds = 0.0;

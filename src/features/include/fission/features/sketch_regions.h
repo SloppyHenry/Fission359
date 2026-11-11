@@ -15,7 +15,7 @@
 #include "fission/geo/kernel.h"
 #include "fission/geo/sketch_regions.h"
 
-namespace fission::interaction {
+namespace fission::features {
 
 struct SketchRegionInfo {
     /// Stable (decision 52): the sorted ids of the elements that bound the region (outer boundary
@@ -44,4 +44,4 @@ bool regionContains(const geo::SketchRegion& region, const core::SketchPoint& at
 /// The index of the smallest region that holds `at`; -1 when there is none.
 int regionAt(const SketchRegionSet& set, const core::SketchPoint& at);
 
-} // namespace fission::interaction
+} // namespace fission::features

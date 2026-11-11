@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "fission/interaction/sketch_regions.h"
+#include "fission/features/sketch_regions.h"
 
 #include <algorithm>
 #include <map>
 
-namespace fission::interaction {
+namespace fission::features {
 
 namespace {
 
@@ -169,4 +169,4 @@ int regionAt(const SketchRegionSet& set, const core::SketchPoint& at) {
     return best;
 }
 
-} // namespace fission::interaction
+} // namespace fission::features

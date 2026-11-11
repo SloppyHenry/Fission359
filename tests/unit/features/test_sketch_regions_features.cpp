@@ -9,10 +9,10 @@
 #include <string>
 #include <vector>
 
+#include "fission/features/sketch_regions.h"
 #include "fission/geo/occt/kernel.h"
-#include "fission/interaction/sketch_regions.h"
 
-using namespace fission::interaction;
+using namespace fission::features;
 using fission::core::SketchElement;
 using fission::core::SketchElementKind;
 using fission::core::SketchPoint;
