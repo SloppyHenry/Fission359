@@ -284,6 +284,24 @@ jobs:
           "$EMSDK_NODE" --version
           cmake --build --preset web-core -j 4 -- -k 0
 
+      # When wasm-opt cannot read a linked test program, name the function at the reported offset
+      # (the files are left unoptimised by the failed link).
+      - name: Diagnose a WebAssembly file that does not parse
+        if: failure()
+        run: |
+          for f in build/web-core/tests/naming/fission_ocaf_tests.wasm build/web-core/tests/unit/fission_unit_tests.wasm; do
+            [ -f "$f" ] || continue
+            echo "== $f"
+            "$EMSDK/upstream/bin/wasm-opt" --version
+            echo "-- with all features:"
+            "$EMSDK/upstream/bin/wasm-opt" "$f" --all-features -o /dev/null 2>&1 | head -3 || true
+            echo "-- with the features emcc uses:"
+            out=$("$EMSDK/upstream/bin/wasm-opt" "$f" --mvp-features --enable-threads --enable-bulk-memory --enable-exception-handling --enable-multivalue --enable-mutable-globals --enable-nontrapping-float-to-int --enable-reference-types --enable-sign-ext -o /dev/null 2>&1 || true)
+            echo "$out" | head -3
+            offset=$(echo "$out" | sed -n 's/.*(at 0:\([0-9]*\)).*/\1/p' | head -1)
+            [ -n "$offset" ] && python3 scripts/tools/wasm_at_offset.py "$EMSDK/upstream/bin/llvm-objdump" "$f" "$offset" || true
+          done
+
       - name: Test
         run: ctest --preset web-core -j 2 --output-junit "$GITHUB_WORKSPACE/web-tests.xml"
         continue-on-error: false
