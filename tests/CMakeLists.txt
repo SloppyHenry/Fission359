@@ -432,6 +432,15 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.rectangle;sketchclickmm:-40,-20;sketchclickmm:40,20;expectsketchregions:1,none;menu:sketchtool.circle;sketchclickmm:40,0;sketchclickmm:50,0;key:Escape;expectsketchtool:;expectsketchregions:3,none;expecthint:3 closed areas;sketchclickmm:-20,0;expectsketchregions:3,selected;expecthint:One is chosen;key:Escape;expectsketch:active;expectsketchregions:3,none;menu:undo;expectsketchregions:1,none;menu:redo;expectsketchregions:3,none;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_regions PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.2b: a measure by typing. A line 40 mm long, the tool off, a click on the line chooses it,
+  # the digits 3 and 0 open the measure field, Enter sets it: the line is 30 mm long (one undo
+  # step, the solver keeps it level); undo makes it 40 mm again.
+  add_test(NAME app_sketch_measure_typed
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-measure.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;sketchclickmm:-20,0;sketchclickmm:20,0;key:Escape;key:Escape;expectsketchtool:;expectsketchelements:line=1;expectsketchsize:40,0;sketchclickmm:0,0;key:3;key:0;key:Return;expectundo:addSketchMeasure;expectsketchsize:30,0;menu:undo;expectsketchsize:40,0")
+  set_tests_properties(app_sketch_measure_typed PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-2.1f: a sketch on the top of the box, the border taken over with the tool U (found by words
   # only this tool carries), one undo step; the box is made wider by a typed value and the border
   # follows (20 x 20 becomes 30 x 20). Nothing is clicked on a grid: the edges come by name.
