@@ -8,6 +8,8 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
+#include <chrono>
+#include <cmath>
 #include <map>
 #include <memory>
 #include <optional>
@@ -492,4 +494,158 @@ TEST_CASE("drawing adds the rules it fulfils", "[core][sketch][autorules]") {
         CHECK(hasRule(rules, {"coincident", {"A1.1", "L1.1"}}));
         CHECK(hasRule(rules, {"tangent", {"A1", "L1"}}));
     }
+}
+
+// --- live dragging (AP-2.2c4) ---------------------------------------------------------------
+
+TEST_CASE("dragging a free end moves it to the pointer", "[core][sketch][drag]") {
+    SketchData sketch;
+    sketch.elements = {line("L1", 0, 0, 10, 0)};
+
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    SketchDragging drag(sketch, {}, *solver, {"L1.1"});
+    REQUIRE(drag.started());
+    const auto moved = drag.moveTo({{20.0, 5.0}});
+    REQUIRE(moved);
+    const SketchElement& solved = moved->elements.front();
+    CHECK(solved.points[1].u == Approx(20.0).margin(1e-6));
+    CHECK(solved.points[1].v == Approx(5.0).margin(1e-6));
+    // PlaneGCS moves as little as possible: the other end stays
+    CHECK(solved.points[0].u == Approx(0.0).margin(1e-6));
+    CHECK(solved.points[0].v == Approx(0.0).margin(1e-6));
+}
+
+TEST_CASE("a dragged end keeps the length and turns round the fixed start",
+          "[core][sketch][drag]") {
+    SketchData sketch;
+    sketch.elements = {line("L1", 0, 0, 10, 0)};
+    sketch.rules = {{"R1", "fixed", {"L1.0"}}};
+    sketch.measures = {lengthMeasure("R2", {"L1"}, 10.0)};
+
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    SketchDragging drag(sketch, {{"R2", 10.0}}, *solver, {"L1.1"});
+    REQUIRE(drag.started());
+    const auto moved = drag.moveTo({{0.0, 20.0}});
+    REQUIRE(moved);
+    const SketchElement& solved = moved->elements.front();
+    checkSketchPoint(solved, 0, 0, 0);
+    // the length rule wins over the drag: the end slides on the circle of radius 10, as close to
+    // (0, 20) as the rule allows
+    const double distance = std::sqrt(solved.points[1].u * solved.points[1].u +
+                                      solved.points[1].v * solved.points[1].v);
+    CHECK(distance == Approx(10.0).margin(1e-6));
+    CHECK(solved.points[1].u == Approx(0.0).margin(1e-4));
+    CHECK(solved.points[1].v == Approx(10.0).margin(1e-4));
+}
+
+TEST_CASE("a horizontal line stays horizontal while its end is dragged", "[core][sketch][drag]") {
+    SketchData sketch;
+    sketch.elements = {line("L1", 0, 0, 10, 0)};
+    sketch.rules = {{"R1", "horizontal", {"L1"}}};
+
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    SketchDragging drag(sketch, {}, *solver, {"L1.1"});
+    REQUIRE(drag.started());
+    const auto moved = drag.moveTo({{15.0, 7.0}});
+    REQUIRE(moved);
+    const SketchElement& solved = moved->elements.front();
+    CHECK(solved.points[0].v == Approx(solved.points[1].v).margin(1e-6));
+}
+
+TEST_CASE("a linked element is never dragged", "[core][sketch][drag]") {
+    SketchData sketch;
+    sketch.elements = {line("L1", 0, 0, 10, 0, SketchLink{0, 0})};
+
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    SketchDragging drag(sketch, {}, *solver, {"L1.1"});
+    CHECK_FALSE(drag.started());
+}
+
+TEST_CASE("a drag can move back and forth", "[core][sketch][drag]") {
+    SketchData sketch;
+    sketch.elements = {line("L1", 0, 0, 10, 0)};
+
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    SketchDragging drag(sketch, {}, *solver, {"L1.1"});
+    REQUIRE(drag.started());
+    const auto away = drag.moveTo({{20.0, 5.0}});
+    REQUIRE(away);
+    const auto back = drag.moveTo({{10.0, 0.0}});
+    REQUIRE(back);
+    CHECK(back->elements.front().points[1].u == Approx(10.0).margin(1e-6));
+    CHECK(back->elements.front().points[1].v == Approx(0.0).margin(1e-6));
+}
+
+TEST_CASE("dragging the same way twice gives bit-identical points", "[core][sketch][drag]") {
+    const auto build = [] {
+        SketchData sketch;
+        sketch.elements = {line("L1", 0, 0, 10, 0)};
+        sketch.rules = {{"R1", "fixed", {"L1.0"}}};
+        sketch.measures = {lengthMeasure("R2", {"L1"}, 10.0)};
+        return sketch;
+    };
+    const SketchMeasureValues values = {{"R2", 10.0}};
+
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    SketchData firstSketch = build();
+    SketchDragging first(firstSketch, values, *solver, {"L1.1"});
+    REQUIRE(first.started());
+    const auto firstMoved = first.moveTo({{0.0, 20.0}});
+    REQUIRE(firstMoved);
+    SketchData secondSketch = build();
+    SketchDragging second(secondSketch, values, *solver, {"L1.1"});
+    REQUIRE(second.started());
+    const auto secondMoved = second.moveTo({{0.0, 20.0}});
+    REQUIRE(secondMoved);
+
+    CHECK(firstMoved->elements == secondMoved->elements); // bit-identical
+}
+
+TEST_CASE("live dragging solves 200 elements fast enough for 30 frames a second",
+          "[.][benchmark][core][sketch][drag]") {
+    // A chain of 200 lines: L<i+1> from (i*5, 0) to ((i+1)*5, 0), each joined to the previous one
+    // by a coincident rule, L1.0 fixed, every 4th line horizontal.
+    SketchData sketch;
+    int ruleNumber = 0;
+    const auto ruleId = [&] {
+        ++ruleNumber;
+        return "R" + std::to_string(ruleNumber);
+    };
+    for (int i = 0; i < 200; ++i) {
+        const std::string id = "L" + std::to_string(i + 1);
+        sketch.elements.push_back(line(id, i * 5.0, 0.0, (i + 1) * 5.0, 0.0));
+        if (i >= 1) {
+            sketch.rules.push_back(
+                {ruleId(), "coincident", {"L" + std::to_string(i) + ".1", id + ".0"}});
+        }
+        if (i % 4 == 0) {
+            sketch.rules.push_back({ruleId(), "horizontal", {id}});
+        }
+    }
+    sketch.rules.push_back({ruleId(), "fixed", {"L1.0"}});
+
+    // Starting the drag analyses the system once; every move after that is one solve.
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    const auto startBuild = std::chrono::steady_clock::now();
+    SketchDragging drag(sketch, {}, *solver, {"L200.1"});
+    const auto endBuild = std::chrono::steady_clock::now();
+    REQUIRE(drag.started());
+    const double buildMs = std::chrono::duration<double, std::milli>(endBuild - startBuild).count();
+    WARN("starting the drag: " << buildMs << " ms");
+
+    // 30 frames like the real drag.
+    const auto start = std::chrono::steady_clock::now();
+    std::optional<SketchData> moved;
+    for (int k = 0; k < 30; ++k) {
+        moved = drag.moveTo({{1000.0, 50.0 + k}});
+        REQUIRE(moved);
+    }
+    const auto end = std::chrono::steady_clock::now();
+    const double totalMs = std::chrono::duration<double, std::milli>(end - start).count();
+    const double averageMs = totalMs / 30.0;
+    WARN("live dragging of 200 elements: " << averageMs << " ms per frame on average");
+    CHECK(averageMs < 33.0); // 30 frames a second
+    // the chain really followed: its end is at the last target, its start stayed
+    checkSketchPoint(*moved->find("L200"), 1, 1000.0, 79.0);
+    checkSketchPoint(*moved->find("L1"), 0, 0.0, 0.0);
 }

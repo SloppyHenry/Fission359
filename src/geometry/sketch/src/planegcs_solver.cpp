@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // The sketch solver on PlaneGCS (AP-2.2a). Every call builds a fresh `GCS::System` from the
-// `SketchSystem`: all numbers PlaneGCS points to live in a `std::deque` that is never resized
-// while the system exists, rules and measures are added in id order, angles go in as radians.
+// `SketchSystem` (a live drag builds it once and keeps it, AP-2.2c4): all numbers PlaneGCS points
+// to live in a `std::deque` that is never resized while the system exists, rules and measures are
+// added in id order, angles go in as radians.
 
 #include "fission/geo/sketch/planegcs_solver.h"
 
@@ -147,6 +148,12 @@ public:
 
     /// Runs the analysis and the solve. Fills `result`.
     void run(const SolveOptions& options, SolveResult& result);
+    /// Analyses the system once when a drag starts (`initSolution` stores the reference
+    /// configuration every later `solve` starts from). Returns false when it fails.
+    bool startDrag();
+    /// One move of a drag: new targets for the held points, then `solve` again without a new
+    /// analysis. Fills `result` (`dof` stays -1).
+    void dragTo(const std::vector<Point2d>& targets, SolveResult& result);
 
 private:
     struct Item {
@@ -174,6 +181,10 @@ private:
     void applyMeasure(const SolverMeasure& measure, int tag);
     void tangent(Arg& first, Arg& second, int tag);
     void fixPoint(GCS::Point& point, int tag);
+    /// The tail after `gcs_.solve`: applies the solution, copies the coordinates into `positions_`
+    /// and `result.points`. `convergedCounts` says whether `GCS::Converged` counts as reached.
+    /// Returns true when the status of `result` is ok.
+    bool finishSolve(int status, bool convergedCounts, SolveResult& result);
     [[noreturn]] static void invalid(const std::string& itemId, const std::string& why);
 
     const SketchSystem& system_;
@@ -189,6 +200,9 @@ private:
     std::deque<GCS::Arc> arcs_;
     /// The radius unknown of every circle and arc, by curve id (for `movableRadii`).
     std::vector<std::pair<std::string, double*>> radii_;
+    /// The two target numbers of every held point, in the order of `system_.held` (for `dragTo`).
+    std::vector<std::pair<double*, double*>> heldTargets_;
+    bool dragReady_ = false;  ///< `startDrag` ran
     std::vector<Item> items_; ///< sorted by id: the tag of an item is its index + 1
     GCS::System gcs_;
 };
@@ -364,10 +378,11 @@ void Model::addHeld() {
         }
         GCS::Point& point = gcsPoints_[found->second];
         // Tag -1: a drag the rules may overrule (PlaneGCS treats it as the lower priority).
-        gcs_.addConstraintCoordinateX(point, constant(held.target.x),
-                                      GCS::DefaultTemporaryConstraint);
-        gcs_.addConstraintCoordinateY(point, constant(held.target.y),
-                                      GCS::DefaultTemporaryConstraint);
+        double* xNumber = constant(held.target.x);
+        double* yNumber = constant(held.target.y);
+        gcs_.addConstraintCoordinateX(point, xNumber, GCS::DefaultTemporaryConstraint);
+        gcs_.addConstraintCoordinateY(point, yNumber, GCS::DefaultTemporaryConstraint);
+        heldTargets_.push_back({xNumber, yNumber});
     }
 }
 
@@ -734,37 +749,121 @@ void Model::run(const SolveOptions& options, SolveResult& result) {
     if (!reached(status) && options.fallback) {
         status = gcs_.solve(true, GCS::LevenbergMarquardt);
     }
-    gcs_.applySolution();
-    for (std::size_t i = 0; i < positions_.size(); ++i) {
-        positions_[i] = {*gcsPoints_[i].x, *gcsPoints_[i].y};
-    }
+    const bool solved = finishSolve(status, dragging || options.diagnose, result);
     if (options.diagnose) {
         gcs_.initSolution(GCS::DogLeg);
         diagnose();
     }
-    if (!reached(status)) {
+    if (!solved) {
         if (!result.conflicting.empty()) {
             result.status = SolveStatus::conflict;
-        } else {
-            result.status = SolveStatus::failed;
-            result.detail = "the solver found no solution (status " + std::to_string(status) + ")";
+            result.detail.clear();
         }
         return;
     }
     if (!result.conflicting.empty()) {
         result.status = SolveStatus::conflict;
+    }
+}
+
+bool Model::startDrag() {
+    // Analyse once. `initSolution` stores the reference configuration (the points the drag starts
+    // with): every later `solve` resets to it and solves from there.
+    gcs_.declareUnknowns(unknowns_);
+    gcs_.initSolution(GCS::DogLeg);
+    dragReady_ = true;
+    return true;
+}
+
+void Model::dragTo(const std::vector<Point2d>& targets, SolveResult& result) {
+    result.dof = -1; // a drag is not analysed: conflicts are not reported, only a failure
+    if (!dragReady_) {
+        result.status = SolveStatus::failed;
+        result.detail = "the drag was not started";
         return;
+    }
+    if (targets.size() != heldTargets_.size()) {
+        result.status = SolveStatus::failed;
+        result.detail = "the drag got " + std::to_string(targets.size()) + " targets for " +
+                        std::to_string(heldTargets_.size()) + " held points";
+        return;
+    }
+    for (const Point2d& target : targets) {
+        if (!finite(target)) {
+            result.status = SolveStatus::failed;
+            result.detail = "a drag target is not a number";
+            return;
+        }
+    }
+    for (std::size_t i = 0; i < targets.size(); ++i) {
+        *heldTargets_[i].first = targets[i].x;
+        *heldTargets_[i].second = targets[i].y;
+    }
+    // No initSolution: solve starts from the reference configuration of the drag start, with the
+    // new targets in the held constraints.
+    const int status = gcs_.solve(true, GCS::DogLeg);
+    finishSolve(status, true, result); // dragging counts Converged as reached, like in `run`
+}
+
+bool Model::finishSolve(int status, bool convergedCounts, SolveResult& result) {
+    const bool reached = status == GCS::Success || (convergedCounts && status == GCS::Converged);
+    gcs_.applySolution();
+    for (std::size_t i = 0; i < positions_.size(); ++i) {
+        positions_[i] = {*gcsPoints_[i].x, *gcsPoints_[i].y};
+    }
+    if (!reached) {
+        result.status = SolveStatus::failed;
+        result.detail = "the solver found no solution (status " + std::to_string(status) + ")";
+        return false;
     }
     if (!allFinite(positions_)) {
         result.status = SolveStatus::failed;
         result.detail = "the solution has a coordinate that is not a number";
-        return;
+        return false;
     }
     result.status = SolveStatus::ok;
     for (std::size_t i = 0; i < result.points.size(); ++i) {
         result.points[i].position = positions_[i];
     }
+    return true;
 }
+
+/// A drag that is going on (AP-2.2c4): the system is built and analysed once when the drag starts;
+/// every move only changes the targets of the held points and solves again. Owns its system, so
+/// the `Model` (which keeps pointers into its deques) always refers to a stable system.
+class PlaneGcsDrag final : public SketchDrag {
+public:
+    explicit PlaneGcsDrag(const SketchSystem& system)
+        : system_(system), model_(std::make_unique<Model>(system_)) {}
+
+    /// Analyses the system once. False when it fails.
+    bool start() { return model_->startDrag(); }
+
+    SolveResult moveTo(const std::vector<Point2d>& targets) override {
+        SolveResult result;
+        result.points = system_.points;
+        try {
+            model_->dragTo(targets, result);
+        } catch (const InvalidSystem& error) {
+            result.status = SolveStatus::failed;
+            result.detail = error.what();
+        } catch (const std::exception& error) {
+            result.status = SolveStatus::failed;
+            result.detail = std::string("the solver stopped: ") + error.what();
+        } catch (...) {
+            result.status = SolveStatus::failed;
+            result.detail = "the solver stopped";
+        }
+        if (result.status != SolveStatus::ok) {
+            result.points = system_.points; // nothing moves unless the solve worked
+        }
+        return result;
+    }
+
+private:
+    SketchSystem system_; ///< owned copy; declared before the model so it outlives it
+    std::unique_ptr<Model> model_;
+};
 
 class PlaneGcsSolver final : public SketchSolver {
 public:
@@ -790,6 +889,21 @@ public:
             result.movableRadii.clear();
         }
         return result;
+    }
+
+    std::unique_ptr<SketchDrag> beginDrag(const SketchSystem& system) const override {
+        if (system.held.empty()) {
+            return nullptr;
+        }
+        try {
+            auto drag = std::make_unique<PlaneGcsDrag>(system);
+            if (!drag->start()) {
+                return nullptr;
+            }
+            return drag;
+        } catch (...) {
+            return nullptr;
+        }
     }
 };
 

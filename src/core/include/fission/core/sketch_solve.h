@@ -9,6 +9,8 @@
 #pragma once
 
 #include <map>
+#include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -38,6 +40,27 @@ SketchMeasureValues storedMeasureValues(const SketchData& sketch);
 /// Builds, solves (default options), applies when ok. Returns the solver's result.
 geo::SolveResult solveSketch(SketchData& sketch, const SketchMeasureValues& values,
                              const geo::SketchSolver& solver);
+
+/// A live drag of sketch points (AP-2.2c4): analysed once when it starts, every move is fast.
+/// Held points of elements with a `link` and unknown point ids are left out.
+class SketchDragging {
+public:
+    /// `held`: solver point ids ("L1.1"), dragged together. The targets start where they are.
+    SketchDragging(const SketchData& sketch, const SketchMeasureValues& values,
+                   const geo::SketchSolver& solver, const std::vector<std::string>& held);
+    /// False when nothing can be dragged (no usable held point, or the solver refused).
+    bool started() const noexcept { return m_drag != nullptr; }
+    /// The ids of the held points that are used, in the order `moveTo` expects its targets.
+    const std::vector<std::string>& held() const noexcept { return m_held; }
+    /// The sketch with the held points pulled to `targets` as far as the rules allow; nullopt when
+    /// the solve fails (the caller keeps the last good state).
+    std::optional<SketchData> moveTo(const std::vector<geo::Point2d>& targets);
+
+private:
+    SketchData m_start;
+    std::vector<std::string> m_held;
+    std::unique_ptr<geo::SketchDrag> m_drag;
+};
 
 /// The elements of the sketch that can still move after a solve (ids like "L1", "C2"): a line or
 /// point when one of its points can move, a circle when its centre or radius can, an arc when its

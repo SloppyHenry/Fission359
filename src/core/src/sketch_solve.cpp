@@ -197,6 +197,46 @@ geo::SolveResult solveSketch(SketchData& sketch, const SketchMeasureValues& valu
     return result;
 }
 
+SketchDragging::SketchDragging(const SketchData& sketch, const SketchMeasureValues& values,
+                               const geo::SketchSolver& solver,
+                               const std::vector<std::string>& held) {
+    m_start = sketch;
+    geo::SketchSystem system = toSolverSystem(sketch, values);
+    for (const std::string& pointId : held) {
+        // The element of the point: the part of "L1.0" before the last '.'.
+        const std::string elementId = pointId.substr(0, pointId.rfind('.'));
+        const SketchElement* element = sketch.find(elementId);
+        if (element == nullptr || element->link) {
+            continue; // unknown element, or follows a body edge: never dragged
+        }
+        const auto known =
+            std::ranges::find_if(system.points, [&pointId](const geo::SolverPoint& point) {
+                return point.id == pointId;
+            });
+        if (known == system.points.end()) {
+            continue; // no solver point with that id
+        }
+        m_held.push_back(pointId);
+        system.held.push_back({pointId, known->position}); // the target starts where it is
+    }
+    if (!m_held.empty()) {
+        m_drag = solver.beginDrag(system);
+    }
+}
+
+std::optional<SketchData> SketchDragging::moveTo(const std::vector<geo::Point2d>& targets) {
+    if (m_drag == nullptr) {
+        return std::nullopt;
+    }
+    const geo::SolveResult result = m_drag->moveTo(targets);
+    if (result.status != geo::SolveStatus::ok) {
+        return std::nullopt; // the caller keeps the last good state
+    }
+    SketchData out = m_start;
+    applySolution(out, result);
+    return out;
+}
+
 std::vector<std::string> movableElements(const SketchData& sketch, const geo::SolveResult& result) {
     // The solver reports the movable points ("L1.0") and radii ("C1"); both are empty unless the
     // status is ok. The point order of the elements matches the solver's (see toSolverSystem):

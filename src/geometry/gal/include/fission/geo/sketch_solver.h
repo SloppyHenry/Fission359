@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -164,6 +165,21 @@ struct SolveResult {
     std::string detail;
 };
 
+/// A drag that is going on (AP-2.2c4). The system is analysed once when it starts; every move only
+/// changes the targets of the held points and solves again, starting from the points the drag
+/// started with.
+class SketchDrag {
+public:
+    SketchDrag() = default;
+    SketchDrag(const SketchDrag&) = delete;
+    SketchDrag& operator=(const SketchDrag&) = delete;
+    virtual ~SketchDrag() = default;
+
+    /// New targets, one per held point in the order of `SketchSystem::held` given to `beginDrag`.
+    /// Never throws. `dof` stays -1; conflicts are not analysed (status ok or failed).
+    virtual SolveResult moveTo(const std::vector<Point2d>& targets) = 0;
+};
+
 /// Solves sketches. One call does not change the solver: it may be used from several threads.
 /// The same system always gives the same coordinates, bit for bit (rules and measures are added in
 /// id order, there are no random start values).
@@ -176,6 +192,10 @@ public:
 
     /// Never throws: whatever goes wrong inside becomes `SolveStatus::failed`.
     virtual SolveResult solve(const SketchSystem& system, const SolveOptions& options) const = 0;
+
+    /// Starts a drag of the points in `system.held` (their targets are where the drag starts).
+    /// nullptr when the system cannot be built or `system.held` is empty. Never throws.
+    virtual std::unique_ptr<SketchDrag> beginDrag(const SketchSystem& system) const = 0;
 };
 
 } // namespace fission::geo
