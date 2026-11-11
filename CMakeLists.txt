@@ -31,6 +31,11 @@ include(FissionLayers)
 if(EMSCRIPTEN)
   add_compile_options(-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
   add_link_options(-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
+  # The code is optimised by the compiler (-O3); the link step runs no Binaryen passes (-O0 comes
+  # after the -O3 of the build type, the last one counts). Binaryen 123 cannot read what LLVM
+  # makes of the constructors of the large programs with WebAssembly exceptions ("popping from
+  # empty stack" in __wasm_call_ctors, both exception formats). Revisit with a newer emsdk.
+  add_link_options(-O0)
   # The project uses no C++ modules; the module scanner does not know Emscripten's -s settings.
   set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 endif()
