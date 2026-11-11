@@ -275,3 +275,142 @@ TEST_CASE("sketch regions: a chosen region is pulled into a body of 10 mm (AP-2.
     CHECK(last.value(QStringLiteral("state")).toString() == QStringLiteral("ok"));
     CHECK(f.model->nextUndo().value(QStringLiteral("key")).toString() == QStringLiteral("extrude"));
 }
+
+namespace {
+
+// The face called `name` of the first body (its number), 0 if there is none.
+int faceNamed(DocumentModel& model, const QString& name) {
+    const auto result = model.result();
+    for (const auto& [id, body] : result->bodies) {
+        for (const auto& face : body.faces) {
+            if (face.name.ends_with(name.toStdString())) {
+                return static_cast<int>(face.faceId);
+            }
+        }
+    }
+    return 0;
+}
+
+// The word "mode" of the step `stepId`, "" when it has none.
+// The bodies listed on their own (not used up in a result).
+int shownBodies(const DocumentModel& model) {
+    int count = 0;
+    for (const QVariant& body : model.bodies()) {
+        count += body.toMap().value(QStringLiteral("consumed")).toBool() ? 0 : 1;
+    }
+    return count;
+}
+
+std::string modeOf(DocumentModel& model, const QString& stepId) {
+    const core::Feature* step = model.document().findFeature(core::FeatureId{stepId.toStdString()});
+    if (step == nullptr) {
+        return {};
+    }
+    const auto mode = step->texts.find("mode");
+    return mode != step->texts.end() ? mode->second : std::string();
+}
+
+} // namespace
+
+TEST_CASE("sketch regions: pulled from a sketch on a face, it joins that body; pulled in, it "
+          "cuts (AP-2.3b3)",
+          "[ui][sketchregions][extrude]") {
+    NoCatching free;
+    Sketching f;
+    f.sketch->finish(); // the ground sketch is empty: leaving it removes it
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    REQUIRE(f.model->addShape(QStringLiteral("box"), false) >= 0);
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const int bodiesBefore = shownBodies(*f.model);
+    REQUIRE(bodiesBefore == 1);
+
+    f.sketch->start();
+    REQUIRE(f.sketch->pickFace(f.model->bodyIdAt(0), faceNamed(*f.model, "/box/top")));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    f.sketch->chooseTool(QStringLiteral("rectangle"));
+    f.click(-2, -2);
+    f.click(2, 2);
+    f.sketch->chooseTool(QString());
+    REQUIRE(f.regionsReady());
+    REQUIRE(f.ids().size() == 1);
+    const QString region = QString::fromStdString(f.ids().front());
+    f.sketch->finish();
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QVariantMap sketchStep = f.model->recipe().back().toMap();
+    REQUIRE(sketchStep.value(QStringLiteral("type")).toString() == QStringLiteral("sketch"));
+    const QString sketchId = sketchStep.value(QStringLiteral("id")).toString();
+
+    const QString body = f.model->addExtrude(sketchId, region, 0, 0);
+    REQUIRE_FALSE(body.isEmpty());
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QVariantList recipe = f.model->recipe();
+    const QVariantMap last = recipe.back().toMap();
+    REQUIRE(last.value(QStringLiteral("type")).toString() == QStringLiteral("extrude"));
+    CHECK(last.value(QStringLiteral("state")).toString() == QStringLiteral("ok"));
+    const QString lastId = last.value(QStringLiteral("id")).toString();
+    const int lastIndex = f.model->stepIndexOfId(lastId);
+    REQUIRE(lastIndex >= 0);
+    CHECK(modeOf(*f.model, lastId) == "merge");
+    CHECK(shownBodies(*f.model) == bodiesBefore);
+
+    // Pulled into the body it cuts it: the mode follows the sign of the distance.
+    REQUIRE(f.model->setStepValue(lastIndex, QStringLiteral("distance"), QStringLiteral("-1")));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() ==
+          QStringLiteral("ok"));
+    CHECK(modeOf(*f.model, lastId) == "subtract");
+    CHECK(shownBodies(*f.model) == bodiesBefore);
+
+    // One undo step brings the distance and the mode back.
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(modeOf(*f.model, lastId) == "merge");
+    f.model->selectStep(lastIndex);
+    bool distanceSeen = false;
+    for (const QVariant& entry : f.model->stepValues()) {
+        const QVariantMap value = entry.toMap();
+        if (value.value(QStringLiteral("name")).toString() == QStringLiteral("distance")) {
+            CHECK(value.value(QStringLiteral("value")).toDouble() == Approx(10.0));
+            distanceSeen = true;
+        }
+    }
+    CHECK(distanceSeen);
+}
+
+TEST_CASE("sketch regions: pulled from the ground, a new body (AP-2.3b3)",
+          "[ui][sketchregions][extrude]") {
+    NoCatching free;
+    Sketching f;
+    f.sketch->chooseTool(QStringLiteral("rectangle"));
+    f.click(0, 0);
+    f.click(40, 30);
+    f.sketch->chooseTool(QString());
+    REQUIRE(f.regionsReady());
+    REQUIRE(f.ids().size() == 1);
+    const QString region = QString::fromStdString(f.ids().front());
+    f.sketch->finish();
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QVariantMap sketchStep = f.model->recipe().back().toMap();
+    REQUIRE(sketchStep.value(QStringLiteral("type")).toString() == QStringLiteral("sketch"));
+    const QString sketchId = sketchStep.value(QStringLiteral("id")).toString();
+    const int bodiesBefore = shownBodies(*f.model);
+    REQUIRE(bodiesBefore == 0);
+
+    const QString body = f.model->addExtrude(sketchId, region, 20, 15);
+    REQUIRE_FALSE(body.isEmpty());
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QVariantMap last = f.model->recipe().back().toMap();
+    CHECK(last.value(QStringLiteral("type")).toString() == QStringLiteral("extrude"));
+    CHECK(last.value(QStringLiteral("state")).toString() == QStringLiteral("ok"));
+    CHECK(modeOf(*f.model, last.value(QStringLiteral("id")).toString()) == "new");
+    CHECK(shownBodies(*f.model) == bodiesBefore + 1);
+}
