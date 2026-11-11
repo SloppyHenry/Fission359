@@ -1,0 +1,39 @@
+{
+ "name": "invalid_negative_length",
+ "description": "A length of -5.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 5,
+   "y": 1
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R1",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": -5
+  }
+ ],
+ "expect": {
+  "status": "failed"
+ }
+}

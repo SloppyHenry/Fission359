@@ -1,0 +1,150 @@
+{
+ "name": "symmetric_trapezoid",
+ "description": "A trapezoid mirrored about a fixed vertical axis.",
+ "points": [
+  {
+   "id": "X1",
+   "x": 20,
+   "y": -5
+  },
+  {
+   "id": "X2",
+   "x": 20,
+   "y": 25
+  },
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 38,
+   "y": 1
+  },
+  {
+   "id": "C",
+   "x": 31,
+   "y": 19
+  },
+  {
+   "id": "D",
+   "x": 9,
+   "y": 21
+  }
+ ],
+ "curves": [
+  {
+   "id": "AX",
+   "kind": "line",
+   "points": [
+    "X1",
+    "X2"
+   ]
+  },
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "L2",
+   "kind": "line",
+   "points": [
+    "B",
+    "C"
+   ]
+  },
+  {
+   "id": "L3",
+   "kind": "line",
+   "points": [
+    "C",
+    "D"
+   ]
+  },
+  {
+   "id": "L4",
+   "kind": "line",
+   "points": [
+    "D",
+    "A"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "AX"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "fixed",
+   "elements": [
+    "A"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "symmetric",
+   "elements": [
+    "A",
+    "B",
+    "AX"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "symmetric",
+   "elements": [
+    "D",
+    "C",
+    "AX"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R5",
+   "kind": "horizontalDistance",
+   "elements": [
+    "A",
+    "D"
+   ],
+   "value": 10
+  },
+  {
+   "id": "R6",
+   "kind": "verticalDistance",
+   "elements": [
+    "A",
+    "D"
+   ],
+   "value": 20
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "B": [
+    40,
+    0
+   ],
+   "C": [
+    30,
+    20
+   ],
+   "D": [
+    10,
+    20
+   ]
+  }
+ }
+}

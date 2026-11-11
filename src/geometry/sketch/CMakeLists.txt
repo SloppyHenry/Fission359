@@ -2,5 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 fission_add_library(fission_geometry_sketch
-  SOURCES src/layer.cpp
-  PUBLIC fission_geometry)
+  SOURCES src/layer.cpp src/planegcs_solver.cpp
+  PUBLIC fission_geometry
+  PRIVATE planegcs)

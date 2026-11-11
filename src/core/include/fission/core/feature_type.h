@@ -16,6 +16,7 @@
 #include "fission/core/help_reason.h"
 #include "fission/geo/kernel.h"
 #include "fission/geo/rotation.h"
+#include "fission/geo/sketch_solver.h"
 
 namespace fission::core {
 
@@ -181,6 +182,9 @@ struct ExecuteContext {
     CancelToken cancel; ///< Long steps look at it and give up when asked to.
     /// The files embedded in the document (a step that reads one names it in its word `asset`).
     const AssetMap* assets = nullptr;
+    /// The sketch solver (a second GAL interface next to the kernel, ADR-0013 addendum 2.2a). Null
+    /// where nobody solves sketches (tests, previews); a step that needs it says so.
+    const geo::SketchSolver* sketchSolver = nullptr;
 };
 
 /// A kind of step (box, cylinder, later extrude, fillet ...). Feature types are plug-ins: a new

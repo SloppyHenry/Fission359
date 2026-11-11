@@ -56,6 +56,7 @@ set(_core_tests
   geometry/test_sketch_intersections.cpp
   geometry/test_sketch_regions.cpp
   geometry/test_sketch_edge.cpp
+  geometry/test_sketch_solver.cpp
   analysis/test_material.cpp)
 
 set(_app_tests
@@ -111,12 +112,12 @@ set(_app_tests
 if(NOT FISSION_WEB_CORE)
   add_executable(fission_unit_tests ${_core_tests} ${_app_tests})
   target_link_libraries(fission_unit_tests PRIVATE
-    fission_core fission_services fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
+    fission_core fission_services fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_geometry_sketch fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
 else()
   # Web core: only the Qt-free libraries, the tests run as WebAssembly under Node.
   add_executable(fission_unit_tests ${_core_tests})
   target_link_libraries(fission_unit_tests PRIVATE
-    fission_core fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt Catch2::Catch2WithMain)
+    fission_core fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_geometry_sketch Catch2::Catch2WithMain)
 endif()
 fission_apply_compiler_options(fission_unit_tests)
 fission_web_test_options(fission_unit_tests)

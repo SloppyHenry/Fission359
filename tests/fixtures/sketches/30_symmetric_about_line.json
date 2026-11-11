@@ -1,0 +1,71 @@
+{
+ "name": "symmetric_about_line",
+ "description": "A point mirrored in a fixed vertical line.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 0,
+   "y": 10
+  },
+  {
+   "id": "P",
+   "x": 5,
+   "y": 3
+  },
+  {
+   "id": "Q",
+   "x": -4,
+   "y": 2
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "fixed",
+   "elements": [
+    "P"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "symmetric",
+   "elements": [
+    "P",
+    "Q",
+    "L1"
+   ]
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "Q": [
+    -5,
+    3
+   ]
+  }
+ }
+}

@@ -113,7 +113,7 @@ public:
 private:
     friend std::optional<RecomputeResult> recompute(const Document&, const FeatureRegistry&,
                                                     const geo::GeometryKernel&, RecomputeCache&,
-                                                    CancelToken);
+                                                    CancelToken, const geo::SketchSolver*);
 
     struct Output {
         geo::Solid solid;
@@ -147,7 +147,8 @@ private:
 /// marked as warning.
 std::optional<RecomputeResult> recompute(const Document& document, const FeatureRegistry& registry,
                                          const geo::GeometryKernel& kernel, RecomputeCache& cache,
-                                         CancelToken cancel = {});
+                                         CancelToken cancel = {},
+                                         const geo::SketchSolver* sketchSolver = nullptr);
 
 /// Writes the refreshed references of `result` into `document`, as far as they still are what
 /// the recompute started from. No command, no undo step. Returns how many were written.
@@ -175,12 +176,13 @@ using RecomputeObserver = std::function<void(const RecomputeEvent&)>;
 /// Recomputes one document in a worker thread. A new request replaces a running calculation:
 /// the old one is asked to stop at once and its result is thrown away.
 ///
-/// The registry and the kernel must outlive the engine. The engine works on a copy of the
-/// document, so the caller can keep editing.
+/// The registry, the kernel and the sketch solver (may be null) must outlive the engine. The engine
+/// works on a copy of the document, so the caller can keep editing.
 class RecomputeEngine {
 public:
     RecomputeEngine(const FeatureRegistry& registry, const geo::GeometryKernel& kernel,
-                    RecomputeObserver observer = {});
+                    RecomputeObserver observer = {},
+                    const geo::SketchSolver* sketchSolver = nullptr);
     ~RecomputeEngine();
     RecomputeEngine(const RecomputeEngine&) = delete;
     RecomputeEngine& operator=(const RecomputeEngine&) = delete;
@@ -199,6 +201,7 @@ private:
 
     const FeatureRegistry& registry_;
     const geo::GeometryKernel& kernel_;
+    const geo::SketchSolver* sketchSolver_;
     RecomputeObserver observer_;
 
     mutable std::mutex mutex_;

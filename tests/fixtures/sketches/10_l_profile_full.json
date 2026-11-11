@@ -1,0 +1,201 @@
+{
+ "name": "l_profile_full",
+ "description": "L profile 60 x 40, thickness 5: fully determined (flow B of the UX concept).",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 58,
+   "y": 1
+  },
+  {
+   "id": "C",
+   "x": 61,
+   "y": 6
+  },
+  {
+   "id": "D",
+   "x": 4,
+   "y": 5
+  },
+  {
+   "id": "E",
+   "x": 6,
+   "y": 38
+  },
+  {
+   "id": "F",
+   "x": 1,
+   "y": 41
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "L2",
+   "kind": "line",
+   "points": [
+    "B",
+    "C"
+   ]
+  },
+  {
+   "id": "L3",
+   "kind": "line",
+   "points": [
+    "C",
+    "D"
+   ]
+  },
+  {
+   "id": "L4",
+   "kind": "line",
+   "points": [
+    "D",
+    "E"
+   ]
+  },
+  {
+   "id": "L5",
+   "kind": "line",
+   "points": [
+    "E",
+    "F"
+   ]
+  },
+  {
+   "id": "L6",
+   "kind": "line",
+   "points": [
+    "F",
+    "A"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "vertical",
+   "elements": [
+    "L2"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "horizontal",
+   "elements": [
+    "L3"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "vertical",
+   "elements": [
+    "L4"
+   ]
+  },
+  {
+   "id": "R5",
+   "kind": "horizontal",
+   "elements": [
+    "L5"
+   ]
+  },
+  {
+   "id": "R6",
+   "kind": "vertical",
+   "elements": [
+    "L6"
+   ]
+  },
+  {
+   "id": "R11",
+   "kind": "fixed",
+   "elements": [
+    "A"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R7",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 60
+  },
+  {
+   "id": "R8",
+   "kind": "length",
+   "elements": [
+    "L6"
+   ],
+   "value": 40
+  },
+  {
+   "id": "R9",
+   "kind": "length",
+   "elements": [
+    "L2"
+   ],
+   "value": 5
+  },
+  {
+   "id": "R10",
+   "kind": "length",
+   "elements": [
+    "L5"
+   ],
+   "value": 5
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "A": [
+    0,
+    0
+   ],
+   "B": [
+    60,
+    0
+   ],
+   "C": [
+    60,
+    5
+   ],
+   "D": [
+    5,
+    5
+   ],
+   "E": [
+    5,
+    40
+   ],
+   "F": [
+    0,
+    40
+   ]
+  }
+ }
+}

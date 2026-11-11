@@ -1,0 +1,85 @@
+{
+ "name": "arc_by_length",
+ "description": "Arc of length 5 pi on radius 10: a quarter circle.",
+ "points": [
+  {
+   "id": "C",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "S",
+   "x": 9,
+   "y": 0.5
+  },
+  {
+   "id": "E",
+   "x": 1,
+   "y": 9
+  }
+ ],
+ "curves": [
+  {
+   "id": "A1",
+   "kind": "arc",
+   "points": [
+    "C",
+    "S",
+    "E"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "C"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "C",
+    "S"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R3",
+   "kind": "radius",
+   "elements": [
+    "A1"
+   ],
+   "value": 10
+  },
+  {
+   "id": "R4",
+   "kind": "length",
+   "elements": [
+    "A1"
+   ],
+   "value": 15.707963267948966
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "C": [
+    0,
+    0
+   ],
+   "S": [
+    10,
+    0
+   ],
+   "E": [
+    0,
+    10
+   ]
+  }
+ }
+}

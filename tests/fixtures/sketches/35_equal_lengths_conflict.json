@@ -1,0 +1,80 @@
+{
+ "name": "equal_lengths_conflict",
+ "description": "Line A is 30 long, line B 40, and both must be equal (UX concept 5.5).",
+ "points": [
+  {
+   "id": "A1",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "A2",
+   "x": 30,
+   "y": 0
+  },
+  {
+   "id": "B1",
+   "x": 0,
+   "y": 10
+  },
+  {
+   "id": "B2",
+   "x": 40,
+   "y": 10
+  }
+ ],
+ "curves": [
+  {
+   "id": "LA",
+   "kind": "line",
+   "points": [
+    "A1",
+    "A2"
+   ]
+  },
+  {
+   "id": "LB",
+   "kind": "line",
+   "points": [
+    "B1",
+    "B2"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R3",
+   "kind": "equal",
+   "elements": [
+    "LA",
+    "LB"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R1",
+   "kind": "length",
+   "elements": [
+    "LA"
+   ],
+   "value": 30
+  },
+  {
+   "id": "R2",
+   "kind": "length",
+   "elements": [
+    "LB"
+   ],
+   "value": 40
+  }
+ ],
+ "expect": {
+  "status": "conflict",
+  "conflictingWithin": [
+   "R1",
+   "R2",
+   "R3"
+  ]
+ }
+}

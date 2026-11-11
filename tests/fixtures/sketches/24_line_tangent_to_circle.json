@@ -1,0 +1,125 @@
+{
+ "name": "line_tangent_to_circle",
+ "description": "A horizontal line of length 20 that touches a circle on top.",
+ "points": [
+  {
+   "id": "K1",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "Q1",
+   "x": 10.4,
+   "y": 0.3
+  },
+  {
+   "id": "P1",
+   "x": -9,
+   "y": 9.5
+  },
+  {
+   "id": "P2",
+   "x": 11,
+   "y": 9.7
+  }
+ ],
+ "curves": [
+  {
+   "id": "C1",
+   "kind": "circle",
+   "points": [
+    "K1",
+    "Q1"
+   ]
+  },
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "P1",
+    "P2"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "K1"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "horizontal",
+   "elements": [
+    "K1",
+    "Q1"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R5",
+   "kind": "tangent",
+   "elements": [
+    "L1",
+    "C1"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R2",
+   "kind": "radius",
+   "elements": [
+    "C1"
+   ],
+   "value": 10
+  },
+  {
+   "id": "R6",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 20
+  },
+  {
+   "id": "R7",
+   "kind": "horizontalDistance",
+   "elements": [
+    "K1",
+    "P1"
+   ],
+   "value": -10
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "K1": [
+    0,
+    0
+   ],
+   "Q1": [
+    10,
+    0
+   ],
+   "P1": [
+    -10,
+    10
+   ],
+   "P2": [
+    10,
+    10
+   ]
+  }
+ }
+}

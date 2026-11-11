@@ -1,0 +1,56 @@
+{
+ "name": "symmetric_about_point",
+ "description": "A point mirrored in a point.",
+ "points": [
+  {
+   "id": "C",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "P",
+   "x": 2,
+   "y": 1
+  },
+  {
+   "id": "Q",
+   "x": -1.5,
+   "y": -0.5
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "fixed",
+   "elements": [
+    "C"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "fixed",
+   "elements": [
+    "P"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "symmetric",
+   "elements": [
+    "P",
+    "Q",
+    "C"
+   ]
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "Q": [
+    -2,
+    -1
+   ]
+  }
+ }
+}

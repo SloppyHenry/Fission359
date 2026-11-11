@@ -1,0 +1,142 @@
+{
+ "name": "slot_floating",
+ "description": "The same slot without a fixed point: it can move in two directions.",
+ "points": [
+  {
+   "id": "P1",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "P2",
+   "x": 38,
+   "y": 0.5
+  },
+  {
+   "id": "P3",
+   "x": 41,
+   "y": 11
+  },
+  {
+   "id": "P4",
+   "x": 1,
+   "y": 9
+  },
+  {
+   "id": "C1",
+   "x": 39,
+   "y": 5
+  },
+  {
+   "id": "C2",
+   "x": 1,
+   "y": 4
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "P1",
+    "P2"
+   ]
+  },
+  {
+   "id": "L2",
+   "kind": "line",
+   "points": [
+    "P4",
+    "P3"
+   ]
+  },
+  {
+   "id": "A1",
+   "kind": "arc",
+   "points": [
+    "C1",
+    "P2",
+    "P3"
+   ]
+  },
+  {
+   "id": "A2",
+   "kind": "arc",
+   "points": [
+    "C2",
+    "P4",
+    "P1"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R2",
+   "kind": "horizontal",
+   "elements": [
+    "L2"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "tangent",
+   "elements": [
+    "L1",
+    "A1"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "tangent",
+   "elements": [
+    "L1",
+    "A2"
+   ]
+  },
+  {
+   "id": "R5",
+   "kind": "tangent",
+   "elements": [
+    "L2",
+    "A1"
+   ]
+  },
+  {
+   "id": "R6",
+   "kind": "tangent",
+   "elements": [
+    "L2",
+    "A2"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R7",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 40
+  },
+  {
+   "id": "R8",
+   "kind": "radius",
+   "elements": [
+    "A1"
+   ],
+   "value": 5
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 2
+ }
+}

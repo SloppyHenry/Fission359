@@ -1,0 +1,83 @@
+{
+ "name": "midpoint_of_line",
+ "description": "A point at the middle of a horizontal line of length 10.",
+ "points": [
+  {
+   "id": "A",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": "B",
+   "x": 9,
+   "y": 0.4
+  },
+  {
+   "id": "M",
+   "x": 4,
+   "y": 1
+  }
+ ],
+ "curves": [
+  {
+   "id": "L1",
+   "kind": "line",
+   "points": [
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "id": "R1",
+   "kind": "horizontal",
+   "elements": [
+    "L1"
+   ]
+  },
+  {
+   "id": "R3",
+   "kind": "fixed",
+   "elements": [
+    "A"
+   ]
+  },
+  {
+   "id": "R4",
+   "kind": "midpoint",
+   "elements": [
+    "M",
+    "L1"
+   ]
+  }
+ ],
+ "measures": [
+  {
+   "id": "R2",
+   "kind": "length",
+   "elements": [
+    "L1"
+   ],
+   "value": 10
+  }
+ ],
+ "expect": {
+  "status": "ok",
+  "dof": 0,
+  "points": {
+   "A": [
+    0,
+    0
+   ],
+   "B": [
+    10,
+    0
+   ],
+   "M": [
+    5,
+    0
+   ]
+  }
+ }
+}
