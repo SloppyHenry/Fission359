@@ -1366,6 +1366,15 @@ Window {
             onAddRequested: root.flyout = "shapes"
             deletion: root.pendingDeletion
             onStepRequested: index => DocumentModel.selectStep(DocumentModel.currentStep === index ? -1 : index)
+            // "Change value" under a problem: the step is chosen and the cursor goes into the field
+            // the problem is about, its text selected, so that typing replaces it (Pflege P19).
+            onValueEditRequested: (index, field) => {
+                if (DocumentModel.currentStep !== index) {
+                    DocumentModel.selectStep(index)
+                }
+                root.rightTab = "object"
+                Qt.callLater(() => rightPanel.focusValue(field))
+            }
             onStepHovered: (index, on) => viewport.lightUpBodies(on ? [DocumentModel.bodyOfStep(index)] : [])
             onStepRenamed: (index, text) => DocumentModel.setStepLabel(index, text)
             onStepOpenRequested: index => Sketch.reopen(index)
@@ -2000,7 +2009,8 @@ Window {
         active: step.active,
         problemTitle: step.problem ? messageCatalog.title(step.problem, step) : "",
         problem: step.problem ? problemText(step.problem, step) : "",
-        problemActions: step.problem ? messageCatalog.actionsFor(step.problem, step) : []
+        problemActions: step.problem ? messageCatalog.actionsFor(step.problem, step) : [],
+        problemField: step.problem ? (step.problem.field || "") : ""
     }))
 
     readonly property var chosenBodyIndexes: Selection.items.map(item => item.bodyIndex)

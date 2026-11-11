@@ -1122,6 +1122,22 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("expectfocus")) {
+            // expectfocus:width - the cursor is in the field of that value (Pflege P19).
+            const QString name = QStringLiteral("field_") + action.mid(colon + 1).trimmed();
+            delay += 400;
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, name] {
+                QQuickItem* item = window->activeFocusItem();
+                while (item != nullptr && item->objectName() != name) {
+                    item = item->parentItem();
+                }
+                if (item == nullptr) {
+                    qWarning().noquote() << QStringLiteral("the cursor is not in %1").arg(name);
+                    g_simulationFailure = 10;
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("expectbubble")) {
             // expectbubble:Breitee - the value bubble is still open and explains the typed text
             // (the line under it says this, a part of it).
