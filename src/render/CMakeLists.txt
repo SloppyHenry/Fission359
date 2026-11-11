@@ -7,6 +7,8 @@ fission_add_library(fission_render
   PUBLIC fission_core fission_geometry Qt6::Gui Qt6::GuiPrivate)
 
 qt_add_shaders(fission_render "fission_render_shaders"
+  # WebGL 2 in the browser reads GLSL ES 300 (AP-6.7b2); the others are the defaults.
+  GLSL "100es,120,150,300es"
   PREFIX "/fission/render/shaders"
   BASE src/shaders
   FILES
