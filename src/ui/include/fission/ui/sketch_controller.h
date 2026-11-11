@@ -227,6 +227,10 @@ public:
     double regionMilliseconds() const noexcept { return m_regionWorker.lastMilliseconds(); }
     /// Esc with no tool, or a click beside every region: lets go of the chosen region.
     void clearRegionSelection();
+    /// For "Pull" (AP-2.3b2): the chosen region with the step and the point on the sketch plane
+    /// (u, v in mm) where the click chose it, as { "step", "region", "u", "v" } for
+    /// `DocumentModel::addExtrude`. An empty map when no region is chosen.
+    Q_INVOKABLE QVariantMap regionPull() const;
     /// The elements of the sketch as the controller knows them (the document's; for tests).
     const std::vector<core::SketchElement>& elements() const noexcept { return m_elements; }
 
@@ -401,6 +405,8 @@ private:
     SketchRegionWorker m_regionWorker;
     std::string m_selectedRegion;
     std::string m_hoverRegion;
+    double m_selectedRegionU = 0.0; ///< where the click chose the region (u on the plane, mm)
+    double m_selectedRegionV = 0.0; ///< where the click chose the region (v on the plane, mm)
     bool m_regionsFailedSaid = false;
 };
 

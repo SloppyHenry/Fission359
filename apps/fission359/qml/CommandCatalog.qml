@@ -367,7 +367,19 @@ QtObject {
         shortcut: tool.key, synonyms: tool.synonyms, needs: "sketch",
         run: { kind: "menu", id: "sketchtool." + tool.id } }))
 
-    readonly property var commands: toolCommands.concat(shapeCommands, sketchCommands, menuCommands, soonCommands)
+    // "Pull" of the sketch mode (AP-2.3b2), in the shape of the drawing tools above: the chosen
+    // closed area of the sketch becomes a body. Runs only while a sketch is open.
+    readonly property var sketchPullCommand: ({
+        id: "sketch.pull", group: "tool", name: qsTr("Pull area"),
+        tip: qsTr("Makes a body from the chosen closed area of the sketch."),
+        hint: qsTr("Choose a closed area of the sketch (a click), then pull it."),
+        shortcut: "Return",
+        synonyms: { de: ["ziehen", "extrudieren", "hochziehen", "körper aus skizze", "bereich ziehen"],
+                    en: ["pull", "extrude", "pad", "body from sketch"] },
+        needs: "sketch",
+        run: { kind: "menu", id: "sketchpull" } })
+
+    readonly property var commands: toolCommands.concat(shapeCommands, sketchCommands, [sketchPullCommand], menuCommands, soonCommands)
 
     // The words to search by: the name and the synonyms of both languages.
     function wordsOf(command) {

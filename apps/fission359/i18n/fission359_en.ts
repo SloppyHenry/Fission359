@@ -428,6 +428,21 @@
         <translation>Click a flat face or the ground plane.</translation>
     </message>
     <message>
+        <location line="+3"/>
+        <source>Pull area</source>
+        <translation>Pull area</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a body from the chosen closed area of the sketch.</source>
+        <translation>Makes a body from the chosen closed area of the sketch.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a closed area of the sketch (a click), then pull it.</source>
+        <translation>Choose a closed area of the sketch (a click), then pull it.</translation>
+    </message>
+    <message>
         <location line="+4"/>
         <source>Named measures</source>
         <translation>Named measures</translation>
@@ -2272,6 +2287,16 @@
         <translation>Face pulled. Drag the grip or type a distance.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>This area cannot be pulled.</source>
+        <translation>This area cannot be pulled.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled out of the sketch: drag the arrow or type a distance.</source>
+        <translation>Pulled out of the sketch: drag the arrow or type a distance.</translation>
+    </message>
+    <message>
         <location line="+21"/>
         <source>This face cannot be removed: it may be part of another body, or the body cannot close up without it.</source>
         <translation>This face cannot be removed: it may be part of another body, or the body cannot close up without it.</translation>
@@ -2675,6 +2700,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Pulling an area</source>
+        <translation>Pulling an area</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Stretching</source>
         <translation>Stretching</translation>
     </message>
@@ -2873,6 +2903,11 @@
         <location line="+1"/>
         <source>Face pulled</source>
         <translation>Face pulled</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Area pulled</source>
+        <translation>Area pulled</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3221,10 +3256,10 @@
     </message>
     <message numerus="yes">
         <location line="+1"/>
-        <source>%n closed area(s). One is chosen: Esc or a click beside lets go.</source>
+        <source>%n closed area(s). One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.</source>
         <translation>
-            <numerusform>%n closed area. One is chosen: Esc or a click beside lets go.</numerusform>
-            <numerusform>%n closed areas. One is chosen: Esc or a click beside lets go.</numerusform>
+            <numerusform>%n closed area. One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.</numerusform>
+            <numerusform>%n closed areas. One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5941,6 +5976,11 @@
         <location line="-267"/>
         <source>Done</source>
         <translation>Done</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Pull</source>
+        <translation>Pull</translation>
     </message>
     <message>
         <location line="+268"/>

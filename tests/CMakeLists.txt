@@ -432,6 +432,15 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.rectangle;sketchclickmm:-40,-20;sketchclickmm:40,20;expectsketchregions:1,none;menu:sketchtool.circle;sketchclickmm:40,0;sketchclickmm:50,0;key:Escape;expectsketchtool:;expectsketchregions:3,none;expecthint:3 closed areas;sketchclickmm:-20,0;expectsketchregions:3,selected;expecthint:One is chosen;key:Escape;expectsketch:active;expectsketchregions:3,none;menu:undo;expectsketchregions:1,none;menu:redo;expectsketchregions:3,none;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_regions PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.3b2: a closed area of the sketch is chosen with a click (the hint says what Enter does),
+  # Enter pulls it out of the sketch into a body: an "extrude" step, one undo step, the new body
+  # chosen and the size tool on (its arrow grip can be dragged or typed to).
+  add_test(NAME app_sketch_pull
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-pull.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.rectangle;sketchclickmm:-40,-20;sketchclickmm:40,20;key:Escape;expectsketchregions:1,none;sketchclickmm:0,0;expectsketchregions:1,selected;expecthint:Enter;key:Return;expectsketch:idle;recipe:box,sketch,extrude;expectundo:extrude")
+  set_tests_properties(app_sketch_pull PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-2.1f: a sketch on the top of the box, the border taken over with the tool U (found by words
   # only this tool carries), one undo step; the box is made wider by a typed value and the border
   # follows (20 x 20 becomes 30 x 20). Nothing is clicked on a grid: the edges come by name.

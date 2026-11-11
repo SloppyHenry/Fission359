@@ -428,6 +428,21 @@
         <translation>Klicke eine ebene Fläche oder die Grundebene an.</translation>
     </message>
     <message>
+        <location line="+3"/>
+        <source>Pull area</source>
+        <translation>Bereich ziehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a body from the chosen closed area of the sketch.</source>
+        <translation>Macht aus dem gewählten geschlossenen Bereich der Skizze einen Körper.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a closed area of the sketch (a click), then pull it.</source>
+        <translation>Wähle einen geschlossenen Bereich der Skizze (ein Klick), dann ziehe ihn.</translation>
+    </message>
+    <message>
         <location line="+4"/>
         <source>Named measures</source>
         <translation>Benannte Maße</translation>
@@ -2272,6 +2287,16 @@
         <translation>Fläche gezogen. Ziehe am Griff oder tippe einen Abstand.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>This area cannot be pulled.</source>
+        <translation>Dieser Bereich kann nicht gezogen werden.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled out of the sketch: drag the arrow or type a distance.</source>
+        <translation>Aus der Skizze gezogen: Ziehe am Pfeil oder tippe einen Abstand.</translation>
+    </message>
+    <message>
         <location line="+21"/>
         <source>This face cannot be removed: it may be part of another body, or the body cannot close up without it.</source>
         <translation>Diese Fläche lässt sich nicht entfernen: Sie gehört vielleicht zu einem anderen Körper, oder der Körper kann sich ohne sie nicht schließen.</translation>
@@ -2675,6 +2700,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Pulling an area</source>
+        <translation>Bereich ziehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Stretching</source>
         <translation>Strecken</translation>
     </message>
@@ -2873,6 +2903,11 @@
         <location line="+1"/>
         <source>Face pulled</source>
         <translation>Fläche gezogen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Area pulled</source>
+        <translation>Bereich gezogen</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3221,10 +3256,10 @@
     </message>
     <message numerus="yes">
         <location line="+1"/>
-        <source>%n closed area(s). One is chosen: Esc or a click beside lets go.</source>
+        <source>%n closed area(s). One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.</source>
         <translation>
-            <numerusform>%n geschlossener Bereich. Einer ist gewählt: Esc oder ein Klick daneben lässt ihn los.</numerusform>
-            <numerusform>%n geschlossene Bereiche. Einer ist gewählt: Esc oder ein Klick daneben lässt ihn los.</numerusform>
+            <numerusform>%n geschlossener Bereich. Einer ist gewählt: Enter oder „Ziehen“ macht daraus einen Körper, Esc oder ein Klick daneben lässt ihn los.</numerusform>
+            <numerusform>%n geschlossene Bereiche. Einer ist gewählt: Enter oder „Ziehen“ macht daraus einen Körper, Esc oder ein Klick daneben lässt ihn los.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5941,6 +5976,11 @@
         <location line="-267"/>
         <source>Done</source>
         <translation>Fertig</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Pull</source>
+        <translation>Ziehen</translation>
     </message>
     <message>
         <location line="+268"/>
