@@ -250,6 +250,16 @@ public:
     /// Adds a measure of that kind for the chosen elements and solves the sketch again; on success
     /// the choice stays. False when nothing is chosen or the model refuses.
     Q_INVOKABLE bool setMeasureForSelection(const QString& expression);
+    /// The rule kinds that fit the chosen elements, in order: one line → "horizontal", "vertical",
+    /// "fixed"; one circle or arc → "fixed"; two lines → "parallel", "perpendicular", "equal";
+    /// a line and a circle/arc → "tangent"; two circles/arcs → "equal", "concentric", "tangent";
+    /// empty for anything else (points, splines, nothing chosen).
+    Q_INVOKABLE QStringList rulesForSelection() const;
+    /// Adds a rule of that kind for the chosen elements and solves the sketch again; on success
+    /// the choice stays. The elements go in the order they were chosen, the line first for
+    /// "tangent" (the solver takes {line, circle|arc}). False when the kind does not fit the
+    /// choice or the model refuses.
+    Q_INVOKABLE bool addRuleForSelection(const QString& kind);
     /// Changes the value of the measure with this "R" id and solves again.
     Q_INVOKABLE bool changeMeasure(const QString& id, const QString& expression);
     /// Removes the rule or measure with this "R" id.

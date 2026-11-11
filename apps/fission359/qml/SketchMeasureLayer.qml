@@ -41,6 +41,36 @@ Item {
         return kind === "angle" ? "angle" : "length"
     }
 
+    // The word of a rule kind, on its button of the rule bar.
+    function ruleWord(kind) {
+        switch (kind) {
+        case "horizontal": return qsTr("Horizontal")
+        case "vertical": return qsTr("Vertical")
+        case "fixed": return qsTr("Fixed")
+        case "parallel": return qsTr("Parallel")
+        case "perpendicular": return qsTr("Right angle")
+        case "equal": return qsTr("Same size")
+        case "concentric": return qsTr("Same centre")
+        case "tangent": return qsTr("Touching")
+        default: return ""
+        }
+    }
+
+    // The tooltip of a rule kind: what the rule does.
+    function ruleTip(kind) {
+        switch (kind) {
+        case "horizontal": return qsTr("Makes the line lie flat, left to right")
+        case "vertical": return qsTr("Makes the line stand upright")
+        case "fixed": return qsTr("Keeps it where it is")
+        case "parallel": return qsTr("Makes the two lines run side by side")
+        case "perpendicular": return qsTr("Makes the two lines meet at a right angle")
+        case "equal": return qsTr("Makes both equally long or equally large")
+        case "concentric": return qsTr("Gives both circles the same centre")
+        case "tangent": return qsTr("Makes them touch without crossing")
+        default: return ""
+        }
+    }
+
     // World → item pixels. Reading the camera values makes the bindings that call this follow it.
     function project(x, y, z) {
         if (!viewport) {
@@ -333,6 +363,54 @@ Item {
                     } else {
                         event.accepted = false
                     }
+                }
+            }
+        }
+    }
+
+    // The rule bar: one button per rule that fits the chosen elements, at the bottom centre (no
+    // tool on, nothing typed). Sketch.selectedElements is read so the bar follows a new choice.
+    Rectangle {
+        id: ruleBar
+
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 12
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: ruleRow.implicitWidth + 12
+        height: 40
+        radius: Theme.radiusFloat
+        color: Theme.raise
+        border.width: 1
+        border.color: Theme.line2
+        visible: !Sketch.toolActive && !root.typing
+                 && Sketch.selectedElements.length > 0
+                 && Sketch.rulesForSelection().length > 0
+        z: 10
+
+        Row {
+            id: ruleRow
+
+            x: 6
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 2
+
+            Repeater {
+                model: {
+                    Sketch.selectedElements // a new choice: the rules are looked up again
+                    return Sketch.rulesForSelection()
+                }
+
+                delegate: Btn {
+                    id: ruleButton
+
+                    required property string modelData
+
+                    small: true
+                    text: root.ruleWord(modelData)
+                    ToolTip.visible: ruleButton.hovered
+                    ToolTip.text: root.ruleTip(modelData)
+                    ToolTip.delay: 700
+                    onClicked: Sketch.addRuleForSelection(modelData)
                 }
             }
         }

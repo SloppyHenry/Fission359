@@ -14,6 +14,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <cmath>
 #include <memory>
 
 #include "fission/geo/occt/kernel.h"
@@ -239,4 +240,81 @@ TEST_CASE("sketch measures: choosing elements and setting a measure through the 
     CHECK(f.sketch->removeMeasure(circleLabel.value(QStringLiteral("id")).toString()));
     f.settle();
     CHECK(f.sketch->measureLabels().size() == 1);
+}
+
+TEST_CASE("sketch rules: the rules that fit the chosen elements through the controller",
+          "[ui][sketchmeasures]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 4); // L1, not horizontal
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->chooseTool(QString()); // no tool: a click chooses an element
+
+    // a) One line chosen: horizontal, vertical and fixed, in this order.
+    f.click(5, 2);
+    CHECK(f.sketch->selectedElements() == QStringList{QStringLiteral("L1")});
+    CHECK(f.sketch->rulesForSelection() ==
+          QStringList(
+              {QStringLiteral("horizontal"), QStringLiteral("vertical"), QStringLiteral("fixed")}));
+
+    // b) "vertical" is taken and the line stands upright: both points at the same u.
+    CHECK(f.sketch->addRuleForSelection(QStringLiteral("vertical")));
+    f.settle();
+    auto elements = f.elements();
+    REQUIRE(elements.size() == 1);
+    CHECK(elements[0].points[0].u == Approx(elements[0].points[1].u).margin(1e-9));
+    CHECK(f.sketch->selectedElements() == QStringList{QStringLiteral("L1")}); // the choice stays
+
+    // c) Two lines chosen: "parallel" fits, "horizontal" does not.
+    f.sketch->escape();
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 20);
+    f.click(8, 24); // L2, not parallel to the now vertical L1
+    REQUIRE(f.elements().size() == 2);
+    f.sketch->chooseTool(QString());
+    const auto middleRay = [](const core::SketchElement& e) {
+        return Drawing::down((e.points[0].u + e.points[1].u) / 2.0,
+                             (e.points[0].v + e.points[1].v) / 2.0);
+    };
+    const core::SketchElement* line1 = nullptr;
+    const core::SketchElement* line2 = nullptr;
+    const auto drawn = f.elements(); // a copy that lives as long as the pointers into it
+    for (const core::SketchElement& e : drawn) {
+        if (e.id == "L1") {
+            line1 = &e;
+        } else if (e.id == "L2") {
+            line2 = &e;
+        }
+    }
+    REQUIRE(line1 != nullptr);
+    REQUIRE(line2 != nullptr);
+    f.sketch->clickAt(middleRay(*line1), 2.0, false, true); // Shift on L1
+    f.sketch->clickAt(middleRay(*line2), 2.0, false, true); // Shift on L2
+    CHECK(f.sketch->selectedElements() ==
+          QStringList({QStringLiteral("L1"), QStringLiteral("L2")}));
+    CHECK(f.sketch->rulesForSelection().contains(QStringLiteral("parallel")));
+    CHECK_FALSE(f.sketch->addRuleForSelection(QStringLiteral("horizontal")));
+
+    // d) "parallel" is taken: the two directions cross at zero.
+    CHECK(f.sketch->addRuleForSelection(QStringLiteral("parallel")));
+    f.settle();
+    line1 = nullptr;
+    line2 = nullptr;
+    const auto solved = f.elements(); // a copy that lives as long as the pointers into it
+    for (const core::SketchElement& e : solved) {
+        if (e.id == "L1") {
+            line1 = &e;
+        } else if (e.id == "L2") {
+            line2 = &e;
+        }
+    }
+    REQUIRE(line1 != nullptr);
+    REQUIRE(line2 != nullptr);
+    const double ax = line1->points[1].u - line1->points[0].u;
+    const double ay = line1->points[1].v - line1->points[0].v;
+    const double bx = line2->points[1].u - line2->points[0].u;
+    const double by = line2->points[1].v - line2->points[0].v;
+    CHECK(std::abs(ax * by - ay * bx) == Approx(0.0).margin(1e-9));
 }

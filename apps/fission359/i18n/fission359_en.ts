@@ -6135,5 +6135,85 @@
         <source>Angle</source>
         <translation>Angle</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Horizontal</source>
+        <translation>Horizontal</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line lie flat, left to right</source>
+        <translation>Makes the line lie flat, left to right</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Vertical</source>
+        <translation>Vertical</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line stand upright</source>
+        <translation>Makes the line stand upright</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fixed</source>
+        <translation>Fixed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keeps it where it is</source>
+        <translation>Keeps it where it is</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Parallel</source>
+        <translation>Parallel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines run side by side</source>
+        <translation>Makes the two lines run side by side</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Right angle</source>
+        <translation>Right angle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines meet at a right angle</source>
+        <translation>Makes the two lines meet at a right angle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same size</source>
+        <translation>Same size</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes both equally long or equally large</source>
+        <translation>Makes both equally long or equally large</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same centre</source>
+        <translation>Same centre</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Gives both circles the same centre</source>
+        <translation>Gives both circles the same centre</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Touching</source>
+        <translation>Touching</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes them touch without crossing</source>
+        <translation>Makes them touch without crossing</translation>
+    </message>
 </context>
 </TS>

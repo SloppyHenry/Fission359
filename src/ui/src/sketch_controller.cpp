@@ -1088,6 +1088,75 @@ bool SketchController::setMeasureForSelection(const QString& expression) {
     return m_model->addSketchMeasure(m_step, kind, elements, expression); // the choice stays
 }
 
+QStringList SketchController::rulesForSelection() const {
+    const auto isCurve = [](core::SketchElementKind kind) {
+        return kind == core::SketchElementKind::circle || kind == core::SketchElementKind::arc;
+    };
+    if (m_selectedElements.size() == 1) {
+        const core::SketchElement* e = elementById(m_elements, m_selectedElements.front());
+        if (e == nullptr) {
+            return {};
+        }
+        switch (e->kind) {
+        case core::SketchElementKind::line:
+            return {QStringLiteral("horizontal"), QStringLiteral("vertical"),
+                    QStringLiteral("fixed")};
+        case core::SketchElementKind::circle:
+        case core::SketchElementKind::arc:
+            return {QStringLiteral("fixed")};
+        default:
+            return {};
+        }
+    }
+    if (m_selectedElements.size() == 2) {
+        const core::SketchElement* a = elementById(m_elements, m_selectedElements[0]);
+        const core::SketchElement* b = elementById(m_elements, m_selectedElements[1]);
+        if (a == nullptr || b == nullptr) {
+            return {};
+        }
+        if (a->kind == core::SketchElementKind::line && b->kind == core::SketchElementKind::line) {
+            return {QStringLiteral("parallel"), QStringLiteral("perpendicular"),
+                    QStringLiteral("equal")};
+        }
+        if ((a->kind == core::SketchElementKind::line && isCurve(b->kind)) ||
+            (isCurve(a->kind) && b->kind == core::SketchElementKind::line)) {
+            return {QStringLiteral("tangent")};
+        }
+        if (isCurve(a->kind) && isCurve(b->kind)) {
+            return {QStringLiteral("equal"), QStringLiteral("concentric"),
+                    QStringLiteral("tangent")};
+        }
+    }
+    return {};
+}
+
+bool SketchController::addRuleForSelection(const QString& kind) {
+    if (m_model == nullptr || m_mode != Mode::sketching) {
+        return false;
+    }
+    if (!rulesForSelection().contains(kind)) {
+        return false;
+    }
+    QStringList elements;
+    elements.reserve(static_cast<int>(m_selectedElements.size()));
+    for (const std::string& id : m_selectedElements) {
+        elements << QString::fromStdString(id);
+    }
+    // The solver takes the line first for a tangent between a line and a curve.
+    if (kind == QStringLiteral("tangent") && elements.size() == 2) {
+        const core::SketchElement* a = elementById(m_elements, m_selectedElements[0]);
+        const core::SketchElement* b = elementById(m_elements, m_selectedElements[1]);
+        const auto isCurve = [](const core::SketchElement* e) {
+            return e != nullptr && (e->kind == core::SketchElementKind::circle ||
+                                    e->kind == core::SketchElementKind::arc);
+        };
+        if (isCurve(a) && b != nullptr && b->kind == core::SketchElementKind::line) {
+            elements.swapItemsAt(0, 1);
+        }
+    }
+    return m_model->addSketchRule(m_step, kind, elements); // the choice stays
+}
+
 std::optional<core::SketchPoint>
 SketchController::measureAnchor(const core::SketchMeasure& measure) const {
     const auto middle = [](const core::SketchElement& e) {

@@ -6135,5 +6135,85 @@
         <source>Angle</source>
         <translation>Winkel</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Horizontal</source>
+        <translation>Waagerecht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line lie flat, left to right</source>
+        <translation>Legt die Linie flach, von links nach rechts</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Vertical</source>
+        <translation>Senkrecht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line stand upright</source>
+        <translation>Stellt die Linie aufrecht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fixed</source>
+        <translation>Fest</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keeps it where it is</source>
+        <translation>Hält es an seinem Platz</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Parallel</source>
+        <translation>Parallel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines run side by side</source>
+        <translation>Lässt die zwei Linien nebeneinander laufen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Right angle</source>
+        <translation>Rechter Winkel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines meet at a right angle</source>
+        <translation>Lässt die zwei Linien rechtwinklig aufeinandertreffen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same size</source>
+        <translation>Gleich groß</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes both equally long or equally large</source>
+        <translation>Macht beide gleich lang oder gleich groß</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same centre</source>
+        <translation>Gleiche Mitte</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Gives both circles the same centre</source>
+        <translation>Gibt beiden Kreisen dieselbe Mitte</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Touching</source>
+        <translation>Berührend</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes them touch without crossing</source>
+        <translation>Lässt sie sich berühren, ohne sich zu kreuzen</translation>
+    </message>
 </context>
 </TS>
