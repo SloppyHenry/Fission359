@@ -3255,6 +3255,36 @@
             <numerusform>%n geschlossene Bereiche. Klicke einen an, um ihn zu wählen.</numerusform>
         </translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Type a number to set the %1</source>
+        <translation>Zahl tippen: %1 setzen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>length</source>
+        <translation>Länge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>diameter</source>
+        <translation>Durchmesser</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>distance</source>
+        <translation>Abstand</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>angle</source>
+        <translation>Winkel</translation>
+    </message>
 </context>
 <context>
     <name>MarkerLine</name>
@@ -6076,6 +6106,34 @@
         <location line="+1"/>
         <source>Zoom: mouse wheel, towards the pointer – or drag this button</source>
         <translation>Zoomen: Mausrad, zum Zeiger hin – oder diesen Knopf ziehen</translation>
+    </message>
+</context>
+<context>
+    <name>SketchMeasureLayer</name>
+    <message>
+        <location filename="../qml/SketchMeasureLayer.qml" line="+29"/>
+        <source>Length</source>
+        <translation>Länge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Diameter</source>
+        <translation>Durchmesser</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Distance</source>
+        <translation>Abstand</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Angle</source>
+        <translation>Winkel</translation>
     </message>
 </context>
 </TS>

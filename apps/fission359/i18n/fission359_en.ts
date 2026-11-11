@@ -3255,6 +3255,36 @@
             <numerusform>%n closed areas. Click one to choose it.</numerusform>
         </translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Type a number to set the %1</source>
+        <translation>Type a number to set the %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>length</source>
+        <translation>length</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>diameter</source>
+        <translation>diameter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>radius</source>
+        <translation>radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>distance</source>
+        <translation>distance</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>angle</source>
+        <translation>angle</translation>
+    </message>
 </context>
 <context>
     <name>MarkerLine</name>
@@ -6076,6 +6106,34 @@
         <location line="+1"/>
         <source>Zoom: mouse wheel, towards the pointer – or drag this button</source>
         <translation>Zoom: mouse wheel, towards the pointer – or drag this button</translation>
+    </message>
+</context>
+<context>
+    <name>SketchMeasureLayer</name>
+    <message>
+        <location filename="../qml/SketchMeasureLayer.qml" line="+29"/>
+        <source>Length</source>
+        <translation>Length</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Diameter</source>
+        <translation>Diameter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Distance</source>
+        <translation>Distance</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Angle</source>
+        <translation>Angle</translation>
     </message>
 </context>
 </TS>
