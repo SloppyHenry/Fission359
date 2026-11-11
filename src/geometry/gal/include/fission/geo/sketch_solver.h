@@ -155,6 +155,11 @@ struct SolveResult {
     std::vector<std::string> conflicting;
     /// Ids of rules and measures that follow from the others already (also with status `ok`).
     std::vector<std::string> redundant;
+    /// Ids of points that can still move (a coordinate is not fixed by the rules and measures);
+    /// only filled when diagnosed and the status is ok. Sorted.
+    std::vector<std::string> movablePoints;
+    /// Ids of circles and arcs whose radius is not fixed yet. Sorted.
+    std::vector<std::string> movableRadii;
     /// For developers: why a solve failed. Never shown to the person.
     std::string detail;
 };

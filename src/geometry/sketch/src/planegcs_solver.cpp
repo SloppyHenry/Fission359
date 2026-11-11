@@ -187,6 +187,8 @@ private:
     std::deque<GCS::Line> lines_;
     std::deque<GCS::Circle> circles_;
     std::deque<GCS::Arc> arcs_;
+    /// The radius unknown of every circle and arc, by curve id (for `movableRadii`).
+    std::vector<std::pair<std::string, double*>> radii_;
     std::vector<Item> items_; ///< sorted by id: the tag of an item is its index + 1
     GCS::System gcs_;
 };
@@ -279,6 +281,7 @@ void Model::addCurves() {
             GCS::Circle& circle = circles_.emplace_back();
             circle.center = gcsPoints_[at[0]];
             circle.rad = unknown(radius);
+            radii_.push_back({curve->id, circle.rad});
             // The point on the circle stays on it: this is what makes the radius "the distance".
             gcs_.addConstraintPointOnCircle(gcsPoints_[at[1]], circle, 0);
             arg.circle = &circle;
@@ -309,6 +312,7 @@ void Model::addCurves() {
             arc.rad = unknown(radius);
             arc.startAngle = unknown(startAngle);
             arc.endAngle = unknown(endAngle);
+            radii_.push_back({curve->id, arc.rad});
             gcs_.addConstraintArcRules(arc, 0);
             arg.arc = &arc;
             arg.circle = &arc;
@@ -674,6 +678,8 @@ void Model::run(const SolveOptions& options, SolveResult& result) {
     const auto diagnose = [&]() {
         result.conflicting.clear();
         result.redundant.clear();
+        result.movablePoints.clear();
+        result.movableRadii.clear();
         result.dof = gcs_.diagnose(GCS::DogLeg);
         GCS::VEC_I conflicting;
         GCS::VEC_I redundant;
@@ -684,6 +690,28 @@ void Model::run(const SolveOptions& options, SolveResult& result) {
         redundant.insert(redundant.end(), partlyRedundant.begin(), partlyRedundant.end());
         idsOf(conflicting, result.conflicting);
         idsOf(redundant, result.redundant);
+        // The parameters the rules and measures do not fix: a point can still move when one of
+        // its coordinates is among them, a circle or arc when its radius is.
+        GCS::VEC_pD dependent;
+        gcs_.getDependentParams(dependent);
+        // Without any rule PlaneGCS analyses nothing and names no parameter, although all of
+        // them are free: when the sketch can still move but none is named, every one counts.
+        const bool allFree = dependent.empty() && result.dof > 0;
+        const auto notFixed = [&](const double* param) {
+            return allFree || std::ranges::find(dependent, param) != dependent.end();
+        };
+        for (std::size_t i = 0; i < gcsPoints_.size(); ++i) {
+            if (notFixed(gcsPoints_[i].x) || notFixed(gcsPoints_[i].y)) {
+                result.movablePoints.push_back(system_.points[i].id);
+            }
+        }
+        for (const auto& [id, rad] : radii_) {
+            if (notFixed(rad)) {
+                result.movableRadii.push_back(id);
+            }
+        }
+        std::ranges::sort(result.movablePoints, naturalLess);
+        std::ranges::sort(result.movableRadii, naturalLess);
     };
 
     if (options.diagnose) {
@@ -758,6 +786,8 @@ public:
         }
         if (result.status != SolveStatus::ok) {
             result.points = system.points; // nothing moves unless the solve worked
+            result.movablePoints.clear();
+            result.movableRadii.clear();
         }
         return result;
     }

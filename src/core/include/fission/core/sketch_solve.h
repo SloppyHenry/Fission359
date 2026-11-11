@@ -10,6 +10,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "fission/core/sketch.h"
 #include "fission/geo/sketch_solver.h"
@@ -37,5 +38,11 @@ SketchMeasureValues storedMeasureValues(const SketchData& sketch);
 /// Builds, solves (default options), applies when ok. Returns the solver's result.
 geo::SolveResult solveSketch(SketchData& sketch, const SketchMeasureValues& values,
                              const geo::SketchSolver& solver);
+
+/// The elements of the sketch that can still move after a solve (ids like "L1", "C2"): a line or
+/// point when one of its points can move, a circle when its centre or radius can, an arc when its
+/// centre, an end or its radius can. A point on the rim of a circle that only turns round it does
+/// not count. Elements that are linked to an edge are fixed. Sorted.
+std::vector<std::string> movableElements(const SketchData& sketch, const geo::SolveResult& result);
 
 } // namespace fission::core

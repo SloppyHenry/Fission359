@@ -4,6 +4,7 @@
 #include "fission/core/sketch_solve.h"
 
 #include <algorithm>
+#include <charconv>
 #include <limits>
 #include <utility>
 
@@ -36,6 +37,21 @@ int ruleIdNumber(const std::string& id) {
         }
     }
     return std::numeric_limits<int>::max();
+}
+
+/// "L2" before "L10": element ids are a letter and a number, the number compares as one.
+bool elementIdLess(const std::string& a, const std::string& b) {
+    if (a.size() < 2 || b.size() < 2 || a.front() != b.front()) {
+        return a < b;
+    }
+    int numberA = 0;
+    int numberB = 0;
+    std::from_chars(a.data() + 1, a.data() + a.size(), numberA);
+    std::from_chars(b.data() + 1, b.data() + b.size(), numberB);
+    if (numberA != numberB) {
+        return numberA < numberB;
+    }
+    return a < b;
 }
 
 /// Sorts by the number in the id, so "R2" comes before "R10"; equal numbers by id, so the
@@ -177,6 +193,54 @@ geo::SolveResult solveSketch(SketchData& sketch, const SketchMeasureValues& valu
     geo::SolveResult result = solver.solve(toSolverSystem(sketch, values), geo::SolveOptions{});
     applySolution(sketch, result); // writes back only when the status is ok
     return result;
+}
+
+std::vector<std::string> movableElements(const SketchData& sketch, const geo::SolveResult& result) {
+    // The solver reports the movable points ("L1.0") and radii ("C1"); both are empty unless the
+    // status is ok. The point order of the elements matches the solver's (see toSolverSystem):
+    // line {start, end}, circle {centre, a point on the circle}, arc {centre, start, end}.
+    const auto pointMoves = [&](const std::string& id) {
+        return std::ranges::find(result.movablePoints, id) != result.movablePoints.end();
+    };
+    const auto radiusMoves = [&](const std::string& id) {
+        return std::ranges::find(result.movableRadii, id) != result.movableRadii.end();
+    };
+    std::vector<std::string> movable;
+    for (const SketchElement& element : sketch.elements) {
+        if (element.link) {
+            continue; // follows a body edge: fixed
+        }
+        bool canMove = false;
+        switch (element.kind) {
+        case SketchElementKind::point:
+            canMove = pointMoves(pointId(element.id, 0));
+            break;
+        case SketchElementKind::line:
+            canMove = pointMoves(pointId(element.id, 0)) || pointMoves(pointId(element.id, 1));
+            break;
+        case SketchElementKind::circle:
+            // The point on the circle (index 1) only turns round the centre: it does not count.
+            canMove = pointMoves(pointId(element.id, 0)) || radiusMoves(element.id);
+            break;
+        case SketchElementKind::arc:
+            canMove = pointMoves(pointId(element.id, 0)) || pointMoves(pointId(element.id, 1)) ||
+                      pointMoves(pointId(element.id, 2)) || radiusMoves(element.id);
+            break;
+        case SketchElementKind::spline:
+            for (std::size_t i = 0; i < element.points.size(); ++i) {
+                if (pointMoves(pointId(element.id, i))) {
+                    canMove = true;
+                    break;
+                }
+            }
+            break;
+        }
+        if (canMove) {
+            movable.push_back(element.id);
+        }
+    }
+    std::ranges::sort(movable, elementIdLess);
+    return movable;
 }
 
 } // namespace fission::core

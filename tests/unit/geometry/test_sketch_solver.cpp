@@ -378,3 +378,17 @@ TEST_CASE("Reference sketches solve the same way every time", "[sketch][solver]"
         }
     }
 }
+
+TEST_CASE("the diagnosis names the points that can still move", "[sketch][solver][dof]") {
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    SketchSystem system;
+    system.points = {{"P1", {0.0, 0.0}}, {"P2", {5.0, 5.0}}};
+    system.rules = {{"R1", SketchRuleKind::fixed, {"P2"}}};
+
+    const SolveResult result = solver->solve(system, SolveOptions{});
+
+    REQUIRE(result.status == SolveStatus::ok);
+    // the free point is movable, the fixed one is not
+    CHECK(result.movablePoints == std::vector<std::string>{"P1"});
+    CHECK(result.movableRadii.empty());
+}

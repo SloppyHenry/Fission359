@@ -201,6 +201,49 @@ TEST_CASE("a linked element keeps its points", "[sketch][solve]") {
 
 // --- storedMeasureValues -----------------------------------------------------------------
 
+TEST_CASE("after solving, the free elements are known", "[core][sketch][solve][dof]") {
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+
+    SECTION("a line without rules can move") {
+        SketchData sketch;
+        sketch.elements = {line("L1", 0, 0, 10, 1)};
+        const SolveResult result = solveSketch(sketch, {}, *solver);
+        REQUIRE(result.status == SolveStatus::ok);
+        CHECK(movableElements(sketch, result) == std::vector<std::string>{"L1"});
+    }
+
+    SECTION("a fixed line cannot move") {
+        SketchData sketch;
+        sketch.elements = {line("L1", 0, 0, 10, 1)};
+        sketch.rules = {{"R1", "fixed", {"L1"}}};
+        const SolveResult result = solveSketch(sketch, {}, *solver);
+        REQUIRE(result.status == SolveStatus::ok);
+        CHECK(result.dof == 0);
+        CHECK(movableElements(sketch, result).empty());
+    }
+
+    SECTION("a circle with only its centre fixed can still change its radius") {
+        SketchData sketch;
+        sketch.elements = {SketchElement{"C1", SketchElementKind::circle, {{5, 5}, {8, 5}}}};
+        sketch.rules = {{"R1", "fixed", {"C1.0"}}};
+        const SolveResult result = solveSketch(sketch, {}, *solver);
+        REQUIRE(result.status == SolveStatus::ok);
+        CHECK(movableElements(sketch, result) == std::vector<std::string>{"C1"});
+    }
+
+    SECTION("a circle with centre fixed and a radius measure cannot move") {
+        SketchData sketch;
+        sketch.elements = {SketchElement{"C1", SketchElementKind::circle, {{5, 5}, {8, 5}}}};
+        sketch.rules = {{"R1", "fixed", {"C1.0"}}};
+        sketch.measures = {radiusMeasure("R2", {"C1"}, 3.0)};
+        const SolveResult result = solveSketch(sketch, {{"R2", 3.0}}, *solver);
+        REQUIRE(result.status == SolveStatus::ok);
+        CHECK(movableElements(sketch, result).empty());
+    }
+}
+
+// --- storedMeasureValues -----------------------------------------------------------------
+
 TEST_CASE("storedMeasureValues reads the last values of the measures", "[sketch][solve]") {
     SketchData sketch;
     sketch.measures = {lengthMeasure("R1", {"L1"}, 30.0), lengthMeasure("R2", {"L1"}, 40.5)};
