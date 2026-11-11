@@ -122,12 +122,19 @@ class SketchController : public QObject {
     Q_PROPERTY(QVariantList measureLabels READ measureLabels NOTIFY measuresChanged)
     /// The marks of the rules of the sketch for the view (AP-2.2c3): one map per rule with
     /// { id, kind, x, y, z (the anchor in space), slot (how many earlier marks share the same
-    /// anchor element, so the view can place them side by side) }.
+    /// anchor element, so the view can place them side by side), conflict, doubled }.
     Q_PROPERTY(QVariantList ruleMarks READ ruleMarks NOTIFY measuresChanged)
     /// How many elements can still move (AP-2.2c1); drawn in `freeColour`.
     Q_PROPERTY(int freeCount READ freeCount NOTIFY freedomChanged)
     /// True when the sketch has elements and nothing can move any more (AP-2.2c1).
     Q_PROPERTY(bool fullyFixed READ fullyFixed NOTIFY freedomChanged)
+    /// The rules and measures that contradict each other (AP-2.2d), in the solver's order: one
+    /// map per entry with { id, kind, measure (true for a measure), text (the measure's label) }.
+    Q_PROPERTY(QVariantList conflicts READ conflicts NOTIFY solveStateChanged)
+    /// The rules and measures that follow from the others already, the same maps (AP-2.2d).
+    Q_PROPERTY(QVariantList doubled READ doubled NOTIFY solveStateChanged)
+    /// The solver found no solution for another reason, no contradiction named (AP-2.2d).
+    Q_PROPERTY(bool solveFailed READ solveFailed NOTIFY solveStateChanged)
 
 public:
     SketchController(DocumentModel* model, SelectionController* selection,
@@ -259,6 +266,12 @@ public:
     QVariantList measureLabels() const;
     /// The marks of the rules of the sketch, one map per rule (see the property, AP-2.2c3).
     QVariantList ruleMarks() const;
+    /// The contradicting rules and measures, one map per entry (see the property, AP-2.2d).
+    QVariantList conflicts() const;
+    /// The doubled (redundant) rules and measures, one map per entry (see the property, AP-2.2d).
+    QVariantList doubled() const;
+    /// True when the solver found no solution for another reason (AP-2.2d).
+    bool solveFailed() const noexcept { return m_solveFailed; }
     /// How many elements can still move (AP-2.2c1).
     int freeCount() const noexcept { return static_cast<int>(m_movable.size()); }
     /// True when the sketch has elements and nothing can move any more (AP-2.2c1).
@@ -320,6 +333,8 @@ signals:
     void measuresChanged();
     /// The elements that can still move changed (AP-2.2c1).
     void freedomChanged();
+    /// The contradicting or doubled rules and measures, or the failure, changed (AP-2.2d).
+    void solveStateChanged();
 
 private:
     enum class Mode { idle, picking, sketching };
@@ -405,6 +420,9 @@ private:
     std::optional<core::SketchPoint>
     ruleAnchor(const core::SketchRule& rule,
                const std::vector<core::SketchElement>& elements) const;
+    /// The entries of `ids` (rule and measure ids) as maps for the view (AP-2.2d): each id is
+    /// looked up in the rules and measures of the step; an unknown id gets no entry.
+    QVariantList constraintEntries(const std::vector<std::string>& ids) const;
     void forgetEdit();
     void onClicked(double x, double y);
     void onPressed(double x, double y);
@@ -431,6 +449,12 @@ private:
     std::vector<core::SketchElement> m_elements;
     std::vector<std::string> m_movable; ///< the elements that can still move (AP-2.2c1)
     int m_dof = -1;                     ///< directions the sketch can still move in (-1: unknown)
+    /// The rules and measures that contradict each other, after solving (AP-2.2d).
+    std::vector<std::string> m_conflicting;
+    /// The rules and measures that follow from the others already (AP-2.2d).
+    std::vector<std::string> m_redundant;
+    /// The solver found no solution for another reason (AP-2.2d).
+    bool m_solveFailed = false;
     std::optional<render::CameraPose> m_previousPose;
     double m_gridStep = 0.0;
     double m_pixelsPerMillimetre = 2.0;

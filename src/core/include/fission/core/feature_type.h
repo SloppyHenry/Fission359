@@ -140,6 +140,13 @@ struct SketchResult {
     std::vector<std::string> movable;
     /// Directions the sketch can still move in; 0 = fully fixed, -1 = not worked out.
     int dof = -1;
+    /// Rules and measures that contradict each other (ids "R3"), after solving (AP-2.2d). The
+    /// sketch keeps its last solved points then.
+    std::vector<std::string> conflicting;
+    /// Rules and measures that follow from the others already (AP-2.2d): no error, a hint.
+    std::vector<std::string> redundant;
+    /// The solver found no solution for another reason (no contradiction named).
+    bool failed = false;
 
     bool operator==(const SketchResult&) const = default;
 };

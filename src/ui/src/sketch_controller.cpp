@@ -398,6 +398,12 @@ void SketchController::leave(bool removeIfEmpty) {
     m_regionWorker.reset();
     m_movable.clear();
     m_dof = -1;
+    if (!m_conflicting.empty() || !m_redundant.empty() || m_solveFailed) {
+        m_conflicting.clear();
+        m_redundant.clear();
+        m_solveFailed = false;
+        emit solveStateChanged();
+    }
     emit regionsChanged();
     emit freedomChanged();
     if (m_viewport != nullptr) {
@@ -552,9 +558,25 @@ void SketchController::onModelChanged() {
     if (result) {
         m_movable = result->movable; // AP-2.2c1: what can still move is drawn in the free colour
         m_dof = result->dof;
+        // AP-2.2d: which rules and measures contradict each other or are doubled
+        const bool solveChanged = m_conflicting != result->conflicting ||
+                                  m_redundant != result->redundant ||
+                                  m_solveFailed != result->failed;
+        m_conflicting = result->conflicting;
+        m_redundant = result->redundant;
+        m_solveFailed = result->failed;
+        if (solveChanged) {
+            emit solveStateChanged();
+        }
     } else {
         m_movable.clear();
         m_dof = -1;
+        if (!m_conflicting.empty() || !m_redundant.empty() || m_solveFailed) {
+            m_conflicting.clear();
+            m_redundant.clear();
+            m_solveFailed = false;
+            emit solveStateChanged();
+        }
     }
     emit freedomChanged();
     m_regionWorker.request(m_model->sketchKernelShared(), m_elements);
@@ -1002,6 +1024,11 @@ const core::SketchElement* elementById(const std::vector<core::SketchElement>& e
     return found != elements.end() ? &*found : nullptr;
 }
 
+// True when `ids` contains `id`.
+bool contains(const std::vector<std::string>& ids, const std::string& id) {
+    return std::ranges::find(ids, id) != ids.end();
+}
+
 // A number with up to two decimals, the trailing zeros removed ("30", "12.5").
 QString trimmedNumber(double value) {
     QString text = QString::number(value, 'f', 2);
@@ -1232,7 +1259,7 @@ QVariantList SketchController::measureLabels() const {
         label[QStringLiteral("x")] = world.x();
         label[QStringLiteral("y")] = world.y();
         label[QStringLiteral("z")] = world.z();
-        label[QStringLiteral("conflict")] = false;
+        label[QStringLiteral("conflict")] = contains(m_conflicting, measure.id); // AP-2.2d
         labels << label;
     }
     return labels;
@@ -1322,9 +1349,52 @@ QVariantList SketchController::ruleMarks() const {
         mark[QStringLiteral("y")] = world.y();
         mark[QStringLiteral("z")] = world.z();
         mark[QStringLiteral("slot")] = slot;
+        mark[QStringLiteral("conflict")] = contains(m_conflicting, rule.id); // AP-2.2d
+        mark[QStringLiteral("doubled")] = contains(m_redundant, rule.id);    // AP-2.2d
         marks << mark;
     }
     return marks;
+}
+
+QVariantList SketchController::constraintEntries(const std::vector<std::string>& ids) const {
+    QVariantList entries;
+    if (m_model == nullptr || m_mode != Mode::sketching) {
+        return entries;
+    }
+    const std::vector<core::SketchRule> rules = m_model->sketchRules(m_step);
+    const std::vector<core::SketchMeasure> measures = m_model->sketchMeasures(m_step);
+    for (const std::string& id : ids) { // the solver's order
+        const auto rule =
+            std::ranges::find_if(rules, [&](const core::SketchRule& r) { return r.id == id; });
+        if (rule != rules.end()) {
+            QVariantMap entry;
+            entry[QStringLiteral("id")] = QString::fromStdString(rule->id);
+            entry[QStringLiteral("kind")] = QString::fromStdString(rule->kind);
+            entry[QStringLiteral("measure")] = false;
+            entry[QStringLiteral("text")] = QString();
+            entries << entry;
+            continue;
+        }
+        const auto measure = std::ranges::find_if(
+            measures, [&](const core::SketchMeasure& m) { return m.id == id; });
+        if (measure != measures.end()) {
+            QVariantMap entry;
+            entry[QStringLiteral("id")] = QString::fromStdString(measure->id);
+            entry[QStringLiteral("kind")] = QString::fromStdString(measure->kind);
+            entry[QStringLiteral("measure")] = true;
+            entry[QStringLiteral("text")] = measureText(*measure); // like the measure labels
+            entries << entry;
+        }
+    }
+    return entries;
+}
+
+QVariantList SketchController::conflicts() const {
+    return constraintEntries(m_conflicting);
+}
+
+QVariantList SketchController::doubled() const {
+    return constraintEntries(m_redundant);
 }
 
 bool SketchController::changeMeasure(const QString& id, const QString& expression) {

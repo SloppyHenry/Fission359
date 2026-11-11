@@ -490,3 +490,83 @@ TEST_CASE("a fixed point is not dragged", "[ui][sketchmeasures][drag]") {
     f.sketch->pressAt(Drawing::down(10, 0), 2.0);
     CHECK_FALSE(f.sketch->draggingPoint());
 }
+
+TEST_CASE("conflicts: two lengths on one line are listed and one click takes one away",
+          "[ui][sketchmeasures][conflict]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0); // L1, horizontal by the automatic rule (R1, AP-2.2c2)
+    f.settle();
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->chooseTool(QString()); // no tool
+    const QString step = f.sketch->step();
+
+    // One length of 30 mm: no conflict.
+    CHECK(f.model->addSketchMeasure(step, QStringLiteral("length"), {QStringLiteral("L1")},
+                                    QStringLiteral("30")));
+    f.settle();
+    CHECK(f.sketch->conflicts().isEmpty());
+    CHECK_FALSE(f.sketch->solveFailed());
+
+    // A second length of 40 mm on the same line: both measures are named as conflicting.
+    CHECK(f.model->addSketchMeasure(step, QStringLiteral("length"), {QStringLiteral("L1")},
+                                    QStringLiteral("40")));
+    f.settle();
+    const QVariantList conflicts = f.sketch->conflicts();
+    REQUIRE(conflicts.size() == 2);
+    for (const QVariant& entry : conflicts) {
+        const QVariantMap map = entry.toMap();
+        CHECK(map.value(QStringLiteral("measure")).toBool());
+        CHECK(map.value(QStringLiteral("kind")).toString() == QStringLiteral("length"));
+    }
+    // both measure labels carry the conflict flag
+    const QVariantList labels = f.sketch->measureLabels();
+    REQUIRE(labels.size() == 2);
+    for (const QVariant& label : labels) {
+        CHECK(label.toMap().value(QStringLiteral("conflict")).toBool());
+    }
+
+    // One click on the second conflicting measure takes it away; the line is 30 mm long again.
+    CHECK(f.sketch->removeMeasure(conflicts[1].toMap().value(QStringLiteral("id")).toString()));
+    f.settle();
+    CHECK(f.sketch->conflicts().isEmpty());
+    const auto elements = f.elements();
+    REQUIRE(elements.size() == 1);
+    const double length = std::hypot(elements[0].points[1].u - elements[0].points[0].u,
+                                     elements[0].points[1].v - elements[0].points[0].v);
+    CHECK(length == Approx(30.0).margin(1e-9));
+    CHECK(elements[0].points[0].v == Approx(elements[0].points[1].v).margin(1e-9)); // horizontal
+}
+
+TEST_CASE("doubled: a second horizontal rule is listed as doubled",
+          "[ui][sketchmeasures][conflict]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0); // L1, horizontal by the automatic rule (R1, AP-2.2c2)
+    f.settle();
+    REQUIRE(f.elements().size() == 1);
+    const QString step = f.sketch->step();
+
+    // The same rule again: it follows from the first one already.
+    CHECK(f.model->addSketchRule(step, QStringLiteral("horizontal"), {QStringLiteral("L1")}));
+    f.settle();
+    const QVariantList doubled = f.sketch->doubled();
+    REQUIRE_FALSE(doubled.isEmpty());
+    const QVariantMap entry = doubled.first().toMap();
+    CHECK(entry.value(QStringLiteral("kind")).toString() == QStringLiteral("horizontal"));
+    CHECK_FALSE(entry.value(QStringLiteral("measure")).toBool());
+    CHECK(f.sketch->conflicts().isEmpty());
+    CHECK_FALSE(f.sketch->solveFailed());
+    // the rule mark of the doubled rule carries the flag
+    for (const QVariant& mark : f.sketch->ruleMarks()) {
+        if (mark.toMap().value(QStringLiteral("id")).toString() ==
+            entry.value(QStringLiteral("id")).toString()) {
+            CHECK(mark.toMap().value(QStringLiteral("doubled")).toBool());
+            CHECK_FALSE(mark.toMap().value(QStringLiteral("conflict")).toBool());
+        }
+    }
+}

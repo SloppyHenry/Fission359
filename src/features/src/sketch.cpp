@@ -116,6 +116,11 @@ public:
                 }
             }
             const geo::SolveResult solved = solveSketch(sketch.data, values, *context.sketchSolver);
+            // AP-2.2d: name the contradicting and doubled rules and measures, whatever the
+            // status is (an ok solve can still report redundant ones)
+            sketch.conflicting = solved.conflicting;
+            sketch.redundant = solved.redundant;
+            sketch.failed = solved.status == geo::SolveStatus::failed;
             if (solved.status == geo::SolveStatus::ok) {
                 sketch.movable = movableElements(sketch.data, solved);
                 sketch.dof = solved.dof;

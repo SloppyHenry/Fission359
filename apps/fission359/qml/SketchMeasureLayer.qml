@@ -53,8 +53,19 @@ Item {
         case "equal": return qsTr("Same size")
         case "concentric": return qsTr("Same centre")
         case "tangent": return qsTr("Touching")
+        case "coincident": return qsTr("Joined")
+        case "symmetric": return qsTr("Symmetric")
+        case "midpoint": return qsTr("In the middle")
+        case "pointOnCurve": return qsTr("On the line")
         default: return ""
         }
+    }
+
+    // The word of a conflict/doubled entry: a measure with its value ("Length 30 mm"), a rule
+    // just by its kind.
+    function entryWord(entry) {
+        return entry.measure ? root.kindWord(entry.kind) + " " + entry.text
+                             : root.ruleWord(entry.kind)
     }
 
     // The tooltip of a rule kind: what the rule does.
@@ -347,8 +358,11 @@ Item {
                 height: 20
                 radius: Theme.radius
                 color: Theme.panel
-                border.width: 1
-                border.color: area.containsMouse ? Theme.accentLine : Theme.line2
+                // A contradicting rule is marked red, a doubled one amber.
+                border.width: mark.info && mark.info.conflict ? 2 : 1
+                border.color: mark.info && mark.info.conflict ? Theme.bad
+                    : mark.info && mark.info.doubled ? Theme.amberLine
+                    : area.containsMouse ? Theme.accentLine : Theme.line2
                 z: 2
 
                 Icon {
@@ -373,6 +387,143 @@ Item {
                 ToolTip.text: root.ruleWord(mark.info ? mark.info.kind : "") + " – "
                               + qsTr("click to remove this rule")
                 ToolTip.delay: 700
+            }
+        }
+    }
+
+    // Contradictions in the sketch (AP-2.2d): cards at the top centre, never a dialog. The red
+    // card lists the rules/measures that contradict each other (or a solve that failed for
+    // another reason), the amber one the ones that already follow from the others. Both in one
+    // Column, so they never overlap; a hidden card has no height and takes no room.
+    Column {
+        anchors.top: parent.top
+        anchors.topMargin: 12
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: 8
+        z: 10
+
+        Rectangle {
+            id: conflictCard
+
+            readonly property bool show: !Sketch.toolActive
+                                         && (Sketch.conflicts.length > 0 || Sketch.solveFailed)
+            visible: show
+            width: 380
+            height: show ? conflictColumn.implicitHeight + 20 : 0
+            radius: Theme.radiusFloat
+            color: Theme.badSoft
+            border.width: 1
+            border.color: Theme.bad
+
+            Column {
+                id: conflictColumn
+
+                x: 10
+                y: 10
+                width: parent.width - 20
+                spacing: 6
+
+                Txt {
+                    width: parent.width
+                    wrapMode: Text.Wrap
+                    text: Sketch.conflicts.length >= 2 ? qsTr("These rules contradict each other:")
+                         : Sketch.conflicts.length === 1 ? qsTr("This rule contradicts the drawing:")
+                         : qsTr("The sketch cannot be solved like this.")
+                    color: Theme.fg
+                    font.weight: Font.Bold
+                }
+
+                Repeater {
+                    model: Sketch.conflicts.length
+
+                    delegate: Row {
+                        required property int index
+                        readonly property var entry: Sketch.conflicts[index]
+
+                        spacing: 8
+
+                        Txt {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.entryWord(entry)
+                            color: Theme.fg
+                            elide: Text.ElideNone
+                        }
+
+                        Btn {
+                            small: true
+                            text: qsTr("Remove")
+                            Accessible.name: qsTr("Remove %1").arg(root.entryWord(entry))
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: entry.measure ? Sketch.removeMeasure(entry.id)
+                                                     : Sketch.removeRule(entry.id)
+                        }
+                    }
+                }
+
+                Txt {
+                    width: parent.width
+                    wrapMode: Text.Wrap
+                    text: qsTr("Remove one of them and the sketch fits again. Until then it keeps its last shape.")
+                    color: Theme.fg2
+                    font.pixelSize: Theme.fontSizeSmall
+                }
+            }
+        }
+
+        Rectangle {
+            id: doubledCard
+
+            readonly property bool show: !Sketch.toolActive && Sketch.doubled.length > 0
+            visible: show
+            width: 380
+            height: show ? doubledColumn.implicitHeight + 20 : 0
+            radius: Theme.radiusFloat
+            color: Theme.amberSoft
+            border.width: 1
+            border.color: Theme.amberLine
+
+            Column {
+                id: doubledColumn
+
+                x: 10
+                y: 10
+                width: parent.width - 20
+                spacing: 6
+
+                Txt {
+                    width: parent.width
+                    wrapMode: Text.Wrap
+                    text: qsTr("This rule is doubled, it already follows from the others:")
+                    color: Theme.fg
+                    font.weight: Font.Bold
+                }
+
+                Repeater {
+                    model: Sketch.doubled.length
+
+                    delegate: Row {
+                        required property int index
+                        readonly property var entry: Sketch.doubled[index]
+
+                        spacing: 8
+
+                        Txt {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.entryWord(entry)
+                            color: Theme.fg
+                            elide: Text.ElideNone
+                        }
+
+                        Btn {
+                            small: true
+                            text: qsTr("Remove")
+                            Accessible.name: qsTr("Remove %1").arg(root.entryWord(entry))
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: entry.measure ? Sketch.removeMeasure(entry.id)
+                                                     : Sketch.removeRule(entry.id)
+                        }
+                    }
+                }
             }
         }
     }

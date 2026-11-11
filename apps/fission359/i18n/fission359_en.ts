@@ -6233,5 +6233,60 @@
         <source>click to remove this rule</source>
         <translation>click to remove this rule</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Joined</source>
+        <translation>Joined</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Symmetric</source>
+        <translation>Symmetric</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>In the middle</source>
+        <translation>In the middle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On the line</source>
+        <translation>On the line</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>These rules contradict each other:</source>
+        <translation>These rules contradict each other:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This rule contradicts the drawing:</source>
+        <translation>This rule contradicts the drawing:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The sketch cannot be solved like this.</source>
+        <translation>The sketch cannot be solved like this.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove</source>
+        <translation>Remove</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove %1</source>
+        <translation>Remove %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove one of them and the sketch fits again. Until then it keeps its last shape.</source>
+        <translation>Remove one of them and the sketch fits again. Until then it keeps its last shape.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This rule is doubled, it already follows from the others:</source>
+        <translation>This rule is doubled, it already follows from the others:</translation>
+    </message>
 </context>
 </TS>

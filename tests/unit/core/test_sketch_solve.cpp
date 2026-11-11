@@ -444,6 +444,59 @@ TEST_CASE("recompute: a sketch measure with a broken formula is an error on the 
     CHECK_FALSE(result.sketches.contains(step));
 }
 
+TEST_CASE("recompute: contradicting measures are named on the sketch result",
+          "[core][sketch][conflict]") {
+    MeasureWorld world;
+    FeatureDraft draft = defaultDraft(*world.registry.find("sketch"));
+    SketchData& data = *draft.sketch;
+    data.elements = {line(data.allocateId(SketchElementKind::line), 0, 0, 10, 0)};
+    // Two length measures on L1, 30 and 40 mm (ids R1, R2): they contradict each other.
+    data.measures = {SketchMeasure{data.allocateRuleId(), "length", {"L1"}, {"30"}, 30.0},
+                     SketchMeasure{data.allocateRuleId(), "length", {"L1"}, {"40"}, 40.0}};
+    const FeatureId step = *world.document.addFeature(std::move(draft));
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+
+    const RecomputeResult result = world.run(*solver);
+    const FeatureState* state = result.state(step);
+    REQUIRE(state != nullptr);
+    CHECK(state->status == FeatureStatus::ok); // a contradiction is no error on the step
+    REQUIRE(result.sketches.contains(step));
+    const SketchResult& sketch = result.sketches.at(step);
+    REQUIRE(sketch.conflicting.size() == 2);
+    CHECK(std::ranges::find(sketch.conflicting, "R1") != sketch.conflicting.end());
+    CHECK(std::ranges::find(sketch.conflicting, "R2") != sketch.conflicting.end());
+    CHECK(sketch.redundant.empty());
+    CHECK_FALSE(sketch.failed);
+    // nothing was solved: the points stay where they were
+    checkSketchPoint(sketch.data.elements.front(), 0, 0, 0);
+    checkSketchPoint(sketch.data.elements.front(), 1, 10, 0);
+}
+
+TEST_CASE("recompute: a doubled rule is named as redundant", "[core][sketch][conflict]") {
+    MeasureWorld world;
+    FeatureDraft draft = defaultDraft(*world.registry.find("sketch"));
+    SketchData& data = *draft.sketch;
+    data.elements = {line(data.allocateId(SketchElementKind::line), 0, 0, 10, 0)};
+    // The same rule twice (ids R1, R2): the second one follows from the first.
+    data.rules = {{data.allocateRuleId(), "horizontal", {"L1"}},
+                  {data.allocateRuleId(), "horizontal", {"L1"}}};
+    const FeatureId step = *world.document.addFeature(std::move(draft));
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+
+    const RecomputeResult result = world.run(*solver);
+    const FeatureState* state = result.state(step);
+    REQUIRE(state != nullptr);
+    CHECK(state->status == FeatureStatus::ok);
+    REQUIRE(result.sketches.contains(step));
+    const SketchResult& sketch = result.sketches.at(step);
+    CHECK(sketch.conflicting.empty());
+    CHECK_FALSE(sketch.failed);
+    REQUIRE_FALSE(sketch.redundant.empty());
+    const bool named = std::ranges::find(sketch.redundant, "R1") != sketch.redundant.end() ||
+                       std::ranges::find(sketch.redundant, "R2") != sketch.redundant.end();
+    CHECK(named);
+}
+
 // --- the rules the drawing fulfils are added when the elements are drawn (AP-2.2c2) --------
 
 TEST_CASE("drawing adds the rules it fulfils", "[core][sketch][autorules]") {

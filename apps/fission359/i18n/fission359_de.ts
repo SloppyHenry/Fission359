@@ -6233,5 +6233,60 @@
         <source>click to remove this rule</source>
         <translation>klicken, um diese Regel zu entfernen</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Joined</source>
+        <translation>Verbunden</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Symmetric</source>
+        <translation>Symmetrisch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>In the middle</source>
+        <translation>In der Mitte</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On the line</source>
+        <translation>Auf der Linie</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>These rules contradict each other:</source>
+        <translation>Diese Regeln widersprechen sich:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This rule contradicts the drawing:</source>
+        <translation>Diese Regel passt nicht zur Zeichnung:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The sketch cannot be solved like this.</source>
+        <translation>So lässt sich die Skizze nicht lösen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove %1</source>
+        <translation>%1 entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove one of them and the sketch fits again. Until then it keeps its last shape.</source>
+        <translation>Entferne eine davon, dann passt die Skizze wieder. Bis dahin behält sie ihre letzte Form.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This rule is doubled, it already follows from the others:</source>
+        <translation>Diese Regel ist doppelt, sie folgt schon aus den anderen:</translation>
+    </message>
 </context>
 </TS>
