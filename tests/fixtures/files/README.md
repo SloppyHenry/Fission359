@@ -11,4 +11,5 @@ tests fails after a format change, write a migration; do not touch the files.
 step type `sketch` came with format 3 (AP-2.1a). It was written with the hidden test "write the
 version 1 fixture files" and then brought into the shape of format 1 (`formatVersion` 1, no
 `sketch` field on the step, no `slider` on measures, checksum new). `v3/sketch.fission` is a real
-format 3 file with one element of every kind.
+format 3 file with one element of every kind. `v4/extrude.fission` is the first file with a step
+`extrude` (AP-2.3b): a 60 × 40 rectangle pulled 25 mm.
