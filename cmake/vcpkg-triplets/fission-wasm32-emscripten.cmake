@@ -33,7 +33,8 @@ set(VCPKG_CMAKE_SYSTEM_NAME Emscripten)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${VCPKG_ROOT_DIR}/scripts/toolchains/emscripten.cmake")
 # Native WebAssembly exceptions: without them Emscripten cannot catch C++ exceptions, and every
 # error the program reports by throwing (OpenCASCADE failures, broken files) ends the program.
-# All libraries and the program must use the same setting.
-set(VCPKG_C_FLAGS "-pthread -fwasm-exceptions")
-set(VCPKG_CXX_FLAGS "-pthread -fwasm-exceptions")
-set(VCPKG_LINKER_FLAGS "-pthread -fwasm-exceptions")
+# The current exception format (exnref, not the legacy one): Binaryen cannot read the legacy
+# format of the large test programs. All libraries and the program must use the same setting.
+set(VCPKG_C_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0")
+set(VCPKG_CXX_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0")
+set(VCPKG_LINKER_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0")

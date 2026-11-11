@@ -280,7 +280,9 @@ jobs:
 
       # OpenCASCADE links need a lot of memory per job; 4 jobs stay within the runner's RAM.
       - name: Build
-        run: cmake --build --preset web-core -j 4
+        run: |
+          "$EMSDK_NODE" --version
+          cmake --build --preset web-core -j 4 -- -k 0
 
       - name: Test
         run: ctest --preset web-core -j 2 --output-junit "$GITHUB_WORKSPACE/web-tests.xml"

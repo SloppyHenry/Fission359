@@ -46,6 +46,8 @@ function(fission_web_test_options target)
       find_program(FISSION_NODE node REQUIRED)
       set(_fission_node "${FISSION_NODE}")
     endif()
-    set_target_properties(${target} PROPERTIES CROSSCOMPILING_EMULATOR "${_fission_node}")
+    # Node before 24 knows the current WebAssembly exception format only behind a flag.
+    set_target_properties(${target} PROPERTIES CROSSCOMPILING_EMULATOR
+      "${_fission_node};--experimental-wasm-exnref")
   endif()
 endfunction()
