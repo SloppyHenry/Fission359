@@ -11,6 +11,7 @@
 
 #include <QCoreApplication>
 #include <QStringList>
+#include <QVariantList>
 #include <QVariantMap>
 
 #include <memory>
@@ -151,4 +152,91 @@ TEST_CASE("sketch measures: rules and measures through the model solve the sketc
     elements = f.elements();
     REQUIRE(elements.size() == 1);
     checkPoint(elements[0].points[1], 30, 0);
+}
+
+TEST_CASE("sketch measures: choosing elements and setting a measure through the controller",
+          "[ui][sketchmeasures]") {
+    NoCatching free;
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0);
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->chooseTool(QString()); // no tool: a click chooses an element
+
+    // a) A click on the middle of the drawn line chooses it; the measure kind is a length.
+    f.click(5, 0);
+    CHECK(f.sketch->selectedElements() == QStringList{QStringLiteral("L1")});
+    CHECK(f.sketch->measureKindForSelection() == QStringLiteral("length"));
+
+    // b) A measure for the choice: one label with the typed value as its text.
+    CHECK(f.sketch->setMeasureForSelection(QStringLiteral("30")));
+    f.settle();
+    QVariantList labels = f.sketch->measureLabels();
+    REQUIRE(labels.size() == 1);
+    const QVariantMap label = labels.first().toMap();
+    CHECK(label.value(QStringLiteral("id")).toString() == QStringLiteral("R1"));
+    CHECK(label.value(QStringLiteral("kind")).toString() == QStringLiteral("length"));
+    CHECK(label.value(QStringLiteral("expression")).toString() == QStringLiteral("30"));
+    CHECK(label.value(QStringLiteral("text")).toString() == QStringLiteral("30"));
+    CHECK_FALSE(label.value(QStringLiteral("conflict")).toBool());
+    CHECK(f.sketch->selectedElements() == QStringList{QStringLiteral("L1")}); // the choice stays
+
+    // c) The measure takes a new value; the label follows.
+    CHECK(f.sketch->changeMeasure(QStringLiteral("R1"), QStringLiteral("45")));
+    f.settle();
+    CHECK(f.sketch->measureLabels().first().toMap().value(QStringLiteral("text")).toString() ==
+          QStringLiteral("45"));
+
+    // d) Esc lets go of the choice, a click on empty space as well.
+    f.sketch->escape();
+    CHECK(f.sketch->selectedElements().isEmpty());
+    f.click(5, 0); // still on the line (the measure made it 45 mm long)
+    CHECK(f.sketch->selectedElements() == QStringList{QStringLiteral("L1")});
+    f.click(60, 60);
+    CHECK(f.sketch->selectedElements().isEmpty());
+
+    // e) Shift adds to the choice: two lines give an angle, a third drops the oldest.
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 20);
+    f.click(10, 25); // L2, not parallel to L1
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 40);
+    f.click(10, 45); // L3, parallel to L2
+    f.sketch->chooseTool(QString());
+    f.sketch->clickAt(Drawing::down(5, 0), 2.0, false, true);    // Shift on L1
+    f.sketch->clickAt(Drawing::down(5, 22.5), 2.0, false, true); // Shift on L2
+    CHECK(f.sketch->selectedElements() ==
+          QStringList({QStringLiteral("L1"), QStringLiteral("L2")}));
+    CHECK(f.sketch->measureKindForSelection() == QStringLiteral("angle"));
+    f.sketch->clickAt(Drawing::down(5, 42.5), 2.0, false, true); // Shift on L3: L1 goes
+    CHECK(f.sketch->selectedElements() ==
+          QStringList({QStringLiteral("L2"), QStringLiteral("L3")}));
+    CHECK(f.sketch->measureKindForSelection() == QStringLiteral("distance")); // parallel
+    f.sketch->clickAt(Drawing::down(5, 42.5), 2.0, false, true); // Shift on L3 again: it goes
+    CHECK(f.sketch->selectedElements() == QStringList{QStringLiteral("L2")});
+    f.sketch->escape();
+    CHECK(f.sketch->selectedElements().isEmpty());
+
+    // f) A circle: the measure kind is the diameter and the label carries the Ø.
+    f.sketch->chooseTool(QStringLiteral("circle"));
+    f.click(20, 20);
+    f.click(25, 20); // middle and a point on the rim: radius 5
+    REQUIRE(f.elements().size() == 4);
+    f.sketch->chooseTool(QString());
+    f.click(25, 20); // on the rim
+    CHECK(f.sketch->selectedElements() == QStringList{QStringLiteral("C1")});
+    CHECK(f.sketch->measureKindForSelection() == QStringLiteral("diameter"));
+    CHECK(f.sketch->setMeasureForSelection(QStringLiteral("12")));
+    f.settle();
+    labels = f.sketch->measureLabels();
+    REQUIRE(labels.size() == 2);
+    const QVariantMap circleLabel = labels.last().toMap();
+    CHECK(circleLabel.value(QStringLiteral("kind")).toString() == QStringLiteral("diameter"));
+    CHECK(circleLabel.value(QStringLiteral("text")).toString() == QString::fromUtf8("Ø 12"));
+
+    // g) The measure can be removed again through the controller.
+    CHECK(f.sketch->removeMeasure(circleLabel.value(QStringLiteral("id")).toString()));
+    f.settle();
+    CHECK(f.sketch->measureLabels().size() == 1);
 }

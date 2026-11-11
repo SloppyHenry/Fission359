@@ -3799,6 +3799,15 @@ std::vector<core::SketchElement> DocumentModel::sketchElements(const QString& st
     return step->sketch->elements;
 }
 
+std::vector<core::SketchMeasure> DocumentModel::sketchMeasures(const QString& stepId) const {
+    const core::Feature* step =
+        m_history.document().findFeature(core::FeatureId{stepId.toStdString()});
+    if (step == nullptr || !step->sketch) {
+        return {};
+    }
+    return step->sketch->measures;
+}
+
 std::optional<std::vector<core::SketchPoint>>
 DocumentModel::sketchSplineLine(const std::vector<core::SketchPoint>& through) const {
     constexpr double kTolerance = 0.005; // mm: well within the 0.01 mm of rule 12

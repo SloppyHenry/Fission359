@@ -476,6 +476,8 @@ public:
     std::optional<core::SketchResult> sketchResult(const QString& stepId) const;
     /// The elements of a sketch as they are in the document now (also before the calculation).
     std::vector<core::SketchElement> sketchElements(const QString& stepId) const;
+    /// The measures of a sketch as they are in the document now (AP-2.2b).
+    std::vector<core::SketchMeasure> sketchMeasures(const QString& stepId) const;
     /// The curve of a spline through these points (the last equal to the first: closed) as a
     /// chain of short lines within 0.005 mm of it, as the kernel calculates it. Nothing when the
     /// kernel cannot make a curve through them. Quick enough for every move of the pointer.

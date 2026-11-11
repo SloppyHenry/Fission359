@@ -34,7 +34,9 @@ constexpr float kGuideWidth = 1.25F;
 constexpr double kDashPixels = 6.0;
 constexpr double kArcDragPixels = 6.0; // pulling further than this from a line end makes an arc
 constexpr int kMaxGridLines = 160;     // per direction
-constexpr double kEditPixels = 12.0;   // how near the pointer must be to a piece or an end to trim
+constexpr double kSelectPixels =
+    6.0;                             // how near a click without a tool must be to choose an element
+constexpr double kEditPixels = 12.0; // how near the pointer must be to a piece or an end to trim
 
 QVector3D at(const core::SketchPlane& plane, double u, double v) {
     const geo::Point3d world = plane.toWorld({u, v});
@@ -200,6 +202,12 @@ void drawElement(render::HandleGraphics& out, const core::SketchPlane& plane,
 bool altHeld() {
     return qobject_cast<QGuiApplication*>(QCoreApplication::instance()) != nullptr &&
            (QGuiApplication::queryKeyboardModifiers() & Qt::AltModifier) != 0;
+}
+
+// Shift is held: the click adds to the chosen elements. (The tests run without a window system.)
+bool shiftHeld() {
+    return qobject_cast<QGuiApplication*>(QCoreApplication::instance()) != nullptr &&
+           (QGuiApplication::queryKeyboardModifiers() & Qt::ShiftModifier) != 0;
 }
 
 const char* toolWord(interaction::SketchToolKind kind) {
@@ -429,8 +437,12 @@ void SketchController::escape() {
     if (m_mode == Mode::idle) {
         return;
     }
-    // First the element being pulled, then the tool, then the chosen region, then the sketch
-    // (decision 10, 13 and 53).
+    // First the chosen elements, then the element being pulled, then the tool, then the chosen
+    // region, then the sketch (decision 10, 13 and 53).
+    if (!m_selectedElements.empty()) {
+        clearElementSelection();
+        return;
+    }
     if (!toolActive() && !m_selectedRegion.empty()) {
         clearRegionSelection();
         return;
@@ -550,7 +562,16 @@ void SketchController::onModelChanged() {
         m_second = false;
         m_anchor.reset();
     }
+    const std::size_t selectedBefore = m_selectedElements.size();
+    std::erase_if(m_selectedElements, [this](const std::string& id) {
+        return std::ranges::none_of(m_elements,
+                                    [&](const core::SketchElement& e) { return e.id == id; });
+    });
+    if (m_selectedElements.size() != selectedBefore) {
+        emit selectionChanged();
+    }
     refresh();
+    emit measuresChanged(); // the measures of the sketch may have changed
     if (changed) {
         emit stateChanged();
     }
@@ -754,9 +775,12 @@ void SketchController::refresh() {
         drawRegions(graphics, 0.03);
 
         for (const core::SketchElement& element : m_elements) {
+            // a chosen element is drawn like the hovered and picked ones (AP-2.2b)
+            const bool selected = elementSelected(element.id);
             drawElement(graphics, m_plane, element, ppm,
-                        element.link ? m_linkedColour : m_elementColour, kElementWidth,
-                        curveOf(element));
+                        selected ? m_draftColour
+                                 : (element.link ? m_linkedColour : m_elementColour),
+                        selected ? kDraftWidth : kElementWidth, curveOf(element));
         }
         if (toolActive()) {
             for (const core::SketchElement& element : m_draft.elements) {
@@ -945,6 +969,192 @@ void SketchController::clearRegionSelection() {
     }
 }
 
+// --- choosing elements and measures (AP-2.2b) ------------------------------------------
+
+namespace {
+
+const core::SketchElement* elementById(const std::vector<core::SketchElement>& elements,
+                                       const std::string& id) {
+    const auto found =
+        std::ranges::find_if(elements, [&](const core::SketchElement& e) { return e.id == id; });
+    return found != elements.end() ? &*found : nullptr;
+}
+
+// A number with up to two decimals, the trailing zeros removed ("30", "12.5").
+QString trimmedNumber(double value) {
+    QString text = QString::number(value, 'f', 2);
+    while (text.endsWith(QLatin1Char('0'))) {
+        text.chop(1);
+    }
+    if (text.endsWith(QLatin1Char('.'))) {
+        text.chop(1);
+    }
+    return text;
+}
+
+// The label of a measure: its value as text, with the sign of its kind.
+QString measureText(const core::SketchMeasure& measure) {
+    const QString number = trimmedNumber(measure.lastValue);
+    if (measure.kind == "diameter") {
+        return QString::fromUtf8("Ø ") + number;
+    }
+    if (measure.kind == "radius") {
+        return QStringLiteral("R ") + number;
+    }
+    if (measure.kind == "angle") {
+        return number + QString::fromUtf8("°");
+    }
+    return number; // length, distance, horizontalDistance, verticalDistance
+}
+
+} // namespace
+
+bool SketchController::elementSelected(const std::string& id) const noexcept {
+    return std::ranges::find(m_selectedElements, id) != m_selectedElements.end();
+}
+
+void SketchController::clearElementSelection() {
+    if (!m_selectedElements.empty()) {
+        m_selectedElements.clear();
+        emit selectionChanged();
+        refresh();
+    }
+}
+
+QStringList SketchController::selectedElements() const {
+    QStringList ids;
+    ids.reserve(static_cast<int>(m_selectedElements.size()));
+    for (const std::string& id : m_selectedElements) {
+        ids << QString::fromStdString(id);
+    }
+    return ids;
+}
+
+QString SketchController::measureKindForSelection() const {
+    if (m_selectedElements.size() == 1) {
+        const core::SketchElement* e = elementById(m_elements, m_selectedElements.front());
+        if (e == nullptr) {
+            return {};
+        }
+        switch (e->kind) {
+        case core::SketchElementKind::line:
+            return QStringLiteral("length");
+        case core::SketchElementKind::circle:
+            return QStringLiteral("diameter");
+        case core::SketchElementKind::arc:
+            return QStringLiteral("radius");
+        default:
+            return {};
+        }
+    }
+    if (m_selectedElements.size() == 2) {
+        const core::SketchElement* a = elementById(m_elements, m_selectedElements[0]);
+        const core::SketchElement* b = elementById(m_elements, m_selectedElements[1]);
+        if (a == nullptr || b == nullptr || a->kind != core::SketchElementKind::line ||
+            b->kind != core::SketchElementKind::line || a->points.size() < 2 ||
+            b->points.size() < 2) {
+            return {};
+        }
+        const double ax = a->points[1].u - a->points[0].u;
+        const double ay = a->points[1].v - a->points[0].v;
+        const double bx = b->points[1].u - b->points[0].u;
+        const double by = b->points[1].v - b->points[0].v;
+        const double lengthA = std::hypot(ax, ay);
+        const double lengthB = std::hypot(bx, by);
+        if (lengthA < 1e-9 || lengthB < 1e-9) {
+            return {};
+        }
+        const double cross = ax * by - ay * bx;
+        // parallel lines (relative): their distance, else the angle between them
+        return std::abs(cross) < 1e-9 * lengthA * lengthB ? QStringLiteral("distance")
+                                                          : QStringLiteral("angle");
+    }
+    return {};
+}
+
+bool SketchController::setMeasureForSelection(const QString& expression) {
+    if (m_model == nullptr || m_mode != Mode::sketching) {
+        return false;
+    }
+    const QString kind = measureKindForSelection();
+    if (kind.isEmpty()) {
+        return false;
+    }
+    QStringList elements;
+    elements.reserve(static_cast<int>(m_selectedElements.size()));
+    for (const std::string& id : m_selectedElements) {
+        elements << QString::fromStdString(id);
+    }
+    return m_model->addSketchMeasure(m_step, kind, elements, expression); // the choice stays
+}
+
+std::optional<core::SketchPoint>
+SketchController::measureAnchor(const core::SketchMeasure& measure) const {
+    const auto middle = [](const core::SketchElement& e) {
+        return core::SketchPoint{(e.points[0].u + e.points[1].u) / 2.0,
+                                 (e.points[0].v + e.points[1].v) / 2.0};
+    };
+    if (measure.elements.size() == 1) {
+        const core::SketchElement* e = elementById(m_elements, measure.elements.front());
+        if (e == nullptr || e->points.size() < 2) {
+            return std::nullopt;
+        }
+        if (e->kind == core::SketchElementKind::line) {
+            return middle(*e);
+        }
+        if (e->kind == core::SketchElementKind::circle || e->kind == core::SketchElementKind::arc) {
+            // on the rim, to the right of the middle
+            const double radius =
+                std::hypot(e->points[1].u - e->points[0].u, e->points[1].v - e->points[0].v);
+            return core::SketchPoint{e->points[0].u + radius, e->points[0].v};
+        }
+        return std::nullopt;
+    }
+    if (measure.elements.size() == 2) {
+        const core::SketchElement* a = elementById(m_elements, measure.elements[0]);
+        const core::SketchElement* b = elementById(m_elements, measure.elements[1]);
+        if (a == nullptr || b == nullptr || a->kind != core::SketchElementKind::line ||
+            b->kind != core::SketchElementKind::line || a->points.size() < 2 ||
+            b->points.size() < 2) {
+            return std::nullopt;
+        }
+        const core::SketchPoint ma = middle(*a);
+        const core::SketchPoint mb = middle(*b);
+        return core::SketchPoint{(ma.u + mb.u) / 2.0, (ma.v + mb.v) / 2.0};
+    }
+    return std::nullopt;
+}
+
+QVariantList SketchController::measureLabels() const {
+    QVariantList labels;
+    if (m_model == nullptr || m_mode != Mode::sketching) {
+        return labels;
+    }
+    for (const core::SketchMeasure& measure : m_model->sketchMeasures(m_step)) {
+        const core::SketchPoint anchor = measureAnchor(measure).value_or(core::SketchPoint{});
+        const QVector3D world = at(m_plane, anchor.u, anchor.v);
+        QVariantMap label;
+        label[QStringLiteral("id")] = QString::fromStdString(measure.id);
+        label[QStringLiteral("kind")] = QString::fromStdString(measure.kind);
+        label[QStringLiteral("expression")] = QString::fromStdString(measure.value.expression);
+        label[QStringLiteral("text")] = measureText(measure);
+        label[QStringLiteral("x")] = world.x();
+        label[QStringLiteral("y")] = world.y();
+        label[QStringLiteral("z")] = world.z();
+        label[QStringLiteral("conflict")] = false;
+        labels << label;
+    }
+    return labels;
+}
+
+bool SketchController::changeMeasure(const QString& id, const QString& expression) {
+    return m_model != nullptr && m_model->setSketchMeasure(m_step, id, expression);
+}
+
+bool SketchController::removeMeasure(const QString& id) {
+    return m_model != nullptr && m_model->removeSketchConstraint(m_step, id);
+}
+
 // --- drawing (AP-2.1c1) -----------------------------------------------------------------
 
 QString SketchController::toolName() const {
@@ -969,6 +1179,10 @@ void SketchController::toggleHelperLine() {
 void SketchController::chooseTool(const QString& name, int variant) {
     if (m_mode != Mode::sketching) {
         return;
+    }
+    if (!m_selectedElements.empty()) { // a tool ends the choosing of elements (AP-2.2b)
+        m_selectedElements.clear();
+        emit selectionChanged();
     }
     using interaction::SketchToolKind;
     SketchToolKind kind = SketchToolKind::none;
@@ -1030,7 +1244,7 @@ void SketchController::onClicked(double x, double y) {
     }
     clickAt({{ray->origin.x(), ray->origin.y(), ray->origin.z()},
              {ray->direction.x(), ray->direction.y(), ray->direction.z()}},
-            m_viewport->pixelsPerMillimetre(), altHeld());
+            m_viewport->pixelsPerMillimetre(), altHeld(), shiftHeld());
 }
 
 void SketchController::onDoubleClicked(double, double) {
@@ -1038,9 +1252,32 @@ void SketchController::onDoubleClicked(double, double) {
 }
 
 void SketchController::clickAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre,
-                               bool alt) {
+                               bool alt, bool add) {
     if (m_mode == Mode::sketching && m_planeReady && !toolActive()) {
-        clickRegion(ray, pixelsPerMillimetre); // no tool: a click chooses a region (decision 53)
+        // no tool: a click on an element chooses it for a measure (AP-2.2b), else a region
+        pointAt(ray, pixelsPerMillimetre);
+        const double reach = kSelectPixels / std::max(pixelsPerMillimetre, 1e-6);
+        const auto onPlane = interaction::planePoint(ray, m_plane);
+        const auto hit = onPlane ? interaction::elementNear(m_elements, *onPlane, reach)
+                                 : std::optional<std::string>{};
+        if (hit) {
+            if (!add) {
+                m_selectedElements = {*hit};
+            } else if (std::ranges::find(m_selectedElements, *hit) != m_selectedElements.end()) {
+                std::erase(m_selectedElements, *hit); // Shift on a chosen one takes it back
+            } else {
+                m_selectedElements.push_back(*hit);
+                if (m_selectedElements.size() > 2) { // two at most, the oldest goes
+                    m_selectedElements.erase(m_selectedElements.begin());
+                }
+            }
+            emit selectionChanged();
+            clearRegionSelection();
+            refresh();
+            return;
+        }
+        clearElementSelection();
+        clickRegion(ray, pixelsPerMillimetre); // a click chooses a region (decision 53)
         return;
     }
     if (!toolActive() || !m_planeReady) {
