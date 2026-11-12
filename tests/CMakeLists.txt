@@ -244,6 +244,14 @@ if(_fission_run_window_tests)
             --camera=35,35,200 --simulate "put:box;menu:new;expecttab:1,2;key:${_fission_prev_tab_key};expecttab:0,2;key:${_fission_next_tab_key};expecttab:1,2;menu:prevtab;expecttab:0,2")
   set_tests_properties(app_tab_keys PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # Pflege P19: "Change value" under the problem of a step puts the cursor into the field the
+  # problem is about (a box with width 0).
+  add_test(NAME app_problem_change_value
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-problem-change-value.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "put:box;value:width,0;clickitem:problemBadge;clickitem:problemAction_editValue;expectfocus:width")
+  set_tests_properties(app_problem_change_value PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # Pflege P10: the keys + and - zoom the 3D view towards its centre by 20 % each (the camera
   # distance gets smaller, then larger again).
   add_test(NAME app_keyboard_zoom

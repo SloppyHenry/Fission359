@@ -47,6 +47,12 @@ Item {
         input.forceActiveFocus()
     }
 
+    // The cursor goes in with the whole text selected: typing replaces the value.
+    function focusAndSelect() {
+        input.forceActiveFocus()
+        input.selectAll()
+    }
+
     function shownText() {
         return root.expression !== "" ? root.expression : Numbers.format(root.value, root.decimals)
     }

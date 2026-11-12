@@ -57,7 +57,7 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 **Größe:** M · Offen aus AP-1.11. Es fehlen Eck-Griffe, die Breite und Tiefe zugleich ändern, und der schwarze Hebe-Pfeil (Lage z). Regeln 11–13 gelten; Ablauf D muss auch mit „Klassisch“ grün sein (R19).
 
 ## P19 Kontextleiste und Hinweise: Reste
-**Größe:** S–M · Aus AP-1.8 und AP-1.12. Tooltip-Karten für Menübefehle der Kontextleiste; „Wert ändern“ wählt den Schritt, soll auch das Feld fokussieren; „Mehr ▾“ und Ausrichten bei mehreren Körpern; die Leiste kann Maßzahlen der Ansicht kurz verdecken.
+**Größe:** S–M · Aus AP-1.8 und AP-1.12. Tooltip-Karten für Menübefehle der Kontextleiste; „Mehr ▾“ und Ausrichten bei mehreren Körpern; die Leiste kann Maßzahlen der Ansicht kurz verdecken.
 
 ## P20 Kleinigkeiten aus AP-1.10 und AP-1.11
 **Größe:** S · „Zuletzt geöffnet“ als Untermenü; Einheit „Zoll“ auch in der Statuszeile und in bestehenden Projekten; Dateizuordnung unter macOS und Linux von Hand prüfen; Bildschirmfotos 80/100/150/200 % in den PR des nächsten Politurdurchgangs.
@@ -75,6 +75,7 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 ---
 
 ## Erledigt
+- **P19 (Teil)** „Wert ändern“ unter einem Problem setzt den Cursor in das betroffene Feld, Text markiert (2026-11-11).
 - **P7** Exakte Fangpunkte aus dem Kernel (2026-11-11): `GeometryKernel::snapPoints` (Ecken, Kantenmitten, Kreismitten, Mitten ebener Flächen, exakt aus OCCT; Nahtkanten ausgenommen), im Hintergrund mit dem Netz berechnet, `SnapSession` nimmt sie statt der Netzpunkte (Rückfall: Netzpunkte).
 - **P18** Abstandsmaß auf einer Platte (2026-11-03, PR #83): Ohne Nachbarn misst das Maß bis zum Rand des kleinsten Körpers, der die Grundfläche umfasst und auf dem der Körper steht oder in dem er steckt (nicht ein Körper darüber, z. B. Schrift über dem Loch); danach bis zum Bettrand. Festlegung ohne Umschalter. `app_flow_a_keychain` tippt den Abstand.
 - **P2** Formen-Galerie schließt bei Klick auf leeren Grund (2026-11-03, PR #84), Simulations-Prüfung `expectflyout:`.
