@@ -38,6 +38,9 @@ Durchmesser, Senkung (Winkel, Ø), Kopfhöhe, Kernloch, Steigung, Quelle. Werte 
 an die Feature-Typen gereicht – kein globaler Zustand).
 
 ## Teil 2.7b – Bohrung als Feature
+**Zerlegt:** 2.7b1 (gebaut) = Kern `GeometryKernel::makeHoleTool(HoleToolSpec)`: Werkzeug eines Lochs (plain, counterbore, countersink
+90°, nutTrap) auf dem Ursprung, Achse +Z, `above` über der Fläche; Flächen `top`, `bottom`, `wall`, `headWall`, `headFloor`, `countersink`,
+`nutWall[1..6]`, `nutFloor`; Golden-Volumen. 2.7b2 = Schritt `hole` (Fläche als Verweis, Punkte, Abziehen).
 1. Feature-Typ `hole`: Eingang Körper, `refs["face"]` (ebene Fläche), Punkte auf der Fläche (Liste von (u,v) in Flächen-Koordinaten, als Werte
    `p1u`, `p1v`, … oder eigene Struktur – Muster mit AP-2.1-ADR abstimmen), Wörter `kind` (through | counterbore | countersink | tapDrill | insert |
    nutTrap), `standard` (Tabellen-Schlüssel), Werte `depth` (oder „durch“), `correction`.

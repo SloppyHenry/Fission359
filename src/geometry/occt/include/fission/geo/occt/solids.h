@@ -71,6 +71,9 @@ NamedSolid removeFacesNamed(const NamedSolid& solid, const std::vector<std::uint
 NamedSolid offsetFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
                             double distance);
 
+/// The cutting tool of a hole (see `GeometryKernel::makeHoleTool`). Throws GeometryError.
+NamedSolid makeHoleToolNamed(const HoleToolSpec& spec);
+
 /// Turns a flat face about a hinge line (see `GeometryKernel::tiltFace`). Throws GeometryError.
 NamedSolid tiltFaceNamed(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot, Point3d axis,
                          double degrees);

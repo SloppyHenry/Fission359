@@ -39,6 +39,7 @@ add_executable(fission_unit_tests
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp
+  geometry/test_hole_tool.cpp
   geometry/test_rotation.cpp
   geometry/test_booleans_gal.cpp
   geometry/test_signatures.cpp
