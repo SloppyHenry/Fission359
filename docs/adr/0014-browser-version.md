@@ -55,3 +55,6 @@ Wir wählen **Option 1**, weil sie als einzige ohne zweite Oberfläche und ohne 
 - OCCT unter Emscripten: offizielle Unterstützung seit 7.x (`BUILD_LIBRARY_TYPE=Static`, Emscripten-Toolchain), Projekt opencascade.js.
 - Manifold hat einen eigenen WebAssembly-Build (manifold-3d auf npm).
 - coi-serviceworker: https://github.com/gzuidhof/coi-serviceworker
+
+**Nachtrag (2026-11-11):** Abweichung von „gleiche Qt-Version wie auf dem Desktop“: Der Browser nutzt Qt 6.12 mit Emscripten 5.0.5,
+weil das zu Qt 6.11 gehörende Emscripten 4.0.7 mit WebAssembly-Ausnahmen fehlerhaften Code erzeugt (AP-6.7 Festlegung 10).
