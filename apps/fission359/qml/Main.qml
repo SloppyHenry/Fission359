@@ -153,6 +153,7 @@ Window {
             { id: "tiltFace", text: qsTr("Tilt face"), enabled: Selection.singleFaceChosen },
             { id: "removeFaces", text: qsTr("Remove face"), enabled: root.facesChosen },
             { id: "offsetFaces", text: qsTr("Offset faces"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
+            { id: "drillHole", text: qsTr("Drill hole"), enabled: Selection.singleFaceChosen },
             { separator: true },
             { id: "shell", text: qsTr("Hollow out"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
             { id: "draft", text: qsTr("Draft"), enabled: root.facesChosen || root.chosenBodies.length === 1 }
@@ -561,6 +562,7 @@ Window {
         case "tiltFace": tiltFaceChosen(); break
         case "removeFaces": removeFacesChosen(); break
         case "offsetFaces": offsetFacesChosen(); break
+        case "drillHole": drillHoleChosen(); break
         case "shell": shellChosen(); break
         case "draft": draftChosen(); break
         case "merge":
@@ -724,6 +726,19 @@ Window {
         root.flyout = ""
         Selection.chooseBodies([made])
         showHint(qsTr("Face tilted. Type an angle in the panel: plus leans it out, minus leans it in."))
+    }
+
+    // Drills a hole of 3.4 mm (for an M3 screw) into the middle of the chosen flat face.
+    function drillHoleChosen() {
+        const item = Selection.singleFaceChosen ? Selection.items[0] : undefined
+        const made = item !== undefined ? DocumentModel.drillHole(item.body, item.number) : ""
+        if (made === "") {
+            showHint(qsTr("A hole can only be drilled into a flat face of a body that is not part of another body yet."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        showHint(qsTr("Hole drilled into the middle of the face. Type the diameter, the depth and the place in the panel."))
     }
 
     function roundVerticalChosen() {
@@ -1813,6 +1828,7 @@ Window {
         if (type === "removeFaces") { return qsTr("Removing faces") }
         if (type === "offsetFaces") { return qsTr("Moving faces") }
         if (type === "tiltFace") { return qsTr("Tilting a face") }
+        if (type === "hole") { return qsTr("Drilling a hole") }
         if (type === "shell") { return qsTr("Hollowing out") }
         if (type === "draft") { return qsTr("Draft") }
         if (type === "place") { return qsTr("Placing") }
@@ -1843,6 +1859,9 @@ Window {
         case "position": return qsTr("Position")
         case "thickness": return qsTr("Wall thickness")
         case "angle": return qsTr("Angle")
+        case "diameter": return qsTr("Diameter")
+        case "u": return qsTr("Across")
+        case "v": return qsTr("Along")
         default: return name
         }
     }
@@ -1895,6 +1914,7 @@ Window {
         case "removeFaces": return qsTr("%n face(s) removed", "", Number(step.count))
         case "offsetFaces": return qsTr("%n face(s) moved", "", Number(step.count))
         case "tiltFace": return qsTr("Face tilted")
+        case "drillHole": return qsTr("Hole drilled")
         case "shellBody": return qsTr("Body hollowed out")
         case "draftFaces": return qsTr("Draft added")
         case "combineBodies":

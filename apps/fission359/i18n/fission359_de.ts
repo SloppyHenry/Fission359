@@ -1078,6 +1078,18 @@
         <source>A %1 as the start of a shape. %2</source>
         <translation>Ein %1 als Anfang einer Form. %2</translation>
     </message>
+    <message>
+        <source>Drill hole</source>
+        <translation>Bohren</translation>
+    </message>
+    <message>
+        <source>Drills a round hole into a flat face, 3.4 mm wide for an M3 screw. Diameter, depth and place can be changed afterwards.</source>
+        <translation>Bohrt ein rundes Loch in eine ebene Fläche, 3,4 mm weit für eine M3-Schraube. Durchmesser, Tiefe und Lage lassen sich danach ändern.</translation>
+    </message>
+    <message>
+        <source>Choose one flat face, then type the diameter, the depth and the place in the panel.</source>
+        <translation>Wähle eine ebene Fläche und trage dann Durchmesser, Tiefe und Lage im Feld ein.</translation>
+    </message>
 </context>
 <context>
     <name>CommandPalette</name>
@@ -3234,6 +3246,38 @@
             <numerusform>%n geschlossener Bereich. Klicke einen an, um ihn zu wählen.</numerusform>
             <numerusform>%n geschlossene Bereiche. Klicke einen an, um ihn zu wählen.</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Drill hole</source>
+        <translation>Bohren</translation>
+    </message>
+    <message>
+        <source>A hole can only be drilled into a flat face of a body that is not part of another body yet.</source>
+        <translation>Eine Bohrung geht nur in eine ebene Fläche eines Körpers, der noch nicht Teil eines anderen Körpers ist.</translation>
+    </message>
+    <message>
+        <source>Hole drilled into the middle of the face. Type the diameter, the depth and the place in the panel.</source>
+        <translation>Bohrung in die Mitte der Fläche gesetzt. Durchmesser, Tiefe und Lage trägst du im Feld ein.</translation>
+    </message>
+    <message>
+        <source>Drilling a hole</source>
+        <translation>Bohren</translation>
+    </message>
+    <message>
+        <source>Hole drilled</source>
+        <translation>Bohrung gesetzt</translation>
+    </message>
+    <message>
+        <source>Diameter</source>
+        <translation>Durchmesser</translation>
+    </message>
+    <message>
+        <source>Across</source>
+        <translation>Quer</translation>
+    </message>
+    <message>
+        <source>Along</source>
+        <translation>Längs</translation>
     </message>
 </context>
 <context>
