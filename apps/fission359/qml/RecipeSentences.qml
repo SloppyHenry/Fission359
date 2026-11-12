@@ -19,85 +19,92 @@ QtObject {
 
     /// One sentence for a step of the recipe ("Box 50 × 20 × 4 mm").
     function text(step) {
+        const words = sentence(step)
+        return Numbers.unit === "in" ? words.replace(/(\d) mm\b/g, "$1 in") : words
+    }
+
+    /// The sentence with the lengths in millimetres; `text` swaps the unit word when in inches.
+    function sentence(step) {
         const n = value => Numbers.format(value, 2)
+        const len = value => Numbers.formatLength(value, 2)
         const v = step.values
         if (step.type === "box" && v.length === 3) {
-            return qsTr("Box %1 × %2 × %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+            return qsTr("Box %1 × %2 × %3 mm").arg(len(v[0])).arg(len(v[1])).arg(len(v[2]))
         }
         if (step.type === "cylinder" && v.length === 2) {
-            return qsTr("Cylinder, radius %1 mm, height %2 mm").arg(n(v[0])).arg(n(v[1]))
+            return qsTr("Cylinder, radius %1 mm, height %2 mm").arg(len(v[0])).arg(len(v[1]))
         }
         if (step.type === "sphere" && v.length === 1) {
-            return qsTr("Sphere, radius %1 mm").arg(n(v[0]))
+            return qsTr("Sphere, radius %1 mm").arg(len(v[0]))
         }
         if (step.type === "hemisphere" && v.length === 1) {
-            return qsTr("Hemisphere, radius %1 mm").arg(n(v[0]))
+            return qsTr("Hemisphere, radius %1 mm").arg(len(v[0]))
         }
         if (step.type === "cone" && v.length === 3) {
             return v[1] > 0
-                ? qsTr("Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
-                : qsTr("Cone, radius %1 mm, height %2 mm").arg(n(v[0])).arg(n(v[2]))
+                ? qsTr("Cone, radius %1 mm at the bottom, %2 mm at the top, height %3 mm").arg(len(v[0])).arg(len(v[1])).arg(len(v[2]))
+                : qsTr("Cone, radius %1 mm, height %2 mm").arg(len(v[0])).arg(len(v[2]))
         }
         if (step.type === "torus" && v.length === 2) {
-            return qsTr("Torus, ring radius %1 mm, tube radius %2 mm").arg(n(v[0])).arg(n(v[1]))
+            return qsTr("Torus, ring radius %1 mm, tube radius %2 mm").arg(len(v[0])).arg(len(v[1]))
         }
         if (step.type === "tube" && v.length === 3) {
-            return qsTr("Tube, radius %1 mm, wall %2 mm, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+            return qsTr("Tube, radius %1 mm, wall %2 mm, height %3 mm").arg(len(v[0])).arg(len(v[1])).arg(len(v[2]))
         }
         if (step.type === "prism" && v.length === 3) {
-            return qsTr("Prism with %1 sides, radius %2 mm, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+            return qsTr("Prism with %1 sides, radius %2 mm, height %3 mm").arg(n(v[0])).arg(len(v[1])).arg(len(v[2]))
         }
         if (step.type === "pyramid" && v.length === 3) {
-            return qsTr("Pyramid %1 × %2 × %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+            return qsTr("Pyramid %1 × %2 × %3 mm").arg(len(v[0])).arg(len(v[1])).arg(len(v[2]))
         }
         if (step.type === "wedge" && v.length === 3) {
-            return qsTr("Wedge %1 × %2 × %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+            return qsTr("Wedge %1 × %2 × %3 mm").arg(len(v[0])).arg(len(v[1])).arg(len(v[2]))
         }
         if (step.type === "star" && v.length === 3) {
-            return qsTr("Star with %1 points, radius %2 mm, height %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+            return qsTr("Star with %1 points, radius %2 mm, height %3 mm").arg(n(v[0])).arg(len(v[1])).arg(len(v[2]))
         }
         if (step.type === "text" && v.length === 2) {
             const style = step.texts.style
             return style !== undefined && style !== "regular"
-                ? qsTr("Text “%1” (%2), letters %3 mm, height %4 mm").arg(step.texts.text).arg(root.styleLabel(style)).arg(n(v[0])).arg(n(v[1]))
-                : qsTr("Text “%1”, letters %2 mm, height %3 mm").arg(step.texts.text).arg(n(v[0])).arg(n(v[1]))
+                ? qsTr("Text “%1” (%2), letters %3 mm, height %4 mm").arg(step.texts.text).arg(root.styleLabel(style)).arg(len(v[0])).arg(len(v[1]))
+                : qsTr("Text “%1”, letters %2 mm, height %3 mm").arg(step.texts.text).arg(len(v[0])).arg(len(v[1]))
         }
         if (step.type === "split" && v.length === 2) {
-            return qsTr("Split across %1 at %2 mm").arg(["X", "Y", "Z"][Math.round(v[0])]).arg(n(v[1]))
+            return qsTr("Split across %1 at %2 mm").arg(["X", "Y", "Z"][Math.round(v[0])]).arg(len(v[1]))
         }
         if (step.type === "fillet" && v.length === 2) {
-            return qsTr("Rounded %n edge(s), radius %1 mm", "", v[0]).arg(n(v[1]))
+            return qsTr("Rounded %n edge(s), radius %1 mm", "", v[0]).arg(len(v[1]))
         }
         if (step.type === "chamfer" && v.length === 2) {
-            return qsTr("Bevelled %n edge(s), distance %1 mm", "", v[0]).arg(n(v[1]))
+            return qsTr("Bevelled %n edge(s), distance %1 mm", "", v[0]).arg(len(v[1]))
         }
         if (step.type === "pushFace" && v.length === 1) {
-            return v[0] >= 0 ? qsTr("Face pulled out by %1 mm").arg(n(v[0]))
-                             : qsTr("Face pushed in by %1 mm").arg(n(-v[0]))
+            return v[0] >= 0 ? qsTr("Face pulled out by %1 mm").arg(len(v[0]))
+                             : qsTr("Face pushed in by %1 mm").arg(len(-v[0]))
         }
         if (step.type === "stretch" && v.length === 2) {
-            return v[0] >= 0 ? qsTr("Stretched by %1 mm").arg(n(v[0])) : qsTr("Shortened by %1 mm").arg(n(-v[0]))
+            return v[0] >= 0 ? qsTr("Stretched by %1 mm").arg(len(v[0])) : qsTr("Shortened by %1 mm").arg(len(-v[0]))
         }
         if (step.type === "removeFaces" && v.length === 1) {
             return qsTr("Removed %n face(s)", "", v[0])
         }
         if (step.type === "offsetFaces" && v.length === 2) {
-            return v[1] >= 0 ? qsTr("Moved %n face(s) out by %1 mm", "", v[0]).arg(n(v[1]))
-                             : qsTr("Moved %n face(s) in by %1 mm", "", v[0]).arg(n(-v[1]))
+            return v[1] >= 0 ? qsTr("Moved %n face(s) out by %1 mm", "", v[0]).arg(len(v[1]))
+                             : qsTr("Moved %n face(s) in by %1 mm", "", v[0]).arg(len(-v[1]))
         }
         if (step.type === "tiltFace" && v.length === 1) {
             return qsTr("Face tilted by %1°").arg(n(v[0]))
         }
         if (step.type === "shell" && v.length === 2) {
             const outside = step.texts !== undefined && step.texts.side === "outside"
-            return outside ? qsTr("Wall of %1 mm added around the body, %n face(s) left open", "", v[0]).arg(n(v[1]))
-                           : qsTr("Hollowed out with a wall of %1 mm, %n face(s) left open", "", v[0]).arg(n(v[1]))
+            return outside ? qsTr("Wall of %1 mm added around the body, %n face(s) left open", "", v[0]).arg(len(v[1]))
+                           : qsTr("Hollowed out with a wall of %1 mm, %n face(s) left open", "", v[0]).arg(len(v[1]))
         }
         if (step.type === "draft" && v.length === 2) {
             return qsTr("Draft of %1° on %n face(s)", "", v[0]).arg(n(v[1]))
         }
         if (step.type === "place" && v.length === 3) {
-            return qsTr("Part placed, moved by %1, %2, %3 mm").arg(n(v[0])).arg(n(v[1])).arg(n(v[2]))
+            return qsTr("Part placed, moved by %1, %2, %3 mm").arg(len(v[0])).arg(len(v[1])).arg(len(v[2]))
         }
         if (step.type === "import" && v.length === 1) {
             return qsTr("Imported from “%1”, part %2").arg(step.texts.asset).arg(n(v[0]))
