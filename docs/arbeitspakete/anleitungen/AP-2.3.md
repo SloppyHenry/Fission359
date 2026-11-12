@@ -61,7 +61,8 @@ gibt Namen weiter (`passesOnNames`), eigene Flächen heißen `F<n>/extrude/…`;
 2.3b3b (gebaut) = Ziel-Körper automatisch: Skizze auf einer Fläche eines Körpers → `merge` mit diesem Körper; negative Distanz
 (Tippen oder Ziehen) schaltet im selben Rückgängig-Schritt auf `subtract`, positive zurück auf `merge`; Skizze auf der Grundebene → `new`.
 Offen für 2.3b3: Umschalten des Vorschlags per Klick am Pfeil (Symbol), Pfeil schon beim Überfahren
-eines Bereichs ohne Klick, Entfernen einer gelesenen Skizze sperren oder melden, Testdatei `v3/extrude.fission`, Budget der
+eines Bereichs ohne Klick (2.3b3c gebaut: `Document::dependentsOf` zählt Schritte, die die Skizze lesen; Löschen nennt sie wie
+bei Körpern), Testdatei `v3/extrude.fission`, Budget der
 Live-Vorschau messen.
 
 1. Feature-Typ `extrude` (Eingang: Skizzen-Schritt per Verweis auf den Bereich, Ziel-Körper bei Modus ≠ new). Werte `distance`, `taper`, Wörter
