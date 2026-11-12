@@ -61,6 +61,10 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 aber alles in mm. Sie ist bis zu dieser Aufgabe ausgeblendet, neue Projekte zählen in mm (Zoll lassen sich weiter eintippen, „2 in“). Nötig: Einheit je Dokument (Dateiformat-Feld mit Migration), Anzeige
 aller Längen (Zahlenfeld, Maßbänder, Rezept-Sätze, Statuszeile, Bett-Beschriftung) in der Einheit des Dokuments, intern weiter mm.
 
+**Erledigt (2026-11-12):** `Numbers::unit`/`formatLength`; `DocumentModel::unit` aus `defaultUnitMillimetres` (kein neues
+Dateiformat-Feld); Zahlenfelder, Griffe, Abstände, Gizmo, Statuszeile, Rezept-Sätze und Bett in der Einheit; Auswahl wieder sichtbar.
+Druckermaße bleiben in mm.
+
 ## P21 Wacklige Fenster-Tests beobachten
 **Größe:** S · Ursache von `app_ring_turn` und `app_snap_corner_handle` wohl behoben (2026-10-28, `pressAndPull`). Fällt einer in der CI erneut aus: Meldung dort ansehen, nicht abschwächen. Prüfungen von `--simulate` warten auf das Ende der Aktion, nie auf feste Zeiten (PR #51).
 2026-11-08: Gefunden, dass eine simulierte Taste (`key:`) hinter einer schon fälligen Prüfung landen konnte, wenn das Programm kurz beschäftigt war (die Taste ging über einen weiteren Null-Timer); behoben, die Taste geht bei aktivem Fenster sofort. Neu beobachtet: `app_number_field_arrows` unter Linux debug-asan einmal 30,9 statt 30,8.

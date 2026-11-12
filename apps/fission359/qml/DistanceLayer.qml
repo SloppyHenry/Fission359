@@ -37,7 +37,7 @@ Item {
         editing = index
         const input = chips.itemAt(index).field
         input.refused = false
-        input.text = Numbers.format(Distances.labels[index].value, 3)
+        input.text = Numbers.formatLength(Distances.labels[index].value, 3)
         input.pendingEdit = false
         input.forceActiveFocus()
         input.selectAll()
@@ -115,7 +115,7 @@ Item {
                     Txt {
                         visible: !part.open
                         anchors.verticalCenter: parent.verticalCenter
-                        text: part.info ? Numbers.format(part.info.value, 2) : ""
+                        text: part.info ? Numbers.formatLength(part.info.value, 2) : ""
                         mono: true
                         color: Theme.fg
                         font.weight: Font.Medium
@@ -183,7 +183,7 @@ Item {
                     Txt {
                         visible: part.open
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "mm"
+                        text: Numbers.unit
                         color: Theme.fg4
                         font.pixelSize: Theme.fontSizeSmall
                         mono: true

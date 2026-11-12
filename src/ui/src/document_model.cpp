@@ -588,6 +588,28 @@ void DocumentModel::waitForCalculation() {
     QCoreApplication::sendPostedEvents(this, 0);
 }
 
+void DocumentModel::setNumbers(Numbers* numbers) {
+    m_numbers = numbers;
+    syncUnit();
+}
+
+QString DocumentModel::unit() const {
+    return std::abs(m_history.document().settings().defaultUnitMillimetres - 25.4) < 1e-9
+               ? QStringLiteral("in")
+               : QStringLiteral("mm");
+}
+
+void DocumentModel::syncUnit() {
+    const QString wanted = unit();
+    if (wanted != m_unit) {
+        m_unit = wanted;
+        emit unitChanged();
+    }
+    if (m_numbers != nullptr) {
+        m_numbers->setUnit(m_unit);
+    }
+}
+
 std::uint64_t DocumentModel::meshKey(const core::BodyResult& body) noexcept {
     return body.token * 256U + body.outputIndex;
 }
@@ -702,6 +724,7 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
         }
         m_numbers->setNamedMeasures(std::move(names));
     }
+    syncUnit();
     {
         auto names = std::make_shared<ElementNameMap>();
         const std::lock_guard lock(m_meshMutex);

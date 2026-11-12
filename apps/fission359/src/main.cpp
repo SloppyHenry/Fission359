@@ -572,9 +572,11 @@ int main(int argc, char* argv[]) {
     fission::ui::CommandSearch commandSearch;
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "CommandSearch", &commandSearch);
     documentModel.setPrinter(preferences.printerId());
-    // New projects count in millimetres until lengths are also shown in inches (pflege.md P23):
-    // a bare number in inches while everything shows millimetres would only confuse.
-    files.setNewDocumentUnit(1.0);
+    // New projects count and show lengths in the chosen unit; opened ones keep their own.
+    files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
+    QObject::connect(&preferences, &fission::ui::Preferences::unitsChanged, &files, [&] {
+        files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
+    });
     numbers.setMaxDecimals(preferences.decimals());
     QObject::connect(&preferences, &fission::ui::Preferences::decimalsChanged, &numbers,
                      [&] { numbers.setMaxDecimals(preferences.decimals()); });

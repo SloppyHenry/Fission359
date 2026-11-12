@@ -256,7 +256,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         text: {
                             const v = Gizmo.offset[entry.index]
-                            return (v > 0 ? "+" : "") + Numbers.format(v, 2)
+                            return (v > 0 ? "+" : "") + Numbers.formatLength(v, 2)
                         }
                         mono: true
                         color: Theme.fg
@@ -330,7 +330,7 @@ Item {
 
             Txt {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "mm"
+                text: Numbers.unit
                 color: Theme.fg4
                 font.pixelSize: Theme.fontSizeSmall
                 mono: true
