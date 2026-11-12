@@ -6149,4 +6149,23 @@
         <translation>Zoomen: Mausrad, zum Zeiger hin – oder diesen Knopf ziehen</translation>
     </message>
 </context>
+<context>
+    <name>HandleLayer</name>
+    <message>
+        <source>Joins</source>
+        <translation>Vereint</translation>
+    </message>
+    <message>
+        <source>Cuts out</source>
+        <translation>Schneidet aus</translation>
+    </message>
+    <message>
+        <source>New body</source>
+        <translation>Neuer Körper</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>Was das Ziehen macht</translation>
+    </message>
+</context>
 </TS>

@@ -6149,4 +6149,23 @@
         <translation>Zoom: mouse wheel, towards the pointer – or drag this button</translation>
     </message>
 </context>
+<context>
+    <name>HandleLayer</name>
+    <message>
+        <source>Joins</source>
+        <translation>Joins</translation>
+    </message>
+    <message>
+        <source>Cuts out</source>
+        <translation>Cuts out</translation>
+    </message>
+    <message>
+        <source>New body</source>
+        <translation>New body</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>What the pull does</translation>
+    </message>
+</context>
 </TS>

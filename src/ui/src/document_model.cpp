@@ -2308,6 +2308,23 @@ bool DocumentModel::setStepText(int index, const QString& name, const QString& t
     return true;
 }
 
+bool DocumentModel::canCycleExtrudeMode(int index) const {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size())) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "extrude") {
+        return false;
+    }
+    const auto sketchWord = step.texts.find("sketch");
+    const core::Feature* sketch =
+        sketchWord == step.texts.end()
+            ? nullptr
+            : m_history.document().findFeature(core::FeatureId{sketchWord->second});
+    return sketch != nullptr && sketch->inputs.size() == 1;
+}
+
 QString DocumentModel::cycleExtrudeMode(int index) {
     const auto& features = m_history.document().features();
     if (index < 0 || index >= static_cast<int>(features.size())) {

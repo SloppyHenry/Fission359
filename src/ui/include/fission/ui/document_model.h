@@ -337,6 +337,8 @@ public:
     /// joined to the body, cut out of it, new again; the distance changes its sign with it. Returns
     /// the mode now ("new", "merge", "subtract"), empty when the step is no pull on a body.
     Q_INVOKABLE QString cycleExtrudeMode(int index);
+    /// True when the step is a pull of a sketch that lies on a body, i.e. its mode can change.
+    Q_INVOKABLE bool canCycleExtrudeMode(int index) const;
     /// How far a pull (step `index`) of a sketch on a body goes: `reach` is "distance" (the typed
     /// number), "throughAll" or "toFace" (up to the flat face number `faceNumber` of that body,
     /// parallel to the sketch). One step of the history; false when the step is no such pull or

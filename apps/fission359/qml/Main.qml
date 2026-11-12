@@ -655,6 +655,13 @@ Window {
         showHint(qsTr("Pulled out of the sketch: drag the arrow or type a distance."))
     }
 
+    // The chip beside the arrow of a pull, or the button of the panel: the next mode.
+    function cycleOrHint() {
+        if (DocumentModel.cycleExtrudeMode(DocumentModel.currentStep) === "") {
+            showHint(qsTr("This pull starts on the ground plane: there is no body to join or cut."))
+        }
+    }
+
     // The faces chosen, all of one body (empty if there are none or they differ).
     function chosenFaceItems() {
         const faces = Selection.items.filter(item => item.kind === "face")
@@ -1526,6 +1533,15 @@ Window {
                 anchors.fill: parent
                 labelFor: root.valueLabel
                 obstacles: viewOverlay.obstacles
+                pullMode: {
+                    DocumentModel.stepTexts
+                    if (!DocumentModel.canCycleExtrudeMode(DocumentModel.currentStep)) {
+                        return ""
+                    }
+                    const entry = DocumentModel.stepTexts.find(t => t.name === "mode")
+                    return entry !== undefined ? entry.value : "new"
+                }
+                onPullModeRequested: root.cycleOrHint()
             }
 
             GizmoLayer {

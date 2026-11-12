@@ -23,6 +23,12 @@ Item {
     readonly property bool typing: bubble.typing
     objectName: "handleLayer"
     readonly property bool busy: Handles.editing
+    // The mode of a pull of a sketch area on a body ("new", "merge", "subtract"; empty: this step
+    // is no such pull): a chip beside the arrow shows it, a click changes it (AP-2.3).
+    property string pullMode: ""
+    signal pullModeRequested
+    readonly property var pullArrow: pullMode === "" ? undefined
+        : Handles.handles.find(handle => handle.parameter === "distance")
 
     // The colours of what the 3D view draws, from the theme.
     Binding {
@@ -74,6 +80,44 @@ Item {
 
     function currentHandle() {
         return bubble.index >= 0 && bubble.index < Handles.handles.length ? Handles.handles[bubble.index] : null
+    }
+
+    Rectangle {
+        id: modeChip
+
+        objectName: "pullModeChip"
+        x: root.pullArrow !== undefined ? Math.min(Math.max(root.pullArrow.x + 16, 4), root.width - width - 4) : 0
+        y: root.pullArrow !== undefined ? Math.min(Math.max(root.pullArrow.y - 36, 4), root.height - height - 4) : 0
+        width: modeLabel.implicitWidth + 18
+        height: 24
+        radius: 12
+        color: modeArea.containsMouse ? Theme.field2 : Theme.panel
+        border.width: 1
+        border.color: Theme.accentLine
+        visible: root.pullArrow !== undefined && !Handles.editing
+        z: 5
+
+        Txt {
+            id: modeLabel
+
+            anchors.centerIn: parent
+            text: root.pullMode === "merge" ? qsTr("Joins")
+                  : root.pullMode === "subtract" ? qsTr("Cuts out") : qsTr("New body")
+            color: Theme.fg
+            font.pixelSize: Theme.fontSizeSmall
+            elide: Text.ElideNone
+        }
+
+        MouseArea {
+            id: modeArea
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            Accessible.role: Accessible.Button
+            Accessible.name: qsTr("What the pull does")
+            onClicked: root.pullModeRequested()
+        }
     }
 
     // One handle for every value: the place to grab its dot, and its label. The delegates stay:
