@@ -457,6 +457,99 @@ void Document::restoreFeature(RemovedFeature removed) {
     touch();
 }
 
+namespace {
+
+/// The step number in a reference name ("F5/hole/wall" -> 5); nullopt when the name does not
+/// start with "F" and digits. Such a name is no reference to a step and is ignored.
+std::optional<int> featureNumberInName(const std::string& name) {
+    if (name.size() < 2 || name.front() != 'F') {
+        return std::nullopt;
+    }
+    int number = 0;
+    std::size_t i = 1;
+    while (i < name.size() && name[i] >= '0' && name[i] <= '9') {
+        number = number * 10 + (name[i] - '0');
+        ++i;
+    }
+    if (i == 1) {
+        return std::nullopt;
+    }
+    return number;
+}
+
+} // namespace
+
+bool Document::orderIsValid(const std::vector<Feature>& order) const {
+    // Where every step sits in this order, by id and by number ("F5" names the number).
+    std::map<FeatureId, std::size_t> positionOfId;
+    std::map<int, std::size_t> positionOfNumber;
+    for (std::size_t p = 0; p < order.size(); ++p) {
+        positionOfId[order[p].id] = p;
+        positionOfNumber[order[p].number] = p;
+    }
+    for (std::size_t p = 0; p < order.size(); ++p) {
+        const Feature& step = order[p];
+        // Every input body must be made by an earlier step of this order. An input that is
+        // already missing (its step was removed) reports itself elsewhere and blocks no move.
+        for (const BodyId& input : step.inputs) {
+            const Body* body = findBody(input);
+            if (body == nullptr) {
+                continue;
+            }
+            const auto maker = positionOfId.find(body->createdBy);
+            if (maker != positionOfId.end() && maker->second >= p) {
+                return false;
+            }
+        }
+        // Every reference to another step ("F<n>/...") must point to an earlier step of this
+        // order; a name without a step number is no such reference. The edges a sketch follows
+        // (AP-2.1f) are references of the sketch step too.
+        const auto pointsEarlier = [&](const std::string& name) {
+            const std::optional<int> number = featureNumberInName(name);
+            if (!number) {
+                return true;
+            }
+            // A step that is gone already "needs help"; it blocks no move.
+            const auto target = positionOfNumber.find(*number);
+            return target == positionOfNumber.end() || target->second < p;
+        };
+        for (const auto& entry : step.refs) {
+            for (const PersistentRef& ref : entry.second) {
+                if (!pointsEarlier(ref.name)) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool Document::moveFeature(const FeatureId& id, std::size_t newIndex) {
+    const auto oldIndex = indexOf(id);
+    if (!oldIndex || newIndex >= features_.size()) {
+        return false;
+    }
+    if (*oldIndex == newIndex) {
+        return true; // already there: nothing changes
+    }
+    // Try the new order on a copy first: a refused move must not change anything.
+    std::vector<Feature> candidate = features_;
+    const auto from = candidate.begin() + static_cast<std::ptrdiff_t>(*oldIndex);
+    const auto to = candidate.begin() + static_cast<std::ptrdiff_t>(newIndex);
+    if (*oldIndex < newIndex) {
+        std::rotate(from, from + 1, to + 1); // the step lands at newIndex
+    } else {
+        std::rotate(to, from, from + 1);
+    }
+    if (!orderIsValid(candidate)) {
+        return false;
+    }
+    features_ = std::move(candidate);
+    // The time marker keeps its count of active steps (AP-1.9): only the order changed.
+    touch();
+    return true;
+}
+
 std::vector<FeatureId> Document::dependentsOf(const FeatureId& id) const {
     const Feature* feature = findFeature(id);
     if (feature == nullptr) {

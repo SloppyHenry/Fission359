@@ -5,7 +5,7 @@ Stand: 2026-11-06 (P17 erledigt mit PR #99, P22 umgesetzt), gegen den Code auf `
 
 ## Reihenfolge
 **Nach Bedarf**, der Nutzertest 1 (AP-1.13) kann die Reihenfolge ändern. P18, P2 und P3 sind vor dem Nutzertest erledigt worden.
-**Braucht eine Entscheidung (trifft die Orchestrierung) oder ein Testsystem:** P1 (Bild oder Video), P5, P10, P11, P14 (Entscheidung oder Rechner).
+**Braucht eine Entscheidung (trifft die Orchestrierung) oder ein Testsystem:** P1 (Bild oder Video), P5, P11, P14 (Entscheidung oder Rechner).
 
 ---
 
@@ -31,21 +31,10 @@ Achsen des Körpers, außerhalb seines (gedrehten) Kastens. `FeatureType::placed
 baut die Bänder heute nur für achsparallele Richtungen. Bilder vorher/nachher; Test: gedrehter Quader (rotZ 30) hat drei Bänder, keines
 schneidet den Körper.
 
-## P7 Exakte Fangpunkte aus dem Kernel
-**Größe:** M · Folgearbeit seit AP-1.6c1.
-Fangpunkte kommen heute aus dem Anzeige-Netz (Rauschen ~1e-5 mm, gebogene Kantenmitten genähert). Neue GAL-Funktion
-`std::vector<SnapPointGal> snapPoints(const Solid&)` (Ecken, Kantenmitten, Kreismitten, Mitten ebener Flächen, exakt aus OCCT), im
-Hintergrund je Ergebnis berechnet, in `SnapSession` statt der Netzpunkte. Test: Zylinder Ø 6,3 → Kreismitte exakt, Kantenmitte eines Bogens
-exakt auf dem Kreis.
-
 ## P9 Rezept umsortieren per Ziehen
 **Größe:** M · UX §4 erlaubt es, AP-1.9 hat es ausgelassen. Ziehen einer Zeile; erlaubt nur, wenn keine Abhängigkeit verletzt wird
 (Eingänge müssen vorher stehen); sonst Erklärung inline. Neuer Command `makeMoveFeature(id, newIndex)`, Test mit Undo und mit verbotener
 Reihenfolge.
-
-## P10 Tastatur-Zoom
-**Größe:** S · Angeboten am 2026-10-16, keine Antwort. **Haltepunkt:** erst fragen. Vorschlag: `+`/`-` und ⌘+/⌘− zoomen zur Mitte der Ansicht
-(`Viewport3D::zoomBy`); Achtung: ⌘+/⌘− wären sonst UI-Skalierung (AP-1.11) – Belegung mit dem Maintainer klären.
 
 ## P11 ⌥ beim Ablegen unter Linux prüfen
 **Größe:** S · Offen aus AP-1.6b3. Manche Linux-Fenstermanager (KDE, GNOME) nehmen ⌥(Alt)+Maus für sich (Fenster verschieben). Auf einem
@@ -81,6 +70,7 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 
 ## Erledigt
 - **P8** Lage beim Tippen nach dem Ablegen an einer Wand (2026-11-11): solange nichts anderes geschah, hält ein getipptes Maß die Unterseite an der Wand, im selben Schritt; mit benannten Maßen im Wert wird nicht nachgeführt.
+- **P7** Exakte Fangpunkte aus dem Kernel (2026-11-11): `GeometryKernel::snapPoints` (Ecken, Kantenmitten, Kreismitten, Mitten ebener Flächen, exakt aus OCCT; Nahtkanten ausgenommen), im Hintergrund mit dem Netz berechnet, `SnapSession` nimmt sie statt der Netzpunkte (Rückfall: Netzpunkte).
 - **P18** Abstandsmaß auf einer Platte (2026-11-03, PR #83): Ohne Nachbarn misst das Maß bis zum Rand des kleinsten Körpers, der die Grundfläche umfasst und auf dem der Körper steht oder in dem er steckt (nicht ein Körper darüber, z. B. Schrift über dem Loch); danach bis zum Bettrand. Festlegung ohne Umschalter. `app_flow_a_keychain` tippt den Abstand.
 - **P2** Formen-Galerie schließt bei Klick auf leeren Grund (2026-11-03, PR #84), Simulations-Prüfung `expectflyout:`.
 - **P3** Abstände der Grundbausteine aus `Theme.space1..6`, Elide in Statuszeile und Tabs (2026-11-03, PR #85). Bildschirmfotos vorher/nachher fehlen; nachholen mit P20.
@@ -89,3 +79,4 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 - **P13** Löcher im Hintergrund prüfen: gemessen, ein Zug-Schritt ≈ 31 ms bei 10 Körpern und 20 Löchern, unter der 50-ms-Grenze; kein Umbau. Wieder ansehen bei Loch-Mustern (AP-2.8) oder großen Körpern.
 - **P15** Rezept-Sätze ausgelagert (Rest nach P19 und P21).
 - **Prüfliste T1–T11 vom 2026-10-27:** alles gemergt (PR #68–#80).
+- **P10** Tastatur-Zoom (2026-11-11): +/= und - zoomen zur Bildmitte um 20 %, ohne Strg/⌘ (bleibt für UI-Skalierung frei), aus beim Tippen.
