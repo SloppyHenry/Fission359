@@ -4324,6 +4324,16 @@
         <translation>Pulled %1 mm</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Pulled %1 mm onto the body</source>
+        <translation>Pulled %1 mm onto the body</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut %1 mm deep</source>
+        <translation>Cut %1 mm deep</translation>
+    </message>
+    <message>
         <location line="+3"/>
         <source>Stretched by %1 mm</source>
         <translation>Stretched by %1 mm</translation>

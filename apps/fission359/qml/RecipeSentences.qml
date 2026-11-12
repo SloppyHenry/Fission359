@@ -76,7 +76,11 @@ QtObject {
                              : qsTr("Face pushed in by %1 mm").arg(n(-v[0]))
         }
         if (step.type === "extrude" && v.length === 1) {
-            return qsTr("Pulled %1 mm").arg(n(v[0]))
+            switch (step.texts.mode) {
+            case "merge": return qsTr("Pulled %1 mm onto the body").arg(n(v[0]))
+            case "subtract": return qsTr("Cut %1 mm deep").arg(n(Math.abs(v[0])))
+            default: return qsTr("Pulled %1 mm").arg(n(v[0]))
+            }
         }
         if (step.type === "stretch" && v.length === 2) {
             return v[0] >= 0 ? qsTr("Stretched by %1 mm").arg(n(v[0])) : qsTr("Shortened by %1 mm").arg(n(-v[0]))
