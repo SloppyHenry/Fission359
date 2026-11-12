@@ -144,6 +144,10 @@ public:
             extent = geo::ExtrudeExtent::distance;
         } else if (extentWord == "symmetric") {
             extent = geo::ExtrudeExtent::symmetric;
+        } else if (extentWord == "throughAll") {
+            extent = geo::ExtrudeExtent::throughAll;
+        } else if (extentWord == "toFace") {
+            extent = geo::ExtrudeExtent::distance; // the distance is worked out below
         } else {
             throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
                                      "extrude: unknown extent '" + extentWord + "'", "extent");
@@ -151,8 +155,46 @@ public:
 
         const SketchPlane& plane = *sketch->plane;
         const geo::SketchFrame frame{plane.origin(), plane.uAxis(), plane.vAxis()};
-        const geo::ExtrudeSpec spec{
+        geo::ExtrudeSpec spec{
             valueOf(input.params, "distance"), *extent, valueOf(input.params, "taper"), {}};
+        if (extentWord == "throughAll" || extentWord == "toFace") {
+            if (mode == "new") {
+                throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                         "extrude: '" + extentWord + "' needs a body to pull into",
+                                         "extent");
+            }
+            const geo::Solid& target = input.inputs.front().solid;
+            if (extentWord == "throughAll") {
+                spec.through = target;
+            } else {
+                // Up to a flat face of the body that lies parallel to the sketch: the distance
+                // is the way from the sketch plane to that face along the sketch's normal.
+                const auto picked = input.refs.find("face");
+                if (picked == input.refs.end() || picked->second.size() != 1) {
+                    throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                             "extrude: 'toFace' needs the reference 'face'",
+                                             "face");
+                }
+                const geo::FaceAnchor anchor =
+                    context.kernel.faceAnchor(target, picked->second.front().id);
+                const geo::Point3d normal = plane.normal();
+                const double along =
+                    anchor.way.x * normal.x + anchor.way.y * normal.y + anchor.way.z * normal.z;
+                if (std::abs(std::abs(along) - 1.0) > 1e-6) {
+                    throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                             "extrude: the face is not parallel to the sketch",
+                                             "face");
+                }
+                const geo::Point3d origin = plane.origin();
+                spec.distance = (anchor.point.x - origin.x) * normal.x +
+                                (anchor.point.y - origin.y) * normal.y +
+                                (anchor.point.z - origin.z) * normal.z;
+                if (std::abs(spec.distance) < 1e-9) {
+                    throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                             "extrude: the face lies in the sketch plane", "face");
+                }
+            }
+        }
         geo::NamedSolid made =
             context.kernel.extrudeRegion(built.curves, {inside.u, inside.v}, frame, spec);
 
