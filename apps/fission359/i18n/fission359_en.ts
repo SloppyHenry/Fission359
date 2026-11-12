@@ -3270,6 +3270,10 @@
             <numerusform>%n closed areas. Click one to choose it.</numerusform>
         </translation>
     </message>
+    <message>
+        <source>This pull starts on the ground plane: there is no body to join or cut.</source>
+        <translation>This pull starts on the ground plane: there is no body to join or cut.</translation>
+    </message>
 </context>
 <context>
     <name>MarkerLine</name>
@@ -4712,6 +4716,38 @@
         <source>Yellow</source>
         <translation>Yellow</translation>
     </message>
+    <message>
+        <source>Pull</source>
+        <translation>Pull</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>What the pull does</translation>
+    </message>
+    <message>
+        <source>Click to change: new body, joined to the body, or cut out of it.</source>
+        <translation>Click to change: new body, joined to the body, or cut out of it.</translation>
+    </message>
+    <message>
+        <source>Joins the body</source>
+        <translation>Joins the body</translation>
+    </message>
+    <message>
+        <source>Cuts out of the body</source>
+        <translation>Cuts out of the body</translation>
+    </message>
+    <message>
+        <source>Makes a new body</source>
+        <translation>Makes a new body</translation>
+    </message>
+    <message>
+        <source>All the way through the body</source>
+        <translation>All the way through the body</translation>
+    </message>
+    <message>
+        <source>Up to the face %1 mm away</source>
+        <translation>Up to the face %1 mm away</translation>
+    </message>
 </context>
 <context>
     <name>RotateLayer</name>
@@ -6111,6 +6147,25 @@
         <location line="+1"/>
         <source>Zoom: mouse wheel, towards the pointer – or drag this button</source>
         <translation>Zoom: mouse wheel, towards the pointer – or drag this button</translation>
+    </message>
+</context>
+<context>
+    <name>HandleLayer</name>
+    <message>
+        <source>Joins</source>
+        <translation>Joins</translation>
+    </message>
+    <message>
+        <source>Cuts out</source>
+        <translation>Cuts out</translation>
+    </message>
+    <message>
+        <source>New body</source>
+        <translation>New body</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>What the pull does</translation>
     </message>
 </context>
 </TS>

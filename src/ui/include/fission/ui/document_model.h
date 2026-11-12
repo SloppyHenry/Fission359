@@ -333,6 +333,21 @@ public:
     Q_INVOKABLE QStringList fontStyles(const QString& family) const;
     /// Sets a word of step `index` (the text of a lettering, the name of its font).
     Q_INVOKABLE bool setStepText(int index, const QString& name, const QString& text);
+    /// A pull of a sketch area (step `index`) that lies on a body goes to the next mode: new body,
+    /// joined to the body, cut out of it, new again; the distance changes its sign with it. Returns
+    /// the mode now ("new", "merge", "subtract"), empty when the step is no pull on a body.
+    Q_INVOKABLE QString cycleExtrudeMode(int index);
+    /// True when the step is a pull of a sketch that lies on a body, i.e. its mode can change.
+    Q_INVOKABLE bool canCycleExtrudeMode(int index) const;
+    /// How far a pull (step `index`) of a sketch on a body goes: `reach` is "distance" (the typed
+    /// number), "throughAll" or "toFace" (up to the flat face number `faceNumber` of that body,
+    /// parallel to the sketch). One step of the history; false when the step is no such pull or
+    /// the face cannot be named.
+    /// The faces a pull (step `index`) may stop at: [{ number, distance }], the flat faces of the
+    /// body it joins or cuts that are parallel to the sketch, `distance` (mm, signed along the
+    /// sketch's normal) from the sketch plane. Empty for a pull on the ground.
+    Q_INVOKABLE QVariantList extrudeReachFaces(int index) const;
+    Q_INVOKABLE bool setExtrudeReach(int index, const QString& reach, int faceNumber);
 
     // --- putting shapes down (AP-1.5) ---
     /// Starts putting a shape of `type` ("sphere", "box" ...) down at (x, y) on the plane z, as

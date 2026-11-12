@@ -441,6 +441,14 @@ if(_fission_run_window_tests)
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.rectangle;sketchclickmm:-40,-20;sketchclickmm:40,20;key:Escape;expectsketchregions:1,none;sketchclickmm:0,0;expectsketchregions:1,selected;expecthint:Enter;key:Return;expectsketch:idle;recipe:box,sketch,extrude;expectundo:extrude")
   set_tests_properties(app_sketch_pull PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.3: a pull of a sketch on the box has a chip beside its arrow that shows the mode; a click
+  # changes it (one undo step "setText").
+  add_test(NAME app_sketch_pull_mode
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-pull-mode.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;expectsketch:picking;click:366,341;expectsketch:active;expectsketchplane:face;menu:sketchtool.rectangle;sketchclickmm:-5,-5;sketchclickmm:5,5;key:Escape;expectsketchregions:1,none;sketchclickmm:0,0;expectsketchregions:1,selected;key:Return;expectsketch:idle;recipe:box,sketch,extrude;clickitem:pullModeChip;expectundo:setText")
+  set_tests_properties(app_sketch_pull_mode PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-2.1f: a sketch on the top of the box, the border taken over with the tool U (found by words
   # only this tool carries), one undo step; the box is made wider by a typed value and the border
   # follows (20 x 20 becomes 30 x 20). Nothing is clicked on a grid: the edges come by name.

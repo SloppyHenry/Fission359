@@ -384,6 +384,91 @@ TEST_CASE("sketch regions: pulled from a sketch on a face, it joins that body; p
     CHECK(distanceSeen);
 }
 
+TEST_CASE("sketch regions: the mode of a pull on a body goes round new, join, cut (AP-2.3)",
+          "[ui][sketchregions][extrude]") {
+    NoCatching free;
+    Sketching f;
+    f.sketch->finish();
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    REQUIRE(f.model->addShape(QStringLiteral("box"), false) >= 0);
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    f.sketch->start();
+    REQUIRE(f.sketch->pickFace(f.model->bodyIdAt(0), faceNamed(*f.model, "/box/top")));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    f.sketch->chooseTool(QStringLiteral("rectangle"));
+    f.click(-2, -2);
+    f.click(2, 2);
+    f.sketch->chooseTool(QString());
+    REQUIRE(f.regionsReady());
+    const QString region = QString::fromStdString(f.ids().front());
+    f.sketch->finish();
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QString sketchId =
+        f.model->recipe().back().toMap().value(QStringLiteral("id")).toString();
+    REQUIRE_FALSE(f.model->addExtrude(sketchId, region, 0, 0).isEmpty());
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QString id = f.model->recipe().back().toMap().value(QStringLiteral("id")).toString();
+    const int index = f.model->stepIndexOfId(id);
+    REQUIRE(index >= 0);
+    CHECK(modeOf(*f.model, id) == "merge");
+
+    CHECK(f.model->cycleExtrudeMode(index) == QStringLiteral("subtract"));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(modeOf(*f.model, id) == "subtract");
+    CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() ==
+          QStringLiteral("ok"));
+    // The faces to stop at: the box has a bottom 20 mm below the sketch on its top (and the top
+    // itself lies in the sketch plane and is left out).
+    const QVariantList reach = f.model->extrudeReachFaces(index);
+    REQUIRE(reach.size() == 1);
+    CHECK(reach.front().toMap().value(QStringLiteral("number")).toInt() ==
+          faceNamed(*f.model, "/box/bottom"));
+    CHECK(std::abs(reach.front().toMap().value(QStringLiteral("distance")).toDouble()) ==
+          Approx(20.0));
+    CHECK(f.model->extrudeReachFaces(-1).isEmpty());
+    // Cut as far as the bottom face of the box, or clean through.
+    CHECK(f.model->setExtrudeReach(index, QStringLiteral("toFace"),
+                                   faceNamed(*f.model, "/box/bottom")));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() ==
+          QStringLiteral("ok"));
+    CHECK(f.model->setExtrudeReach(index, QStringLiteral("throughAll"), 0));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() ==
+          QStringLiteral("ok"));
+    CHECK(f.model->setExtrudeReach(index, QStringLiteral("distance"), 0));
+    CHECK_FALSE(f.model->setExtrudeReach(index, QStringLiteral("toFace"), 4242));
+    CHECK_FALSE(f.model->setExtrudeReach(index, QStringLiteral("sideways"), 0));
+    f.model->waitForCalculation();
+    CHECK(f.model->cycleExtrudeMode(index) == QStringLiteral("new"));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(modeOf(*f.model, id) == "new");
+    CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() ==
+          QStringLiteral("ok"));
+    CHECK(f.model->cycleExtrudeMode(index) == QStringLiteral("merge"));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(modeOf(*f.model, id) == "merge");
+
+    // One undo step goes back one mode.
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(modeOf(*f.model, id) == "new");
+    // Not a pull, or a pull on the ground: nothing to cycle.
+    CHECK(f.model->cycleExtrudeMode(-1).isEmpty());
+    CHECK(f.model->cycleExtrudeMode(0).isEmpty());
+}
+
 TEST_CASE("sketch regions: pulled from the ground, a new body (AP-2.3b3)",
           "[ui][sketchregions][extrude]") {
     NoCatching free;

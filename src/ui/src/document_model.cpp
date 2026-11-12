@@ -1002,8 +1002,10 @@ QVariantList DocumentModel::buildStepTexts() const {
             spec.name == "font"                                ? QStringLiteral("font")
             : spec.name == "style"                             ? QStringLiteral("style")
             : spec.name == "keepTools" || spec.name == "fuzzy" ? QStringLiteral("flag")
-            : spec.name == "mode" || spec.name == "auto"       ? QStringLiteral("hidden")
-                                                               : QStringLiteral("text");
+            : spec.name == "mode" || spec.name == "auto" || spec.name == "sketch" ||
+                    spec.name == "region" || spec.name == "extent"
+                ? QStringLiteral("hidden")
+                : QStringLiteral("text");
         texts.push_back(entry);
     }
     return texts;
@@ -1149,6 +1151,123 @@ void DocumentModel::documentChanged(bool geometryChanged) {
     if (geometryChanged) {
         requestRecompute();
     }
+}
+
+QVariantList DocumentModel::extrudeReachFaces(int index) const {
+    QVariantList list;
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) || !m_result) {
+        return list;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "extrude" || step.inputs.size() != 1) {
+        return list;
+    }
+    const auto sketchWord = step.texts.find("sketch");
+    const auto sketch = sketchWord == step.texts.end()
+                            ? m_result->sketches.end()
+                            : m_result->sketches.find(core::FeatureId{sketchWord->second});
+    const auto body = m_result->bodies.find(step.inputs.front());
+    if (sketch == m_result->sketches.end() || !sketch->second.plane ||
+        body == m_result->bodies.end()) {
+        return list;
+    }
+    const geo::Point3d origin = sketch->second.plane->origin();
+    const geo::Point3d normal = sketch->second.plane->normal();
+    try {
+        const geo::BodySignatures looks = m_kernel->signatures(body->second.solid);
+        // The flat faces parallel to the sketch; of faces in one plane the largest.
+        std::map<long long, const geo::ElementSignature*> byPlace;
+        for (const geo::ElementSignature& face : looks.faces) {
+            if (face.shape != geo::SignatureShape::plane) {
+                continue;
+            }
+            const double along = face.direction.x * normal.x + face.direction.y * normal.y +
+                                 face.direction.z * normal.z;
+            if (std::abs(std::abs(along) - 1.0) > 1e-6) {
+                continue;
+            }
+            const double distance = (face.centroid.x - origin.x) * normal.x +
+                                    (face.centroid.y - origin.y) * normal.y +
+                                    (face.centroid.z - origin.z) * normal.z;
+            if (std::abs(distance) < 1e-6) {
+                continue;
+            }
+            const auto key = std::llround(distance * 1e6);
+            const auto known = byPlace.find(key);
+            if (known == byPlace.end() || known->second->size < face.size) {
+                byPlace[key] = &face;
+            }
+        }
+        for (const auto& [key, face] : byPlace) {
+            QVariantMap entry;
+            entry[QStringLiteral("number")] = static_cast<int>(face->id);
+            entry[QStringLiteral("distance")] = static_cast<double>(key) / 1e6;
+            list.push_back(entry);
+        }
+    } catch (const geo::GeometryError&) {
+        list.clear();
+    }
+    return list;
+}
+
+bool DocumentModel::setExtrudeReach(int index, const QString& reach, int faceNumber) {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) || !m_result) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "extrude" ||
+        (reach != QLatin1String("distance") && reach != QLatin1String("throughAll") &&
+         reach != QLatin1String("toFace"))) {
+        return false;
+    }
+    const core::FeatureId id = step.id;
+    std::vector<core::PersistentRef> refs;
+    if (reach == QLatin1String("toFace")) {
+        // The face of the body the pull joins or cuts (its single input) to stop at.
+        if (step.inputs.size() != 1 || faceNumber < 1) {
+            return false;
+        }
+        const auto made = m_result->bodies.find(step.inputs.front());
+        if (made == m_result->bodies.end()) {
+            return false;
+        }
+        try {
+            const core::BodyLooks looks =
+                core::describeBody(made->second.faces, m_kernel->signatures(made->second.solid));
+            const auto found = std::find_if(looks.faces.begin(), looks.faces.end(),
+                                            [&](const core::NamedLook& face) {
+                                                return face.id == static_cast<unsigned>(faceNumber);
+                                            });
+            if (found == looks.faces.end()) {
+                return false;
+            }
+            auto ref = core::makeRef(looks, core::ElementKind::face, found->id,
+                                     core::placementOf(m_history.document(), m_registry,
+                                                       m_result->features, found->name));
+            if (!ref) {
+                return false;
+            }
+            refs.push_back(std::move(*ref));
+        } catch (const geo::GeometryError&) {
+            return false;
+        }
+    } else if (reach == QLatin1String("throughAll") && step.inputs.size() != 1) {
+        return false;
+    }
+    m_history.beginTransaction({"setText", {{"name", "extent"}}});
+    const bool ok =
+        m_history.execute(core::makeSetFeatureText(id, "extent", reach.toStdString())) &&
+        m_history.execute(core::makeSetFeatureRefs(id, "face", std::move(refs)));
+    if (!ok) {
+        m_history.cancelTransaction();
+        return false;
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
 }
 
 bool DocumentModel::setStepValue(int index, const QString& name, const QString& text) {
@@ -2187,6 +2306,77 @@ bool DocumentModel::setStepText(int index, const QString& name, const QString& t
         documentChanged();
     }
     return true;
+}
+
+bool DocumentModel::canCycleExtrudeMode(int index) const {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size())) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "extrude") {
+        return false;
+    }
+    const auto sketchWord = step.texts.find("sketch");
+    const core::Feature* sketch =
+        sketchWord == step.texts.end()
+            ? nullptr
+            : m_history.document().findFeature(core::FeatureId{sketchWord->second});
+    return sketch != nullptr && sketch->inputs.size() == 1;
+}
+
+QString DocumentModel::cycleExtrudeMode(int index) {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size())) {
+        return {};
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "extrude") {
+        return {};
+    }
+    // The body the sketch lies on (the one the pull may join to or cut from), if there is one.
+    const auto sketchWord = step.texts.find("sketch");
+    const core::Feature* sketch =
+        sketchWord == step.texts.end()
+            ? nullptr
+            : m_history.document().findFeature(core::FeatureId{sketchWord->second});
+    if (sketch == nullptr || sketch->inputs.size() != 1) {
+        return {};
+    }
+    const core::BodyId target = sketch->inputs.front();
+    const auto word = step.texts.find("mode");
+    const std::string now = word != step.texts.end() ? word->second : "new";
+    // New body, then joined, then cut out, then new again (decision 3 of AP-2.3).
+    const std::string next = now == "new" ? "merge" : now == "merge" ? "subtract" : "new";
+    // The distance follows the mode as it does when it is typed: negative cuts into the body.
+    const auto distance = step.params.find("distance");
+    std::string distanceText;
+    if (distance != step.params.end() && isPlainNumber(distance->second.expression)) {
+        const double value = std::abs(
+            core::evaluateExpression(distance->second.expression, core::QuantityKind::length)
+                .value_or(0.0));
+        if (value > 0.0) {
+            distanceText =
+                QString::number(next == "subtract" ? -value : value, 'g', 15).toStdString();
+        }
+    }
+    const core::FeatureId id = step.id;
+    m_history.beginTransaction({"setText", {{"name", "mode"}}});
+    bool ok =
+        m_history.execute(core::makeSetFeatureText(id, "mode", next)) &&
+        m_history.execute(core::makeSetFeatureInputs(
+            id, next == "new" ? std::vector<core::BodyId>{} : std::vector<core::BodyId>{target}));
+    if (ok && !distanceText.empty()) {
+        ok = m_history.execute(core::makeSetFeatureValue(id, "distance", distanceText));
+    }
+    if (!ok) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return QString::fromStdString(next);
 }
 
 void DocumentModel::setBodyHole(int index, bool hole) {

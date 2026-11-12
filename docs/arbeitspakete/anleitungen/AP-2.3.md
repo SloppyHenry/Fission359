@@ -31,6 +31,14 @@ Selbstschnitt von Kurven ungeprüft). Booleans gibt es (`GeometryKernel::boolean
 **Festlegungen (Orchestrierung, 2026-11-11):** Haltepunkt 1 → ein Schritt `extrude` mit Wort `mode`, wie empfohlen. Haltepunkt 2 →
 automatischer Modus wie empfohlen, Vorschlag am Pfeil, ein Klick ändert ihn.
 
+3. **Modus wechseln (2026-11-12):** Ein Zug auf einer Skizze, die auf einem Körper liegt, wechselt per Klick im Feld „Ziehen“ des
+   rechten Bereichs reihum: neuer Körper → vereint → ausgeschnitten → neu (`DocumentModel::cycleExtrudeMode`, ein Schritt im Verlauf; das
+   Vorzeichen des Abstands folgt dem Modus). Auf der Grundebene gibt es nur „neu“. Der Pfeil in der 3D-Ansicht selbst wird nicht
+   zum Umschalter (er bleibt der Abstandsgriff); das Überfahren einer Fläche hebt sie wie bisher hervor. „Bis Fläche“/„durch alles“
+   stehen im Schritt (Wörter `extent`); „Ganz durch den Körper“ ist ein Schalter im Feld „Ziehen“ (`setExtrudeReach`). „Bis Fläche“ wählt man im Feld „Ziehen“ aus einer Liste der ebenen, zur Skizze parallelen Flächen des Körpers
+   (`extrudeReachFaces`, mit Abstand in mm; eine Fläche je Ebene), nicht per Klick in der 3D-Ansicht: deren Flächennummern gehören zum
+   Körper nach dem Zug.
+
 ## Teil 2.3a – Ziehen (Kern)
 **Zerlegt:** 2.3a1 (gebaut) = `GeometryKernel::extrudeRegion(curves, inside, frame, spec)`: der Bereich, der den Punkt `inside` enthält,
 wird auf die Ebene `frame` gesetzt und entlang ihrer Normalen gezogen (`distance`, auch negativ, oder `symmetric`). Flächennamen

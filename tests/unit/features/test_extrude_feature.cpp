@@ -11,10 +11,12 @@
 #include <string>
 #include <vector>
 
+#include "fission/core/body_looks.h"
 #include "fission/core/commands.h"
 #include "fission/core/feature_type.h"
 #include "fission/core/history.h"
 #include "fission/core/recompute.h"
+#include "fission/core/resolve.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/occt/kernel.h"
 
@@ -316,6 +318,60 @@ TEST_CASE("extrude: a cut beside the body and a wrong number of bodies are error
         const FeatureId sketch = world.addSketch();
         world.rectangle(sketch, 60, 40);
         const FeatureId pull = addExtrudeOnto(world, sketch, box, "melt", "10");
+        const RecomputeResult result = world.calculate();
+        CHECK(result.state(pull)->status != FeatureStatus::ok);
+    }
+}
+
+TEST_CASE("extrude: through all cuts the body clean through (AP-2.3 rest)", "[extrude][feature]") {
+    ExtrudeWorld world;
+    const FeatureId box = addBox(world, "30");
+    const FeatureId sketch = world.addSketch();
+    world.rectangle(sketch, 60, 40);
+    const FeatureId cut = addExtrudeOnto(world, sketch, box, "subtract", "1");
+    REQUIRE(world.history.execute(makeSetFeatureText(cut, "extent", "throughAll")));
+    const RecomputeResult result = world.calculate();
+    REQUIRE(result.state(cut) != nullptr);
+    CHECK(result.state(cut)->status == FeatureStatus::ok);
+    CHECK(volumeOf(world, result, cut) == Approx(200000.0 - 60.0 * 40.0 * 20.0).epsilon(1e-9));
+}
+
+TEST_CASE("extrude: up to a face stops at that face (AP-2.3 rest)", "[extrude][feature]") {
+    ExtrudeWorld world;
+    const FeatureId box = addBox(world, "30");
+    const FeatureId sketch = world.addSketch();
+    world.rectangle(sketch, 60, 40);
+    const FeatureId cut = addExtrudeOnto(world, sketch, box, "subtract", "1");
+    // The top of the box (z = 20) as the face to stop at.
+    const RecomputeResult first = world.calculate();
+    const BodyResult& body = first.bodies.at(world.history.document().findFeature(box)->outputs[0]);
+    const BodyLooks looks = describeBody(body.faces, world.kernel->signatures(body.solid));
+    const NamedLook* top = nullptr;
+    for (const NamedLook& face : looks.faces) {
+        if (face.name.ends_with("/top")) {
+            top = &face;
+        }
+    }
+    REQUIRE(top != nullptr);
+    const auto ref =
+        makeRef(looks, ElementKind::face, top->id,
+                placementOf(world.history.document(), world.registry, first.features, top->name));
+    REQUIRE(ref.has_value());
+    REQUIRE(world.history.execute(makeSetFeatureText(cut, "extent", "toFace")));
+    REQUIRE(world.history.execute(makeSetFeatureRefs(cut, "face", {*ref})));
+    const RecomputeResult result = world.calculate();
+    REQUIRE(result.state(cut) != nullptr);
+    CHECK(result.state(cut)->status == FeatureStatus::ok);
+    CHECK(volumeOf(world, result, cut) == Approx(200000.0 - 60.0 * 40.0 * 20.0).epsilon(1e-9));
+}
+
+TEST_CASE("extrude: through all and up to a face need a body (AP-2.3 rest)", "[extrude][feature]") {
+    for (const char* extent : {"throughAll", "toFace"}) {
+        ExtrudeWorld world;
+        const FeatureId sketch = world.addSketch();
+        world.rectangle(sketch, 60, 40);
+        const FeatureId pull = world.addExtrude(sketch, "L1+L2+L3+L4");
+        REQUIRE(world.history.execute(makeSetFeatureText(pull, "extent", extent)));
         const RecomputeResult result = world.calculate();
         CHECK(result.state(pull)->status != FeatureStatus::ok);
     }

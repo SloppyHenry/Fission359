@@ -655,6 +655,13 @@ Window {
         showHint(qsTr("Pulled out of the sketch: drag the arrow or type a distance."))
     }
 
+    // The chip beside the arrow of a pull, or the button of the panel: the next mode.
+    function cycleOrHint() {
+        if (DocumentModel.cycleExtrudeMode(DocumentModel.currentStep) === "") {
+            showHint(qsTr("This pull starts on the ground plane: there is no body to join or cut."))
+        }
+    }
+
     // The faces chosen, all of one body (empty if there are none or they differ).
     function chosenFaceItems() {
         const faces = Selection.items.filter(item => item.kind === "face")
@@ -1526,6 +1533,15 @@ Window {
                 anchors.fill: parent
                 labelFor: root.valueLabel
                 obstacles: viewOverlay.obstacles
+                pullMode: {
+                    DocumentModel.stepTexts
+                    if (!DocumentModel.canCycleExtrudeMode(DocumentModel.currentStep)) {
+                        return ""
+                    }
+                    const entry = DocumentModel.stepTexts.find(t => t.name === "mode")
+                    return entry !== undefined ? entry.value : "new"
+                }
+                onPullModeRequested: root.cycleOrHint()
             }
 
             GizmoLayer {
@@ -1785,6 +1801,17 @@ Window {
             fonts: DocumentModel.fontFamilies
             fontStyles: DocumentModel.fontStyles(root.currentFontName)
             onTextCommitted: (name, text) => root.changeWords(name, text)
+            onReachChosen: reach => DocumentModel.setExtrudeReach(DocumentModel.currentStep, reach, 0)
+            onReachFaceChosen: number => {
+                rightPanel.reachFaceNumber = number
+                DocumentModel.setExtrudeReach(DocumentModel.currentStep, "toFace", number)
+            }
+            reachFaces: { DocumentModel.stepTexts; return DocumentModel.extrudeReachFaces(DocumentModel.currentStep) }
+            onModeCycleRequested: {
+                if (DocumentModel.cycleExtrudeMode(DocumentModel.currentStep) === "") {
+                    root.showHint(qsTr("This pull starts on the ground plane: there is no body to join or cut."))
+                }
+            }
             onTabRequested: tab => root.rightTab = tab
             onAxisChosen: axis => DocumentModel.setSplitAxis(DocumentModel.currentStep, axis)
             onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)

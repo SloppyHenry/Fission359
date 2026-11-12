@@ -3270,6 +3270,10 @@
             <numerusform>%n geschlossene Bereiche. Klicke einen an, um ihn zu wählen.</numerusform>
         </translation>
     </message>
+    <message>
+        <source>This pull starts on the ground plane: there is no body to join or cut.</source>
+        <translation>Dieses Ziehen beginnt auf der Grundebene: Es gibt keinen Körper zum Vereinen oder Ausschneiden.</translation>
+    </message>
 </context>
 <context>
     <name>MarkerLine</name>
@@ -4712,6 +4716,38 @@
         <source>Yellow</source>
         <translation>Gelb</translation>
     </message>
+    <message>
+        <source>Pull</source>
+        <translation>Ziehen</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>Was das Ziehen macht</translation>
+    </message>
+    <message>
+        <source>Click to change: new body, joined to the body, or cut out of it.</source>
+        <translation>Klicken zum Wechseln: neuer Körper, mit dem Körper vereint oder aus ihm ausgeschnitten.</translation>
+    </message>
+    <message>
+        <source>Joins the body</source>
+        <translation>Vereint mit dem Körper</translation>
+    </message>
+    <message>
+        <source>Cuts out of the body</source>
+        <translation>Schneidet aus dem Körper aus</translation>
+    </message>
+    <message>
+        <source>Makes a new body</source>
+        <translation>Macht einen neuen Körper</translation>
+    </message>
+    <message>
+        <source>All the way through the body</source>
+        <translation>Ganz durch den Körper</translation>
+    </message>
+    <message>
+        <source>Up to the face %1 mm away</source>
+        <translation>Bis zur Fläche %1 mm entfernt</translation>
+    </message>
 </context>
 <context>
     <name>RotateLayer</name>
@@ -6111,6 +6147,25 @@
         <location line="+1"/>
         <source>Zoom: mouse wheel, towards the pointer – or drag this button</source>
         <translation>Zoomen: Mausrad, zum Zeiger hin – oder diesen Knopf ziehen</translation>
+    </message>
+</context>
+<context>
+    <name>HandleLayer</name>
+    <message>
+        <source>Joins</source>
+        <translation>Vereint</translation>
+    </message>
+    <message>
+        <source>Cuts out</source>
+        <translation>Schneidet aus</translation>
+    </message>
+    <message>
+        <source>New body</source>
+        <translation>Neuer Körper</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>Was das Ziehen macht</translation>
     </message>
 </context>
 </TS>
