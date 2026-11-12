@@ -38,3 +38,6 @@ set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${VCPKG_ROOT_DIR}/scripts/toolchains/emscrip
 set(VCPKG_C_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0")
 set(VCPKG_CXX_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0")
 set(VCPKG_LINKER_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0")
+# -O2 instead of the default -O3: clearly less memory in the compiler for OpenCASCADE's largest files.
+set(VCPKG_C_FLAGS_RELEASE "-O2 -DNDEBUG")
+set(VCPKG_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
