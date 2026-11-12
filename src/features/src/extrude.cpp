@@ -34,6 +34,14 @@ public:
         // step is made; the person does not edit them (they are not shown).
         own.push_back({"insideU", QuantityKind::length, "0"});
         own.push_back({"insideV", QuantityKind::length, "0"});
+        // Where the grip stands: a point on the face and the way it looks out (all 0 = no grip).
+        // Set when the step is made; the person does not edit them (they are not shown).
+        for (const char* name : {"anchorX", "anchorY", "anchorZ"}) {
+            own.push_back({name, QuantityKind::length, "0"});
+        }
+        for (const char* name : {"anchorDx", "anchorDy", "anchorDz"}) {
+            own.push_back({name, QuantityKind::plain, "0"});
+        }
         return own;
     }
 
@@ -168,7 +176,24 @@ public:
         return {"extrude", {params.at("distance")}};
     }
 
-    std::vector<HandleSpec> handles(const ResolvedParams&) const override { return {}; }
+    // The grip stands where the person pointed inside the region, moved out by the distance;
+    // dragging it along the way the body is pulled out changes the distance (rule 1).
+    std::vector<HandleSpec> handles(const ResolvedParams& params) const override {
+        const geo::Point3d way{valueOf(params, "anchorDx"), valueOf(params, "anchorDy"),
+                               valueOf(params, "anchorDz")};
+        const double length = std::hypot(way.x, way.y, way.z);
+        if (!(length > 0.5)) {
+            return {};
+        }
+        const double distance = valueOf(params, "distance");
+        const geo::Point3d unit{way.x / length, way.y / length, way.z / length};
+        const geo::Point3d spot{valueOf(params, "anchorX"), valueOf(params, "anchorY"),
+                                valueOf(params, "anchorZ")};
+        return {makeHandle(
+            "distance", HandleKind::distance,
+            {spot.x + unit.x * distance, spot.y + unit.y * distance, spot.z + unit.z * distance},
+            unit, distance)};
+    }
 
     std::vector<std::string> sizeParameters() const override { return {"distance"}; }
 };

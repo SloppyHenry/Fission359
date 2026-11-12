@@ -206,7 +206,7 @@ Window {
         }
         const areas = Sketch.regionCount > 0
             ? " " + (Sketch.selectedRegion !== ""
-                     ? qsTr("%n closed area(s). One is chosen: Esc or a click beside lets go.", "", Sketch.regionCount)
+                     ? qsTr("%n closed area(s). One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.", "", Sketch.regionCount)
                      : qsTr("%n closed area(s). Click one to choose it.", "", Sketch.regionCount))
             : ""
         return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + areas + helper
@@ -488,6 +488,7 @@ Window {
             }
             break
         case "sketchdone": Sketch.finish(); break
+        case "sketchpull": pullRegion(); break
         case "sketch":
             root.flyout = ""
             Measure.enabled = false
@@ -635,6 +636,23 @@ Window {
         const stretched = steps.length > 0 && steps[steps.length - 1].type === "stretch"
         showHint(stretched ? qsTr("Stretching: rounds and holes stay as they are. Drag the grip or type a distance.")
                            : qsTr("Face pulled. Drag the grip or type a distance."))
+    }
+
+    // Pulls the chosen closed area of the sketch into a body (AP-2.3b2): a new "extrude" step with
+    // an arrow grip, shown with the size tool.
+    function pullRegion() {
+        const pull = Sketch.regionPull()
+        if (pull.region === undefined) { return }
+        Sketch.finish()
+        const made = DocumentModel.addExtrude(pull.step, pull.region, pull.u, pull.v)
+        if (made === "") {
+            showHint(qsTr("This area cannot be pulled."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        root.tool = "size" // the arrow grip of the step is shown by this tool
+        showHint(qsTr("Pulled out of the sketch: drag the arrow or type a distance."))
     }
 
     // The faces chosen, all of one body (empty if there are none or they differ).
@@ -878,6 +896,14 @@ Window {
     readonly property bool copyingSketch: Sketch.toolActive && (Sketch.tool === "mirror" || Sketch.tool === "pattern")
     Shortcut { sequence: "Backspace"; enabled: root.drawingCurve && !root.typing; onActivated: Sketch.removeLastPoint() }
     Shortcut { sequences: ["Return", "Enter"]; enabled: (root.drawingCurve || root.copyingSketch) && !root.typing && !Handles.armed; onActivated: Sketch.acceptTyped() }
+    // Enter with a closed area of the sketch chosen and no tool on (AP-2.3b2): pulls it into a body.
+    // Never on together with the Enter above: that one needs a tool, this one needs none.
+    Shortcut {
+        sequences: ["Return", "Enter"]
+        enabled: Sketch.active && !Sketch.toolActive && !root.typing && !Handles.armed
+                 && Sketch.selectedRegion !== ""
+        onActivated: root.pullRegion()
+    }
     Shortcut { sequence: "Backspace"; enabled: Selection.count > 0 && !root.drawingCurve && !root.typing && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("delete") }
     Shortcut { sequence: "Ctrl+X"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("cut") }
     Shortcut { sequence: "Ctrl+D"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("duplicate") }
@@ -1676,6 +1702,7 @@ Window {
                 sketchVariant: Sketch.toolVariant
                 sketchHelper: Sketch.helperLine
                 onSketchDoneRequested: Sketch.finish()
+                onPullRequested: root.run("sketchpull")
                 onSketchToolRequested: (id, variant) => Sketch.chooseTool(id, variant)
                 onSketchHelperToggled: Sketch.toggleHelperLine()
                 onFlyoutCloseRequested: root.flyout = ""
@@ -1809,6 +1836,7 @@ Window {
         if (type === "fillet") { return qsTr("Rounding") }
         if (type === "chamfer") { return qsTr("Bevelling") }
         if (type === "pushFace") { return qsTr("Pulling a face") }
+        if (type === "extrude") { return qsTr("Pulling an area") }
         if (type === "stretch") { return qsTr("Stretching") }
         if (type === "removeFaces") { return qsTr("Removing faces") }
         if (type === "offsetFaces") { return qsTr("Moving faces") }
@@ -1891,6 +1919,7 @@ Window {
         case "roundEdges": return qsTr("%n edge(s) rounded", "", Number(step.count))
         case "bevelEdges": return qsTr("%n edge(s) bevelled", "", Number(step.count))
         case "pushFace": return qsTr("Face pulled")
+        case "extrude": return qsTr("Area pulled")
         case "stretchBody": return qsTr("Body stretched")
         case "removeFaces": return qsTr("%n face(s) removed", "", Number(step.count))
         case "offsetFaces": return qsTr("%n face(s) moved", "", Number(step.count))
@@ -1974,6 +2003,7 @@ Window {
         case "fillet": return "round"
         case "chamfer": return "bevel"
         case "pushFace":
+        case "extrude":
         case "stretch":
         case "offsetFaces":
         case "tiltFace": return "move"

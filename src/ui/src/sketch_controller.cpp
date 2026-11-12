@@ -928,6 +928,9 @@ void SketchController::clickRegion(const interaction::PlaneRay& ray, double pixe
         const int index = features::regionAt(set, {onPlane->u, onPlane->v});
         if (index >= 0) {
             chosen = set.regions[static_cast<std::size_t>(index)].id;
+            // where the click chose the region (u, v on the plane, mm), for "Pull" (AP-2.3b2)
+            m_selectedRegionU = onPlane->u;
+            m_selectedRegionV = onPlane->v;
         }
     }
     if (chosen != m_selectedRegion) { // a click beside every region lets go
@@ -943,6 +946,18 @@ void SketchController::clearRegionSelection() {
         emit regionsChanged();
         refresh();
     }
+}
+
+QVariantMap SketchController::regionPull() const {
+    QVariantMap map;
+    if (m_selectedRegion.empty()) {
+        return map;
+    }
+    map[QStringLiteral("step")] = m_step;
+    map[QStringLiteral("region")] = QString::fromStdString(m_selectedRegion);
+    map[QStringLiteral("u")] = m_selectedRegionU;
+    map[QStringLiteral("v")] = m_selectedRegionV;
+    return map;
 }
 
 // --- drawing (AP-2.1c1) -----------------------------------------------------------------

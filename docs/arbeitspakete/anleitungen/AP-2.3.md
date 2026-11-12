@@ -53,8 +53,11 @@ Bereich über das Wort `region` (Bereichs-Id aus den Kanten, Festlegung 52); daz
 Fehlt der Bereich, rechnet der Schritt nicht (Fehler am Schritt, nie geraten). Die Neuberechnung reicht die Skizzen der früheren
 Schritte durch (`ExecuteInput::sketches`, `FeatureType::readsSketch`) und nimmt Skizze und Ebene in den Schlüssel des
 Zwischenspeichers. Seitenflächen heißen nach den Elementen (`side[L3]`). Bereichs-Ids liegen jetzt in `features`
-(`fission/features/sketch_regions.h`). Nur Modus „neu“. Offen für 2.3b2: Pfeil-Griff und Werkzeug, Modi mit Ziel-Körpern, Entfernen
-der Skizze sperren oder melden, Testdatei `v3/extrude.fission`.
+(`fission/features/sketch_regions.h`). Nur Modus „neu“. 2.3b2 (gebaut) = Bedienung: in der Skizze einen Bereich anklicken, dann „Ziehen“ (Knopf neben „Fertig“, Enter
+oder Befehlssuche) → Skizze schließt, Schritt `extrude` mit 10 mm, neuer Körper gewählt, Werkzeug „Größe“ zeigt den Pfeil-Griff
+(Ziehen oder Tippen). Offen für 2.3b3: Modi mit Ziel-Körpern und automatischer Vorschlag (Haltepunkt 2), Pfeil schon beim Überfahren
+eines Bereichs ohne Klick, Entfernen einer gelesenen Skizze sperren oder melden, Testdatei `v3/extrude.fission`, Budget der
+Live-Vorschau messen.
 
 1. Feature-Typ `extrude` (Eingang: Skizzen-Schritt per Verweis auf den Bereich, Ziel-Körper bei Modus ≠ new). Werte `distance`, `taper`, Wörter
    `extent`, `mode`.

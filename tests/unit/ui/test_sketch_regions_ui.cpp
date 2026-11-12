@@ -237,3 +237,41 @@ TEST_CASE("sketch regions: an open chain and helper lines give none; leaving for
     f.sketch->finish();
     CHECK(f.sketch->regionCount() == 0);
 }
+
+TEST_CASE("sketch regions: a chosen region is pulled into a body of 10 mm (AP-2.3b)",
+          "[ui][sketchregions][extrude]") {
+    NoCatching free;
+    Sketching f;
+    f.sketch->chooseTool(QStringLiteral("rectangle"));
+    f.click(0, 0);
+    f.click(40, 30);
+    f.sketch->chooseTool(QString());
+    REQUIRE(f.regionsReady());
+    REQUIRE(f.ids().size() == 1);
+    const QString region = QString::fromStdString(f.ids().front());
+    f.sketch->finish();
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QVariantList before = f.model->recipe();
+    REQUIRE_FALSE(before.isEmpty());
+    const QVariantMap sketchStep = before.back().toMap();
+    REQUIRE(sketchStep.value(QStringLiteral("type")).toString() == QStringLiteral("sketch"));
+    const QString sketchId = sketchStep.value(QStringLiteral("id")).toString();
+
+    // An unknown region still makes the step; the step shows the error (never a guessed region).
+    CHECK_FALSE(f.model->addExtrude(sketchId, QStringLiteral("nothing"), 20, 15).isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() !=
+          QStringLiteral("ok"));
+    f.model->undo();
+    CHECK(f.model->addExtrude(QStringLiteral("not-a-step"), region, 20, 15).isEmpty());
+
+    const QString body = f.model->addExtrude(sketchId, region, 20, 15);
+    REQUIRE_FALSE(body.isEmpty());
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QVariantMap last = f.model->recipe().back().toMap();
+    CHECK(last.value(QStringLiteral("type")).toString() == QStringLiteral("extrude"));
+    CHECK(last.value(QStringLiteral("state")).toString() == QStringLiteral("ok"));
+    CHECK(f.model->nextUndo().value(QStringLiteral("key")).toString() == QStringLiteral("extrude"));
+}

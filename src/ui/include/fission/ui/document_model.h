@@ -449,6 +449,12 @@ public:
     /// when the body is part of another one, the face is not flat or cannot be named again after
     /// a change. A new step of the recipe, one step of the history.
     Q_INVOKABLE QString addSketch(const QString& bodyId, int faceNumber);
+    /// Pulls the region `regionId` of the sketch step `sketchStep` (its id) out of the sketch plane
+    /// into a new body (AP-2.3b): a step "extrude" of 10 mm. `u`, `v` is a point inside the region
+    /// (sketch coordinates); the grip stands there. Returns the id of the new body, or "" when the
+    /// sketch step has no result. A region that is not there shows as an error on the step.
+    Q_INVOKABLE QString addExtrude(const QString& sketchStep, const QString& regionId, double u,
+                                   double v);
     /// True when the face is flat, i.e. a sketch can lie on it.
     Q_INVOKABLE bool faceIsFlat(const QString& bodyId, int faceNumber) const;
     /// Removes the sketch step when nothing was drawn in it (a normal command, so that undo
