@@ -22,6 +22,7 @@ add_executable(fission_unit_tests
   naming/test_random.cpp
   naming/test_sensitivity.cpp
   features/test_primitives.cpp
+  features/test_hole_tables.cpp
   features/test_combine.cpp
   features/test_split.cpp
   features/test_blend.cpp
@@ -39,6 +40,7 @@ add_executable(fission_unit_tests
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp
+  geometry/test_hole_tool.cpp
   geometry/test_rotation.cpp
   geometry/test_booleans_gal.cpp
   geometry/test_signatures.cpp
