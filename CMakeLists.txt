@@ -29,8 +29,8 @@ include(FissionLayers)
 # errors can be caught
 # (the same flags as cmake/vcpkg-triplets/fission-wasm32-emscripten.cmake).
 if(EMSCRIPTEN)
-  add_compile_options(-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
-  add_link_options(-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
+  add_compile_options(-pthread -fwasm-exceptions)
+  add_link_options(-pthread -fwasm-exceptions)
   # The code is optimised by the compiler (-O3); the link step runs no Binaryen passes (-O0 comes
   # after the -O3 of the build type, the last one counts). Binaryen 123 cannot read what LLVM
   # makes of the constructors of the large programs with WebAssembly exceptions ("popping from
