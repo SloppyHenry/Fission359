@@ -28,7 +28,16 @@ Selbstschnitt von Kurven ungeprüft). Booleans gibt es (`GeometryKernel::boolean
 2. **Automatischer Modus:** Empfehlung: Richtung in einen Körper hinein = Ausschneiden; aus einer Körperfläche heraus = Vereinen; auf leerer
    Ebene = Neu. Vorschlag sichtbar am Pfeil (Symbol), ein Klick ändert ihn.
 
+**Festlegungen (Orchestrierung, 2026-11-11):** Haltepunkt 1 → ein Schritt `extrude` mit Wort `mode`, wie empfohlen. Haltepunkt 2 →
+automatischer Modus wie empfohlen, Vorschlag am Pfeil, ein Klick ändert ihn.
+
 ## Teil 2.3a – Ziehen (Kern)
+**Zerlegt:** 2.3a1 (gebaut) = `GeometryKernel::extrudeRegion(curves, inside, frame, spec)`: der Bereich, der den Punkt `inside` enthält,
+wird auf die Ebene `frame` gesetzt und entlang ihrer Normalen gezogen (`distance`, auch negativ, oder `symmetric`). Flächennamen
+`capStart`, `capEnd`, `side[c<i>]` nach dem Index der Skizzen-Kurve (Wiederholung `side[c<i>:<k>]`); der Bereich wird über dieselbe
+Zerlegung wie `sketchRegions` gefunden. Golden: Rechteck, Kreis, Ring (beide Bereiche), symmetrisch, negativ, gedrehte Ebene, Fehler.
+2.3a2 (offen) = Verjüngung, „durch alles“, „bis Fläche“, L-Profil-Golden.
+
 1. GAL: `NamedSolid extrude(const SketchProfile&, const ExtrudeSpec&)` mit `ExtrudeSpec { double distance; ExtrudeExtent extent (distance |
    symmetric | toFace | throughAll); double taperDegrees; std::optional<Solid> toFaceSolid…; }`. OCCT: `BRepPrimAPI_MakePrism`; Verjüngung
    über `BRepOffsetAPI_DraftAngle` oder `LocOpe_DPrism`/`BRepFeat_MakeDPrism` (testen, was gültige Körper liefert; Haltepunkt bei Problemen).

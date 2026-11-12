@@ -10,6 +10,7 @@
 
 #include "fission/geo/error.h"
 #include "fission/geo/exchange.h"
+#include "fission/geo/extrude.h"
 #include "fission/geo/measuring.h"
 #include "fission/geo/mesh.h"
 #include "fission/geo/named_solid.h"
@@ -427,6 +428,25 @@ public:
         (void)curves;
         throw GeometryError(GeometryErrorCode::kernelFailure,
                             "this kernel cannot find sketch regions");
+    }
+
+    /// Pulls the region of the sketch that contains `inside` (a point of the sketch plane, in
+    /// sketch coordinates) straight out of the plane `frame` (AP-2.3a). The curves are as in
+    /// `sketchRegions`, in sketch coordinates. Faces are named: the start cap "capStart" (in the
+    /// sketch plane, or the lower one for symmetric), the end cap "capEnd", and each side
+    /// "side[c<i>]" after the index i of the curve it comes from; when one curve gives several
+    /// sides (it was cut by other curves) the second and later get ":<k>" (k = 2, 3, ...):
+    /// "side[c3]", "side[c3:2]". Throws `GeometryError`: `invalidInput` when no region contains
+    /// `inside`, the distance is zero or not finite, or the frame is not two perpendicular unit
+    /// vectors; `kernelFailure` when the kernel cannot calculate or the result is not valid. The
+    /// default refuses.
+    virtual NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
+                                     const SketchFrame& frame, const ExtrudeSpec& spec) const {
+        (void)curves;
+        (void)inside;
+        (void)frame;
+        (void)spec;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot extrude");
     }
 
     /// Measures one element (corner: position; edge: length, radius of a circle or arc; face:
