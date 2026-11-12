@@ -94,3 +94,34 @@ TEST_CASE("the arrow keys move a number and keep a formula", "[numbers][arrows]"
     CHECK(numbers.adjusted(QStringLiteral("5+"), QStringLiteral("length"), 1.0).isEmpty());
     QLocale::setDefault(QLocale(QLocale::English));
 }
+
+TEST_CASE("numbers: in inches a bare number counts in inches, a unit still wins",
+          "[numbers][unit]") {
+    Numbers numbers;
+    numbers.setUnit(QStringLiteral("in"));
+    CHECK(numbers.evaluate(QStringLiteral("2"), QStringLiteral("length")) == Approx(50.8));
+    CHECK(numbers.evaluate(QStringLiteral("10 mm"), QStringLiteral("length")) == Approx(10.0));
+    CHECK(numbers.evaluate(QStringLiteral("2"), QStringLiteral("angle")) == Approx(2.0));
+    // Only "mm" and "in" are units; anything else is ignored.
+    numbers.setUnit(QStringLiteral("cm"));
+    CHECK(numbers.unit() == QStringLiteral("in"));
+}
+
+TEST_CASE("numbers: lengths are shown in the unit", "[numbers][unit]") {
+    QLocale::setDefault(QLocale(QLocale::English));
+    Numbers numbers;
+    numbers.setUnit(QStringLiteral("in"));
+    CHECK(numbers.formatLength(50.8) == QStringLiteral("2"));
+    CHECK(numbers.unitSymbol() == QStringLiteral("in"));
+    numbers.setUnit(QStringLiteral("mm"));
+    CHECK(numbers.formatLength(50.8) == QStringLiteral("50.8"));
+    CHECK(numbers.unitSymbol() == QStringLiteral("mm"));
+}
+
+TEST_CASE("numbers: the arrow keys step one inch in inches", "[numbers][unit]") {
+    QLocale::setDefault(QLocale(QLocale::English));
+    Numbers numbers;
+    numbers.setUnit(QStringLiteral("in"));
+    CHECK(numbers.adjusted(QStringLiteral("2"), QStringLiteral("length"), 1.0) ==
+          QStringLiteral("3"));
+}
