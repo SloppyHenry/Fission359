@@ -252,6 +252,14 @@ if(_fission_run_window_tests)
             --camera=35,35,200 --simulate "put:box;value:width,0;clickitem:problemBadge;clickitem:problemAction_editValue;expectfocus:width")
   set_tests_properties(app_problem_change_value PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # Pflege P10: the keys + and - zoom the 3D view towards its centre by 20 % each (the camera
+  # distance gets smaller, then larger again).
+  add_test(NAME app_keyboard_zoom
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-keyboard-zoom.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "markcamera;key:+;expectcamera:closer;markcamera;key:-;key:-;expectcamera:farther")
+  set_tests_properties(app_keyboard_zoom PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-1.8 criterion 1, rule 2: a wrong text in the value bubble is not taken, the bubble stays
   # open and says why; Esc takes everything back: the value stays and no new step appears.
   add_test(NAME app_bubble_wrong_input

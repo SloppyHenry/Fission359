@@ -288,6 +288,8 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
     // All steps are timers counted from now. They are precise timers: a coarse one (Qt's
     // default above 2 s) may fire up to 5 % late, so a key could come after the check that
     // follows it.
+    // The camera distance stored by "markcamera"; "expectcamera:closer/farther" compare with it.
+    auto markedCameraDistance = std::make_shared<double>(0.0);
     int delay = 0;
     for (const QString& action : actions.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
         const int colon = action.indexOf(QLatin1Char(':'));
@@ -755,6 +757,38 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     g_simulationFailure = 14;
                 }
             });
+            continue;
+        }
+        if (kind == QLatin1String("markcamera")) {
+            // markcamera - the camera distance is stored now; expectcamera:closer /
+            // expectcamera:farther compare the distance with it.
+            delay += 350;
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [viewport, markedCameraDistance] {
+                *markedCameraDistance = viewport->cameraDistance();
+            });
+            continue;
+        }
+        if (kind == QLatin1String("expectcamera")) {
+            // expectcamera:closer / expectcamera:farther - the camera stands closer to its
+            // target / farther from it than at the last markcamera (the zoom keys + and -);
+            // otherwise the program ends with an error (for the tests).
+            const QString wanted = action.mid(colon + 1).trimmed();
+            delay += 500;
+            QTimer::singleShot(
+                delay, Qt::PreciseTimer, viewport, [viewport, markedCameraDistance, wanted] {
+                    const double now = viewport->cameraDistance();
+                    const bool ok = wanted == QLatin1String("closer") ? now < *markedCameraDistance
+                                                                      : now > *markedCameraDistance;
+                    if (!ok) {
+                        qWarning().noquote()
+                            << QStringLiteral("the camera distance is %1, expected "
+                                              "%2 than %3")
+                                   .arg(now)
+                                   .arg(wanted)
+                                   .arg(*markedCameraDistance);
+                        g_simulationFailure = 20;
+                    }
+                });
             continue;
         }
         if (kind == QLatin1String("expectsketchtyping")) {

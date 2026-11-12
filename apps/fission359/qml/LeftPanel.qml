@@ -24,6 +24,12 @@ Rectangle {
     signal stepRenamed(int index, string text)
     signal stepOpenRequested(int index)
     signal stepDeleteRequested(int index)
+    // Reordering the recipe by dragging a row up or down.
+    signal stepMoveRequested(int from, int to)
+    property int dragFrom: -1       // the row being dragged (-1: none)
+    property int dragTarget: -1     // the slot it would land in while dragging
+    property bool dragAllowed: true // whether the drop at `dragTarget` would be accepted
+    property string dragHint: ""    // why a drop is refused, shown under the list
     signal stepHideRequested(int index, bool hide)
     /// "Choose again" on a step whose reference needs help (AP-2.10e).
     signal stepRepairRequested(int index)
@@ -63,6 +69,19 @@ Rectangle {
         ghost.visible = false
         const gap = gapFor(line, dy)
         root.markerRequested(gap >= root.recipe.length ? -1 : gap)
+    }
+
+    // The y of the drop line in recipeBox: the top edge of the row at the slot, or the bottom of
+    // the list when the dragged row would land behind the last one.
+    function dropLineY() {
+        const t = root.dragTarget
+        if (t < 0 || root.recipe.length === 0)
+            return 0
+        const slot = t > root.dragFrom ? t + 1 : t
+        if (slot >= stepRepeater.count)
+            return rows.mapToItem(recipeBox, 0, rows.height).y - 1
+        const item = stepRepeater.itemAt(slot)
+        return item ? item.mapToItem(recipeBox, 0, 0).y - 1 : 0
     }
     signal tabRequested(string tab)
     // The named measures under the recipe: folded out or not, and the words for their mistakes.
@@ -387,6 +406,22 @@ Rectangle {
             z: 3
         }
 
+        // Where a dragged row would land: a 2px line at the target slot, red when the move is
+        // refused (the step would land before a step it needs).
+        Rectangle {
+            id: dropLine
+
+            visible: root.dragFrom >= 0 && root.dragTarget >= 0 && root.dragTarget !== root.dragFrom
+            x: 8
+            width: parent.width - 16
+            y: root.dropLineY()
+            height: 2
+            radius: 1
+            color: root.dragAllowed ? Theme.accent : Theme.bad
+            opacity: 0.9
+            z: 3
+        }
+
         Item {
             id: recipeHeader
 
@@ -453,7 +488,8 @@ Rectangle {
             contentHeight: recipeBody.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            interactive: !root.markerHeld
+            // While a row is dragged the list must not scroll away under the hand.
+            interactive: !root.markerHeld && root.dragFrom < 0
 
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
@@ -589,6 +625,47 @@ Rectangle {
                                 rowMenu.y = Math.max(8, spot.y - rowMenu.height / 2)
                                 rowMenu.open()
                             }
+
+                            // Dragging the row up or down reorders the recipe. The drag only
+                            // takes over after the drag threshold, so clicks, double clicks,
+                            // rename and the right-click menu keep working.
+                            DragHandler {
+                                id: stepDrag
+
+                                target: null
+                                xAxis.enabled: false
+                                onActiveTranslationChanged: {
+                                    const count = root.recipe.length
+                                    if (count <= 0 || stepRow.height <= 0)
+                                        return
+                                    const to = Math.max(0, Math.min(count - 1,
+                                        stepItem.index + Math.round(stepDrag.translation.y / stepRow.height)))
+                                    root.dragTarget = to
+                                    root.dragAllowed = to === stepItem.index ||
+                                                       DocumentModel.canMoveStep(stepItem.index, to)
+                                    root.dragHint = to !== stepItem.index && !root.dragAllowed
+                                        ? qsTr("This step needs a step above it - it cannot go there")
+                                        : ""
+                                }
+                                onActiveChanged: {
+                                    if (active) {
+                                        root.dragFrom = stepItem.index
+                                        root.dragTarget = stepItem.index
+                                        root.dragAllowed = true
+                                        root.dragHint = ""
+                                    } else {
+                                        const from = root.dragFrom
+                                        const to = root.dragTarget
+                                        root.dragFrom = -1
+                                        root.dragTarget = -1
+                                        root.dragAllowed = true
+                                        root.dragHint = ""
+                                        if (from >= 0 && to >= 0 && to !== from &&
+                                                DocumentModel.canMoveStep(from, to))
+                                            root.stepMoveRequested(from, to)
+                                    }
+                                }
+                            }
                         }
 
                         function startRename() { stepRow.startRename() }
@@ -624,6 +701,35 @@ Rectangle {
                 wrapMode: Text.WordWrap
                 elide: Text.ElideNone
             }
+            }
+        }
+
+        // Why a dragged row cannot land where it is now: shown at the bottom of the list.
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: recipeScroll.bottom
+            anchors.margins: 8
+            height: dragHintText.implicitHeight + 16
+            visible: root.dragHint !== ""
+            radius: 6
+            color: Theme.panel
+            border.width: 1
+            border.color: Theme.bad
+            z: 4
+
+            Text {
+                id: dragHintText
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: 8
+                text: root.dragHint
+                wrapMode: Text.WordWrap
+                color: Theme.bad
+                font.pixelSize: Theme.fontSizeSmall
+                z: 4
             }
         }
     }
