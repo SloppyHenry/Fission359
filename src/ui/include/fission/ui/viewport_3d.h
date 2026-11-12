@@ -61,6 +61,7 @@ class Viewport3D : public QQuickRhiItem {
     Q_PROPERTY(QString mouseStyle READ mouseStyle WRITE setMouseStyle NOTIFY mouseStyleChanged)
     Q_PROPERTY(double cameraYaw READ cameraYaw NOTIFY cameraChanged)
     Q_PROPERTY(double cameraPitch READ cameraPitch NOTIFY cameraChanged)
+    Q_PROPERTY(double cameraDistance READ cameraDistance NOTIFY cameraChanged)
     Q_PROPERTY(double pixelsPerMillimetre READ pixelsPerMillimetre NOTIFY cameraChanged)
     /// The step (mm) a dragged length snaps to now: the one chosen in `fixedSnapStep`, or the one
     /// of the zoom (shown in the status bar).
@@ -116,6 +117,7 @@ public:
     void setDisplayMode(const QString& mode);
     double cameraYaw() const { return m_camera.pose().yaw; }
     double cameraPitch() const { return m_camera.pose().pitch; }
+    double cameraDistance() const { return m_camera.pose().distance; }
     double pixelsPerMillimetre() const { return m_camera.pixelsPerMillimetre(); }
     /// For the sketch mode: the drag with the left button that is going on is a drawing drag (no
     /// rubber band, no body moves). Ended by the release.

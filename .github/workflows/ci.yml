@@ -147,6 +147,10 @@ jobs:
     env:
       CMAKE_CXX_COMPILER_LAUNCHER: ccache
       CCACHE_DIR: ${{ github.workspace }}/.ccache
+      # The Actions cache holds 10 GB for the whole repository. Unbounded, a sanitizer ccache
+      # grew to 2.5 GB per preset and pushed the vcpkg archives out (every job then rebuilt Qt
+      # and ran into its time limit).
+      CCACHE_MAXSIZE: ${{ contains(matrix.preset, 'asan') && '400M' || '300M' }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -198,6 +202,11 @@ jobs:
           sudo apt-get install -y clang-tidy
           python3 scripts/tools/tidy_changed.py --build-dir build/${{ matrix.preset }} \
             --base origin/${{ github.base_ref }}
+
+      # Down to CCACHE_MAXSIZE before it is saved (a restored cache can be larger).
+      - name: Trim ccache
+        if: always() && github.event_name != 'pull_request'
+        run: ccache --cleanup && ccache --show-stats || true
 
       - name: Save ccache
         if: always() && github.event_name != 'pull_request'
