@@ -36,7 +36,9 @@ automatischer Modus wie empfohlen, Vorschlag am Pfeil, ein Klick ändert ihn.
 wird auf die Ebene `frame` gesetzt und entlang ihrer Normalen gezogen (`distance`, auch negativ, oder `symmetric`). Flächennamen
 `capStart`, `capEnd`, `side[c<i>]` nach dem Index der Skizzen-Kurve (Wiederholung `side[c<i>:<k>]`); der Bereich wird über dieselbe
 Zerlegung wie `sketchRegions` gefunden. Golden: Rechteck, Kreis, Ring (beide Bereiche), symmetrisch, negativ, gedrehte Ebene, Fehler.
-2.3a2 (offen) = Verjüngung, „durch alles“, „bis Fläche“, L-Profil-Golden.
+2.3a2 (gebaut) = Verjüngung nach innen (`taperDegrees` > 0, über `LocOpe_DPrism`, Höhe dort entlang der schrägen Seite gemessen),
+„durch alles“ (`throughAll` mit Körper `through`: Länge aus dessen Hüllquader + 1 mm), L-Profil-Golden. 2.3a3 (offen) = Verjüngung nach
+außen mit scharfen Ecken (`LocOpe_DPrism` rundet sie, darum bisher abgelehnt), „bis Fläche“.
 
 1. GAL: `NamedSolid extrude(const SketchProfile&, const ExtrudeSpec&)` mit `ExtrudeSpec { double distance; ExtrudeExtent extent (distance |
    symmetric | toFace | throughAll); double taperDegrees; std::optional<Solid> toFaceSolid…; }`. OCCT: `BRepPrimAPI_MakePrism`; Verjüngung

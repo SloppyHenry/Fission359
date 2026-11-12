@@ -436,10 +436,14 @@ public:
     /// sketch plane, or the lower one for symmetric), the end cap "capEnd", and each side
     /// "side[c<i>]" after the index i of the curve it comes from; when one curve gives several
     /// sides (it was cut by other curves) the second and later get ":<k>" (k = 2, 3, ...):
-    /// "side[c3]", "side[c3:2]". Throws `GeometryError`: `invalidInput` when no region contains
-    /// `inside`, the distance is zero or not finite, or the frame is not two perpendicular unit
-    /// vectors; `kernelFailure` when the kernel cannot calculate or the result is not valid. The
-    /// default refuses.
+    /// "side[c3]", "side[c3:2]". `taperDegrees` != 0 leans the sides (positive inwards, so the far
+    /// cap is smaller) and needs a pull to one side; `throughAll` pulls far enough to pass
+    /// completely through the body `spec.through`, `distance` only giving the side. Throws
+    /// `GeometryError`: `invalidInput` when no region contains `inside`, the distance is zero or
+    /// not finite (with `throughAll` only that it is a number), the taper is not a number or 89
+    /// degrees or more, a taper is asked together with `symmetric`, `throughAll` has no body, or
+    /// the frame is not two perpendicular unit vectors; `kernelFailure` when the kernel cannot
+    /// calculate or the result is not valid. The default refuses.
     virtual NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
                                      const SketchFrame& frame, const ExtrudeSpec& spec) const {
         (void)curves;
