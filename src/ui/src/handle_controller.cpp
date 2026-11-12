@@ -336,9 +336,104 @@ void HandleController::refresh() {
             const QPointF step = onScreen(raw.atWorld + raw.axisWorld) - raw.at;
             raw.length = lengthOf(step);
             raw.way = raw.length > 1e-9 ? step / raw.length : QPointF(0.0, -1.0);
-            include(raw.atWorld);
-            include(raw.startWorld);
             raws.push_back(raw);
+        }
+
+        // The frame the layout works in: the axes the sizes of the body run along, so that a
+        // turned body is measured along its own sides, not along the axes of the bed. Unturned,
+        // and whenever the handles are not the sides of a box, it is the world axes.
+        std::array<QVector3D, 3> frame = {QVector3D(1.0F, 0.0F, 0.0F), QVector3D(0.0F, 1.0F, 0.0F),
+                                          QVector3D(0.0F, 0.0F, 1.0F)};
+        {
+            const std::array<QVector3D, 3> worldAxes = {QVector3D(1.0F, 0.0F, 0.0F),
+                                                        QVector3D(0.0F, 1.0F, 0.0F),
+                                                        QVector3D(0.0F, 0.0F, 1.0F)};
+            std::vector<QVector3D> taken;
+            bool boxFrame = true;
+            for (const Raw& raw : raws) {
+                if (raw.role != QLatin1String("size") ||
+                    raw.handle["kind"].toString() != QLatin1String("distance")) {
+                    continue;
+                }
+                if (taken.size() == 3) {
+                    break;
+                }
+                QVector3D rest = raw.axisWorld;
+                bool parallel = false;
+                for (const QVector3D& t : taken) {
+                    const float dot = QVector3D::dotProduct(rest, t);
+                    if (std::abs(dot) > 0.999F) {
+                        parallel = true; // the same axis as one already taken
+                        break;
+                    }
+                    if (std::abs(dot) > 0.02F) {
+                        boxFrame = false; // slanted to the others: not the sides of a box
+                    }
+                    rest -= t * dot;
+                }
+                if (!boxFrame) {
+                    break;
+                }
+                if (!parallel && rest.length() > 0.5F) {
+                    taken.push_back(rest.normalized());
+                }
+            }
+            if (boxFrame && !taken.empty()) {
+                if (taken.size() == 2) {
+                    taken.push_back(QVector3D::crossProduct(taken[0], taken[1]).normalized());
+                } else if (taken.size() == 1) {
+                    // The world axis least parallel to the one found, and the cross of both.
+                    int least = 0;
+                    float leastDot = 2.0F;
+                    for (int a = 0; a < 3; ++a) {
+                        const float dot = std::abs(QVector3D::dotProduct(worldAxes[a], taken[0]));
+                        if (dot < leastDot) {
+                            leastDot = dot;
+                            least = a;
+                        }
+                    }
+                    QVector3D second = worldAxes[least];
+                    second -= taken[0] * QVector3D::dotProduct(second, taken[0]);
+                    taken.push_back(second.normalized());
+                    taken.push_back(QVector3D::crossProduct(taken[0], taken[1]).normalized());
+                }
+                if (taken.size() == 3) {
+                    // The slots: 2 the most vertical axis, of the other two 0 the one with the
+                    // larger |x|, so that an unturned body gets exactly the world axes.
+                    int i2 = 0;
+                    for (int i = 1; i < 3; ++i) {
+                        if (std::abs(taken[i].z()) > std::abs(taken[i2].z())) {
+                            i2 = i;
+                        }
+                    }
+                    const int r0 = i2 == 0 ? 1 : 0;
+                    const int r1 = i2 == 2 ? 1 : 2;
+                    const int i0 = std::abs(taken[r0].x()) >= std::abs(taken[r1].x()) ? r0 : r1;
+                    const int i1 = i0 == r0 ? r1 : r0;
+                    frame = {taken[i0], taken[i1], taken[i2]};
+                    for (int s = 0; s < 3; ++s) {
+                        if (QVector3D::dotProduct(frame[s], worldAxes[s]) < 0.0F) {
+                            frame[s] = -frame[s];
+                        }
+                    }
+                    if (QVector3D::dotProduct(QVector3D::crossProduct(frame[0], frame[1]),
+                                              frame[2]) < 0.0F) {
+                        frame[1] = -frame[1]; // a right-handed frame
+                    }
+                }
+            }
+        }
+        // A point of the layout in that frame, and back in the scene.
+        const auto toLocal = [&frame](const QVector3D& p) {
+            return QVector3D(QVector3D::dotProduct(p, frame[0]), QVector3D::dotProduct(p, frame[1]),
+                             QVector3D::dotProduct(p, frame[2]));
+        };
+        const auto toWorld = [&frame](const QVector3D& l) {
+            return frame[0] * l.x() + frame[1] * l.y() + frame[2] * l.z();
+        };
+        for (const Raw& raw : raws) {
+            include(toLocal(raw.atWorld));
+            include(toLocal(raw.startWorld));
         }
 
         // The box round the body: the measure bands lie outside it, like the measures of a
@@ -347,27 +442,30 @@ void HandleController::refresh() {
         QVector3D bodyLow;
         QVector3D bodyHigh;
         if (!raws.empty() && bodyBounds(bodyLow, bodyHigh)) {
-            include(bodyLow);
-            include(bodyHigh);
+            for (int corner = 0; corner < 8; ++corner) {
+                include(toLocal({(corner & 1) != 0 ? bodyHigh.x() : bodyLow.x(),
+                                 (corner & 2) != 0 ? bodyHigh.y() : bodyLow.y(),
+                                 (corner & 4) != 0 ? bodyHigh.z() : bodyLow.z()}));
+            }
         }
         const QVector3D centre = (low + high) / 2.0F;
         QPointF screenLow(1e30, 1e30);
         QPointF screenHigh(-1e30, -1e30);
         for (int corner = 0; corner < 8 && !raws.empty(); ++corner) {
-            const QPointF p = onScreen({(corner & 1) != 0 ? high.x() : low.x(),
-                                        (corner & 2) != 0 ? high.y() : low.y(),
-                                        (corner & 4) != 0 ? high.z() : low.z()});
+            const QPointF p = onScreen(toWorld({(corner & 1) != 0 ? high.x() : low.x(),
+                                                (corner & 2) != 0 ? high.y() : low.y(),
+                                                (corner & 4) != 0 ? high.z() : low.z()}));
             screenLow = QPointF(std::min(screenLow.x(), p.x()), std::min(screenLow.y(), p.y()));
             screenHigh = QPointF(std::max(screenHigh.x(), p.x()), std::max(screenHigh.y(), p.y()));
         }
-        const QPointF screenCentre = onScreen(centre);
+        const QPointF screenCentre = onScreen(toWorld(centre));
         // The outline of that box on screen (convex hull of its corners), and whether a label
         // there would lie on it.
         std::vector<QPointF> outline;
         for (int corner = 0; corner < 8 && !raws.empty(); ++corner) {
-            outline.push_back(onScreen({(corner & 1) != 0 ? high.x() : low.x(),
-                                        (corner & 2) != 0 ? high.y() : low.y(),
-                                        (corner & 4) != 0 ? high.z() : low.z()}));
+            outline.push_back(onScreen(toWorld({(corner & 1) != 0 ? high.x() : low.x(),
+                                                (corner & 2) != 0 ? high.y() : low.y(),
+                                                (corner & 4) != 0 ? high.z() : low.z()})));
         }
         outline = convexHull(outline);
         const auto coversBody = [&outline](const QPointF& chip) {
@@ -404,7 +502,7 @@ void HandleController::refresh() {
         std::vector<Placed> placed;
         for (const Raw& raw : raws) {
             Placed place;
-            const int axis = axisOf(raw.axisWorld);
+            const int axis = axisOf(toLocal(raw.axisWorld));
             // Looked at nearly end on, a band would be a short slanted stroke: none then, as
             // for dragging (kLeastSight).
             const QVector3D sight = (raw.atWorld - eye).normalized();
@@ -414,8 +512,9 @@ void HandleController::refresh() {
                                 axis >= 0 && seen;
             if (linear) {
                 // The edge of the box the band runs along, and the way out of the box from it.
-                const float from = raw.startWorld[axis];
-                const float to = raw.atWorld[axis];
+                const float from = toLocal(raw.startWorld)[axis];
+                const float to = toLocal(raw.atWorld)[axis];
+                const QVector3D eyeLocal = toLocal(eye);
                 QVector3D base;
                 QVector3D out;
                 if (axis == 2) {
@@ -425,7 +524,7 @@ void HandleController::refresh() {
                     for (int corner = 0; corner < 4; ++corner) {
                         const QVector3D p((corner & 1) != 0 ? high.x() : low.x(),
                                           (corner & 2) != 0 ? high.y() : low.y(), centre.z());
-                        const auto left = static_cast<float>(onScreen(p).x());
+                        const auto left = static_cast<float>(onScreen(toWorld(p)).x());
                         if (left < bestLeft) {
                             bestLeft = left;
                             base = p;
@@ -438,9 +537,9 @@ void HandleController::refresh() {
                     // Seen straight from above, the width goes in front and the depth right.
                     const int across = axis == 0 ? 1 : 0;
                     base = centre;
-                    base[2] = eye.z() >= low.z() ? low.z() : high.z();
-                    const bool near =
-                        across == 1 ? eye.y() > centre.y() + 1.0F : eye.x() > centre.x() - 1.0F;
+                    base[2] = eyeLocal.z() >= low.z() ? low.z() : high.z();
+                    const bool near = across == 1 ? eyeLocal.y() > centre.y() + 1.0F
+                                                  : eyeLocal.x() > centre.x() - 1.0F;
                     base[across] = near ? high[across] : low[across];
                     out = QVector3D();
                     out[across] = near ? 1.0F : -1.0F;
@@ -449,8 +548,8 @@ void HandleController::refresh() {
                 QVector3D edgeTo = base;
                 edgeFrom[axis] = from;
                 edgeTo[axis] = to;
-                place.edgeStart = onScreen(edgeFrom);
-                place.edgeEnd = onScreen(edgeTo);
+                place.edgeStart = onScreen(toWorld(edgeFrom));
+                place.edgeEnd = onScreen(toWorld(edgeTo));
                 const QPointF along = place.edgeEnd - place.edgeStart;
                 const double bandLength = lengthOf(along);
                 const QVector3D middle = (edgeFrom + edgeTo) / 2.0F;
@@ -458,8 +557,9 @@ void HandleController::refresh() {
                     const QPointF unit = along / bandLength;
                     const QPointF normal(-unit.y(), unit.x());
                     auto aside = [&](const QVector3D& way) {
-                        return std::abs(
-                            QPointF::dotProduct(onScreen(middle + way) - onScreen(middle), normal));
+                        const QPointF moved = onScreen(toWorld(middle + way));
+                        const QPointF still = onScreen(toWorld(middle));
+                        return std::abs(QPointF::dotProduct(moved - still, normal));
                     };
                     // Looking along the way out (straight at the face), the band would lie on
                     // the edge: then it goes below the body, as in a front view of a drawing.
@@ -471,13 +571,15 @@ void HandleController::refresh() {
                         // Far enough out that its label, which sits on the band, stays off the
                         // body.
                         const double wanted = kBandGap + reachOf(normal, kChipWidth, kChipHeight);
-                        const auto offset = out * static_cast<float>(wanted / perMillimetre);
+                        const QVector3D outWorld = toWorld(out);
+                        const QVector3D offset =
+                            outWorld * static_cast<float>(wanted / perMillimetre);
                         place.band = true;
-                        place.bandStartWorld = edgeFrom + offset;
-                        place.bandEndWorld = edgeTo + offset;
-                        place.edgeStartWorld = edgeFrom;
-                        place.edgeEndWorld = edgeTo;
-                        place.tick = out * static_cast<float>(kTickPixels / perMillimetre);
+                        place.bandStartWorld = toWorld(edgeFrom) + offset;
+                        place.bandEndWorld = toWorld(edgeTo) + offset;
+                        place.edgeStartWorld = toWorld(edgeFrom);
+                        place.edgeEndWorld = toWorld(edgeTo);
+                        place.tick = outWorld * static_cast<float>(kTickPixels / perMillimetre);
                         place.bandStart = onScreen(place.bandStartWorld);
                         place.bandEnd = onScreen(place.bandEndWorld);
                         place.chip = (place.bandStart + place.bandEnd) / 2.0;
