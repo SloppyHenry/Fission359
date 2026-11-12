@@ -80,8 +80,13 @@ Float {
                 onActivated: value => Preferences.language = value
             }
 
-            // No unit choice yet: every value is shown in millimetres (inches can be typed: "2 in").
-            // The choice comes back with a real inch display (pflege.md P23).
+            Label { text: qsTr("Unit for new projects") }
+            Segmented {
+                accessibleName: qsTr("Unit")
+                current: Preferences.units
+                model: [{ value: "mm", text: qsTr("Millimetres") }, { value: "in", text: qsTr("Inches") }]
+                onActivated: value => Preferences.units = value
+            }
 
             Label { text: qsTr("Decimal places shown") }
             Segmented {
