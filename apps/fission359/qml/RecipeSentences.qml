@@ -82,6 +82,13 @@ QtObject {
             default: return qsTr("Pulled %1 mm").arg(n(v[0]))
             }
         }
+        if (step.type === "revolve" && v.length === 1) {
+            switch (step.texts.mode) {
+            case "merge": return qsTr("Turned and joined with the body (%1°)").arg(n(v[0]))
+            case "subtract": return qsTr("Turned and cut out of the body (%1°)").arg(n(v[0]))
+            default: return qsTr("Turned an area into a body (%1°)").arg(n(v[0]))
+            }
+        }
         if (step.type === "stretch" && v.length === 2) {
             return v[0] >= 0 ? qsTr("Stretched by %1 mm").arg(n(v[0])) : qsTr("Shortened by %1 mm").arg(n(-v[0]))
         }
@@ -120,7 +127,7 @@ QtObject {
             }
         }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "tiltFace", "shell", "draft"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "tiltFace", "shell", "draft", "revolve"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)

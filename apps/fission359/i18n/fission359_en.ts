@@ -2705,6 +2705,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Turning an area</source>
+        <translation>Turning an area</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Stretching</source>
         <translation>Stretching</translation>
     </message>
@@ -4336,6 +4341,21 @@
         <location line="+1"/>
         <source>Cut %1 mm deep</source>
         <translation>Cut %1 mm deep</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turned an area into a body (%1°)</source>
+        <translation>Turned an area into a body (%1°)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turned and joined with the body (%1°)</source>
+        <translation>Turned and joined with the body (%1°)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turned and cut out of the body (%1°)</source>
+        <translation>Turned and cut out of the body (%1°)</translation>
     </message>
     <message>
         <location line="+3"/>

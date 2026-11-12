@@ -1843,6 +1843,7 @@ Window {
         if (type === "chamfer") { return qsTr("Bevelling") }
         if (type === "pushFace") { return qsTr("Pulling a face") }
         if (type === "extrude") { return qsTr("Pulling an area") }
+        if (type === "revolve") { return qsTr("Turning an area") }
         if (type === "stretch") { return qsTr("Stretching") }
         if (type === "removeFaces") { return qsTr("Removing faces") }
         if (type === "offsetFaces") { return qsTr("Moving faces") }
