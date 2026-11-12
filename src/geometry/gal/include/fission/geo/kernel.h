@@ -15,6 +15,7 @@
 #include "fission/geo/mesh.h"
 #include "fission/geo/named_solid.h"
 #include "fission/geo/outline.h"
+#include "fission/geo/pattern.h"
 #include "fission/geo/primitives.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/signature.h"
@@ -125,6 +126,15 @@ public:
         (void)solid;
         (void)delta;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move bodies");
+    }
+
+    /// The same body transformed by `transform` (rotation and translation). A pure move: the faces
+    /// stay the faces they were, with their roles, in the same order. Throws GeometryError for
+    /// a transform that is not finite. The default refuses.
+    virtual NamedSolid transformed(const NamedSolid& solid, const Transform3& transform) const {
+        (void)solid;
+        (void)transform;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot transform");
     }
 
     /// Combines `target` with `tools` exactly (no tolerance), then joins faces that lie in one

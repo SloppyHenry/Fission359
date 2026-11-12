@@ -4435,6 +4435,22 @@
             <numerusform>Merged with %n bodies</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>Row of %n copy(ies)</source>
+        <translation>
+            <numerusform>Row of %n copy</numerusform>
+            <numerusform>Row of %n copies</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>Circle of %n copy(ies)</source>
+        <translation>
+            <numerusform>Circle of %n copy</numerusform>
+            <numerusform>Circle of %n copies</numerusform>
+        </translation>
+    </message>
     <message>
         <location line="+5"/>
         <source>Step %1 (unknown kind)</source>

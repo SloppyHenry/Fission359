@@ -3285,6 +3285,10 @@
             <numerusform>%n geschlossene Bereiche. Klicke einen an, um ihn zu wählen.</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Pattern</source>
+        <translation>Muster</translation>
+    </message>
 </context>
 <context>
     <name>MarkerLine</name>
@@ -4439,6 +4443,20 @@
         <location line="+5"/>
         <source>Step %1 (unknown kind)</source>
         <translation>Schritt %1 (unbekannte Art)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Row of %n copy(ies)</source>
+        <translation>
+            <numerusform>Reihe aus %n Exemplar</numerusform>
+            <numerusform>Reihe aus %n Exemplaren</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Circle of %n copy(ies)</source>
+        <translation>
+            <numerusform>Kreis aus %n Exemplar</numerusform>
+            <numerusform>Kreis aus %n Exemplaren</numerusform>
+        </translation>
     </message>
 </context>
 <context>
