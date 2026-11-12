@@ -1108,6 +1108,18 @@
         <source>A %1 as the start of a shape. %2</source>
         <translation>A %1 as the start of a shape. %2</translation>
     </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Helper plane</translation>
+    </message>
+    <message>
+        <source>A plane that floats beside a face or above the bed, to sketch on later. It is not part of the body and never printed.</source>
+        <translation>A plane that floats beside a face or above the bed, to sketch on later. It is not part of the body and never printed.</translation>
+    </message>
+    <message>
+        <source>Choose a flat face (or nothing for the bed), then type the distance in the panel.</source>
+        <translation>Choose a flat face (or nothing for the bed), then type the distance in the panel.</translation>
+    </message>
 </context>
 <context>
     <name>CommandPalette</name>
@@ -3285,6 +3297,26 @@
             <numerusform>%n closed areas. Click one to choose it.</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Helper plane</translation>
+    </message>
+    <message>
+        <source>A helper plane can only start from a flat face.</source>
+        <translation>A helper plane can only start from a flat face.</translation>
+    </message>
+    <message>
+        <source>Helper plane 10 mm from the face. Type another distance in the panel.</source>
+        <translation>Helper plane 10 mm from the face. Type another distance in the panel.</translation>
+    </message>
+    <message>
+        <source>Helper plane 10 mm above the bed. Type another distance in the panel.</source>
+        <translation>Helper plane 10 mm above the bed. Type another distance in the panel.</translation>
+    </message>
+    <message>
+        <source>Helper plane added</source>
+        <translation>Helper plane added</translation>
+    </message>
 </context>
 <context>
     <name>MarkerLine</name>
@@ -4411,6 +4443,11 @@
         <source>Sketch</source>
         <translation>Sketch</translation>
     </message>
+    <message>
+        <location line="+3"/>
+        <source>Helper plane, %1 mm offset</source>
+        <translation>Helper plane, %1 mm offset</translation>
+    </message>
     <message numerus="yes">
         <location line="+4"/>
         <source>Cut out %n body(ies)</source>
@@ -4711,6 +4748,14 @@
         <location line="+1"/>
         <source>Yellow</source>
         <translation>Yellow</translation>
+    </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Helper plane</translation>
+    </message>
+    <message>
+        <source>Show the plane in the view</source>
+        <translation>Show the plane in the view</translation>
     </message>
 </context>
 <context>

@@ -155,6 +155,7 @@ Window {
             { id: "tiltFace", text: qsTr("Tilt face"), enabled: Selection.singleFaceChosen },
             { id: "removeFaces", text: qsTr("Remove face"), enabled: root.facesChosen },
             { id: "offsetFaces", text: qsTr("Offset faces"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
+            { id: "helperPlane", text: qsTr("Helper plane"), enabled: true },
             { separator: true },
             { id: "shell", text: qsTr("Hollow out"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
             { id: "draft", text: qsTr("Draft"), enabled: root.facesChosen || root.chosenBodies.length === 1 }
@@ -565,6 +566,7 @@ Window {
         case "tiltFace": tiltFaceChosen(); break
         case "removeFaces": removeFacesChosen(); break
         case "offsetFaces": offsetFacesChosen(); break
+        case "helperPlane": helperPlaneChosen(); break
         case "shell": shellChosen(); break
         case "draft": draftChosen(); break
         case "merge":
@@ -679,6 +681,20 @@ Window {
         root.flyout = ""
         Selection.chooseBodies([made])
         showHint(qsTr("Faces moved by 0.2 mm. Type another distance in the panel."))
+    }
+
+    // A helper plane 10 mm from the chosen flat face, or from the ground without one (AP-2.12c).
+    function helperPlaneChosen() {
+        const item = Selection.singleFaceChosen ? Selection.items[0] : undefined
+        const made = item !== undefined ? DocumentModel.addHelperPlane(item.body, item.number)
+                                        : DocumentModel.addHelperPlane("", 0)
+        if (made === "") {
+            showHint(qsTr("A helper plane can only start from a flat face."))
+            return
+        }
+        root.flyout = ""
+        showHint(item !== undefined ? qsTr("Helper plane 10 mm from the face. Type another distance in the panel.")
+                                    : qsTr("Helper plane 10 mm above the bed. Type another distance in the panel."))
     }
 
     // The body to work on: the one the chosen faces belong to, or the one chosen body ("" if none).
@@ -1827,6 +1843,7 @@ Window {
         if (type === "place") { return qsTr("Placing") }
         if (type === "import") { return qsTr("Imported body") }
         if (type === "sketch") { return qsTr("Sketch") }
+        if (type === "helperPlane") { return qsTr("Helper plane") }
         const name = shapeCatalog.nameOf(type)
         return name !== "" ? name : qsTr("Body")
     }
@@ -1905,6 +1922,7 @@ Window {
         case "removeFaces": return qsTr("%n face(s) removed", "", Number(step.count))
         case "offsetFaces": return qsTr("%n face(s) moved", "", Number(step.count))
         case "tiltFace": return qsTr("Face tilted")
+        case "helperPlane": return qsTr("Helper plane added")
         case "shellBody": return qsTr("Body hollowed out")
         case "draftFaces": return qsTr("Draft added")
         case "combineBodies":

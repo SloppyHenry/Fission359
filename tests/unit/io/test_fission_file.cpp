@@ -350,6 +350,9 @@ TEST_CASE("write the version 1 fixture files", "[.generate-fixtures]") {
     World world;
     fs::create_directories(fixtureFolder("v1"));
     for (const std::string& type : world.registry.ids()) {
+        if (type == "helperPlane") {
+            continue; // came after format 1
+        }
         const fs::path target = fixtureFolder("v1") / (type + ".fission");
         if (fs::exists(target)) {
             continue; // a fixture is written once and never changed
@@ -392,7 +395,9 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
             CHECK(result->sketches.begin()->second.data.elements.empty());
         }
     }
-    CHECK(count == world.registry.ids().size());
+    // Step types that came after format 1 and have no artificial version 1 file.
+    const std::size_t newer = 1; // helperPlane (AP-2.12b)
+    CHECK(count + newer == world.registry.ids().size());
 }
 
 // The first file that has a sketch with elements (format 3, AP-2.1a). Written once, never changed.

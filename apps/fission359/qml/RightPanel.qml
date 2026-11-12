@@ -84,6 +84,8 @@ Rectangle {
     // "Go all the way through": a switch for a hole whose shape runs straight (a value 0 or 1).
     readonly property var throughValue: stepValues.find(v => v.group === "through")
     property bool isHole: false
+    // A helper plane (AP-2.12c): the square drawn for it can be hidden.
+    readonly property var shownText: stepTexts.find(t => t.name === "shown")
     // A split: the axis it cuts across (0 = x, 1 = y, 2 = z) and where.
     readonly property var axisValue: stepValues.find(v => v.group === "axis")
     readonly property var cutValues: stepValues.filter(v => v.group === "cut")
@@ -386,6 +388,18 @@ Rectangle {
                             value: cutField.entry.expression
                         }
                     }
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.shownText !== undefined
+                heading: qsTr("Helper plane")
+
+                Toggle {
+                    objectName: "helperPlaneShown"
+                    text: qsTr("Show the plane in the view")
+                    checked: root.shownText !== undefined && root.shownText.value === "yes"
+                    onToggled: root.textCommitted("shown", checked ? "yes" : "no")
                 }
             }
 

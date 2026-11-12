@@ -244,6 +244,14 @@ if(_fission_run_window_tests)
             --camera=35,35,200 --simulate "put:box;menu:new;expecttab:1,2;key:${_fission_prev_tab_key};expecttab:0,2;key:${_fission_next_tab_key};expecttab:1,2;menu:prevtab;expecttab:0,2")
   set_tests_properties(app_tab_keys PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.12c: a helper plane is made from the menu (a step without a body); its switch hides the
+  # square in the view (one undo step).
+  add_test(NAME app_helper_plane
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-helper-plane.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "put:box;menu:helperPlane;recipe:box,helperPlane;step:1;clickitem:helperPlaneShown;expectundo:setText")
+  set_tests_properties(app_helper_plane PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # Pflege P10: the keys + and - zoom the 3D view towards its centre by 20 % each (the camera
   # distance gets smaller, then larger again).
   add_test(NAME app_keyboard_zoom
