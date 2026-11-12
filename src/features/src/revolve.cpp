@@ -49,7 +49,7 @@ public:
     }
 
     std::optional<FeatureId> readsSketch(const Feature& feature) const override {
-        const std::string& text = textOf(feature, "sketch", "");
+        const std::string text = textOf(feature, "sketch", "");
         if (text.empty()) {
             return std::nullopt;
         }
