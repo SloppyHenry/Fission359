@@ -103,6 +103,9 @@ Bounds bounds(const Solid& solid);
 /// The box that touches the body (see `GeometryKernel::exactBounds`).
 Bounds exactBounds(const Solid& solid);
 
+/// See GeometryKernel::snapPoints.
+std::vector<SnapPointGal> snapPoints(const Solid& solid);
+
 /// What every face and edge of the body looks like (see `GeometryKernel::signatures`).
 BodySignatures signatures(const Solid& solid);
 

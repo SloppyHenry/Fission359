@@ -319,6 +319,13 @@ public:
     /// Deletes the steps at `indexes` (and with them the bodies they make) as one step of the
     /// history; the cuts of holes follow. False when there is nothing to delete.
     Q_INVOKABLE bool deleteSteps(const QVariantList& indexes);
+    /// Whether moving the step at `from` to `to` would be accepted. Checked on a copy of the
+    /// document: the step must not land before a step it depends on. False for invalid indexes
+    /// or `from == to`.
+    Q_INVOKABLE bool canMoveStep(int from, int to) const;
+    /// Moves the step at `from` to `to` (its index after the move) as one step of the history.
+    /// False when the move is refused or the indexes are invalid or equal.
+    Q_INVOKABLE bool moveStep(int from, int to);
     /// Puts the time marker behind the first `count` steps (-1 or the number of steps: at the end).
     /// One step of the history; a new step goes in at the marker and the marker moves behind it.
     Q_INVOKABLE bool moveMarker(int count);
@@ -737,6 +744,12 @@ private:
     void collectForms(const core::Feature& step, std::vector<const core::Feature*>& out) const;
     /// Writes the turn and the foot of a seat into the step (one value after the other).
     void writeSeat(const core::FeatureId& id, const geo::Seat& seat);
+    /// Pflege P8: re-seats the shape that was just put down on a wall with its sizes as they are
+    /// now, so that its underside stays on the wall. Called inside the open step of a change, so
+    /// that the re-seat is part of the same undo step. False (and nothing written) when there is
+    /// no fresh seat, another command happened since, or a value cannot be worked out without the
+    /// named measures: never seated with guessed sizes.
+    bool reseatFresh();
     const core::Body* findBody(const QString& bodyId) const;
 
     // What was copied (also on the system clipboard, see clipboard_payload.h).
@@ -764,6 +777,18 @@ private:
     QString m_placingSurface;
     geo::Point3d m_placingCentre; ///< middle of the shape's box minus its foot (before a turn)
     bool m_placingOnFace = false; ///< the shape lies on a tilted face (it has a turn)
+    /// The wall a shape was put down on (pflege P8): while nothing else happened since (same
+    /// revision), a typed size keeps its underside on the wall.
+    struct FreshSeat {
+        core::FeatureId feature;
+        geo::Point3d point;
+        geo::Point3d normal;
+        std::uint64_t revision = 0;
+    };
+    std::optional<FreshSeat> m_freshSeat;
+    geo::Point3d m_placingSeatPoint;         ///< the last wall point of the shape being placed
+    geo::Point3d m_placingSeatNormal;        ///< and the wall's outward direction
+    std::uint64_t m_changeStartRevision = 0; ///< the revision when `beginChange` opened its step
     double m_workplaneZ = 0.0;
     QString m_workplaneBody;
     int m_currentStep = -1;
@@ -773,6 +798,8 @@ private:
     // Tessellations by result, made on the worker thread, read when the scene is put together.
     std::mutex m_meshMutex;
     std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_meshes;
+    std::map<std::uint64_t, std::shared_ptr<const std::vector<geo::SnapPointGal>>>
+        m_snapPoints; ///< by mesh key, guarded by m_meshMutex
 
     // Finer tessellations for the current zoom, by mesh key; made by a pool thread, used on the
     // interface thread only.

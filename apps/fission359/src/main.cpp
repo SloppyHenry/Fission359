@@ -235,6 +235,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "keeps the button down), "
             "drag:x,y,40,0,8 (press at a point of the 3D view, "
             "pull, let go), focus:width (the cursor into that field), key:Right (press a key), "
+            "markcamera (store the camera distance), expectcamera:closer / expectcamera:farther "
+            "(fail unless the camera came closer to / farther from its target since markcamera), "
             "separated by semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
@@ -570,10 +572,9 @@ int main(int argc, char* argv[]) {
     fission::ui::CommandSearch commandSearch;
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "CommandSearch", &commandSearch);
     documentModel.setPrinter(preferences.printerId());
-    files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
-    QObject::connect(&preferences, &fission::ui::Preferences::unitsChanged, &files, [&] {
-        files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
-    });
+    // New projects count in millimetres until lengths are also shown in inches (pflege.md P23):
+    // a bare number in inches while everything shows millimetres would only confuse.
+    files.setNewDocumentUnit(1.0);
     numbers.setMaxDecimals(preferences.decimals());
     QObject::connect(&preferences, &fission::ui::Preferences::decimalsChanged, &numbers,
                      [&] { numbers.setMaxDecimals(preferences.decimals()); });
