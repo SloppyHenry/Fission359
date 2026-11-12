@@ -1025,31 +1025,38 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                 kind == QLatin1String("clickitem") ? Qt::LeftButton : Qt::RightButton;
             for (const QEvent::Type type : {QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
                 delay += type == QEvent::MouseButtonPress ? 350 : 60;
-                QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, name, type, button] {
-                    std::function<QQuickItem*(QQuickItem*)> find = [&](QQuickItem* item) {
-                        if (item->objectName() == name && item->isVisible()) {
-                            return item;
+                QTimer::singleShot(
+                    delay, Qt::PreciseTimer, viewport, [window, model, name, type, button] {
+                        // A step changed just before may still be calculated: what the click is
+                        // aimed at (a problem badge, its way out) only exists after that.
+                        if (type == QEvent::MouseButtonPress) {
+                            model->waitForCalculation();
+                            QCoreApplication::processEvents();
                         }
-                        for (QQuickItem* child : item->childItems()) {
-                            if (QQuickItem* found = find(child)) {
-                                return found;
+                        std::function<QQuickItem*(QQuickItem*)> find = [&](QQuickItem* item) {
+                            if (item->objectName() == name && item->isVisible()) {
+                                return item;
                             }
+                            for (QQuickItem* child : item->childItems()) {
+                                if (QQuickItem* found = find(child)) {
+                                    return found;
+                                }
+                            }
+                            return static_cast<QQuickItem*>(nullptr);
+                        };
+                        QQuickItem* item = find(window->contentItem());
+                        if (item == nullptr) {
+                            qWarning().noquote() << QStringLiteral("no item %1 to click").arg(name);
+                            g_simulationFailure = 5;
+                            return;
                         }
-                        return static_cast<QQuickItem*>(nullptr);
-                    };
-                    QQuickItem* item = find(window->contentItem());
-                    if (item == nullptr) {
-                        qWarning().noquote() << QStringLiteral("no item %1 to click").arg(name);
-                        g_simulationFailure = 5;
-                        return;
-                    }
-                    const QPointF scene =
-                        item->mapToScene(QPointF(item->width() / 3, item->height() / 2));
-                    const bool press = type == QEvent::MouseButtonPress;
-                    QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()), button,
-                                      press ? button : Qt::NoButton, Qt::NoModifier);
-                    QCoreApplication::sendEvent(window, &event);
-                });
+                        const QPointF scene =
+                            item->mapToScene(QPointF(item->width() / 3, item->height() / 2));
+                        const bool press = type == QEvent::MouseButtonPress;
+                        QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()), button,
+                                          press ? button : Qt::NoButton, Qt::NoModifier);
+                        QCoreApplication::sendEvent(window, &event);
+                    });
             }
             continue;
         }
