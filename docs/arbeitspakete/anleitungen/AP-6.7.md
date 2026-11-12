@@ -58,6 +58,7 @@ Alle entschieden (Festlegungen 1–8). Neue Fragen: anhalten und berichten.
 ## Teil 6.7b – Programm im Browser
 1. Qt für WebAssembly (aqtinstall, `wasm_multithread`, plus passende Host-Qt-Version) in der CI; Preset `web-release` für die ganze App.
 2. Shader: GLSL-ES-300-Varianten; Renderer prüft, dass alle Pässe auf WebGL 2 laufen (Fallbacks dokumentieren).
+   Stand 2026-11-11: `qt_add_shaders` erzeugt `GLSL "100es,120,150,300es"` (alle 18 Shader); der Lauf auf WebGL 2 folgt mit der App.
 3. Plattformzweige nur in `src/services/` (z. B. `services/platform.h`: `isBrowser()`), Festlegung 5 umsetzen.
 4. `scripts/web` und lokaler Server (Festlegung 3). Startseite-HTML (`packaging/web/index.html`): Ladebalken, Hinweis bei fehlender
    Cross-Origin-Isolation oder fehlendem WebGL 2 (DE/EN, je nach Browsersprache).
