@@ -4711,6 +4711,30 @@
         <source>Yellow</source>
         <translation>Yellow</translation>
     </message>
+    <message>
+        <source>What is the hole for?</source>
+        <translation>What is the hole for?</translation>
+    </message>
+    <message>
+        <source>Screw goes through</source>
+        <translation>Screw goes through</translation>
+    </message>
+    <message>
+        <source>Countersunk screw</source>
+        <translation>Countersunk screw</translation>
+    </message>
+    <message>
+        <source>Screw with a cylinder head</source>
+        <translation>Screw with a cylinder head</translation>
+    </message>
+    <message>
+        <source>Nut to put in</source>
+        <translation>Nut to put in</translation>
+    </message>
+    <message>
+        <source>Screw cuts its own thread</source>
+        <translation>Screw cuts its own thread</translation>
+    </message>
 </context>
 <context>
     <name>RotateLayer</name>

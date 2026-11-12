@@ -132,6 +132,34 @@ TEST_CASE("drill hole: a flat face gets a hole step", "[ui][faces][holes]") {
     CHECK(f.model->drillHole(QStringLiteral("nobody"), 1).isEmpty());
 }
 
+TEST_CASE("drill hole: the screw size and kind come from the tables", "[ui][faces][holes]") {
+    Pull f;
+    QString made;
+    for (int number = 1; number <= 6 && made.isEmpty(); ++number) {
+        made = f.model->drillHole(f.body, number);
+    }
+    REQUIRE_FALSE(made.isEmpty());
+    f.model->waitForCalculation();
+    const int index = static_cast<int>(f.model->recipe().size()) - 1;
+    CHECK(f.model->setHoleScrew(index, QStringLiteral("M3"), QStringLiteral("countersink")));
+    f.model->waitForCalculation();
+    CHECK(f.step(1).value("state").toString() == "ok");
+    CHECK(f.model->setHoleScrew(index, QStringLiteral("M4"), QStringLiteral("counterbore")));
+    f.model->waitForCalculation();
+    CHECK(f.step(1).value("state").toString() == "ok");
+    CHECK(f.model->setHoleScrew(index, QStringLiteral("M3"), QStringLiteral("nutTrap")));
+    f.model->waitForCalculation();
+    CHECK(f.step(1).value("state").toString() == "ok");
+    CHECK(f.model->setHoleScrew(index, QStringLiteral("M3"), QStringLiteral("tapDrill")));
+    f.model->waitForCalculation();
+    CHECK(f.step(1).value("state").toString() == "ok");
+    // One undo step goes back to the previous kind.
+    CHECK(f.model->undo());
+    CHECK_FALSE(f.model->setHoleScrew(index, QStringLiteral("M99"), QStringLiteral("plain")));
+    CHECK_FALSE(f.model->setHoleScrew(index, QStringLiteral("M3"), QStringLiteral("round")));
+    CHECK_FALSE(f.model->setHoleScrew(0, QStringLiteral("M3"), QStringLiteral("plain")));
+}
+
 TEST_CASE("remove faces: a bad request is refused, a flat face is its own feature", "[ui][faces]") {
     Pull f;
     const int before = f.model->historyPosition();

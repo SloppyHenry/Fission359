@@ -1773,6 +1773,7 @@ Window {
             fonts: DocumentModel.fontFamilies
             fontStyles: DocumentModel.fontStyles(root.currentFontName)
             onTextCommitted: (name, text) => root.changeWords(name, text)
+            onHoleScrewChosen: (size, kind) => DocumentModel.setHoleScrew(DocumentModel.currentStep, size, kind)
             onTabRequested: tab => root.rightTab = tab
             onAxisChosen: axis => DocumentModel.setSplitAxis(DocumentModel.currentStep, axis)
             onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)
