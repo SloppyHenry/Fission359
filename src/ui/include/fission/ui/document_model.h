@@ -532,6 +532,12 @@ public:
     /// Turns a flat face about its lowest edge, 10 degrees to start with (positive leans it out):
     /// a new step. Returns the id of the new body, empty when nothing can be done.
     Q_INVOKABLE QString tiltFace(const QString& bodyId, int faceNumber);
+    /// Adds a helper plane 10 mm from the flat face `faceNumber` of the body, or from the ground
+    /// plane when `bodyId` is empty (AP-2.12): a step without a body. Returns the id of the step,
+    /// empty when nothing can be done.
+    Q_INVOKABLE QString addHelperPlane(const QString& bodyId, int faceNumber);
+    /// The four corners (mm) of every helper plane that is calculated and shown, for the view.
+    std::vector<std::array<geo::Point3d, 4>> helperPlaneCorners() const;
     /// The faces that belong to the one at `faceNumber` as a feature: for a curved face the curved
     /// faces it runs into and the floor of a blind hole, for a flat face just itself.
     Q_INVOKABLE QVariantList faceFeature(const QString& bodyId, int faceNumber) const;

@@ -1108,6 +1108,18 @@
         <source>A %1 as the start of a shape. %2</source>
         <translation>Ein %1 als Anfang einer Form. %2</translation>
     </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Hilfsebene</translation>
+    </message>
+    <message>
+        <source>A plane that floats beside a face or above the bed, to sketch on later. It is not part of the body and never printed.</source>
+        <translation>Eine Ebene, die neben einer Fläche oder über dem Druckbett schwebt, um später darauf zu skizzieren. Sie gehört nicht zum Körper und wird nie gedruckt.</translation>
+    </message>
+    <message>
+        <source>Choose a flat face (or nothing for the bed), then type the distance in the panel.</source>
+        <translation>Wähle eine ebene Fläche (oder nichts für das Druckbett) und trage dann den Abstand im Feld ein.</translation>
+    </message>
 </context>
 <context>
     <name>CommandPalette</name>
@@ -3288,6 +3300,22 @@
     <message>
         <source>Helper plane</source>
         <translation>Hilfsebene</translation>
+    </message>
+    <message>
+        <source>A helper plane can only start from a flat face.</source>
+        <translation>Eine Hilfsebene geht nur von einer ebenen Fläche aus.</translation>
+    </message>
+    <message>
+        <source>Helper plane 10 mm from the face. Type another distance in the panel.</source>
+        <translation>Hilfsebene 10 mm von der Fläche entfernt. Einen anderen Abstand trägst du im Feld ein.</translation>
+    </message>
+    <message>
+        <source>Helper plane 10 mm above the bed. Type another distance in the panel.</source>
+        <translation>Hilfsebene 10 mm über dem Druckbett. Einen anderen Abstand trägst du im Feld ein.</translation>
+    </message>
+    <message>
+        <source>Helper plane added</source>
+        <translation>Hilfsebene hinzugefügt</translation>
     </message>
 </context>
 <context>

@@ -118,6 +118,27 @@ TEST_CASE("tilt face: a flat face turns about its lowest edge", "[ui][faces]") {
     CHECK(f.model->tiltFace(QStringLiteral("nobody"), 1).isEmpty());
 }
 
+TEST_CASE("helper plane: from the ground or a flat face, without a body",
+          "[ui][faces][helperplane]") {
+    Pull f;
+    const int bodiesBefore = static_cast<int>(f.model->result()->bodies.size());
+    CHECK_FALSE(f.model->addHelperPlane(QString(), 0).isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.step(1).value("type").toString() == "helperPlane");
+    CHECK(f.step(1).value("state").toString() == "ok");
+    CHECK(static_cast<int>(f.model->result()->bodies.size()) == bodiesBefore);
+    CHECK(f.model->helperPlaneCorners().size() == 1);
+    QString made;
+    for (int number = 1; number <= 6 && made.isEmpty(); ++number) {
+        made = f.model->addHelperPlane(f.body, number);
+    }
+    CHECK_FALSE(made.isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.model->helperPlaneCorners().size() == 2);
+    CHECK(f.model->addHelperPlane(f.body, 0).isEmpty());
+    CHECK(f.model->addHelperPlane(QStringLiteral("nobody"), 1).isEmpty());
+}
+
 TEST_CASE("remove faces: a bad request is refused, a flat face is its own feature", "[ui][faces]") {
     Pull f;
     const int before = f.model->historyPosition();

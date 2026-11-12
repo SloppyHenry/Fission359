@@ -4319,6 +4319,80 @@ QString DocumentModel::tiltFace(const QString& bodyId, int faceNumber) {
                        "tiltFace");
 }
 
+QString DocumentModel::addHelperPlane(const QString& bodyId, int faceNumber) {
+    const core::FeatureType* type = m_registry.find("helperPlane");
+    if (type == nullptr || !m_result) {
+        return {};
+    }
+    core::FeatureDraft draft = core::defaultDraft(*type);
+    if (!bodyId.isEmpty()) {
+        const core::Body* target = findBody(bodyId);
+        if (target == nullptr || faceNumber < 1) {
+            return {};
+        }
+        const auto made = m_result->bodies.find(target->id);
+        if (made == m_result->bodies.end()) {
+            return {};
+        }
+        try {
+            const core::BodyLooks looks =
+                core::describeBody(made->second.faces, m_kernel->signatures(made->second.solid));
+            const auto found = std::ranges::find_if(looks.faces, [&](const core::NamedLook& face) {
+                return face.id == static_cast<std::uint32_t>(faceNumber);
+            });
+            if (found == looks.faces.end() || !faceIsFlat(bodyId, faceNumber)) {
+                return {};
+            }
+            auto ref = core::makeRef(looks, core::ElementKind::face, found->id,
+                                     core::placementOf(m_history.document(), m_registry,
+                                                       m_result->features, found->name));
+            if (!ref) {
+                return {};
+            }
+            draft.refs["plane"] = {std::move(*ref)};
+            draft.inputs = {target->id};
+        } catch (const geo::GeometryError&) {
+            return {};
+        }
+    }
+    m_history.beginTransaction({"helperPlane", {}});
+    const auto id = m_history.addFeature(std::move(draft));
+    if (!id) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return toQString(id->value);
+}
+
+std::vector<std::array<geo::Point3d, 4>> DocumentModel::helperPlaneCorners() const {
+    std::vector<std::array<geo::Point3d, 4>> planes;
+    if (!m_result) {
+        return planes;
+    }
+    constexpr double half = 40.0; // mm: the square drawn for a plane
+    for (const core::Feature& feature : m_history.document().features()) {
+        if (feature.type != "helperPlane" || feature.suppressed) {
+            continue;
+        }
+        const auto made = m_result->sketches.find(feature.id);
+        if (made == m_result->sketches.end() || !made->second.plane) {
+            continue;
+        }
+        const core::SketchPlane& plane = *made->second.plane;
+        std::array<geo::Point3d, 4> corners;
+        const double signs[4][2] = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
+        for (int i = 0; i < 4; ++i) {
+            corners[static_cast<std::size_t>(i)] =
+                plane.toWorld({signs[i][0] * half, signs[i][1] * half});
+        }
+        planes.push_back(corners);
+    }
+    return planes;
+}
+
 QString DocumentModel::shellBody(const QString& bodyId, const QVariantList& openFaces) {
     const core::Body* target = findBody(bodyId);
     if (target == nullptr || !m_result) {

@@ -676,6 +676,27 @@ int main(int argc, char* argv[]) {
         align.attach(viewport);
         distances.attachGizmo(&gizmo);
         viewport->setScene(documentModel.scene());
+        // The helper planes are drawn as squares with a line round them (AP-2.12c).
+        const auto drawPlanes = [viewport, &documentModel] {
+            fission::render::HandleGraphics graphics;
+            for (const auto& corners : documentModel.helperPlaneCorners()) {
+                fission::render::HandleQuad quad;
+                for (std::size_t i = 0; i < 4; ++i) {
+                    quad.corners[i] = QVector3D(static_cast<float>(corners[i].x),
+                                                static_cast<float>(corners[i].y),
+                                                static_cast<float>(corners[i].z));
+                }
+                quad.fill = QColor(0x4C, 0x8D, 0xFF, 40);
+                quad.line = QColor(0x4C, 0x8D, 0xFF, 200);
+                graphics.quads.push_back(quad);
+            }
+            viewport->setHandleGraphics(std::move(graphics),
+                                        fission::ui::Viewport3D::HandleSource::datum);
+        };
+        QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
+                         [drawPlanes](const std::shared_ptr<const fission::render::RenderScene>&) {
+                             drawPlanes();
+                         });
         const QMetaObject::Connection sceneConnection =
             QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
                              [viewport](std::shared_ptr<const fission::render::RenderScene> scene) {
