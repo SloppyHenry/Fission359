@@ -1739,6 +1739,11 @@
         <source>Delete</source>
         <translation>Löschen</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>This step needs a step above it - it cannot go there</source>
+        <translation>Dieser Schritt braucht einen Schritt darüber – dorthin geht er nicht</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
@@ -2822,6 +2827,11 @@
         <location line="+1"/>
         <source>%1 moved</source>
         <translation>%1 verschoben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 moved in the recipe</source>
+        <translation>%1 im Rezept verschoben</translation>
     </message>
     <message>
         <location line="+1"/>

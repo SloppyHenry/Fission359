@@ -1381,6 +1381,7 @@ Window {
                 }
             }
             onStepDeleteRequested: index => root.requestDeletion(DocumentModel.deletionOfStep(index), true)
+            onStepMoveRequested: (from, to) => DocumentModel.moveStep(from, to)
             onDeleteConfirmed: {
                 const steps = root.pendingDeletion.steps
                 root.pendingDeletion = null
@@ -1875,6 +1876,7 @@ Window {
         switch (step.key) {
         case "addFeature": return qsTr("%1 added").arg(typeLabel(step.type))
         case "removeFeature": return qsTr("%1 removed").arg(typeLabel(step.type))
+        case "moveFeature": return qsTr("%1 moved in the recipe").arg(typeLabel(step.type))
         case "setValue":
             return step.value !== undefined
                 ? qsTr("%1 changed to %2").arg(valueLabel(step.field)).arg(step.value)

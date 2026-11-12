@@ -1479,6 +1479,34 @@ bool DocumentModel::deleteSteps(const QVariantList& indexes) {
     return true;
 }
 
+bool DocumentModel::canMoveStep(int from, int to) const {
+    const auto& features = m_history.document().features();
+    if (from < 0 || from >= static_cast<int>(features.size()) || to < 0 ||
+        to >= static_cast<int>(features.size()) || from == to) {
+        return false;
+    }
+    core::Document copy = m_history.document();
+    return copy.moveFeature(features[static_cast<std::size_t>(from)].id,
+                            static_cast<std::size_t>(to));
+}
+
+bool DocumentModel::moveStep(int from, int to) {
+    const auto& features = m_history.document().features();
+    if (from < 0 || from >= static_cast<int>(features.size()) || to < 0 ||
+        to >= static_cast<int>(features.size()) || from == to) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(from)];
+    core::CommandDescription label{"moveFeature", {{"type", step.type}}};
+    if (!executeWithCuts(core::makeMoveFeature(step.id, static_cast<std::size_t>(to)),
+                         std::move(label))) {
+        return false;
+    }
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
 bool DocumentModel::setStepSuppressed(int index, bool suppressed) {
     const auto& features = m_history.document().features();
     if (index < 0 || index >= static_cast<int>(features.size())) {

@@ -7,6 +7,7 @@ add_executable(fission_unit_tests
   core/test_measure_names.cpp
   core/test_measures.cpp
   core/test_document.cpp
+  core/test_move_feature.cpp
   core/test_recompute.cpp
   core/test_history.cpp
   core/test_sketch.cpp
