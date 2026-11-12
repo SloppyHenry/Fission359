@@ -16,6 +16,7 @@
 #include "fission/geo/named_solid.h"
 #include "fission/geo/outline.h"
 #include "fission/geo/primitives.h"
+#include "fission/geo/revolve.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/signature.h"
 #include "fission/geo/sketch_curve.h"
@@ -443,6 +444,30 @@ public:
         (void)frame;
         (void)spec;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot extrude");
+    }
+
+    /// Turns the region of the sketch that contains `inside` (a point of the sketch plane, in
+    /// sketch coordinates) about an axis that lies in the plane `frame` (AP-2.3c,
+    /// "Drehkörper"). The curves are as in `sketchRegions`, in sketch coordinates; the axis is
+    /// `spec.axisPoint` and `spec.axisDirection` in sketch coordinates, and the region must lie
+    /// entirely on one side of it (touching the axis is allowed). A positive angle turns
+    /// right-handed about the axis direction, as `RevolveSpec` documents. Faces are named: each
+    /// side "side[c<i>]" after the index i of the curve it comes from (when one curve gives
+    /// several sides, the second and later get ":<k>", k = 2, 3, ..., as in `extrudeRegion`); a
+    /// turn of less than 360 degrees also gets the caps "capStart" (at angle 0, in the sketch
+    /// plane) and "capEnd" (at the full angle). A full turn of 360 degrees has no caps. Throws
+    /// `GeometryError`: `invalidInput` when no region contains `inside`, the axis point or
+    /// direction is not a number or the direction is zero, the angle is not a number, not
+    /// positive or more than 360 degrees, the area crosses the axis, or the frame is not two
+    /// perpendicular unit vectors; `kernelFailure` when the kernel cannot calculate or the
+    /// result is not valid. The default refuses.
+    virtual NamedSolid revolveRegion(const std::vector<SketchCurve>& curves, Point2d inside,
+                                     const SketchFrame& frame, const RevolveSpec& spec) const {
+        (void)curves;
+        (void)inside;
+        (void)frame;
+        (void)spec;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot revolve");
     }
 
     /// Measures one element (corner: position; edge: length, radius of a circle or arc; face:

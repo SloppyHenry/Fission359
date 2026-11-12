@@ -7,6 +7,7 @@
 
 #include "fission/geo/extrude.h"
 #include "fission/geo/named_solid.h"
+#include "fission/geo/revolve.h"
 #include "fission/geo/sketch_edge.h"
 #include "fission/geo/sketch_regions.h"
 
@@ -18,5 +19,9 @@ SketchRegionResult sketchRegions(const std::vector<SketchCurve>& curves);
 /// See `GeometryKernel::extrudeRegion`. Throws GeometryError.
 NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
                          const SketchFrame& frame, const ExtrudeSpec& spec);
+
+/// See `GeometryKernel::revolveRegion`. Throws GeometryError.
+NamedSolid revolveRegion(const std::vector<SketchCurve>& curves, Point2d inside,
+                         const SketchFrame& frame, const RevolveSpec& spec);
 
 } // namespace fission::geo::occt

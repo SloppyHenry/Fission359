@@ -120,6 +120,10 @@ public:
                              const SketchFrame& frame, const ExtrudeSpec& spec) const override {
         return occt::extrudeRegion(curves, inside, frame, spec);
     }
+    NamedSolid revolveRegion(const std::vector<SketchCurve>& curves, Point2d inside,
+                             const SketchFrame& frame, const RevolveSpec& spec) const override {
+        return occt::revolveRegion(curves, inside, frame, spec);
+    }
     std::vector<SketchCrossing>
     sketchCarrierCrossings(const SketchCurve& carrier,
                            const std::vector<SketchCurve>& others) const override {
