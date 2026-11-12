@@ -128,7 +128,8 @@ with tempfile.TemporaryDirectory() as data:
     # 9. The start page: an example opens as a new project, a recent file opens, "New" is empty.
     run(data, "clickitem:startExample_keychain;recipe:box,cylinder,combine;expectmodified:0",
         start_page=True)
-    run(data, "clickitem:startRecent_0;recipe:box,cylinder,sphere,cone;expectmodified:0",
+    run(data, "clickitem:startRecent_0;recipe:box,cylinder,sphere,cone;expectmodified:0;"
+               "expectmenu:recent,1",
         start_page=True)
     run(data, "clickitem:startNew;recipe:;expectmodified:0", start_page=True)
     for example in ("box-with-hole", "star"):

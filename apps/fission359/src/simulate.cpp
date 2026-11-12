@@ -1156,6 +1156,37 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("expectmenu")) {
+            // expectmenu:recent,1 - the menus have an entry "recent" with a submenu of at least
+            // one entry (Pflege P20: "Open recent" is a submenu, not a flat list).
+            const QStringList spec = action.mid(colon + 1).split(QLatin1Char(','));
+            delay += 400;
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [window, spec] {
+                const QString wanted = spec.value(0).trimmed();
+                const int least = spec.value(1).toInt();
+                int found = -1;
+                for (const QVariant& menu : window->property("menuModel").toList()) {
+                    for (const QVariant& item :
+                         menu.toMap().value(QStringLiteral("items")).toList()) {
+                        const QVariantMap entry = item.toMap();
+                        if (entry.value(QStringLiteral("id")).toString() == wanted &&
+                            entry.contains(QStringLiteral("submenu"))) {
+                            found = static_cast<int>(
+                                entry.value(QStringLiteral("submenu")).toList().size());
+                        }
+                    }
+                }
+                if (found < least) {
+                    qWarning().noquote()
+                        << QStringLiteral("the submenu %1 has %2 entries, expected at least %3")
+                               .arg(wanted)
+                               .arg(found)
+                               .arg(least);
+                    g_simulationFailure = 10;
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("expectbubble")) {
             // expectbubble:Breitee - the value bubble is still open and explains the typed text
             // (the line under it says this, a part of it).

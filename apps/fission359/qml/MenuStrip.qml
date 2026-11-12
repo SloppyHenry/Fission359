@@ -10,7 +10,7 @@ import Fission359.Ui
 Rectangle {
     id: root
 
-    property var menus: []          // [{ title, items: [{ id, text, shortcut, enabled, checked, separator }] }]
+    property var menus: []          // [{ title, items: [{ id, text, shortcut, enabled, checked, separator, submenu }] }]
     property bool inWindowMenus: true
     property string printerText: ""
     signal actionTriggered(string id)
