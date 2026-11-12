@@ -70,6 +70,12 @@
       "displayName": "Linux Debug + AddressSanitizer/UBSan",
       "inherits": "linux-base",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "FISSION_SANITIZE": "address;undefined" }
+    },
+    {
+      "name": "web-core",
+      "displayName": "WebAssembly core (no Qt)",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "FISSION_WEB_CORE": "ON" }
     }
   ],
   "buildPresets": [
@@ -80,7 +86,8 @@
     { "name": "linux-debug", "configurePreset": "linux-debug" },
     { "name": "linux-release", "configurePreset": "linux-release" },
     { "name": "linux-asan", "configurePreset": "linux-asan" },
-    { "name": "linux-coverage", "configurePreset": "linux-coverage" }
+    { "name": "linux-coverage", "configurePreset": "linux-coverage" },
+    { "name": "web-core", "configurePreset": "web-core" }
   ],
   "testPresets": [
     {
@@ -112,6 +119,12 @@
       "name": "linux-asan",
       "configurePreset": "linux-asan",
       "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "web-core",
+      "configurePreset": "web-core",
+      "output": { "outputOnFailure": true },
+      "execution": { "timeout": 900 }
     }
   ]
 }

@@ -1,7 +1,9 @@
 # SPDX-FileCopyrightText: Fission359 contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_executable(fission_unit_tests
+# AP-6.7a: the tests split in two groups - the Qt-free core tests, which also build for
+# WebAssembly and run under Node, and the tests of the app layers (desktop only).
+set(_core_tests
   core/test_version.cpp
   core/test_expression.cpp
   core/test_measure_names.cpp
@@ -32,7 +34,6 @@ add_executable(fission_unit_tests
   features/test_import.cpp
   features/test_sketch_feature.cpp
   features/test_sketch_edges.cpp
-  services/test_settings.cpp
   io/test_fission_file.cpp
   io/test_export.cpp
   io/test_formats.cpp
@@ -58,7 +59,10 @@ add_executable(fission_unit_tests
   geometry/test_extrude.cpp
   geometry/test_sketch_edge.cpp
   geometry/test_sketch_solver.cpp
-  analysis/test_material.cpp
+  analysis/test_material.cpp)
+
+set(_app_tests
+  services/test_settings.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
   render/test_picking.cpp
@@ -107,9 +111,18 @@ add_executable(fission_unit_tests
   interaction/test_sketch_pattern.cpp
   interaction/test_sketch_regions.cpp)
 
-target_link_libraries(fission_unit_tests PRIVATE
-  fission_core fission_services fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_geometry_sketch fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
+if(NOT FISSION_WEB_CORE)
+  add_executable(fission_unit_tests ${_core_tests} ${_app_tests})
+  target_link_libraries(fission_unit_tests PRIVATE
+    fission_core fission_services fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_geometry_sketch fission_render fission_interaction fission_ui Catch2::Catch2WithMain)
+else()
+  # Web core: only the Qt-free libraries, the tests run as WebAssembly under Node.
+  add_executable(fission_unit_tests ${_core_tests})
+  target_link_libraries(fission_unit_tests PRIVATE
+    fission_core fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_geometry_sketch Catch2::Catch2WithMain)
+endif()
 fission_apply_compiler_options(fission_unit_tests)
+fission_web_test_options(fission_unit_tests)
 
 target_include_directories(fission_unit_tests SYSTEM PRIVATE "${FISSION_LIB3MF_CPP_INCLUDE_DIR}")
 
@@ -121,7 +134,8 @@ target_compile_definitions(fission_unit_tests PRIVATE
 # Under AddressSanitizer, known leaks of third-party libraries are listed in tests/lsan.supp.
 if(FISSION_SANITIZE MATCHES "address")
   catch_discover_tests(fission_unit_tests
-    PROPERTIES ENVIRONMENT "LSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/tests/lsan.supp")
+    PROPERTIES ENVIRONMENT "LSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/tests/lsan.supp"
+    ${_fission_discovery})
 else()
-  catch_discover_tests(fission_unit_tests)
+  catch_discover_tests(fission_unit_tests ${_fission_discovery})
 endif()

@@ -6,12 +6,22 @@ include(Catch)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
+# AP-6.7a: in the WebAssembly build the Catch2 test listing runs at test time through the
+# Node emulator (CROSSCOMPILING_EMULATOR), so the discovery mode there is PRE_TEST.
+set(_fission_discovery "")
+if(FISSION_WEB_CORE)
+  set(_fission_discovery "DISCOVERY_MODE;PRE_TEST")
+endif()
+
 add_subdirectory(unit)
-add_subdirectory(smoke)
 add_subdirectory(geometry)
 add_subdirectory(naming)
 add_subdirectory(layering)
-add_subdirectory(ui)
+if(NOT FISSION_WEB_CORE)
+  # smoke and ui need Qt and the app, which the web core build does not have.
+  add_subdirectory(smoke)
+  add_subdirectory(ui)
+endif()
 
 # Source-level checks (license headers, kernel types and Qt only where allowed).
 add_test(NAME license_headers
@@ -34,6 +44,10 @@ add_test(NAME third_party_rejects_forbidden_license
   COMMAND ${Python3_EXECUTABLE} "${_licenses_py}" check --vcpkg-root "${FISSION_VCPKG_ROOT}"
           --inventory "${CMAKE_CURRENT_SOURCE_DIR}/licenses/forbidden-inventory.json"
           --expect-problem stb)
+
+# The tests of the built app need the fission359 target and mostly Qt; the web core build
+# (FISSION_WEB_CORE) has neither.
+if(NOT FISSION_WEB_CORE)
 
 # --version needs no window system and loads OpenCASCADE (proves the library setup).
 add_test(NAME app_prints_version COMMAND fission359 --version)
@@ -66,6 +80,8 @@ if(_fission_run_app_in_tree)
     TIMEOUT 60)
 endif()
 
+endif()
+
 # Rule 10 (AP-1.12): every tool and command has a hint, a tooltip sentence and synonyms.
 add_test(NAME commands_complete
   COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_commands.py"
@@ -85,6 +101,9 @@ add_test(NAME recipe_sentences_complete
 add_test(NAME translations_complete
   COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/tools/check_translations.py"
           "${CMAKE_SOURCE_DIR}")
+
+# Everything from here on runs fission359 in a real window (Qt, display, packaged app).
+if(NOT FISSION_WEB_CORE)
 
 # The real window with a graphics device: needs a display, so on Linux it runs inside Xvfb with
 # software OpenGL; on macOS the window system of the machine is used. Skipped without either.
@@ -661,4 +680,6 @@ if(_fission_run_window_tests)
       set_tests_properties(${_test} PROPERTIES DISABLED TRUE)
     endforeach()
   endif()
+endif()
+
 endif()
