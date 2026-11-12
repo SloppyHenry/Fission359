@@ -188,6 +188,30 @@ std::vector<SnapPoint> snapPointsOf(const geo::TriangleMesh& mesh) {
     return points;
 }
 
+std::vector<SnapPoint> snapPointsOf(const std::vector<geo::SnapPointGal>& exact) {
+    std::vector<SnapPoint> points;
+    points.reserve(exact.size());
+    for (const geo::SnapPointGal& point : exact) {
+        SnapKind kind = SnapKind::corner;
+        switch (point.kind) {
+        case geo::SnapPointKind::corner:
+            kind = SnapKind::corner;
+            break;
+        case geo::SnapPointKind::circleCentre:
+            kind = SnapKind::circleCentre;
+            break;
+        case geo::SnapPointKind::edgeMiddle:
+            kind = SnapKind::edgeMiddle;
+            break;
+        case geo::SnapPointKind::faceMiddle:
+            kind = SnapKind::faceMiddle;
+            break;
+        }
+        points.push_back({{point.position.x, point.position.y, point.position.z}, kind});
+    }
+    return points;
+}
+
 std::vector<SnapPoint> snapPointsOfBox(const Vec3& low, const Vec3& high) {
     std::vector<SnapPoint> points;
     const Vec3 mid{(low[0] + high[0]) / 2.0, (low[1] + high[1]) / 2.0, (low[2] + high[2]) / 2.0};

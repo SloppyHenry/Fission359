@@ -10,6 +10,7 @@
 
 #include "fission/geo/error.h"
 #include "fission/geo/exchange.h"
+#include "fission/geo/extrude.h"
 #include "fission/geo/measuring.h"
 #include "fission/geo/mesh.h"
 #include "fission/geo/named_solid.h"
@@ -70,6 +71,14 @@ struct FlatFace {
     /// when the boundary has no straight edge. Of several equally long edges the first in the
     /// body's own order, so that the answer follows the body when it is moved or turned.
     std::optional<Point3d> longestEdge;
+};
+
+/// A point a dragged body can catch on (pflege P7), exact from the kernel.
+enum class SnapPointKind { corner, circleCentre, edgeMiddle, faceMiddle };
+struct SnapPointGal {
+    Point3d position;
+    SnapPointKind kind = SnapPointKind::corner;
+    bool operator==(const SnapPointGal&) const = default;
 };
 
 /// What features may ask of the geometry kernel (docs/03-architektur.md §4). The core and the
@@ -421,6 +430,25 @@ public:
                             "this kernel cannot find sketch regions");
     }
 
+    /// Pulls the region of the sketch that contains `inside` (a point of the sketch plane, in
+    /// sketch coordinates) straight out of the plane `frame` (AP-2.3a). The curves are as in
+    /// `sketchRegions`, in sketch coordinates. Faces are named: the start cap "capStart" (in the
+    /// sketch plane, or the lower one for symmetric), the end cap "capEnd", and each side
+    /// "side[c<i>]" after the index i of the curve it comes from; when one curve gives several
+    /// sides (it was cut by other curves) the second and later get ":<k>" (k = 2, 3, ...):
+    /// "side[c3]", "side[c3:2]". Throws `GeometryError`: `invalidInput` when no region contains
+    /// `inside`, the distance is zero or not finite, or the frame is not two perpendicular unit
+    /// vectors; `kernelFailure` when the kernel cannot calculate or the result is not valid. The
+    /// default refuses.
+    virtual NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
+                                     const SketchFrame& frame, const ExtrudeSpec& spec) const {
+        (void)curves;
+        (void)inside;
+        (void)frame;
+        (void)spec;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot extrude");
+    }
+
     /// Measures one element (corner: position; edge: length, radius of a circle or arc; face:
     /// area, radius of a cylinder or sphere) or the shortest distance and the angle between two
     /// (AP-2.11, see `Measurement`). The two may lie on different bodies. Throws `GeometryError`
@@ -447,6 +475,12 @@ public:
         const SolidReport report = measure(solid);
         return {report.boxMin, report.boxMax};
     }
+
+    /// The exact points to catch on: every corner, the middle of every edge (also of a bent one:
+    /// the point at half its length), the centre of every circle or arc, and the middle of every
+    /// flat face (the centre of its area). Duplicates (closer than 1e-9 mm, same kind) appear once.
+    /// Empty where a kernel cannot tell.
+    virtual std::vector<SnapPointGal> snapPoints(const Solid& /*solid*/) const { return {}; }
 
     virtual TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const = 0;
 
