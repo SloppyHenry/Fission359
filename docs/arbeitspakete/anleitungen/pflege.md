@@ -74,8 +74,8 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 **Größe:** S · „Zuletzt geöffnet“ als Untermenü; Einheit „Zoll“ → P23 (Auswahl bis dahin ausgeblendet); Dateizuordnung unter macOS und Linux von Hand prüfen; Bildschirmfotos 80/100/150/200 % in den PR des nächsten Politurdurchgangs.
 
 ## P23 Anzeige in Zoll
-**Größe:** L · Aus P20. Die Einstellung „Einheit für neue Projekte: Zoll“ wurde gespeichert, wirkte aber nirgends; sie ist bis zu dieser
-Aufgabe ausgeblendet (Zoll lassen sich weiter eintippen, „2 in“). Nötig: Einheit je Dokument (Dateiformat-Feld mit Migration), Anzeige
+**Größe:** L · Aus P20. Die Einstellung „Einheit für neue Projekte: Zoll“ ließ in neuen Projekten bloße Zahlen als Zoll zählen, angezeigt wurde
+aber alles in mm. Sie ist bis zu dieser Aufgabe ausgeblendet, neue Projekte zählen in mm (Zoll lassen sich weiter eintippen, „2 in“). Nötig: Einheit je Dokument (Dateiformat-Feld mit Migration), Anzeige
 aller Längen (Zahlenfeld, Maßbänder, Rezept-Sätze, Statuszeile, Bett-Beschriftung) in der Einheit des Dokuments, intern weiter mm.
 
 ## P21 Wacklige Fenster-Tests beobachten
