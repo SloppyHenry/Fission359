@@ -17,7 +17,8 @@
 namespace fission::core {
 
 /// The version of `document.json` this program writes (docs/03-architektur.md §7).
-inline constexpr int currentFormatVersion = 4;
+/// Version 5 (AP-2.2): a sketch carries `measures` next to its `rules`.
+inline constexpr int currentFormatVersion = 5;
 
 /// What went wrong or looked odd while reading. Codes only: the interface turns them into
 /// sentences (rule 5), nothing is built as text here.

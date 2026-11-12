@@ -3094,6 +3094,26 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Rule added to the sketch</source>
+        <translation>Rule added to the sketch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Measure %1 added to the sketch</source>
+        <translation>Measure %1 added to the sketch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sketch measure changed to %1</source>
+        <translation>Sketch measure changed to %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rule or measure removed from the sketch</source>
+        <translation>Rule or measure removed from the sketch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Step renamed</source>
         <translation>Step renamed</translation>
     </message>
@@ -3284,6 +3304,36 @@
             <numerusform>%n closed area. Click one to choose it.</numerusform>
             <numerusform>%n closed areas. Click one to choose it.</numerusform>
         </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Type a number to set the %1</source>
+        <translation>Type a number to set the %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>length</source>
+        <translation>length</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>diameter</source>
+        <translation>diameter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>radius</source>
+        <translation>radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>distance</source>
+        <translation>distance</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>angle</source>
+        <translation>angle</translation>
     </message>
 </context>
 <context>
@@ -6106,6 +6156,114 @@
         <location line="+1"/>
         <source>Zoom: mouse wheel, towards the pointer – or drag this button</source>
         <translation>Zoom: mouse wheel, towards the pointer – or drag this button</translation>
+    </message>
+</context>
+<context>
+    <name>SketchMeasureLayer</name>
+    <message>
+        <location filename="../qml/SketchMeasureLayer.qml" line="+29"/>
+        <source>Length</source>
+        <translation>Length</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Diameter</source>
+        <translation>Diameter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Distance</source>
+        <translation>Distance</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Angle</source>
+        <translation>Angle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Horizontal</source>
+        <translation>Horizontal</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line lie flat, left to right</source>
+        <translation>Makes the line lie flat, left to right</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Vertical</source>
+        <translation>Vertical</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line stand upright</source>
+        <translation>Makes the line stand upright</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fixed</source>
+        <translation>Fixed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keeps it where it is</source>
+        <translation>Keeps it where it is</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Parallel</source>
+        <translation>Parallel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines run side by side</source>
+        <translation>Makes the two lines run side by side</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Right angle</source>
+        <translation>Right angle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines meet at a right angle</source>
+        <translation>Makes the two lines meet at a right angle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same size</source>
+        <translation>Same size</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes both equally long or equally large</source>
+        <translation>Makes both equally long or equally large</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same centre</source>
+        <translation>Same centre</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Gives both circles the same centre</source>
+        <translation>Gives both circles the same centre</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Touching</source>
+        <translation>Touching</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes them touch without crossing</source>
+        <translation>Makes them touch without crossing</translation>
     </message>
 </context>
 </TS>

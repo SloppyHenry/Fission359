@@ -751,6 +751,21 @@ bool Document::setSketchConstruction(const FeatureId& id, std::string_view eleme
     return true;
 }
 
+bool Document::setSketchData(const FeatureId& id, SketchData sketch) {
+    Feature* feature = mutableFeature(id);
+    if (feature == nullptr || !feature->sketch) {
+        return false;
+    }
+    if (!sketch.consistent()) {
+        return false;
+    }
+    if (*feature->sketch != sketch) {
+        feature->sketch = std::move(sketch);
+        touch();
+    }
+    return true;
+}
+
 // --- bodies -------------------------------------------------------------------------------
 
 bool Document::setFeatureInputs(const FeatureId& id, std::vector<BodyId> inputs) {

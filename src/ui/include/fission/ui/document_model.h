@@ -23,11 +23,13 @@
 #include "fission/core/command.h"
 #include "fission/core/document.h"
 #include "fission/core/element_names.h"
+#include "fission/core/expression.h"
 #include "fission/core/feature_type.h"
 #include "fission/core/history.h"
 #include "fission/core/recompute.h"
 #include "fission/geo/kernel.h"
 #include "fission/geo/seat.h"
+#include "fission/geo/sketch_solver.h"
 #include "fission/render/scene.h"
 #include "fission/ui/clipboard_payload.h"
 
@@ -122,13 +124,18 @@ class DocumentModel : public QObject {
 
 public:
     /// `kernel` does the geometry work; the application hands in the OpenCASCADE one.
+    /// `sketchSolver` solves the sketches of the sketch steps (the application hands in the
+    /// PlaneGCS one); without it no rule or measure can be added to a sketch. It must outlive
+    /// this model.
     explicit DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel,
-                           QObject* parent = nullptr);
+                           QObject* parent = nullptr,
+                           std::shared_ptr<const geo::SketchSolver> sketchSolver = nullptr);
     /// With more feature types than the built-in ones (tests register steps that only exist
     /// there, like one that holds a reference).
     DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel,
                   std::vector<std::unique_ptr<const core::FeatureType>> extraTypes,
-                  QObject* parent = nullptr);
+                  QObject* parent = nullptr,
+                  std::shared_ptr<const geo::SketchSolver> sketchSolver = nullptr);
     ~DocumentModel() override;
 
     /// The number fields use the named measures of the document in their formulas.
@@ -476,6 +483,8 @@ public:
     std::optional<core::SketchResult> sketchResult(const QString& stepId) const;
     /// The elements of a sketch as they are in the document now (also before the calculation).
     std::vector<core::SketchElement> sketchElements(const QString& stepId) const;
+    /// The measures of a sketch as they are in the document now (AP-2.2b).
+    std::vector<core::SketchMeasure> sketchMeasures(const QString& stepId) const;
     /// The curve of a spline through these points (the last equal to the first: closed) as a
     /// chain of short lines within 0.005 mm of it, as the kernel calculates it. Nothing when the
     /// kernel cannot make a curve through them. Quick enough for every move of the pointer.
@@ -494,6 +503,34 @@ public:
     /// sketch, the edit is empty or one of its parts is refused.
     bool applySketchEdit(const QString& stepId, const interaction::SketchEdit& edit,
                          const QString& action);
+    /// Adds a rule to the sketch of a step and solves the sketch again (AP-2.2b), as ONE step
+    /// of the history. `kind` is the rule word ("horizontal", "fixed", ...), `elements` the
+    /// element ids or point references ("L1", "L1.0") it concerns. False (nothing changed) when
+    /// there is no solver, the step has no sketch or the command is refused.
+    bool addSketchRule(const QString& step, const QString& kind, const QStringList& elements);
+    /// Adds a measure to the sketch of a step and solves again (AP-2.2b), as ONE step of the
+    /// history. `kind` is the measure word ("length", "angle", ...), `expression` the value as
+    /// typed ("30", "2 * Breite"), evaluated with the named measures of the document. The value
+    /// must be > 0, except for "angle", "horizontalDistance" and "verticalDistance". False
+    /// (nothing changed) when there is no solver, the step has no sketch, the expression cannot
+    /// be evaluated or the command is refused.
+    bool addSketchMeasure(const QString& step, const QString& kind, const QStringList& elements,
+                          const QString& expression);
+    /// Changes the value of a measure of the sketch of a step and solves again (AP-2.2b), as ONE
+    /// step of the history; `measureId` is the "R" id of the measure. The same checks as in
+    /// `addSketchMeasure`. False (nothing changed) when there is no solver, the step has no
+    /// sketch or no measure with that id, the expression cannot be evaluated or the command is
+    /// refused.
+    bool setSketchMeasure(const QString& step, const QString& measureId, const QString& expression);
+    /// Removes a rule or a measure ("R1", ...) from the sketch of a step as ONE step of the
+    /// history; the coordinates stay as they are. False (nothing changed) when the step has no
+    /// sketch or neither a rule nor a measure has that id.
+    bool removeSketchConstraint(const QString& step, const QString& id);
+    /// What `expression` is worth now, in mm (in degrees when `angle`), with the named measures
+    /// of the document; nothing when it cannot be evaluated.
+    std::optional<double> evaluateSketchValue(const QString& expression, bool angle) const;
+    /// The sketch solver the application gave (null when there is none).
+    const geo::SketchSolver* sketchSolver() const { return m_sketchSolver.get(); }
     /// The kernel, for the sketch tools that need crossings (trim, extend).
     const geo::GeometryKernel& sketchKernel() const { return *m_kernel; }
     /// The same kernel to be kept by a worker thread (the kernel does no state of its own).
@@ -669,6 +706,9 @@ private:
     /// After the document changed by a command, undo or redo: show it, and calculate again
     /// unless `geometryChanged` is false (only a look changed).
     void documentChanged(bool geometryChanged = true);
+    /// The named measures of the document as the number fields and the sketch formulas see them:
+    /// the length measures of the last result, by name.
+    core::NamedMeasures namedMeasureValues() const;
     int stepIndexOf(const core::FeatureId& id) const;
     /// A step that works on faces of one body (AP-2.4): the faces become references in `slot`,
     /// `values` set parameters (as plain digits), the result takes over name and colour of the
@@ -696,6 +736,9 @@ private:
     static std::uint64_t meshKey(const core::BodyResult& body) noexcept;
 
     std::shared_ptr<const geo::GeometryKernel> m_kernel;
+    /// The one sketch solver of the application (null when there is none); the engine and the
+    /// sketch commands hold a pointer to it.
+    std::shared_ptr<const geo::SketchSolver> m_sketchSolver;
     core::FeatureRegistry m_registry;
     // The reference being picked again (empty feature id = none).
     core::FeatureId m_repairFeature;

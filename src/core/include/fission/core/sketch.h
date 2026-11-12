@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "fission/geo/rotation.h"
+#include "fission/geo/sketch_solver.h"
 #include "fission/geo/types.h"
 
 namespace fission::core {
@@ -150,6 +151,35 @@ struct SketchRule {
     bool operator==(const SketchRule&) const = default;
 };
 
+/// The value of a measure as typed by the person: an expression ("12", "2 * width"). The real
+/// `Value` lives in document.h, which includes this file, so this stand-in with the same shape
+/// is used here instead.
+struct SketchMeasureValue {
+    std::string expression;
+
+    bool operator==(const SketchMeasureValue&) const = default;
+};
+
+/// A measure of the sketch (Maß): a length, distance, radius, diameter or angle that the solver
+/// keeps. Rules and measures share one id counter (`SketchData::lastRuleNumber`, ids "R1", ...).
+struct SketchMeasure {
+    std::string id;
+    std::string kind;                  ///< word of geo::SketchMeasureKind ("length", ...)
+    std::vector<std::string> elements; ///< element ids ("L1") or point references ("L1.0")
+    SketchMeasureValue value;          ///< as typed (expression), see document.h
+    double lastValue = 0.0;            ///< last evaluated value (mm or degrees), start for solving
+
+    bool operator==(const SketchMeasure&) const = default;
+};
+
+/// The word of a rule kind as stored in `SketchRule::kind` ("horizontal", ...), and back.
+std::string_view sketchRuleKindWord(geo::SketchRuleKind kind);
+std::optional<geo::SketchRuleKind> sketchRuleKindFromWord(std::string_view word);
+
+/// The word of a measure kind as stored in `SketchMeasure::kind` ("length", ...), and back.
+std::string_view sketchMeasureKindWord(geo::SketchMeasureKind kind);
+std::optional<geo::SketchMeasureKind> sketchMeasureKindFromWord(std::string_view word);
+
 /// The content of a `sketch` step beyond its plane (the plane is in the step's values, words and
 /// references, see ADR-0013).
 struct SketchData {
@@ -158,16 +188,21 @@ struct SketchData {
     /// never frees its number.
     std::array<int, sketchElementKindCount> lastNumber{};
     std::vector<SketchRule> rules;
+    std::vector<SketchMeasure> measures;
     int lastRuleNumber = 0;
 
     /// The next free id of a kind, counted up ("L1", "L2", ...).
     std::string allocateId(SketchElementKind kind);
+    /// The next free id of a rule or measure, counted up ("R1", "R2", ...).
+    std::string allocateRuleId();
     const SketchElement* find(std::string_view id) const noexcept;
     SketchElement* find(std::string_view id) noexcept;
     std::optional<std::size_t> indexOf(std::string_view id) const noexcept;
 
     /// True when ids are letter + number of their kind, none repeats, every number is within the
-    /// counter of its kind (so a new id can never repeat one), and every element is usable.
+    /// counter of its kind (so a new id can never repeat one), every element is usable, and the
+    /// rules and measures have unique "R" ids within `lastRuleNumber`, references that exist and
+    /// (measures only) a known kind word.
     bool consistent() const;
 
     /// Everything that matters for a calculation, as text: equal text, equal sketch.
@@ -175,6 +210,10 @@ struct SketchData {
 
     bool operator==(const SketchData&) const = default;
 };
+
+/// True when `ref` names something of the sketch: an element id ("L1"), or one of its points
+/// ("L1.0", the point with that index – the solver forms its point ids that way).
+bool sketchReferenceExists(const SketchData& data, std::string_view ref) noexcept;
 
 /// The id's number ("L12" -> 12) and kind; nullopt when it is not of that form.
 struct ParsedSketchId {

@@ -45,6 +45,7 @@
 #include "fission/core/version.h"
 #include "fission/geo/occt/kernel.h"
 #include "fission/geo/occt/layer.h"
+#include "fission/geo/sketch/planegcs_solver.h"
 #include "fission/render/benchmark_scene.h"
 #include "fission/render/scene.h"
 #include "fission/services/autosave.h"
@@ -526,7 +527,10 @@ int main(int argc, char* argv[]) {
     kernelOptions.fontFiles = bundledFontFiles();
     std::shared_ptr<const fission::geo::GeometryKernel> kernel =
         fission::geo::occt::makeKernel(kernelOptions);
-    fission::ui::DocumentModel documentModel(kernel);
+    // The one sketch solver of the application: the document model and its engine use it.
+    std::shared_ptr<const fission::geo::SketchSolver> sketchSolver =
+        fission::geo::sketch::makePlaneGcsSolver();
+    fission::ui::DocumentModel documentModel(kernel, nullptr, sketchSolver);
     documentModel.setNumbers(&numbers);
     documentModel.addDemoBox();
     documentModel.waitForCalculation();

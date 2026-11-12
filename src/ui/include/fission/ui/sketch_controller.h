@@ -7,6 +7,8 @@
 #include <QObject>
 #include <QPointer>
 #include <QString>
+#include <QStringList>
+#include <QVariantList>
 #include <QVariantMap>
 
 #include <array>
@@ -109,6 +111,11 @@ class SketchController : public QObject {
     Q_PROPERTY(QColor regionColour MEMBER m_regionColour NOTIFY coloursChanged)
     /// A number that belongs to the last `notice` (the biggest radius that fits, in mm).
     Q_PROPERTY(double noticeNumber READ noticeNumber NOTIFY noticeNumberChanged)
+    /// The ids of the chosen elements (no tool on; at most two, for a measure, AP-2.2b).
+    Q_PROPERTY(QStringList selectedElements READ selectedElements NOTIFY selectionChanged)
+    /// The labels of the measures of the sketch for the view: one map per measure with
+    /// { id, kind, expression (as typed), text, x, y, z (the anchor in space), conflict }.
+    Q_PROPERTY(QVariantList measureLabels READ measureLabels NOTIFY measuresChanged)
 
 public:
     SketchController(DocumentModel* model, SelectionController* selection,
@@ -172,9 +179,10 @@ public:
     Q_INVOKABLE void chooseTool(const QString& name, int variant = -1);
     Q_INVOKABLE void toggleHelperLine();
     /// A click on the plane along this line of sight (`alt`: the key that makes a helper line is
-    /// held). The point is the one the pointer catches (Shift off). The view calls this for each
-    /// click; tests call it directly.
-    void clickAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre, bool alt = false);
+    /// held, `add`: Shift is held, the click adds to the chosen elements). The point is the one the
+    /// pointer catches (Shift off). The view calls this for each click; tests call it directly.
+    void clickAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre, bool alt = false,
+                 bool add = false);
     /// A double click: ends a chain of lines.
     Q_INVOKABLE void doubleClick();
     /// The left button goes down / the pointer moves with it held / it goes up (AP-2.1c2). Pressed
@@ -231,6 +239,31 @@ public:
     void clearRegionSelection();
     /// The elements of the sketch as the controller knows them (the document's; for tests).
     const std::vector<core::SketchElement>& elements() const noexcept { return m_elements; }
+    /// The ids of the chosen elements (no tool on, in the order they were chosen).
+    QStringList selectedElements() const;
+    /// The labels of the measures of the sketch, one map per measure (see the property).
+    QVariantList measureLabels() const;
+    /// The measure kind for the chosen elements (AP-2.2b): "length" for one line, "diameter" for
+    /// one circle, "radius" for one arc; for two lines "distance" when they are parallel, else
+    /// "angle"; "" otherwise.
+    Q_INVOKABLE QString measureKindForSelection() const;
+    /// Adds a measure of that kind for the chosen elements and solves the sketch again; on success
+    /// the choice stays. False when nothing is chosen or the model refuses.
+    Q_INVOKABLE bool setMeasureForSelection(const QString& expression);
+    /// The rule kinds that fit the chosen elements, in order: one line → "horizontal", "vertical",
+    /// "fixed"; one circle or arc → "fixed"; two lines → "parallel", "perpendicular", "equal";
+    /// a line and a circle/arc → "tangent"; two circles/arcs → "equal", "concentric", "tangent";
+    /// empty for anything else (points, splines, nothing chosen).
+    Q_INVOKABLE QStringList rulesForSelection() const;
+    /// Adds a rule of that kind for the chosen elements and solves the sketch again; on success
+    /// the choice stays. The elements go in the order they were chosen, the line first for
+    /// "tangent" (the solver takes {line, circle|arc}). False when the kind does not fit the
+    /// choice or the model refuses.
+    Q_INVOKABLE bool addRuleForSelection(const QString& kind);
+    /// Changes the value of the measure with this "R" id and solves again.
+    Q_INVOKABLE bool changeMeasure(const QString& id, const QString& expression);
+    /// Removes the rule or measure with this "R" id.
+    Q_INVOKABLE bool removeMeasure(const QString& id);
 
 signals:
     void stateChanged();
@@ -257,6 +290,10 @@ signals:
     void blockedChanged();
     /// The regions, the chosen one or the one under the pointer changed.
     void regionsChanged();
+    /// The chosen elements changed (AP-2.2b).
+    void selectionChanged();
+    /// The measures of the sketch changed (AP-2.2b).
+    void measuresChanged();
 
 private:
     enum class Mode { idle, picking, sketching };
@@ -332,6 +369,10 @@ private:
     void hoverRegionAt(const core::SketchPoint& at);
     void clickRegion(const interaction::PlaneRay& ray, double pixelsPerMillimetre);
     void drawRegions(render::HandleGraphics& out, double lift) const;
+    // choosing elements for a measure (AP-2.2b)
+    bool elementSelected(const std::string& id) const noexcept;
+    void clearElementSelection();
+    std::optional<core::SketchPoint> measureAnchor(const core::SketchMeasure& measure) const;
     void forgetEdit();
     void onClicked(double x, double y);
     void onPressed(double x, double y);
@@ -404,6 +445,7 @@ private:
     std::string m_selectedRegion;
     std::string m_hoverRegion;
     bool m_regionsFailedSaid = false;
+    std::vector<std::string> m_selectedElements; ///< the chosen elements (no tool on, AP-2.2b)
 };
 
 } // namespace fission::ui

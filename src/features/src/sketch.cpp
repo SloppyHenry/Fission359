@@ -6,6 +6,7 @@
 #include <cmath>
 #include <memory>
 
+#include "fission/core/sketch_solve.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
 
@@ -98,6 +99,22 @@ public:
                                            turnOf(input.params));
         }
         followEdges(input, context, sketch);
+        // The measures were evaluated by the recompute (a formula may use a named measure, as in
+        // "2 * width"): solve the sketch before its result is used. Only a status of ok writes the
+        // solved coordinates back; conflict and failed keep them - a contradiction is no error
+        // here, AP-2.2d explains it.
+        if (context.sketchSolver != nullptr && input.sketchMeasures != nullptr &&
+            (!sketch.data.rules.empty() || !sketch.data.measures.empty())) {
+            for (SketchMeasure& measure : sketch.data.measures) {
+                const auto found = input.sketchMeasures->find(measure.id);
+                if (found != input.sketchMeasures->end()) {
+                    measure.lastValue = found->second; // the label shows the current number
+                }
+            }
+            const geo::SolveResult solved =
+                solveSketch(sketch.data, *input.sketchMeasures, *context.sketchSolver);
+            (void)solved;
+        }
         FeatureResult result;
         result.sketch = std::move(sketch);
         return result;

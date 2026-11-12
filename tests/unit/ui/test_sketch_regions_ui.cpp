@@ -184,7 +184,8 @@ TEST_CASE(
     CHECK(f.sketch->selectedRegion().isEmpty());
     f.click(10, 15);
     CHECK(f.sketch->selectedRegion() == rectangleOnly);
-    f.click(48, 15); // the other part of the circle: the choice changes
+    // the other part of the circle (8 px from its rim: nearer would choose the circle itself)
+    f.click(46, 15);
     CHECK_FALSE(f.sketch->selectedRegion().isEmpty());
     CHECK(f.sketch->selectedRegion() != rectangleOnly);
     f.click(-30, -30); // a click beside lets go

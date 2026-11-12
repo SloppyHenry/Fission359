@@ -11,6 +11,7 @@ add_executable(fission_unit_tests
   core/test_recompute.cpp
   core/test_history.cpp
   core/test_sketch.cpp
+  core/test_sketch_solve.cpp
   core/test_selection.cpp
   core/test_scaling.cpp
   core/test_cuts.cpp
@@ -78,6 +79,7 @@ add_executable(fission_unit_tests
   ui/test_selection_controller.cpp
   ui/test_sketch_mode.cpp
   ui/test_sketch_tools.cpp
+  ui/test_sketch_measures_ui.cpp
   ui/test_sketch_takeover.cpp
   ui/test_sketch_regions_ui.cpp
   ui/test_placement.cpp
