@@ -24,7 +24,15 @@ mit Hinweis, und Nachzug in 3.1).
    nennen. Bestätigen, dass Normwerte (Fakten, keine geschützten Texte) so übernommen werden dürfen.
 2. **Gewinde-Spiel:** Empfehlung: Standard 0,2 mm radial für FDM (aus Druckerprofil, AP-3.1), einstellbar.
 
+**Festlegungen (Orchestrierung, 2026-11-12):** Haltepunkt 1 → Normwerte sind Fakten und werden mit Quellenangabe übernommen. Die
+Tabellen liegen als feste C++-Daten in `src/features` (`hole_tables.h`), nicht als JSON in `resources/`: kein Dateizugriff zur Laufzeit
+(auch im Browser), Prüfung durch Unit-Tests statt Schema. Einschmelzmuttern und Holzschrauben folgen mit belegter Händler-/Normquelle.
+Haltepunkt 2 → 0,2 mm radial, wie empfohlen.
+
 ## Teil 2.7a – Datentabellen
+**Gebaut (2026-11-12):** metrische Schrauben M2–M12: Steigung, Kernloch, Durchgang fein/mittel/grob (ISO 273), Zylinderkopf (ISO 4762),
+Senkkopf 90° (ISO 10642), Mutter (ISO 4032); `findMetricScrew`, `clearanceDiameter`, `hexCornerWidth`.
+
 `resources/holes/*.json` (Schema mit Validierung, Test, der jede Datei gegen das Schema prüft): je Eintrag Name (Schlüssel für die Übersetzung),
 Durchmesser, Senkung (Winkel, Ø), Kopfhöhe, Kernloch, Steigung, Quelle. Werte als Zahlen in mm. Zugriff über `src/features` (Laden beim Start,
 an die Feature-Typen gereicht – kein globaler Zustand).
