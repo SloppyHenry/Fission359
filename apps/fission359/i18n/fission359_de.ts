@@ -4749,6 +4749,14 @@
         <source>Yellow</source>
         <translation>Gelb</translation>
     </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Hilfsebene</translation>
+    </message>
+    <message>
+        <source>Show the plane in the view</source>
+        <translation>Ebene in der Ansicht zeigen</translation>
+    </message>
 </context>
 <context>
     <name>RotateLayer</name>

@@ -1015,11 +1015,12 @@ QVariantList DocumentModel::buildStepTexts() const {
             toQString(given != feature.texts.end() ? given->second : spec.defaultValue);
         // `mode` and `auto` are the program's business (combine steps), `keepTools` a switch.
         entry[QStringLiteral("kind")] =
-            spec.name == "font"                                ? QStringLiteral("font")
-            : spec.name == "style"                             ? QStringLiteral("style")
-            : spec.name == "keepTools" || spec.name == "fuzzy" ? QStringLiteral("flag")
-            : spec.name == "mode" || spec.name == "auto"       ? QStringLiteral("hidden")
-                                                               : QStringLiteral("text");
+            spec.name == "font"    ? QStringLiteral("font")
+            : spec.name == "style" ? QStringLiteral("style")
+            : spec.name == "keepTools" || spec.name == "fuzzy" || spec.name == "shown"
+                ? QStringLiteral("flag")
+            : spec.name == "mode" || spec.name == "auto" ? QStringLiteral("hidden")
+                                                         : QStringLiteral("text");
         texts.push_back(entry);
     }
     return texts;
@@ -4375,6 +4376,10 @@ std::vector<std::array<geo::Point3d, 4>> DocumentModel::helperPlaneCorners() con
     constexpr double half = 40.0; // mm: the square drawn for a plane
     for (const core::Feature& feature : m_history.document().features()) {
         if (feature.type != "helperPlane" || feature.suppressed) {
+            continue;
+        }
+        const auto shown = feature.texts.find("shown");
+        if (shown != feature.texts.end() && shown->second == "no") {
             continue;
         }
         const auto made = m_result->sketches.find(feature.id);

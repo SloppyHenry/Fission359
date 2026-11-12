@@ -4749,6 +4749,14 @@
         <source>Yellow</source>
         <translation>Yellow</translation>
     </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Helper plane</translation>
+    </message>
+    <message>
+        <source>Show the plane in the view</source>
+        <translation>Show the plane in the view</translation>
+    </message>
 </context>
 <context>
     <name>RotateLayer</name>

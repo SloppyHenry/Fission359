@@ -135,6 +135,11 @@ TEST_CASE("helper plane: from the ground or a flat face, without a body",
     CHECK_FALSE(made.isEmpty());
     f.model->waitForCalculation();
     CHECK(f.model->helperPlaneCorners().size() == 2);
+    // Hidden, the square is not drawn (the plane stays).
+    f.model->selectStep(1);
+    REQUIRE(f.model->setStepText(1, QStringLiteral("shown"), QStringLiteral("no")));
+    f.model->waitForCalculation();
+    CHECK(f.model->helperPlaneCorners().size() == 1);
     CHECK(f.model->addHelperPlane(f.body, 0).isEmpty());
     CHECK(f.model->addHelperPlane(QStringLiteral("nobody"), 1).isEmpty());
 }

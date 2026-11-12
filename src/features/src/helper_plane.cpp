@@ -31,7 +31,8 @@ public:
     }
 
     std::vector<TextFieldSpec> texts() const override {
-        return {{"mode", "offset"}, {"basePlane", "xy"}};
+        // `shown`: "no" hides the square the view draws for the plane (the plane stays there).
+        return {{"mode", "offset"}, {"basePlane", "xy"}, {"shown", "yes"}};
     }
 
     std::optional<FeatureIssue> validate(const ResolvedParams& params) const override {
