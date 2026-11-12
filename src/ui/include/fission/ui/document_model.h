@@ -451,8 +451,10 @@ public:
     Q_INVOKABLE QString addSketch(const QString& bodyId, int faceNumber);
     /// Pulls the region `regionId` of the sketch step `sketchStep` (its id) out of the sketch plane
     /// into a new body (AP-2.3b): a step "extrude" of 10 mm. `u`, `v` is a point inside the region
-    /// (sketch coordinates); the grip stands there. Returns the id of the new body, or "" when the
-    /// sketch step has no result. A region that is not there shows as an error on the step.
+    /// (sketch coordinates); the grip stands there. A sketch on a face of a body pulls into that
+    /// body instead: the pull merges into it, a negative distance cuts it. Returns the id of the
+    /// new body, or "" when the sketch step has no result. A region that is not there shows as an
+    /// error on the step.
     Q_INVOKABLE QString addExtrude(const QString& sketchStep, const QString& regionId, double u,
                                    double v);
     /// True when the face is flat, i.e. a sketch can lie on it.

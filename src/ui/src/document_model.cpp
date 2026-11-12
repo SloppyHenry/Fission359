@@ -1157,8 +1157,58 @@ bool DocumentModel::setStepValue(int index, const QString& name, const QString& 
         return false;
     }
     const core::FeatureId id = features[static_cast<std::size_t>(index)].id;
+    // Pulled into the body it cuts, out of it it joins (UX: the mode follows the sign of the
+    // distance, AP-2.3 Haltepunkt 2). Read before the commands run: they may move the list.
+    std::string wantedMode;
+    {
+        const core::Feature& step = features[static_cast<std::size_t>(index)];
+        if (step.type == "extrude" && name == QLatin1String("distance") &&
+            isPlainNumber(text.toStdString())) {
+            const auto mode = step.texts.find("mode");
+            if (mode != step.texts.end() &&
+                (mode->second == "merge" || mode->second == "subtract")) {
+                core::QuantityKind kind = core::QuantityKind::length;
+                if (const core::FeatureType* type = m_registry.find("extrude")) {
+                    for (const core::ParamSpec& spec : type->parameters()) {
+                        if (spec.name == "distance") {
+                            kind = spec.kind;
+                            break;
+                        }
+                    }
+                }
+                const double distance =
+                    core::evaluateExpression(text.toStdString(), kind).value_or(0.0);
+                const std::string wanted = distance < 0.0 ? "subtract" : "merge";
+                if (wanted != mode->second) {
+                    wantedMode = wanted;
+                }
+            }
+        }
+    }
     const std::uint64_t before = m_history.document().revision();
     auto command = core::makeSetFeatureValue(id, name.toStdString(), text.toStdString());
+    if (!wantedMode.empty()) {
+        // The distance and the mode change in one step of the history.
+        const bool own = !m_history.inTransaction();
+        if (own) {
+            m_history.beginTransaction({"setValue", {{"field", name.toStdString()}}});
+        }
+        const bool ok = m_history.execute(std::move(command)) &&
+                        m_history.execute(core::makeSetFeatureText(id, "mode", wantedMode));
+        if (!ok) {
+            if (own) {
+                m_history.cancelTransaction();
+            }
+            return false;
+        }
+        if (own) {
+            m_history.commitTransaction();
+        } else {
+            scheduleLiveCuts();
+        }
+        documentChanged();
+        return true;
+    }
     // With holes in the document the change may move one into or out of a body: its cuts follow
     // in the same step.
     if (hasCuttingParts() && !m_history.inTransaction()) {
@@ -3753,6 +3803,19 @@ QString DocumentModel::addExtrude(const QString& sketchStep, const QString& regi
         draft.params.at(name).expression = digits(number);
     }
     draft.newBodies = 1;
+
+    // A sketch on a face of a body that nothing uses yet: the pull joins that body (a negative
+    // distance then cuts it, see setStepValue).
+    if (const core::Feature* sketchFeature =
+            m_history.document().findFeature(core::FeatureId{sketchStep.toStdString()})) {
+        if (sketchFeature->inputs.size() == 1) {
+            const core::Body* target = findBody(toQString(sketchFeature->inputs.front().value));
+            if (target != nullptr && !m_history.document().consumerOf(target->id)) {
+                draft.texts["mode"] = "merge";
+                draft.inputs = {target->id};
+            }
+        }
+    }
 
     m_history.beginTransaction({"extrude", {}});
     const auto id = m_history.addFeature(std::move(draft));

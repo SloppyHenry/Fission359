@@ -58,7 +58,9 @@ oder Befehlssuche) → Skizze schließt, Schritt `extrude` mit 10 mm, neuer Kör
 (Ziehen oder Tippen). 2.3b3a (gebaut) = Wort `mode` (`new`, `merge`, `subtract`): bei `merge`/`subtract` genau ein
 Eingangskörper, der wie bei „Vereinen“ in den neuen Körper aufgeht; Schnitt neben dem Körper = `noOverlap`; der Schritt
 gibt Namen weiter (`passesOnNames`), eigene Flächen heißen `F<n>/extrude/…`; Rezept-Sätze „aufgezogen“/„ausgeschnitten“.
-Offen für 2.3b3: Ziel-Körper in der Bedienung und automatischer Vorschlag (Haltepunkt 2), Pfeil schon beim Überfahren
+2.3b3b (gebaut) = Ziel-Körper automatisch: Skizze auf einer Fläche eines Körpers → `merge` mit diesem Körper; negative Distanz
+(Tippen oder Ziehen) schaltet im selben Rückgängig-Schritt auf `subtract`, positive zurück auf `merge`; Skizze auf der Grundebene → `new`.
+Offen für 2.3b3: Umschalten des Vorschlags per Klick am Pfeil (Symbol), Pfeil schon beim Überfahren
 eines Bereichs ohne Klick, Entfernen einer gelesenen Skizze sperren oder melden, Testdatei `v3/extrude.fission`, Budget der
 Live-Vorschau messen.
 
