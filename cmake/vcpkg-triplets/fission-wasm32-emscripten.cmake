@@ -33,11 +33,12 @@ set(VCPKG_CMAKE_SYSTEM_NAME Emscripten)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${VCPKG_ROOT_DIR}/scripts/toolchains/emscripten.cmake")
 # Native WebAssembly exceptions: without them Emscripten cannot catch C++ exceptions, and every
 # error the program reports by throwing (OpenCASCADE failures, broken files) ends the program.
-# The current exception format (exnref, not the legacy one): Binaryen cannot read the legacy
-# format of the large test programs. All libraries and the program must use the same setting.
-set(VCPKG_C_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0")
-set(VCPKG_CXX_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0")
-set(VCPKG_LINKER_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0")
-# -O2 instead of the default -O3: clearly less memory in the compiler for OpenCASCADE's largest files.
-set(VCPKG_C_FLAGS_RELEASE "-O2 -DNDEBUG")
-set(VCPKG_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+# The legacy exception format: the exnref format made Emscripten 5.0.5 write br_table jumps that
+# the engine refuses ("label arity inconsistent"). All libraries and the program must use the
+# same setting.
+set(VCPKG_C_FLAGS "-pthread -fwasm-exceptions")
+set(VCPKG_CXX_FLAGS "-pthread -fwasm-exceptions")
+set(VCPKG_LINKER_FLAGS "-pthread -fwasm-exceptions")
+# -O2 instead of the default -O3 for every library (set last, so that nothing after it can
+# override it; the flags a port adds itself come before the flags of the build type).
+set(VCPKG_CMAKE_CONFIGURE_OPTIONS "-DCMAKE_C_FLAGS_RELEASE=-O2 -DNDEBUG" "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -DNDEBUG")
