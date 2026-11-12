@@ -232,6 +232,9 @@ jobs:
     timeout-minutes: 360
     env:
       EMSDK_VERSION: "5.0.5"
+      # OpenCASCADE's heaviest files make clang use well over 1 GB each; five parallel compiles
+      # crashed it (segmentation fault) on the 4-core runner with 16 GB.
+      VCPKG_MAX_CONCURRENCY: "2"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
