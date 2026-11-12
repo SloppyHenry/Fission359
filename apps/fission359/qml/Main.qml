@@ -69,7 +69,8 @@ Window {
     // The files opened last, as entries of the File menu (a flat list under a heading).
     readonly property var recentItems: {
         const files = Files.recentFiles
-        if (files.length === 0) {
+        // In the browser there are no recent files of the computer to offer (AP-6.7b3).
+        if (files.length === 0 || Platform.browser) {
             return []
         }
         const list = [{ separator: true }, { id: "recent.header", text: qsTr("Open recent"), enabled: false }]

@@ -5680,6 +5680,11 @@
         <source>Examples</source>
         <translation>Beispiele</translation>
     </message>
+    <message>
+        <location filename="../qml/StartPage.qml" line="159"/>
+        <source>You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.</source>
+        <translation>Du nutzt die Browser-Version: Speichern lädt die Datei herunter, Öffnen holt sie von deinem Rechner. Deine Arbeit wird zusätzlich im Browser gesichert.</translation>
+    </message>
 </context>
 <context>
     <name>StatusBar</name>

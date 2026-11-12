@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Fission359 contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Web-Ausgabe (WebAssembly): bauen und lokal ausliefern.
+#
+#   scripts/web build            Web-Version bauen (Preset web-release)
+#   scripts/web serve [Ordner]   Web-Version lokal ausliefern auf http://localhost:8359
+#
+# Ohne die COOP/COEP-Header von scripts/lib/web_server.py gibt es kein SharedArrayBuffer,
+# die Threads der Web-Version starten nicht. Deshalb immer über scripts/web serve öffnen,
+# nie über file://.
+
+set -u -o pipefail
+# shellcheck source=lib/common.sh
+. "$(dirname "$0")/lib/common.sh"
+
+PORT=8359
+DEFAULT_DIR="build/web-release/apps/fission359"
+
+usage() {
+    say "Aufruf: scripts/web <Unterbefehl>"
+    say ""
+    say "  build            Web-Version bauen (cmake --preset web-release)"
+    say "  serve [Ordner]   Web-Version ausliefern auf http://localhost:$PORT"
+    say "                   (Standardordner: $DEFAULT_DIR)"
+    say ""
+}
+
+cmd="${1:-}"
+[ $# -gt 0 ] && shift
+
+case "$cmd" in
+    serve)
+        dir="${1:-$REPO_ROOT/$DEFAULT_DIR}"
+        if [ ! -d "$dir" ]; then
+            die "Der Ordner '$dir' fehlt. Erst bauen: scripts/web build (Preset web-release, kommt in einem späteren Paket)."
+        fi
+        need_command python3
+        step "Liefere '$dir' lokal aus"
+        ok "Öffne http://localhost:$PORT im Browser (127.0.0.1, mit COOP/COEP)"
+        exec python3 "$REPO_ROOT/scripts/lib/web_server.py" "$dir" "$PORT"
+        ;;
+    build)
+        need_command cmake
+        cd "$REPO_ROOT" || exit 1
+        step "Baue die Web-Version (Preset web-release)"
+        if ! cmake --list-presets=all 2>/dev/null | grep -q '"web-release"'; then
+            die "Das Preset 'web-release' gibt es noch nicht (es kommt in einem späteren Paket, siehe CMakePresets.json)."
+        fi
+        if ! { cmake --preset web-release && cmake --build --preset web-release; }; then
+            die "Das Bauen der Web-Version ist fehlgeschlagen. Siehe scripts/run --help für die Voraussetzungen."
+        fi
+        ok "Gebaut: $DEFAULT_DIR"
+        note "Ausliefern mit: scripts/web serve"
+        ;;
+    --help|-h)
+        usage
+        ;;
+    "")
+        usage
+        die "Es fehlt ein Unterbefehl. Siehe scripts/web --help"
+        ;;
+    *)
+        die "Unbekannter Unterbefehl '$cmd'. Siehe scripts/web --help"
+        ;;
+esac

@@ -34,6 +34,7 @@ add_executable(fission_unit_tests
   features/test_sketch_feature.cpp
   features/test_sketch_edges.cpp
   services/test_settings.cpp
+  services/test_platform.cpp
   io/test_fission_file.cpp
   io/test_export.cpp
   io/test_formats.cpp
