@@ -301,6 +301,7 @@ Document fixtureDocument(World& world, const std::string& type) {
         {"tiltFace", {"face", ElementKind::face}},
         {"removeFaces", {"faces", ElementKind::face}},
         {"offsetFaces", {"faces", ElementKind::face}},
+        {"hole", {"face", ElementKind::face}},
         {"draft", {"faces", ElementKind::face}},
         {"shell", {"openFaces", ElementKind::face}}};
     if (const auto slot = onElement.find(type); slot != onElement.end()) {
@@ -372,9 +373,9 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
         REQUIRE(opened.document);
         CHECK(opened.problems.empty());
         CHECK(opened.documentProblems.empty());
-        CHECK(opened.info.formatVersion == 1);
-
         const std::string type = entry.path().stem().string();
+        // `hole` came with format 4 (AP-2.7b2) and was written by that program, unchanged.
+        CHECK(opened.info.formatVersion == (type == "hole" ? 4 : 1));
         CHECK(opened.document->title == "Fixture " + type);
         CHECK(opened.document->features().back().type == type);
         CHECK(opened.document->findParameter("Breite")->expression == "25,5 mm");

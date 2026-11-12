@@ -12,3 +12,6 @@ step type `sketch` came with format 3 (AP-2.1a). It was written with the hidden 
 version 1 fixture files" and then brought into the shape of format 1 (`formatVersion` 1, no
 `sketch` field on the step, no `slider` on measures, checksum new). `v3/sketch.fission` is a real
 format 3 file with one element of every kind.
+
+`v1/hole.fission` was written by a program of format 4 (the step type `hole` came with AP-2.7b2)
+and is kept as it was written; the test expects format 4 for it.
