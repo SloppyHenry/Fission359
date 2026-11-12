@@ -75,6 +75,11 @@ Rectangle {
     signal dragFinished(bool accepted)
     signal textCommitted(string name, string text)
     signal modeCycleRequested()
+    signal reachChosen(string reach)
+    readonly property string pullReach: {
+        const entry = stepTexts.find(t => t.name === "extent")
+        return entry !== undefined ? entry.value : "distance"
+    }
     // The pull of a sketch area (AP-2.3): what it does with the body the sketch lies on.
     readonly property bool isPull: stepTexts.some(t => t.name === "region")
     readonly property string pullMode: {
@@ -434,6 +439,13 @@ Rectangle {
                             visible: pullModeButton.visualFocus
                         }
                     }
+                }
+
+                Toggle {
+                    visible: root.pullMode !== "new"
+                    text: qsTr("All the way through the body")
+                    checked: root.pullReach === "throughAll"
+                    onToggled: root.reachChosen(checked ? "throughAll" : "distance")
                 }
             }
 

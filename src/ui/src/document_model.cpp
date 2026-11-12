@@ -1002,8 +1002,10 @@ QVariantList DocumentModel::buildStepTexts() const {
             spec.name == "font"                                ? QStringLiteral("font")
             : spec.name == "style"                             ? QStringLiteral("style")
             : spec.name == "keepTools" || spec.name == "fuzzy" ? QStringLiteral("flag")
-            : spec.name == "mode" || spec.name == "auto"       ? QStringLiteral("hidden")
-                                                               : QStringLiteral("text");
+            : spec.name == "mode" || spec.name == "auto" || spec.name == "sketch" ||
+                    spec.name == "region" || spec.name == "extent"
+                ? QStringLiteral("hidden")
+                : QStringLiteral("text");
         texts.push_back(entry);
     }
     return texts;
@@ -1149,6 +1151,65 @@ void DocumentModel::documentChanged(bool geometryChanged) {
     if (geometryChanged) {
         requestRecompute();
     }
+}
+
+bool DocumentModel::setExtrudeReach(int index, const QString& reach, int faceNumber) {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) || !m_result) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "extrude" ||
+        (reach != QLatin1String("distance") && reach != QLatin1String("throughAll") &&
+         reach != QLatin1String("toFace"))) {
+        return false;
+    }
+    const core::FeatureId id = step.id;
+    std::vector<core::PersistentRef> refs;
+    if (reach == QLatin1String("toFace")) {
+        // The face of the body the pull joins or cuts (its single input) to stop at.
+        if (step.inputs.size() != 1 || faceNumber < 1) {
+            return false;
+        }
+        const auto made = m_result->bodies.find(step.inputs.front());
+        if (made == m_result->bodies.end()) {
+            return false;
+        }
+        try {
+            const core::BodyLooks looks =
+                core::describeBody(made->second.faces, m_kernel->signatures(made->second.solid));
+            const auto found = std::find_if(looks.faces.begin(), looks.faces.end(),
+                                            [&](const core::NamedLook& face) {
+                                                return face.id == static_cast<unsigned>(faceNumber);
+                                            });
+            if (found == looks.faces.end()) {
+                return false;
+            }
+            auto ref = core::makeRef(looks, core::ElementKind::face, found->id,
+                                     core::placementOf(m_history.document(), m_registry,
+                                                       m_result->features, found->name));
+            if (!ref) {
+                return false;
+            }
+            refs.push_back(std::move(*ref));
+        } catch (const geo::GeometryError&) {
+            return false;
+        }
+    } else if (reach == QLatin1String("throughAll") && step.inputs.size() != 1) {
+        return false;
+    }
+    m_history.beginTransaction({"setText", {{"name", "extent"}}});
+    const bool ok =
+        m_history.execute(core::makeSetFeatureText(id, "extent", reach.toStdString())) &&
+        m_history.execute(core::makeSetFeatureRefs(id, "face", std::move(refs)));
+    if (!ok) {
+        m_history.cancelTransaction();
+        return false;
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
 }
 
 bool DocumentModel::setStepValue(int index, const QString& name, const QString& text) {

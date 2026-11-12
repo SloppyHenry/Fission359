@@ -4740,6 +4740,10 @@
         <source>Makes a new body</source>
         <translation>Makes a new body</translation>
     </message>
+    <message>
+        <source>All the way through the body</source>
+        <translation>All the way through the body</translation>
+    </message>
 </context>
 <context>
     <name>RotateLayer</name>

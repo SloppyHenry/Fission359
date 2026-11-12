@@ -35,7 +35,9 @@ automatischer Modus wie empfohlen, Vorschlag am Pfeil, ein Klick ändert ihn.
    rechten Bereichs reihum: neuer Körper → vereint → ausgeschnitten → neu (`DocumentModel::cycleExtrudeMode`, ein Schritt im Verlauf; das
    Vorzeichen des Abstands folgt dem Modus). Auf der Grundebene gibt es nur „neu“. Der Pfeil in der 3D-Ansicht selbst wird nicht
    zum Umschalter (er bleibt der Abstandsgriff); das Überfahren einer Fläche hebt sie wie bisher hervor. „Bis Fläche“/„durch alles“
-   stehen im Schritt (Wörter `extent`), die Bedienung zum Wählen der Zielfläche folgt.
+   stehen im Schritt (Wörter `extent`); „Ganz durch den Körper“ ist ein Schalter im Feld „Ziehen“ (`setExtrudeReach`). „Bis Fläche“ ist im Modell
+fertig, die Bedienung fehlt noch: die Flächennummer gehört zum Körper **vor** dem Zug, die 3D-Ansicht zeigt den Körper danach.
+Darum braucht es eine Wahl auf dem Vorgänger-Körper (Vorschau mit dem Körper vor dem Zug), kein Klick auf das Ergebnis.
 
 ## Teil 2.3a – Ziehen (Kern)
 **Zerlegt:** 2.3a1 (gebaut) = `GeometryKernel::extrudeRegion(curves, inside, frame, spec)`: der Bereich, der den Punkt `inside` enthält,

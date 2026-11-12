@@ -337,6 +337,11 @@ public:
     /// joined to the body, cut out of it, new again; the distance changes its sign with it. Returns
     /// the mode now ("new", "merge", "subtract"), empty when the step is no pull on a body.
     Q_INVOKABLE QString cycleExtrudeMode(int index);
+    /// How far a pull (step `index`) of a sketch on a body goes: `reach` is "distance" (the typed
+    /// number), "throughAll" or "toFace" (up to the flat face number `faceNumber` of that body,
+    /// parallel to the sketch). One step of the history; false when the step is no such pull or
+    /// the face cannot be named.
+    Q_INVOKABLE bool setExtrudeReach(int index, const QString& reach, int faceNumber);
 
     // --- putting shapes down (AP-1.5) ---
     /// Starts putting a shape of `type` ("sphere", "box" ...) down at (x, y) on the plane z, as
