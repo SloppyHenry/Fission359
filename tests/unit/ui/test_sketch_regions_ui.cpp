@@ -384,6 +384,66 @@ TEST_CASE("sketch regions: pulled from a sketch on a face, it joins that body; p
     CHECK(distanceSeen);
 }
 
+TEST_CASE("sketch regions: the mode of a pull on a body goes round new, join, cut (AP-2.3)",
+          "[ui][sketchregions][extrude]") {
+    NoCatching free;
+    Sketching f;
+    f.sketch->finish();
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    REQUIRE(f.model->addShape(QStringLiteral("box"), false) >= 0);
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    f.sketch->start();
+    REQUIRE(f.sketch->pickFace(f.model->bodyIdAt(0), faceNamed(*f.model, "/box/top")));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    f.sketch->chooseTool(QStringLiteral("rectangle"));
+    f.click(-2, -2);
+    f.click(2, 2);
+    f.sketch->chooseTool(QString());
+    REQUIRE(f.regionsReady());
+    const QString region = QString::fromStdString(f.ids().front());
+    f.sketch->finish();
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QString sketchId =
+        f.model->recipe().back().toMap().value(QStringLiteral("id")).toString();
+    REQUIRE_FALSE(f.model->addExtrude(sketchId, region, 0, 0).isEmpty());
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QString id = f.model->recipe().back().toMap().value(QStringLiteral("id")).toString();
+    const int index = f.model->stepIndexOfId(id);
+    REQUIRE(index >= 0);
+    CHECK(modeOf(*f.model, id) == "merge");
+
+    CHECK(f.model->cycleExtrudeMode(index) == QStringLiteral("subtract"));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(modeOf(*f.model, id) == "subtract");
+    CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() ==
+          QStringLiteral("ok"));
+    CHECK(f.model->cycleExtrudeMode(index) == QStringLiteral("new"));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(modeOf(*f.model, id) == "new");
+    CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() ==
+          QStringLiteral("ok"));
+    CHECK(f.model->cycleExtrudeMode(index) == QStringLiteral("merge"));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(modeOf(*f.model, id) == "merge");
+
+    // One undo step goes back one mode.
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(modeOf(*f.model, id) == "new");
+    // Not a pull, or a pull on the ground: nothing to cycle.
+    CHECK(f.model->cycleExtrudeMode(-1).isEmpty());
+    CHECK(f.model->cycleExtrudeMode(0).isEmpty());
+}
+
 TEST_CASE("sketch regions: pulled from the ground, a new body (AP-2.3b3)",
           "[ui][sketchregions][extrude]") {
     NoCatching free;

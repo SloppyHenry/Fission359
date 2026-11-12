@@ -333,6 +333,10 @@ public:
     Q_INVOKABLE QStringList fontStyles(const QString& family) const;
     /// Sets a word of step `index` (the text of a lettering, the name of its font).
     Q_INVOKABLE bool setStepText(int index, const QString& name, const QString& text);
+    /// A pull of a sketch area (step `index`) that lies on a body goes to the next mode: new body,
+    /// joined to the body, cut out of it, new again; the distance changes its sign with it. Returns
+    /// the mode now ("new", "merge", "subtract"), empty when the step is no pull on a body.
+    Q_INVOKABLE QString cycleExtrudeMode(int index);
 
     // --- putting shapes down (AP-1.5) ---
     /// Starts putting a shape of `type` ("sphere", "box" ...) down at (x, y) on the plane z, as

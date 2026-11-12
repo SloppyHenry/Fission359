@@ -74,6 +74,13 @@ Rectangle {
     signal dragStarted(string name)
     signal dragFinished(bool accepted)
     signal textCommitted(string name, string text)
+    signal modeCycleRequested()
+    // The pull of a sketch area (AP-2.3): what it does with the body the sketch lies on.
+    readonly property bool isPull: stepTexts.some(t => t.name === "region")
+    readonly property string pullMode: {
+        const entry = stepTexts.find(t => t.name === "mode")
+        return entry !== undefined ? entry.value : "new"
+    }
     function focusText() {
         wordRepeater.itemAt(0)?.focusAndSelect()
     }
@@ -384,6 +391,47 @@ Rectangle {
                             target: cutField
                             property: "expression"
                             value: cutField.entry.expression
+                        }
+                    }
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.isPull
+                heading: qsTr("Pull")
+
+                AbstractButton {
+                    id: pullModeButton
+
+                    objectName: "pullModeButton"
+                    height: 30
+                    implicitWidth: pullModeLabel.implicitWidth + 24
+                    hoverEnabled: true
+                    Accessible.name: qsTr("What the pull does")
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Click to change: new body, joined to the body, or cut out of it.")
+                    onClicked: root.modeCycleRequested()
+
+                    contentItem: Txt {
+                        id: pullModeLabel
+
+                        text: root.pullMode === "merge" ? qsTr("Joins the body")
+                              : root.pullMode === "subtract" ? qsTr("Cuts out of the body")
+                              : qsTr("Makes a new body")
+                        color: Theme.fg
+                        font.weight: Font.Medium
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    background: Rectangle {
+                        radius: 6
+                        color: pullModeButton.hovered ? Theme.field : Theme.raise
+                        border.width: 1
+                        border.color: Theme.line2
+
+                        Focusring {
+                            visible: pullModeButton.visualFocus
                         }
                     }
                 }

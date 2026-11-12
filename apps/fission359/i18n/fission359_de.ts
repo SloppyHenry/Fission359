@@ -3270,6 +3270,10 @@
             <numerusform>%n geschlossene Bereiche. Klicke einen an, um ihn zu wählen.</numerusform>
         </translation>
     </message>
+    <message>
+        <source>This pull starts on the ground plane: there is no body to join or cut.</source>
+        <translation>Dieses Ziehen beginnt auf der Grundebene: Es gibt keinen Körper zum Vereinen oder Ausschneiden.</translation>
+    </message>
 </context>
 <context>
     <name>MarkerLine</name>
@@ -4711,6 +4715,30 @@
         <location line="+1"/>
         <source>Yellow</source>
         <translation>Gelb</translation>
+    </message>
+    <message>
+        <source>Pull</source>
+        <translation>Ziehen</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>Was das Ziehen macht</translation>
+    </message>
+    <message>
+        <source>Click to change: new body, joined to the body, or cut out of it.</source>
+        <translation>Klicken zum Wechseln: neuer Körper, mit dem Körper vereint oder aus ihm ausgeschnitten.</translation>
+    </message>
+    <message>
+        <source>Joins the body</source>
+        <translation>Vereint mit dem Körper</translation>
+    </message>
+    <message>
+        <source>Cuts out of the body</source>
+        <translation>Schneidet aus dem Körper aus</translation>
+    </message>
+    <message>
+        <source>Makes a new body</source>
+        <translation>Macht einen neuen Körper</translation>
     </message>
 </context>
 <context>

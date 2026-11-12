@@ -1785,6 +1785,11 @@ Window {
             fonts: DocumentModel.fontFamilies
             fontStyles: DocumentModel.fontStyles(root.currentFontName)
             onTextCommitted: (name, text) => root.changeWords(name, text)
+            onModeCycleRequested: {
+                if (DocumentModel.cycleExtrudeMode(DocumentModel.currentStep) === "") {
+                    root.showHint(qsTr("This pull starts on the ground plane: there is no body to join or cut."))
+                }
+            }
             onTabRequested: tab => root.rightTab = tab
             onAxisChosen: axis => DocumentModel.setSplitAxis(DocumentModel.currentStep, axis)
             onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)

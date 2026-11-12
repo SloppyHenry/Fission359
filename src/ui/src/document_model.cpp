@@ -2189,6 +2189,60 @@ bool DocumentModel::setStepText(int index, const QString& name, const QString& t
     return true;
 }
 
+QString DocumentModel::cycleExtrudeMode(int index) {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size())) {
+        return {};
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "extrude") {
+        return {};
+    }
+    // The body the sketch lies on (the one the pull may join to or cut from), if there is one.
+    const auto sketchWord = step.texts.find("sketch");
+    const core::Feature* sketch =
+        sketchWord == step.texts.end()
+            ? nullptr
+            : m_history.document().findFeature(core::FeatureId{sketchWord->second});
+    if (sketch == nullptr || sketch->inputs.size() != 1) {
+        return {};
+    }
+    const core::BodyId target = sketch->inputs.front();
+    const auto word = step.texts.find("mode");
+    const std::string now = word != step.texts.end() ? word->second : "new";
+    // New body, then joined, then cut out, then new again (decision 3 of AP-2.3).
+    const std::string next = now == "new" ? "merge" : now == "merge" ? "subtract" : "new";
+    // The distance follows the mode as it does when it is typed: negative cuts into the body.
+    const auto distance = step.params.find("distance");
+    std::string distanceText;
+    if (distance != step.params.end() && isPlainNumber(distance->second.expression)) {
+        const double value = std::abs(
+            core::evaluateExpression(distance->second.expression, core::QuantityKind::length)
+                .value_or(0.0));
+        if (value > 0.0) {
+            distanceText =
+                QString::number(next == "subtract" ? -value : value, 'g', 15).toStdString();
+        }
+    }
+    const core::FeatureId id = step.id;
+    m_history.beginTransaction({"setText", {{"name", "mode"}}});
+    bool ok =
+        m_history.execute(core::makeSetFeatureText(id, "mode", next)) &&
+        m_history.execute(core::makeSetFeatureInputs(
+            id, next == "new" ? std::vector<core::BodyId>{} : std::vector<core::BodyId>{target}));
+    if (ok && !distanceText.empty()) {
+        ok = m_history.execute(core::makeSetFeatureValue(id, "distance", distanceText));
+    }
+    if (!ok) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return QString::fromStdString(next);
+}
+
 void DocumentModel::setBodyHole(int index, bool hole) {
     const auto& bodies = m_history.document().bodies();
     if (index < 0 || index >= static_cast<int>(bodies.size())) {
