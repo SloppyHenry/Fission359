@@ -126,3 +126,28 @@ TEST_CASE("hole tool: sizes that do not fit are refused", "[geometry][holes]") {
     narrowHead.headDiameter = 3.0;
     CHECK(codeOf(*kernel, narrowHead) == geo::GeometryErrorCode::invalidInput);
 }
+
+TEST_CASE("hole tool: placed at `at` along `up`, the tool stands on the face",
+          "[geometry][holes]") {
+    const auto kernel = geo::occt::makeKernel();
+    geo::HoleToolSpec spec; // plain, diameter 3.4, depth 10, above 1
+    spec.at = {10.0, 0.0, 5.0};
+    spec.up = {1.0, 0.0, 0.0}; // the face looks along +X: the tool runs along X
+    const geo::NamedSolid made = kernel->makeHoleTool(spec);
+    const geo::SolidReport report = kernel->measure(made.solid);
+    CHECK(report.valid);
+    CHECK(report.volume == exactly(kPi * 1.7 * 1.7 * 11.0)); // a pure move keeps the volume
+    CHECK(rolesOf(made) == std::set<std::string>{"top", "bottom", "wall"});
+    // The tool's z axis now runs along +X from `at`: x from at.x - depth to at.x + above.
+    CHECK(report.boxMin.x == Approx(10.0 - 10.0).margin(1e-9));
+    CHECK(report.boxMax.x == Approx(10.0 + 1.0).margin(1e-9));
+    CHECK(report.boxMin.y == Approx(-1.7).margin(1e-9));
+    CHECK(report.boxMax.y == Approx(1.7).margin(1e-9));
+    CHECK(report.boxMin.z == Approx(5.0 - 1.7).margin(1e-9));
+    CHECK(report.boxMax.z == Approx(5.0 + 1.7).margin(1e-9));
+
+    // A direction without a length is refused.
+    geo::HoleToolSpec noDirection;
+    noDirection.up = {0.0, 0.0, 0.0};
+    CHECK(codeOf(*kernel, noDirection) == geo::GeometryErrorCode::invalidInput);
+}

@@ -76,6 +76,10 @@ struct FlatFace {
 enum class HoleKind { plain, counterbore, countersink, nutTrap };
 
 /// The tool of a hole: its top at z = 0 on the face, `above` mm higher so that it cuts cleanly.
+/// The tool is built standing on the origin, axis along +Z, and is then placed by `at` and
+/// `up`: the origin of the tool (z = 0, its top edge) sits at `at` on the face, and the tool's
+/// Z axis runs along `up`, the face's outward normal, so the tool reaches from `above` the
+/// face down into the material (the point (0, 0, -depth) lands at `at - up * depth`).
 struct HoleToolSpec {
     HoleKind kind = HoleKind::plain;
     double diameter = 3.4;   // the hole, mm
@@ -85,6 +89,8 @@ struct HoleToolSpec {
     double nutWidth = 0;     // nut trap: width across flats, mm
     double nutDepth = 0;     // nut trap depth, mm
     double above = 1.0;
+    Point3d at{0, 0, 0}; ///< Place of the tool's origin (z = 0, its top edge on the face).
+    Point3d up{0, 0, 1}; ///< Direction of the tool's Z axis: the face's outward normal.
 };
 
 /// What features may ask of the geometry kernel (docs/03-architektur.md §4). The core and the
@@ -234,11 +240,12 @@ public:
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
     }
 
-    /// The tool of a hole (see `HoleToolSpec`), to be subtracted: standing on the origin, axis
-    /// along +Z, going down into the material (z from `above` to `-depth`). Face roles: `top`,
+    /// The tool of a hole (see `HoleToolSpec`), to be subtracted: built standing on the origin,
+    /// axis along +Z, going down into the material (z from `above` to `-depth`), then placed by
+    /// `at` and `up` on the face. Face roles: `top`,
     /// `bottom`, `wall`, `headWall`, `headFloor` (counterbore), `countersink`, `nutWall[1]` ...
     /// `nutWall[6]`, `nutFloor`. Throws `GeometryError` with `invalidInput` for sizes that do not
-    /// fit. The default refuses.
+    /// fit and for an `up` without a length. The default refuses.
     virtual NamedSolid makeHoleTool(const HoleToolSpec& spec) const {
         (void)spec;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot make holes");

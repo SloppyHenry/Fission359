@@ -4318,6 +4318,11 @@
         </translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Drilled a hole, Ø %1 mm, %2 mm deep</source>
+        <translation>Bohrung, Ø %1 mm, %2 mm tief</translation>
+    </message>
+    <message>
         <location line="+3"/>
         <source>Face tilted by %1°</source>
         <translation>Fläche um %1° gekippt</translation>

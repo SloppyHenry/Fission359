@@ -85,6 +85,9 @@ QtObject {
             return v[1] >= 0 ? qsTr("Moved %n face(s) out by %1 mm", "", v[0]).arg(n(v[1]))
                              : qsTr("Moved %n face(s) in by %1 mm", "", v[0]).arg(n(-v[1]))
         }
+        if (step.type === "hole" && v.length === 2) {
+            return qsTr("Drilled a hole, Ø %1 mm, %2 mm deep").arg(n(v[0])).arg(n(v[1]))
+        }
         if (step.type === "tiltFace" && v.length === 1) {
             return qsTr("Face tilted by %1°").arg(n(v[0]))
         }
@@ -113,7 +116,7 @@ QtObject {
             }
         }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "tiltFace", "shell", "draft"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "hole", "tiltFace", "shell", "draft"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)
