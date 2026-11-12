@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!-- SPDX-FileCopyrightText: Fission359 contributors -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fission359</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #17181c;
+    color: #e8e9ec;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  /* Qt renders its canvas into this element (Qt wasm standard page). */
+  #screen { position: fixed; inset: 0; }
+  #screen canvas { display: block; width: 100%; height: 100%; }
+  #overlay {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; padding: 0 24px;
+  }
+  #bar {
+    width: min(320px, 70vw); height: 6px;
+    border-radius: 3px; background: #2b2d34; overflow: hidden;
+  }
+  #bar i {
+    display: block; width: 40%; height: 100%;
+    border-radius: 3px; background: #4f8ef7;
+    animation: slide 1.1s ease-in-out infinite;
+  }
+  @keyframes slide {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(320%); }
+  }
+  #message {
+    margin: 0; max-width: 520px;
+    text-align: center; font-size: 15px; line-height: 1.55; color: #c9cbd2;
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="screen"></div>
+<div id="overlay">
+  <div id="bar"><i></i></div>
+  <p id="message"></p>
+</div>
+<script>
+(function () {
+    "use strict";
+    // Bilingual: German when the browser speaks German, English otherwise.
+    var de = (navigator.language || "").toLowerCase().slice(0, 2) === "de";
+    document.documentElement.lang = de ? "de" : "en";
+    var text = {
+        loading: de ? "Fission359 lädt …" : "Fission359 is loading …",
+        noIsolation: de
+            ? "Cross-Origin-Isolation fehlt – bitte über die vorgesehene Adresse öffnen (z. B. scripts/web serve)."
+            : "Cross-origin isolation is missing – please open this page via the intended address (e.g. scripts/web serve).",
+        noWebgl: de
+            ? "WebGL 2 ist in diesem Browser nicht verfügbar."
+            : "WebGL 2 is not available in this browser."
+    };
+    var message = document.getElementById("message");
+    message.textContent = text.loading;
+
+    function stopWith(textToShow) {
+        document.getElementById("bar").classList.add("hidden");
+        message.textContent = textToShow;
+    }
+
+    // Without cross-origin isolation there is no SharedArrayBuffer: the threads of the Qt
+    // wasm build do not start. The server (scripts/lib/web_server.py) sets the headers.
+    if (!window.crossOriginIsolated) {
+        stopWith(text.noIsolation);
+        return;
+    }
+    // The 3D view needs WebGL 2.
+    if (!document.createElement("canvas").getContext("webgl2")) {
+        stopWith(text.noWebgl);
+        return;
+    }
+
+    // Qt wasm standard page: the loader renders into #screen; fission359.js provides qtLoad.
+    var script = document.createElement("script");
+    script.src = "fission359.js";
+    script.onload = function () {
+        var loader = qtLoad({ container: document.getElementById("screen") });
+        var loaded = loader.loadEmscriptenModule("fission359");
+        if (loaded && loaded.then) {
+            loaded.then(function () {
+                document.getElementById("overlay").classList.add("hidden");
+            });
+        } else {
+            document.getElementById("overlay").classList.add("hidden");
+        }
+    };
+    document.body.appendChild(script);
+})();
+</script>
+</body>
+</html>

@@ -68,6 +68,7 @@
 #include "fission/ui/measure_controller.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/placement_controller.h"
+#include "fission/ui/platform_info.h"
 #include "fission/ui/preferences.h"
 #include "fission/ui/rotate_controller.h"
 #include "fission/ui/scale_controller.h"
@@ -571,6 +572,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Preferences", &preferences);
     fission::ui::CommandSearch commandSearch;
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "CommandSearch", &commandSearch);
+    fission::ui::PlatformInfo platform;
+    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Platform", &platform);
     documentModel.setPrinter(preferences.printerId());
     // New projects count in millimetres until lengths are also shown in inches (pflege.md P23):
     // a bare number in inches while everything shows millimetres would only confuse.

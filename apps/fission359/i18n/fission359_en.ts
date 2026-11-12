@@ -5680,6 +5680,11 @@
         <source>Examples</source>
         <translation>Examples</translation>
     </message>
+    <message>
+        <location filename="../qml/StartPage.qml" line="159"/>
+        <source>You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.</source>
+        <translation>You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.</translation>
+    </message>
 </context>
 <context>
     <name>StatusBar</name>
