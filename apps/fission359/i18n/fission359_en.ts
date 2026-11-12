@@ -894,6 +894,36 @@
         <translation>The view turns and zooms; nothing in the project changes.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Zoom in</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view closer to the middle of the screen.</source>
+        <translation>Moves the view closer to the middle of the screen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view comes closer; nothing in the project changes.</source>
+        <translation>The view comes closer; nothing in the project changes.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Zoom out</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view farther away from the middle of the screen.</source>
+        <translation>Moves the view farther away from the middle of the screen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view goes farther away; nothing in the project changes.</source>
+        <translation>The view goes farther away; nothing in the project changes.</translation>
+    </message>
+    <message>
         <location line="+5"/>
         <source>Home view</source>
         <translation>Home view</translation>
@@ -1947,6 +1977,16 @@
         <location line="+2"/>
         <source>Show everything</source>
         <translation>Show everything</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Zoom in</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Zoom out</translation>
     </message>
     <message>
         <location line="+1"/>
