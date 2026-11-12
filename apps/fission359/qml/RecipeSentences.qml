@@ -112,8 +112,14 @@ QtObject {
             default: return qsTr("Merged with %n body(ies)", "", v[0])
             }
         }
+        if (step.type === "pattern" && v.length === 1) {
+            switch (step.texts.mode) {
+            case "circular": return qsTr("Circle of %n copy(ies)", "", v[0])
+            default: return qsTr("Row of %n copy(ies)", "", v[0])
+            }
+        }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "tiltFace", "shell", "draft"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "tiltFace", "shell", "draft", "pattern"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)

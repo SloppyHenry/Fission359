@@ -324,6 +324,37 @@ NamedSolid translateNamed(const NamedSolid& solid, Point3d delta) {
     }
 }
 
+NamedSolid transformNamed(const NamedSolid& solid, const Transform3& transform) {
+    // Check for non-finite values in rotation matrix and translation
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (!std::isfinite(transform.r[i][j])) {
+                throw GeometryError(GeometryErrorCode::invalidInput, "transform: not a number");
+            }
+        }
+    }
+    if (!std::isfinite(transform.t.x) || !std::isfinite(transform.t.y) ||
+        !std::isfinite(transform.t.z)) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "transform: not a number");
+    }
+    try {
+        // gp_Trsf supports matrices with determinant -1 (reflections), and BRepBuilderAPI_Transform
+        // will reverse the orientation accordingly.
+        gp_Trsf trsf;
+        trsf.SetValues(transform.r[0][0], transform.r[0][1], transform.r[0][2], transform.t.x,
+                       transform.r[1][0], transform.r[1][1], transform.r[1][2], transform.t.y,
+                       transform.r[2][0], transform.r[2][1], transform.r[2][2], transform.t.z);
+        const TopoDS_Shape transformed =
+            BRepBuilderAPI_Transform(shapeOf(solid.solid), trsf, /*Copy=*/true).Shape();
+        NamedSolid result;
+        result.solid = validated(transformed, "transform");
+        result.faces = solid.faces;
+        return result;
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "transform: the kernel failed");
+    }
+}
+
 Solid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner, double cornerRadius) {
     return makeNamedBox(sizeX, sizeY, sizeZ, corner, cornerRadius).solid;
 }

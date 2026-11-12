@@ -27,6 +27,7 @@ add_executable(fission_unit_tests
   features/test_blend.cpp
   features/test_push_face.cpp
   features/test_face_ops.cpp
+  features/test_pattern_step.cpp
   features/test_shell_draft.cpp
   features/test_text_feature.cpp
   features/test_import.cpp
@@ -45,6 +46,7 @@ add_executable(fission_unit_tests
   geometry/test_blends.cpp
   geometry/test_faces.cpp
   geometry/test_stretch.cpp
+  geometry/test_transformed.cpp
   geometry/test_plausibility.cpp
   geometry/test_hollow.cpp
   geometry/test_draft.cpp
@@ -56,6 +58,7 @@ add_executable(fission_unit_tests
   geometry/test_sketch_intersections.cpp
   geometry/test_sketch_regions.cpp
   geometry/test_extrude.cpp
+  geometry/test_pattern.cpp
   geometry/test_sketch_edge.cpp
   geometry/test_sketch_solver.cpp
   analysis/test_material.cpp

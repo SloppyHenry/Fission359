@@ -1824,6 +1824,7 @@ Window {
         if (type === "tiltFace") { return qsTr("Tilting a face") }
         if (type === "shell") { return qsTr("Hollowing out") }
         if (type === "draft") { return qsTr("Draft") }
+        if (type === "pattern") { return qsTr("Pattern") }
         if (type === "place") { return qsTr("Placing") }
         if (type === "import") { return qsTr("Imported body") }
         if (type === "sketch") { return qsTr("Sketch") }
