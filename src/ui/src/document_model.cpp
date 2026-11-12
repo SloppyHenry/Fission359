@@ -29,6 +29,7 @@
 #include "fission/core/scaling.h"
 #include "fission/core/version.h"
 #include "fission/features/builtin.h"
+#include "fission/features/hole_tables.h"
 #include "fission/geo/error.h"
 #include "fission/geo/seat.h"
 #include "fission/interaction/align.h"
@@ -1002,8 +1003,9 @@ QVariantList DocumentModel::buildStepTexts() const {
             spec.name == "font"                                ? QStringLiteral("font")
             : spec.name == "style"                             ? QStringLiteral("style")
             : spec.name == "keepTools" || spec.name == "fuzzy" ? QStringLiteral("flag")
-            : spec.name == "mode" || spec.name == "auto"       ? QStringLiteral("hidden")
-                                                               : QStringLiteral("text");
+            : spec.name == "mode" || spec.name == "auto" || spec.name == "kind"
+                ? QStringLiteral("hidden")
+                : QStringLiteral("text");
         texts.push_back(entry);
     }
     return texts;
@@ -4227,6 +4229,62 @@ QString DocumentModel::drillHole(const QString& bodyId, int faceNumber) {
     }
     return addFaceStep(bodyId, "hole", {static_cast<std::uint32_t>(faceNumber)}, "face",
                        {{"diameter", 3.4}, {"depth", 10.0}}, "drillHole");
+}
+
+bool DocumentModel::setHoleScrew(int index, const QString& size, const QString& kind) {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) ||
+        features[static_cast<std::size_t>(index)].type != "hole") {
+        return false;
+    }
+    const features::MetricScrew* screw = features::findMetricScrew(size.toStdString());
+    if (screw == nullptr) {
+        return false;
+    }
+    // What each kind of hole takes from the tables (AP-2.7c, decision 4): the hole for the screw,
+    // and the head or nut pocket for it. Values the kind does not need are set to 0.
+    double diameter = features::clearanceDiameter(*screw, features::ClearanceFit::medium);
+    double headDiameter = 0.0;
+    double headDepth = 0.0;
+    double nutWidth = 0.0;
+    double nutDepth = 0.0;
+    std::string word = "plain";
+    if (kind == QLatin1String("counterbore")) {
+        word = "counterbore";
+        headDiameter = screw->socketHeadDiameter;
+        headDepth = screw->socketHeadHeight;
+    } else if (kind == QLatin1String("countersink")) {
+        word = "countersink";
+        headDiameter = screw->countersinkDiameter;
+    } else if (kind == QLatin1String("nutTrap")) {
+        word = "nutTrap";
+        nutWidth = screw->nutWidth;
+        nutDepth = screw->nutHeight;
+    } else if (kind == QLatin1String("tapDrill")) {
+        diameter = screw->tapDrill;
+    } else if (kind != QLatin1String("plain")) {
+        return false;
+    }
+    const core::FeatureId id = features[static_cast<std::size_t>(index)].id;
+    const auto number = [](double value) { return QString::number(value, 'g', 15).toStdString(); };
+    m_history.beginTransaction({"setText", {{"name", "kind"}}});
+    bool ok = m_history.execute(core::makeSetFeatureText(id, "kind", word));
+    const std::pair<const char*, double> values[] = {{"diameter", diameter},
+                                                     {"headDiameter", headDiameter},
+                                                     {"headDepth", headDepth},
+                                                     {"nutWidth", nutWidth},
+                                                     {"nutDepth", nutDepth}};
+    for (const auto& [name, value] : values) {
+        ok = ok && m_history.execute(core::makeSetFeatureValue(id, name, number(value)));
+    }
+    if (!ok) {
+        m_history.cancelTransaction();
+        return false;
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
 }
 
 QString DocumentModel::shellBody(const QString& bodyId, const QVariantList& openFaces) {

@@ -528,6 +528,10 @@ public:
     /// Drills an M3 hole (3.4 mm, 10 mm deep) into the middle of a flat face: a new step.
     /// Returns the id of the new body, empty when nothing can be done.
     Q_INVOKABLE QString drillHole(const QString& bodyId, int faceNumber);
+    /// Sets a drilled hole (step `index`) for a metric screw from the tables: `size` like "M3",
+    /// `kind` one of plain (clearance hole), counterbore, countersink, nutTrap, tapDrill. One
+    /// step of the history. False when the step is no hole or size or kind are unknown.
+    Q_INVOKABLE bool setHoleScrew(int index, const QString& size, const QString& kind);
     /// The faces that belong to the one at `faceNumber` as a feature: for a curved face the curved
     /// faces it runs into and the floor of a blind hole, for a flat face just itself.
     Q_INVOKABLE QVariantList faceFeature(const QString& bodyId, int faceNumber) const;

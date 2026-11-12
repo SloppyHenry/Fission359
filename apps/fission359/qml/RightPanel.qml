@@ -74,6 +74,15 @@ Rectangle {
     signal dragStarted(string name)
     signal dragFinished(bool accepted)
     signal textCommitted(string name, string text)
+    signal holeScrewChosen(string size, string kind)
+    // A drilled hole (AP-2.7c): the screw it is for, and what the hole is to take.
+    readonly property bool isDrill: stepTexts.some(t => t.name === "kind")
+    readonly property string drillKind: {
+        const entry = stepTexts.find(t => t.name === "kind")
+        return entry !== undefined ? entry.value : "plain"
+    }
+    property string drillSize: "M3"
+    readonly property var drillSizes: ["M2", "M2.5", "M3", "M4", "M5", "M6", "M8", "M10", "M12"]
     function focusText() {
         wordRepeater.itemAt(0)?.focusAndSelect()
     }
@@ -384,6 +393,92 @@ Rectangle {
                             target: cutField
                             property: "expression"
                             value: cutField.entry.expression
+                        }
+                    }
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.isDrill
+                heading: qsTr("What is the hole for?")
+
+                Row {
+                    spacing: 6
+
+                    Repeater {
+                        model: root.drillSizes
+
+                        delegate: AbstractButton {
+                            id: sizeButton
+
+                            required property string modelData
+
+                            objectName: "drillSize" + modelData
+                            height: 28
+                            implicitWidth: sizeLabel.implicitWidth + 14
+                            checkable: true
+                            checked: root.drillSize === modelData
+                            hoverEnabled: true
+                            Accessible.name: modelData
+                            onClicked: {
+                                root.drillSize = modelData
+                                root.holeScrewChosen(modelData, root.drillKind)
+                            }
+
+                            contentItem: Txt {
+                                id: sizeLabel
+
+                                text: sizeButton.modelData
+                                color: sizeButton.checked ? Theme.fg : Theme.fg2
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                radius: 6
+                                color: sizeButton.checked ? Theme.accentSoft : (sizeButton.hovered ? Theme.field : Theme.raise)
+                                border.width: 1
+                                border.color: sizeButton.checked ? Theme.accentLine : Theme.line2
+                            }
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: [
+                        { kind: "plain", label: qsTr("Screw goes through") },
+                        { kind: "countersink", label: qsTr("Countersunk screw") },
+                        { kind: "counterbore", label: qsTr("Screw with a cylinder head") },
+                        { kind: "nutTrap", label: qsTr("Nut to put in") },
+                        { kind: "tapDrill", label: qsTr("Screw cuts its own thread") }
+                    ]
+
+                    delegate: AbstractButton {
+                        id: kindButton
+
+                        required property var modelData
+
+                        objectName: "drillKind_" + modelData.kind
+                        width: parent.width
+                        height: 30
+                        checkable: true
+                        checked: root.drillKind === modelData.kind
+                        hoverEnabled: true
+                        Accessible.name: modelData.label
+                        onClicked: root.holeScrewChosen(root.drillSize, modelData.kind)
+
+                        contentItem: Txt {
+                            text: kindButton.modelData.label
+                            color: kindButton.checked ? Theme.fg : Theme.fg2
+                            verticalAlignment: Text.AlignVCenter
+                            leftPadding: 8
+                        }
+
+                        background: Rectangle {
+                            radius: 6
+                            color: kindButton.checked ? Theme.accentSoft : (kindButton.hovered ? Theme.field : "transparent")
+                            border.width: kindButton.checked ? 1 : 0
+                            border.color: Theme.accentLine
                         }
                     }
                 }
