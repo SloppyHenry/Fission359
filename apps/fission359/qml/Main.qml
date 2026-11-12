@@ -120,6 +120,8 @@ Window {
             { id: "focus", text: qsTr("Focus"), shortcut: isMac ? "⇧F" : qsTr("Shift+F"), checked: root.focusMode },
             { separator: true },
             { id: "view.frame", text: qsTr("Show everything"), shortcut: "F" },
+            { id: "view.zoomin", text: qsTr("Zoom in"), shortcut: "+" },
+            { id: "view.zoomout", text: qsTr("Zoom out"), shortcut: "-" },
             { id: "view.lookat", text: qsTr("Look at face"), shortcut: "L", enabled: Selection.singleFaceChosen },
             { id: "view.home", text: qsTr("Home view"), shortcut: isMac ? "Home" : qsTr("Pos1") },
             { id: "view.front", text: qsTr("Front"), shortcut: "1" },
@@ -515,6 +517,8 @@ Window {
             root.visibility = root.visibility === Window.FullScreen ? Window.Windowed : Window.FullScreen
             break
         case "view.frame": viewport.frameAll(); break
+        case "view.zoomin": viewport.zoomBy(0.8); break
+        case "view.zoomout": viewport.zoomBy(1.25); break
         case "view.lookat": Selection.lookAtChosenFace(); break
         case "selectall":
             if (typing) {
@@ -845,6 +849,10 @@ Window {
     Shortcut { sequence: "Shift+F"; onActivated: root.run("focus") }
     // F is "Round corner" in the sketch mode (AP-2.1e2): the two are never on together.
     Shortcut { sequence: "F"; enabled: !Sketch.active; onActivated: root.run("view.frame") }
+    // Keyboard zoom (pflege P10); Ctrl/Cmd+plus stays free for UI scaling. Off while a drawing
+    // tool is on: there "-" starts a typed number (two active shortcuts on one key fire neither).
+    Shortcut { sequences: ["+", "=", "Shift+="]; enabled: !root.typing && !Sketch.toolActive; onActivated: root.run("view.zoomin") }
+    Shortcut { sequence: "-"; enabled: !root.typing && !Sketch.toolActive; onActivated: root.run("view.zoomout") }
     Shortcut { sequence: "L"; enabled: Selection.singleFaceChosen && !Sketch.active; onActivated: root.run("view.lookat") }
     // The drawing tools of the sketch mode (AP-2.1c1); the keys mean something else outside it.
     Shortcut { sequence: "L"; enabled: Sketch.active && !root.typing; onActivated: root.run("sketchtool.line") }
@@ -1381,6 +1389,7 @@ Window {
                 }
             }
             onStepDeleteRequested: index => root.requestDeletion(DocumentModel.deletionOfStep(index), true)
+            onStepMoveRequested: (from, to) => DocumentModel.moveStep(from, to)
             onDeleteConfirmed: {
                 const steps = root.pendingDeletion.steps
                 root.pendingDeletion = null
@@ -1875,6 +1884,7 @@ Window {
         switch (step.key) {
         case "addFeature": return qsTr("%1 added").arg(typeLabel(step.type))
         case "removeFeature": return qsTr("%1 removed").arg(typeLabel(step.type))
+        case "moveFeature": return qsTr("%1 moved in the recipe").arg(typeLabel(step.type))
         case "setValue":
             return step.value !== undefined
                 ? qsTr("%1 changed to %2").arg(valueLabel(step.field)).arg(step.value)

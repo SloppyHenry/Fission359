@@ -13,15 +13,18 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <optional>
 
 #include "fission/geo/error.h"
 
+#include "sketch_region_face.h"
 #include "sketch_spline_curve.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAlgoAPI_Splitter.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepClass_FaceClassifier.hxx>
 #include <BRepGProp.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepTools.hxx>
@@ -63,9 +66,8 @@ double distance(const Point2d& a, const Point2d& b) {
     return std::hypot(b.x - a.x, b.y - a.y);
 }
 
-[[noreturn]] void invalid(const char* what) {
-    throw GeometryError(GeometryErrorCode::invalidInput, std::string("sketchRegions: ") + what,
-                        "region");
+[[noreturn]] void invalid(const char* op, const char* what) {
+    throw GeometryError(GeometryErrorCode::invalidInput, std::string(op) + ": " + what, "region");
 }
 
 // One curve as an edge, with its curve kept for looking up directions.
@@ -76,31 +78,31 @@ struct Source {
     double last = 0.0;
 };
 
-Source makeSource(const SketchCurve& curve) {
+Source makeSource(const SketchCurve& curve, const char* op) {
     const std::vector<Point2d>& p = curve.points;
     for (const Point2d& point : p) {
         if (!std::isfinite(point.x) || !std::isfinite(point.y)) {
-            invalid("a point is not finite");
+            invalid(op, "a point is not finite");
         }
     }
     Source source;
-    const auto fromEdge = [&source](const TopoDS_Edge& edge) {
+    const auto fromEdge = [&source, op](const TopoDS_Edge& edge) {
         source.edge = edge;
         source.curve = BRep_Tool::Curve(edge, source.first, source.last);
         if (source.curve.IsNull()) {
-            throw GeometryError(GeometryErrorCode::kernelFailure, "sketchRegions: no curve");
+            throw GeometryError(GeometryErrorCode::kernelFailure, std::string(op) + ": no curve");
         }
     };
     const auto lineOf = [&](const Point2d& a, const Point2d& b) {
         if (!(distance(a, b) > 0.0)) {
-            invalid("a line needs two different points");
+            invalid(op, "a line needs two different points");
         }
         fromEdge(BRepBuilderAPI_MakeEdge(gp_Pnt(a.x, a.y, 0.0), gp_Pnt(b.x, b.y, 0.0)).Edge());
     };
     switch (curve.kind) {
     case SketchCurveKind::line:
         if (p.size() != 2) {
-            invalid("a line needs two points");
+            invalid(op, "a line needs two points");
         }
         lineOf(p[0], p[1]);
         break;
@@ -108,7 +110,7 @@ Source makeSource(const SketchCurve& curve) {
     case SketchCurveKind::arc: {
         const std::size_t count = curve.kind == SketchCurveKind::circle ? 2 : 3;
         if (p.size() != count || !(distance(p[0], p[1]) > 0.0)) {
-            invalid("a circle or arc needs a radius");
+            invalid(op, "a circle or arc needs a radius");
         }
         const double radius = distance(p[0], p[1]);
         const gp_Dir toStart((p[1].x - p[0].x) / radius, (p[1].y - p[0].y) / radius, 0.0);
@@ -118,7 +120,7 @@ Source makeSource(const SketchCurve& curve) {
             fromEdge(BRepBuilderAPI_MakeEdge(circle).Edge());
         } else {
             if (!(distance(p[0], p[2]) > 0.0)) {
-                invalid("an arc needs an end");
+                invalid(op, "an arc needs an end");
             }
             double sweep = std::atan2(p[2].y - p[0].y, p[2].x - p[0].x) -
                            std::atan2(p[1].y - p[0].y, p[1].x - p[0].x);
@@ -445,6 +447,47 @@ bool loopOf(const TopoDS_Wire& wire, const SourceMap& origin, const std::vector<
     return chain(std::move(stretches), outer, sources, loop);
 }
 
+// The first half of `sketchRegions` and `regionFaceAt`, shared: one edge per curve, the big
+// frame face split by those edges, and the map from every piece of an edge back to the indices
+// of the curves it lies on. `op` names the calling operation in error messages.
+void splitSketch(const std::vector<SketchCurve>& curves, const char* op,
+                 std::vector<Source>& sources, Frame& frame, BRepAlgoAPI_Splitter& splitter,
+                 SourceMap& origin) {
+    sources.reserve(curves.size());
+    for (const SketchCurve& curve : curves) {
+        sources.push_back(makeSource(curve, op));
+    }
+    frame = makeFrame(curves);
+
+    NCollection_List<TopoDS_Shape> arguments;
+    arguments.Append(frame.face);
+    NCollection_List<TopoDS_Shape> tools;
+    for (const Source& source : sources) {
+        tools.Append(source.edge);
+    }
+    splitter.SetArguments(arguments);
+    splitter.SetTools(tools);
+    splitter.Build();
+    if (!splitter.IsDone() || splitter.HasErrors()) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, std::string(op) + ": split failed");
+    }
+
+    for (std::size_t i = 0; i < sources.size(); ++i) {
+        const NCollection_List<TopoDS_Shape>& made = splitter.Modified(sources[i].edge);
+        std::vector<TopoDS_Shape> pieces(made.begin(), made.end());
+        if (pieces.empty() && !splitter.IsDeleted(sources[i].edge)) {
+            pieces.push_back(sources[i].edge);
+        }
+        for (const TopoDS_Shape& piece : pieces) {
+            if (std::vector<std::size_t>* have = origin.ChangeSeek(piece)) {
+                have->push_back(i);
+            } else {
+                origin.Bind(piece, std::vector<std::size_t>{i});
+            }
+        }
+    }
+}
+
 } // namespace
 
 SketchRegionResult sketchRegions(const std::vector<SketchCurve>& curves) {
@@ -454,41 +497,10 @@ SketchRegionResult sketchRegions(const std::vector<SketchCurve>& curves) {
     }
     try {
         std::vector<Source> sources;
-        sources.reserve(curves.size());
-        for (const SketchCurve& curve : curves) {
-            sources.push_back(makeSource(curve));
-        }
-        const Frame frame = makeFrame(curves);
-
-        NCollection_List<TopoDS_Shape> arguments;
-        arguments.Append(frame.face);
-        NCollection_List<TopoDS_Shape> tools;
-        for (const Source& source : sources) {
-            tools.Append(source.edge);
-        }
+        Frame frame;
         BRepAlgoAPI_Splitter splitter;
-        splitter.SetArguments(arguments);
-        splitter.SetTools(tools);
-        splitter.Build();
-        if (!splitter.IsDone() || splitter.HasErrors()) {
-            throw GeometryError(GeometryErrorCode::kernelFailure, "sketchRegions: split failed");
-        }
-
         SourceMap origin;
-        for (std::size_t i = 0; i < sources.size(); ++i) {
-            const NCollection_List<TopoDS_Shape>& made = splitter.Modified(sources[i].edge);
-            std::vector<TopoDS_Shape> pieces(made.begin(), made.end());
-            if (pieces.empty() && !splitter.IsDeleted(sources[i].edge)) {
-                pieces.push_back(sources[i].edge);
-            }
-            for (const TopoDS_Shape& piece : pieces) {
-                if (std::vector<std::size_t>* have = origin.ChangeSeek(piece)) {
-                    have->push_back(i);
-                } else {
-                    origin.Bind(piece, std::vector<std::size_t>{i});
-                }
-            }
-        }
+        splitSketch(curves, "sketchRegions", sources, frame, splitter, origin);
 
         for (TopExp_Explorer it(splitter.Shape(), TopAbs_FACE); it.More(); it.Next()) {
             const TopoDS_Face face = TopoDS::Face(it.Current());
@@ -547,6 +559,46 @@ SketchRegionResult sketchRegions(const std::vector<SketchCurve>& curves) {
         return a.centroid.y < b.centroid.y;
     });
     return result;
+}
+
+std::optional<RegionFace> regionFaceAt(const std::vector<SketchCurve>& curves, Point2d inside) {
+    if (curves.empty()) {
+        return std::nullopt;
+    }
+    try {
+        std::vector<Source> sources;
+        Frame frame;
+        BRepAlgoAPI_Splitter splitter;
+        SourceMap origin;
+        splitSketch(curves, "extrude", sources, frame, splitter, origin);
+
+        for (TopExp_Explorer it(splitter.Shape(), TopAbs_FACE); it.More(); it.Next()) {
+            const TopoDS_Face face = TopoDS::Face(it.Current());
+            if (atCorner(face, frame.corners)) {
+                continue; // the rest of the plane
+            }
+            GProp_GProps properties;
+            BRepGProp::SurfaceProperties(face, properties);
+            if (!(std::abs(properties.Mass()) >= kSketchRegionMinArea)) {
+                continue;
+            }
+            BRepClass_FaceClassifier classifier(face, gp_Pnt(inside.x, inside.y, 0.0), 1e-7);
+            if (classifier.State() == TopAbs_IN) {
+                RegionFace region;
+                region.face = face;
+                for (TopExp_Explorer e(face, TopAbs_EDGE); e.More(); e.Next()) {
+                    const TopoDS_Edge edge = TopoDS::Edge(e.Current());
+                    if (const std::vector<std::size_t>* indices = origin.Seek(edge)) {
+                        region.edgeCurves.push_back({edge, *indices});
+                    }
+                }
+                return region;
+            }
+        }
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "extrude: the kernel failed");
+    }
+    return std::nullopt;
 }
 
 } // namespace fission::geo::occt

@@ -235,6 +235,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "keeps the button down), "
             "drag:x,y,40,0,8 (press at a point of the 3D view, "
             "pull, let go), focus:width (the cursor into that field), key:Right (press a key), "
+            "markcamera (store the camera distance), expectcamera:closer / expectcamera:farther "
+            "(fail unless the camera came closer to / farther from its target since markcamera), "
             "separated by semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),

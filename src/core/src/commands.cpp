@@ -109,6 +109,30 @@ private:
     CommandDescription description_;
 };
 
+class MoveFeatureCommand final : public Command {
+public:
+    MoveFeatureCommand(FeatureId id, std::size_t newIndex)
+        : id_(std::move(id)), newIndex_(newIndex) {}
+
+    ApplyResult apply(Document& document) override {
+        oldIndex_ = document.indexOf(id_);
+        description_ = featureLabel(document, id_, "moveFeature");
+        return document.moveFeature(id_, newIndex_) ? ApplyResult::applied : ApplyResult::refused;
+    }
+    void revert(Document& document) override {
+        if (oldIndex_) {
+            document.moveFeature(id_, *oldIndex_);
+        }
+    }
+    CommandDescription describe() const override { return description_; }
+
+private:
+    FeatureId id_;
+    std::size_t newIndex_ = 0;
+    std::optional<std::size_t> oldIndex_;
+    CommandDescription description_;
+};
+
 // --- sketches -------------------------------------------------------------------------------
 
 constexpr const char* sketchKindWord(SketchElementKind kind) {
@@ -432,6 +456,10 @@ std::unique_ptr<Command> makeImportFile(std::string fileName, Bytes bytes,
 
 std::unique_ptr<Command> makeRemoveFeature(FeatureId id) {
     return std::make_unique<RemoveFeatureCommand>(std::move(id));
+}
+
+std::unique_ptr<Command> makeMoveFeature(FeatureId id, std::size_t newIndex) {
+    return std::make_unique<MoveFeatureCommand>(std::move(id), newIndex);
 }
 
 std::unique_ptr<Command> makeSetFeatureValue(FeatureId id, std::string name,
