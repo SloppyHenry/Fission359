@@ -31,13 +31,6 @@ Achsen des Körpers, außerhalb seines (gedrehten) Kastens. `FeatureType::placed
 baut die Bänder heute nur für achsparallele Richtungen. Bilder vorher/nachher; Test: gedrehter Quader (rotZ 30) hat drei Bänder, keines
 schneidet den Körper.
 
-## P7 Exakte Fangpunkte aus dem Kernel
-**Größe:** M · Folgearbeit seit AP-1.6c1.
-Fangpunkte kommen heute aus dem Anzeige-Netz (Rauschen ~1e-5 mm, gebogene Kantenmitten genähert). Neue GAL-Funktion
-`std::vector<SnapPointGal> snapPoints(const Solid&)` (Ecken, Kantenmitten, Kreismitten, Mitten ebener Flächen, exakt aus OCCT), im
-Hintergrund je Ergebnis berechnet, in `SnapSession` statt der Netzpunkte. Test: Zylinder Ø 6,3 → Kreismitte exakt, Kantenmitte eines Bogens
-exakt auf dem Kreis.
-
 ## P8 Lage beim Tippen von Maßen nach dem Ablegen an einer Wand mitführen
 **Größe:** S · Idee aus AP-1.6b3. **Haltepunkt:** erst fragen, ob gewünscht.
 Problem: Nach dem Ablegen an einer Wand und `50 ⇥ 20 ⇥ 4` ändert sich die Höhe um die Körpermitte; die Form rutscht von der Wand.
@@ -86,6 +79,7 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 ---
 
 ## Erledigt
+- **P7** Exakte Fangpunkte aus dem Kernel (2026-11-11): `GeometryKernel::snapPoints` (Ecken, Kantenmitten, Kreismitten, Mitten ebener Flächen, exakt aus OCCT; Nahtkanten ausgenommen), im Hintergrund mit dem Netz berechnet, `SnapSession` nimmt sie statt der Netzpunkte (Rückfall: Netzpunkte).
 - **P18** Abstandsmaß auf einer Platte (2026-11-03, PR #83): Ohne Nachbarn misst das Maß bis zum Rand des kleinsten Körpers, der die Grundfläche umfasst und auf dem der Körper steht oder in dem er steckt (nicht ein Körper darüber, z. B. Schrift über dem Loch); danach bis zum Bettrand. Festlegung ohne Umschalter. `app_flow_a_keychain` tippt den Abstand.
 - **P2** Formen-Galerie schließt bei Klick auf leeren Grund (2026-11-03, PR #84), Simulations-Prüfung `expectflyout:`.
 - **P3** Abstände der Grundbausteine aus `Theme.space1..6`, Elide in Statuszeile und Tabs (2026-11-03, PR #85). Bildschirmfotos vorher/nachher fehlen; nachholen mit P20.

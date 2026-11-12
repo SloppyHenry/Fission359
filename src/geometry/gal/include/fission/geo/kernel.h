@@ -72,6 +72,14 @@ struct FlatFace {
     std::optional<Point3d> longestEdge;
 };
 
+/// A point a dragged body can catch on (pflege P7), exact from the kernel.
+enum class SnapPointKind { corner, circleCentre, edgeMiddle, faceMiddle };
+struct SnapPointGal {
+    Point3d position;
+    SnapPointKind kind = SnapPointKind::corner;
+    bool operator==(const SnapPointGal&) const = default;
+};
+
 /// What features may ask of the geometry kernel (docs/03-architektur.md §4). The core and the
 /// feature types only know this interface; the OpenCASCADE implementation is handed in by the
 /// application, tests may hand in another one.
@@ -447,6 +455,12 @@ public:
         const SolidReport report = measure(solid);
         return {report.boxMin, report.boxMax};
     }
+
+    /// The exact points to catch on: every corner, the middle of every edge (also of a bent one:
+    /// the point at half its length), the centre of every circle or arc, and the middle of every
+    /// flat face (the centre of its area). Duplicates (closer than 1e-9 mm, same kind) appear once.
+    /// Empty where a kernel cannot tell.
+    virtual std::vector<SnapPointGal> snapPoints(const Solid& /*solid*/) const { return {}; }
 
     virtual TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const = 0;
 

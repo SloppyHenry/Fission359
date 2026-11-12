@@ -780,6 +780,8 @@ private:
     // Tessellations by result, made on the worker thread, read when the scene is put together.
     std::mutex m_meshMutex;
     std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_meshes;
+    std::map<std::uint64_t, std::shared_ptr<const std::vector<geo::SnapPointGal>>>
+        m_snapPoints; ///< by mesh key, guarded by m_meshMutex
 
     // Finer tessellations for the current zoom, by mesh key; made by a pool thread, used on the
     // interface thread only.
