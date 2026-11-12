@@ -3285,6 +3285,10 @@
             <numerusform>%n geschlossene Bereiche. Klicke einen an, um ihn zu wählen.</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Hilfsebene</translation>
+    </message>
 </context>
 <context>
     <name>MarkerLine</name>
@@ -4410,6 +4414,11 @@
         <location line="+3"/>
         <source>Sketch</source>
         <translation>Skizze</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Helper plane, %1 mm offset</source>
+        <translation>Hilfsebene, %1 mm versetzt</translation>
     </message>
     <message numerus="yes">
         <location line="+4"/>

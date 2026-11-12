@@ -3285,6 +3285,10 @@
             <numerusform>%n closed areas. Click one to choose it.</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Helper plane</translation>
+    </message>
 </context>
 <context>
     <name>MarkerLine</name>
@@ -4410,6 +4414,11 @@
         <location line="+3"/>
         <source>Sketch</source>
         <translation>Sketch</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Helper plane, %1 mm offset</source>
+        <translation>Helper plane, %1 mm offset</translation>
     </message>
     <message numerus="yes">
         <location line="+4"/>

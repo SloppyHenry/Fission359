@@ -105,6 +105,9 @@ QtObject {
         if (step.type === "sketch") {
             return qsTr("Sketch")
         }
+        if (step.type === "helperPlane" && v.length === 1) {
+            return qsTr("Helper plane, %1 mm offset").arg(n(v[0]))
+        }
         if (step.type === "combine" && v.length === 1) {
             switch (step.texts.mode) {
             case "subtract": return qsTr("Cut out %n body(ies)", "", v[0])
@@ -113,7 +116,7 @@ QtObject {
             }
         }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "tiltFace", "shell", "draft"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "tiltFace", "shell", "draft", "helperPlane"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)
