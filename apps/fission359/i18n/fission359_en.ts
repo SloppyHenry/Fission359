@@ -1093,6 +1093,18 @@
         <source>A %1 as the start of a shape. %2</source>
         <translation>A %1 as the start of a shape. %2</translation>
     </message>
+    <message>
+        <source>Spin area</source>
+        <translation>Spin area</translation>
+    </message>
+    <message>
+        <source>Turns the chosen closed area of the sketch about the vertical line through its middle into a round body: a vase, a ring, a ball.</source>
+        <translation>Turns the chosen closed area of the sketch about the vertical line through its middle into a round body: a vase, a ring, a ball.</translation>
+    </message>
+    <message>
+        <source>Choose a closed area on one side of the vertical line, then spin it.</source>
+        <translation>Choose a closed area on one side of the vertical line, then spin it.</translation>
+    </message>
 </context>
 <context>
     <name>CommandPalette</name>
@@ -3278,6 +3290,14 @@
     <message>
         <source>This pull starts on the ground plane: there is no body to join or cut.</source>
         <translation>This pull starts on the ground plane: there is no body to join or cut.</translation>
+    </message>
+    <message>
+        <source>This area cannot be turned.</source>
+        <translation>This area cannot be turned.</translation>
+    </message>
+    <message>
+        <source>Turned into a body about the vertical line through the sketch's middle. Type another angle in the panel.</source>
+        <translation>Turned into a body about the vertical line through the sketch's middle. Type another angle in the panel.</translation>
     </message>
 </context>
 <context>
@@ -6163,6 +6183,10 @@
         <location line="+1"/>
         <source>Zoom: mouse wheel, towards the pointer – or drag this button</source>
         <translation>Zoom: mouse wheel, towards the pointer – or drag this button</translation>
+    </message>
+    <message>
+        <source>Spin</source>
+        <translation>Spin</translation>
     </message>
 </context>
 </TS>

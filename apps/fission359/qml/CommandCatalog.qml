@@ -379,7 +379,18 @@ QtObject {
         needs: "sketch",
         run: { kind: "menu", id: "sketchpull" } })
 
-    readonly property var commands: toolCommands.concat(shapeCommands, sketchCommands, [sketchPullCommand], menuCommands, soonCommands)
+    // "Spin" of the sketch mode (AP-2.3c): the chosen closed area is turned about the vertical line
+    // through the sketch's middle.
+    readonly property var sketchSpinCommand: ({
+        id: "sketch.spin", group: "tool", name: qsTr("Spin area"),
+        tip: qsTr("Turns the chosen closed area of the sketch about the vertical line through its middle into a round body: a vase, a ring, a ball."),
+        hint: qsTr("Choose a closed area on one side of the vertical line, then spin it."),
+        synonyms: { de: ["drehen", "drehkörper", "rotationskörper", "rotieren", "vase", "ring drehen", "bereich drehen"],
+                    en: ["spin", "revolve", "lathe", "turn", "vase", "body of revolution"] },
+        needs: "sketch",
+        run: { kind: "menu", id: "sketchspin" } })
+
+    readonly property var commands: toolCommands.concat(shapeCommands, sketchCommands, [sketchPullCommand, sketchSpinCommand], menuCommands, soonCommands)
 
     // The words to search by: the name and the synonyms of both languages.
     function wordsOf(command) {

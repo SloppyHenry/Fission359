@@ -489,6 +489,7 @@ Window {
             break
         case "sketchdone": Sketch.finish(); break
         case "sketchpull": pullRegion(); break
+        case "sketchspin": spinRegion(); break
         case "sketch":
             root.flyout = ""
             Measure.enabled = false
@@ -653,6 +654,22 @@ Window {
         Selection.chooseBodies([made])
         root.tool = "size" // the arrow grip of the step is shown by this tool
         showHint(qsTr("Pulled out of the sketch: drag the arrow or type a distance."))
+    }
+
+    // Turns the chosen closed area of the sketch about the sketch's vertical axis (AP-2.3c): a new
+    // "revolve" step, a full turn to start with.
+    function spinRegion() {
+        const pull = Sketch.regionPull()
+        if (pull.region === undefined) { return }
+        Sketch.finish()
+        const made = DocumentModel.addRevolve(pull.step, pull.region, pull.u, pull.v)
+        if (made === "") {
+            showHint(qsTr("This area cannot be turned."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        showHint(qsTr("Turned into a body about the vertical line through the sketch's middle. Type another angle in the panel."))
     }
 
     // The faces chosen, all of one body (empty if there are none or they differ).
@@ -1703,6 +1720,7 @@ Window {
                 sketchHelper: Sketch.helperLine
                 onSketchDoneRequested: Sketch.finish()
                 onPullRequested: root.run("sketchpull")
+                onSpinRequested: root.run("sketchspin")
                 onSketchToolRequested: (id, variant) => Sketch.chooseTool(id, variant)
                 onSketchHelperToggled: Sketch.toggleHelperLine()
                 onFlyoutCloseRequested: root.flyout = ""

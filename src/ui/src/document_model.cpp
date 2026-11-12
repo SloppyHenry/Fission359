@@ -3945,6 +3945,37 @@ QString DocumentModel::addExtrude(const QString& sketchStep, const QString& regi
     return toQString(feature->outputs.front().value);
 }
 
+QString DocumentModel::addRevolve(const QString& sketchStep, const QString& regionId, double u,
+                                  double v) {
+    const core::FeatureType* type = m_registry.find("revolve");
+    if (type == nullptr || !m_result) {
+        return {};
+    }
+    const bool known = std::ranges::any_of(m_result->sketches, [&](const auto& entry) {
+        return toQString(entry.first.value) == sketchStep && entry.second.plane;
+    });
+    if (!known) {
+        return {};
+    }
+    core::FeatureDraft draft = core::defaultDraft(*type);
+    draft.texts["sketch"] = sketchStep.toStdString();
+    draft.texts["region"] = regionId.toStdString();
+    draft.params.at("insideU").expression = digits(u);
+    draft.params.at("insideV").expression = digits(v);
+    draft.newBodies = 1;
+    m_history.beginTransaction({"revolve", {}});
+    const auto id = m_history.addFeature(std::move(draft));
+    const core::Feature* feature = id ? m_history.document().findFeature(*id) : nullptr;
+    if (feature == nullptr || feature->outputs.empty()) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return toQString(feature->outputs.front().value);
+}
+
 bool DocumentModel::faceIsFlat(const QString& bodyId, int faceNumber) const {
     const core::Body* target = findBody(bodyId);
     if (target == nullptr || faceNumber < 1 || !m_result) {

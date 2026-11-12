@@ -460,6 +460,31 @@ TEST_CASE("sketch regions: the mode of a pull on a body goes round new, join, cu
     CHECK(f.model->cycleExtrudeMode(0).isEmpty());
 }
 
+TEST_CASE("sketch regions: a chosen region is spun into a round body (AP-2.3c)",
+          "[ui][sketchregions][revolve]") {
+    NoCatching free;
+    Sketching f;
+    f.sketch->chooseTool(QStringLiteral("rectangle"));
+    f.click(10, 0);
+    f.click(20, 30);
+    f.sketch->chooseTool(QString());
+    REQUIRE(f.regionsReady());
+    const QString region = QString::fromStdString(f.ids().front());
+    f.sketch->finish();
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QString sketchId =
+        f.model->recipe().back().toMap().value(QStringLiteral("id")).toString();
+    CHECK(f.model->addRevolve(QStringLiteral("not-a-step"), region, 15, 15).isEmpty());
+    REQUIRE_FALSE(f.model->addRevolve(sketchId, region, 15, 15).isEmpty());
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    const QVariantMap last = f.model->recipe().back().toMap();
+    CHECK(last.value(QStringLiteral("type")).toString() == QStringLiteral("revolve"));
+    CHECK(last.value(QStringLiteral("state")).toString() == QStringLiteral("ok"));
+    CHECK(f.model->nextUndo().value(QStringLiteral("key")).toString() == QStringLiteral("revolve"));
+}
+
 TEST_CASE("sketch regions: pulled from the ground, a new body (AP-2.3b3)",
           "[ui][sketchregions][extrude]") {
     NoCatching free;

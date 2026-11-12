@@ -466,6 +466,11 @@ public:
     /// error on the step.
     Q_INVOKABLE QString addExtrude(const QString& sketchStep, const QString& regionId, double u,
                                    double v);
+    /// Turns the region `regionId` of the sketch step `sketchStep` about the vertical axis of the
+    /// sketch (through its origin) into a new body (AP-2.3c): a step "revolve" of 360 degrees.
+    /// Returns the id of the new body, "" when the sketch step has no result.
+    Q_INVOKABLE QString addRevolve(const QString& sketchStep, const QString& regionId, double u,
+                                   double v);
     /// True when the face is flat, i.e. a sketch can lie on it.
     Q_INVOKABLE bool faceIsFlat(const QString& bodyId, int faceNumber) const;
     /// Removes the sketch step when nothing was drawn in it (a normal command, so that undo
