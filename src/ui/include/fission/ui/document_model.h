@@ -341,6 +341,10 @@ public:
     /// number), "throughAll" or "toFace" (up to the flat face number `faceNumber` of that body,
     /// parallel to the sketch). One step of the history; false when the step is no such pull or
     /// the face cannot be named.
+    /// The faces a pull (step `index`) may stop at: [{ number, distance }], the flat faces of the
+    /// body it joins or cuts that are parallel to the sketch, `distance` (mm, signed along the
+    /// sketch's normal) from the sketch plane. Empty for a pull on the ground.
+    Q_INVOKABLE QVariantList extrudeReachFaces(int index) const;
     Q_INVOKABLE bool setExtrudeReach(int index, const QString& reach, int faceNumber);
 
     // --- putting shapes down (AP-1.5) ---

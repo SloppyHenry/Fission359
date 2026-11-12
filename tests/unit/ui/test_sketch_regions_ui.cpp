@@ -423,6 +423,15 @@ TEST_CASE("sketch regions: the mode of a pull on a body goes round new, join, cu
     CHECK(modeOf(*f.model, id) == "subtract");
     CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() ==
           QStringLiteral("ok"));
+    // The faces to stop at: the box has a bottom 20 mm below the sketch on its top (and the top
+    // itself lies in the sketch plane and is left out).
+    const QVariantList reach = f.model->extrudeReachFaces(index);
+    REQUIRE(reach.size() == 1);
+    CHECK(reach.front().toMap().value(QStringLiteral("number")).toInt() ==
+          faceNamed(*f.model, "/box/bottom"));
+    CHECK(std::abs(reach.front().toMap().value(QStringLiteral("distance")).toDouble()) ==
+          Approx(20.0));
+    CHECK(f.model->extrudeReachFaces(-1).isEmpty());
     // Cut as far as the bottom face of the box, or clean through.
     CHECK(f.model->setExtrudeReach(index, QStringLiteral("toFace"),
                                    faceNamed(*f.model, "/box/bottom")));

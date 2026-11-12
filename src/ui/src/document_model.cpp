@@ -1153,6 +1153,64 @@ void DocumentModel::documentChanged(bool geometryChanged) {
     }
 }
 
+QVariantList DocumentModel::extrudeReachFaces(int index) const {
+    QVariantList list;
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) || !m_result) {
+        return list;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "extrude" || step.inputs.size() != 1) {
+        return list;
+    }
+    const auto sketchWord = step.texts.find("sketch");
+    const auto sketch = sketchWord == step.texts.end()
+                            ? m_result->sketches.end()
+                            : m_result->sketches.find(core::FeatureId{sketchWord->second});
+    const auto body = m_result->bodies.find(step.inputs.front());
+    if (sketch == m_result->sketches.end() || !sketch->second.plane ||
+        body == m_result->bodies.end()) {
+        return list;
+    }
+    const geo::Point3d origin = sketch->second.plane->origin();
+    const geo::Point3d normal = sketch->second.plane->normal();
+    try {
+        const geo::BodySignatures looks = m_kernel->signatures(body->second.solid);
+        // The flat faces parallel to the sketch; of faces in one plane the largest.
+        std::map<long long, const geo::ElementSignature*> byPlace;
+        for (const geo::ElementSignature& face : looks.faces) {
+            if (face.shape != geo::SignatureShape::plane) {
+                continue;
+            }
+            const double along = face.direction.x * normal.x + face.direction.y * normal.y +
+                                 face.direction.z * normal.z;
+            if (std::abs(std::abs(along) - 1.0) > 1e-6) {
+                continue;
+            }
+            const double distance = (face.centroid.x - origin.x) * normal.x +
+                                    (face.centroid.y - origin.y) * normal.y +
+                                    (face.centroid.z - origin.z) * normal.z;
+            if (std::abs(distance) < 1e-6) {
+                continue;
+            }
+            const auto key = std::llround(distance * 1e6);
+            const auto known = byPlace.find(key);
+            if (known == byPlace.end() || known->second->size < face.size) {
+                byPlace[key] = &face;
+            }
+        }
+        for (const auto& [key, face] : byPlace) {
+            QVariantMap entry;
+            entry[QStringLiteral("number")] = static_cast<int>(face->id);
+            entry[QStringLiteral("distance")] = static_cast<double>(key) / 1e6;
+            list.push_back(entry);
+        }
+    } catch (const geo::GeometryError&) {
+        list.clear();
+    }
+    return list;
+}
+
 bool DocumentModel::setExtrudeReach(int index, const QString& reach, int faceNumber) {
     const auto& features = m_history.document().features();
     if (index < 0 || index >= static_cast<int>(features.size()) || !m_result) {

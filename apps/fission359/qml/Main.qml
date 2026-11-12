@@ -1786,6 +1786,11 @@ Window {
             fontStyles: DocumentModel.fontStyles(root.currentFontName)
             onTextCommitted: (name, text) => root.changeWords(name, text)
             onReachChosen: reach => DocumentModel.setExtrudeReach(DocumentModel.currentStep, reach, 0)
+            onReachFaceChosen: number => {
+                rightPanel.reachFaceNumber = number
+                DocumentModel.setExtrudeReach(DocumentModel.currentStep, "toFace", number)
+            }
+            reachFaces: { DocumentModel.stepTexts; return DocumentModel.extrudeReachFaces(DocumentModel.currentStep) }
             onModeCycleRequested: {
                 if (DocumentModel.cycleExtrudeMode(DocumentModel.currentStep) === "") {
                     root.showHint(qsTr("This pull starts on the ground plane: there is no body to join or cut."))

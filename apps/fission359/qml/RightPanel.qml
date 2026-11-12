@@ -76,6 +76,9 @@ Rectangle {
     signal textCommitted(string name, string text)
     signal modeCycleRequested()
     signal reachChosen(string reach)
+    signal reachFaceChosen(int number)
+    property var reachFaces: []        // [{ number, distance }] faces a pull may stop at
+    property int reachFaceNumber: 0    // the face number a "toFace" pull stops at (0: unknown)
     readonly property string pullReach: {
         const entry = stepTexts.find(t => t.name === "extent")
         return entry !== undefined ? entry.value : "distance"
@@ -438,6 +441,18 @@ Rectangle {
                         Focusring {
                             visible: pullModeButton.visualFocus
                         }
+                    }
+                }
+
+                Repeater {
+                    model: root.pullMode !== "new" ? root.reachFaces : []
+
+                    delegate: Toggle {
+                        required property var modelData
+
+                        text: qsTr("Up to the face %1 mm away").arg(Math.abs(modelData.distance).toFixed(2))
+                        checked: root.pullReach === "toFace" && root.reachFaceNumber === modelData.number
+                        onToggled: checked ? root.reachFaceChosen(modelData.number) : root.reachChosen("distance")
                     }
                 }
 

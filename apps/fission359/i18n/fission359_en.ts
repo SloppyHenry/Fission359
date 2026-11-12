@@ -4744,6 +4744,10 @@
         <source>All the way through the body</source>
         <translation>All the way through the body</translation>
     </message>
+    <message>
+        <source>Up to the face %1 mm away</source>
+        <translation>Up to the face %1 mm away</translation>
+    </message>
 </context>
 <context>
     <name>RotateLayer</name>
