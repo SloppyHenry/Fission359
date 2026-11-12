@@ -31,6 +31,7 @@ add_executable(fission_unit_tests
   features/test_import.cpp
   features/test_sketch_feature.cpp
   features/test_extrude_feature.cpp
+  features/test_revolve_feature.cpp
   features/test_sketch_edges.cpp
   services/test_settings.cpp
   io/test_fission_file.cpp
@@ -56,6 +57,7 @@ add_executable(fission_unit_tests
   geometry/test_sketch_intersections.cpp
   geometry/test_sketch_regions.cpp
   geometry/test_extrude.cpp
+  geometry/test_revolve.cpp
   geometry/test_sketch_edge.cpp
   geometry/test_sketch_solver.cpp
   analysis/test_material.cpp
