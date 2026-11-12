@@ -1078,6 +1078,18 @@
         <source>A %1 as the start of a shape. %2</source>
         <translation>A %1 as the start of a shape. %2</translation>
     </message>
+    <message>
+        <source>Drill hole</source>
+        <translation>Drill hole</translation>
+    </message>
+    <message>
+        <source>Drills a round hole into a flat face, 3.4 mm wide for an M3 screw. Diameter, depth and place can be changed afterwards.</source>
+        <translation>Drills a round hole into a flat face, 3.4 mm wide for an M3 screw. Diameter, depth and place can be changed afterwards.</translation>
+    </message>
+    <message>
+        <source>Choose one flat face, then type the diameter, the depth and the place in the panel.</source>
+        <translation>Choose one flat face, then type the diameter, the depth and the place in the panel.</translation>
+    </message>
 </context>
 <context>
     <name>CommandPalette</name>
@@ -3234,6 +3246,38 @@
             <numerusform>%n closed area. Click one to choose it.</numerusform>
             <numerusform>%n closed areas. Click one to choose it.</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Drill hole</source>
+        <translation>Drill hole</translation>
+    </message>
+    <message>
+        <source>A hole can only be drilled into a flat face of a body that is not part of another body yet.</source>
+        <translation>A hole can only be drilled into a flat face of a body that is not part of another body yet.</translation>
+    </message>
+    <message>
+        <source>Hole drilled into the middle of the face. Type the diameter, the depth and the place in the panel.</source>
+        <translation>Hole drilled into the middle of the face. Type the diameter, the depth and the place in the panel.</translation>
+    </message>
+    <message>
+        <source>Drilling a hole</source>
+        <translation>Drilling a hole</translation>
+    </message>
+    <message>
+        <source>Hole drilled</source>
+        <translation>Hole drilled</translation>
+    </message>
+    <message>
+        <source>Diameter</source>
+        <translation>Diameter</translation>
+    </message>
+    <message>
+        <source>Across</source>
+        <translation>Across</translation>
+    </message>
+    <message>
+        <source>Along</source>
+        <translation>Along</translation>
     </message>
 </context>
 <context>

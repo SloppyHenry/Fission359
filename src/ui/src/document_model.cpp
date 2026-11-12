@@ -860,7 +860,7 @@ void DocumentModel::rebuildLists() {
             (type == "combine" || type == "place" || type == "split" || type == "fillet" ||
              type == "chamfer" || type == "pushFace" || type == "stretch" ||
              type == "removeFaces" || type == "offsetFaces" || type == "tiltFace" ||
-             type == "shell" || type == "draft") &&
+             type == "hole" || type == "shell" || type == "draft") &&
             !maker->inputs.empty() && origin.contains(maker->inputs.front().value);
         if (continues) {
             const Origin& started = origin.at(maker->inputs.front().value);
@@ -4206,6 +4206,29 @@ QString DocumentModel::tiltFace(const QString& bodyId, int faceNumber) {
                        "tiltFace");
 }
 
+QString DocumentModel::drillHole(const QString& bodyId, int faceNumber) {
+    const core::Body* target = findBody(bodyId);
+    if (target == nullptr || faceNumber < 1 || !m_result) {
+        return {};
+    }
+    const auto made = m_result->bodies.find(target->id);
+    if (made == m_result->bodies.end()) {
+        return {};
+    }
+    try {
+        const geo::BodySignatures looks = m_kernel->signatures(made->second.solid);
+        const auto number = static_cast<std::uint32_t>(faceNumber);
+        if (number > looks.faces.size() ||
+            looks.faces[number - 1].shape != geo::SignatureShape::plane) {
+            return {};
+        }
+    } catch (const geo::GeometryError&) {
+        return {};
+    }
+    return addFaceStep(bodyId, "hole", {static_cast<std::uint32_t>(faceNumber)}, "face",
+                       {{"diameter", 3.4}, {"depth", 10.0}}, "drillHole");
+}
+
 QString DocumentModel::shellBody(const QString& bodyId, const QVariantList& openFaces) {
     const core::Body* target = findBody(bodyId);
     if (target == nullptr || !m_result) {
@@ -4397,7 +4420,8 @@ QVariantMap DocumentModel::faceAnchor(const QString& bodyId, int number) const {
         const bool combined = type == "combine" || type == "place" || type == "split" ||
                               type == "fillet" || type == "chamfer" || type == "pushFace" ||
                               type == "stretch" || type == "removeFaces" || type == "offsetFaces" ||
-                              type == "tiltFace" || type == "shell" || type == "draft";
+                              type == "tiltFace" || type == "hole" || type == "shell" ||
+                              type == "draft";
         anchor[QStringLiteral("arrow")] = combined && !m_history.document().consumerOf(body->id);
     } catch (const geo::GeometryError&) {
         anchor[QStringLiteral("valid")] = false;

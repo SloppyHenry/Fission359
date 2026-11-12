@@ -118,6 +118,20 @@ TEST_CASE("tilt face: a flat face turns about its lowest edge", "[ui][faces]") {
     CHECK(f.model->tiltFace(QStringLiteral("nobody"), 1).isEmpty());
 }
 
+TEST_CASE("drill hole: a flat face gets a hole step", "[ui][faces][holes]") {
+    Pull f;
+    QString made;
+    for (int number = 1; number <= 6 && made.isEmpty(); ++number) {
+        made = f.model->drillHole(f.body, number);
+    }
+    REQUIRE_FALSE(made.isEmpty());
+    f.model->waitForCalculation();
+    CHECK(f.step(1).value("type").toString() == "hole");
+    CHECK(f.step(1).value("state").toString() == "ok");
+    CHECK(f.model->drillHole(f.body, 0).isEmpty());
+    CHECK(f.model->drillHole(QStringLiteral("nobody"), 1).isEmpty());
+}
+
 TEST_CASE("remove faces: a bad request is refused, a flat face is its own feature", "[ui][faces]") {
     Pull f;
     const int before = f.model->historyPosition();
