@@ -852,7 +852,7 @@ void SketchController::refresh() {
 // --- regions (AP-2.1g) -------------------------------------------------------------------
 
 void SketchController::drawRegions(render::HandleGraphics& out, double lift) const {
-    const interaction::SketchRegionSet& set = m_regionWorker.regions();
+    const features::SketchRegionSet& set = m_regionWorker.regions();
     const geo::Point3d& n = m_plane.normal();
     const auto place = [&](const geo::Point2d& p) {
         const geo::Point3d world = m_plane.toWorld({p.x, p.y});
@@ -860,7 +860,7 @@ void SketchController::drawRegions(render::HandleGraphics& out, double lift) con
                          static_cast<float>(world.y + n.y * lift),
                          static_cast<float>(world.z + n.z * lift));
     };
-    for (const interaction::SketchRegionInfo& info : set.regions) {
+    for (const features::SketchRegionInfo& info : set.regions) {
         // light shading; the one under the pointer stronger, the chosen one strongest (decision 53)
         int alpha = 34;
         if (info.id == m_selectedRegion) {
@@ -886,10 +886,10 @@ void SketchController::onRegionsChanged() {
     if (m_mode != Mode::sketching) {
         return;
     }
-    const interaction::SketchRegionSet& set = m_regionWorker.regions();
+    const features::SketchRegionSet& set = m_regionWorker.regions();
     const auto has = [&set](const std::string& id) {
         return std::ranges::any_of(
-            set.regions, [&](const interaction::SketchRegionInfo& info) { return info.id == id; });
+            set.regions, [&](const features::SketchRegionInfo& info) { return info.id == id; });
     };
     if (!m_selectedRegion.empty() && !has(m_selectedRegion)) {
         m_selectedRegion.clear(); // the region is gone (an element was removed or moved away)
@@ -910,8 +910,8 @@ void SketchController::onRegionsChanged() {
 }
 
 void SketchController::hoverRegionAt(const core::SketchPoint& at) {
-    const interaction::SketchRegionSet& set = m_regionWorker.regions();
-    const int index = interaction::regionAt(set, at);
+    const features::SketchRegionSet& set = m_regionWorker.regions();
+    const int index = features::regionAt(set, at);
     const std::string id = index >= 0 ? set.regions[static_cast<std::size_t>(index)].id : "";
     if (id != m_hoverRegion) {
         m_hoverRegion = id;
@@ -924,8 +924,8 @@ void SketchController::clickRegion(const interaction::PlaneRay& ray, double pixe
     const auto onPlane = interaction::planePoint(ray, m_plane);
     std::string chosen;
     if (onPlane) {
-        const interaction::SketchRegionSet& set = m_regionWorker.regions();
-        const int index = interaction::regionAt(set, {onPlane->u, onPlane->v});
+        const features::SketchRegionSet& set = m_regionWorker.regions();
+        const int index = features::regionAt(set, {onPlane->u, onPlane->v});
         if (index >= 0) {
             chosen = set.regions[static_cast<std::size_t>(index)].id;
         }

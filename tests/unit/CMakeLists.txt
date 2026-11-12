@@ -31,6 +31,7 @@ add_executable(fission_unit_tests
   features/test_text_feature.cpp
   features/test_import.cpp
   features/test_sketch_feature.cpp
+  features/test_extrude_feature.cpp
   features/test_sketch_edges.cpp
   services/test_settings.cpp
   io/test_fission_file.cpp
@@ -105,7 +106,7 @@ add_executable(fission_unit_tests
   interaction/test_sketch_edit.cpp
   interaction/test_sketch_offset.cpp
   interaction/test_sketch_pattern.cpp
-  interaction/test_sketch_regions.cpp)
+  features/test_sketch_regions_features.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
   fission_core fission_services fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_geometry_sketch fission_render fission_interaction fission_ui Catch2::Catch2WithMain)

@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <bit>
+#include <cstdio>
 #include <exception>
 
 #include "fission/core/body_looks.h"
@@ -67,7 +68,8 @@ std::optional<FeatureIssue> resolveValues(const Feature& feature, const FeatureT
 // Everything that goes into a result, written out. Equal text, equal result.
 std::string cacheKey(const Feature& feature, const FeatureType& type, const ResolvedParams& params,
                      const std::vector<const BodyResult*>& inputs,
-                     const std::map<std::string, std::vector<ResolvedRef>>& refs) {
+                     const std::map<std::string, std::vector<ResolvedRef>>& refs,
+                     const std::map<FeatureId, SketchResult>& sketches) {
     std::string key(type.id());
     key += '\x1f';
     key += std::to_string(type.version());
@@ -103,6 +105,26 @@ std::string cacheKey(const Feature& feature, const FeatureType& type, const Reso
     if (feature.sketch) {
         key += "\x1f$";
         key += feature.sketch->fingerprint();
+    }
+    // A step that reads a sketch (AP-2.3) goes in with what the sketch is: its elements and its
+    // plane, so that a changed sketch gives a new key.
+    if (const std::optional<FeatureId> sketchStep = type.readsSketch(feature)) {
+        key += "\x1f%";
+        const auto found = sketches.find(*sketchStep);
+        if (found != sketches.end() && found->second.plane) {
+            const SketchPlane& plane = *found->second.plane;
+            key += found->second.data.fingerprint();
+            for (const double value : {plane.origin().x, plane.origin().y, plane.origin().z,
+                                       plane.uAxis().x, plane.uAxis().y, plane.uAxis().z,
+                                       plane.vAxis().x, plane.vAxis().y, plane.vAxis().z}) {
+                char buffer[32];
+                std::snprintf(buffer, sizeof(buffer), "%.17g", value);
+                key += buffer;
+                key += ',';
+            }
+        } else {
+            key += "missing";
+        }
     }
     // The elements the references led to are part of what goes into the result.
     for (const auto& [slot, found] : refs) {
@@ -496,7 +518,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         };
 
         // Remembered, or ask the kernel.
-        const std::string key = cacheKey(feature, *type, state.params, inputBodies, resolvedRefs);
+        const std::string key =
+            cacheKey(feature, *type, state.params, inputBodies, resolvedRefs, result.sketches);
         const Entry* entry = cache.find(key);
         if (entry != nullptr) {
             ++result.remembered;
@@ -505,8 +528,10 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             std::optional<SketchResult> sketch;
             try {
                 const ExecuteContext context{kernel, cancel, &document.assets(), sketchSolver};
-                FeatureResult made = type->execute(
-                    {feature, state.params, inputs, std::move(producers), resolvedRefs}, context);
+                FeatureResult made =
+                    type->execute({feature, state.params, inputs, std::move(producers),
+                                   resolvedRefs, &result.sketches},
+                                  context);
                 if (cancel.stop_requested()) {
                     return std::nullopt; // a step that gave up because it was asked to
                 }
