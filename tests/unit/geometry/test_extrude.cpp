@@ -207,16 +207,62 @@ TEST_CASE("extrude: a tapered circle pull is a cone frustum", "[geometry][extrud
     CHECK(report.volume == Approx(kPi * 10.0 / 3.0 * (100.0 + 10.0 * r2 + r2 * r2)).epsilon(1e-6));
 }
 
-TEST_CASE("extrude: an outward taper is refused for now", "[geometry][extrude]") {
-    // The kernel would round the corners of an outward taper (not what anyone expects).
+TEST_CASE("extrude: an outward taper keeps sharp corners (AP-2.3a3)", "[geometry][extrude]") {
     const auto k = occt::makeKernel();
-    try {
-        (void)k->extrudeRegion(rectangle(0, 0, 20, 20), {10, 10}, {},
-                               {10.0, ExtrudeExtent::distance, -5.0, {}});
-        FAIL("an outward taper must be refused");
-    } catch (const GeometryError& error) {
-        CHECK(error.code() == GeometryErrorCode::invalidInput);
+    const double taper = 5.0;
+    const NamedSolid named = k->extrudeRegion(rectangle(0, 0, 20, 20), {10, 10}, {},
+                                              {10.0, ExtrudeExtent::distance, -taper, {}});
+    const SolidReport report = k->measure(named.solid);
+    CHECK(report.valid);
+    const double s2 = 20.0 + 2.0 * 10.0 * std::tan(taper * kPi / 180.0); // the far side
+    const double area2 = s2 * s2;
+    // frustum of a square pyramid: h/3 * (A1 + A2 + sqrt(A1*A2))
+    CHECK(report.volume ==
+          Approx(10.0 / 3.0 * (400.0 + area2 + std::sqrt(400.0 * area2))).epsilon(1e-6));
+    CHECK(report.faces == 6); // sharp corners: no extra rounded faces
+    CHECK(report.boxMax.z == Approx(10.0).margin(1e-6));
+    CHECK(report.boxMax.x == Approx(10.0 + s2 / 2.0).margin(1e-6));
+    const std::set<std::string> roles = rolesOf(named);
+    CHECK(roles.contains("capStart"));
+    CHECK(roles.contains("capEnd"));
+    int sides = 0;
+    for (const std::string& role : roles) {
+        if (role.starts_with("side[c")) {
+            ++sides;
+        }
     }
+    CHECK(sides == 4);
+    CHECK(roles.size() >= 6);
+}
+
+TEST_CASE("extrude: an outward taper of a ring narrows the hole", "[geometry][extrude]") {
+    const auto k = occt::makeKernel();
+    const double taper = 5.0;
+    const std::vector<SketchCurve> sketch = join(rectangle(0, 0, 40, 40), {circle({20, 20}, 5)});
+    const NamedSolid named =
+        k->extrudeRegion(sketch, {2, 2}, {}, {10.0, ExtrudeExtent::distance, -taper, {}});
+    const SolidReport report = k->measure(named.solid);
+    CHECK(report.valid);
+    const double grow = 10.0 * std::tan(taper * kPi / 180.0);
+    const double s2 = 40.0 + 2.0 * grow; // the far outer side
+    const double outer = 10.0 / 3.0 * (1600.0 + s2 * s2 + std::sqrt(1600.0 * s2 * s2));
+    const double r2 = 5.0 - grow; // the far hole radius
+    const double hole = kPi * 10.0 / 3.0 * (25.0 + 5.0 * r2 + r2 * r2);
+    CHECK(report.volume == Approx(outer - hole).epsilon(1e-5));
+}
+
+TEST_CASE("extrude: an outward taper downwards", "[geometry][extrude]") {
+    const auto k = occt::makeKernel();
+    const double taper = 5.0;
+    const NamedSolid named = k->extrudeRegion(rectangle(0, 0, 20, 20), {10, 10}, {},
+                                              {-10.0, ExtrudeExtent::distance, -taper, {}});
+    const SolidReport report = k->measure(named.solid);
+    CHECK(report.valid);
+    const double s2 = 20.0 + 2.0 * 10.0 * std::tan(taper * kPi / 180.0); // the far side
+    const double area2 = s2 * s2;
+    CHECK(report.volume ==
+          Approx(10.0 / 3.0 * (400.0 + area2 + std::sqrt(400.0 * area2))).epsilon(1e-6));
+    CHECK(report.boxMin.z == Approx(-10.0).margin(1e-6));
 }
 
 TEST_CASE("extrude: through all passes completely through the body", "[geometry][extrude]") {

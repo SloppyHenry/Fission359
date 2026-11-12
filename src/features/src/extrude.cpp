@@ -68,7 +68,7 @@ public:
             return issue;
         }
         const double taper = valueOf(params, "taper");
-        if (!std::isfinite(taper) || taper < 0.0 || taper >= 89.0) {
+        if (!std::isfinite(taper) || std::abs(taper) >= 89.0) {
             FeatureIssue issue;
             issue.code = FeatureIssueCode::parameterOutOfRange;
             issue.subject = "taper";
