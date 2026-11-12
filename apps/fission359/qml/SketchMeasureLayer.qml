@@ -139,6 +139,14 @@ Item {
         createInput.text = first
         createInput.forceActiveFocus()
         createInput.cursorPosition = createInput.text.length
+        // The first digit is typed before the field has the keyboard; on some platforms (X11) the
+        // field puts its cursor to the start when it gets it, and the next digit would land in
+        // front of the first one ("03" instead of "30"). Put the cursor to the end afterwards too.
+        Qt.callLater(() => {
+            if (creating) {
+                createInput.cursorPosition = createInput.text.length
+            }
+        })
     }
 
     // Enter: the text is evaluated first (a wrong one stays open, with the reason under it).
@@ -353,6 +361,13 @@ Item {
                 kind: root.inputKind(creator.kind)
                 Accessible.name: root.kindWord(creator.kind)
 
+                // Whenever the field gets the keyboard while a measure is made, typing goes on
+                // after what is already there.
+                onActiveFocusChanged: {
+                    if (activeFocus && root.creating) {
+                        cursorPosition = text.length
+                    }
+                }
                 Keys.onReturnPressed: root.acceptCreate()
                 Keys.onEnterPressed: root.acceptCreate()
                 Keys.onEscapePressed: root.cancelCreate()
