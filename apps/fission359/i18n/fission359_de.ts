@@ -2542,8 +2542,8 @@
     </message>
     <message>
         <location line="+1572"/>
-        <source>Unit: mm</source>
-        <translation>Einheit: mm</translation>
+        <source>Unit: %1</source>
+        <translation>Einheit: %1</translation>
     </message>
     <message>
         <location line="+27"/>

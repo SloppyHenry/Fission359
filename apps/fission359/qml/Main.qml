@@ -1774,7 +1774,7 @@ Window {
         selection: root.selectionText
         toolName: root.toolName(root.tool)
         hint: root.currentHint
-        unitText: qsTr("Unit: mm")
+        unitText: qsTr("Unit: %1").arg(Numbers.unit)
         continueVisible: Sketch.toolActive && Sketch.placed === 1
                          && (Sketch.tool === "mirror" || Sketch.tool === "pattern")
         onContinueClicked: Sketch.proceed()

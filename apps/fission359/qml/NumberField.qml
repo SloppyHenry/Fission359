@@ -12,7 +12,7 @@ Item {
 
     property string label: ""
     property real value: 0
-    property string unit: "mm"
+    property string unit: Numbers.unit // callers may pass their own ("°", "")
     property string kind: "length" // length | angle | plain
     property string axis: ""       // "", "x", "y" or "z": a coloured letter in front
     property int decimals: 3
@@ -48,7 +48,12 @@ Item {
     }
 
     function shownText() {
-        return root.expression !== "" ? root.expression : Numbers.format(root.value, root.decimals)
+        if (root.expression !== "") {
+            return root.expression
+        }
+        // `value` stays in millimetres; a length is shown in the document's unit (P23b).
+        return root.kind === "length" ? Numbers.formatLength(root.value, root.decimals)
+                                      : Numbers.format(root.value, root.decimals)
     }
 
     function refresh() {
