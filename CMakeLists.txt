@@ -26,7 +26,7 @@ include(FissionCompilerOptions)
 include(FissionLayers)
 
 # WebAssembly (Emscripten) needs pthreads, and native exceptions in the legacy format (explicit,
-# the default of Emscripten 5 is exnref) so that errors can be caught; no jump tables, so that no
+# so that no default decides) so that errors can be caught; no jump tables, so that no
 # br_table is made (the same flags as cmake/vcpkg-triplets/fission-wasm32-emscripten.cmake).
 if(EMSCRIPTEN)
   add_compile_options(-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1 -fno-jump-tables)

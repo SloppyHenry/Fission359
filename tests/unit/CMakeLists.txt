@@ -39,7 +39,6 @@ set(_core_tests
   features/test_sketch_feature.cpp
   features/test_extrude_feature.cpp
   features/test_sketch_edges.cpp
-  services/test_platform.cpp
   io/test_fission_file.cpp
   io/test_export.cpp
   io/test_formats.cpp
@@ -73,6 +72,7 @@ set(_core_tests
 
 set(_app_tests
   services/test_settings.cpp
+  services/test_platform.cpp
   render/test_camera.cpp
   render/test_navigation.cpp
   render/test_picking.cpp

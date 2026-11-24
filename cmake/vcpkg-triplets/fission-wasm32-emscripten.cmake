@@ -33,8 +33,8 @@ set(VCPKG_CMAKE_SYSTEM_NAME Emscripten)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${VCPKG_ROOT_DIR}/scripts/toolchains/emscripten.cmake")
 # Native WebAssembly exceptions: without them Emscripten cannot catch C++ exceptions, and every
 # error the program reports by throwing (OpenCASCADE failures, broken files) ends the program.
-# The legacy exception format, chosen explicitly: "-fwasm-exceptions" alone gives the exnref format
-# in Emscripten 5, which made br_table jumps that V8 refuses ("label arity inconsistent").
+# The legacy exception format, chosen explicitly and not by default: V8 refused br_table
+# jumps in the programs ("label arity inconsistent"), probably an effect of the exnref format.
 # -fno-jump-tables keeps Clang from making br_table at all. All libraries and the program must
 # use the same flags (the same list is in the top CMakeLists.txt). Changing this file changes the
 # vcpkg and CI cache keys.
