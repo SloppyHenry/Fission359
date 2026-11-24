@@ -160,6 +160,10 @@ public:
     void setClipPlane(const std::optional<ClipPlane>& plane);
     const std::optional<ClipPlane>& clipPlane() const { return m_clip; }
 
+    /// The cut faces of the section view, drawn on the plane with stripes, not cut themselves
+    /// and not pickable. null: none (they are gone until a new set is there).
+    void setCaps(std::shared_ptr<const CapSet> caps);
+
     /// Draws everything into `target`, including the background gradient.
     void draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const Frame& frame);
 
@@ -208,6 +212,14 @@ private:
     /// Draws the shadow map (the bodies as the section plane leaves them).
     void renderShadow(QRhiCommandBuffer* cb);
     bool m_shadowStale = false;
+    std::shared_ptr<const CapSet> m_caps;
+    bool m_capsDirty = false;
+    std::unique_ptr<QRhiBuffer> m_capVertices;
+    std::unique_ptr<QRhiBuffer> m_capIndices;
+    std::size_t m_capIndexCount = 0;
+    void uploadCaps(QRhiResourceUpdateBatch* updates);
+    QShader m_capFragment;
+    std::unique_ptr<QRhiGraphicsPipeline> m_capPipeline;
     /// Depth of the scene, then the occlusion from it, then the blur; fills `m_aoBlurTexture`.
     void renderAmbientOcclusion(QRhiCommandBuffer* cb, const Frame& frame, const QSize& size);
     bool ensureAmbientOcclusionTargets(const QSize& size);

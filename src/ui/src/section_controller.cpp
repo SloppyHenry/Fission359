@@ -19,6 +19,11 @@ SectionController::SectionController(DocumentModel* model,
                                      std::shared_ptr<const geo::GeometryKernel> kernel,
                                      QObject* parent)
     : QObject(parent), m_model(model), m_kernel(std::move(kernel)) {
+    connect(&m_caps, &SectionCapWorker::changed, this, [this] {
+        if (m_enabled && m_viewport != nullptr) {
+            m_viewport->setSectionCaps(m_caps.caps());
+        }
+    });
     if (m_model != nullptr) {
         // A new or opened document starts without a cut.
         connect(m_model, &DocumentModel::documentReplaced, this, [this] { setEnabled(false); });
@@ -81,11 +86,15 @@ void SectionController::refresh(bool centre) {
 }
 
 void SectionController::apply() {
+    if (!m_enabled) {
+        m_caps.reset();
+    }
     if (m_viewport == nullptr) {
         return;
     }
     if (!m_enabled) {
         m_viewport->setClipPlane(std::nullopt);
+        m_viewport->setSectionCaps(nullptr);
         return;
     }
     const int axis = axisIndex();
@@ -95,6 +104,26 @@ void SectionController::apply() {
     point[axis] = static_cast<float>(m_position);
     normal[axis] = static_cast<float>(m_side);
     m_viewport->setClipPlane(render::ClipPlane{point, normal});
+    requestCaps();
+}
+
+void SectionController::requestCaps() {
+    if (m_model == nullptr || m_kernel == nullptr || m_viewport == nullptr) {
+        return;
+    }
+    // The old cut faces are wrong for the new place: hide them until the new ones are there.
+    m_viewport->setSectionCaps(nullptr);
+    std::vector<SectionCapWorker::Body> bodies;
+    for (const DocumentModel::ExportBody& body : m_model->exportBodies({})) {
+        bodies.push_back(
+            {body.id.value, body.solid, QColor(body.color.red, body.color.green, body.color.blue)});
+    }
+    const int axis = axisIndex();
+    geo::Point3d point{m_centre[0], m_centre[1], m_centre[2]};
+    geo::Point3d normal{0.0, 0.0, 0.0};
+    (axis == 0 ? point.x : axis == 1 ? point.y : point.z) = m_position;
+    (axis == 0 ? normal.x : axis == 1 ? normal.y : normal.z) = m_side;
+    m_caps.request(m_kernel, std::move(bodies), point, normal);
 }
 
 void SectionController::setEnabled(bool enabled) {

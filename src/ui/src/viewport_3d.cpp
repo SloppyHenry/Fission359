@@ -85,6 +85,7 @@ public:
         frame.accent = m_snapshot.accent;
         const auto started = std::chrono::steady_clock::now();
         m_renderer->setClipPlane(m_snapshot.clip);
+        m_renderer->setCaps(m_snapshot.caps);
         m_renderer->draw(cb, renderTarget(), frame);
         const double cpuMilliseconds =
             std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
@@ -349,6 +350,13 @@ double Viewport3D::bedSizeY() const {
 void Viewport3D::setClipPlane(const std::optional<render::ClipPlane>& plane) {
     if (m_clip != plane) {
         m_clip = plane;
+        update();
+    }
+}
+
+void Viewport3D::setSectionCaps(std::shared_ptr<const render::CapSet> caps) {
+    if (m_caps != caps) {
+        m_caps = std::move(caps);
         update();
     }
 }
@@ -1105,6 +1113,7 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect, bool pickIdle) {
     snapshot.snapGridStep = m_snapGridShown ? static_cast<float>(m_snapGridStep) : 0.0F;
     snapshot.ambientOcclusion = m_ambientOcclusion;
     snapshot.clip = m_clip;
+    snapshot.caps = m_caps;
     snapshot.sceneVersion = m_sceneVersion;
     snapshot.paletteVersion = m_paletteVersion;
     snapshot.highlights = m_selectionHighlights;

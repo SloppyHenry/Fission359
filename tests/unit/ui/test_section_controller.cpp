@@ -8,6 +8,8 @@
 
 #include <QCoreApplication>
 
+#include <array>
+#include <cmath>
 #include <memory>
 
 #include "fission/geo/occt/kernel.h"
@@ -104,4 +106,65 @@ TEST_CASE("section: without a visible body it stays off and says so", "[section-
     w.section.setEnabled(true);
     CHECK_FALSE(w.section.enabled());
     CHECK(told == 1);
+}
+
+namespace {
+
+double capArea(const fission::render::CapSet& caps) {
+    double area = 0.0;
+    for (const fission::render::CapMesh& cap : caps) {
+        for (std::size_t i = 0; i + 2 < cap.indices.size(); i += 3) {
+            const auto at = [&cap](std::uint32_t index) {
+                return std::array<double, 3>{cap.positions[3 * index], cap.positions[3 * index + 1],
+                                             cap.positions[3 * index + 2]};
+            };
+            const auto a = at(cap.indices[i]);
+            const auto b = at(cap.indices[i + 1]);
+            const auto c = at(cap.indices[i + 2]);
+            const double u[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+            const double v[3] = {c[0] - a[0], c[1] - a[1], c[2] - a[2]};
+            const double x = u[1] * v[2] - u[2] * v[1];
+            const double y = u[2] * v[0] - u[0] * v[2];
+            const double z = u[0] * v[1] - u[1] * v[0];
+            area += 0.5 * std::sqrt(x * x + y * y + z * z);
+        }
+    }
+    return area;
+}
+
+} // namespace
+
+TEST_CASE("section: the cut face of a cube is worked out in the background", "[section-ui]") {
+    World w;
+    w.section.setEnabled(true);
+    // Until the result is there the viewport shows no cut face.
+    CHECK(w.viewport.sectionCaps() == nullptr);
+    REQUIRE(w.section.waitForCaps(10000));
+    REQUIRE(w.viewport.sectionCaps() != nullptr);
+    CHECK(w.viewport.sectionCaps()->size() == 1);
+    CHECK(capArea(*w.viewport.sectionCaps()) == Approx(400.0).epsilon(1e-6));
+    // The plane moves: the old cut face is hidden at once, the new one comes.
+    w.section.setPosition(w.section.rangeMin() + 5.0);
+    CHECK(w.viewport.sectionCaps() == nullptr);
+    REQUIRE(w.section.waitForCaps(10000));
+    CHECK(capArea(*w.viewport.sectionCaps()) == Approx(400.0).epsilon(1e-6));
+    // Off: no cut face.
+    w.section.setEnabled(false);
+    CHECK(w.viewport.sectionCaps() == nullptr);
+}
+
+TEST_CASE("section: an old result is dropped when a newer request is there", "[section-ui]") {
+    World w;
+    w.section.setEnabled(true);
+    w.section.setPosition(w.section.rangeMin() + 2.0);
+    w.section.setPosition(w.section.rangeMin() + 8.0);
+    w.section.setAxis(QStringLiteral("z"));
+    REQUIRE(w.section.waitForCaps(10000));
+    REQUIRE(w.viewport.sectionCaps() != nullptr);
+    // Only the last plane counts: all its points lie at the middle of Z.
+    for (const fission::render::CapMesh& cap : *w.viewport.sectionCaps()) {
+        for (std::size_t i = 2; i < cap.positions.size(); i += 3) {
+            CHECK(cap.positions[i] == Approx(w.section.position()).margin(1e-4));
+        }
+    }
 }

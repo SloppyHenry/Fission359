@@ -39,3 +39,6 @@ So probierst du es aus: Messen, zwei Flächen anklicken → Abstand; Kopieren. K
 
 ## Nicht tun
 Kein Wandstärken-Heatmap (Druckcheck AP-3.2).
+
+## Stand Schnittansicht (2026-11-25)
+Gebaut als reine Anzeige (Kernel `sectionMesh`, Clip-Ebene im Renderer und beim Picking, `SectionController`, Karte, Deckfläche im Hintergrund). Rest: Pfeil-Griff an der Ebene in der Ansicht, `app_section` in der CI bestätigen, Abbrechen laufender Schnitte.

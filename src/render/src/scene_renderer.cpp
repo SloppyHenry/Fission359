@@ -218,6 +218,7 @@ SceneRenderer::SceneRenderer(QRhi* rhi) : m_rhi(rhi) {
     m_bedFragment = loadShader("bed.frag");
     m_flatVertex = loadShader("flat.vert");
     m_flatFragment = loadShader("flat.frag");
+    m_capFragment = loadShader("cap.frag");
     m_backgroundVertex = loadShader("background.vert");
     m_backgroundFragment = loadShader("background.frag");
     m_shadowVertex = loadShader("shadow.vert");
@@ -319,6 +320,8 @@ void SceneRenderer::createPipelines(QRhiRenderPassDescriptor* pass, int sampleCo
     // Holes are drawn see-through, after everything solid, and cast no shadow.
     m_ghostPipeline =
         makePipeline(m_bodyVertex, m_bodyFragment, false, false, true, true, pass, sampleCount);
+    m_capPipeline =
+        makePipeline(m_flatVertex, m_capFragment, true, false, false, true, pass, sampleCount);
     m_discPipeline =
         makePipeline(m_flatVertex, m_flatFragment, true, false, true, true, pass, sampleCount);
     m_linePipeline =
@@ -627,6 +630,40 @@ void SceneRenderer::renderShadow(QRhiCommandBuffer* cb) {
     cb->endPass();
 }
 
+void SceneRenderer::setCaps(std::shared_ptr<const CapSet> caps) {
+    if (caps != m_caps) {
+        m_caps = std::move(caps);
+        m_capsDirty = true;
+    }
+}
+
+void SceneRenderer::uploadCaps(QRhiResourceUpdateBatch* updates) {
+    m_capsDirty = false;
+    m_capVertices.reset();
+    m_capIndices.reset();
+    m_capIndexCount = 0;
+    if (!m_caps) {
+        return;
+    }
+    std::vector<FlatVertex> vertices;
+    std::vector<std::uint32_t> indices;
+    for (const CapMesh& cap : *m_caps) {
+        const auto base = static_cast<std::uint32_t>(vertices.size());
+        for (std::size_t i = 0; i + 2 < cap.positions.size(); i += 3) {
+            vertices.push_back(flatVertex(cap.positions[i], cap.positions[i + 1],
+                                          cap.positions[i + 2], cap.color));
+        }
+        for (const std::uint32_t index : cap.indices) {
+            indices.push_back(base + index);
+        }
+    }
+    m_capVertices = makeVertexBuffer(updates, vertices.data(), vertices.size() * sizeof(FlatVertex),
+                                     QRhiBuffer::VertexBuffer);
+    m_capIndices = makeVertexBuffer(updates, indices.data(), indices.size() * sizeof(std::uint32_t),
+                                    QRhiBuffer::IndexBuffer);
+    m_capIndexCount = m_capIndices ? indices.size() : 0;
+}
+
 void SceneRenderer::setClipPlane(const std::optional<ClipPlane>& plane) {
     if (m_clip != plane) {
         m_shadowStale = true; // the shadow map follows the cut
@@ -899,6 +936,9 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
                       m_rhi->clipSpaceCorrMatrix() * frame.projection * frame.view, frame, size,
                       occlusion, true);
     }
+    if (m_capsDirty) {
+        uploadCaps(updates);
+    }
     prepareHighlights(updates, frame, size);
     prepareHandles(updates, frame, size);
 
@@ -934,6 +974,14 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
                 cb->drawIndexed(static_cast<quint32>(body->indexCount));
             }
         }
+    }
+    if (m_clip && m_capVertices && m_capIndices && m_capIndexCount > 0) {
+        // The cut faces lie on the plane itself, so they are drawn without the plane's cut.
+        const QRhiCommandBuffer::VertexInput input(m_capVertices.get(), 0);
+        cb->setGraphicsPipeline(m_capPipeline.get());
+        cb->setShaderResources(m_srb.get());
+        cb->setVertexInput(0, 1, &input, m_capIndices.get(), 0, QRhiCommandBuffer::IndexUInt32);
+        cb->drawIndexed(static_cast<quint32>(m_capIndexCount));
     }
     if (frame.bedVisible && m_discVertices) {
         const QRhiCommandBuffer::VertexInput input(m_discVertices.get(), 0);

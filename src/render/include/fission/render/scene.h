@@ -57,6 +57,14 @@ struct ClipPlane {
     bool cuts(const QVector3D& p) const { return QVector3D::dotProduct(normal, p - point) > 0.0F; }
 };
 
+/// The cut face of one body in the section view, as triangles in the plane (AP-2.11c).
+struct CapMesh {
+    std::vector<float> positions; ///< x, y, z per vertex (mm)
+    std::vector<std::uint32_t> indices;
+    QColor color{233, 234, 236};
+};
+using CapSet = std::vector<CapMesh>;
+
 struct RenderScene {
     std::vector<RenderBody> bodies;
     BedSpec bed;

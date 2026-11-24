@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "fission/geo/kernel.h"
+#include "fission/ui/section_cap_worker.h"
 
 namespace fission::ui {
 
@@ -54,6 +55,10 @@ public:
     Q_INVOKABLE void flipSide();
     /// The index of the axis: 0, 1, 2.
     int axisIndex() const noexcept;
+    /// For tests: waits for the cut faces to be worked out (they are, in the background).
+    bool waitForCaps(int milliseconds) { return m_caps.waitUntilIdle(milliseconds); }
+    /// The cut faces of the last finished calculation (null: none yet).
+    const std::shared_ptr<const render::CapSet>& caps() const noexcept { return m_caps.caps(); }
 
 signals:
     void enabledChanged();
@@ -66,10 +71,13 @@ private:
     bool measureRange(double (&lo)[3], double (&hi)[3]) const;
     void refresh(bool centre);
     void apply();
+    /// Asks for new cut faces; the old ones are not shown meanwhile.
+    void requestCaps();
 
     QPointer<DocumentModel> m_model;
     QPointer<Viewport3D> m_viewport;
     std::shared_ptr<const geo::GeometryKernel> m_kernel;
+    SectionCapWorker m_caps;
     bool m_enabled = false;
     QString m_axis = QStringLiteral("x");
     double m_position = 0.0;
