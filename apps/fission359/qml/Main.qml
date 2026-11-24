@@ -70,6 +70,10 @@ Window {
     // empty submenu when there are none).
     readonly property var recentItems: {
         const files = Files.recentFiles
+        // In the browser there are no recent files of the computer to offer (AP-6.7b3).
+        if (Platform.browser) {
+            return []
+        }
         const submenu = []
         for (let i = 0; i < files.length; ++i) {
             submenu.push({ id: "recent." + i, text: Files.baseName(files[i]) })
@@ -153,6 +157,8 @@ Window {
             { id: "tiltFace", text: qsTr("Tilt face"), enabled: Selection.singleFaceChosen },
             { id: "removeFaces", text: qsTr("Remove face"), enabled: root.facesChosen },
             { id: "offsetFaces", text: qsTr("Offset faces"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
+            { id: "helperPlane", text: qsTr("Helper plane"), enabled: true },
+            { id: "drillHole", text: qsTr("Drill hole"), enabled: Selection.singleFaceChosen },
             { separator: true },
             { id: "shell", text: qsTr("Hollow out"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
             { id: "draft", text: qsTr("Draft"), enabled: root.facesChosen || root.chosenBodies.length === 1 }
@@ -206,7 +212,7 @@ Window {
         }
         const areas = Sketch.regionCount > 0
             ? " " + (Sketch.selectedRegion !== ""
-                     ? qsTr("%n closed area(s). One is chosen: Esc or a click beside lets go.", "", Sketch.regionCount)
+                     ? qsTr("%n closed area(s). One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.", "", Sketch.regionCount)
                      : qsTr("%n closed area(s). Click one to choose it.", "", Sketch.regionCount))
             : ""
         return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + areas + helper
@@ -488,6 +494,7 @@ Window {
             }
             break
         case "sketchdone": Sketch.finish(); break
+        case "sketchpull": pullRegion(); break
         case "sketch":
             root.flyout = ""
             Measure.enabled = false
@@ -563,6 +570,8 @@ Window {
         case "tiltFace": tiltFaceChosen(); break
         case "removeFaces": removeFacesChosen(); break
         case "offsetFaces": offsetFacesChosen(); break
+        case "helperPlane": helperPlaneChosen(); break
+        case "drillHole": drillHoleChosen(); break
         case "shell": shellChosen(); break
         case "draft": draftChosen(); break
         case "merge":
@@ -639,6 +648,30 @@ Window {
                            : qsTr("Face pulled. Drag the grip or type a distance."))
     }
 
+    // Pulls the chosen closed area of the sketch into a body (AP-2.3b2): a new "extrude" step with
+    // an arrow grip, shown with the size tool.
+    function pullRegion() {
+        const pull = Sketch.regionPull()
+        if (pull.region === undefined) { return }
+        Sketch.finish()
+        const made = DocumentModel.addExtrude(pull.step, pull.region, pull.u, pull.v)
+        if (made === "") {
+            showHint(qsTr("This area cannot be pulled."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        root.tool = "size" // the arrow grip of the step is shown by this tool
+        showHint(qsTr("Pulled out of the sketch: drag the arrow or type a distance."))
+    }
+
+    // The chip beside the arrow of a pull, or the button of the panel: the next mode.
+    function cycleOrHint() {
+        if (DocumentModel.cycleExtrudeMode(DocumentModel.currentStep) === "") {
+            showHint(qsTr("This pull starts on the ground plane: there is no body to join or cut."))
+        }
+    }
+
     // The faces chosen, all of one body (empty if there are none or they differ).
     function chosenFaceItems() {
         const faces = Selection.items.filter(item => item.kind === "face")
@@ -677,6 +710,20 @@ Window {
         root.flyout = ""
         Selection.chooseBodies([made])
         showHint(qsTr("Faces moved by 0.2 mm. Type another distance in the panel."))
+    }
+
+    // A helper plane 10 mm from the chosen flat face, or from the ground without one (AP-2.12c).
+    function helperPlaneChosen() {
+        const item = Selection.singleFaceChosen ? Selection.items[0] : undefined
+        const made = item !== undefined ? DocumentModel.addHelperPlane(item.body, item.number)
+                                        : DocumentModel.addHelperPlane("", 0)
+        if (made === "") {
+            showHint(qsTr("A helper plane can only start from a flat face."))
+            return
+        }
+        root.flyout = ""
+        showHint(item !== undefined ? qsTr("Helper plane 10 mm from the face. Type another distance in the panel.")
+                                    : qsTr("Helper plane 10 mm above the bed. Type another distance in the panel."))
     }
 
     // The body to work on: the one the chosen faces belong to, or the one chosen body ("" if none).
@@ -726,6 +773,19 @@ Window {
         root.flyout = ""
         Selection.chooseBodies([made])
         showHint(qsTr("Face tilted. Type an angle in the panel: plus leans it out, minus leans it in."))
+    }
+
+    // Drills a hole of 3.4 mm (for an M3 screw) into the middle of the chosen flat face.
+    function drillHoleChosen() {
+        const item = Selection.singleFaceChosen ? Selection.items[0] : undefined
+        const made = item !== undefined ? DocumentModel.drillHole(item.body, item.number) : ""
+        if (made === "") {
+            showHint(qsTr("A hole can only be drilled into a flat face of a body that is not part of another body yet."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        showHint(qsTr("Hole drilled into the middle of the face. Type the diameter, the depth and the place in the panel."))
     }
 
     function roundVerticalChosen() {
@@ -884,6 +944,14 @@ Window {
     readonly property bool copyingSketch: Sketch.toolActive && (Sketch.tool === "mirror" || Sketch.tool === "pattern")
     Shortcut { sequence: "Backspace"; enabled: root.drawingCurve && !root.typing; onActivated: Sketch.removeLastPoint() }
     Shortcut { sequences: ["Return", "Enter"]; enabled: (root.drawingCurve || root.copyingSketch) && !root.typing && !Handles.armed; onActivated: Sketch.acceptTyped() }
+    // Enter with a closed area of the sketch chosen and no tool on (AP-2.3b2): pulls it into a body.
+    // Never on together with the Enter above: that one needs a tool, this one needs none.
+    Shortcut {
+        sequences: ["Return", "Enter"]
+        enabled: Sketch.active && !Sketch.toolActive && !root.typing && !Handles.armed
+                 && Sketch.selectedRegion !== ""
+        onActivated: root.pullRegion()
+    }
     Shortcut { sequence: "Backspace"; enabled: Selection.count > 0 && !root.drawingCurve && !root.typing && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing; onActivated: root.run("delete") }
     Shortcut { sequence: "Ctrl+X"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("cut") }
     Shortcut { sequence: "Ctrl+D"; enabled: !root.isMac && Selection.count > 0 && !root.typing; onActivated: root.run("duplicate") }
@@ -1507,6 +1575,15 @@ Window {
                 anchors.fill: parent
                 labelFor: root.valueLabel
                 obstacles: viewOverlay.obstacles
+                pullMode: {
+                    DocumentModel.stepTexts
+                    if (!DocumentModel.canCycleExtrudeMode(DocumentModel.currentStep)) {
+                        return ""
+                    }
+                    const entry = DocumentModel.stepTexts.find(t => t.name === "mode")
+                    return entry !== undefined ? entry.value : "new"
+                }
+                onPullModeRequested: root.cycleOrHint()
             }
 
             GizmoLayer {
@@ -1683,6 +1760,7 @@ Window {
                 sketchVariant: Sketch.toolVariant
                 sketchHelper: Sketch.helperLine
                 onSketchDoneRequested: Sketch.finish()
+                onPullRequested: root.run("sketchpull")
                 onSketchToolRequested: (id, variant) => Sketch.chooseTool(id, variant)
                 onSketchHelperToggled: Sketch.toggleHelperLine()
                 onFlyoutCloseRequested: root.flyout = ""
@@ -1762,9 +1840,22 @@ Window {
             stepValues: root.stepValueList
             isHole: root.currentStepIsHole
             stepTexts: DocumentModel.stepTexts
+            holeScrew: { DocumentModel.stepTexts; return DocumentModel.holeScrewOf(DocumentModel.currentStep) }
             fonts: DocumentModel.fontFamilies
             fontStyles: DocumentModel.fontStyles(root.currentFontName)
             onTextCommitted: (name, text) => root.changeWords(name, text)
+            onHoleScrewChosen: (size, kind) => DocumentModel.setHoleScrew(DocumentModel.currentStep, size, kind)
+            onReachChosen: reach => DocumentModel.setExtrudeReach(DocumentModel.currentStep, reach, 0)
+            onReachFaceChosen: number => {
+                rightPanel.reachFaceNumber = number
+                DocumentModel.setExtrudeReach(DocumentModel.currentStep, "toFace", number)
+            }
+            reachFaces: { DocumentModel.stepTexts; return DocumentModel.extrudeReachFaces(DocumentModel.currentStep) }
+            onModeCycleRequested: {
+                if (DocumentModel.cycleExtrudeMode(DocumentModel.currentStep) === "") {
+                    root.showHint(qsTr("This pull starts on the ground plane: there is no body to join or cut."))
+                }
+            }
             onTabRequested: tab => root.rightTab = tab
             onAxisChosen: axis => DocumentModel.setSplitAxis(DocumentModel.currentStep, axis)
             onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)
@@ -1781,7 +1872,7 @@ Window {
         selection: root.selectionText
         toolName: root.toolName(root.tool)
         hint: root.currentHint
-        unitText: qsTr("Unit: mm")
+        unitText: qsTr("Unit: %1").arg(Numbers.unit)
         continueVisible: Sketch.toolActive && Sketch.placed === 1
                          && (Sketch.tool === "mirror" || Sketch.tool === "pattern")
         onContinueClicked: Sketch.proceed()
@@ -1816,15 +1907,19 @@ Window {
         if (type === "fillet") { return qsTr("Rounding") }
         if (type === "chamfer") { return qsTr("Bevelling") }
         if (type === "pushFace") { return qsTr("Pulling a face") }
+        if (type === "extrude") { return qsTr("Pulling an area") }
         if (type === "stretch") { return qsTr("Stretching") }
         if (type === "removeFaces") { return qsTr("Removing faces") }
         if (type === "offsetFaces") { return qsTr("Moving faces") }
         if (type === "tiltFace") { return qsTr("Tilting a face") }
+        if (type === "hole") { return qsTr("Drilling a hole") }
         if (type === "shell") { return qsTr("Hollowing out") }
         if (type === "draft") { return qsTr("Draft") }
+        if (type === "pattern") { return qsTr("Pattern") }
         if (type === "place") { return qsTr("Placing") }
         if (type === "import") { return qsTr("Imported body") }
         if (type === "sketch") { return qsTr("Sketch") }
+        if (type === "helperPlane") { return qsTr("Helper plane") }
         const name = shapeCatalog.nameOf(type)
         return name !== "" ? name : qsTr("Body")
     }
@@ -1850,6 +1945,9 @@ Window {
         case "position": return qsTr("Position")
         case "thickness": return qsTr("Wall thickness")
         case "angle": return qsTr("Angle")
+        case "diameter": return qsTr("Diameter")
+        case "u": return qsTr("Across")
+        case "v": return qsTr("Along")
         default: return name
         }
     }
@@ -1899,10 +1997,13 @@ Window {
         case "roundEdges": return qsTr("%n edge(s) rounded", "", Number(step.count))
         case "bevelEdges": return qsTr("%n edge(s) bevelled", "", Number(step.count))
         case "pushFace": return qsTr("Face pulled")
+        case "extrude": return qsTr("Area pulled")
         case "stretchBody": return qsTr("Body stretched")
         case "removeFaces": return qsTr("%n face(s) removed", "", Number(step.count))
         case "offsetFaces": return qsTr("%n face(s) moved", "", Number(step.count))
         case "tiltFace": return qsTr("Face tilted")
+        case "helperPlane": return qsTr("Helper plane added")
+        case "drillHole": return qsTr("Hole drilled")
         case "shellBody": return qsTr("Body hollowed out")
         case "draftFaces": return qsTr("Draft added")
         case "combineBodies":
@@ -1982,6 +2083,7 @@ Window {
         case "fillet": return "round"
         case "chamfer": return "bevel"
         case "pushFace":
+        case "extrude":
         case "stretch":
         case "offsetFaces":
         case "tiltFace": return "move"
