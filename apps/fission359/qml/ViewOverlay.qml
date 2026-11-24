@@ -27,6 +27,8 @@ Item {
     property bool sketching: false         // choosing the plane of a sketch, or drawing in one
     property bool sketchActive: false      // drawing in a sketch: "Done" shows
     signal sketchDoneRequested
+    /// "Pull" (AP-2.3b2): the chosen closed area of the sketch becomes a body.
+    signal pullRequested
     property var sketchTools: null         // SketchToolCatalog
     property string sketchTool: ""         // the drawing tool that is on
     property int sketchVariant: 0
@@ -118,6 +120,16 @@ Item {
                 iconName: "ok"
                 text: qsTr("Done")
                 onClicked: root.sketchDoneRequested()
+            }
+
+            Btn {
+                objectName: "sketchPull"
+                anchors.verticalCenter: parent.verticalCenter
+                small: true
+                variant: "primary"
+                text: qsTr("Pull")
+                visible: root.sketchActive && Sketch.selectedRegion !== ""
+                onClicked: root.pullRequested()
             }
         }
     }

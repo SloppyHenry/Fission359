@@ -74,6 +74,29 @@ Rectangle {
     signal dragStarted(string name)
     signal dragFinished(bool accepted)
     signal textCommitted(string name, string text)
+    signal holeScrewChosen(string size, string kind)
+    // A drilled hole (AP-2.7c): the screw it is for, and what the hole is to take.
+    readonly property bool isDrill: stepTexts.some(t => t.name === "kind")
+    // What the numbers of the step say: { size, kind }, size is "" when they match no table row.
+    property var holeScrew: ({ size: "", kind: "plain" })
+    readonly property string drillKind: holeScrew.kind
+    readonly property string drillSize: holeScrew.size
+    readonly property var drillSizes: ["M2", "M2.5", "M3", "M4", "M5", "M6", "M8", "M10", "M12"]
+    signal modeCycleRequested()
+    signal reachChosen(string reach)
+    signal reachFaceChosen(int number)
+    property var reachFaces: []        // [{ number, distance }] faces a pull may stop at
+    property int reachFaceNumber: 0    // the face number a "toFace" pull stops at (0: unknown)
+    readonly property string pullReach: {
+        const entry = stepTexts.find(t => t.name === "extent")
+        return entry !== undefined ? entry.value : "distance"
+    }
+    // The pull of a sketch area (AP-2.3): what it does with the body the sketch lies on.
+    readonly property bool isPull: stepTexts.some(t => t.name === "region")
+    readonly property string pullMode: {
+        const entry = stepTexts.find(t => t.name === "mode")
+        return entry !== undefined ? entry.value : "new"
+    }
     function focusText() {
         wordRepeater.itemAt(0)?.focusAndSelect()
     }
@@ -367,7 +390,7 @@ Rectangle {
                         width: parent.width
                         label: entry.label
                         kind: entry.kind
-                        unit: "mm"
+                        unit: Numbers.unit
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
                         saveName: entry.label
@@ -400,6 +423,154 @@ Rectangle {
                     text: qsTr("Show the plane in the view")
                     checked: root.shownText !== undefined && root.shownText.value === "yes"
                     onToggled: root.textCommitted("shown", checked ? "yes" : "no")
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.isDrill
+                heading: qsTr("What is the hole for?")
+
+                Row {
+                    spacing: 6
+
+                    Repeater {
+                        model: root.drillSizes
+
+                        delegate: AbstractButton {
+                            id: sizeButton
+
+                            required property string modelData
+
+                            objectName: "drillSize" + modelData
+                            height: 28
+                            implicitWidth: sizeLabel.implicitWidth + 14
+                            checkable: true
+                            checked: root.drillSize === modelData
+                            hoverEnabled: true
+                            Accessible.name: modelData
+                            onClicked: {
+                                root.holeScrewChosen(modelData, root.drillKind)
+                            }
+
+                            contentItem: Txt {
+                                id: sizeLabel
+
+                                text: sizeButton.modelData
+                                color: sizeButton.checked ? Theme.fg : Theme.fg2
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                radius: 6
+                                color: sizeButton.checked ? Theme.accentSoft : (sizeButton.hovered ? Theme.field : Theme.raise)
+                                border.width: 1
+                                border.color: sizeButton.checked ? Theme.accentLine : Theme.line2
+                            }
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: [
+                        { kind: "plain", label: qsTr("Screw goes through") },
+                        { kind: "countersink", label: qsTr("Countersunk screw") },
+                        { kind: "counterbore", label: qsTr("Screw with a cylinder head") },
+                        { kind: "nutTrap", label: qsTr("Nut to put in") },
+                        { kind: "tapDrill", label: qsTr("Screw cuts its own thread") }
+                    ]
+
+                    delegate: AbstractButton {
+                        id: kindButton
+
+                        required property var modelData
+
+                        objectName: "drillKind_" + modelData.kind
+                        width: parent.width
+                        height: 30
+                        checkable: true
+                        checked: root.drillKind === modelData.kind
+                        hoverEnabled: true
+                        Accessible.name: modelData.label
+                        onClicked: root.holeScrewChosen(root.drillSize, modelData.kind)
+
+                        contentItem: Txt {
+                            text: kindButton.modelData.label
+                            color: kindButton.checked ? Theme.fg : Theme.fg2
+                            verticalAlignment: Text.AlignVCenter
+                            leftPadding: 8
+                        }
+
+                        background: Rectangle {
+                            radius: 6
+                            color: kindButton.checked ? Theme.accentSoft : (kindButton.hovered ? Theme.field : "transparent")
+                            border.width: kindButton.checked ? 1 : 0
+                            border.color: Theme.accentLine
+                        }
+                    }
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.isPull
+                heading: qsTr("Pull")
+
+                AbstractButton {
+                    id: pullModeButton
+
+                    objectName: "pullModeButton"
+                    height: 30
+                    implicitWidth: pullModeLabel.implicitWidth + 24
+                    hoverEnabled: true
+                    Accessible.name: qsTr("What the pull does")
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Click to change: new body, joined to the body, or cut out of it.")
+                    onClicked: root.modeCycleRequested()
+
+                    contentItem: Txt {
+                        id: pullModeLabel
+
+                        text: root.pullMode === "merge" ? qsTr("Joins the body")
+                              : root.pullMode === "subtract" ? qsTr("Cuts out of the body")
+                              : qsTr("Makes a new body")
+                        color: Theme.fg
+                        font.weight: Font.Medium
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    background: Rectangle {
+                        radius: 6
+                        color: pullModeButton.hovered ? Theme.field : Theme.raise
+                        border.width: 1
+                        border.color: Theme.line2
+
+                        Focusring {
+                            visible: pullModeButton.visualFocus
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: root.pullMode !== "new" ? root.reachFaces : []
+
+                    delegate: Toggle {
+                        required property var modelData
+
+                        text: {
+                            const words = qsTr("Up to the face %1 mm away").arg(Numbers.formatLength(Math.abs(modelData.distance), 2))
+                            return Numbers.unit === "in" ? words.replace(/(\d) mm\b/g, "$1 in") : words
+                        }
+                        checked: root.pullReach === "toFace" && root.reachFaceNumber === modelData.number
+                        onToggled: checked ? root.reachFaceChosen(modelData.number) : root.reachChosen("distance")
+                    }
+                }
+
+                Toggle {
+                    visible: root.pullMode !== "new"
+                    text: qsTr("All the way through the body")
+                    checked: root.pullReach === "throughAll"
+                    onToggled: root.reachChosen(checked ? "throughAll" : "distance")
                 }
             }
 
@@ -479,7 +650,8 @@ Rectangle {
                         width: parent.width
                         label: entry.label
                         kind: entry.kind
-                        unit: entry.kind === "angle" ? "°" : entry.kind === "plain" ? "" : "mm"
+                        unit: entry.kind === "angle" ? "°"
+                                           : entry.kind === "plain" ? "" : Numbers.unit
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
                         saveName: entry.label
@@ -651,7 +823,8 @@ Rectangle {
                         width: parent.width
                         label: entry.label
                         kind: entry.kind
-                        unit: entry.kind === "angle" ? "°" : entry.kind === "plain" ? "" : "mm"
+                        unit: entry.kind === "angle" ? "°"
+                                           : entry.kind === "plain" ? "" : Numbers.unit
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
                         saveName: entry.label

@@ -62,6 +62,9 @@ public:
                            double distance) const override {
         return offsetFacesNamed(solid, faceIds, distance);
     }
+    NamedSolid makeHoleTool(const HoleToolSpec& spec) const override {
+        return makeHoleToolNamed(spec);
+    }
     NamedSolid tiltFace(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot, Point3d axis,
                         double degrees) const override {
         return tiltFaceNamed(solid, faceId, pivot, axis, degrees);

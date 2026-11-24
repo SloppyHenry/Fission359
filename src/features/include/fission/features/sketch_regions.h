@@ -15,7 +15,7 @@
 #include "fission/geo/kernel.h"
 #include "fission/geo/sketch_regions.h"
 
-namespace fission::interaction {
+namespace fission::features {
 
 struct SketchRegionInfo {
     /// Stable (decision 52): the sorted ids of the elements that bound the region (outer boundary
@@ -33,6 +33,17 @@ struct SketchRegionSet {
     std::size_t rejected = 0; ///< found by the kernel but failed the check: left out
 };
 
+/// The curves of the elements as the kernel takes them (points and construction elements are
+/// left out), in the order of the elements, with the id of the element each curve comes from.
+struct SketchCurves {
+    std::vector<geo::SketchCurve> curves;
+    std::vector<std::string> ids; ///< id of curve i
+};
+
+/// The curves of the elements (helper lines and points are left out; the others are as the
+/// kernel gets them).
+SketchCurves sketchCurvesOf(const std::vector<core::SketchElement>& elements);
+
 /// The regions of the elements (helper lines and points are left out; the others are as the
 /// kernel gets them). Throws `geo::GeometryError`.
 SketchRegionSet computeSketchRegions(const geo::GeometryKernel& kernel,
@@ -44,4 +55,4 @@ bool regionContains(const geo::SketchRegion& region, const core::SketchPoint& at
 /// The index of the smallest region that holds `at`; -1 when there is none.
 int regionAt(const SketchRegionSet& set, const core::SketchPoint& at);
 
-} // namespace fission::interaction
+} // namespace fission::features

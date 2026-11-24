@@ -428,6 +428,21 @@
         <translation>Click a flat face or the ground plane.</translation>
     </message>
     <message>
+        <location line="+3"/>
+        <source>Pull area</source>
+        <translation>Pull area</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a body from the chosen closed area of the sketch.</source>
+        <translation>Makes a body from the chosen closed area of the sketch.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a closed area of the sketch (a click), then pull it.</source>
+        <translation>Choose a closed area of the sketch (a click), then pull it.</translation>
+    </message>
+    <message>
         <location line="+4"/>
         <source>Named measures</source>
         <translation>Named measures</translation>
@@ -1034,39 +1049,9 @@
         <translation>Bevel edges</translation>
     </message>
     <message>
-        <location line="+107"/>
-        <source>Drilled hole</source>
-        <translation>Drilled hole</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>A round hole in a face with a chosen diameter and depth, also countersunk.</source>
-        <translation>A round hole in a face with a chosen diameter and depth, also countersunk.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Click a face, then drag the dot.</source>
-        <translation>Click a face, then drag the dot.</translation>
-    </message>
-    <message>
         <location line="-74"/>
         <source>Hollow out</source>
         <translation>Hollow out</translation>
-    </message>
-    <message>
-        <location line="+78"/>
-        <source>Pull up a sketch</source>
-        <translation>Pull up a sketch</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Turns a sketch into a body by pulling it up.</source>
-        <translation>Turns a sketch into a body by pulling it up.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Draw a sketch, then drag it up.</source>
-        <translation>Draw a sketch, then drag it up.</translation>
     </message>
     <message>
         <location line="-274"/>
@@ -1119,6 +1104,18 @@
     <message>
         <source>Choose a flat face (or nothing for the bed), then type the distance in the panel.</source>
         <translation>Choose a flat face (or nothing for the bed), then type the distance in the panel.</translation>
+    </message>
+    <message>
+        <source>Drill hole</source>
+        <translation>Drill hole</translation>
+    </message>
+    <message>
+        <source>Drills a round hole into a flat face, 3.4 mm wide for an M3 screw. Diameter, depth and place can be changed afterwards.</source>
+        <translation>Drills a round hole into a flat face, 3.4 mm wide for an M3 screw. Diameter, depth and place can be changed afterwards.</translation>
+    </message>
+    <message>
+        <source>Choose one flat face, then type the diameter, the depth and the place in the panel.</source>
+        <translation>Choose one flat face, then type the diameter, the depth and the place in the panel.</translation>
     </message>
 </context>
 <context>
@@ -2329,6 +2326,16 @@
         <translation>Face pulled. Drag the grip or type a distance.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>This area cannot be pulled.</source>
+        <translation>This area cannot be pulled.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled out of the sketch: drag the arrow or type a distance.</source>
+        <translation>Pulled out of the sketch: drag the arrow or type a distance.</translation>
+    </message>
+    <message>
         <location line="+21"/>
         <source>This face cannot be removed: it may be part of another body, or the body cannot close up without it.</source>
         <translation>This face cannot be removed: it may be part of another body, or the body cannot close up without it.</translation>
@@ -2599,8 +2606,8 @@
     </message>
     <message>
         <location line="+1572"/>
-        <source>Unit: mm</source>
-        <translation>Unit: mm</translation>
+        <source>Unit: %1</source>
+        <translation>Unit: %1</translation>
     </message>
     <message>
         <location line="+27"/>
@@ -2729,6 +2736,11 @@
         <location line="+2"/>
         <source>Pulling a face</source>
         <translation>Pulling a face</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulling an area</source>
+        <translation>Pulling an area</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2935,6 +2947,11 @@
         <location line="+1"/>
         <source>Face pulled</source>
         <translation>Face pulled</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Area pulled</source>
+        <translation>Area pulled</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3283,10 +3300,10 @@
     </message>
     <message numerus="yes">
         <location line="+1"/>
-        <source>%n closed area(s). One is chosen: Esc or a click beside lets go.</source>
+        <source>%n closed area(s). One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.</source>
         <translation>
-            <numerusform>%n closed area. One is chosen: Esc or a click beside lets go.</numerusform>
-            <numerusform>%n closed areas. One is chosen: Esc or a click beside lets go.</numerusform>
+            <numerusform>%n closed area. One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.</numerusform>
+            <numerusform>%n closed areas. One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -3316,6 +3333,42 @@
     <message>
         <source>Helper plane added</source>
         <translation>Helper plane added</translation>
+    </message>
+    <message>
+        <source>Drill hole</source>
+        <translation>Drill hole</translation>
+    </message>
+    <message>
+        <source>A hole can only be drilled into a flat face of a body that is not part of another body yet.</source>
+        <translation>A hole can only be drilled into a flat face of a body that is not part of another body yet.</translation>
+    </message>
+    <message>
+        <source>Hole drilled into the middle of the face. Type the diameter, the depth and the place in the panel.</source>
+        <translation>Hole drilled into the middle of the face. Type the diameter, the depth and the place in the panel.</translation>
+    </message>
+    <message>
+        <source>Drilling a hole</source>
+        <translation>Drilling a hole</translation>
+    </message>
+    <message>
+        <source>Hole drilled</source>
+        <translation>Hole drilled</translation>
+    </message>
+    <message>
+        <source>Diameter</source>
+        <translation>Diameter</translation>
+    </message>
+    <message>
+        <source>Across</source>
+        <translation>Across</translation>
+    </message>
+    <message>
+        <source>Along</source>
+        <translation>Along</translation>
+    </message>
+    <message>
+        <source>This pull starts on the ground plane: there is no body to join or cut.</source>
+        <translation>This pull starts on the ground plane: there is no body to join or cut.</translation>
     </message>
 </context>
 <context>
@@ -4367,6 +4420,21 @@
     </message>
     <message>
         <location line="+3"/>
+        <source>Pulled %1 mm</source>
+        <translation>Pulled %1 mm</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled %1 mm onto the body</source>
+        <translation>Pulled %1 mm onto the body</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut %1 mm deep</source>
+        <translation>Cut %1 mm deep</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>Stretched by %1 mm</source>
         <translation>Stretched by %1 mm</translation>
     </message>
@@ -4398,6 +4466,11 @@
             <numerusform>Moved %n face in by %1 mm</numerusform>
             <numerusform>Moved %n faces in by %1 mm</numerusform>
         </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Drilled a hole, Ø %1 mm, %2 mm deep</source>
+        <translation>Drilled a hole, Ø %1 mm, %2 mm deep</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4756,6 +4829,62 @@
     <message>
         <source>Show the plane in the view</source>
         <translation>Show the plane in the view</translation>
+    </message>
+    <message>
+        <source>What is the hole for?</source>
+        <translation>What is the hole for?</translation>
+    </message>
+    <message>
+        <source>Screw goes through</source>
+        <translation>Screw goes through</translation>
+    </message>
+    <message>
+        <source>Countersunk screw</source>
+        <translation>Countersunk screw</translation>
+    </message>
+    <message>
+        <source>Screw with a cylinder head</source>
+        <translation>Screw with a cylinder head</translation>
+    </message>
+    <message>
+        <source>Nut to put in</source>
+        <translation>Nut to put in</translation>
+    </message>
+    <message>
+        <source>Screw cuts its own thread</source>
+        <translation>Screw cuts its own thread</translation>
+    </message>
+    <message>
+        <source>Pull</source>
+        <translation>Pull</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>What the pull does</translation>
+    </message>
+    <message>
+        <source>Click to change: new body, joined to the body, or cut out of it.</source>
+        <translation>Click to change: new body, joined to the body, or cut out of it.</translation>
+    </message>
+    <message>
+        <source>Joins the body</source>
+        <translation>Joins the body</translation>
+    </message>
+    <message>
+        <source>Cuts out of the body</source>
+        <translation>Cuts out of the body</translation>
+    </message>
+    <message>
+        <source>Makes a new body</source>
+        <translation>Makes a new body</translation>
+    </message>
+    <message>
+        <source>All the way through the body</source>
+        <translation>All the way through the body</translation>
+    </message>
+    <message>
+        <source>Up to the face %1 mm away</source>
+        <translation>Up to the face %1 mm away</translation>
     </message>
 </context>
 <context>
@@ -5725,6 +5854,11 @@
         <source>Examples</source>
         <translation>Examples</translation>
     </message>
+    <message>
+        <location filename="../qml/StartPage.qml" line="159"/>
+        <source>You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.</source>
+        <translation>You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.</translation>
+    </message>
 </context>
 <context>
     <name>StatusBar</name>
@@ -6033,6 +6167,11 @@
         <translation>Done</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>Pull</source>
+        <translation>Pull</translation>
+    </message>
+    <message>
         <location line="+268"/>
         <source>2D drawing as a base, with measures and rules.</source>
         <translation>2D drawing as a base, with measures and rules.</translation>
@@ -6151,6 +6290,25 @@
         <location line="+1"/>
         <source>Zoom: mouse wheel, towards the pointer – or drag this button</source>
         <translation>Zoom: mouse wheel, towards the pointer – or drag this button</translation>
+    </message>
+</context>
+<context>
+    <name>HandleLayer</name>
+    <message>
+        <source>Joins</source>
+        <translation>Joins</translation>
+    </message>
+    <message>
+        <source>Cuts out</source>
+        <translation>Cuts out</translation>
+    </message>
+    <message>
+        <source>New body</source>
+        <translation>New body</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>What the pull does</translation>
     </message>
 </context>
 </TS>

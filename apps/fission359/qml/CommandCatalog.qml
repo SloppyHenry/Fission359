@@ -258,6 +258,13 @@ QtObject {
           synonyms: { de: ["flächen versetzen", "versatz", "passung", "spiel", "toleranz", "dicker machen", "dünner machen"],
                       en: ["offset faces", "offset", "fit", "clearance", "tolerance", "thicken", "shrink"] },
           run: { kind: "menu", id: "offsetFaces" } },
+        { id: "menu.drillHole", group: "body", name: qsTr("Drill hole"),
+          tip: qsTr("Drills a round hole into a flat face, 3.4 mm wide for an M3 screw. Diameter, depth and place can be changed afterwards."),
+          hint: qsTr("Choose one flat face, then type the diameter, the depth and the place in the panel."),
+          needs: "face",
+          synonyms: { de: ["bohren", "bohrung", "loch bohren", "schraubenloch", "loch in fläche", "durchgangsloch", "sackloch"],
+                      en: ["drill", "drill hole", "bore", "screw hole", "hole in face", "through hole", "blind hole"] },
+          run: { kind: "menu", id: "drillHole" } },
         { id: "menu.shell", group: "body", name: qsTr("Hollow out"),
           tip: qsTr("Makes the body hollow with an even wall. The top stays open unless you choose other faces to leave open. The result is checked: if the program is not sure of it, nothing is made."),
           hint: qsTr("Choose a body (the top is left open) or the faces to leave open, then drag the grip or type the wall."),
@@ -344,18 +351,6 @@ QtObject {
     // What the program will be able to do later. They are listed so that the search finds them
     // and says so honestly (rule: no dead ends without a word).
     readonly property var soonCommands: [
-        { id: "soon.drill", group: "soon", name: qsTr("Drilled hole"),
-          tip: qsTr("A round hole in a face with a chosen diameter and depth, also countersunk."),
-          hint: qsTr("Click a face, then drag the dot."),
-          synonyms: { de: ["bohrung", "bohren", "loch bohren", "senkung", "gewindeloch", "schraubenloch"],
-                      en: ["drilled hole", "drill", "bore", "countersink", "screw hole", "hole in face"] },
-          run: { kind: "soon" } },
-        { id: "soon.extrude", group: "soon", name: qsTr("Pull up a sketch"),
-          tip: qsTr("Turns a sketch into a body by pulling it up."),
-          hint: qsTr("Draw a sketch, then drag it up."),
-          synonyms: { de: ["hochziehen", "extrudieren", "skizze ausziehen", "aus skizze", "ziehen"],
-                      en: ["pull up", "extrude", "pull sketch", "push pull", "lift sketch"] },
-          run: { kind: "soon" } },
         { id: "soon.pattern", group: "soon", name: qsTr("Pattern"),
           tip: qsTr("Repeats a body in a row, a grid or around a circle."),
           hint: qsTr("Choose the body, then the number and the distance."),
@@ -387,7 +382,21 @@ QtObject {
         shortcut: tool.key, synonyms: tool.synonyms, needs: "sketch",
         run: { kind: "menu", id: "sketchtool." + tool.id } }))
 
-    readonly property var commands: toolCommands.concat(shapeCommands, sketchCommands, menuCommands, soonCommands)
+    // "Pull" of the sketch mode (AP-2.3b2), in the shape of the drawing tools above: the chosen
+    // closed area of the sketch becomes a body. Runs only while a sketch is open.
+    readonly property var sketchPullCommand: ({
+        id: "sketch.pull", group: "tool", name: qsTr("Pull area"),
+        tip: qsTr("Makes a body from the chosen closed area of the sketch."),
+        hint: qsTr("Choose a closed area of the sketch (a click), then pull it."),
+        shortcut: "Return",
+        synonyms: { de: ["ziehen", "extrudieren", "hochziehen", "körper aus skizze", "bereich ziehen",
+                          "skizze ausziehen", "aus skizze"],
+                    en: ["pull", "extrude", "pad", "body from sketch", "pull up", "pull sketch", "push pull",
+                          "lift sketch"] },
+        needs: "sketch",
+        run: { kind: "menu", id: "sketchpull" } })
+
+    readonly property var commands: toolCommands.concat(shapeCommands, sketchCommands, [sketchPullCommand], menuCommands, soonCommands)
 
     // The words to search by: the name and the synonyms of both languages.
     function wordsOf(command) {

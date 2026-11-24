@@ -119,6 +119,9 @@ class DocumentModel : public QObject {
     Q_PROPERTY(double nozzle READ nozzle NOTIFY printerChanged)
     /// [{ id, name, bedX, bedY, bedZ, nozzle }]
     Q_PROPERTY(QVariantList printers READ printers CONSTANT)
+    /// The display unit for lengths of this document (P23b): "in" when a bare number in it counts
+    /// as inches (defaultUnitMillimetres 25.4), else "mm".
+    Q_PROPERTY(QString unit READ unit NOTIFY unitChanged)
 
 public:
     /// `kernel` does the geometry work; the application hands in the OpenCASCADE one.
@@ -132,7 +135,7 @@ public:
     ~DocumentModel() override;
 
     /// The number fields use the named measures of the document in their formulas.
-    void setNumbers(Numbers* numbers) { m_numbers = numbers; }
+    void setNumbers(Numbers* numbers);
 
     /// The one box the program starts with (replaces the demo body of AP-0.8).
     void addDemoBox();
@@ -287,6 +290,8 @@ public:
     /// Chooses the printer; false for an id that is not in the list. Not part of the history:
     /// the printer is a setting of the program, not a change of the model.
     Q_INVOKABLE bool setPrinter(const QString& id);
+    /// "in" or "mm", what a bare number in this document means (P23b).
+    QString unit() const;
 
     Q_INVOKABLE void selectStep(int index);
     /// Sets the value `name` of step `index` to what was typed (a number or a formula).
@@ -340,6 +345,21 @@ public:
     Q_INVOKABLE QStringList fontStyles(const QString& family) const;
     /// Sets a word of step `index` (the text of a lettering, the name of its font).
     Q_INVOKABLE bool setStepText(int index, const QString& name, const QString& text);
+    /// A pull of a sketch area (step `index`) that lies on a body goes to the next mode: new body,
+    /// joined to the body, cut out of it, new again; the distance changes its sign with it. Returns
+    /// the mode now ("new", "merge", "subtract"), empty when the step is no pull on a body.
+    Q_INVOKABLE QString cycleExtrudeMode(int index);
+    /// True when the step is a pull of a sketch that lies on a body, i.e. its mode can change.
+    Q_INVOKABLE bool canCycleExtrudeMode(int index) const;
+    /// How far a pull (step `index`) of a sketch on a body goes: `reach` is "distance" (the typed
+    /// number), "throughAll" or "toFace" (up to the flat face number `faceNumber` of that body,
+    /// parallel to the sketch). One step of the history; false when the step is no such pull or
+    /// the face cannot be named.
+    /// The faces a pull (step `index`) may stop at: [{ number, distance }], the flat faces of the
+    /// body it joins or cuts that are parallel to the sketch, `distance` (mm, signed along the
+    /// sketch's normal) from the sketch plane. Empty for a pull on the ground.
+    Q_INVOKABLE QVariantList extrudeReachFaces(int index) const;
+    Q_INVOKABLE bool setExtrudeReach(int index, const QString& reach, int faceNumber);
 
     // --- putting shapes down (AP-1.5) ---
     /// Starts putting a shape of `type` ("sphere", "box" ...) down at (x, y) on the plane z, as
@@ -456,6 +476,14 @@ public:
     /// when the body is part of another one, the face is not flat or cannot be named again after
     /// a change. A new step of the recipe, one step of the history.
     Q_INVOKABLE QString addSketch(const QString& bodyId, int faceNumber);
+    /// Pulls the region `regionId` of the sketch step `sketchStep` (its id) out of the sketch plane
+    /// into a new body (AP-2.3b): a step "extrude" of 10 mm. `u`, `v` is a point inside the region
+    /// (sketch coordinates); the grip stands there. A sketch on a face of a body pulls into that
+    /// body instead: the pull merges into it, a negative distance cuts it. Returns the id of the
+    /// new body, or "" when the sketch step has no result. A region that is not there shows as an
+    /// error on the step.
+    Q_INVOKABLE QString addExtrude(const QString& sketchStep, const QString& regionId, double u,
+                                   double v);
     /// True when the face is flat, i.e. a sketch can lie on it.
     Q_INVOKABLE bool faceIsFlat(const QString& bodyId, int faceNumber) const;
     /// Removes the sketch step when nothing was drawn in it (a normal command, so that undo
@@ -538,6 +566,16 @@ public:
     Q_INVOKABLE QString addHelperPlane(const QString& bodyId, int faceNumber);
     /// The four corners (mm) of every helper plane that is calculated and shown, for the view.
     std::vector<std::array<geo::Point3d, 4>> helperPlaneCorners() const;
+    /// Drills an M3 hole (3.4 mm, 10 mm deep) into the middle of a flat face: a new step.
+    /// Returns the id of the new body, empty when nothing can be done.
+    Q_INVOKABLE QString drillHole(const QString& bodyId, int faceNumber);
+    /// Sets a drilled hole (step `index`) for a metric screw from the tables: `size` like "M3",
+    /// `kind` one of plain (clearance hole), counterbore, countersink, nutTrap, tapDrill. One
+    /// step of the history. False when the step is no hole or size or kind are unknown.
+    /// {size, kind} of a hole step read back from its values: the table row and kind that give
+    /// exactly these numbers (tolerance 1e-6); size is empty for any other numbers.
+    Q_INVOKABLE QVariantMap holeScrewOf(int index) const;
+    Q_INVOKABLE bool setHoleScrew(int index, const QString& size, const QString& kind);
     /// The faces that belong to the one at `faceNumber` as a feature: for a curved face the curved
     /// faces it runs into and the floor of a blind hole, for a flat face just itself.
     Q_INVOKABLE QVariantList faceFeature(const QString& bodyId, int faceNumber) const;
@@ -660,6 +698,8 @@ signals:
     void historyChanged();
     void printerChanged();
     void paletteChanged();
+    /// The document's display unit for lengths changed (a new or opened document, P23b).
+    void unitChanged();
     /// The document was replaced as a whole (a file was opened, a new project started): whatever
     /// was chosen or in progress is gone.
     void documentReplaced();
@@ -694,6 +734,8 @@ private:
     void rebuildLists();
     void rebuildMeasures();
     void rebuildScene();
+    /// Brings `m_unit` and the numbers (the QML singleton) to the unit of the document (P23b).
+    void syncUnit();
     QVariantList buildStepValues() const;
     QVariantList buildStepTexts() const;
     QVariantList buildStepHandles() const;
@@ -769,6 +811,7 @@ private:
     std::shared_ptr<const render::RenderScene> m_scene;
     std::shared_ptr<const ElementNameMap> m_elementNames = std::make_shared<ElementNameMap>();
     Numbers* m_numbers = nullptr;
+    QString m_unit = QStringLiteral("mm"); ///< the unit last pushed to the numbers (P23b)
 
     QVariantList m_recipe;
     QVariantList m_measureList;
