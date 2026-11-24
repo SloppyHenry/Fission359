@@ -13,6 +13,7 @@ std::unique_ptr<const core::FeatureType> makeCylinderType();
 void addShapeTypes(core::FeatureRegistry& registry);
 std::unique_ptr<const core::FeatureType> makeTextType();
 std::unique_ptr<const core::FeatureType> makeCombineType();
+std::unique_ptr<const core::FeatureType> makePatternType();
 std::unique_ptr<const core::FeatureType> makePlaceType();
 std::unique_ptr<const core::FeatureType> makeSplitType();
 std::unique_ptr<const core::FeatureType> makeFilletType();
@@ -26,6 +27,8 @@ std::unique_ptr<const core::FeatureType> makeShellType();
 std::unique_ptr<const core::FeatureType> makeDraftType();
 std::unique_ptr<const core::FeatureType> makeImportType();
 std::unique_ptr<const core::FeatureType> makeSketchType();
+std::unique_ptr<const core::FeatureType> makeHelperPlaneType();
+std::unique_ptr<const core::FeatureType> makeHoleType();
 std::unique_ptr<const core::FeatureType> makeExtrudeType();
 std::unique_ptr<const core::FeatureType> makeRevolveType();
 } // namespace detail
@@ -36,6 +39,7 @@ void registerBuiltinFeatures(core::FeatureRegistry& registry) {
     detail::addShapeTypes(registry);
     registry.add(detail::makeTextType());
     registry.add(detail::makeCombineType());
+    registry.add(detail::makePatternType());
     registry.add(detail::makePlaceType());
     registry.add(detail::makeSplitType());
     registry.add(detail::makeFilletType());
@@ -49,6 +53,8 @@ void registerBuiltinFeatures(core::FeatureRegistry& registry) {
     registry.add(detail::makeDraftType());
     registry.add(detail::makeImportType());
     registry.add(detail::makeSketchType());
+    registry.add(detail::makeHelperPlaneType());
+    registry.add(detail::makeHoleType());
     registry.add(detail::makeExtrudeType());
     registry.add(detail::makeRevolveType());
 }

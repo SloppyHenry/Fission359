@@ -263,6 +263,11 @@ public:
     std::optional<RemovedFeature> takeFeature(const FeatureId& id);
     /// Puts a step taken out with `takeFeature` back where it was.
     void restoreFeature(RemovedFeature removed);
+    /// Moves a step to `newIndex` (its index after the move). Refused (false) when the step does
+    /// not exist, newIndex >= number of steps, or the new order breaks a dependency: every input
+    /// body of a step must be made by an earlier step (see addFeature), and every reference of a
+    /// step to another step must point to an earlier step.
+    bool moveFeature(const FeatureId& id, std::size_t newIndex);
     /// The number the last new step got. Commands set it back on undo so that numbers stay
     /// gapless in what the person sees; removing a step alone never frees its number.
     int lastFeatureNumber() const noexcept { return lastFeatureNumber_; }
@@ -307,6 +312,10 @@ public:
     /// Sets or clears the link of an element to an edge of a body (AP-2.1f).
     bool setSketchLink(const FeatureId& id, std::string_view elementId,
                        std::optional<SketchLink> link);
+    /// Replaces the whole sketch of a sketch step (rules, measures, coordinates); used by the
+    /// commands that solve the sketch. False when the step has no sketch or `sketch` is not
+    /// consistent().
+    bool setSketchData(const FeatureId& id, SketchData sketch);
 
     // --- the time marker ("jetzt", AP-1.9) -------------------------------------------------
     /// How many steps of the recipe count, or nullopt for all of them. The steps after the
@@ -340,6 +349,10 @@ public:
 private:
     Feature* mutableFeature(const FeatureId& id);
     Body* mutableBody(const BodyId& id);
+    /// True when every step of `order` only uses what earlier steps of `order` made: its input
+    /// bodies (by their maker) and its references to other steps ("F<n>/...") point to steps
+    /// before it.
+    bool orderIsValid(const std::vector<Feature>& order) const;
     void touch() noexcept { ++revision_; }
 
     DocumentSettings settings_;

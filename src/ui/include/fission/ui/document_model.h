@@ -23,11 +23,13 @@
 #include "fission/core/command.h"
 #include "fission/core/document.h"
 #include "fission/core/element_names.h"
+#include "fission/core/expression.h"
 #include "fission/core/feature_type.h"
 #include "fission/core/history.h"
 #include "fission/core/recompute.h"
 #include "fission/geo/kernel.h"
 #include "fission/geo/seat.h"
+#include "fission/geo/sketch_solver.h"
 #include "fission/render/scene.h"
 #include "fission/ui/clipboard_payload.h"
 
@@ -119,20 +121,28 @@ class DocumentModel : public QObject {
     Q_PROPERTY(double nozzle READ nozzle NOTIFY printerChanged)
     /// [{ id, name, bedX, bedY, bedZ, nozzle }]
     Q_PROPERTY(QVariantList printers READ printers CONSTANT)
+    /// The display unit for lengths of this document (P23b): "in" when a bare number in it counts
+    /// as inches (defaultUnitMillimetres 25.4), else "mm".
+    Q_PROPERTY(QString unit READ unit NOTIFY unitChanged)
 
 public:
     /// `kernel` does the geometry work; the application hands in the OpenCASCADE one.
+    /// `sketchSolver` solves the sketches of the sketch steps (the application hands in the
+    /// PlaneGCS one); without it no rule or measure can be added to a sketch. It must outlive
+    /// this model.
     explicit DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel,
-                           QObject* parent = nullptr);
+                           QObject* parent = nullptr,
+                           std::shared_ptr<const geo::SketchSolver> sketchSolver = nullptr);
     /// With more feature types than the built-in ones (tests register steps that only exist
     /// there, like one that holds a reference).
     DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel,
                   std::vector<std::unique_ptr<const core::FeatureType>> extraTypes,
-                  QObject* parent = nullptr);
+                  QObject* parent = nullptr,
+                  std::shared_ptr<const geo::SketchSolver> sketchSolver = nullptr);
     ~DocumentModel() override;
 
     /// The number fields use the named measures of the document in their formulas.
-    void setNumbers(Numbers* numbers) { m_numbers = numbers; }
+    void setNumbers(Numbers* numbers);
 
     /// The one box the program starts with (replaces the demo body of AP-0.8).
     void addDemoBox();
@@ -287,6 +297,8 @@ public:
     /// Chooses the printer; false for an id that is not in the list. Not part of the history:
     /// the printer is a setting of the program, not a change of the model.
     Q_INVOKABLE bool setPrinter(const QString& id);
+    /// "in" or "mm", what a bare number in this document means (P23b).
+    QString unit() const;
 
     Q_INVOKABLE void selectStep(int index);
     /// Sets the value `name` of step `index` to what was typed (a number or a formula).
@@ -319,6 +331,13 @@ public:
     /// Deletes the steps at `indexes` (and with them the bodies they make) as one step of the
     /// history; the cuts of holes follow. False when there is nothing to delete.
     Q_INVOKABLE bool deleteSteps(const QVariantList& indexes);
+    /// Whether moving the step at `from` to `to` would be accepted. Checked on a copy of the
+    /// document: the step must not land before a step it depends on. False for invalid indexes
+    /// or `from == to`.
+    Q_INVOKABLE bool canMoveStep(int from, int to) const;
+    /// Moves the step at `from` to `to` (its index after the move) as one step of the history.
+    /// False when the move is refused or the indexes are invalid or equal.
+    Q_INVOKABLE bool moveStep(int from, int to);
     /// Puts the time marker behind the first `count` steps (-1 or the number of steps: at the end).
     /// One step of the history; a new step goes in at the marker and the marker moves behind it.
     Q_INVOKABLE bool moveMarker(int count);
@@ -337,10 +356,16 @@ public:
     /// joined to the body, cut out of it, new again; the distance changes its sign with it. Returns
     /// the mode now ("new", "merge", "subtract"), empty when the step is no pull on a body.
     Q_INVOKABLE QString cycleExtrudeMode(int index);
+    /// True when the step is a pull of a sketch that lies on a body, i.e. its mode can change.
+    Q_INVOKABLE bool canCycleExtrudeMode(int index) const;
     /// How far a pull (step `index`) of a sketch on a body goes: `reach` is "distance" (the typed
     /// number), "throughAll" or "toFace" (up to the flat face number `faceNumber` of that body,
     /// parallel to the sketch). One step of the history; false when the step is no such pull or
     /// the face cannot be named.
+    /// The faces a pull (step `index`) may stop at: [{ number, distance }], the flat faces of the
+    /// body it joins or cuts that are parallel to the sketch, `distance` (mm, signed along the
+    /// sketch's normal) from the sketch plane. Empty for a pull on the ground.
+    Q_INVOKABLE QVariantList extrudeReachFaces(int index) const;
     Q_INVOKABLE bool setExtrudeReach(int index, const QString& reach, int faceNumber);
 
     // --- putting shapes down (AP-1.5) ---
@@ -491,6 +516,10 @@ public:
     std::optional<core::SketchResult> sketchResult(const QString& stepId) const;
     /// The elements of a sketch as they are in the document now (also before the calculation).
     std::vector<core::SketchElement> sketchElements(const QString& stepId) const;
+    /// The measures of a sketch as they are in the document now (AP-2.2b).
+    std::vector<core::SketchMeasure> sketchMeasures(const QString& stepId) const;
+    /// The rules of a sketch as they are in the document now (AP-2.2c3).
+    std::vector<core::SketchRule> sketchRules(const QString& stepId) const;
     /// The curve of a spline through these points (the last equal to the first: closed) as a
     /// chain of short lines within 0.005 mm of it, as the kernel calculates it. Nothing when the
     /// kernel cannot make a curve through them. Quick enough for every move of the pointer.
@@ -500,15 +529,44 @@ public:
     /// of the history; `kind` ("line", "rectangle", "circle", "point") names it in the history.
     /// The ids in `elements` are ignored, the sketch gives them out. False (nothing changed) when
     /// the step has no sketch, `elements` is empty, an element cannot be used or the kernel cannot
-    /// make the curve of a spline among them.
+    /// make the curve of a spline among them. With `autoRules` the rules the new elements fulfil
+    /// exactly are added in the same step of the history (AP-2.2c2).
     bool addSketchElements(const QString& stepId, const std::vector<core::SketchElement>& elements,
-                           const QString& kind);
+                           const QString& kind, bool autoRules = false);
     /// Trims or extends elements of a sketch (AP-2.1e1): the moves, removals and new elements of
     /// `edit` as ONE step of the history, named by `action` ("trimSketch" or "extendSketch"; the
     /// recipe says "… trimmed" / "… extended"). False (nothing changed) when the step has no
     /// sketch, the edit is empty or one of its parts is refused.
     bool applySketchEdit(const QString& stepId, const interaction::SketchEdit& edit,
                          const QString& action);
+    /// Adds a rule to the sketch of a step and solves the sketch again (AP-2.2b), as ONE step
+    /// of the history. `kind` is the rule word ("horizontal", "fixed", ...), `elements` the
+    /// element ids or point references ("L1", "L1.0") it concerns. False (nothing changed) when
+    /// there is no solver, the step has no sketch or the command is refused.
+    bool addSketchRule(const QString& step, const QString& kind, const QStringList& elements);
+    /// Adds a measure to the sketch of a step and solves again (AP-2.2b), as ONE step of the
+    /// history. `kind` is the measure word ("length", "angle", ...), `expression` the value as
+    /// typed ("30", "2 * Breite"), evaluated with the named measures of the document. The value
+    /// must be > 0, except for "angle", "horizontalDistance" and "verticalDistance". False
+    /// (nothing changed) when there is no solver, the step has no sketch, the expression cannot
+    /// be evaluated or the command is refused.
+    bool addSketchMeasure(const QString& step, const QString& kind, const QStringList& elements,
+                          const QString& expression);
+    /// Changes the value of a measure of the sketch of a step and solves again (AP-2.2b), as ONE
+    /// step of the history; `measureId` is the "R" id of the measure. The same checks as in
+    /// `addSketchMeasure`. False (nothing changed) when there is no solver, the step has no
+    /// sketch or no measure with that id, the expression cannot be evaluated or the command is
+    /// refused.
+    bool setSketchMeasure(const QString& step, const QString& measureId, const QString& expression);
+    /// Removes a rule or a measure ("R1", ...) from the sketch of a step as ONE step of the
+    /// history; the coordinates stay as they are. False (nothing changed) when the step has no
+    /// sketch or neither a rule nor a measure has that id.
+    bool removeSketchConstraint(const QString& step, const QString& id);
+    /// What `expression` is worth now, in mm (in degrees when `angle`), with the named measures
+    /// of the document; nothing when it cannot be evaluated.
+    std::optional<double> evaluateSketchValue(const QString& expression, bool angle) const;
+    /// The sketch solver the application gave (null when there is none).
+    const geo::SketchSolver* sketchSolver() const { return m_sketchSolver.get(); }
     /// The kernel, for the sketch tools that need crossings (trim, extend).
     const geo::GeometryKernel& sketchKernel() const { return *m_kernel; }
     /// The same kernel to be kept by a worker thread (the kernel does no state of its own).
@@ -547,6 +605,22 @@ public:
     /// Turns a flat face about its lowest edge, 10 degrees to start with (positive leans it out):
     /// a new step. Returns the id of the new body, empty when nothing can be done.
     Q_INVOKABLE QString tiltFace(const QString& bodyId, int faceNumber);
+    /// Adds a helper plane 10 mm from the flat face `faceNumber` of the body, or from the ground
+    /// plane when `bodyId` is empty (AP-2.12): a step without a body. Returns the id of the step,
+    /// empty when nothing can be done.
+    Q_INVOKABLE QString addHelperPlane(const QString& bodyId, int faceNumber);
+    /// The four corners (mm) of every helper plane that is calculated and shown, for the view.
+    std::vector<std::array<geo::Point3d, 4>> helperPlaneCorners() const;
+    /// Drills an M3 hole (3.4 mm, 10 mm deep) into the middle of a flat face: a new step.
+    /// Returns the id of the new body, empty when nothing can be done.
+    Q_INVOKABLE QString drillHole(const QString& bodyId, int faceNumber);
+    /// Sets a drilled hole (step `index`) for a metric screw from the tables: `size` like "M3",
+    /// `kind` one of plain (clearance hole), counterbore, countersink, nutTrap, tapDrill. One
+    /// step of the history. False when the step is no hole or size or kind are unknown.
+    /// {size, kind} of a hole step read back from its values: the table row and kind that give
+    /// exactly these numbers (tolerance 1e-6); size is empty for any other numbers.
+    Q_INVOKABLE QVariantMap holeScrewOf(int index) const;
+    Q_INVOKABLE bool setHoleScrew(int index, const QString& size, const QString& kind);
     /// The faces that belong to the one at `faceNumber` as a feature: for a curved face the curved
     /// faces it runs into and the floor of a blind hole, for a flat face just itself.
     Q_INVOKABLE QVariantList faceFeature(const QString& bodyId, int faceNumber) const;
@@ -669,6 +743,8 @@ signals:
     void historyChanged();
     void printerChanged();
     void paletteChanged();
+    /// The document's display unit for lengths changed (a new or opened document, P23b).
+    void unitChanged();
     /// The document was replaced as a whole (a file was opened, a new project started): whatever
     /// was chosen or in progress is gone.
     void documentReplaced();
@@ -684,6 +760,9 @@ private:
     /// After the document changed by a command, undo or redo: show it, and calculate again
     /// unless `geometryChanged` is false (only a look changed).
     void documentChanged(bool geometryChanged = true);
+    /// The named measures of the document as the number fields and the sketch formulas see them:
+    /// the length measures of the last result, by name.
+    core::NamedMeasures namedMeasureValues() const;
     int stepIndexOf(const core::FeatureId& id) const;
     /// A step that works on faces of one body (AP-2.4): the faces become references in `slot`,
     /// `values` set parameters (as plain digits), the result takes over name and colour of the
@@ -703,6 +782,8 @@ private:
     void rebuildLists();
     void rebuildMeasures();
     void rebuildScene();
+    /// Brings `m_unit` and the numbers (the QML singleton) to the unit of the document (P23b).
+    void syncUnit();
     QVariantList buildStepValues() const;
     QVariantList buildStepTexts() const;
     QVariantList buildStepHandles() const;
@@ -711,6 +792,9 @@ private:
     static std::uint64_t meshKey(const core::BodyResult& body) noexcept;
 
     std::shared_ptr<const geo::GeometryKernel> m_kernel;
+    /// The one sketch solver of the application (null when there is none); the engine and the
+    /// sketch commands hold a pointer to it.
+    std::shared_ptr<const geo::SketchSolver> m_sketchSolver;
     core::FeatureRegistry m_registry;
     // The reference being picked again (empty feature id = none).
     core::FeatureId m_repairFeature;
@@ -759,6 +843,12 @@ private:
     void collectForms(const core::Feature& step, std::vector<const core::Feature*>& out) const;
     /// Writes the turn and the foot of a seat into the step (one value after the other).
     void writeSeat(const core::FeatureId& id, const geo::Seat& seat);
+    /// Pflege P8: re-seats the shape that was just put down on a wall with its sizes as they are
+    /// now, so that its underside stays on the wall. Called inside the open step of a change, so
+    /// that the re-seat is part of the same undo step. False (and nothing written) when there is
+    /// no fresh seat, another command happened since, or a value cannot be worked out without the
+    /// named measures: never seated with guessed sizes.
+    bool reseatFresh();
     const core::Body* findBody(const QString& bodyId) const;
 
     // What was copied (also on the system clipboard, see clipboard_payload.h).
@@ -772,6 +862,7 @@ private:
     std::shared_ptr<const render::RenderScene> m_scene;
     std::shared_ptr<const ElementNameMap> m_elementNames = std::make_shared<ElementNameMap>();
     Numbers* m_numbers = nullptr;
+    QString m_unit = QStringLiteral("mm"); ///< the unit last pushed to the numbers (P23b)
 
     QVariantList m_recipe;
     QVariantList m_measureList;
@@ -786,6 +877,18 @@ private:
     QString m_placingSurface;
     geo::Point3d m_placingCentre; ///< middle of the shape's box minus its foot (before a turn)
     bool m_placingOnFace = false; ///< the shape lies on a tilted face (it has a turn)
+    /// The wall a shape was put down on (pflege P8): while nothing else happened since (same
+    /// revision), a typed size keeps its underside on the wall.
+    struct FreshSeat {
+        core::FeatureId feature;
+        geo::Point3d point;
+        geo::Point3d normal;
+        std::uint64_t revision = 0;
+    };
+    std::optional<FreshSeat> m_freshSeat;
+    geo::Point3d m_placingSeatPoint;         ///< the last wall point of the shape being placed
+    geo::Point3d m_placingSeatNormal;        ///< and the wall's outward direction
+    std::uint64_t m_changeStartRevision = 0; ///< the revision when `beginChange` opened its step
     double m_workplaneZ = 0.0;
     QString m_workplaneBody;
     int m_currentStep = -1;
@@ -795,6 +898,8 @@ private:
     // Tessellations by result, made on the worker thread, read when the scene is put together.
     std::mutex m_meshMutex;
     std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_meshes;
+    std::map<std::uint64_t, std::shared_ptr<const std::vector<geo::SnapPointGal>>>
+        m_snapPoints; ///< by mesh key, guarded by m_meshMutex
 
     // Finer tessellations for the current zoom, by mesh key; made by a pool thread, used on the
     // interface thread only.

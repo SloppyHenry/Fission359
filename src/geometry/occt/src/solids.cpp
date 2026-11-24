@@ -30,6 +30,7 @@
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
 #include <GCPnts_TangentialDeflection.hxx>
 #include <GProp_GProps.hxx>
 #include <GeomAbs_SurfaceType.hxx>
@@ -40,7 +41,9 @@
 #include <Standard_Failure.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <TopExp.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopLoc_Location.hxx>
+#include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_ShapeMapHasher.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
@@ -321,6 +324,37 @@ NamedSolid translateNamed(const NamedSolid& solid, Point3d delta) {
     }
 }
 
+NamedSolid transformNamed(const NamedSolid& solid, const Transform3& transform) {
+    // Check for non-finite values in rotation matrix and translation
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (!std::isfinite(transform.r[i][j])) {
+                throw GeometryError(GeometryErrorCode::invalidInput, "transform: not a number");
+            }
+        }
+    }
+    if (!std::isfinite(transform.t.x) || !std::isfinite(transform.t.y) ||
+        !std::isfinite(transform.t.z)) {
+        throw GeometryError(GeometryErrorCode::invalidInput, "transform: not a number");
+    }
+    try {
+        // gp_Trsf supports matrices with determinant -1 (reflections), and BRepBuilderAPI_Transform
+        // will reverse the orientation accordingly.
+        gp_Trsf trsf;
+        trsf.SetValues(transform.r[0][0], transform.r[0][1], transform.r[0][2], transform.t.x,
+                       transform.r[1][0], transform.r[1][1], transform.r[1][2], transform.t.y,
+                       transform.r[2][0], transform.r[2][1], transform.r[2][2], transform.t.z);
+        const TopoDS_Shape transformed =
+            BRepBuilderAPI_Transform(shapeOf(solid.solid), trsf, /*Copy=*/true).Shape();
+        NamedSolid result;
+        result.solid = validated(transformed, "transform");
+        result.faces = solid.faces;
+        return result;
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "transform: the kernel failed");
+    }
+}
+
 Solid makeBox(double sizeX, double sizeY, double sizeZ, Point3d corner, double cornerRadius) {
     return makeNamedBox(sizeX, sizeY, sizeZ, corner, cornerRadius).solid;
 }
@@ -353,6 +387,85 @@ Bounds exactBounds(const Solid& solid) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "exactBounds: the kernel failed");
     }
     return result;
+}
+
+std::vector<SnapPointGal> snapPoints(const Solid& solid) {
+    std::vector<SnapPointGal> points;
+    try {
+        const TopoDS_Shape& shape = shapeOf(solid);
+
+        ShapeMap vertices;
+        TopExp::MapShapes(shape, TopAbs_VERTEX, vertices);
+        for (int i = 1; i <= vertices.Extent(); ++i) {
+            const gp_Pnt p = BRep_Tool::Pnt(TopoDS::Vertex(vertices(i)));
+            points.push_back({{p.X(), p.Y(), p.Z()}, SnapPointKind::corner});
+        }
+
+        // The seam of a round face (where a cylinder's side meets itself) is no edge a person
+        // sees: its middle would be a point in the middle of nowhere.
+        ShapeMap seams;
+        for (TopExp_Explorer face(shape, TopAbs_FACE); face.More(); face.Next()) {
+            for (TopExp_Explorer edge(face.Current(), TopAbs_EDGE); edge.More(); edge.Next()) {
+                if (BRep_Tool::IsClosed(TopoDS::Edge(edge.Current()),
+                                        TopoDS::Face(face.Current()))) {
+                    seams.Add(edge.Current());
+                }
+            }
+        }
+        ShapeMap edges;
+        TopExp::MapShapes(shape, TopAbs_EDGE, edges);
+        for (int i = 1; i <= edges.Extent(); ++i) {
+            const TopoDS_Edge edge = TopoDS::Edge(edges(i));
+            if (BRep_Tool::Degenerated(edge) || seams.Contains(edge)) {
+                continue;
+            }
+            const BRepAdaptor_Curve curve(edge);
+            // The middle of the edge: the point at half its length, also of a bent one.
+            const double length = GCPnts_AbscissaPoint::Length(curve);
+            const double u =
+                GCPnts_AbscissaPoint(curve, length / 2.0, curve.FirstParameter()).Parameter();
+            const gp_Pnt middle = curve.Value(u);
+            points.push_back({{middle.X(), middle.Y(), middle.Z()}, SnapPointKind::edgeMiddle});
+            if (curve.GetType() == GeomAbs_Circle) {
+                const gp_Pnt centre = curve.Circle().Location();
+                points.push_back(
+                    {{centre.X(), centre.Y(), centre.Z()}, SnapPointKind::circleCentre});
+            }
+        }
+
+        ShapeMap faces;
+        TopExp::MapShapes(shape, TopAbs_FACE, faces);
+        for (int i = 1; i <= faces.Extent(); ++i) {
+            const TopoDS_Face face = TopoDS::Face(faces(i));
+            const BRepAdaptor_Surface surface(face);
+            if (surface.GetType() == GeomAbs_Plane) {
+                GProp_GProps properties;
+                BRepGProp::SurfaceProperties(face, properties);
+                const gp_Pnt centre = properties.CentreOfMass();
+                points.push_back({{centre.X(), centre.Y(), centre.Z()}, SnapPointKind::faceMiddle});
+            }
+        }
+    } catch (const Standard_Failure&) {
+        throw GeometryError(GeometryErrorCode::kernelFailure, "snapPoints: the kernel failed");
+    }
+
+    // Duplicates (same kind, closer than 1e-9 mm) appear once.
+    std::vector<SnapPointGal> unique;
+    for (const SnapPointGal& point : points) {
+        const auto duplicate = [&point](const SnapPointGal& other) {
+            if (other.kind != point.kind) {
+                return false;
+            }
+            const double dx = other.position.x - point.position.x;
+            const double dy = other.position.y - point.position.y;
+            const double dz = other.position.z - point.position.z;
+            return dx * dx + dy * dy + dz * dz < 1e-18;
+        };
+        if (std::find_if(unique.begin(), unique.end(), duplicate) == unique.end()) {
+            unique.push_back(point);
+        }
+    }
+    return unique;
 }
 
 SolidReport measure(const Solid& solid) {

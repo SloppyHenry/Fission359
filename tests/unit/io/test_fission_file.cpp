@@ -301,6 +301,7 @@ Document fixtureDocument(World& world, const std::string& type) {
         {"tiltFace", {"face", ElementKind::face}},
         {"removeFaces", {"faces", ElementKind::face}},
         {"offsetFaces", {"faces", ElementKind::face}},
+        {"hole", {"face", ElementKind::face}},
         {"draft", {"faces", ElementKind::face}},
         {"shell", {"openFaces", ElementKind::face}}};
     if (const auto slot = onElement.find(type); slot != onElement.end()) {
@@ -350,8 +351,8 @@ TEST_CASE("write the version 1 fixture files", "[.generate-fixtures]") {
     World world;
     fs::create_directories(fixtureFolder("v1"));
     for (const std::string& type : world.registry.ids()) {
-        if (type == "extrude" || type == "revolve") {
-            continue; // came after format 1
+        if (type == "helperPlane" || type == "pattern" || type == "extrude" || type == "revolve") {
+            continue; // came after format 1 (extrude: its file lives in v4/)
         }
         const fs::path target = fixtureFolder("v1") / (type + ".fission");
         if (fs::exists(target)) {
@@ -375,9 +376,9 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
         REQUIRE(opened.document);
         CHECK(opened.problems.empty());
         CHECK(opened.documentProblems.empty());
-        CHECK(opened.info.formatVersion == 1);
-
         const std::string type = entry.path().stem().string();
+        // `hole` came with format 4 (AP-2.7b2) and was written by that program, unchanged.
+        CHECK(opened.info.formatVersion == (type == "hole" ? 4 : 1));
         CHECK(opened.document->title == "Fixture " + type);
         CHECK(opened.document->features().back().type == type);
         CHECK(opened.document->findParameter("Breite")->expression == "25,5 mm");
@@ -397,7 +398,8 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
     }
     // Step types that came after format 1 and have no artificial version 1 file (see the README
     // of the fixtures); their files live in the folder of their own format.
-    const std::size_t newer = 2; // extrude (AP-2.3b), revolve (AP-2.3c)
+    // pattern (AP-2.8b), extrude (AP-2.3b), helperPlane (AP-2.12b), revolve (AP-2.3c)
+    const std::size_t newer = 4;
     CHECK(count + newer == world.registry.ids().size());
 }
 

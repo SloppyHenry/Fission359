@@ -19,6 +19,7 @@
 #include "fission/core/resolve.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/occt/kernel.h"
+#include "fission/geo/sketch/planegcs_solver.h"
 
 using Catch::Approx;
 using namespace fission::core;
@@ -375,4 +376,41 @@ TEST_CASE("extrude: through all and up to a face need a body (AP-2.3 rest)", "[e
         const RecomputeResult result = world.calculate();
         CHECK(result.state(pull)->status != FeatureStatus::ok);
     }
+}
+
+TEST_CASE("extrude: a named measure changes the solved sketch and so the pulled body",
+          "[extrude][feature][sketch]") {
+    ExtrudeWorld world;
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    REQUIRE(world.history.execute(
+        makeAddParameter(Parameter{"Breite", "60", QuantityKind::length, "", std::nullopt})));
+    const FeatureId sketch = world.addSketch();
+    world.rectangle(sketch, 60, 40);
+    for (const char* line : {"L1", "L3"}) {
+        REQUIRE(world.history.execute(makeAddSketchRule(sketch, "horizontal", {line}, *solver)));
+    }
+    for (const char* line : {"L2", "L4"}) {
+        REQUIRE(world.history.execute(makeAddSketchRule(sketch, "vertical", {line}, *solver)));
+    }
+    REQUIRE(world.history.execute(makeAddSketchRule(sketch, "fixed", {"L1.0"}, *solver)));
+    for (const auto& pair : std::vector<std::vector<std::string>>{
+             {"L1.1", "L2.0"}, {"L2.1", "L3.0"}, {"L3.1", "L4.0"}, {"L4.1", "L1.0"}}) {
+        REQUIRE(world.history.execute(makeAddSketchRule(sketch, "coincident", pair, *solver)));
+    }
+    REQUIRE(world.history.execute(
+        makeAddSketchMeasure(sketch, "length", {"L1"}, "Breite", 60.0, *solver)));
+    world.addExtrude(sketch, "L1+L2+L3+L4");
+    const BodyId body = world.onlyBody();
+
+    const auto volumeOf = [&] {
+        const auto result = recompute(world.history.document(), world.registry, *world.kernel,
+                                      world.cache, {}, solver.get());
+        REQUIRE(result.has_value());
+        REQUIRE(result->bodies.contains(body));
+        return world.kernel->measure(result->bodies.at(body).solid).volume;
+    };
+    CHECK(volumeOf() == Approx(72000.0).epsilon(1e-6));
+    // Only the named measure changes: the cache must not hand back the old body.
+    REQUIRE(world.history.execute(makeSetParameterExpression("Breite", "80")));
+    CHECK(volumeOf() == Approx(96000.0).epsilon(1e-6));
 }

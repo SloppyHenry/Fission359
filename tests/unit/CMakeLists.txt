@@ -7,9 +7,11 @@ add_executable(fission_unit_tests
   core/test_measure_names.cpp
   core/test_measures.cpp
   core/test_document.cpp
+  core/test_move_feature.cpp
   core/test_recompute.cpp
   core/test_history.cpp
   core/test_sketch.cpp
+  core/test_sketch_solve.cpp
   core/test_selection.cpp
   core/test_scaling.cpp
   core/test_cuts.cpp
@@ -21,11 +23,15 @@ add_executable(fission_unit_tests
   naming/test_random.cpp
   naming/test_sensitivity.cpp
   features/test_primitives.cpp
+  features/test_hole_tables.cpp
   features/test_combine.cpp
   features/test_split.cpp
   features/test_blend.cpp
   features/test_push_face.cpp
   features/test_face_ops.cpp
+  features/test_pattern_step.cpp
+  features/test_helper_plane.cpp
+  features/test_hole_step.cpp
   features/test_shell_draft.cpp
   features/test_text_feature.cpp
   features/test_import.cpp
@@ -34,18 +40,21 @@ add_executable(fission_unit_tests
   features/test_revolve_feature.cpp
   features/test_sketch_edges.cpp
   services/test_settings.cpp
+  services/test_platform.cpp
   io/test_fission_file.cpp
   io/test_export.cpp
   io/test_formats.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp
+  geometry/test_hole_tool.cpp
   geometry/test_rotation.cpp
   geometry/test_booleans_gal.cpp
   geometry/test_signatures.cpp
   geometry/test_blends.cpp
   geometry/test_faces.cpp
   geometry/test_stretch.cpp
+  geometry/test_transformed.cpp
   geometry/test_plausibility.cpp
   geometry/test_hollow.cpp
   geometry/test_draft.cpp
@@ -58,6 +67,8 @@ add_executable(fission_unit_tests
   geometry/test_sketch_regions.cpp
   geometry/test_extrude.cpp
   geometry/test_revolve.cpp
+  geometry/test_pattern.cpp
+  geometry/test_datum.cpp
   geometry/test_sketch_edge.cpp
   geometry/test_sketch_solver.cpp
   analysis/test_material.cpp
@@ -80,6 +91,7 @@ add_executable(fission_unit_tests
   ui/test_selection_controller.cpp
   ui/test_sketch_mode.cpp
   ui/test_sketch_tools.cpp
+  ui/test_sketch_measures_ui.cpp
   ui/test_sketch_takeover.cpp
   ui/test_sketch_regions_ui.cpp
   ui/test_placement.cpp

@@ -45,6 +45,7 @@
 #include "fission/core/version.h"
 #include "fission/geo/occt/kernel.h"
 #include "fission/geo/occt/layer.h"
+#include "fission/geo/sketch/planegcs_solver.h"
 #include "fission/render/benchmark_scene.h"
 #include "fission/render/scene.h"
 #include "fission/services/autosave.h"
@@ -68,6 +69,7 @@
 #include "fission/ui/measure_controller.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/placement_controller.h"
+#include "fission/ui/platform_info.h"
 #include "fission/ui/preferences.h"
 #include "fission/ui/rotate_controller.h"
 #include "fission/ui/scale_controller.h"
@@ -235,6 +237,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "keeps the button down), "
             "drag:x,y,40,0,8 (press at a point of the 3D view, "
             "pull, let go), focus:width (the cursor into that field), key:Right (press a key), "
+            "markcamera (store the camera distance), expectcamera:closer / expectcamera:farther "
+            "(fail unless the camera came closer to / farther from its target since markcamera), "
             "separated by semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
@@ -524,7 +528,10 @@ int main(int argc, char* argv[]) {
     kernelOptions.fontFiles = bundledFontFiles();
     std::shared_ptr<const fission::geo::GeometryKernel> kernel =
         fission::geo::occt::makeKernel(kernelOptions);
-    fission::ui::DocumentModel documentModel(kernel);
+    // The one sketch solver of the application: the document model and its engine use it.
+    std::shared_ptr<const fission::geo::SketchSolver> sketchSolver =
+        fission::geo::sketch::makePlaneGcsSolver();
+    fission::ui::DocumentModel documentModel(kernel, nullptr, sketchSolver);
     documentModel.setNumbers(&numbers);
     documentModel.addDemoBox();
     documentModel.waitForCalculation();
@@ -569,7 +576,10 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Preferences", &preferences);
     fission::ui::CommandSearch commandSearch;
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "CommandSearch", &commandSearch);
+    fission::ui::PlatformInfo platform;
+    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Platform", &platform);
     documentModel.setPrinter(preferences.printerId());
+    // New projects count and show lengths in the chosen unit; opened ones keep their own.
     files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
     QObject::connect(&preferences, &fission::ui::Preferences::unitsChanged, &files, [&] {
         files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
@@ -675,6 +685,27 @@ int main(int argc, char* argv[]) {
         align.attach(viewport);
         distances.attachGizmo(&gizmo);
         viewport->setScene(documentModel.scene());
+        // The helper planes are drawn as squares with a line round them (AP-2.12c).
+        const auto drawPlanes = [viewport, &documentModel] {
+            fission::render::HandleGraphics graphics;
+            for (const auto& corners : documentModel.helperPlaneCorners()) {
+                fission::render::HandleQuad quad;
+                for (std::size_t i = 0; i < 4; ++i) {
+                    quad.corners[i] = QVector3D(static_cast<float>(corners[i].x),
+                                                static_cast<float>(corners[i].y),
+                                                static_cast<float>(corners[i].z));
+                }
+                quad.fill = QColor(0x4C, 0x8D, 0xFF, 40);
+                quad.line = QColor(0x4C, 0x8D, 0xFF, 200);
+                graphics.quads.push_back(quad);
+            }
+            viewport->setHandleGraphics(std::move(graphics),
+                                        fission::ui::Viewport3D::HandleSource::datum);
+        };
+        QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
+                         [drawPlanes](const std::shared_ptr<const fission::render::RenderScene>&) {
+                             drawPlanes();
+                         });
         const QMetaObject::Connection sceneConnection =
             QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
                              [viewport](std::shared_ptr<const fission::render::RenderScene> scene) {

@@ -50,7 +50,7 @@
 ---
 
 ### AP-2.2 Skizzen-Regeln und Maße (Constraint-Solver)
-**Status:** offen · **Größe:** XL · **Abhängigkeiten:** AP-2.1
+**Status:** in Arbeit (2.2a in main seit 2026-11-11, PR #113: Skizzen-Löser hinter der GAL mit PlaneGCS; 2.2b Maße und Regeln in PR #115) · **Größe:** XL · **Abhängigkeiten:** AP-2.1
 **Bauanleitung:** [anleitungen/AP-2.2.md](anleitungen/AP-2.2.md)
 
 > Vor dem Start in Teilpakete zerlegen (Solver-Anbindung, Auto-Regeln, Maße, Diagnose-UI).

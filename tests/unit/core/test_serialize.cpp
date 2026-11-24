@@ -330,7 +330,7 @@ TEST_CASE("only sketch steps carry the field sketch", "[serialize][sketch]") {
         sketches += feature.contains("sketch") ? 1 : 0;
     }
     CHECK(sketches == 1);
-    CHECK(json.at("formatVersion") == 4);
+    CHECK(json.at("formatVersion") == currentFormatVersion);
 }
 
 TEST_CASE("a file of format 2 opens in format 4, a sketch step is an empty sketch",
@@ -347,7 +347,7 @@ TEST_CASE("a file of format 2 opens in format 4, a sketch step is an empty sketc
     REQUIRE(step.sketch.has_value());
     CHECK(step.sketch->elements.empty());
     // Written again it is the current format, with the field.
-    CHECK(Json::parse(toJson(*loaded.document)).at("formatVersion") == 4);
+    CHECK(Json::parse(toJson(*loaded.document)).at("formatVersion") == currentFormatVersion);
     CHECK(load(toJson(*loaded.document)).document->sameContentAs(*loaded.document));
 }
 
@@ -423,8 +423,8 @@ TEST_CASE("a file of format 3 opens in format 4, nothing is linked",
         CHECK_FALSE(element.link.has_value());
     }
     CHECK(sketchStep(*loaded.document).sketch->elements.size() == 5);
-    // Written again it is format 4
-    CHECK(Json::parse(toJson(*loaded.document)).at("formatVersion") == 4);
+    // Written again it is the current format
+    CHECK(Json::parse(toJson(*loaded.document)).at("formatVersion") == currentFormatVersion);
     CHECK(load(toJson(*loaded.document)).document->sameContentAs(*loaded.document));
 }
 

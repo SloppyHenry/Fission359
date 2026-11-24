@@ -909,6 +909,36 @@
         <translation>Die Ansicht dreht und zoomt; am Projekt ändert sich nichts.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Heranzoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view closer to the middle of the screen.</source>
+        <translation>Bringt die Ansicht näher an die Bildschirmmitte.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view comes closer; nothing in the project changes.</source>
+        <translation>Die Ansicht kommt näher; am Projekt ändert sich nichts.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Herauszoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view farther away from the middle of the screen.</source>
+        <translation>Rückt die Ansicht weiter von der Bildschirmmitte weg.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view goes farther away; nothing in the project changes.</source>
+        <translation>Die Ansicht rückt weiter weg; am Projekt ändert sich nichts.</translation>
+    </message>
+    <message>
         <location line="+5"/>
         <source>Home view</source>
         <translation>Startansicht</translation>
@@ -1019,39 +1049,9 @@
         <translation>Fase</translation>
     </message>
     <message>
-        <location line="+107"/>
-        <source>Drilled hole</source>
-        <translation>Bohrung</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>A round hole in a face with a chosen diameter and depth, also countersunk.</source>
-        <translation>Ein rundes Loch in einer Fläche mit gewähltem Durchmesser und gewählter Tiefe, auch mit Senkung.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Click a face, then drag the dot.</source>
-        <translation>Klicke eine Fläche an, dann ziehe den Punkt.</translation>
-    </message>
-    <message>
         <location line="-74"/>
         <source>Hollow out</source>
         <translation>Aushöhlen</translation>
-    </message>
-    <message>
-        <location line="+78"/>
-        <source>Pull up a sketch</source>
-        <translation>Skizze hochziehen</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Turns a sketch into a body by pulling it up.</source>
-        <translation>Macht aus einer Skizze einen Körper, indem man sie hochzieht.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Draw a sketch, then drag it up.</source>
-        <translation>Zeichne eine Skizze und ziehe sie dann hoch.</translation>
     </message>
     <message>
         <location line="-274"/>
@@ -1104,6 +1104,30 @@
     <message>
         <source>Choose a closed area on one side of the vertical line, then spin it.</source>
         <translation>Wähle einen geschlossenen Bereich auf einer Seite der senkrechten Linie und drehe ihn dann.</translation>
+    </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Hilfsebene</translation>
+    </message>
+    <message>
+        <source>A plane that floats beside a face or above the bed, to sketch on later. It is not part of the body and never printed.</source>
+        <translation>Eine Ebene, die neben einer Fläche oder über dem Druckbett schwebt, um später darauf zu skizzieren. Sie gehört nicht zum Körper und wird nie gedruckt.</translation>
+    </message>
+    <message>
+        <source>Choose a flat face (or nothing for the bed), then type the distance in the panel.</source>
+        <translation>Wähle eine ebene Fläche (oder nichts für das Druckbett) und trage dann den Abstand im Feld ein.</translation>
+    </message>
+    <message>
+        <source>Drill hole</source>
+        <translation>Bohren</translation>
+    </message>
+    <message>
+        <source>Drills a round hole into a flat face, 3.4 mm wide for an M3 screw. Diameter, depth and place can be changed afterwards.</source>
+        <translation>Bohrt ein rundes Loch in eine ebene Fläche, 3,4 mm weit für eine M3-Schraube. Durchmesser, Tiefe und Lage lassen sich danach ändern.</translation>
+    </message>
+    <message>
+        <source>Choose one flat face, then type the diameter, the depth and the place in the panel.</source>
+        <translation>Wähle eine ebene Fläche und trage dann Durchmesser, Tiefe und Lage im Feld ein.</translation>
     </message>
 </context>
 <context>
@@ -1766,6 +1790,11 @@
         <source>Delete</source>
         <translation>Löschen</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>This step needs a step above it - it cannot go there</source>
+        <translation>Dieser Schritt braucht einen Schritt darüber – dorthin geht er nicht</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
@@ -1969,6 +1998,16 @@
         <location line="+2"/>
         <source>Show everything</source>
         <translation>Alles zeigen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Heranzoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Herauszoomen</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2579,8 +2618,8 @@
     </message>
     <message>
         <location line="+1572"/>
-        <source>Unit: mm</source>
-        <translation>Einheit: mm</translation>
+        <source>Unit: %1</source>
+        <translation>Einheit: %1</translation>
     </message>
     <message>
         <location line="+27"/>
@@ -2777,8 +2816,8 @@
     </message>
     <message>
         <location line="+3"/>
-        <source>Shift switches catching off, %1 draws a helper line.</source>
-        <translation>Mit Umschalt rastet der Zeiger nicht ein, mit %1 zeichnest du eine Hilfslinie.</translation>
+        <source>Shift switches catching and automatic rules off, %1 draws a helper line.</source>
+        <translation>Shift schaltet Einrasten und automatische Regeln aus, %1 zeichnet eine Hilfslinie.</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -2869,6 +2908,11 @@
         <location line="+1"/>
         <source>%1 moved</source>
         <translation>%1 verschoben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 moved in the recipe</source>
+        <translation>%1 im Rezept verschoben</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3096,6 +3140,26 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Rule added to the sketch</source>
+        <translation>Regel zur Skizze hinzugefügt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Measure %1 added to the sketch</source>
+        <translation>Maß %1 zur Skizze hinzugefügt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sketch measure changed to %1</source>
+        <translation>Skizzenmaß auf %1 geändert</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rule or measure removed from the sketch</source>
+        <translation>Regel oder Maß aus der Skizze entfernt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Step renamed</source>
         <translation>Schritt umbenannt</translation>
     </message>
@@ -3286,6 +3350,105 @@
             <numerusform>%n geschlossener Bereich. Klicke einen an, um ihn zu wählen.</numerusform>
             <numerusform>%n geschlossene Bereiche. Klicke einen an, um ihn zu wählen.</numerusform>
         </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The sketch is fully fixed.</source>
+        <translation>Die Skizze steht fest.</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n element(s) can still move (blue): drag them to try, or click one and type a number to fix its size.</source>
+        <translation>
+            <numerusform>%n Element kann sich noch bewegen (blau): zum Ausprobieren ziehen, oder anklicken und eine Zahl tippen, um seine Größe festzulegen.</numerusform>
+            <numerusform>%n Elemente können sich noch bewegen (blau): zum Ausprobieren ziehen, oder eines anklicken und eine Zahl tippen, um seine Größe festzulegen.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Type a number to set the %1</source>
+        <translation>Zahl tippen: %1 setzen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>length</source>
+        <translation>Länge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>diameter</source>
+        <translation>Durchmesser</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>distance</source>
+        <translation>Abstand</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>angle</source>
+        <translation>Winkel</translation>
+    </message>
+    <message>
+        <source>Pattern</source>
+        <translation>Muster</translation>
+    </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Hilfsebene</translation>
+    </message>
+    <message>
+        <source>A helper plane can only start from a flat face.</source>
+        <translation>Eine Hilfsebene geht nur von einer ebenen Fläche aus.</translation>
+    </message>
+    <message>
+        <source>Helper plane 10 mm from the face. Type another distance in the panel.</source>
+        <translation>Hilfsebene 10 mm von der Fläche entfernt. Einen anderen Abstand trägst du im Feld ein.</translation>
+    </message>
+    <message>
+        <source>Helper plane 10 mm above the bed. Type another distance in the panel.</source>
+        <translation>Hilfsebene 10 mm über dem Druckbett. Einen anderen Abstand trägst du im Feld ein.</translation>
+    </message>
+    <message>
+        <source>Helper plane added</source>
+        <translation>Hilfsebene hinzugefügt</translation>
+    </message>
+    <message>
+        <source>Drill hole</source>
+        <translation>Bohren</translation>
+    </message>
+    <message>
+        <source>A hole can only be drilled into a flat face of a body that is not part of another body yet.</source>
+        <translation>Eine Bohrung geht nur in eine ebene Fläche eines Körpers, der noch nicht Teil eines anderen Körpers ist.</translation>
+    </message>
+    <message>
+        <source>Hole drilled into the middle of the face. Type the diameter, the depth and the place in the panel.</source>
+        <translation>Bohrung in die Mitte der Fläche gesetzt. Durchmesser, Tiefe und Lage trägst du im Feld ein.</translation>
+    </message>
+    <message>
+        <source>Drilling a hole</source>
+        <translation>Bohren</translation>
+    </message>
+    <message>
+        <source>Hole drilled</source>
+        <translation>Bohrung gesetzt</translation>
+    </message>
+    <message>
+        <source>Diameter</source>
+        <translation>Durchmesser</translation>
+    </message>
+    <message>
+        <source>Across</source>
+        <translation>Quer</translation>
+    </message>
+    <message>
+        <source>Along</source>
+        <translation>Längs</translation>
     </message>
     <message>
         <source>This pull starts on the ground plane: there is no body to join or cut.</source>
@@ -4412,6 +4575,11 @@
         </translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Drilled a hole, Ø %1 mm, %2 mm deep</source>
+        <translation>Bohrung, Ø %1 mm, %2 mm tief</translation>
+    </message>
+    <message>
         <location line="+3"/>
         <source>Face tilted by %1°</source>
         <translation>Fläche um %1° gekippt</translation>
@@ -4455,6 +4623,11 @@
         <source>Sketch</source>
         <translation>Skizze</translation>
     </message>
+    <message>
+        <location line="+3"/>
+        <source>Helper plane, %1 mm offset</source>
+        <translation>Hilfsebene, %1 mm versetzt</translation>
+    </message>
     <message numerus="yes">
         <location line="+4"/>
         <source>Cut out %n body(ies)</source>
@@ -4483,6 +4656,20 @@
         <location line="+5"/>
         <source>Step %1 (unknown kind)</source>
         <translation>Schritt %1 (unbekannte Art)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Row of %n copy(ies), %1 mm apart</source>
+        <translation>
+            <numerusform>Reihe aus %n Exemplar, mit %1 mm Abstand</numerusform>
+            <numerusform>Reihe aus %n Exemplaren, mit %1 mm Abstand</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Circle of %n copy(ies), %1° in all</source>
+        <translation>
+            <numerusform>Kreis aus %n Exemplar, über %1° verteilt</numerusform>
+            <numerusform>Kreis aus %n Exemplaren, über %1° verteilt</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -4757,6 +4944,38 @@
         <translation>Gelb</translation>
     </message>
     <message>
+        <source>Helper plane</source>
+        <translation>Hilfsebene</translation>
+    </message>
+    <message>
+        <source>Show the plane in the view</source>
+        <translation>Ebene in der Ansicht zeigen</translation>
+    </message>
+    <message>
+        <source>What is the hole for?</source>
+        <translation>Wofür ist das Loch?</translation>
+    </message>
+    <message>
+        <source>Screw goes through</source>
+        <translation>Schraube geht hindurch</translation>
+    </message>
+    <message>
+        <source>Countersunk screw</source>
+        <translation>Senkkopfschraube</translation>
+    </message>
+    <message>
+        <source>Screw with a cylinder head</source>
+        <translation>Schraube mit Zylinderkopf</translation>
+    </message>
+    <message>
+        <source>Nut to put in</source>
+        <translation>Mutter zum Einlegen</translation>
+    </message>
+    <message>
+        <source>Screw cuts its own thread</source>
+        <translation>Schraube schneidet sich ihr Gewinde</translation>
+    </message>
+    <message>
         <source>Pull</source>
         <translation>Ziehen</translation>
     </message>
@@ -4783,6 +5002,10 @@
     <message>
         <source>All the way through the body</source>
         <translation>Ganz durch den Körper</translation>
+    </message>
+    <message>
+        <source>Up to the face %1 mm away</source>
+        <translation>Bis zur Fläche %1 mm entfernt</translation>
     </message>
 </context>
 <context>
@@ -5752,6 +5975,11 @@
         <source>Examples</source>
         <translation>Beispiele</translation>
     </message>
+    <message>
+        <location filename="../qml/StartPage.qml" line="159"/>
+        <source>You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.</source>
+        <translation>Du nutzt die Browser-Version: Speichern lädt die Datei herunter, Öffnen holt sie von deinem Rechner. Deine Arbeit wird zusätzlich im Browser gesichert.</translation>
+    </message>
 </context>
 <context>
     <name>StatusBar</name>
@@ -6187,6 +6415,193 @@
     <message>
         <source>Spin</source>
         <translation>Drehen</translation>
+    </message>
+</context>
+<context>
+    <name>SketchMeasureLayer</name>
+    <message>
+        <location filename="../qml/SketchMeasureLayer.qml" line="+29"/>
+        <source>Length</source>
+        <translation>Länge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Diameter</source>
+        <translation>Durchmesser</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Distance</source>
+        <translation>Abstand</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Angle</source>
+        <translation>Winkel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Horizontal</source>
+        <translation>Waagerecht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line lie flat, left to right</source>
+        <translation>Legt die Linie flach, von links nach rechts</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Vertical</source>
+        <translation>Senkrecht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line stand upright</source>
+        <translation>Stellt die Linie aufrecht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fixed</source>
+        <translation>Fest</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keeps it where it is</source>
+        <translation>Hält es an seinem Platz</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Parallel</source>
+        <translation>Parallel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines run side by side</source>
+        <translation>Lässt die zwei Linien nebeneinander laufen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Right angle</source>
+        <translation>Rechter Winkel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines meet at a right angle</source>
+        <translation>Lässt die zwei Linien rechtwinklig aufeinandertreffen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same size</source>
+        <translation>Gleich groß</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes both equally long or equally large</source>
+        <translation>Macht beide gleich lang oder gleich groß</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same centre</source>
+        <translation>Gleiche Mitte</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Gives both circles the same centre</source>
+        <translation>Gibt beiden Kreisen dieselbe Mitte</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Touching</source>
+        <translation>Berührend</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes them touch without crossing</source>
+        <translation>Lässt sie sich berühren, ohne sich zu kreuzen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>click to remove this rule</source>
+        <translation>klicken, um diese Regel zu entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Joined</source>
+        <translation>Verbunden</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Symmetric</source>
+        <translation>Symmetrisch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>In the middle</source>
+        <translation>In der Mitte</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On the line</source>
+        <translation>Auf der Linie</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>These rules contradict each other:</source>
+        <translation>Diese Regeln widersprechen sich:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This rule contradicts the drawing:</source>
+        <translation>Diese Regel passt nicht zur Zeichnung:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The sketch cannot be solved like this.</source>
+        <translation>So lässt sich die Skizze nicht lösen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove %1</source>
+        <translation>%1 entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove one of them and the sketch fits again. Until then it keeps its last shape.</source>
+        <translation>Entferne eine davon, dann passt die Skizze wieder. Bis dahin behält sie ihre letzte Form.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This rule is doubled, it already follows from the others:</source>
+        <translation>Diese Regel ist doppelt, sie folgt schon aus den anderen:</translation>
+    </message>
+</context>
+<context>
+    <name>HandleLayer</name>
+    <message>
+        <source>Joins</source>
+        <translation>Vereint</translation>
+    </message>
+    <message>
+        <source>Cuts out</source>
+        <translation>Schneidet aus</translation>
+    </message>
+    <message>
+        <source>New body</source>
+        <translation>Neuer Körper</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>Was das Ziehen macht</translation>
     </message>
 </context>
 </TS>

@@ -226,3 +226,57 @@ TEST_CASE("cylinder: the seam belongs to the same face on both sides", "[solid][
     CHECK(seams == 1);
     CHECK(rims == 2);
 }
+
+TEST_CASE("snap points are exact: corners, edge middles, circle centres, face middles",
+          "[solid][snap]") {
+    const auto count = [](const std::vector<SnapPointGal>& points, SnapPointKind kind) {
+        int n = 0;
+        for (const SnapPointGal& point : points) {
+            if (point.kind == kind) {
+                ++n;
+            }
+        }
+        return n;
+    };
+    const auto has = [](const std::vector<SnapPointGal>& points, SnapPointKind kind,
+                        Point3d expected, double margin) {
+        for (const SnapPointGal& point : points) {
+            if (point.kind == kind && std::abs(point.position.x - expected.x) <= margin &&
+                std::abs(point.position.y - expected.y) <= margin &&
+                std::abs(point.position.z - expected.z) <= margin) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    // A box 20 x 10 x 5 at the origin: 8 corners, 12 edge middles, 6 face middles, no circles.
+    const Solid box = occt::makeBox(20.0, 10.0, 5.0);
+    const std::vector<SnapPointGal> boxPoints = occt::snapPoints(box);
+    CHECK(count(boxPoints, SnapPointKind::corner) == 8);
+    CHECK(count(boxPoints, SnapPointKind::edgeMiddle) == 12);
+    CHECK(count(boxPoints, SnapPointKind::faceMiddle) == 6);
+    CHECK(count(boxPoints, SnapPointKind::circleCentre) == 0);
+    CHECK(has(boxPoints, SnapPointKind::corner, {20.0, 10.0, 5.0}, 1e-12));
+    CHECK(has(boxPoints, SnapPointKind::edgeMiddle, {10.0, 0.0, 0.0}, 1e-12));
+    CHECK(has(boxPoints, SnapPointKind::faceMiddle, {10.0, 5.0, 5.0}, 1e-12));
+
+    // A cylinder of radius 3.15 (diameter 6.3), height 10, base at the origin.
+    constexpr double kRadius = 3.15;
+    const Solid cylinder = occt::makeCylinder(kRadius, 10.0);
+    const std::vector<SnapPointGal> cylinderPoints = occt::snapPoints(cylinder);
+    CHECK(has(cylinderPoints, SnapPointKind::circleCentre, {0.0, 0.0, 0.0}, 1e-12));
+    CHECK(has(cylinderPoints, SnapPointKind::circleCentre, {0.0, 0.0, 10.0}, 1e-12));
+    // Every edge middle lies on the cylinder: at the radius from the axis. Only the two circle
+    // edges give one: the seam of the side is no edge a person sees.
+    CHECK(count(cylinderPoints, SnapPointKind::edgeMiddle) == 2);
+    for (const SnapPointGal& point : cylinderPoints) {
+        if (point.kind == SnapPointKind::edgeMiddle) {
+            CHECK(std::hypot(point.position.x, point.position.y) == Approx(kRadius).margin(1e-9));
+        }
+    }
+    // The two flat discs have their middle at the circle centres; the side is not flat.
+    CHECK(count(cylinderPoints, SnapPointKind::faceMiddle) == 2);
+    CHECK(has(cylinderPoints, SnapPointKind::faceMiddle, {0.0, 0.0, 0.0}, 1e-9));
+    CHECK(has(cylinderPoints, SnapPointKind::faceMiddle, {0.0, 0.0, 10.0}, 1e-9));
+}

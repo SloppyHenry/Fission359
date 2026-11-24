@@ -36,6 +36,9 @@ public:
     NamedSolid translate(const NamedSolid& solid, Point3d delta) const override {
         return translateNamed(solid, delta);
     }
+    NamedSolid transformed(const NamedSolid& solid, const Transform3& transform) const override {
+        return transformNamed(solid, transform);
+    }
     NamedSolid boolean(BooleanOp op, const NamedSolid& target, const std::vector<NamedSolid>& tools,
                        double fuzzy) const override {
         return booleanNamed(op, target, tools, fuzzy);
@@ -61,6 +64,9 @@ public:
     NamedSolid offsetFaces(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
                            double distance) const override {
         return offsetFacesNamed(solid, faceIds, distance);
+    }
+    NamedSolid makeHoleTool(const HoleToolSpec& spec) const override {
+        return makeHoleToolNamed(spec);
     }
     NamedSolid tiltFace(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot, Point3d axis,
                         double degrees) const override {
@@ -132,6 +138,9 @@ public:
     SolidReport measure(const Solid& solid) const override { return occt::measure(solid); }
     Bounds bounds(const Solid& solid) const override { return occt::bounds(solid); }
     Bounds exactBounds(const Solid& solid) const override { return occt::exactBounds(solid); }
+    std::vector<SnapPointGal> snapPoints(const Solid& solid) const override {
+        return occt::snapPoints(solid);
+    }
     TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const override {
         return occt::tessellate(solid, params);
     }

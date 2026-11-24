@@ -14,6 +14,7 @@
 #include "fission/core/document.h"
 #include "fission/core/expression.h"
 #include "fission/core/help_reason.h"
+#include "fission/core/sketch_solve.h"
 #include "fission/geo/kernel.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/sketch_solver.h"
@@ -134,6 +135,18 @@ struct SketchResult {
     /// plane (rule 6): a face that cannot be found again safely means no result at all.
     std::optional<SketchPlane> plane;
     SketchData data;
+    /// The elements that can still move (ids), after solving (AP-2.2c1). Without rules and
+    /// measures every element that does not follow a body edge.
+    std::vector<std::string> movable;
+    /// Directions the sketch can still move in; 0 = fully fixed, -1 = not worked out.
+    int dof = -1;
+    /// Rules and measures that contradict each other (ids "R3"), after solving (AP-2.2d). The
+    /// sketch keeps its last solved points then.
+    std::vector<std::string> conflicting;
+    /// Rules and measures that follow from the others already (AP-2.2d): no error, a hint.
+    std::vector<std::string> redundant;
+    /// The solver found no solution for another reason (no contradiction named).
+    bool failed = false;
 
     bool operator==(const SketchResult&) const = default;
 };
@@ -175,6 +188,10 @@ struct ExecuteInput {
     /// to the elements found, in the order of the references. Only safely found elements are
     /// here; a step with a reference that needs help is not calculated at all.
     std::map<std::string, std::vector<ResolvedRef>> refs = {};
+    /// The evaluated measures of a sketch step, by measure id (mm, degrees for angles); null for
+    /// other steps or when the step has no measures. A measure's formula may use a named measure
+    /// ("2 * width"), so the recompute evaluates them with the named measures of the document.
+    const SketchMeasureValues* sketchMeasures = nullptr;
     /// The sketch steps calculated so far (AP-2.3), for a step that reads a sketch
     /// (`readsSketch`); null where nobody passes them.
     const std::map<FeatureId, SketchResult>* sketches = nullptr;

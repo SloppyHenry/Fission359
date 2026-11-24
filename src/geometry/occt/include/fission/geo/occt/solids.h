@@ -9,6 +9,7 @@
 #include "fission/geo/kernel.h"
 #include "fission/geo/mesh.h"
 #include "fission/geo/occt/fonts.h"
+#include "fission/geo/pattern.h"
 #include "fission/geo/primitives.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/solid.h"
@@ -47,6 +48,9 @@ NamedSolid rotateNamed(const NamedSolid& solid, Point3d centre, const Angles& an
 /// The body moved by `delta` (see `GeometryKernel::translate`).
 NamedSolid translateNamed(const NamedSolid& solid, Point3d delta);
 
+/// The body transformed by `transform` (see `GeometryKernel::transformed`). Throws GeometryError.
+NamedSolid transformNamed(const NamedSolid& solid, const Transform3& transform);
+
 /// Combines bodies (see `GeometryKernel::boolean`). Throws GeometryError.
 NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,
                         const std::vector<NamedSolid>& tools, double fuzzy = 0.0);
@@ -70,6 +74,9 @@ NamedSolid removeFacesNamed(const NamedSolid& solid, const std::vector<std::uint
 /// Moves several faces (see `GeometryKernel::offsetFaces`). Throws GeometryError.
 NamedSolid offsetFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
                             double distance);
+
+/// The cutting tool of a hole (see `GeometryKernel::makeHoleTool`). Throws GeometryError.
+NamedSolid makeHoleToolNamed(const HoleToolSpec& spec);
 
 /// Turns a flat face about a hinge line (see `GeometryKernel::tiltFace`). Throws GeometryError.
 NamedSolid tiltFaceNamed(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot, Point3d axis,
@@ -99,6 +106,9 @@ SolidReport measure(const Solid& solid);
 Bounds bounds(const Solid& solid);
 /// The box that touches the body (see `GeometryKernel::exactBounds`).
 Bounds exactBounds(const Solid& solid);
+
+/// See GeometryKernel::snapPoints.
+std::vector<SnapPointGal> snapPoints(const Solid& solid);
 
 /// What every face and edge of the body looks like (see `GeometryKernel::signatures`).
 BodySignatures signatures(const Solid& solid);

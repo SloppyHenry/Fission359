@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <set>
 #include <tuple>
 #include <vector>
@@ -25,10 +26,13 @@
 #include "fission/core/body_looks.h"
 #include "fission/core/commands.h"
 #include "fission/core/cuts.h"
+#include "fission/core/expression.h"
 #include "fission/core/resolve.h"
 #include "fission/core/scaling.h"
+#include "fission/core/sketch_solve.h"
 #include "fission/core/version.h"
 #include "fission/features/builtin.h"
+#include "fission/features/hole_tables.h"
 #include "fission/geo/error.h"
 #include "fission/geo/seat.h"
 #include "fission/interaction/align.h"
@@ -183,13 +187,14 @@ QClipboard* systemClipboard() {
 }
 } // namespace
 
-DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel, QObject* parent)
-    : DocumentModel(std::move(kernel), {}, parent) {}
+DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel, QObject* parent,
+                             std::shared_ptr<const geo::SketchSolver> sketchSolver)
+    : DocumentModel(std::move(kernel), {}, parent, std::move(sketchSolver)) {}
 
 DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel,
                              std::vector<std::unique_ptr<const core::FeatureType>> extraTypes,
-                             QObject* parent)
-    : QObject(parent), m_kernel(std::move(kernel)) {
+                             QObject* parent, std::shared_ptr<const geo::SketchSolver> sketchSolver)
+    : QObject(parent), m_kernel(std::move(kernel)), m_sketchSolver(std::move(sketchSolver)) {
     features::registerBuiltinFeatures(m_registry);
     for (auto& type : extraTypes) {
         m_registry.add(std::move(type));
@@ -209,7 +214,8 @@ DocumentModel::DocumentModel(std::shared_ptr<const geo::GeometryKernel> kernel,
     m_liveCutTimer.setInterval(150);
     connect(&m_liveCutTimer, &QTimer::timeout, this, [this] { liveCuts(); });
     m_engine = std::make_unique<core::RecomputeEngine>(
-        m_registry, *m_kernel, [this](const core::RecomputeEvent& event) { onEngineEvent(event); });
+        m_registry, *m_kernel, [this](const core::RecomputeEvent& event) { onEngineEvent(event); },
+        m_sketchSolver.get());
     // Reading the computer's fonts takes a moment: not on the interface thread (rule 9).
     m_detailPool.start([this, kernel = m_kernel] {
         QStringList families;
@@ -588,6 +594,28 @@ void DocumentModel::waitForCalculation() {
     QCoreApplication::sendPostedEvents(this, 0);
 }
 
+void DocumentModel::setNumbers(Numbers* numbers) {
+    m_numbers = numbers;
+    syncUnit();
+}
+
+QString DocumentModel::unit() const {
+    return std::abs(m_history.document().settings().defaultUnitMillimetres - 25.4) < 1e-9
+               ? QStringLiteral("in")
+               : QStringLiteral("mm");
+}
+
+void DocumentModel::syncUnit() {
+    const QString wanted = unit();
+    if (wanted != m_unit) {
+        m_unit = wanted;
+        emit unitChanged();
+    }
+    if (m_numbers != nullptr) {
+        m_numbers->setUnit(m_unit);
+    }
+}
+
 std::uint64_t DocumentModel::meshKey(const core::BodyResult& body) noexcept {
     return body.token * 256U + body.outputIndex;
 }
@@ -626,8 +654,20 @@ void DocumentModel::onEngineEvent(const core::RecomputeEvent& event) {
                 render::tessellationForDetail(0, m_kernel->bounds(body.solid).diagonal());
             auto mesh =
                 std::make_shared<const geo::TriangleMesh>(m_kernel->tessellate(body.solid, params));
+            // The exact points to catch on (pflege P7), worked out next to the mesh. When they
+            // fail, the mesh still stands: the drag then catches on the points of the mesh.
+            std::shared_ptr<const std::vector<geo::SnapPointGal>> snaps;
+            try {
+                snaps = std::make_shared<const std::vector<geo::SnapPointGal>>(
+                    m_kernel->snapPoints(body.solid));
+            } catch (const geo::GeometryError& error) {
+                qWarning() << "the snap points of a body could not be worked out:" << error.what();
+            }
             const std::lock_guard lock(m_meshMutex);
             m_meshes.emplace(key, std::move(mesh));
+            if (snaps) {
+                m_snapPoints.emplace(key, std::move(snaps));
+            }
         } catch (const geo::GeometryError& error) {
             qWarning() << "a body could not be tessellated:" << error.what();
         }
@@ -674,6 +714,7 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
         }
         for (std::size_t i = 0; i + kKeptNewer < others.size(); ++i) { // `others` is ascending
             m_meshes.erase(others[i]);
+            m_snapPoints.erase(others[i]);
         }
         // Finer meshes of bodies that changed are gone; new bodies get theirs again below.
         for (auto it = m_detailMeshes.begin(); it != m_detailMeshes.end();) {
@@ -681,14 +722,9 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
         }
     }
     if (m_numbers != nullptr) {
-        core::NamedMeasures names;
-        for (const core::MeasureResult& measure : m_result->measures.results) {
-            if (measure.value && measure.value->dimension == core::Dimension{1, 0}) {
-                names[measure.name] = measure.value->value;
-            }
-        }
-        m_numbers->setNamedMeasures(std::move(names));
+        m_numbers->setNamedMeasures(namedMeasureValues());
     }
+    syncUnit();
     {
         auto names = std::make_shared<ElementNameMap>();
         const std::lock_guard lock(m_meshMutex);
@@ -726,6 +762,9 @@ void DocumentModel::rebuildScene() {
             }
             render::RenderBody drawn;
             drawn.id = body.id.value;
+            if (const auto snaps = m_snapPoints.find(key); snaps != m_snapPoints.end()) {
+                drawn.snapPoints = snaps->second;
+            }
             // The finer mesh of the current zoom if it is ready, otherwise the basic one.
             const auto fine = m_detailMeshes.find(key);
             if (fine != m_detailMeshes.end()) {
@@ -860,7 +899,7 @@ void DocumentModel::rebuildLists() {
             (type == "combine" || type == "place" || type == "split" || type == "fillet" ||
              type == "chamfer" || type == "pushFace" || type == "stretch" ||
              type == "removeFaces" || type == "offsetFaces" || type == "tiltFace" ||
-             type == "shell" || type == "draft") &&
+             type == "hole" || type == "shell" || type == "draft") &&
             !maker->inputs.empty() && origin.contains(maker->inputs.front().value);
         if (continues) {
             const Origin& started = origin.at(maker->inputs.front().value);
@@ -999,11 +1038,12 @@ QVariantList DocumentModel::buildStepTexts() const {
             toQString(given != feature.texts.end() ? given->second : spec.defaultValue);
         // `mode` and `auto` are the program's business (combine steps), `keepTools` a switch.
         entry[QStringLiteral("kind")] =
-            spec.name == "font"                                ? QStringLiteral("font")
-            : spec.name == "style"                             ? QStringLiteral("style")
-            : spec.name == "keepTools" || spec.name == "fuzzy" ? QStringLiteral("flag")
-            : spec.name == "mode" || spec.name == "auto" || spec.name == "sketch" ||
-                    spec.name == "region" || spec.name == "extent"
+            spec.name == "font"    ? QStringLiteral("font")
+            : spec.name == "style" ? QStringLiteral("style")
+            : spec.name == "keepTools" || spec.name == "fuzzy" || spec.name == "shown"
+                ? QStringLiteral("flag")
+            : spec.name == "mode" || spec.name == "auto" || spec.name == "kind" ||
+                    spec.name == "sketch" || spec.name == "region" || spec.name == "extent"
                 ? QStringLiteral("hidden")
                 : QStringLiteral("text");
         texts.push_back(entry);
@@ -1151,6 +1191,64 @@ void DocumentModel::documentChanged(bool geometryChanged) {
     if (geometryChanged) {
         requestRecompute();
     }
+}
+
+QVariantList DocumentModel::extrudeReachFaces(int index) const {
+    QVariantList list;
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) || !m_result) {
+        return list;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "extrude" || step.inputs.size() != 1) {
+        return list;
+    }
+    const auto sketchWord = step.texts.find("sketch");
+    const auto sketch = sketchWord == step.texts.end()
+                            ? m_result->sketches.end()
+                            : m_result->sketches.find(core::FeatureId{sketchWord->second});
+    const auto body = m_result->bodies.find(step.inputs.front());
+    if (sketch == m_result->sketches.end() || !sketch->second.plane ||
+        body == m_result->bodies.end()) {
+        return list;
+    }
+    const geo::Point3d origin = sketch->second.plane->origin();
+    const geo::Point3d normal = sketch->second.plane->normal();
+    try {
+        const geo::BodySignatures looks = m_kernel->signatures(body->second.solid);
+        // The flat faces parallel to the sketch; of faces in one plane the largest.
+        std::map<long long, const geo::ElementSignature*> byPlace;
+        for (const geo::ElementSignature& face : looks.faces) {
+            if (face.shape != geo::SignatureShape::plane) {
+                continue;
+            }
+            const double along = face.direction.x * normal.x + face.direction.y * normal.y +
+                                 face.direction.z * normal.z;
+            if (std::abs(std::abs(along) - 1.0) > 1e-6) {
+                continue;
+            }
+            const double distance = (face.centroid.x - origin.x) * normal.x +
+                                    (face.centroid.y - origin.y) * normal.y +
+                                    (face.centroid.z - origin.z) * normal.z;
+            if (std::abs(distance) < 1e-6) {
+                continue;
+            }
+            const auto key = std::llround(distance * 1e6);
+            const auto known = byPlace.find(key);
+            if (known == byPlace.end() || known->second->size < face.size) {
+                byPlace[key] = &face;
+            }
+        }
+        for (const auto& [key, face] : byPlace) {
+            QVariantMap entry;
+            entry[QStringLiteral("number")] = static_cast<int>(face->id);
+            entry[QStringLiteral("distance")] = static_cast<double>(key) / 1e6;
+            list.push_back(entry);
+        }
+    } catch (const geo::GeometryError&) {
+        list.clear();
+    }
+    return list;
 }
 
 bool DocumentModel::setExtrudeReach(int index, const QString& reach, int faceNumber) {
@@ -1590,6 +1688,34 @@ bool DocumentModel::deleteSteps(const QVariantList& indexes) {
     return true;
 }
 
+bool DocumentModel::canMoveStep(int from, int to) const {
+    const auto& features = m_history.document().features();
+    if (from < 0 || from >= static_cast<int>(features.size()) || to < 0 ||
+        to >= static_cast<int>(features.size()) || from == to) {
+        return false;
+    }
+    core::Document copy = m_history.document();
+    return copy.moveFeature(features[static_cast<std::size_t>(from)].id,
+                            static_cast<std::size_t>(to));
+}
+
+bool DocumentModel::moveStep(int from, int to) {
+    const auto& features = m_history.document().features();
+    if (from < 0 || from >= static_cast<int>(features.size()) || to < 0 ||
+        to >= static_cast<int>(features.size()) || from == to) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(from)];
+    core::CommandDescription label{"moveFeature", {{"type", step.type}}};
+    if (!executeWithCuts(core::makeMoveFeature(step.id, static_cast<std::size_t>(to)),
+                         std::move(label))) {
+        return false;
+    }
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
 bool DocumentModel::setStepSuppressed(int index, bool suppressed) {
     const auto& features = m_history.document().features();
     if (index < 0 || index >= static_cast<int>(features.size())) {
@@ -1705,6 +1831,7 @@ bool DocumentModel::goToHistory(int position) {
 }
 
 void DocumentModel::beginChange(const QString& field) {
+    m_changeStartRevision = m_history.document().revision();
     m_history.beginTransaction({"setValue", {{"field", field.toStdString()}}});
 }
 
@@ -1755,8 +1882,64 @@ bool DocumentModel::executeWithCuts(std::unique_ptr<core::Command> command,
 }
 
 void DocumentModel::commitChange() {
+    // Pflege P8: a size typed right after the shape was put down on a wall re-seats it, so that
+    // its underside stays on the wall; inside this step, so that undo takes both together.
+    const std::uint64_t before = m_history.document().revision();
+    const bool reseated = reseatFresh();
     finishTransaction();
+    if (m_freshSeat) {
+        if (reseated) {
+            m_freshSeat->revision = m_history.document().revision();
+        } else if (m_changeStartRevision != m_freshSeat->revision) {
+            m_freshSeat.reset(); // another command happened in between: the seat is forgotten
+        }
+    }
+    if (reseated && m_history.document().revision() != before) {
+        documentChanged();
+    }
     emit historyChanged();
+}
+
+bool DocumentModel::reseatFresh() {
+    if (!m_freshSeat || m_changeStartRevision != m_freshSeat->revision ||
+        m_currentFeature != m_freshSeat->feature) {
+        return false; // only a size of the shape that was just put down, nothing in between
+    }
+    const core::Feature* feature = m_history.document().findFeature(m_freshSeat->feature);
+    const core::FeatureType* type = feature != nullptr ? m_registry.find(feature->type) : nullptr;
+    if (type == nullptr || !feature->params.contains("rotX") || !feature->params.contains("rotY") ||
+        !feature->params.contains("rotZ")) {
+        return false;
+    }
+    // The sizes as they are now, worked out from the formulas as typed. A formula that uses a
+    // named measure does not evaluate here: no re-seat then, never a guessed size.
+    core::ResolvedParams params;
+    for (const core::ParamSpec& spec : type->parameters()) {
+        const auto found = feature->params.find(spec.name);
+        const std::string& expression =
+            found != feature->params.end() ? found->second.expression : spec.defaultExpression;
+        const std::optional<double> value = core::evaluateExpression(
+            expression, spec.kind, {}, m_history.document().settings().defaultUnitMillimetres);
+        if (!value) {
+            return false;
+        }
+        params[spec.name] = core::Quantity{*value, core::dimensionOf(spec.kind)};
+    }
+    for (const char* place : {"x", "y", "z"}) {
+        const auto found = params.find(place);
+        if (found != params.end()) {
+            found->second.value = 0.0; // measured from the foot
+        }
+    }
+    const geo::Point3d centre = type->bodyCentre(params);
+    const auto angleOf = [&params](const char* name) {
+        const auto found = params.find(name);
+        return found != params.end() ? found->second.value : 0.0;
+    };
+    const geo::Angles hint{angleOf("rotX"), angleOf("rotY"), angleOf("rotZ")};
+    writeSeat(m_freshSeat->feature,
+              geo::seatOnFace(m_freshSeat->point, m_freshSeat->normal, centre, hint));
+    return true;
 }
 
 void DocumentModel::cancelChange() {
@@ -2250,6 +2433,23 @@ bool DocumentModel::setStepText(int index, const QString& name, const QString& t
     return true;
 }
 
+bool DocumentModel::canCycleExtrudeMode(int index) const {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size())) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "extrude") {
+        return false;
+    }
+    const auto sketchWord = step.texts.find("sketch");
+    const core::Feature* sketch =
+        sketchWord == step.texts.end()
+            ? nullptr
+            : m_history.document().findFeature(core::FeatureId{sketchWord->second});
+    return sketch != nullptr && sketch->inputs.size() == 1;
+}
+
 QString DocumentModel::cycleExtrudeMode(int index) {
     const auto& features = m_history.document().features();
     if (index < 0 || index >= static_cast<int>(features.size())) {
@@ -2383,6 +2583,7 @@ int DocumentModel::startPlacing(const QString& type, bool asHole, double x, doub
     m_placingZ = z;
     m_placingSurface.clear();
     m_placingOnFace = false;
+    m_freshSeat.reset();
     m_placingCentre = centreOffsetOfDefaults(*featureType);
     const int step = stepIndexOf(*id);
     m_currentFeature = *id;
@@ -2431,6 +2632,8 @@ void DocumentModel::placeOnFace(const geo::Point3d& point, const geo::Point3d& n
         return;
     }
     const std::uint64_t before = m_history.document().revision();
+    m_placingSeatPoint = point;
+    m_placingSeatNormal = normal;
     writeSeat(m_placingFeature, geo::seatOnFace(point, normal, m_placingCentre));
     m_placingOnFace = true;
     // The work plane is a height; a wall does not move it.
@@ -2445,6 +2648,7 @@ bool DocumentModel::finishPlacing() {
     if (!m_placing) {
         return false;
     }
+    const bool onFace = m_placingOnFace; // read before anything resets it
     finishTransaction();
     m_placing = false;
     const int placedStep = stepIndexOf(m_placingFeature);
@@ -2456,6 +2660,13 @@ bool DocumentModel::finishPlacing() {
     emit placingChanged();
     emit workplaneChanged();
     emit shapePlaced(placedStep, placedType);
+    // Pflege P8: while nothing else happens, a typed size keeps the underside on the wall.
+    if (onFace) {
+        m_freshSeat = FreshSeat{m_placingFeature, m_placingSeatPoint, m_placingSeatNormal,
+                                m_history.document().revision()};
+    } else {
+        m_freshSeat.reset();
+    }
     return true;
 }
 
@@ -2466,6 +2677,7 @@ void DocumentModel::cancelPlacing() {
     m_liveCutTimer.stop();
     m_history.cancelTransaction();
     m_placing = false;
+    m_freshSeat.reset();
     documentChanged();
     emit placingChanged();
 }
@@ -4062,6 +4274,24 @@ std::vector<core::SketchElement> DocumentModel::sketchElements(const QString& st
     return step->sketch->elements;
 }
 
+std::vector<core::SketchMeasure> DocumentModel::sketchMeasures(const QString& stepId) const {
+    const core::Feature* step =
+        m_history.document().findFeature(core::FeatureId{stepId.toStdString()});
+    if (step == nullptr || !step->sketch) {
+        return {};
+    }
+    return step->sketch->measures;
+}
+
+std::vector<core::SketchRule> DocumentModel::sketchRules(const QString& stepId) const {
+    const core::Feature* step =
+        m_history.document().findFeature(core::FeatureId{stepId.toStdString()});
+    if (step == nullptr || !step->sketch) {
+        return {};
+    }
+    return step->sketch->rules;
+}
+
 std::optional<std::vector<core::SketchPoint>>
 DocumentModel::sketchSplineLine(const std::vector<core::SketchPoint>& through) const {
     constexpr double kTolerance = 0.005; // mm: well within the 0.01 mm of rule 12
@@ -4086,7 +4316,7 @@ DocumentModel::sketchSplineLine(const std::vector<core::SketchPoint>& through) c
 
 bool DocumentModel::addSketchElements(const QString& stepId,
                                       const std::vector<core::SketchElement>& elements,
-                                      const QString& kind) {
+                                      const QString& kind, bool autoRules) {
     const core::FeatureId id{stepId.toStdString()};
     const core::Feature* step = m_history.document().findFeature(id);
     if (step == nullptr || !step->sketch || elements.empty()) {
@@ -4109,6 +4339,24 @@ bool DocumentModel::addSketchElements(const QString& stepId,
             m_history.cancelTransaction();
             documentChanged();
             return false;
+        }
+    }
+    if (autoRules && m_sketchSolver != nullptr) {
+        // The rules the drawing fulfils exactly (level, upright, joined ends, tangent arcs) come
+        // with it, in the same step of the history; a rule the solver refuses is left out.
+        const core::Feature* drawn = m_history.document().findFeature(id);
+        if (drawn != nullptr && drawn->sketch &&
+            drawn->sketch->elements.size() >= elements.size()) {
+            std::vector<std::string> newIds;
+            const auto& all = drawn->sketch->elements;
+            for (std::size_t i = all.size() - elements.size(); i < all.size(); ++i) {
+                newIds.push_back(all[i].id);
+            }
+            const std::vector<core::AutoRule> rules = core::autoSketchRules(*drawn->sketch, newIds);
+            for (const core::AutoRule& rule : rules) {
+                m_history.execute(
+                    core::makeAddSketchRule(id, rule.kind, rule.elements, *m_sketchSolver));
+            }
         }
     }
     finishTransaction();
@@ -4139,6 +4387,172 @@ bool DocumentModel::applySketchEdit(const QString& stepId, const interaction::Sk
         done = done && m_history.execute(std::make_unique<core::AddSketchElementCommand>(
                            id, element.kind, element.points, element.construction));
     }
+    if (!done) {
+        m_history.cancelTransaction();
+        documentChanged();
+        return false;
+    }
+    finishTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
+// --- rules and measures of a sketch (AP-2.2b) -------------------------------------------
+
+namespace {
+/// A measure value must be > 0, except an angle or a signed distance along u or v (any sign,
+/// zero allowed).
+bool measureValueAllowed(const std::string& kind, double value) {
+    return kind == "angle" || kind == "horizontalDistance" || kind == "verticalDistance" ||
+           value > 0.0;
+}
+} // namespace
+
+core::NamedMeasures DocumentModel::namedMeasureValues() const {
+    core::NamedMeasures names;
+    if (m_result) {
+        for (const core::MeasureResult& measure : m_result->measures.results) {
+            if (measure.value && measure.value->dimension == core::Dimension{1, 0}) {
+                names[measure.name] = measure.value->value;
+            }
+        }
+    }
+    return names;
+}
+
+std::optional<double> DocumentModel::evaluateSketchValue(const QString& expression,
+                                                         bool angle) const {
+    return core::evaluateExpression(expression.toStdString(),
+                                    angle ? core::QuantityKind::angle : core::QuantityKind::length,
+                                    namedMeasureValues());
+}
+
+bool DocumentModel::addSketchRule(const QString& step, const QString& kind,
+                                  const QStringList& elements) {
+    if (m_sketchSolver == nullptr) {
+        return false;
+    }
+    const core::FeatureId id{step.toStdString()};
+    const core::Feature* feature = m_history.document().findFeature(id);
+    if (feature == nullptr || !feature->sketch) {
+        return false;
+    }
+    std::vector<std::string> refs;
+    refs.reserve(elements.size());
+    for (const QString& element : elements) {
+        refs.push_back(element.toStdString());
+    }
+    m_history.beginTransaction(
+        {"addSketchRule",
+         {{"type", "sketch"},
+          {"number", std::to_string(m_history.document().indexOf(id).value_or(0) + 1)}}});
+    const bool done = m_history.execute(
+        core::makeAddSketchRule(id, kind.toStdString(), std::move(refs), *m_sketchSolver));
+    if (!done) {
+        m_history.cancelTransaction();
+        documentChanged();
+        return false;
+    }
+    finishTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
+bool DocumentModel::addSketchMeasure(const QString& step, const QString& kind,
+                                     const QStringList& elements, const QString& expression) {
+    if (m_sketchSolver == nullptr) {
+        return false;
+    }
+    const bool angle = kind == QStringLiteral("angle");
+    const std::optional<double> value = evaluateSketchValue(expression, angle);
+    if (!value || !measureValueAllowed(kind.toStdString(), *value)) {
+        return false;
+    }
+    const core::FeatureId id{step.toStdString()};
+    const core::Feature* feature = m_history.document().findFeature(id);
+    if (feature == nullptr || !feature->sketch) {
+        return false;
+    }
+    std::vector<std::string> refs;
+    refs.reserve(elements.size());
+    for (const QString& element : elements) {
+        refs.push_back(element.toStdString());
+    }
+    m_history.beginTransaction(
+        {"addSketchMeasure",
+         {{"type", "sketch"},
+          {"number", std::to_string(m_history.document().indexOf(id).value_or(0) + 1)}}});
+    const bool done = m_history.execute(
+        core::makeAddSketchMeasure(id, kind.toStdString(), std::move(refs),
+                                   expression.toStdString(), *value, *m_sketchSolver));
+    if (!done) {
+        m_history.cancelTransaction();
+        documentChanged();
+        return false;
+    }
+    finishTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
+bool DocumentModel::setSketchMeasure(const QString& step, const QString& measureId,
+                                     const QString& expression) {
+    if (m_sketchSolver == nullptr) {
+        return false;
+    }
+    const core::FeatureId id{step.toStdString()};
+    const core::Feature* feature = m_history.document().findFeature(id);
+    if (feature == nullptr || !feature->sketch) {
+        return false;
+    }
+    const std::string measureIdText = measureId.toStdString();
+    const core::SketchMeasure* measure = nullptr;
+    for (const core::SketchMeasure& candidate : feature->sketch->measures) {
+        if (candidate.id == measureIdText) {
+            measure = &candidate;
+            break;
+        }
+    }
+    if (measure == nullptr) {
+        return false;
+    }
+    const bool angle = measure->kind == "angle";
+    const std::optional<double> value = evaluateSketchValue(expression, angle);
+    if (!value || !measureValueAllowed(measure->kind, *value)) {
+        return false;
+    }
+    m_history.beginTransaction(
+        {"setSketchMeasure",
+         {{"type", "sketch"},
+          {"number", std::to_string(m_history.document().indexOf(id).value_or(0) + 1)}}});
+    const bool done = m_history.execute(core::makeSetSketchMeasure(
+        id, measureIdText, expression.toStdString(), *value, *m_sketchSolver));
+    if (!done) {
+        m_history.cancelTransaction();
+        documentChanged();
+        return false;
+    }
+    finishTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
+bool DocumentModel::removeSketchConstraint(const QString& step, const QString& id) {
+    const core::FeatureId featureId{step.toStdString()};
+    const core::Feature* feature = m_history.document().findFeature(featureId);
+    if (feature == nullptr || !feature->sketch) {
+        return false;
+    }
+    m_history.beginTransaction(
+        {"removeSketchConstraint",
+         {{"type", "sketch"},
+          {"number", std::to_string(m_history.document().indexOf(featureId).value_or(0) + 1)}}});
+    const bool done =
+        m_history.execute(core::makeRemoveSketchConstraint(featureId, id.toStdString()));
     if (!done) {
         m_history.cancelTransaction();
         documentChanged();
@@ -4466,6 +4880,245 @@ QString DocumentModel::tiltFace(const QString& bodyId, int faceNumber) {
                        "tiltFace");
 }
 
+QString DocumentModel::addHelperPlane(const QString& bodyId, int faceNumber) {
+    const core::FeatureType* type = m_registry.find("helperPlane");
+    if (type == nullptr || !m_result) {
+        return {};
+    }
+    core::FeatureDraft draft = core::defaultDraft(*type);
+    if (!bodyId.isEmpty()) {
+        const core::Body* target = findBody(bodyId);
+        if (target == nullptr || faceNumber < 1) {
+            return {};
+        }
+        const auto made = m_result->bodies.find(target->id);
+        if (made == m_result->bodies.end()) {
+            return {};
+        }
+        try {
+            const core::BodyLooks looks =
+                core::describeBody(made->second.faces, m_kernel->signatures(made->second.solid));
+            const auto found = std::ranges::find_if(looks.faces, [&](const core::NamedLook& face) {
+                return face.id == static_cast<std::uint32_t>(faceNumber);
+            });
+            if (found == looks.faces.end() || !faceIsFlat(bodyId, faceNumber)) {
+                return {};
+            }
+            auto ref = core::makeRef(looks, core::ElementKind::face, found->id,
+                                     core::placementOf(m_history.document(), m_registry,
+                                                       m_result->features, found->name));
+            if (!ref) {
+                return {};
+            }
+            draft.refs["plane"] = {std::move(*ref)};
+            draft.inputs = {target->id};
+        } catch (const geo::GeometryError&) {
+            return {};
+        }
+    }
+    m_history.beginTransaction({"helperPlane", {}});
+    const auto id = m_history.addFeature(std::move(draft));
+    if (!id) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    selectStep(stepIndexOf(*id)); // the panel shows its distance and its switch at once
+    return toQString(id->value);
+}
+
+std::vector<std::array<geo::Point3d, 4>> DocumentModel::helperPlaneCorners() const {
+    std::vector<std::array<geo::Point3d, 4>> planes;
+    if (!m_result) {
+        return planes;
+    }
+    constexpr double half = 40.0; // mm: the square drawn for a plane
+    for (const core::Feature& feature : m_history.document().features()) {
+        if (feature.type != "helperPlane" || feature.suppressed) {
+            continue;
+        }
+        const auto shown = feature.texts.find("shown");
+        if (shown != feature.texts.end() && shown->second == "no") {
+            continue;
+        }
+        const auto made = m_result->sketches.find(feature.id);
+        if (made == m_result->sketches.end() || !made->second.plane) {
+            continue;
+        }
+        const core::SketchPlane& plane = *made->second.plane;
+        std::array<geo::Point3d, 4> corners;
+        const double signs[4][2] = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
+        for (int i = 0; i < 4; ++i) {
+            corners[static_cast<std::size_t>(i)] =
+                plane.toWorld({signs[i][0] * half, signs[i][1] * half});
+        }
+        planes.push_back(corners);
+    }
+    return planes;
+}
+
+QString DocumentModel::drillHole(const QString& bodyId, int faceNumber) {
+    const core::Body* target = findBody(bodyId);
+    if (target == nullptr || faceNumber < 1 || !m_result) {
+        return {};
+    }
+    const auto made = m_result->bodies.find(target->id);
+    if (made == m_result->bodies.end()) {
+        return {};
+    }
+    try {
+        const geo::BodySignatures looks = m_kernel->signatures(made->second.solid);
+        const auto number = static_cast<std::uint32_t>(faceNumber);
+        if (number > looks.faces.size() ||
+            looks.faces[number - 1].shape != geo::SignatureShape::plane) {
+            return {};
+        }
+    } catch (const geo::GeometryError&) {
+        return {};
+    }
+    return addFaceStep(bodyId, "hole", {static_cast<std::uint32_t>(faceNumber)}, "face",
+                       {{"diameter", 3.4}, {"depth", 10.0}}, "drillHole");
+}
+
+namespace {
+
+/// What a hole of one kind takes from the table row of a screw (AP-2.7c, decision 4): the word of
+/// the step and the five values. Values the kind does not need are 0. `kind` is one of plain,
+/// counterbore, countersink, nutTrap, tapDrill (the thread hole is a plain hole of core size).
+struct HoleFromTable {
+    std::string word = "plain";
+    double diameter = 0.0;
+    double headDiameter = 0.0;
+    double headDepth = 0.0;
+    double nutWidth = 0.0;
+    double nutDepth = 0.0;
+};
+
+std::optional<HoleFromTable> holeFromTable(const features::MetricScrew& screw,
+                                           const QString& kind) {
+    HoleFromTable hole;
+    hole.diameter = features::clearanceDiameter(screw, features::ClearanceFit::medium);
+    if (kind == QLatin1String("counterbore")) {
+        hole.word = "counterbore";
+        hole.headDiameter = screw.socketHeadDiameter;
+        hole.headDepth = screw.socketHeadHeight;
+    } else if (kind == QLatin1String("countersink")) {
+        hole.word = "countersink";
+        hole.headDiameter = screw.countersinkDiameter;
+    } else if (kind == QLatin1String("nutTrap")) {
+        hole.word = "nutTrap";
+        hole.nutWidth = screw.nutWidth;
+        hole.nutDepth = screw.nutHeight;
+    } else if (kind == QLatin1String("tapDrill")) {
+        hole.diameter = screw.tapDrill;
+    } else if (kind != QLatin1String("plain")) {
+        return std::nullopt;
+    }
+    return hole;
+}
+
+double holeNumber(const core::Feature& step, const char* name) {
+    const auto found = step.params.find(name);
+    if (found == step.params.end()) {
+        return std::nan("");
+    }
+    return core::evaluateExpression(found->second.expression, core::QuantityKind::length)
+        .value_or(std::nan(""));
+}
+
+} // namespace
+
+QVariantMap DocumentModel::holeScrewOf(int index) const {
+    QVariantMap answer{{"size", QString()}, {"kind", QStringLiteral("plain")}};
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) ||
+        features[static_cast<std::size_t>(index)].type != "hole") {
+        return answer;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    const auto word = step.texts.find("kind");
+    if (word != step.texts.end()) {
+        answer["kind"] = QString::fromStdString(word->second);
+    }
+    const std::string stored = word != step.texts.end() ? word->second : "plain";
+    const double diameter = holeNumber(step, "diameter");
+    const double headDiameter = holeNumber(step, "headDiameter");
+    const double headDepth = holeNumber(step, "headDepth");
+    const double nutWidth = holeNumber(step, "nutWidth");
+    const double nutDepth = holeNumber(step, "nutDepth");
+    const auto same = [](double a, double b) { return std::abs(a - b) <= 1e-6; };
+    for (const features::MetricScrew& screw : features::metricScrews()) {
+        for (const char* kind : {"plain", "tapDrill", "counterbore", "countersink", "nutTrap"}) {
+            const auto table = holeFromTable(screw, QLatin1String(kind));
+            if (table && table->word == stored) {
+                if (same(diameter, table->diameter) && same(headDiameter, table->headDiameter) &&
+                    same(headDepth, table->headDepth) && same(nutWidth, table->nutWidth) &&
+                    same(nutDepth, table->nutDepth)) {
+                    answer["size"] =
+                        QString::fromUtf8(screw.size.data(), static_cast<int>(screw.size.size()));
+                    answer["kind"] = QLatin1String(kind);
+                    return answer;
+                }
+            }
+        }
+    }
+    return answer;
+}
+
+bool DocumentModel::setHoleScrew(int index, const QString& size, const QString& kind) {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) ||
+        features[static_cast<std::size_t>(index)].type != "hole") {
+        return false;
+    }
+    const features::MetricScrew* screw = nullptr;
+    if (size.isEmpty()) {
+        // No size is marked (a typed diameter): take the row whose through hole is nearest.
+        const double diameter = holeNumber(features[static_cast<std::size_t>(index)], "diameter");
+        double best = 1e300;
+        for (const features::MetricScrew& row : features::metricScrews()) {
+            const double gap = std::abs(
+                features::clearanceDiameter(row, features::ClearanceFit::medium) - diameter);
+            if (gap < best) {
+                best = gap;
+                screw = &row;
+            }
+        }
+    } else {
+        screw = features::findMetricScrew(size.toStdString());
+    }
+    if (screw == nullptr) {
+        return false;
+    }
+    const std::optional<HoleFromTable> table = holeFromTable(*screw, kind);
+    if (!table) {
+        return false;
+    }
+    const std::string word = table->word;
+    const core::FeatureId id = features[static_cast<std::size_t>(index)].id;
+    const auto number = [](double value) { return QString::number(value, 'g', 15).toStdString(); };
+    m_history.beginTransaction({"setText", {{"name", "kind"}}});
+    bool ok = m_history.execute(core::makeSetFeatureText(id, "kind", word));
+    const std::pair<const char*, double> values[] = {{"diameter", table->diameter},
+                                                     {"headDiameter", table->headDiameter},
+                                                     {"headDepth", table->headDepth},
+                                                     {"nutWidth", table->nutWidth},
+                                                     {"nutDepth", table->nutDepth}};
+    for (const auto& [name, value] : values) {
+        ok = ok && m_history.execute(core::makeSetFeatureValue(id, name, number(value)));
+    }
+    if (!ok) {
+        m_history.cancelTransaction();
+        return false;
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
 QString DocumentModel::shellBody(const QString& bodyId, const QVariantList& openFaces) {
     const core::Body* target = findBody(bodyId);
     if (target == nullptr || !m_result) {
@@ -4657,7 +5310,8 @@ QVariantMap DocumentModel::faceAnchor(const QString& bodyId, int number) const {
         const bool combined = type == "combine" || type == "place" || type == "split" ||
                               type == "fillet" || type == "chamfer" || type == "pushFace" ||
                               type == "stretch" || type == "removeFaces" || type == "offsetFaces" ||
-                              type == "tiltFace" || type == "shell" || type == "draft";
+                              type == "tiltFace" || type == "hole" || type == "shell" ||
+                              type == "draft";
         anchor[QStringLiteral("arrow")] = combined && !m_history.document().consumerOf(body->id);
     } catch (const geo::GeometryError&) {
         anchor[QStringLiteral("valid")] = false;

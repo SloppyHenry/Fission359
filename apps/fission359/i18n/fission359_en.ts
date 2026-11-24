@@ -909,6 +909,36 @@
         <translation>The view turns and zooms; nothing in the project changes.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Zoom in</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view closer to the middle of the screen.</source>
+        <translation>Moves the view closer to the middle of the screen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view comes closer; nothing in the project changes.</source>
+        <translation>The view comes closer; nothing in the project changes.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Zoom out</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view farther away from the middle of the screen.</source>
+        <translation>Moves the view farther away from the middle of the screen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view goes farther away; nothing in the project changes.</source>
+        <translation>The view goes farther away; nothing in the project changes.</translation>
+    </message>
+    <message>
         <location line="+5"/>
         <source>Home view</source>
         <translation>Home view</translation>
@@ -1019,39 +1049,9 @@
         <translation>Bevel edges</translation>
     </message>
     <message>
-        <location line="+107"/>
-        <source>Drilled hole</source>
-        <translation>Drilled hole</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>A round hole in a face with a chosen diameter and depth, also countersunk.</source>
-        <translation>A round hole in a face with a chosen diameter and depth, also countersunk.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Click a face, then drag the dot.</source>
-        <translation>Click a face, then drag the dot.</translation>
-    </message>
-    <message>
         <location line="-74"/>
         <source>Hollow out</source>
         <translation>Hollow out</translation>
-    </message>
-    <message>
-        <location line="+78"/>
-        <source>Pull up a sketch</source>
-        <translation>Pull up a sketch</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Turns a sketch into a body by pulling it up.</source>
-        <translation>Turns a sketch into a body by pulling it up.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Draw a sketch, then drag it up.</source>
-        <translation>Draw a sketch, then drag it up.</translation>
     </message>
     <message>
         <location line="-274"/>
@@ -1104,6 +1104,30 @@
     <message>
         <source>Choose a closed area on one side of the vertical line, then spin it.</source>
         <translation>Choose a closed area on one side of the vertical line, then spin it.</translation>
+    </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Helper plane</translation>
+    </message>
+    <message>
+        <source>A plane that floats beside a face or above the bed, to sketch on later. It is not part of the body and never printed.</source>
+        <translation>A plane that floats beside a face or above the bed, to sketch on later. It is not part of the body and never printed.</translation>
+    </message>
+    <message>
+        <source>Choose a flat face (or nothing for the bed), then type the distance in the panel.</source>
+        <translation>Choose a flat face (or nothing for the bed), then type the distance in the panel.</translation>
+    </message>
+    <message>
+        <source>Drill hole</source>
+        <translation>Drill hole</translation>
+    </message>
+    <message>
+        <source>Drills a round hole into a flat face, 3.4 mm wide for an M3 screw. Diameter, depth and place can be changed afterwards.</source>
+        <translation>Drills a round hole into a flat face, 3.4 mm wide for an M3 screw. Diameter, depth and place can be changed afterwards.</translation>
+    </message>
+    <message>
+        <source>Choose one flat face, then type the diameter, the depth and the place in the panel.</source>
+        <translation>Choose one flat face, then type the diameter, the depth and the place in the panel.</translation>
     </message>
 </context>
 <context>
@@ -1766,6 +1790,11 @@
         <source>Delete</source>
         <translation>Delete</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>This step needs a step above it - it cannot go there</source>
+        <translation>This step needs a step above it - it cannot go there</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
@@ -1969,6 +1998,16 @@
         <location line="+2"/>
         <source>Show everything</source>
         <translation>Show everything</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Zoom in</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Zoom out</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2579,8 +2618,8 @@
     </message>
     <message>
         <location line="+1572"/>
-        <source>Unit: mm</source>
-        <translation>Unit: mm</translation>
+        <source>Unit: %1</source>
+        <translation>Unit: %1</translation>
     </message>
     <message>
         <location line="+27"/>
@@ -2777,8 +2816,8 @@
     </message>
     <message>
         <location line="+3"/>
-        <source>Shift switches catching off, %1 draws a helper line.</source>
-        <translation>Shift switches catching off, %1 draws a helper line.</translation>
+        <source>Shift switches catching and automatic rules off, %1 draws a helper line.</source>
+        <translation>Shift switches catching and automatic rules off, %1 draws a helper line.</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -2869,6 +2908,11 @@
         <location line="+1"/>
         <source>%1 moved</source>
         <translation>%1 moved</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 moved in the recipe</source>
+        <translation>%1 moved in the recipe</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3096,6 +3140,26 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Rule added to the sketch</source>
+        <translation>Rule added to the sketch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Measure %1 added to the sketch</source>
+        <translation>Measure %1 added to the sketch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sketch measure changed to %1</source>
+        <translation>Sketch measure changed to %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rule or measure removed from the sketch</source>
+        <translation>Rule or measure removed from the sketch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Step renamed</source>
         <translation>Step renamed</translation>
     </message>
@@ -3286,6 +3350,101 @@
             <numerusform>%n closed area. Click one to choose it.</numerusform>
             <numerusform>%n closed areas. Click one to choose it.</numerusform>
         </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The sketch is fully fixed.</source>
+        <translation>The sketch is fully fixed.</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n element(s) can still move (blue): drag them to try, or click one and type a number to fix its size.</source>
+        <translation>
+            <numerusform>%n element can still move (blue): drag it to try, or click it and type a number to fix its size.</numerusform>
+            <numerusform>%n elements can still move (blue): drag them to try, or click one and type a number to fix its size.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Type a number to set the %1</source>
+        <translation>Type a number to set the %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>length</source>
+        <translation>length</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>diameter</source>
+        <translation>diameter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>radius</source>
+        <translation>radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>distance</source>
+        <translation>distance</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>angle</source>
+        <translation>angle</translation>
+    </message>
+    <message>
+        <source>Helper plane</source>
+        <translation>Helper plane</translation>
+    </message>
+    <message>
+        <source>A helper plane can only start from a flat face.</source>
+        <translation>A helper plane can only start from a flat face.</translation>
+    </message>
+    <message>
+        <source>Helper plane 10 mm from the face. Type another distance in the panel.</source>
+        <translation>Helper plane 10 mm from the face. Type another distance in the panel.</translation>
+    </message>
+    <message>
+        <source>Helper plane 10 mm above the bed. Type another distance in the panel.</source>
+        <translation>Helper plane 10 mm above the bed. Type another distance in the panel.</translation>
+    </message>
+    <message>
+        <source>Helper plane added</source>
+        <translation>Helper plane added</translation>
+    </message>
+    <message>
+        <source>Drill hole</source>
+        <translation>Drill hole</translation>
+    </message>
+    <message>
+        <source>A hole can only be drilled into a flat face of a body that is not part of another body yet.</source>
+        <translation>A hole can only be drilled into a flat face of a body that is not part of another body yet.</translation>
+    </message>
+    <message>
+        <source>Hole drilled into the middle of the face. Type the diameter, the depth and the place in the panel.</source>
+        <translation>Hole drilled into the middle of the face. Type the diameter, the depth and the place in the panel.</translation>
+    </message>
+    <message>
+        <source>Drilling a hole</source>
+        <translation>Drilling a hole</translation>
+    </message>
+    <message>
+        <source>Hole drilled</source>
+        <translation>Hole drilled</translation>
+    </message>
+    <message>
+        <source>Diameter</source>
+        <translation>Diameter</translation>
+    </message>
+    <message>
+        <source>Across</source>
+        <translation>Across</translation>
+    </message>
+    <message>
+        <source>Along</source>
+        <translation>Along</translation>
     </message>
     <message>
         <source>This pull starts on the ground plane: there is no body to join or cut.</source>
@@ -4412,6 +4571,11 @@
         </translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Drilled a hole, Ø %1 mm, %2 mm deep</source>
+        <translation>Drilled a hole, Ø %1 mm, %2 mm deep</translation>
+    </message>
+    <message>
         <location line="+3"/>
         <source>Face tilted by %1°</source>
         <translation>Face tilted by %1°</translation>
@@ -4455,6 +4619,11 @@
         <source>Sketch</source>
         <translation>Sketch</translation>
     </message>
+    <message>
+        <location line="+3"/>
+        <source>Helper plane, %1 mm offset</source>
+        <translation>Helper plane, %1 mm offset</translation>
+    </message>
     <message numerus="yes">
         <location line="+4"/>
         <source>Cut out %n body(ies)</source>
@@ -4477,6 +4646,22 @@
         <translation>
             <numerusform>Merged with %n body</numerusform>
             <numerusform>Merged with %n bodies</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>Row of %n copy(ies), %1 mm apart</source>
+        <translation>
+            <numerusform>Row of %n copy, %1 mm apart</numerusform>
+            <numerusform>Row of %n copies, %1 mm apart</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>Circle of %n copy(ies), %1° in all</source>
+        <translation>
+            <numerusform>Circle of %n copy, %1° in all</numerusform>
+            <numerusform>Circle of %n copies, %1° in all</numerusform>
         </translation>
     </message>
     <message>
@@ -4757,6 +4942,38 @@
         <translation>Yellow</translation>
     </message>
     <message>
+        <source>Helper plane</source>
+        <translation>Helper plane</translation>
+    </message>
+    <message>
+        <source>Show the plane in the view</source>
+        <translation>Show the plane in the view</translation>
+    </message>
+    <message>
+        <source>What is the hole for?</source>
+        <translation>What is the hole for?</translation>
+    </message>
+    <message>
+        <source>Screw goes through</source>
+        <translation>Screw goes through</translation>
+    </message>
+    <message>
+        <source>Countersunk screw</source>
+        <translation>Countersunk screw</translation>
+    </message>
+    <message>
+        <source>Screw with a cylinder head</source>
+        <translation>Screw with a cylinder head</translation>
+    </message>
+    <message>
+        <source>Nut to put in</source>
+        <translation>Nut to put in</translation>
+    </message>
+    <message>
+        <source>Screw cuts its own thread</source>
+        <translation>Screw cuts its own thread</translation>
+    </message>
+    <message>
         <source>Pull</source>
         <translation>Pull</translation>
     </message>
@@ -4783,6 +5000,10 @@
     <message>
         <source>All the way through the body</source>
         <translation>All the way through the body</translation>
+    </message>
+    <message>
+        <source>Up to the face %1 mm away</source>
+        <translation>Up to the face %1 mm away</translation>
     </message>
 </context>
 <context>
@@ -5752,6 +5973,11 @@
         <source>Examples</source>
         <translation>Examples</translation>
     </message>
+    <message>
+        <location filename="../qml/StartPage.qml" line="159"/>
+        <source>You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.</source>
+        <translation>You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.</translation>
+    </message>
 </context>
 <context>
     <name>StatusBar</name>
@@ -6187,6 +6413,193 @@
     <message>
         <source>Spin</source>
         <translation>Spin</translation>
+    </message>
+</context>
+<context>
+    <name>SketchMeasureLayer</name>
+    <message>
+        <location filename="../qml/SketchMeasureLayer.qml" line="+29"/>
+        <source>Length</source>
+        <translation>Length</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Diameter</source>
+        <translation>Diameter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Distance</source>
+        <translation>Distance</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Angle</source>
+        <translation>Angle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Horizontal</source>
+        <translation>Horizontal</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line lie flat, left to right</source>
+        <translation>Makes the line lie flat, left to right</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Vertical</source>
+        <translation>Vertical</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line stand upright</source>
+        <translation>Makes the line stand upright</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fixed</source>
+        <translation>Fixed</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keeps it where it is</source>
+        <translation>Keeps it where it is</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Parallel</source>
+        <translation>Parallel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines run side by side</source>
+        <translation>Makes the two lines run side by side</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Right angle</source>
+        <translation>Right angle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines meet at a right angle</source>
+        <translation>Makes the two lines meet at a right angle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same size</source>
+        <translation>Same size</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes both equally long or equally large</source>
+        <translation>Makes both equally long or equally large</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same centre</source>
+        <translation>Same centre</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Gives both circles the same centre</source>
+        <translation>Gives both circles the same centre</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Touching</source>
+        <translation>Touching</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes them touch without crossing</source>
+        <translation>Makes them touch without crossing</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>click to remove this rule</source>
+        <translation>click to remove this rule</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Joined</source>
+        <translation>Joined</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Symmetric</source>
+        <translation>Symmetric</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>In the middle</source>
+        <translation>In the middle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On the line</source>
+        <translation>On the line</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>These rules contradict each other:</source>
+        <translation>These rules contradict each other:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This rule contradicts the drawing:</source>
+        <translation>This rule contradicts the drawing:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The sketch cannot be solved like this.</source>
+        <translation>The sketch cannot be solved like this.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove</source>
+        <translation>Remove</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove %1</source>
+        <translation>Remove %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove one of them and the sketch fits again. Until then it keeps its last shape.</source>
+        <translation>Remove one of them and the sketch fits again. Until then it keeps its last shape.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This rule is doubled, it already follows from the others:</source>
+        <translation>This rule is doubled, it already follows from the others:</translation>
+    </message>
+</context>
+<context>
+    <name>HandleLayer</name>
+    <message>
+        <source>Joins</source>
+        <translation>Joins</translation>
+    </message>
+    <message>
+        <source>Cuts out</source>
+        <translation>Cuts out</translation>
+    </message>
+    <message>
+        <source>New body</source>
+        <translation>New body</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>What the pull does</translation>
     </message>
 </context>
 </TS>
