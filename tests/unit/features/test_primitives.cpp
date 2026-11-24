@@ -110,12 +110,13 @@ std::uint32_t faceOf(const FeatureOutput& output, const std::string& role) {
 TEST_CASE("the built-in feature types are registered", "[features]") {
     Setup setup;
     CHECK(setup.registry.ids() ==
-          std::vector<std::string>{"box",    "chamfer",  "combine",     "cone",        "cylinder",
-                                   "draft",  "extrude",  "fillet",      "helperPlane", "hemisphere",
-                                   "hole",   "import",   "offsetFaces", "pattern",     "place",
-                                   "prism",  "pushFace", "pyramid",     "removeFaces", "shell",
-                                   "sketch", "sphere",   "split",       "star",        "stretch",
-                                   "text",   "tiltFace", "torus",       "tube",        "wedge"});
+          std::vector<std::string>{
+              "box",         "chamfer", "combine",     "cone",       "cylinder", "draft",
+              "extrude",     "fillet",  "helperPlane", "hemisphere", "hole",     "import",
+              "offsetFaces", "pattern", "place",       "prism",      "pushFace", "pyramid",
+              "removeFaces", "revolve", "shell",       "sketch",     "sphere",   "split",
+              "star",        "stretch", "text",        "tiltFace",   "torus",    "tube",
+              "wedge"});
 }
 
 TEST_CASE("box: size, place, faces and their names", "[features]") {

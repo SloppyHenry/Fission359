@@ -351,7 +351,7 @@ TEST_CASE("write the version 1 fixture files", "[.generate-fixtures]") {
     World world;
     fs::create_directories(fixtureFolder("v1"));
     for (const std::string& type : world.registry.ids()) {
-        if (type == "helperPlane" || type == "pattern" || type == "extrude") {
+        if (type == "helperPlane" || type == "pattern" || type == "extrude" || type == "revolve") {
             continue; // came after format 1 (extrude: its file lives in v4/)
         }
         const fs::path target = fixtureFolder("v1") / (type + ".fission");
@@ -398,7 +398,8 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
     }
     // Step types that came after format 1 and have no artificial version 1 file (see the README
     // of the fixtures); their files live in the folder of their own format.
-    const std::size_t newer = 3; // pattern (AP-2.8b), extrude (AP-2.3b), helperPlane (AP-2.12b)
+    // pattern (AP-2.8b), extrude (AP-2.3b), helperPlane (AP-2.12b), revolve (AP-2.3c)
+    const std::size_t newer = 4;
     CHECK(count + newer == world.registry.ids().size());
 }
 

@@ -1094,6 +1094,18 @@
         <translation>Ein %1 als Anfang einer Form. %2</translation>
     </message>
     <message>
+        <source>Spin area</source>
+        <translation>Bereich drehen</translation>
+    </message>
+    <message>
+        <source>Turns the chosen closed area of the sketch about the vertical line through its middle into a round body: a vase, a ring, a ball.</source>
+        <translation>Dreht den gewählten geschlossenen Bereich der Skizze um die senkrechte Linie durch ihre Mitte zu einem runden Körper: Vase, Ring, Kugel.</translation>
+    </message>
+    <message>
+        <source>Choose a closed area on one side of the vertical line, then spin it.</source>
+        <translation>Wähle einen geschlossenen Bereich auf einer Seite der senkrechten Linie und drehe ihn dann.</translation>
+    </message>
+    <message>
         <source>Helper plane</source>
         <translation>Hilfsebene</translation>
     </message>
@@ -2744,6 +2756,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Turning an area</source>
+        <translation>Bereich drehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Stretching</source>
         <translation>Strecken</translation>
     </message>
@@ -3436,6 +3453,14 @@
     <message>
         <source>This pull starts on the ground plane: there is no body to join or cut.</source>
         <translation>Dieses Ziehen beginnt auf der Grundebene: Es gibt keinen Körper zum Vereinen oder Ausschneiden.</translation>
+    </message>
+    <message>
+        <source>This area cannot be turned.</source>
+        <translation>Dieser Bereich lässt sich nicht drehen.</translation>
+    </message>
+    <message>
+        <source>Turned into a body about the vertical line through the sketch's middle. Type another angle in the panel.</source>
+        <translation>Um die senkrechte Linie durch die Skizzenmitte zu einem Körper gedreht. Einen anderen Winkel trägst du im Feld ein.</translation>
     </message>
 </context>
 <context>
@@ -4497,8 +4522,53 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Cut all the way through the body</source>
+        <translation>Ganz durch den Körper ausgeschnitten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled all the way through the body</source>
+        <translation>Ganz durch den Körper gezogen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut up to a face of the body</source>
+        <translation>Bis zu einer Fläche des Körpers ausgeschnitten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled up to a face of the body</source>
+        <translation>Bis zu einer Fläche des Körpers gezogen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut %1 mm deep in total, half to each side</source>
+        <translation>Insgesamt %1 mm tief ausgeschnitten, je zur Hälfte auf jede Seite</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled %1 mm in total, half to each side</source>
+        <translation>Insgesamt %1 mm gezogen, je zur Hälfte auf jede Seite</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Cut %1 mm deep</source>
         <translation>%1 mm tief ausgeschnitten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turned an area into a body (%1°)</source>
+        <translation>Bereich zum Drehkörper gedreht (%1°)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turned and joined with the body (%1°)</source>
+        <translation>Gedreht und mit dem Körper vereint (%1°)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turned and cut out of the body (%1°)</source>
+        <translation>Gedreht und aus dem Körper ausgeschnitten (%1°)</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -6371,6 +6441,10 @@
         <location line="+1"/>
         <source>Zoom: mouse wheel, towards the pointer – or drag this button</source>
         <translation>Zoomen: Mausrad, zum Zeiger hin – oder diesen Knopf ziehen</translation>
+    </message>
+    <message>
+        <source>Spin</source>
+        <translation>Drehen</translation>
     </message>
 </context>
 <context>
