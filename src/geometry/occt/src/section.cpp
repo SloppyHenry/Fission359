@@ -59,7 +59,7 @@ SectionMesh sectionMesh(const Solid& solid, Point3d planePoint, Point3d planeNor
 
         BRepAlgoAPI_Common common(data->shape(), sheet);
         if (!common.IsDone()) {
-            return section;
+            throw GeometryError(GeometryErrorCode::kernelFailure, "the section could not be cut");
         }
         const TopoDS_Shape shape = BRepBuilderAPI_Copy(common.Shape(), /*copyGeom=*/false).Shape();
         BRepMesh_IncrementalMesh mesher(shape, deflection, /*isRelative=*/false, 0.5,
@@ -101,7 +101,9 @@ SectionMesh sectionMesh(const Solid& solid, Point3d planePoint, Point3d planeNor
     } catch (const GeometryError&) {
         throw;
     } catch (const Standard_Failure&) {
-        return {}; // the cut failed: no section for this body, never a crash
+        // Empty means only "the plane misses the body"; a failed cut is an error the caller can
+        // log (and show no cap for this body).
+        throw GeometryError(GeometryErrorCode::kernelFailure, "the section could not be cut");
     }
     return section;
 }
