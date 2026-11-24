@@ -126,7 +126,8 @@ jobs:
     name: ${{ matrix.name }}
     needs: libraries
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    # With a cold ccache the sanitizer build and its tests alone take almost 90 minutes.
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
@@ -198,6 +199,9 @@ jobs:
 
       - name: clang-tidy on changed files (advisory)
         if: github.event_name == 'pull_request' && matrix.preset == 'linux-asan'
+        # Advisory: neither a finding nor a slow run may fail a job whose tests are green.
+        continue-on-error: true
+        timeout-minutes: 20
         run: |
           sudo apt-get install -y clang-tidy
           python3 scripts/tools/tidy_changed.py --build-dir build/${{ matrix.preset }} \

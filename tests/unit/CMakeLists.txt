@@ -13,6 +13,7 @@ set(_core_tests
   core/test_recompute.cpp
   core/test_history.cpp
   core/test_sketch.cpp
+  core/test_sketch_solve.cpp
   core/test_selection.cpp
   core/test_scaling.cpp
   core/test_cuts.cpp
@@ -38,6 +39,7 @@ set(_core_tests
   features/test_import.cpp
   features/test_sketch_feature.cpp
   features/test_extrude_feature.cpp
+  features/test_revolve_feature.cpp
   features/test_sketch_edges.cpp
   io/test_fission_file.cpp
   io/test_export.cpp
@@ -64,6 +66,7 @@ set(_core_tests
   geometry/test_sketch_intersections.cpp
   geometry/test_sketch_regions.cpp
   geometry/test_extrude.cpp
+  geometry/test_revolve.cpp
   geometry/test_pattern.cpp
   geometry/test_datum.cpp
   geometry/test_sketch_edge.cpp
@@ -92,6 +95,7 @@ set(_app_tests
   ui/test_selection_controller.cpp
   ui/test_sketch_mode.cpp
   ui/test_sketch_tools.cpp
+  ui/test_sketch_measures_ui.cpp
   ui/test_sketch_takeover.cpp
   ui/test_sketch_regions_ui.cpp
   ui/test_placement.cpp

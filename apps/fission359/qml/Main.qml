@@ -66,18 +66,19 @@ Window {
     title: (Files.fileName !== "" ? Files.fileName + ".fission" : root.documentName)
            + (Files.modified ? " •" : "") + " – " + qsTr("Fission359")
 
-    // The files opened last, as entries of the File menu (a flat list under a heading).
+    // The files opened last, as the submenu "Open recent" of the File menu (greyed with an
+    // empty submenu when there are none).
     readonly property var recentItems: {
         const files = Files.recentFiles
         // In the browser there are no recent files of the computer to offer (AP-6.7b3).
-        if (files.length === 0 || Platform.browser) {
+        if (Platform.browser) {
             return []
         }
-        const list = [{ separator: true }, { id: "recent.header", text: qsTr("Open recent"), enabled: false }]
+        const submenu = []
         for (let i = 0; i < files.length; ++i) {
-            list.push({ id: "recent." + i, text: "    " + Files.baseName(files[i]) })
+            submenu.push({ id: "recent." + i, text: Files.baseName(files[i]) })
         }
-        return list
+        return [{ id: "recent", text: qsTr("Open recent"), submenu: submenu, enabled: files.length > 0 }]
     }
 
     // ---- the menus: one model for the system menu bar and the in-window menus ------------
@@ -207,14 +208,21 @@ Window {
         const helper = Sketch.helperLine ? " " + qsTr("Helper lines are on: what you draw is only an aid.") : ""
         if (Sketch.toolActive) {
             return sketchToolCatalog.hintFor(Sketch.tool, Sketch.toolVariant, Sketch.placed, Sketch.pullingArc)
-                   + " " + qsTr("Shift switches catching off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
+                   + " " + qsTr("Shift switches catching and automatic rules off, %1 draws a helper line.").arg(Qt.platform.os === "osx" ? "⌥" : "Alt") + helper
         }
         const areas = Sketch.regionCount > 0
             ? " " + (Sketch.selectedRegion !== ""
                      ? qsTr("%n closed area(s). One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.", "", Sketch.regionCount)
                      : qsTr("%n closed area(s). Click one to choose it.", "", Sketch.regionCount))
             : ""
-        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + areas + helper
+        // Elements chosen with no tool on (AP-2.2b): a digit opens the field for a measure of them.
+        const measureKind = Sketch.selectedElements.length > 0 ? Sketch.measureKindForSelection() : ""
+        // What can still move (AP-2.2c1): drawn blue, and the hint says how many.
+        const freedom = Sketch.fullyFixed ? " " + qsTr("The sketch is fully fixed.") : Sketch.freeCount > 0 ? " " + qsTr("%n element(s) can still move (blue): drag them to try, or click one and type a number to fix its size.", "", Sketch.freeCount) : ""
+        if (measureKind !== "") {
+            return qsTr("Type a number to set the %1").arg(measureKindWord(measureKind)) + areas + freedom + helper
+        }
+        return qsTr("Sketching: choose a tool at the left (L line, R rectangle, C circle, A arc, S slot, G polygon, K curve, T trim, E extend, O offset, F round corner, M mirror, W pattern, U take over edge, P point, X helper line). The pointer catches on points, middles and the grid; hold Shift to switch catching off. Done or Esc leaves the sketch.") + areas + freedom + helper
     }
 
     // ---- undo and redo ---------------------------------------------------------------------
@@ -494,6 +502,7 @@ Window {
             break
         case "sketchdone": Sketch.finish(); break
         case "sketchpull": pullRegion(); break
+        case "sketchspin": spinRegion(); break
         case "sketch":
             root.flyout = ""
             Measure.enabled = false
@@ -662,6 +671,22 @@ Window {
         Selection.chooseBodies([made])
         root.tool = "size" // the arrow grip of the step is shown by this tool
         showHint(qsTr("Pulled out of the sketch: drag the arrow or type a distance."))
+    }
+
+    // Turns the chosen closed area of the sketch about the sketch's vertical axis (AP-2.3c): a new
+    // "revolve" step, a full turn to start with.
+    function spinRegion() {
+        const pull = Sketch.regionPull()
+        if (pull.region === undefined) { return }
+        Sketch.finish()
+        const made = DocumentModel.addRevolve(pull.step, pull.region, pull.u, pull.v)
+        if (made === "") {
+            showHint(qsTr("This area cannot be turned."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        showHint(qsTr("Turned into a body about the vertical line through the sketch's middle. Type another angle in the panel."))
     }
 
     // The chip beside the arrow of a pull, or the button of the panel: the next mode.
@@ -1008,6 +1033,8 @@ Window {
     Binding { target: Sketch; property: "gridColour"; value: Theme.gridMajor }
     Binding { target: Sketch; property: "gridMajorColour"; value: Theme.fg4 }
     Binding { target: Sketch; property: "elementColour"; value: Theme.fg }
+    // Elements that can still move (AP-2.2c1): the accent.
+    Binding { target: Sketch; property: "freeColour"; value: Theme.accent }
     Binding { target: Sketch; property: "guideColour"; value: Theme.accentLine }
     Binding { target: Sketch; property: "markerColour"; value: Theme.accentLine }
     Binding { target: Sketch; property: "draftColour"; value: Theme.accent }
@@ -1044,12 +1071,12 @@ Window {
     Shortcut { sequence: "Ctrl+M"; enabled: !root.isMac && !root.typing; onActivated: root.run("measures") }
     Shortcut { sequence: "P"; enabled: !Sketch.active; onActivated: root.run("orthographic") }
     Shortcut { sequence: "Home"; onActivated: root.run("view.home") }
-    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.front") }
-    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.back") }
-    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.left") }
-    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.right") }
-    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.top") }
-    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive; onActivated: root.run("view.bottom") }
+    Shortcut { sequence: "1"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive && Sketch.selectedElements.length === 0; onActivated: root.run("view.front") }
+    Shortcut { sequence: "2"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive && Sketch.selectedElements.length === 0; onActivated: root.run("view.back") }
+    Shortcut { sequence: "3"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive && Sketch.selectedElements.length === 0; onActivated: root.run("view.left") }
+    Shortcut { sequence: "4"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive && Sketch.selectedElements.length === 0; onActivated: root.run("view.right") }
+    Shortcut { sequence: "5"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive && Sketch.selectedElements.length === 0; onActivated: root.run("view.top") }
+    Shortcut { sequence: "6"; enabled: !Handles.armed && !Handles.editing && !Gizmo.editing && !Rotate.editing && !Scale.editing && !Sketch.toolActive && Sketch.selectedElements.length === 0; onActivated: root.run("view.bottom") }
     // A shape that was just put down waits for its sizes: digits type them (they are the views
     // again as soon as something else is chosen). Tab or Enter start typing, too.
     Repeater {
@@ -1087,6 +1114,24 @@ Window {
                 sequence: sketchDigit.modelData
                 enabled: Sketch.toolActive && !sketchLayer.typing && !root.typing
                 onActivated: sketchLayer.startTyping(sketchDigit.modelData)
+            }
+        }
+    }
+    // A digit with chosen sketch elements and no tool on (AP-2.2b) opens the field for a measure
+    // of them; what is typed then goes into that field.
+    Repeater {
+        model: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ",", ".", "-"]
+
+        delegate: Item {
+            id: measureDigit
+
+            required property string modelData
+
+            Shortcut {
+                sequence: measureDigit.modelData
+                enabled: !Sketch.toolActive && Sketch.selectedElements.length > 0
+                         && Sketch.measureKindForSelection() !== "" && !measureLayer.typing && !root.typing
+                onActivated: measureLayer.startMeasure(measureDigit.modelData)
             }
         }
     }
@@ -1612,6 +1657,14 @@ Window {
                 obstacles: viewOverlay.obstacles
             }
 
+            // The labels of the sketch measures with their number fields (AP-2.2b).
+            SketchMeasureLayer {
+                id: measureLayer
+
+                anchors.fill: parent
+                viewport: viewport
+            }
+
             MeasureLayer {
                 anchors.fill: parent
                 text: measureCard.mainNumber
@@ -1760,6 +1813,7 @@ Window {
                 sketchHelper: Sketch.helperLine
                 onSketchDoneRequested: Sketch.finish()
                 onPullRequested: root.run("sketchpull")
+                onSpinRequested: root.run("sketchspin")
                 onSketchToolRequested: (id, variant) => Sketch.chooseTool(id, variant)
                 onSketchHelperToggled: Sketch.toggleHelperLine()
                 onFlyoutCloseRequested: root.flyout = ""
@@ -1907,6 +1961,7 @@ Window {
         if (type === "chamfer") { return qsTr("Bevelling") }
         if (type === "pushFace") { return qsTr("Pulling a face") }
         if (type === "extrude") { return qsTr("Pulling an area") }
+        if (type === "revolve") { return qsTr("Turning an area") }
         if (type === "stretch") { return qsTr("Stretching") }
         if (type === "removeFaces") { return qsTr("Removing faces") }
         if (type === "offsetFaces") { return qsTr("Moving faces") }
@@ -1968,6 +2023,18 @@ Window {
         case "polygon": return qsTr("Polygon")
         case "spline": return qsTr("Curve")
         default: return qsTr("Sketch part")
+        }
+    }
+
+    // The glossary word for a measure kind of the sketch (AP-2.2b), small in the hint line.
+    function measureKindWord(kind) {
+        switch (kind) {
+        case "length": return qsTr("length")
+        case "diameter": return qsTr("diameter")
+        case "radius": return qsTr("radius")
+        case "distance": return qsTr("distance")
+        case "angle": return qsTr("angle")
+        default: return ""
         }
     }
 
@@ -2033,6 +2100,10 @@ Window {
         case "unlinkSketchElement": return qsTr("%n sketch element(s) let go of the body", "", Number(step.count))
         case "sketchConstructionOn": return qsTr("%1 made a helper line").arg(sketchElementLabel(step.kind))
         case "sketchConstructionOff": return qsTr("%1 made a normal line again").arg(sketchElementLabel(step.kind))
+        case "addSketchRule": return qsTr("Rule added to the sketch")
+        case "addSketchMeasure": return qsTr("Measure %1 added to the sketch").arg(step.value)
+        case "setSketchMeasure": return qsTr("Sketch measure changed to %1").arg(step.value)
+        case "removeSketchConstraint": return qsTr("Rule or measure removed from the sketch")
         case "setLabel": return qsTr("Step renamed")
         case "setRollback": return step.count === "" ? qsTr("Time marker put back to now") : qsTr("Time marker moved")
         case "suppress": return qsTr("%1 step hidden").arg(typeLabel(step.type))

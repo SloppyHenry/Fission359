@@ -83,10 +83,29 @@ QtObject {
                              : qsTr("Face pushed in by %1 mm").arg(len(-v[0]))
         }
         if (step.type === "extrude" && v.length === 1) {
+            // The reach decides what the typed distance means (AP-2.3): through everything and up
+            // to a face ignore it; a symmetric pull counts it in total, half to each side.
+            const cut = step.texts.mode === "subtract"
+            switch (step.texts.extent) {
+            case "throughAll":
+                return cut ? qsTr("Cut all the way through the body") : qsTr("Pulled all the way through the body")
+            case "toFace":
+                return cut ? qsTr("Cut up to a face of the body") : qsTr("Pulled up to a face of the body")
+            case "symmetric":
+                return cut ? qsTr("Cut %1 mm deep in total, half to each side").arg(len(Math.abs(v[0])))
+                           : qsTr("Pulled %1 mm in total, half to each side").arg(len(Math.abs(v[0])))
+            }
             switch (step.texts.mode) {
             case "merge": return qsTr("Pulled %1 mm onto the body").arg(len(v[0]))
             case "subtract": return qsTr("Cut %1 mm deep").arg(len(Math.abs(v[0])))
             default: return qsTr("Pulled %1 mm").arg(len(v[0]))
+            }
+        }
+        if (step.type === "revolve" && v.length === 1) {
+            switch (step.texts.mode) {
+            case "merge": return qsTr("Turned and joined with the body (%1°)").arg(n(v[0]))
+            case "subtract": return qsTr("Turned and cut out of the body (%1°)").arg(n(v[0]))
+            default: return qsTr("Turned an area into a body (%1°)").arg(n(v[0]))
             }
         }
         if (step.type === "stretch" && v.length === 2) {
@@ -139,7 +158,7 @@ QtObject {
             }
         }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "hole", "tiltFace", "shell", "draft", "helperPlane", "pattern"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "hole", "tiltFace", "shell", "draft", "helperPlane", "pattern", "revolve"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)

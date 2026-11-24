@@ -1094,6 +1094,18 @@
         <translation>Ein %1 als Anfang einer Form. %2</translation>
     </message>
     <message>
+        <source>Spin area</source>
+        <translation>Bereich drehen</translation>
+    </message>
+    <message>
+        <source>Turns the chosen closed area of the sketch about the vertical line through its middle into a round body: a vase, a ring, a ball.</source>
+        <translation>Dreht den gewählten geschlossenen Bereich der Skizze um die senkrechte Linie durch ihre Mitte zu einem runden Körper: Vase, Ring, Kugel.</translation>
+    </message>
+    <message>
+        <source>Choose a closed area on one side of the vertical line, then spin it.</source>
+        <translation>Wähle einen geschlossenen Bereich auf einer Seite der senkrechten Linie und drehe ihn dann.</translation>
+    </message>
+    <message>
         <source>Helper plane</source>
         <translation>Hilfsebene</translation>
     </message>
@@ -2744,6 +2756,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Turning an area</source>
+        <translation>Bereich drehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Stretching</source>
         <translation>Strecken</translation>
     </message>
@@ -2799,8 +2816,8 @@
     </message>
     <message>
         <location line="+3"/>
-        <source>Shift switches catching off, %1 draws a helper line.</source>
-        <translation>Mit Umschalt rastet der Zeiger nicht ein, mit %1 zeichnest du eine Hilfslinie.</translation>
+        <source>Shift switches catching and automatic rules off, %1 draws a helper line.</source>
+        <translation>Shift schaltet Einrasten und automatische Regeln aus, %1 zeichnet eine Hilfslinie.</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -3123,6 +3140,26 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Rule added to the sketch</source>
+        <translation>Regel zur Skizze hinzugefügt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Measure %1 added to the sketch</source>
+        <translation>Maß %1 zur Skizze hinzugefügt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sketch measure changed to %1</source>
+        <translation>Skizzenmaß auf %1 geändert</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rule or measure removed from the sketch</source>
+        <translation>Regel oder Maß aus der Skizze entfernt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Step renamed</source>
         <translation>Schritt umbenannt</translation>
     </message>
@@ -3315,6 +3352,49 @@
         </translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>The sketch is fully fixed.</source>
+        <translation>Die Skizze steht fest.</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n element(s) can still move (blue): drag them to try, or click one and type a number to fix its size.</source>
+        <translation>
+            <numerusform>%n Element kann sich noch bewegen (blau): zum Ausprobieren ziehen, oder anklicken und eine Zahl tippen, um seine Größe festzulegen.</numerusform>
+            <numerusform>%n Elemente können sich noch bewegen (blau): zum Ausprobieren ziehen, oder eines anklicken und eine Zahl tippen, um seine Größe festzulegen.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Type a number to set the %1</source>
+        <translation>Zahl tippen: %1 setzen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>length</source>
+        <translation>Länge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>diameter</source>
+        <translation>Durchmesser</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>distance</source>
+        <translation>Abstand</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>angle</source>
+        <translation>Winkel</translation>
+    </message>
+    <message>
         <source>Pattern</source>
         <translation>Muster</translation>
     </message>
@@ -3373,6 +3453,14 @@
     <message>
         <source>This pull starts on the ground plane: there is no body to join or cut.</source>
         <translation>Dieses Ziehen beginnt auf der Grundebene: Es gibt keinen Körper zum Vereinen oder Ausschneiden.</translation>
+    </message>
+    <message>
+        <source>This area cannot be turned.</source>
+        <translation>Dieser Bereich lässt sich nicht drehen.</translation>
+    </message>
+    <message>
+        <source>Turned into a body about the vertical line through the sketch's middle. Type another angle in the panel.</source>
+        <translation>Um die senkrechte Linie durch die Skizzenmitte zu einem Körper gedreht. Einen anderen Winkel trägst du im Feld ein.</translation>
     </message>
 </context>
 <context>
@@ -4434,8 +4522,53 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Cut all the way through the body</source>
+        <translation>Ganz durch den Körper ausgeschnitten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled all the way through the body</source>
+        <translation>Ganz durch den Körper gezogen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut up to a face of the body</source>
+        <translation>Bis zu einer Fläche des Körpers ausgeschnitten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled up to a face of the body</source>
+        <translation>Bis zu einer Fläche des Körpers gezogen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut %1 mm deep in total, half to each side</source>
+        <translation>Insgesamt %1 mm tief ausgeschnitten, je zur Hälfte auf jede Seite</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled %1 mm in total, half to each side</source>
+        <translation>Insgesamt %1 mm gezogen, je zur Hälfte auf jede Seite</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Cut %1 mm deep</source>
         <translation>%1 mm tief ausgeschnitten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turned an area into a body (%1°)</source>
+        <translation>Bereich zum Drehkörper gedreht (%1°)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turned and joined with the body (%1°)</source>
+        <translation>Gedreht und mit dem Körper vereint (%1°)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turned and cut out of the body (%1°)</source>
+        <translation>Gedreht und aus dem Körper ausgeschnitten (%1°)</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -6308,6 +6441,178 @@
         <location line="+1"/>
         <source>Zoom: mouse wheel, towards the pointer – or drag this button</source>
         <translation>Zoomen: Mausrad, zum Zeiger hin – oder diesen Knopf ziehen</translation>
+    </message>
+    <message>
+        <source>Spin</source>
+        <translation>Drehen</translation>
+    </message>
+</context>
+<context>
+    <name>SketchMeasureLayer</name>
+    <message>
+        <location filename="../qml/SketchMeasureLayer.qml" line="+29"/>
+        <source>Length</source>
+        <translation>Länge</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Diameter</source>
+        <translation>Durchmesser</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Radius</source>
+        <translation>Radius</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Distance</source>
+        <translation>Abstand</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Angle</source>
+        <translation>Winkel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Horizontal</source>
+        <translation>Waagerecht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line lie flat, left to right</source>
+        <translation>Legt die Linie flach, von links nach rechts</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Vertical</source>
+        <translation>Senkrecht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the line stand upright</source>
+        <translation>Stellt die Linie aufrecht</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fixed</source>
+        <translation>Fest</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keeps it where it is</source>
+        <translation>Hält es an seinem Platz</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Parallel</source>
+        <translation>Parallel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines run side by side</source>
+        <translation>Lässt die zwei Linien nebeneinander laufen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Right angle</source>
+        <translation>Rechter Winkel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes the two lines meet at a right angle</source>
+        <translation>Lässt die zwei Linien rechtwinklig aufeinandertreffen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same size</source>
+        <translation>Gleich groß</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes both equally long or equally large</source>
+        <translation>Macht beide gleich lang oder gleich groß</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Same centre</source>
+        <translation>Gleiche Mitte</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Gives both circles the same centre</source>
+        <translation>Gibt beiden Kreisen dieselbe Mitte</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Touching</source>
+        <translation>Berührend</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes them touch without crossing</source>
+        <translation>Lässt sie sich berühren, ohne sich zu kreuzen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>click to remove this rule</source>
+        <translation>klicken, um diese Regel zu entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Joined</source>
+        <translation>Verbunden</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Symmetric</source>
+        <translation>Symmetrisch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>In the middle</source>
+        <translation>In der Mitte</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On the line</source>
+        <translation>Auf der Linie</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>These rules contradict each other:</source>
+        <translation>Diese Regeln widersprechen sich:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This rule contradicts the drawing:</source>
+        <translation>Diese Regel passt nicht zur Zeichnung:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The sketch cannot be solved like this.</source>
+        <translation>So lässt sich die Skizze nicht lösen.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove %1</source>
+        <translation>%1 entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove one of them and the sketch fits again. Until then it keeps its last shape.</source>
+        <translation>Entferne eine davon, dann passt die Skizze wieder. Bis dahin behält sie ihre letzte Form.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This rule is doubled, it already follows from the others:</source>
+        <translation>Diese Regel ist doppelt, sie folgt schon aus den anderen:</translation>
     </message>
 </context>
 <context>

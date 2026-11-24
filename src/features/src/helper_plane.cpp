@@ -90,7 +90,8 @@ public:
         SketchPlane resultPlane(offsetDatum.origin, offsetDatum.uAxis, vAxis);
 
         FeatureResult result;
-        result.sketch = SketchResult{resultPlane, {}};
+        result.sketch = SketchResult{};
+        result.sketch->plane = resultPlane;
         return result;
     }
 

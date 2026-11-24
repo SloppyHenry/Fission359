@@ -62,7 +62,7 @@ with tempfile.TemporaryDirectory() as data:
         check({"manifest.json", "document.json", "preview.png"} <= set(names), "parts missing: %s" % names)
         check(archive.read("preview.png")[:4] == b"\x89PNG", "the preview is not a picture")
         manifest = json.loads(archive.read("manifest.json"))
-        check(manifest["formatVersion"] == 4 and "document.json" in manifest["checksums"], "manifest")
+        check(manifest["formatVersion"] == 5 and "document.json" in manifest["checksums"], "manifest")
         document = json.loads(archive.read("document.json"))
         check([f["type"] for f in document["features"]] == ["box", "cylinder", "sphere"], "recipe in file")
     run(data, "recipe:box,cylinder,sphere;expectmodified:0", model)       # opened by argument
@@ -128,7 +128,8 @@ with tempfile.TemporaryDirectory() as data:
     # 9. The start page: an example opens as a new project, a recent file opens, "New" is empty.
     run(data, "clickitem:startExample_keychain;recipe:box,cylinder,combine;expectmodified:0",
         start_page=True)
-    run(data, "clickitem:startRecent_0;recipe:box,cylinder,sphere,cone;expectmodified:0",
+    run(data, "clickitem:startRecent_0;recipe:box,cylinder,sphere,cone;expectmodified:0;"
+               "expectmenu:recent,1",
         start_page=True)
     run(data, "clickitem:startNew;recipe:;expectmodified:0", start_page=True)
     for example in ("box-with-hole", "star"):
