@@ -61,6 +61,7 @@ class Viewport3D : public QQuickRhiItem {
     Q_PROPERTY(QString mouseStyle READ mouseStyle WRITE setMouseStyle NOTIFY mouseStyleChanged)
     Q_PROPERTY(double cameraYaw READ cameraYaw NOTIFY cameraChanged)
     Q_PROPERTY(double cameraPitch READ cameraPitch NOTIFY cameraChanged)
+    Q_PROPERTY(double cameraDistance READ cameraDistance NOTIFY cameraChanged)
     Q_PROPERTY(double pixelsPerMillimetre READ pixelsPerMillimetre NOTIFY cameraChanged)
     /// The step (mm) a dragged length snaps to now: the one chosen in `fixedSnapStep`, or the one
     /// of the zoom (shown in the status bar).
@@ -116,6 +117,7 @@ public:
     void setDisplayMode(const QString& mode);
     double cameraYaw() const { return m_camera.pose().yaw; }
     double cameraPitch() const { return m_camera.pose().pitch; }
+    double cameraDistance() const { return m_camera.pose().distance; }
     double pixelsPerMillimetre() const { return m_camera.pixelsPerMillimetre(); }
     /// For the sketch mode: the drag with the left button that is going on is a drawing drag (no
     /// rubber band, no body moves). Ended by the release.
@@ -261,7 +263,8 @@ public:
         distances = 5,
         align = 6,
         measure = 7,
-        sketch = 8 ///< the grid, the elements and the catch marker of the sketch mode (AP-2.1b)
+        sketch = 8, ///< the grid, the elements and the catch marker of the sketch mode (AP-2.1b)
+        datum = 9   ///< the helper planes (AP-2.12c)
     };
     void setHandleGraphics(render::HandleGraphics graphics,
                            HandleSource source = HandleSource::size);
@@ -397,7 +400,7 @@ private:
     core::SelectionFilter m_filter;
     std::optional<QStringList> m_pickable; ///< see `setPickableBodies`
     std::vector<render::Highlight> m_selectionHighlights;
-    std::array<render::HandleGraphics, 9> m_handleGraphics;
+    std::array<render::HandleGraphics, 10> m_handleGraphics;
     std::optional<render::Highlight> m_hover;
     std::vector<render::Highlight> m_listHover; ///< lit up from a list, see `lightUpBodies`
     std::deque<PickRequest> m_pickQueue;

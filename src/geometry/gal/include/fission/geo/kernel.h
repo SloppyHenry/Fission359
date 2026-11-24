@@ -10,10 +10,12 @@
 
 #include "fission/geo/error.h"
 #include "fission/geo/exchange.h"
+#include "fission/geo/extrude.h"
 #include "fission/geo/measuring.h"
 #include "fission/geo/mesh.h"
 #include "fission/geo/named_solid.h"
 #include "fission/geo/outline.h"
+#include "fission/geo/pattern.h"
 #include "fission/geo/primitives.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/signature.h"
@@ -72,6 +74,35 @@ struct FlatFace {
     std::optional<Point3d> longestEdge;
 };
 
+/// The kind of a drilled hole (AP-2.7b).
+enum class HoleKind { plain, counterbore, countersink, nutTrap };
+
+/// The tool of a hole: its top at z = 0 on the face, `above` mm higher so that it cuts cleanly.
+/// The tool is built standing on the origin, axis along +Z, and is then placed by `at` and
+/// `up`: the origin of the tool (z = 0, its top edge) sits at `at` on the face, and the tool's
+/// Z axis runs along `up`, the face's outward normal, so the tool reaches from `above` the
+/// face down into the material (the point (0, 0, -depth) lands at `at - up * depth`).
+struct HoleToolSpec {
+    HoleKind kind = HoleKind::plain;
+    double diameter = 3.4;   // the hole, mm
+    double depth = 10.0;     // below z = 0, mm
+    double headDiameter = 0; // counterbore or countersink (90°) diameter at the face, mm
+    double headDepth = 0;    // counterbore depth, mm
+    double nutWidth = 0;     // nut trap: width across flats, mm
+    double nutDepth = 0;     // nut trap depth, mm
+    double above = 1.0;
+    Point3d at{0, 0, 0}; ///< Place of the tool's origin (z = 0, its top edge on the face).
+    Point3d up{0, 0, 1}; ///< Direction of the tool's Z axis: the face's outward normal.
+};
+
+/// A point a dragged body can catch on (pflege P7), exact from the kernel.
+enum class SnapPointKind { corner, circleCentre, edgeMiddle, faceMiddle };
+struct SnapPointGal {
+    Point3d position;
+    SnapPointKind kind = SnapPointKind::corner;
+    bool operator==(const SnapPointGal&) const = default;
+};
+
 /// What features may ask of the geometry kernel (docs/03-architektur.md §4). The core and the
 /// feature types only know this interface; the OpenCASCADE implementation is handed in by the
 /// application, tests may hand in another one.
@@ -116,6 +147,15 @@ public:
         (void)solid;
         (void)delta;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move bodies");
+    }
+
+    /// The same body transformed by `transform` (rotation and translation). A pure move: the faces
+    /// stay the faces they were, with their roles, in the same order. Throws GeometryError for
+    /// a transform that is not finite. The default refuses.
+    virtual NamedSolid transformed(const NamedSolid& solid, const Transform3& transform) const {
+        (void)solid;
+        (void)transform;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot transform");
     }
 
     /// Combines `target` with `tools` exactly (no tolerance), then joins faces that lie in one
@@ -217,6 +257,17 @@ public:
         (void)faceIds;
         (void)distance;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot move faces");
+    }
+
+    /// The tool of a hole (see `HoleToolSpec`), to be subtracted: built standing on the origin,
+    /// axis along +Z, going down into the material (z from `above` to `-depth`), then placed by
+    /// `at` and `up` on the face. Face roles: `top`,
+    /// `bottom`, `wall`, `headWall`, `headFloor` (counterbore), `countersink`, `nutWall[1]` ...
+    /// `nutWall[6]`, `nutFloor`. Throws `GeometryError` with `invalidInput` for sizes that do not
+    /// fit and for an `up` without a length. The default refuses.
+    virtual NamedSolid makeHoleTool(const HoleToolSpec& spec) const {
+        (void)spec;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot make holes");
     }
 
     /// Turns a flat face by `degrees` around the line through `pivot` along `axis` (both in the
@@ -421,6 +472,29 @@ public:
                             "this kernel cannot find sketch regions");
     }
 
+    /// Pulls the region of the sketch that contains `inside` (a point of the sketch plane, in
+    /// sketch coordinates) straight out of the plane `frame` (AP-2.3a). The curves are as in
+    /// `sketchRegions`, in sketch coordinates. Faces are named: the start cap "capStart" (in the
+    /// sketch plane, or the lower one for symmetric), the end cap "capEnd", and each side
+    /// "side[c<i>]" after the index i of the curve it comes from; when one curve gives several
+    /// sides (it was cut by other curves) the second and later get ":<k>" (k = 2, 3, ...):
+    /// "side[c3]", "side[c3:2]". `taperDegrees` != 0 leans the sides (positive inwards, so the far
+    /// cap is smaller) and needs a pull to one side; `throughAll` pulls far enough to pass
+    /// completely through the body `spec.through`, `distance` only giving the side. Throws
+    /// `GeometryError`: `invalidInput` when no region contains `inside`, the distance is zero or
+    /// not finite (with `throughAll` only that it is a number), the taper is not a number or 89
+    /// degrees or more, a taper is asked together with `symmetric`, `throughAll` has no body, or
+    /// the frame is not two perpendicular unit vectors; `kernelFailure` when the kernel cannot
+    /// calculate or the result is not valid. The default refuses.
+    virtual NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
+                                     const SketchFrame& frame, const ExtrudeSpec& spec) const {
+        (void)curves;
+        (void)inside;
+        (void)frame;
+        (void)spec;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot extrude");
+    }
+
     /// Measures one element (corner: position; edge: length, radius of a circle or arc; face:
     /// area, radius of a cylinder or sphere) or the shortest distance and the angle between two
     /// (AP-2.11, see `Measurement`). The two may lie on different bodies. Throws `GeometryError`
@@ -447,6 +521,12 @@ public:
         const SolidReport report = measure(solid);
         return {report.boxMin, report.boxMax};
     }
+
+    /// The exact points to catch on: every corner, the middle of every edge (also of a bent one:
+    /// the point at half its length), the centre of every circle or arc, and the middle of every
+    /// flat face (the centre of its area). Duplicates (closer than 1e-9 mm, same kind) appear once.
+    /// Empty where a kernel cannot tell.
+    virtual std::vector<SnapPointGal> snapPoints(const Solid& /*solid*/) const { return {}; }
 
     virtual TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const = 0;
 

@@ -102,15 +102,56 @@ const char* codeName(core::ExpressionErrorCode code) {
 
 } // namespace
 
+QString Numbers::unit() const {
+    return m_unit;
+}
+
+void Numbers::setUnit(const QString& unit) {
+    if (unit != QStringLiteral("mm") && unit != QStringLiteral("in")) {
+        return;
+    }
+    if (unit == m_unit) {
+        return;
+    }
+    m_unit = unit;
+    emit unitChanged();
+}
+
+double Numbers::millimetresPerUnit() const {
+    return m_unit == QStringLiteral("in") ? 25.4 : 1.0;
+}
+
+QString Numbers::unitSymbol() const {
+    return m_unit;
+}
+
+QString Numbers::formatLength(double millimetres, int decimals) const {
+    return format(millimetres / millimetresPerUnit(), decimals);
+}
+
 double Numbers::evaluate(const QString& text, const QString& kind) const {
     const core::QuantityKind quantity = quantityOf(kind);
     const std::optional<double> value =
-        core::evaluateExpression(text.toStdString(), quantity, m_measures);
+        core::evaluateExpression(text.toStdString(), quantity, m_measures, millimetresPerUnit());
     return value ? *value : std::numeric_limits<double>::quiet_NaN();
 }
 
 QString Numbers::adjusted(const QString& text, const QString& kind, double delta) const {
     const core::QuantityKind quantity = quantityOf(kind);
+    // In inches `delta` counts inches (one arrow step = 1 in): a bare number is evaluated in mm
+    // with the inch default, moved by delta*25.4 mm and shown in inches again. Formulas keep the
+    // old path, `adjustedExpression` has no default unit.
+    if (quantity == core::QuantityKind::length && m_unit == QStringLiteral("in")) {
+        const auto parsed = core::Expression::parse(text.toStdString());
+        if (parsed && parsed.value().references().empty()) {
+            const auto value =
+                core::evaluateExpression(text.toStdString(), quantity, m_measures, 25.4);
+            if (!value) {
+                return {};
+            }
+            return format((*value + delta * 25.4) / 25.4, 9);
+        }
+    }
     const std::optional<std::string> moved =
         core::adjustedExpression(text.toStdString(), quantity, delta);
     if (!moved) {
@@ -172,6 +213,7 @@ QVariantMap Numbers::explain(const QString& text, const QString& kind) const {
         }
         core::EvaluationContext context;
         context.kind = quantityOf(kind);
+        context.defaultUnitMillimetres = millimetresPerUnit();
         context.lookup = [&folded](std::string_view key) -> std::optional<core::Quantity> {
             const auto found = folded.find(std::string(key));
             if (found == folded.end()) {

@@ -406,6 +406,47 @@ TEST_CASE("placing: on a wall the shape lies on it, as plain numbers in one step
     CHECK(f.model->bodies().size() == 1);
 }
 
+TEST_CASE("placing: typed sizes after putting a shape on a wall keep it on the wall",
+          "[ui][placement]") {
+    Fixture f;
+    WallView view(f);
+    REQUIRE(f.placement->begin("box", false, view.wall.x(), view.wall.y()));
+    REQUIRE(f.placement->finish());
+    f.refresh();
+    const int last = static_cast<int>(f.model->recipe().size()) - 1;
+    const int stepsBefore = f.stepsDone();
+    const double wallY = view.side * 10.0;
+
+    // The height typed right after: the underside stays on the wall, the box reaches 35 mm out.
+    f.model->selectStep(last);
+    f.model->beginChange("height");
+    REQUIRE(f.model->setStepValue(last, "height", "35"));
+    f.model->commitChange();
+    f.model->waitForCalculation();
+    f.refresh();
+    {
+        const Box3 box = extentOf(*f.model->scene(), f.lastBodyId());
+        const double nearWall = view.side < 0.0 ? box.maxY : box.minY;
+        const double farWall = view.side < 0.0 ? box.minY : box.maxY;
+        CHECK(nearWall == Approx(wallY).margin(1e-3));
+        CHECK(std::abs(farWall - wallY) == Approx(35.0).margin(1e-3));
+    }
+    CHECK(f.stepsDone() == stepsBefore + 1); // the re-seat is inside the same step
+
+    // A second size of the same shape: still on the wall.
+    f.model->beginChange("width");
+    REQUIRE(f.model->setStepValue(last, "width", "30"));
+    f.model->commitChange();
+    f.model->waitForCalculation();
+    f.refresh();
+    {
+        const Box3 box = extentOf(*f.model->scene(), f.lastBodyId());
+        const double nearWall = view.side < 0.0 ? box.maxY : box.minY;
+        CHECK(nearWall == Approx(wallY).margin(1e-3));
+    }
+    CHECK(f.stepsDone() == stepsBefore + 2);
+}
+
 TEST_CASE("placing: Alt keeps the shape upright on the work plane", "[ui][placement]") {
     Fixture f;
     WallView view(f);
