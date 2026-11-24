@@ -119,6 +119,9 @@ class DocumentModel : public QObject {
     Q_PROPERTY(double nozzle READ nozzle NOTIFY printerChanged)
     /// [{ id, name, bedX, bedY, bedZ, nozzle }]
     Q_PROPERTY(QVariantList printers READ printers CONSTANT)
+    /// The display unit for lengths of this document (P23b): "in" when a bare number in it counts
+    /// as inches (defaultUnitMillimetres 25.4), else "mm".
+    Q_PROPERTY(QString unit READ unit NOTIFY unitChanged)
 
 public:
     /// `kernel` does the geometry work; the application hands in the OpenCASCADE one.
@@ -132,7 +135,7 @@ public:
     ~DocumentModel() override;
 
     /// The number fields use the named measures of the document in their formulas.
-    void setNumbers(Numbers* numbers) { m_numbers = numbers; }
+    void setNumbers(Numbers* numbers);
 
     /// The one box the program starts with (replaces the demo body of AP-0.8).
     void addDemoBox();
@@ -287,6 +290,8 @@ public:
     /// Chooses the printer; false for an id that is not in the list. Not part of the history:
     /// the printer is a setting of the program, not a change of the model.
     Q_INVOKABLE bool setPrinter(const QString& id);
+    /// "in" or "mm", what a bare number in this document means (P23b).
+    QString unit() const;
 
     Q_INVOKABLE void selectStep(int index);
     /// Sets the value `name` of step `index` to what was typed (a number or a formula).
@@ -319,6 +324,13 @@ public:
     /// Deletes the steps at `indexes` (and with them the bodies they make) as one step of the
     /// history; the cuts of holes follow. False when there is nothing to delete.
     Q_INVOKABLE bool deleteSteps(const QVariantList& indexes);
+    /// Whether moving the step at `from` to `to` would be accepted. Checked on a copy of the
+    /// document: the step must not land before a step it depends on. False for invalid indexes
+    /// or `from == to`.
+    Q_INVOKABLE bool canMoveStep(int from, int to) const;
+    /// Moves the step at `from` to `to` (its index after the move) as one step of the history.
+    /// False when the move is refused or the indexes are invalid or equal.
+    Q_INVOKABLE bool moveStep(int from, int to);
     /// Puts the time marker behind the first `count` steps (-1 or the number of steps: at the end).
     /// One step of the history; a new step goes in at the marker and the marker moves behind it.
     Q_INVOKABLE bool moveMarker(int count);
@@ -670,6 +682,8 @@ signals:
     void historyChanged();
     void printerChanged();
     void paletteChanged();
+    /// The document's display unit for lengths changed (a new or opened document, P23b).
+    void unitChanged();
     /// The document was replaced as a whole (a file was opened, a new project started): whatever
     /// was chosen or in progress is gone.
     void documentReplaced();
@@ -704,6 +718,8 @@ private:
     void rebuildLists();
     void rebuildMeasures();
     void rebuildScene();
+    /// Brings `m_unit` and the numbers (the QML singleton) to the unit of the document (P23b).
+    void syncUnit();
     QVariantList buildStepValues() const;
     QVariantList buildStepTexts() const;
     QVariantList buildStepHandles() const;
@@ -760,6 +776,12 @@ private:
     void collectForms(const core::Feature& step, std::vector<const core::Feature*>& out) const;
     /// Writes the turn and the foot of a seat into the step (one value after the other).
     void writeSeat(const core::FeatureId& id, const geo::Seat& seat);
+    /// Pflege P8: re-seats the shape that was just put down on a wall with its sizes as they are
+    /// now, so that its underside stays on the wall. Called inside the open step of a change, so
+    /// that the re-seat is part of the same undo step. False (and nothing written) when there is
+    /// no fresh seat, another command happened since, or a value cannot be worked out without the
+    /// named measures: never seated with guessed sizes.
+    bool reseatFresh();
     const core::Body* findBody(const QString& bodyId) const;
 
     // What was copied (also on the system clipboard, see clipboard_payload.h).
@@ -773,6 +795,7 @@ private:
     std::shared_ptr<const render::RenderScene> m_scene;
     std::shared_ptr<const ElementNameMap> m_elementNames = std::make_shared<ElementNameMap>();
     Numbers* m_numbers = nullptr;
+    QString m_unit = QStringLiteral("mm"); ///< the unit last pushed to the numbers (P23b)
 
     QVariantList m_recipe;
     QVariantList m_measureList;
@@ -787,6 +810,18 @@ private:
     QString m_placingSurface;
     geo::Point3d m_placingCentre; ///< middle of the shape's box minus its foot (before a turn)
     bool m_placingOnFace = false; ///< the shape lies on a tilted face (it has a turn)
+    /// The wall a shape was put down on (pflege P8): while nothing else happened since (same
+    /// revision), a typed size keeps its underside on the wall.
+    struct FreshSeat {
+        core::FeatureId feature;
+        geo::Point3d point;
+        geo::Point3d normal;
+        std::uint64_t revision = 0;
+    };
+    std::optional<FreshSeat> m_freshSeat;
+    geo::Point3d m_placingSeatPoint;         ///< the last wall point of the shape being placed
+    geo::Point3d m_placingSeatNormal;        ///< and the wall's outward direction
+    std::uint64_t m_changeStartRevision = 0; ///< the revision when `beginChange` opened its step
     double m_workplaneZ = 0.0;
     QString m_workplaneBody;
     int m_currentStep = -1;
@@ -796,6 +831,8 @@ private:
     // Tessellations by result, made on the worker thread, read when the scene is put together.
     std::mutex m_meshMutex;
     std::map<std::uint64_t, std::shared_ptr<const geo::TriangleMesh>> m_meshes;
+    std::map<std::uint64_t, std::shared_ptr<const std::vector<geo::SnapPointGal>>>
+        m_snapPoints; ///< by mesh key, guarded by m_meshMutex
 
     // Finer tessellations for the current zoom, by mesh key; made by a pool thread, used on the
     // interface thread only.

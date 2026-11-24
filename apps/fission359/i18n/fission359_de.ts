@@ -909,6 +909,36 @@
         <translation>Die Ansicht dreht und zoomt; am Projekt ändert sich nichts.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Heranzoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view closer to the middle of the screen.</source>
+        <translation>Bringt die Ansicht näher an die Bildschirmmitte.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view comes closer; nothing in the project changes.</source>
+        <translation>Die Ansicht kommt näher; am Projekt ändert sich nichts.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Herauszoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view farther away from the middle of the screen.</source>
+        <translation>Rückt die Ansicht weiter von der Bildschirmmitte weg.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view goes farther away; nothing in the project changes.</source>
+        <translation>Die Ansicht rückt weiter weg; am Projekt ändert sich nichts.</translation>
+    </message>
+    <message>
         <location line="+5"/>
         <source>Home view</source>
         <translation>Startansicht</translation>
@@ -1754,6 +1784,11 @@
         <source>Delete</source>
         <translation>Löschen</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>This step needs a step above it - it cannot go there</source>
+        <translation>Dieser Schritt braucht einen Schritt darüber – dorthin geht er nicht</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
@@ -1957,6 +1992,16 @@
         <location line="+2"/>
         <source>Show everything</source>
         <translation>Alles zeigen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Heranzoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Herauszoomen</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2567,8 +2612,8 @@
     </message>
     <message>
         <location line="+1572"/>
-        <source>Unit: mm</source>
-        <translation>Einheit: mm</translation>
+        <source>Unit: %1</source>
+        <translation>Einheit: %1</translation>
     </message>
     <message>
         <location line="+27"/>
@@ -2852,6 +2897,11 @@
         <location line="+1"/>
         <source>%1 moved</source>
         <translation>%1 verschoben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 moved in the recipe</source>
+        <translation>%1 im Rezept verschoben</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5715,6 +5765,11 @@
         <location line="+27"/>
         <source>Examples</source>
         <translation>Beispiele</translation>
+    </message>
+    <message>
+        <location filename="../qml/StartPage.qml" line="159"/>
+        <source>You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.</source>
+        <translation>Du nutzt die Browser-Version: Speichern lädt die Datei herunter, Öffnen holt sie von deinem Rechner. Deine Arbeit wird zusätzlich im Browser gesichert.</translation>
     </message>
 </context>
 <context>

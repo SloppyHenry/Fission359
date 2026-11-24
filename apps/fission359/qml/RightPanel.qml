@@ -380,7 +380,7 @@ Rectangle {
                         width: parent.width
                         label: entry.label
                         kind: entry.kind
-                        unit: "mm"
+                        unit: Numbers.unit
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
                         saveName: entry.label
@@ -540,7 +540,8 @@ Rectangle {
                         width: parent.width
                         label: entry.label
                         kind: entry.kind
-                        unit: entry.kind === "angle" ? "°" : entry.kind === "plain" ? "" : "mm"
+                        unit: entry.kind === "angle" ? "°"
+                                           : entry.kind === "plain" ? "" : Numbers.unit
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
                         saveName: entry.label
@@ -712,7 +713,8 @@ Rectangle {
                         width: parent.width
                         label: entry.label
                         kind: entry.kind
-                        unit: entry.kind === "angle" ? "°" : entry.kind === "plain" ? "" : "mm"
+                        unit: entry.kind === "angle" ? "°"
+                                           : entry.kind === "plain" ? "" : Numbers.unit
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
                         saveName: entry.label

@@ -252,3 +252,23 @@ TEST_CASE("snap scale: a flat body catches on the axes it has", "[snap]") {
     REQUIRE(caught.has_value());
     CHECK(caught->factor == 2.0);
 }
+
+TEST_CASE("exact kernel points become points to catch on", "[snap][exact]") {
+    const std::vector<fission::geo::SnapPointGal> exact = {
+        {{1.25, -2.5, 3.75}, fission::geo::SnapPointKind::corner},
+        {{0.0, 0.0, 10.0}, fission::geo::SnapPointKind::circleCentre},
+        {{3.15, 0.0, 0.0}, fission::geo::SnapPointKind::edgeMiddle},
+        {{5.0, 5.0, 5.0}, fission::geo::SnapPointKind::faceMiddle},
+    };
+    const auto points = snapPointsOf(exact);
+    // The same positions (exact, not read off the mesh) and the same kinds, in the same order.
+    REQUIRE(points.size() == exact.size());
+    CHECK(points[0].position == Vec3{1.25, -2.5, 3.75});
+    CHECK(points[0].kind == SnapKind::corner);
+    CHECK(points[1].position == Vec3{0.0, 0.0, 10.0});
+    CHECK(points[1].kind == SnapKind::circleCentre);
+    CHECK(points[2].position == Vec3{3.15, 0.0, 0.0});
+    CHECK(points[2].kind == SnapKind::edgeMiddle);
+    CHECK(points[3].position == Vec3{5.0, 5.0, 5.0});
+    CHECK(points[3].kind == SnapKind::faceMiddle);
+}

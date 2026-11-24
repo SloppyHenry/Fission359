@@ -17,6 +17,7 @@
 #include <optional>
 #include <vector>
 
+#include "fission/geo/kernel.h"
 #include "fission/geo/mesh.h"
 
 namespace fission::interaction {
@@ -49,6 +50,9 @@ double snapGridDisplayStep(double step, double pixelsPerMillimetre);
 /// the centres of its circles and the middles of its flat faces. (Round faces have none: their
 /// centre is not on them.)
 std::vector<SnapPoint> snapPointsOf(const geo::TriangleMesh& mesh);
+
+/// The exact points from the kernel (pflege P7), as points to catch on.
+std::vector<SnapPoint> snapPointsOf(const std::vector<geo::SnapPointGal>& exact);
 
 /// The 8 corners, 12 edge middles and 6 face middles of a box.
 std::vector<SnapPoint> snapPointsOfBox(const Vec3& low, const Vec3& high);
