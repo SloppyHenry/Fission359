@@ -16,9 +16,14 @@ namespace fission::ui {
 /// and both decimal separators in, the user's decimal separator out.
 class Numbers : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QString unit READ unit WRITE setUnit NOTIFY unitChanged)
 
 public:
     explicit Numbers(QObject* parent = nullptr) : QObject(parent) {}
+
+    /// The display unit for lengths, "mm" or "in"; any other word is ignored.
+    QString unit() const;
+    void setUnit(const QString& unit);
 
     /// The named measures of the document that formulas may use (millimetres). Set by the
     /// document model whenever they change.
@@ -31,8 +36,8 @@ public:
     /// completely is not offered again.
     Q_INVOKABLE QStringList completions(const QString& typed) const;
 
-    /// Value of what was typed in; kind is "length" (result in mm), "angle" or "plain".
-    /// Returns NaN when the text is not a valid expression.
+    /// Value of what was typed in; kind is "length" (result in mm), "angle" or "plain";
+    /// a bare number counts in `unit`. Returns NaN when the text is not a valid expression.
     Q_INVOKABLE double evaluate(const QString& text,
                                 const QString& kind = QStringLiteral("length")) const;
 
@@ -42,9 +47,18 @@ public:
     Q_INVOKABLE QString format(double value, int decimals = 3) const;
     void setMaxDecimals(int decimals) { m_maxDecimals = decimals; }
 
-    /// The text moved by `delta` (millimetres or degrees) for the arrow keys: a number becomes the
-    /// new number in the user's decimal separator, a formula stays one (`Breite/2` becomes
-    /// `(Breite/2) + 1`). Empty when the text is not a valid expression.
+    /// The display unit for lengths as the symbol behind the numbers ("mm" or "in").
+    Q_INVOKABLE QString unitSymbol() const;
+
+    /// `millimetres` shown in `unit` (converted to inches when the unit is "in"), otherwise
+    /// like `format`.
+    Q_INVOKABLE QString formatLength(double millimetres, int decimals = 3) const;
+
+    /// The text moved by `delta` for the arrow keys: a number becomes the new number in the
+    /// user's decimal separator, a formula stays one (`Breite/2` becomes `(Breite/2) + 1`).
+    /// For lengths `delta` is in the display unit (one step = 1 mm, or 1 in when the unit is
+    /// "in"; a bare number then stays a number in inches). Empty when the text is not a valid
+    /// expression.
     Q_INVOKABLE QString adjusted(const QString& text, const QString& kind, double delta) const;
 
     /// Why `text` is not a valid expression, for the line under the field: `code` (the name of
@@ -54,10 +68,17 @@ public:
     /// or empty.
     Q_INVOKABLE QVariantMap explain(const QString& text, const QString& kind) const;
 
+signals:
+    void unitChanged();
+
 private:
+    /// Millimetres in one display unit: 25.4 for "in", 1.0 for "mm".
+    double millimetresPerUnit() const;
+
     core::NamedMeasures m_measures;
     QStringList m_measureNames;
     int m_maxDecimals = 4;
+    QString m_unit = QStringLiteral("mm");
 };
 
 } // namespace fission::ui

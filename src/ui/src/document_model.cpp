@@ -591,6 +591,28 @@ void DocumentModel::waitForCalculation() {
     QCoreApplication::sendPostedEvents(this, 0);
 }
 
+void DocumentModel::setNumbers(Numbers* numbers) {
+    m_numbers = numbers;
+    syncUnit();
+}
+
+QString DocumentModel::unit() const {
+    return std::abs(m_history.document().settings().defaultUnitMillimetres - 25.4) < 1e-9
+               ? QStringLiteral("in")
+               : QStringLiteral("mm");
+}
+
+void DocumentModel::syncUnit() {
+    const QString wanted = unit();
+    if (wanted != m_unit) {
+        m_unit = wanted;
+        emit unitChanged();
+    }
+    if (m_numbers != nullptr) {
+        m_numbers->setUnit(m_unit);
+    }
+}
+
 std::uint64_t DocumentModel::meshKey(const core::BodyResult& body) noexcept {
     return body.token * 256U + body.outputIndex;
 }
@@ -629,8 +651,20 @@ void DocumentModel::onEngineEvent(const core::RecomputeEvent& event) {
                 render::tessellationForDetail(0, m_kernel->bounds(body.solid).diagonal());
             auto mesh =
                 std::make_shared<const geo::TriangleMesh>(m_kernel->tessellate(body.solid, params));
+            // The exact points to catch on (pflege P7), worked out next to the mesh. When they
+            // fail, the mesh still stands: the drag then catches on the points of the mesh.
+            std::shared_ptr<const std::vector<geo::SnapPointGal>> snaps;
+            try {
+                snaps = std::make_shared<const std::vector<geo::SnapPointGal>>(
+                    m_kernel->snapPoints(body.solid));
+            } catch (const geo::GeometryError& error) {
+                qWarning() << "the snap points of a body could not be worked out:" << error.what();
+            }
             const std::lock_guard lock(m_meshMutex);
             m_meshes.emplace(key, std::move(mesh));
+            if (snaps) {
+                m_snapPoints.emplace(key, std::move(snaps));
+            }
         } catch (const geo::GeometryError& error) {
             qWarning() << "a body could not be tessellated:" << error.what();
         }
@@ -677,6 +711,7 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
         }
         for (std::size_t i = 0; i + kKeptNewer < others.size(); ++i) { // `others` is ascending
             m_meshes.erase(others[i]);
+            m_snapPoints.erase(others[i]);
         }
         // Finer meshes of bodies that changed are gone; new bodies get theirs again below.
         for (auto it = m_detailMeshes.begin(); it != m_detailMeshes.end();) {
@@ -686,6 +721,7 @@ void DocumentModel::applyResult(std::shared_ptr<const core::RecomputeResult> res
     if (m_numbers != nullptr) {
         m_numbers->setNamedMeasures(namedMeasureValues());
     }
+    syncUnit();
     {
         auto names = std::make_shared<ElementNameMap>();
         const std::lock_guard lock(m_meshMutex);
@@ -723,6 +759,9 @@ void DocumentModel::rebuildScene() {
             }
             render::RenderBody drawn;
             drawn.id = body.id.value;
+            if (const auto snaps = m_snapPoints.find(key); snaps != m_snapPoints.end()) {
+                drawn.snapPoints = snaps->second;
+            }
             // The finer mesh of the current zoom if it is ready, otherwise the basic one.
             const auto fine = m_detailMeshes.find(key);
             if (fine != m_detailMeshes.end()) {
@@ -1476,6 +1515,34 @@ bool DocumentModel::deleteSteps(const QVariantList& indexes) {
     return true;
 }
 
+bool DocumentModel::canMoveStep(int from, int to) const {
+    const auto& features = m_history.document().features();
+    if (from < 0 || from >= static_cast<int>(features.size()) || to < 0 ||
+        to >= static_cast<int>(features.size()) || from == to) {
+        return false;
+    }
+    core::Document copy = m_history.document();
+    return copy.moveFeature(features[static_cast<std::size_t>(from)].id,
+                            static_cast<std::size_t>(to));
+}
+
+bool DocumentModel::moveStep(int from, int to) {
+    const auto& features = m_history.document().features();
+    if (from < 0 || from >= static_cast<int>(features.size()) || to < 0 ||
+        to >= static_cast<int>(features.size()) || from == to) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(from)];
+    core::CommandDescription label{"moveFeature", {{"type", step.type}}};
+    if (!executeWithCuts(core::makeMoveFeature(step.id, static_cast<std::size_t>(to)),
+                         std::move(label))) {
+        return false;
+    }
+    documentChanged();
+    emit historyChanged();
+    return true;
+}
+
 bool DocumentModel::setStepSuppressed(int index, bool suppressed) {
     const auto& features = m_history.document().features();
     if (index < 0 || index >= static_cast<int>(features.size())) {
@@ -1591,6 +1658,7 @@ bool DocumentModel::goToHistory(int position) {
 }
 
 void DocumentModel::beginChange(const QString& field) {
+    m_changeStartRevision = m_history.document().revision();
     m_history.beginTransaction({"setValue", {{"field", field.toStdString()}}});
 }
 
@@ -1641,8 +1709,64 @@ bool DocumentModel::executeWithCuts(std::unique_ptr<core::Command> command,
 }
 
 void DocumentModel::commitChange() {
+    // Pflege P8: a size typed right after the shape was put down on a wall re-seats it, so that
+    // its underside stays on the wall; inside this step, so that undo takes both together.
+    const std::uint64_t before = m_history.document().revision();
+    const bool reseated = reseatFresh();
     finishTransaction();
+    if (m_freshSeat) {
+        if (reseated) {
+            m_freshSeat->revision = m_history.document().revision();
+        } else if (m_changeStartRevision != m_freshSeat->revision) {
+            m_freshSeat.reset(); // another command happened in between: the seat is forgotten
+        }
+    }
+    if (reseated && m_history.document().revision() != before) {
+        documentChanged();
+    }
     emit historyChanged();
+}
+
+bool DocumentModel::reseatFresh() {
+    if (!m_freshSeat || m_changeStartRevision != m_freshSeat->revision ||
+        m_currentFeature != m_freshSeat->feature) {
+        return false; // only a size of the shape that was just put down, nothing in between
+    }
+    const core::Feature* feature = m_history.document().findFeature(m_freshSeat->feature);
+    const core::FeatureType* type = feature != nullptr ? m_registry.find(feature->type) : nullptr;
+    if (type == nullptr || !feature->params.contains("rotX") || !feature->params.contains("rotY") ||
+        !feature->params.contains("rotZ")) {
+        return false;
+    }
+    // The sizes as they are now, worked out from the formulas as typed. A formula that uses a
+    // named measure does not evaluate here: no re-seat then, never a guessed size.
+    core::ResolvedParams params;
+    for (const core::ParamSpec& spec : type->parameters()) {
+        const auto found = feature->params.find(spec.name);
+        const std::string& expression =
+            found != feature->params.end() ? found->second.expression : spec.defaultExpression;
+        const std::optional<double> value = core::evaluateExpression(
+            expression, spec.kind, {}, m_history.document().settings().defaultUnitMillimetres);
+        if (!value) {
+            return false;
+        }
+        params[spec.name] = core::Quantity{*value, core::dimensionOf(spec.kind)};
+    }
+    for (const char* place : {"x", "y", "z"}) {
+        const auto found = params.find(place);
+        if (found != params.end()) {
+            found->second.value = 0.0; // measured from the foot
+        }
+    }
+    const geo::Point3d centre = type->bodyCentre(params);
+    const auto angleOf = [&params](const char* name) {
+        const auto found = params.find(name);
+        return found != params.end() ? found->second.value : 0.0;
+    };
+    const geo::Angles hint{angleOf("rotX"), angleOf("rotY"), angleOf("rotZ")};
+    writeSeat(m_freshSeat->feature,
+              geo::seatOnFace(m_freshSeat->point, m_freshSeat->normal, centre, hint));
+    return true;
 }
 
 void DocumentModel::cancelChange() {
@@ -2215,6 +2339,7 @@ int DocumentModel::startPlacing(const QString& type, bool asHole, double x, doub
     m_placingZ = z;
     m_placingSurface.clear();
     m_placingOnFace = false;
+    m_freshSeat.reset();
     m_placingCentre = centreOffsetOfDefaults(*featureType);
     const int step = stepIndexOf(*id);
     m_currentFeature = *id;
@@ -2263,6 +2388,8 @@ void DocumentModel::placeOnFace(const geo::Point3d& point, const geo::Point3d& n
         return;
     }
     const std::uint64_t before = m_history.document().revision();
+    m_placingSeatPoint = point;
+    m_placingSeatNormal = normal;
     writeSeat(m_placingFeature, geo::seatOnFace(point, normal, m_placingCentre));
     m_placingOnFace = true;
     // The work plane is a height; a wall does not move it.
@@ -2277,6 +2404,7 @@ bool DocumentModel::finishPlacing() {
     if (!m_placing) {
         return false;
     }
+    const bool onFace = m_placingOnFace; // read before anything resets it
     finishTransaction();
     m_placing = false;
     const int placedStep = stepIndexOf(m_placingFeature);
@@ -2288,6 +2416,13 @@ bool DocumentModel::finishPlacing() {
     emit placingChanged();
     emit workplaneChanged();
     emit shapePlaced(placedStep, placedType);
+    // Pflege P8: while nothing else happens, a typed size keeps the underside on the wall.
+    if (onFace) {
+        m_freshSeat = FreshSeat{m_placingFeature, m_placingSeatPoint, m_placingSeatNormal,
+                                m_history.document().revision()};
+    } else {
+        m_freshSeat.reset();
+    }
     return true;
 }
 
@@ -2298,6 +2433,7 @@ void DocumentModel::cancelPlacing() {
     m_liveCutTimer.stop();
     m_history.cancelTransaction();
     m_placing = false;
+    m_freshSeat.reset();
     documentChanged();
     emit placingChanged();
 }

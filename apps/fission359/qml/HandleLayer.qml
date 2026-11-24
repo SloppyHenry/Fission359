@@ -16,8 +16,8 @@ Item {
 
     // The sentence for a value ("Width"): the window knows the words.
     property var labelFor: name => name
-    // Unit of a value, shown behind it.
-    property string unit: "mm"
+    // Unit of a value, shown behind it (P23b: the document's unit).
+    property string unit: Numbers.unit
     // What floats over the view (tool palette, view cube …): labels keep out from under it.
     property var obstacles: []
     readonly property bool typing: bubble.typing
@@ -155,7 +155,7 @@ Item {
 
                     Txt {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: part.handle ? Numbers.format(part.handle.value, 2) : ""
+                        text: part.handle ? Numbers.formatLength(part.handle.value, 2) : ""
                         color: part.active ? Theme.accentFg : Theme.fg
                         font.weight: Font.Medium
                         mono: true
@@ -347,7 +347,7 @@ Item {
             Txt {
                 visible: !bubble.typing
                 anchors.verticalCenter: parent.verticalCenter
-                text: Numbers.format(bubble.dragValue, 2)
+                text: Numbers.formatLength(bubble.dragValue, 2)
                 mono: true
                 color: Theme.fg
                 font.weight: Font.Medium

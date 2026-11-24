@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <atomic>
 #include <memory>
+#include <vector>
 
 #include "fission/geo/occt/kernel.h"
 #include "fission/ui/document_model.h"
@@ -1164,6 +1165,31 @@ TEST_CASE("the time marker shows an earlier state and new steps go in at it",
     REQUIRE(f.model->moveMarker(-1));
     f.model->waitForCalculation();
     CHECK(f.model->marker() == -1);
+}
+
+TEST_CASE("steps move in the recipe; a move in front of an input is refused",
+          "[ui][document-model][recipe][move]") {
+    Fixture f;
+    REQUIRE(f.model->addShape("cylinder", false) == 1);
+    REQUIRE(f.model->addShape("sphere", false) == 2);
+    f.model->waitForCalculation();
+    std::vector<fission::core::FeatureId> before;
+    for (const auto& step : f.model->document().features()) {
+        before.push_back(step.id);
+    }
+    REQUIRE(before.size() == 3);
+    CHECK(f.model->canMoveStep(2, 1));
+    REQUIRE(f.model->moveStep(2, 1));
+    f.model->waitForCalculation();
+    const auto& moved = f.model->document().features();
+    CHECK(moved[1].id == before[2]);
+    CHECK(moved[2].id == before[1]);
+    REQUIRE(f.model->undo());
+    f.model->waitForCalculation();
+    CHECK(f.model->document().features()[1].id == before[1]);
+    CHECK_FALSE(f.model->canMoveStep(1, 1));
+    CHECK_FALSE(f.model->moveStep(5, 0));
+    CHECK_FALSE(f.model->moveStep(0, -1));
 }
 
 TEST_CASE("renaming a body in the list is one step and undoes", "[ui][document-model][recipe]") {

@@ -69,6 +69,7 @@
 #include "fission/ui/measure_controller.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/placement_controller.h"
+#include "fission/ui/platform_info.h"
 #include "fission/ui/preferences.h"
 #include "fission/ui/rotate_controller.h"
 #include "fission/ui/scale_controller.h"
@@ -236,6 +237,8 @@ CommandLine parseCommandLine(int& argc, char** argv) {
             "keeps the button down), "
             "drag:x,y,40,0,8 (press at a point of the 3D view, "
             "pull, let go), focus:width (the cursor into that field), key:Right (press a key), "
+            "markcamera (store the camera distance), expectcamera:closer / expectcamera:farther "
+            "(fail unless the camera came closer to / farther from its target since markcamera), "
             "separated by semicolons."),
         QStringLiteral("actions"));
     const QCommandLineOption size(QStringLiteral("size"),
@@ -573,7 +576,10 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Preferences", &preferences);
     fission::ui::CommandSearch commandSearch;
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "CommandSearch", &commandSearch);
+    fission::ui::PlatformInfo platform;
+    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Platform", &platform);
     documentModel.setPrinter(preferences.printerId());
+    // New projects count and show lengths in the chosen unit; opened ones keep their own.
     files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
     QObject::connect(&preferences, &fission::ui::Preferences::unitsChanged, &files, [&] {
         files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
