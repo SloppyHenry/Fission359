@@ -287,6 +287,20 @@ QtObject {
           synonyms: { de: ["alles zeigen", "einpassen", "zoomen", "alles sehen", "ansicht anpassen"],
                       en: ["show everything", "fit", "zoom to fit", "frame all", "see all"] },
           run: { kind: "menu", id: "view.frame" } },
+        { id: "menu.view.zoomin", group: "view", name: qsTr("Zoom in"),
+          tip: qsTr("Moves the view closer to the middle of the screen."),
+          hint: qsTr("The view comes closer; nothing in the project changes."),
+          shortcut: "+",
+          synonyms: { de: ["vergrößern", "heranzoomen", "näher", "zoom plus", "hineinzoomen"],
+                      en: ["zoom in", "closer", "magnify", "zoom plus"] },
+          run: { kind: "menu", id: "view.zoomin" } },
+        { id: "menu.view.zoomout", group: "view", name: qsTr("Zoom out"),
+          tip: qsTr("Moves the view farther away from the middle of the screen."),
+          hint: qsTr("The view goes farther away; nothing in the project changes."),
+          shortcut: "-",
+          synonyms: { de: ["verkleinern", "herauszoomen", "weiter weg", "zoom minus"],
+                      en: ["zoom out", "farther", "zoom minus", "see more"] },
+          run: { kind: "menu", id: "view.zoomout" } },
         { id: "menu.view.home", group: "view", name: qsTr("Home view"),
           tip: qsTr("Goes back to the starting view."),
           hint: qsTr("The keys 1 to 6 show the sides."),
@@ -331,12 +345,6 @@ QtObject {
     // What the program will be able to do later. They are listed so that the search finds them
     // and says so honestly (rule: no dead ends without a word).
     readonly property var soonCommands: [
-        { id: "soon.drill", group: "soon", name: qsTr("Drilled hole"),
-          tip: qsTr("A round hole in a face with a chosen diameter and depth, also countersunk."),
-          hint: qsTr("Click a face, then drag the dot."),
-          synonyms: { de: ["bohrung", "bohren", "loch bohren", "senkung", "gewindeloch", "schraubenloch"],
-                      en: ["drilled hole", "drill", "bore", "countersink", "screw hole", "hole in face"] },
-          run: { kind: "soon" } },
         { id: "soon.extrude", group: "soon", name: qsTr("Pull up a sketch"),
           tip: qsTr("Turns a sketch into a body by pulling it up."),
           hint: qsTr("Draw a sketch, then drag it up."),
@@ -374,7 +382,19 @@ QtObject {
         shortcut: tool.key, synonyms: tool.synonyms, needs: "sketch",
         run: { kind: "menu", id: "sketchtool." + tool.id } }))
 
-    readonly property var commands: toolCommands.concat(shapeCommands, sketchCommands, menuCommands, soonCommands)
+    // "Pull" of the sketch mode (AP-2.3b2), in the shape of the drawing tools above: the chosen
+    // closed area of the sketch becomes a body. Runs only while a sketch is open.
+    readonly property var sketchPullCommand: ({
+        id: "sketch.pull", group: "tool", name: qsTr("Pull area"),
+        tip: qsTr("Makes a body from the chosen closed area of the sketch."),
+        hint: qsTr("Choose a closed area of the sketch (a click), then pull it."),
+        shortcut: "Return",
+        synonyms: { de: ["ziehen", "extrudieren", "hochziehen", "körper aus skizze", "bereich ziehen"],
+                    en: ["pull", "extrude", "pad", "body from sketch"] },
+        needs: "sketch",
+        run: { kind: "menu", id: "sketchpull" } })
+
+    readonly property var commands: toolCommands.concat(shapeCommands, sketchCommands, [sketchPullCommand], menuCommands, soonCommands)
 
     // The words to search by: the name and the synonyms of both languages.
     function wordsOf(command) {

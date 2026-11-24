@@ -83,6 +83,21 @@ Rectangle {
     }
     property string drillSize: "M3"
     readonly property var drillSizes: ["M2", "M2.5", "M3", "M4", "M5", "M6", "M8", "M10", "M12"]
+    signal modeCycleRequested()
+    signal reachChosen(string reach)
+    signal reachFaceChosen(int number)
+    property var reachFaces: []        // [{ number, distance }] faces a pull may stop at
+    property int reachFaceNumber: 0    // the face number a "toFace" pull stops at (0: unknown)
+    readonly property string pullReach: {
+        const entry = stepTexts.find(t => t.name === "extent")
+        return entry !== undefined ? entry.value : "distance"
+    }
+    // The pull of a sketch area (AP-2.3): what it does with the body the sketch lies on.
+    readonly property bool isPull: stepTexts.some(t => t.name === "region")
+    readonly property string pullMode: {
+        const entry = stepTexts.find(t => t.name === "mode")
+        return entry !== undefined ? entry.value : "new"
+    }
     function focusText() {
         wordRepeater.itemAt(0)?.focusAndSelect()
     }
@@ -374,7 +389,7 @@ Rectangle {
                         width: parent.width
                         label: entry.label
                         kind: entry.kind
-                        unit: "mm"
+                        unit: Numbers.unit
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
                         saveName: entry.label
@@ -485,6 +500,69 @@ Rectangle {
             }
 
             Section {
+                visible: root.showsStep && root.isPull
+                heading: qsTr("Pull")
+
+                AbstractButton {
+                    id: pullModeButton
+
+                    objectName: "pullModeButton"
+                    height: 30
+                    implicitWidth: pullModeLabel.implicitWidth + 24
+                    hoverEnabled: true
+                    Accessible.name: qsTr("What the pull does")
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Click to change: new body, joined to the body, or cut out of it.")
+                    onClicked: root.modeCycleRequested()
+
+                    contentItem: Txt {
+                        id: pullModeLabel
+
+                        text: root.pullMode === "merge" ? qsTr("Joins the body")
+                              : root.pullMode === "subtract" ? qsTr("Cuts out of the body")
+                              : qsTr("Makes a new body")
+                        color: Theme.fg
+                        font.weight: Font.Medium
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    background: Rectangle {
+                        radius: 6
+                        color: pullModeButton.hovered ? Theme.field : Theme.raise
+                        border.width: 1
+                        border.color: Theme.line2
+
+                        Focusring {
+                            visible: pullModeButton.visualFocus
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: root.pullMode !== "new" ? root.reachFaces : []
+
+                    delegate: Toggle {
+                        required property var modelData
+
+                        text: {
+                            const words = qsTr("Up to the face %1 mm away").arg(Numbers.formatLength(Math.abs(modelData.distance), 2))
+                            return Numbers.unit === "in" ? words.replace(/(\d) mm\b/g, "$1 in") : words
+                        }
+                        checked: root.pullReach === "toFace" && root.reachFaceNumber === modelData.number
+                        onToggled: checked ? root.reachFaceChosen(modelData.number) : root.reachChosen("distance")
+                    }
+                }
+
+                Toggle {
+                    visible: root.pullMode !== "new"
+                    text: qsTr("All the way through the body")
+                    checked: root.pullReach === "throughAll"
+                    onToggled: root.reachChosen(checked ? "throughAll" : "distance")
+                }
+            }
+
+            Section {
                 visible: root.showsStep && root.stepTexts.some(t => t.kind === "text" || t.kind === "font" || t.kind === "style")
                 heading: qsTr("Text")
 
@@ -560,7 +638,8 @@ Rectangle {
                         width: parent.width
                         label: entry.label
                         kind: entry.kind
-                        unit: entry.kind === "angle" ? "°" : entry.kind === "plain" ? "" : "mm"
+                        unit: entry.kind === "angle" ? "°"
+                                           : entry.kind === "plain" ? "" : Numbers.unit
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
                         saveName: entry.label
@@ -732,7 +811,8 @@ Rectangle {
                         width: parent.width
                         label: entry.label
                         kind: entry.kind
-                        unit: entry.kind === "angle" ? "°" : entry.kind === "plain" ? "" : "mm"
+                        unit: entry.kind === "angle" ? "°"
+                                           : entry.kind === "plain" ? "" : Numbers.unit
                         invalid: entry.error
                         onTextCommitted: text => root.valueCommitted(modelData, text)
                         saveName: entry.label

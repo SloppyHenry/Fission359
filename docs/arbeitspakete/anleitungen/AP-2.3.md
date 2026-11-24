@@ -28,7 +28,27 @@ Selbstschnitt von Kurven ungeprüft). Booleans gibt es (`GeometryKernel::boolean
 2. **Automatischer Modus:** Empfehlung: Richtung in einen Körper hinein = Ausschneiden; aus einer Körperfläche heraus = Vereinen; auf leerer
    Ebene = Neu. Vorschlag sichtbar am Pfeil (Symbol), ein Klick ändert ihn.
 
+**Festlegungen (Orchestrierung, 2026-11-11):** Haltepunkt 1 → ein Schritt `extrude` mit Wort `mode`, wie empfohlen. Haltepunkt 2 →
+automatischer Modus wie empfohlen, Vorschlag am Pfeil, ein Klick ändert ihn.
+
+3. **Modus wechseln (2026-11-12):** Ein Zug auf einer Skizze, die auf einem Körper liegt, wechselt per Klick im Feld „Ziehen“ des
+   rechten Bereichs reihum: neuer Körper → vereint → ausgeschnitten → neu (`DocumentModel::cycleExtrudeMode`, ein Schritt im Verlauf; das
+   Vorzeichen des Abstands folgt dem Modus). Auf der Grundebene gibt es nur „neu“. Der Pfeil in der 3D-Ansicht selbst wird nicht
+   zum Umschalter (er bleibt der Abstandsgriff); das Überfahren einer Fläche hebt sie wie bisher hervor. „Bis Fläche“/„durch alles“
+   stehen im Schritt (Wörter `extent`); „Ganz durch den Körper“ ist ein Schalter im Feld „Ziehen“ (`setExtrudeReach`). „Bis Fläche“ wählt man im Feld „Ziehen“ aus einer Liste der ebenen, zur Skizze parallelen Flächen des Körpers
+   (`extrudeReachFaces`, mit Abstand in mm; eine Fläche je Ebene), nicht per Klick in der 3D-Ansicht: deren Flächennummern gehören zum
+   Körper nach dem Zug.
+
 ## Teil 2.3a – Ziehen (Kern)
+**Zerlegt:** 2.3a1 (gebaut) = `GeometryKernel::extrudeRegion(curves, inside, frame, spec)`: der Bereich, der den Punkt `inside` enthält,
+wird auf die Ebene `frame` gesetzt und entlang ihrer Normalen gezogen (`distance`, auch negativ, oder `symmetric`). Flächennamen
+`capStart`, `capEnd`, `side[c<i>]` nach dem Index der Skizzen-Kurve (Wiederholung `side[c<i>:<k>]`); der Bereich wird über dieselbe
+Zerlegung wie `sketchRegions` gefunden. Golden: Rechteck, Kreis, Ring (beide Bereiche), symmetrisch, negativ, gedrehte Ebene, Fehler.
+2.3a2 (gebaut) = Verjüngung nach innen (`taperDegrees` > 0, über `LocOpe_DPrism`, Höhe dort entlang der schrägen Seite gemessen),
+„durch alles“ (`throughAll` mit Körper `through`: Länge aus dessen Hüllquader + 1 mm), L-Profil-Golden. 2.3a3a (gebaut) = Verjüngung nach
+außen mit scharfen Ecken: fernes Profil per `BRepOffsetAPI_MakeOffset` (`GeomAbs_Intersection`), je Draht ein gerader Loft
+(`ThruSections`), Löcher abgezogen; Drähte nach Mitte und Größe zugeordnet. 2.3a3b (offen) = „bis Fläche“.
+
 1. GAL: `NamedSolid extrude(const SketchProfile&, const ExtrudeSpec&)` mit `ExtrudeSpec { double distance; ExtrudeExtent extent (distance |
    symmetric | toFace | throughAll); double taperDegrees; std::optional<Solid> toFaceSolid…; }`. OCCT: `BRepPrimAPI_MakePrism`; Verjüngung
    über `BRepOffsetAPI_DraftAngle` oder `LocOpe_DPrism`/`BRepFeat_MakeDPrism` (testen, was gültige Körper liefert; Haltepunkt bei Problemen).
@@ -37,6 +57,23 @@ Selbstschnitt von Kurven ungeprüft). Booleans gibt es (`GeometryKernel::boolean
    (Volumen nach Pyramidenstumpf-Formel); symmetrisch; durch alles.
 
 ## Teil 2.3b – Ziehen (Bedienung und Modi)
+**Zerlegt:** 2.3b1 (gebaut) = Schritt `extrude` ohne Bedienung. Er liest die Skizze über das Wort `sketch` (Schritt-Id) und den
+Bereich über das Wort `region` (Bereichs-Id aus den Kanten, Festlegung 52); dazu `insideU`/`insideV` (ein Punkt im Bereich, verdeckt).
+Fehlt der Bereich, rechnet der Schritt nicht (Fehler am Schritt, nie geraten). Die Neuberechnung reicht die Skizzen der früheren
+Schritte durch (`ExecuteInput::sketches`, `FeatureType::readsSketch`) und nimmt Skizze und Ebene in den Schlüssel des
+Zwischenspeichers. Seitenflächen heißen nach den Elementen (`side[L3]`). Bereichs-Ids liegen jetzt in `features`
+(`fission/features/sketch_regions.h`). Nur Modus „neu“. 2.3b2 (gebaut) = Bedienung: in der Skizze einen Bereich anklicken, dann „Ziehen“ (Knopf neben „Fertig“, Enter
+oder Befehlssuche) → Skizze schließt, Schritt `extrude` mit 10 mm, neuer Körper gewählt, Werkzeug „Größe“ zeigt den Pfeil-Griff
+(Ziehen oder Tippen). 2.3b3a (gebaut) = Wort `mode` (`new`, `merge`, `subtract`): bei `merge`/`subtract` genau ein
+Eingangskörper, der wie bei „Vereinen“ in den neuen Körper aufgeht; Schnitt neben dem Körper = `noOverlap`; der Schritt
+gibt Namen weiter (`passesOnNames`), eigene Flächen heißen `F<n>/extrude/…`; Rezept-Sätze „aufgezogen“/„ausgeschnitten“.
+2.3b3b (gebaut) = Ziel-Körper automatisch: Skizze auf einer Fläche eines Körpers → `merge` mit diesem Körper; negative Distanz
+(Tippen oder Ziehen) schaltet im selben Rückgängig-Schritt auf `subtract`, positive zurück auf `merge`; Skizze auf der Grundebene → `new`.
+Offen für 2.3b3: Umschalten des Vorschlags per Klick am Pfeil (Symbol), Pfeil schon beim Überfahren
+eines Bereichs ohne Klick (2.3b3c gebaut: `Document::dependentsOf` zählt Schritte, die die Skizze lesen; Löschen nennt sie wie
+bei Körpern), Testdatei `v3/extrude.fission`, Budget der
+Live-Vorschau messen.
+
 1. Feature-Typ `extrude` (Eingang: Skizzen-Schritt per Verweis auf den Bereich, Ziel-Körper bei Modus ≠ new). Werte `distance`, `taper`, Wörter
    `extent`, `mode`.
 2. Pfeil-Griff direkt auf einem Skizzenbereich (Hover zeigt ihn, UX §2.2), Ziehen = Distanz (negative = in die andere Richtung), Tippen

@@ -119,6 +119,10 @@ public:
     SketchRegionResult sketchRegions(const std::vector<SketchCurve>& curves) const override {
         return occt::sketchRegions(curves);
     }
+    NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
+                             const SketchFrame& frame, const ExtrudeSpec& spec) const override {
+        return occt::extrudeRegion(curves, inside, frame, spec);
+    }
     std::vector<SketchCrossing>
     sketchCarrierCrossings(const SketchCurve& carrier,
                            const std::vector<SketchCurve>& others) const override {
@@ -127,6 +131,9 @@ public:
     SolidReport measure(const Solid& solid) const override { return occt::measure(solid); }
     Bounds bounds(const Solid& solid) const override { return occt::bounds(solid); }
     Bounds exactBounds(const Solid& solid) const override { return occt::exactBounds(solid); }
+    std::vector<SnapPointGal> snapPoints(const Solid& solid) const override {
+        return occt::snapPoints(solid);
+    }
     TriangleMesh tessellate(const Solid& solid, const TessellationParams& params) const override {
         return occt::tessellate(solid, params);
     }

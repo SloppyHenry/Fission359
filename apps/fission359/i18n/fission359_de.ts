@@ -428,6 +428,21 @@
         <translation>Klicke eine ebene Fläche oder die Grundebene an.</translation>
     </message>
     <message>
+        <location line="+3"/>
+        <source>Pull area</source>
+        <translation>Bereich ziehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Makes a body from the chosen closed area of the sketch.</source>
+        <translation>Macht aus dem gewählten geschlossenen Bereich der Skizze einen Körper.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a closed area of the sketch (a click), then pull it.</source>
+        <translation>Wähle einen geschlossenen Bereich der Skizze (ein Klick), dann ziehe ihn.</translation>
+    </message>
+    <message>
         <location line="+4"/>
         <source>Named measures</source>
         <translation>Benannte Maße</translation>
@@ -894,6 +909,36 @@
         <translation>Die Ansicht dreht und zoomt; am Projekt ändert sich nichts.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Heranzoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view closer to the middle of the screen.</source>
+        <translation>Bringt die Ansicht näher an die Bildschirmmitte.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view comes closer; nothing in the project changes.</source>
+        <translation>Die Ansicht kommt näher; am Projekt ändert sich nichts.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Herauszoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Moves the view farther away from the middle of the screen.</source>
+        <translation>Rückt die Ansicht weiter von der Bildschirmmitte weg.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The view goes farther away; nothing in the project changes.</source>
+        <translation>Die Ansicht rückt weiter weg; am Projekt ändert sich nichts.</translation>
+    </message>
+    <message>
         <location line="+5"/>
         <source>Home view</source>
         <translation>Startansicht</translation>
@@ -1002,21 +1047,6 @@
         <location line="+7"/>
         <source>Bevel edges</source>
         <translation>Fase</translation>
-    </message>
-    <message>
-        <location line="+107"/>
-        <source>Drilled hole</source>
-        <translation>Bohrung</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>A round hole in a face with a chosen diameter and depth, also countersunk.</source>
-        <translation>Ein rundes Loch in einer Fläche mit gewähltem Durchmesser und gewählter Tiefe, auch mit Senkung.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Click a face, then drag the dot.</source>
-        <translation>Klicke eine Fläche an, dann ziehe den Punkt.</translation>
     </message>
     <message>
         <location line="-74"/>
@@ -1751,6 +1781,11 @@
         <source>Delete</source>
         <translation>Löschen</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>This step needs a step above it - it cannot go there</source>
+        <translation>Dieser Schritt braucht einen Schritt darüber – dorthin geht er nicht</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
@@ -1954,6 +1989,16 @@
         <location line="+2"/>
         <source>Show everything</source>
         <translation>Alles zeigen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom in</source>
+        <translation>Heranzoomen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom out</source>
+        <translation>Herauszoomen</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2284,6 +2329,16 @@
         <translation>Fläche gezogen. Ziehe am Griff oder tippe einen Abstand.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>This area cannot be pulled.</source>
+        <translation>Dieser Bereich kann nicht gezogen werden.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled out of the sketch: drag the arrow or type a distance.</source>
+        <translation>Aus der Skizze gezogen: Ziehe am Pfeil oder tippe einen Abstand.</translation>
+    </message>
+    <message>
         <location line="+21"/>
         <source>This face cannot be removed: it may be part of another body, or the body cannot close up without it.</source>
         <translation>Diese Fläche lässt sich nicht entfernen: Sie gehört vielleicht zu einem anderen Körper, oder der Körper kann sich ohne sie nicht schließen.</translation>
@@ -2554,8 +2609,8 @@
     </message>
     <message>
         <location line="+1572"/>
-        <source>Unit: mm</source>
-        <translation>Einheit: mm</translation>
+        <source>Unit: %1</source>
+        <translation>Einheit: %1</translation>
     </message>
     <message>
         <location line="+27"/>
@@ -2684,6 +2739,11 @@
         <location line="+2"/>
         <source>Pulling a face</source>
         <translation>Fläche ziehen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulling an area</source>
+        <translation>Bereich ziehen</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2837,6 +2897,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>%1 moved in the recipe</source>
+        <translation>%1 im Rezept verschoben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>%1 turned</source>
         <translation>%1 gedreht</translation>
     </message>
@@ -2885,6 +2950,11 @@
         <location line="+1"/>
         <source>Face pulled</source>
         <translation>Fläche gezogen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Area pulled</source>
+        <translation>Bereich gezogen</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3233,10 +3303,10 @@
     </message>
     <message numerus="yes">
         <location line="+1"/>
-        <source>%n closed area(s). One is chosen: Esc or a click beside lets go.</source>
+        <source>%n closed area(s). One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.</source>
         <translation>
-            <numerusform>%n geschlossener Bereich. Einer ist gewählt: Esc oder ein Klick daneben lässt ihn los.</numerusform>
-            <numerusform>%n geschlossene Bereiche. Einer ist gewählt: Esc oder ein Klick daneben lässt ihn los.</numerusform>
+            <numerusform>%n geschlossener Bereich. Einer ist gewählt: Enter oder „Ziehen“ macht daraus einen Körper, Esc oder ein Klick daneben lässt ihn los.</numerusform>
+            <numerusform>%n geschlossene Bereiche. Einer ist gewählt: Enter oder „Ziehen“ macht daraus einen Körper, Esc oder ein Klick daneben lässt ihn los.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -3278,6 +3348,10 @@
     <message>
         <source>Along</source>
         <translation>Längs</translation>
+    </message>
+    <message>
+        <source>This pull starts on the ground plane: there is no body to join or cut.</source>
+        <translation>Dieses Ziehen beginnt auf der Grundebene: Es gibt keinen Körper zum Vereinen oder Ausschneiden.</translation>
     </message>
 </context>
 <context>
@@ -4329,6 +4403,21 @@
     </message>
     <message>
         <location line="+3"/>
+        <source>Pulled %1 mm</source>
+        <translation>Gezogen %1 mm</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled %1 mm onto the body</source>
+        <translation>%1 mm aufgezogen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut %1 mm deep</source>
+        <translation>%1 mm tief ausgeschnitten</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>Stretched by %1 mm</source>
         <translation>Um %1 mm gestreckt</translation>
     </message>
@@ -4734,6 +4823,38 @@
     <message>
         <source>Screw cuts its own thread</source>
         <translation>Schraube schneidet sich ihr Gewinde</translation>
+    </message>
+    <message>
+        <source>Pull</source>
+        <translation>Ziehen</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>Was das Ziehen macht</translation>
+    </message>
+    <message>
+        <source>Click to change: new body, joined to the body, or cut out of it.</source>
+        <translation>Klicken zum Wechseln: neuer Körper, mit dem Körper vereint oder aus ihm ausgeschnitten.</translation>
+    </message>
+    <message>
+        <source>Joins the body</source>
+        <translation>Vereint mit dem Körper</translation>
+    </message>
+    <message>
+        <source>Cuts out of the body</source>
+        <translation>Schneidet aus dem Körper aus</translation>
+    </message>
+    <message>
+        <source>Makes a new body</source>
+        <translation>Macht einen neuen Körper</translation>
+    </message>
+    <message>
+        <source>All the way through the body</source>
+        <translation>Ganz durch den Körper</translation>
+    </message>
+    <message>
+        <source>Up to the face %1 mm away</source>
+        <translation>Bis zur Fläche %1 mm entfernt</translation>
     </message>
 </context>
 <context>
@@ -5703,6 +5824,11 @@
         <source>Examples</source>
         <translation>Beispiele</translation>
     </message>
+    <message>
+        <location filename="../qml/StartPage.qml" line="159"/>
+        <source>You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.</source>
+        <translation>Du nutzt die Browser-Version: Speichern lädt die Datei herunter, Öffnen holt sie von deinem Rechner. Deine Arbeit wird zusätzlich im Browser gesichert.</translation>
+    </message>
 </context>
 <context>
     <name>StatusBar</name>
@@ -6011,6 +6137,11 @@
         <translation>Fertig</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>Pull</source>
+        <translation>Ziehen</translation>
+    </message>
+    <message>
         <location line="+268"/>
         <source>2D drawing as a base, with measures and rules.</source>
         <translation>2D-Zeichnung als Grundlage, mit Maßen und Regeln.</translation>
@@ -6129,6 +6260,25 @@
         <location line="+1"/>
         <source>Zoom: mouse wheel, towards the pointer – or drag this button</source>
         <translation>Zoomen: Mausrad, zum Zeiger hin – oder diesen Knopf ziehen</translation>
+    </message>
+</context>
+<context>
+    <name>HandleLayer</name>
+    <message>
+        <source>Joins</source>
+        <translation>Vereint</translation>
+    </message>
+    <message>
+        <source>Cuts out</source>
+        <translation>Schneidet aus</translation>
+    </message>
+    <message>
+        <source>New body</source>
+        <translation>Neuer Körper</translation>
+    </message>
+    <message>
+        <source>What the pull does</source>
+        <translation>Was das Ziehen macht</translation>
     </message>
 </context>
 </TS>
