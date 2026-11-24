@@ -37,8 +37,10 @@ struct FeatureState {
     std::optional<FeatureIssue> issue;
     std::optional<Description> description; ///< Set when the values could be worked out.
     ResolvedParams params;                  ///< The values as worked out (mm, degrees).
-    bool computed = false;                  ///< The kernel was asked in this run (not remembered).
-    bool stale = false;                     ///< Its bodies show the last valid result.
+    /// The evaluated sketch measures of the step, by measure id; empty without a sketch.
+    SketchMeasureValues sketchMeasures;
+    bool computed = false; ///< The kernel was asked in this run (not remembered).
+    bool stale = false;    ///< Its bodies show the last valid result.
     /// The result that failed, as a rough mesh, only when the kernel could still make one. It is
     /// drawn red and see-through next to the last valid result and never used for computing.
     std::shared_ptr<const geo::TriangleMesh> failedPreview;

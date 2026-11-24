@@ -65,10 +65,54 @@ std::optional<FeatureIssue> resolveValues(const Feature& feature, const FeatureT
     return std::nullopt;
 }
 
+// Works out every measure of a sketch step, the same way as its values: formulas, named measures,
+// units. A length measure takes lengths, an angle measure angles.
+std::optional<FeatureIssue> resolveSketchMeasures(const Feature& feature,
+                                                  const MeasureResolution& measures,
+                                                  const MeasureLookup& lookup, double defaultUnit,
+                                                  SketchMeasureValues& out) {
+    if (!feature.sketch) {
+        return std::nullopt;
+    }
+    for (const SketchMeasure& measure : feature.sketch->measures) {
+        const Outcome<Expression> parsed = Expression::parse(measure.value.expression);
+        if (!parsed) {
+            FeatureIssue issue = issueOf(FeatureIssueCode::parameterInvalid, measure.id);
+            issue.expression = parsed.error();
+            return issue;
+        }
+        // A measure that has an error itself: say so, instead of "unknown name".
+        for (const NameReference& reference : parsed.value().references()) {
+            const MeasureResult* named = measures.find(reference.name);
+            if (named != nullptr && named->error) {
+                FeatureIssue issue = issueOf(FeatureIssueCode::parameterInvalid, measure.id);
+                issue.expression = ExpressionError{
+                    ExpressionErrorCode::brokenDependency, reference.where, named->name, {}};
+                return issue;
+            }
+        }
+        const auto kind = sketchMeasureKindFromWord(measure.kind);
+        const bool angle = kind && *kind == geo::SketchMeasureKind::angle;
+        EvaluationContext context;
+        context.kind = angle ? QuantityKind::angle : QuantityKind::length;
+        context.defaultUnitMillimetres = defaultUnit;
+        context.lookup = lookup;
+        const Outcome<Quantity> value = parsed.value().evaluate(context);
+        if (!value) {
+            FeatureIssue issue = issueOf(FeatureIssueCode::parameterInvalid, measure.id);
+            issue.expression = value.error();
+            return issue;
+        }
+        out[measure.id] = value.value().value;
+    }
+    return std::nullopt;
+}
+
 // Everything that goes into a result, written out. Equal text, equal result.
 std::string cacheKey(const Feature& feature, const FeatureType& type, const ResolvedParams& params,
                      const std::vector<const BodyResult*>& inputs,
                      const std::map<std::string, std::vector<ResolvedRef>>& refs,
+                     const SketchMeasureValues& sketchMeasures,
                      const std::map<FeatureId, SketchResult>& sketches) {
     std::string key(type.id());
     key += '\x1f';
@@ -105,6 +149,14 @@ std::string cacheKey(const Feature& feature, const FeatureType& type, const Reso
     if (feature.sketch) {
         key += "\x1f$";
         key += feature.sketch->fingerprint();
+    }
+    // The evaluated sketch measures: a named measure a formula uses changes them, and the step
+    // has to be calculated again (full precision, like the values above).
+    for (const auto& [id, value] : sketchMeasures) {
+        key += '\x1f';
+        key += id;
+        key += '=';
+        key += std::to_string(std::bit_cast<std::uint64_t>(value));
     }
     // A step that reads a sketch (AP-2.3) goes in with what the sketch is: its elements and its
     // plane, so that a changed sketch gives a new key.
@@ -362,6 +414,15 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             fail(std::move(*issue));
             continue;
         }
+        // The measures of a sketch step, worked out with the named measures ("2 * width").
+        if (feature.sketch) {
+            if (auto issue = resolveSketchMeasures(feature, result.measures, lookup,
+                                                   document.settings().defaultUnitMillimetres,
+                                                   state.sketchMeasures)) {
+                fail(std::move(*issue));
+                continue;
+            }
+        }
         state.description = type->describeStep(feature, state.params);
 
         // Bodies it works on.
@@ -518,8 +579,8 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
         };
 
         // Remembered, or ask the kernel.
-        const std::string key =
-            cacheKey(feature, *type, state.params, inputBodies, resolvedRefs, result.sketches);
+        const std::string key = cacheKey(feature, *type, state.params, inputBodies, resolvedRefs,
+                                         state.sketchMeasures, result.sketches);
         const Entry* entry = cache.find(key);
         if (entry != nullptr) {
             ++result.remembered;
@@ -528,10 +589,11 @@ std::optional<RecomputeResult> recompute(const Document& document, const Feature
             std::optional<SketchResult> sketch;
             try {
                 const ExecuteContext context{kernel, cancel, &document.assets(), sketchSolver};
-                FeatureResult made =
-                    type->execute({feature, state.params, inputs, std::move(producers),
-                                   resolvedRefs, &result.sketches},
-                                  context);
+                FeatureResult made = type->execute(
+                    {feature, state.params, inputs, std::move(producers), resolvedRefs,
+                     state.sketchMeasures.empty() ? nullptr : &state.sketchMeasures,
+                     &result.sketches},
+                    context);
                 if (cancel.stop_requested()) {
                     return std::nullopt; // a step that gave up because it was asked to
                 }

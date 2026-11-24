@@ -10,6 +10,7 @@
 
 #include "fission/core/command.h"
 #include "fission/core/document.h"
+#include "fission/geo/sketch_solver.h"
 
 namespace fission::core {
 
@@ -113,6 +114,35 @@ std::unique_ptr<Command> makeSetSketchConstruction(FeatureId step, std::string e
 /// `type`, `number`, `element`.
 std::unique_ptr<Command> makeSetSketchLink(FeatureId step, std::string element,
                                            std::optional<SketchLink> link);
+
+/// Adds a rule to the sketch of a step and solves the sketch again (AP-2.2b). The solver must
+/// outlive the command (only a pointer to it is stored). Refused when the kind word is unknown
+/// or a reference does not exist. Description key `addSketchRule`, values `type`, `number`,
+/// `rule`.
+std::unique_ptr<Command> makeAddSketchRule(FeatureId step, std::string kind,
+                                           std::vector<std::string> elements,
+                                           const geo::SketchSolver& solver);
+
+/// Adds a measure to the sketch of a step and solves the sketch again (AP-2.2b); `expression`
+/// is the value as typed, `evaluated` its value now. The solver must outlive the command.
+/// Refused when the kind word is unknown or a reference does not exist. Description key
+/// `addSketchMeasure`, values `type`, `number`, `measure`, `value`.
+std::unique_ptr<Command> makeAddSketchMeasure(FeatureId step, std::string kind,
+                                              std::vector<std::string> elements,
+                                              std::string expression, double evaluated,
+                                              const geo::SketchSolver& solver);
+
+/// Changes the value of a measure of the sketch and solves again (AP-2.2b). The solver must
+/// outlive the command. Refused when no measure has that id. Description key `setSketchMeasure`,
+/// values `type`, `number`, `id`, `value`.
+std::unique_ptr<Command> makeSetSketchMeasure(FeatureId step, std::string measureId,
+                                              std::string expression, double evaluated,
+                                              const geo::SketchSolver& solver);
+
+/// Removes a rule or a measure from the sketch of a step (no solving, the coordinates stay).
+/// Refused when neither has that id. Description key `removeSketchConstraint`, values `type`,
+/// `number`, `id`.
+std::unique_ptr<Command> makeRemoveSketchConstraint(FeatureId step, std::string id);
 
 /// Removes a step and the bodies it made.
 std::unique_ptr<Command> makeRemoveFeature(FeatureId id);
