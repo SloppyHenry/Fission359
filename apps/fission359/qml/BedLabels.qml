@@ -10,6 +10,12 @@ import Fission359.View
 Item {
     id: root
 
+    // A bed size in the document's unit (P23b); the sentence keeps its "mm" for the translations.
+    function sized(millimetres) {
+        const words = qsTr("%1 mm").arg(Numbers.formatLength(millimetres, 1))
+        return Numbers.unit === "in" ? words.replace(/(\d) mm\b/, "$1 in") : words
+    }
+
     property Viewport3D viewport
     property string printerText: ""
     readonly property real halfX: viewport ? viewport.bedSizeX / 2 : 0
@@ -31,7 +37,7 @@ Item {
 
         x: p.x - width / 2
         y: p.y + 24 - height / 2
-        text: qsTr("%1 mm").arg(root.viewport ? root.viewport.bedSizeX : 0)
+        text: root.sized(root.viewport ? root.viewport.bedSizeX : 0)
         color: Theme.fg3
         mono: true
         font.pixelSize: Theme.fontSizeSmall
@@ -43,7 +49,7 @@ Item {
 
         x: p.x + 10
         y: p.y + 20 - height / 2
-        text: qsTr("%1 mm").arg(root.viewport ? root.viewport.bedSizeY : 0)
+        text: root.sized(root.viewport ? root.viewport.bedSizeY : 0)
         color: Theme.fg3
         mono: true
         font.pixelSize: Theme.fontSizeSmall

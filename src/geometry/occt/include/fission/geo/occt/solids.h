@@ -71,6 +71,9 @@ NamedSolid removeFacesNamed(const NamedSolid& solid, const std::vector<std::uint
 NamedSolid offsetFacesNamed(const NamedSolid& solid, const std::vector<std::uint32_t>& faceIds,
                             double distance);
 
+/// The cutting tool of a hole (see `GeometryKernel::makeHoleTool`). Throws GeometryError.
+NamedSolid makeHoleToolNamed(const HoleToolSpec& spec);
+
 /// Turns a flat face about a hinge line (see `GeometryKernel::tiltFace`). Throws GeometryError.
 NamedSolid tiltFaceNamed(const NamedSolid& solid, std::uint32_t faceId, Point3d pivot, Point3d axis,
                          double degrees);
@@ -99,6 +102,9 @@ SolidReport measure(const Solid& solid);
 Bounds bounds(const Solid& solid);
 /// The box that touches the body (see `GeometryKernel::exactBounds`).
 Bounds exactBounds(const Solid& solid);
+
+/// See GeometryKernel::snapPoints.
+std::vector<SnapPointGal> snapPoints(const Solid& solid);
 
 /// What every face and edge of the body looks like (see `GeometryKernel::signatures`).
 BodySignatures signatures(const Solid& solid);

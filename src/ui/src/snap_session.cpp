@@ -112,7 +112,10 @@ void SnapSession::collectTargets(const render::RenderScene& scene, const std::st
         }
         Points& kept = m_cache[body.id];
         if (kept.version != body.meshVersion || kept.points.empty()) {
-            kept.points = interaction::snapPointsOf(*body.mesh);
+            // The exact points from the kernel when they are there, else the points of the mesh.
+            kept.points = body.snapPoints && !body.snapPoints->empty()
+                              ? interaction::snapPointsOf(*body.snapPoints)
+                              : interaction::snapPointsOf(*body.mesh);
             kept.version = body.meshVersion;
         }
         m_targets.insert(m_targets.end(), kept.points.begin(), kept.points.end());

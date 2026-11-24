@@ -139,15 +139,38 @@ Rectangle {
                 }
             }
 
+            // In the browser version (AP-6.7b3): what saving and opening mean there. On the
+            // desktop this card is not shown at all.
+            Rectangle {
+                visible: Platform.browser
+                width: parent.width
+                height: browserHint.implicitHeight + 24
+                radius: Theme.radiusCard
+                color: Theme.panel
+                border.width: 1
+                border.color: Theme.line
+
+                Txt {
+                    id: browserHint
+
+                    x: 16
+                    y: 12
+                    width: parent.width - 32
+                    text: qsTr("You are using the browser version: saving downloads the file, opening fetches it from your computer. Your work is also kept safe in the browser.")
+                    color: Theme.fg
+                    wrapMode: Text.WordWrap
+                }
+            }
+
             Txt {
-                visible: root.recent.length > 0
+                visible: root.recent.length > 0 && !Platform.browser
                 text: qsTr("Opened recently")
                 color: Theme.fg
                 font.weight: Font.DemiBold
             }
 
             Flow {
-                visible: root.recent.length > 0
+                visible: root.recent.length > 0 && !Platform.browser
                 width: parent.width
                 spacing: 14
 
