@@ -24,6 +24,7 @@
 #include "fission/ui/clipboard_payload.h"
 #include "fission/ui/document_model.h"
 #include "fission/ui/file_controller.h"
+#include "fission/ui/numbers.h"
 #include "fission/ui/viewport_3d.h"
 
 using fission::ui::DocumentModel;
@@ -231,6 +232,27 @@ TEST_CASE("two documents do not touch each other", "[files]") {
     session.model.waitForCalculation();
     CHECK(session.model.bodies().front().toMap().value(QStringLiteral("name")).toString() ==
           QStringLiteral("Eins"));
+}
+
+TEST_CASE("files: a new project in inches shows inches (P23b)", "[files]") {
+    application();
+    Folder folder;
+    Session session(folder.path("recent.ini"));
+    fission::ui::Numbers numbers;
+    session.model.setNumbers(&numbers);
+    CHECK(numbers.unit() == QStringLiteral("mm")); // the demo project counts in millimetres
+
+    session.files.setNewDocumentUnit(25.4);
+    REQUIRE(session.files.newDocument());
+    CHECK(session.model.unit() == QStringLiteral("in"));
+    session.model.waitForCalculation();
+    CHECK(numbers.unit() == QStringLiteral("in"));
+
+    session.files.setNewDocumentUnit(1.0);
+    REQUIRE(session.files.newDocument());
+    CHECK(session.model.unit() == QStringLiteral("mm"));
+    session.model.waitForCalculation();
+    CHECK(numbers.unit() == QStringLiteral("mm"));
 }
 
 TEST_CASE("closing a tab saves it, and the last tab leaves an empty project", "[files]") {
