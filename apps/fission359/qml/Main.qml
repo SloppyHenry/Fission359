@@ -778,7 +778,7 @@ Window {
             return
         }
         root.flyout = ""
-        Selection.chooseBodies([made])
+        root.tool = "size" // the arrow that moves the plane is shown by this tool
         showHint(qsTr("Mirror image beside the body. Drag the arrow or type where the mirror plane stands."))
     }
 
