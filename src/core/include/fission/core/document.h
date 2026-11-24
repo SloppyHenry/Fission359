@@ -256,11 +256,18 @@ public:
     /// Removes the step and the bodies it created. Steps that used them stay and report a
     /// missing input; `dependentsOf` tells beforehand who that will be.
     bool removeFeature(const FeatureId& id);
+    /// The steps that need the step `id`: they work on a body it created, or they read a sketch
+    /// it is (its word `sketch`), directly or through the steps in between.
     std::vector<FeatureId> dependentsOf(const FeatureId& id) const;
     /// Like `removeFeature`, but hands back what is needed to restore the step exactly.
     std::optional<RemovedFeature> takeFeature(const FeatureId& id);
     /// Puts a step taken out with `takeFeature` back where it was.
     void restoreFeature(RemovedFeature removed);
+    /// Moves a step to `newIndex` (its index after the move). Refused (false) when the step does
+    /// not exist, newIndex >= number of steps, or the new order breaks a dependency: every input
+    /// body of a step must be made by an earlier step (see addFeature), and every reference of a
+    /// step to another step must point to an earlier step.
+    bool moveFeature(const FeatureId& id, std::size_t newIndex);
     /// The number the last new step got. Commands set it back on undo so that numbers stay
     /// gapless in what the person sees; removing a step alone never frees its number.
     int lastFeatureNumber() const noexcept { return lastFeatureNumber_; }
@@ -338,6 +345,10 @@ public:
 private:
     Feature* mutableFeature(const FeatureId& id);
     Body* mutableBody(const BodyId& id);
+    /// True when every step of `order` only uses what earlier steps of `order` made: its input
+    /// bodies (by their maker) and its references to other steps ("F<n>/...") point to steps
+    /// before it.
+    bool orderIsValid(const std::vector<Feature>& order) const;
     void touch() noexcept { ++revision_; }
 
     DocumentSettings settings_;

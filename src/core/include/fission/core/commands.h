@@ -117,6 +117,9 @@ std::unique_ptr<Command> makeSetSketchLink(FeatureId step, std::string element,
 /// Removes a step and the bodies it made.
 std::unique_ptr<Command> makeRemoveFeature(FeatureId id);
 
+/// Moves a step to `newIndex` (its index after the move); undo moves it back.
+std::unique_ptr<Command> makeMoveFeature(FeatureId id, std::size_t newIndex);
+
 /// Sets a value of a step (a number or a formula).
 std::unique_ptr<Command> makeSetFeatureValue(FeatureId id, std::string name,
                                              std::string expression);

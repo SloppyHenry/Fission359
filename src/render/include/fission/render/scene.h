@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "fission/geo/kernel.h"
 #include "fission/geo/mesh.h"
 
 namespace fission::render {
@@ -23,6 +24,9 @@ struct RenderBody {
     std::string id;                ///< Stable for one body across rebuilds of the scene.
     std::uint64_t meshVersion = 0; ///< Changes whenever the tessellation is a different one.
     std::shared_ptr<const geo::TriangleMesh> mesh;
+    /// The exact points to catch on (pflege P7), worked out in the background with the mesh;
+    /// null or empty: use the points of the mesh.
+    std::shared_ptr<const std::vector<geo::SnapPointGal>> snapPoints;
     QColor color{233, 234, 236};
 
     /// The tessellation, or an empty one if there is none yet.

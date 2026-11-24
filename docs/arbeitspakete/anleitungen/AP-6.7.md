@@ -64,6 +64,25 @@ Alle entschieden (Festlegungen 1–8). Neue Fragen: anhalten und berichten.
 5. Playwright-Test im Web-Job: Seite lädt, App meldet „bereit“ (Konsolenzeile wie beim Smoke-Test), ein Würfel wird über
    `--simulate`-Schritte (als URL-Parameter durchgereicht) platziert, ein Bildschirmfoto wird als CI-Artefakt abgelegt.
 
+**6.7b3 – gebaut:**
+- `src/services/include/fission/services/platform.h`: `services::isBrowser()` – true nur unter `__EMSCRIPTEN__`, der einzige
+  erlaubte Plattformzweig außerhalb von `render/`.
+- Unit-Test `tests/unit/services/test_platform.cpp` (Catch2; `static_assert` und `CHECK_FALSE` für den Desktop-Build).
+- QML-Singleton `Platform` (`fission::ui::PlatformInfo`, `Q_PROPERTY(bool browser READ browser CONSTANT)` in `src/ui/`),
+  registriert in `apps/fission359/src/main.cpp`; `src/ui` verlinkt `fission_services` bereits.
+- Im Browser ausgeblendet (nicht halb angeboten): „Zuletzt geöffnet“ auf der Startseite (`StartPage.qml`) und die Einträge
+  „Open recent“ im Datei-Menü (`Main.qml`), jeweils über `Platform.browser`.
+- Hinweiskarte nur im Browser auf der Startseite (`StartPage.qml`, `visible: Platform.browser`), Texte DE/EN in
+  `apps/fission359/i18n/fission359_en.ts` und `fission359_de.ts`.
+- `scripts/web serve [Ordner]` liefert `build/web-release/apps/fission359` über `scripts/lib/web_server.py` auf
+  http://localhost:8359 aus (127.0.0.1, COOP/COEP/CORP-Header, `application/wasm`, `Cache-Control: no-cache`);
+  `scripts/web build` ruft `cmake --preset web-release` auf und meldet klar, solange das Preset noch fehlt.
+- `packaging/web/index.html`: Startseite mit Ladebalken, DE/EN je nach Browsersprache, Prüfung von `crossOriginIsolated`
+  und WebGL 2 vor dem Laden, lädt dann `fission359.js` (Qt-Standard: `<div id="screen">` + Loader `qtLoad`); keine externen
+  Ressourcen.
+- Offen: Preset `web-release` (nächstes Paket), Playwright-Test im Web-Job, weitere Ausblendungen, sobald die
+  Funktionen im Browser umgesetzt sind (Dateizugriff, Autosave im Browser-Speicher – siehe Teil 6.7c).
+
 ## Teil 6.7c – Dateien und „Nichts geht verloren“ im Browser
 1. Öffnen (`.fission`, STL, 3MF, STEP, SVG, Bilder) über `QFileDialog::getOpenFileContent`; Speichern und Export über `saveFileContent`
    (Download). Alles hinter einer Schnittstelle in `src/services/` (z. B. `FileAccess`), Desktop-Umsetzung unverändert.
