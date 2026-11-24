@@ -1823,6 +1823,7 @@ Window {
             stepValues: root.stepValueList
             isHole: root.currentStepIsHole
             stepTexts: DocumentModel.stepTexts
+            holeScrew: { DocumentModel.stepTexts; return DocumentModel.holeScrewOf(DocumentModel.currentStep) }
             fonts: DocumentModel.fontFamilies
             fontStyles: DocumentModel.fontStyles(root.currentFontName)
             onTextCommitted: (name, text) => root.changeWords(name, text)

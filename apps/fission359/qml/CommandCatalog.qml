@@ -345,12 +345,6 @@ QtObject {
     // What the program will be able to do later. They are listed so that the search finds them
     // and says so honestly (rule: no dead ends without a word).
     readonly property var soonCommands: [
-        { id: "soon.extrude", group: "soon", name: qsTr("Pull up a sketch"),
-          tip: qsTr("Turns a sketch into a body by pulling it up."),
-          hint: qsTr("Draw a sketch, then drag it up."),
-          synonyms: { de: ["hochziehen", "extrudieren", "skizze ausziehen", "aus skizze", "ziehen"],
-                      en: ["pull up", "extrude", "pull sketch", "push pull", "lift sketch"] },
-          run: { kind: "soon" } },
         { id: "soon.pattern", group: "soon", name: qsTr("Pattern"),
           tip: qsTr("Repeats a body in a row, a grid or around a circle."),
           hint: qsTr("Choose the body, then the number and the distance."),
@@ -389,8 +383,10 @@ QtObject {
         tip: qsTr("Makes a body from the chosen closed area of the sketch."),
         hint: qsTr("Choose a closed area of the sketch (a click), then pull it."),
         shortcut: "Return",
-        synonyms: { de: ["ziehen", "extrudieren", "hochziehen", "körper aus skizze", "bereich ziehen"],
-                    en: ["pull", "extrude", "pad", "body from sketch"] },
+        synonyms: { de: ["ziehen", "extrudieren", "hochziehen", "körper aus skizze", "bereich ziehen",
+                          "skizze ausziehen", "aus skizze"],
+                    en: ["pull", "extrude", "pad", "body from sketch", "pull up", "pull sketch", "push pull",
+                          "lift sketch"] },
         needs: "sketch",
         run: { kind: "menu", id: "sketchpull" } })
 

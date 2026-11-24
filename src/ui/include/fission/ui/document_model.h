@@ -566,6 +566,9 @@ public:
     /// Sets a drilled hole (step `index`) for a metric screw from the tables: `size` like "M3",
     /// `kind` one of plain (clearance hole), counterbore, countersink, nutTrap, tapDrill. One
     /// step of the history. False when the step is no hole or size or kind are unknown.
+    /// {size, kind} of a hole step read back from its values: the table row and kind that give
+    /// exactly these numbers (tolerance 1e-6); size is empty for any other numbers.
+    Q_INVOKABLE QVariantMap holeScrewOf(int index) const;
     Q_INVOKABLE bool setHoleScrew(int index, const QString& size, const QString& kind);
     /// The faces that belong to the one at `faceNumber` as a feature: for a curved face the curved
     /// faces it runs into and the floor of a blind hole, for a flat face just itself.

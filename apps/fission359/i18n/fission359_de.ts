@@ -1054,21 +1054,6 @@
         <translation>Aushöhlen</translation>
     </message>
     <message>
-        <location line="+78"/>
-        <source>Pull up a sketch</source>
-        <translation>Skizze hochziehen</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Turns a sketch into a body by pulling it up.</source>
-        <translation>Macht aus einer Skizze einen Körper, indem man sie hochzieht.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Draw a sketch, then drag it up.</source>
-        <translation>Zeichne eine Skizze und ziehe sie dann hoch.</translation>
-    </message>
-    <message>
         <location line="-274"/>
         <source>Sketch</source>
         <translation>Skizze</translation>

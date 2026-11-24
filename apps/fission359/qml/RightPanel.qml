@@ -77,11 +77,10 @@ Rectangle {
     signal holeScrewChosen(string size, string kind)
     // A drilled hole (AP-2.7c): the screw it is for, and what the hole is to take.
     readonly property bool isDrill: stepTexts.some(t => t.name === "kind")
-    readonly property string drillKind: {
-        const entry = stepTexts.find(t => t.name === "kind")
-        return entry !== undefined ? entry.value : "plain"
-    }
-    property string drillSize: "M3"
+    // What the numbers of the step say: { size, kind }, size is "" when they match no table row.
+    property var holeScrew: ({ size: "", kind: "plain" })
+    readonly property string drillKind: holeScrew.kind
+    readonly property string drillSize: holeScrew.size
     readonly property var drillSizes: ["M2", "M2.5", "M3", "M4", "M5", "M6", "M8", "M10", "M12"]
     signal modeCycleRequested()
     signal reachChosen(string reach)
@@ -436,7 +435,6 @@ Rectangle {
                             hoverEnabled: true
                             Accessible.name: modelData
                             onClicked: {
-                                root.drillSize = modelData
                                 root.holeScrewChosen(modelData, root.drillKind)
                             }
 

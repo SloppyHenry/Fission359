@@ -151,7 +151,7 @@ with tempfile.TemporaryDirectory() as data:
               "search:namen,shape.text;search:verschiben,tool.move;search:grosse,tool.size;"
               "search:round edges,menu.round;search:drill,menu.drillHole;search:rotate,tool.rotate;"
               "search:speichern,menu.save;search:rückgängig,menu.undo;search:kugel,shape.sphere;"
-              "runcommand:tool.rotate;runcommand:menu.settings;runcommand:soon.extrude")
+              "runcommand:tool.rotate;runcommand:menu.settings;runcommand:soon.pattern")
 
     # 12. The hint line and the message catalogue.
     run(data, "menu:new;expecthint:Start with a shape;"

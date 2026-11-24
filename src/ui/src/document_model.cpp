@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <set>
 #include <tuple>
 #include <vector>
@@ -4670,49 +4671,130 @@ QString DocumentModel::drillHole(const QString& bodyId, int faceNumber) {
                        {{"diameter", 3.4}, {"depth", 10.0}}, "drillHole");
 }
 
+namespace {
+
+/// What a hole of one kind takes from the table row of a screw (AP-2.7c, decision 4): the word of
+/// the step and the five values. Values the kind does not need are 0. `kind` is one of plain,
+/// counterbore, countersink, nutTrap, tapDrill (the thread hole is a plain hole of core size).
+struct HoleFromTable {
+    std::string word = "plain";
+    double diameter = 0.0;
+    double headDiameter = 0.0;
+    double headDepth = 0.0;
+    double nutWidth = 0.0;
+    double nutDepth = 0.0;
+};
+
+std::optional<HoleFromTable> holeFromTable(const features::MetricScrew& screw,
+                                           const QString& kind) {
+    HoleFromTable hole;
+    hole.diameter = features::clearanceDiameter(screw, features::ClearanceFit::medium);
+    if (kind == QLatin1String("counterbore")) {
+        hole.word = "counterbore";
+        hole.headDiameter = screw.socketHeadDiameter;
+        hole.headDepth = screw.socketHeadHeight;
+    } else if (kind == QLatin1String("countersink")) {
+        hole.word = "countersink";
+        hole.headDiameter = screw.countersinkDiameter;
+    } else if (kind == QLatin1String("nutTrap")) {
+        hole.word = "nutTrap";
+        hole.nutWidth = screw.nutWidth;
+        hole.nutDepth = screw.nutHeight;
+    } else if (kind == QLatin1String("tapDrill")) {
+        hole.diameter = screw.tapDrill;
+    } else if (kind != QLatin1String("plain")) {
+        return std::nullopt;
+    }
+    return hole;
+}
+
+double holeNumber(const core::Feature& step, const char* name) {
+    const auto found = step.params.find(name);
+    if (found == step.params.end()) {
+        return std::nan("");
+    }
+    return core::evaluateExpression(found->second.expression, core::QuantityKind::length)
+        .value_or(std::nan(""));
+}
+
+} // namespace
+
+QVariantMap DocumentModel::holeScrewOf(int index) const {
+    QVariantMap answer{{"size", QString()}, {"kind", QStringLiteral("plain")}};
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) ||
+        features[static_cast<std::size_t>(index)].type != "hole") {
+        return answer;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    const auto word = step.texts.find("kind");
+    if (word != step.texts.end()) {
+        answer["kind"] = QString::fromStdString(word->second);
+    }
+    const std::string stored = word != step.texts.end() ? word->second : "plain";
+    const double diameter = holeNumber(step, "diameter");
+    const double headDiameter = holeNumber(step, "headDiameter");
+    const double headDepth = holeNumber(step, "headDepth");
+    const double nutWidth = holeNumber(step, "nutWidth");
+    const double nutDepth = holeNumber(step, "nutDepth");
+    const auto same = [](double a, double b) { return std::abs(a - b) <= 1e-6; };
+    for (const features::MetricScrew& screw : features::metricScrews()) {
+        for (const char* kind : {"plain", "tapDrill", "counterbore", "countersink", "nutTrap"}) {
+            const auto table = holeFromTable(screw, QLatin1String(kind));
+            if (table && table->word == stored) {
+                if (same(diameter, table->diameter) && same(headDiameter, table->headDiameter) &&
+                    same(headDepth, table->headDepth) && same(nutWidth, table->nutWidth) &&
+                    same(nutDepth, table->nutDepth)) {
+                    answer["size"] =
+                        QString::fromUtf8(screw.size.data(), static_cast<int>(screw.size.size()));
+                    answer["kind"] = QLatin1String(kind);
+                    return answer;
+                }
+            }
+        }
+    }
+    return answer;
+}
+
 bool DocumentModel::setHoleScrew(int index, const QString& size, const QString& kind) {
     const auto& features = m_history.document().features();
     if (index < 0 || index >= static_cast<int>(features.size()) ||
         features[static_cast<std::size_t>(index)].type != "hole") {
         return false;
     }
-    const features::MetricScrew* screw = features::findMetricScrew(size.toStdString());
+    const features::MetricScrew* screw = nullptr;
+    if (size.isEmpty()) {
+        // No size is marked (a typed diameter): take the row whose through hole is nearest.
+        const double diameter = holeNumber(features[static_cast<std::size_t>(index)], "diameter");
+        double best = 1e300;
+        for (const features::MetricScrew& row : features::metricScrews()) {
+            const double gap = std::abs(
+                features::clearanceDiameter(row, features::ClearanceFit::medium) - diameter);
+            if (gap < best) {
+                best = gap;
+                screw = &row;
+            }
+        }
+    } else {
+        screw = features::findMetricScrew(size.toStdString());
+    }
     if (screw == nullptr) {
         return false;
     }
-    // What each kind of hole takes from the tables (AP-2.7c, decision 4): the hole for the screw,
-    // and the head or nut pocket for it. Values the kind does not need are set to 0.
-    double diameter = features::clearanceDiameter(*screw, features::ClearanceFit::medium);
-    double headDiameter = 0.0;
-    double headDepth = 0.0;
-    double nutWidth = 0.0;
-    double nutDepth = 0.0;
-    std::string word = "plain";
-    if (kind == QLatin1String("counterbore")) {
-        word = "counterbore";
-        headDiameter = screw->socketHeadDiameter;
-        headDepth = screw->socketHeadHeight;
-    } else if (kind == QLatin1String("countersink")) {
-        word = "countersink";
-        headDiameter = screw->countersinkDiameter;
-    } else if (kind == QLatin1String("nutTrap")) {
-        word = "nutTrap";
-        nutWidth = screw->nutWidth;
-        nutDepth = screw->nutHeight;
-    } else if (kind == QLatin1String("tapDrill")) {
-        diameter = screw->tapDrill;
-    } else if (kind != QLatin1String("plain")) {
+    const std::optional<HoleFromTable> table = holeFromTable(*screw, kind);
+    if (!table) {
         return false;
     }
+    const std::string word = table->word;
     const core::FeatureId id = features[static_cast<std::size_t>(index)].id;
     const auto number = [](double value) { return QString::number(value, 'g', 15).toStdString(); };
     m_history.beginTransaction({"setText", {{"name", "kind"}}});
     bool ok = m_history.execute(core::makeSetFeatureText(id, "kind", word));
-    const std::pair<const char*, double> values[] = {{"diameter", diameter},
-                                                     {"headDiameter", headDiameter},
-                                                     {"headDepth", headDepth},
-                                                     {"nutWidth", nutWidth},
-                                                     {"nutDepth", nutDepth}};
+    const std::pair<const char*, double> values[] = {{"diameter", table->diameter},
+                                                     {"headDiameter", table->headDiameter},
+                                                     {"headDepth", table->headDepth},
+                                                     {"nutWidth", table->nutWidth},
+                                                     {"nutDepth", table->nutDepth}};
     for (const auto& [name, value] : values) {
         ok = ok && m_history.execute(core::makeSetFeatureValue(id, name, number(value)));
     }

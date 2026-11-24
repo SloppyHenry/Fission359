@@ -1054,21 +1054,6 @@
         <translation>Hollow out</translation>
     </message>
     <message>
-        <location line="+78"/>
-        <source>Pull up a sketch</source>
-        <translation>Pull up a sketch</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Turns a sketch into a body by pulling it up.</source>
-        <translation>Turns a sketch into a body by pulling it up.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Draw a sketch, then drag it up.</source>
-        <translation>Draw a sketch, then drag it up.</translation>
-    </message>
-    <message>
         <location line="-274"/>
         <source>Sketch</source>
         <translation>Sketch</translation>
