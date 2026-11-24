@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include <cmath>
 #include <memory>
 
 #include "fission/core/sketch.h"

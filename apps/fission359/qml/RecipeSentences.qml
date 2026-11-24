@@ -123,7 +123,7 @@ QtObject {
             return qsTr("Sketch")
         }
         if (step.type === "helperPlane" && v.length === 1) {
-            return qsTr("Helper plane, %1 mm offset").arg(n(v[0]))
+            return qsTr("Helper plane, %1 mm offset").arg(len(v[0]))
         }
         if (step.type === "combine" && v.length === 1) {
             switch (step.texts.mode) {
