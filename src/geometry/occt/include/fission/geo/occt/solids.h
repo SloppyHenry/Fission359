@@ -9,6 +9,7 @@
 #include "fission/geo/kernel.h"
 #include "fission/geo/mesh.h"
 #include "fission/geo/occt/fonts.h"
+#include "fission/geo/pattern.h"
 #include "fission/geo/primitives.h"
 #include "fission/geo/rotation.h"
 #include "fission/geo/solid.h"
@@ -46,6 +47,9 @@ NamedSolid rotateNamed(const NamedSolid& solid, Point3d centre, const Angles& an
 
 /// The body moved by `delta` (see `GeometryKernel::translate`).
 NamedSolid translateNamed(const NamedSolid& solid, Point3d delta);
+
+/// The body transformed by `transform` (see `GeometryKernel::transformed`). Throws GeometryError.
+NamedSolid transformNamed(const NamedSolid& solid, const Transform3& transform);
 
 /// Combines bodies (see `GeometryKernel::boolean`). Throws GeometryError.
 NamedSolid booleanNamed(BooleanOp op, const NamedSolid& target,

@@ -18,10 +18,10 @@
 
 #include "fission/core/sketch.h"
 #include "fission/core/sketch_solve.h"
+#include "fission/features/sketch_regions.h"
 #include "fission/interaction/sketch_edit.h"
 #include "fission/interaction/sketch_offset.h"
 #include "fission/interaction/sketch_pattern.h"
-#include "fission/interaction/sketch_regions.h"
 #include "fission/interaction/sketch_snap.h"
 #include "fission/interaction/sketch_tool.h"
 #include "fission/render/camera.h"
@@ -107,7 +107,7 @@ class SketchController : public QObject {
     /// The regions of the sketch (AP-2.1g): closed areas, calculated in the background (the old
     /// ones stay until the new ones are there). The one under the pointer (no tool on) is
     /// `hoveredRegion`, the one a click chose is `selectedRegion` (ids, see
-    /// `interaction::SketchRegionInfo`; empty: none). Choosing is a state of the view, not a step.
+    /// `features::SketchRegionInfo`; empty: none). Choosing is a state of the view, not a step.
     Q_PROPERTY(int regionCount READ regionCount NOTIFY regionsChanged)
     Q_PROPERTY(QString selectedRegion READ selectedRegion NOTIFY regionsChanged)
     Q_PROPERTY(QString hoveredRegion READ hoveredRegion NOTIFY regionsChanged)
@@ -248,9 +248,7 @@ public:
     }
     QString selectedRegion() const { return QString::fromStdString(m_selectedRegion); }
     QString hoveredRegion() const { return QString::fromStdString(m_hoverRegion); }
-    const interaction::SketchRegionSet& regions() const noexcept {
-        return m_regionWorker.regions();
-    }
+    const features::SketchRegionSet& regions() const noexcept { return m_regionWorker.regions(); }
     /// The regions are being worked out.
     bool regionsBusy() const noexcept { return m_regionWorker.busy(); }
     /// Waits for the background calculation (tests, `--simulate`); true when it is done.
@@ -258,6 +256,10 @@ public:
     double regionMilliseconds() const noexcept { return m_regionWorker.lastMilliseconds(); }
     /// Esc with no tool, or a click beside every region: lets go of the chosen region.
     void clearRegionSelection();
+    /// For "Pull" (AP-2.3b2): the chosen region with the step and the point on the sketch plane
+    /// (u, v in mm) where the click chose it, as { "step", "region", "u", "v" } for
+    /// `DocumentModel::addExtrude`. An empty map when no region is chosen.
+    Q_INVOKABLE QVariantMap regionPull() const;
     /// The elements of the sketch as the controller knows them (the document's; for tests).
     const std::vector<core::SketchElement>& elements() const noexcept { return m_elements; }
     /// The ids of the chosen elements (no tool on, in the order they were chosen).
@@ -511,6 +513,8 @@ private:
     SketchRegionWorker m_regionWorker;
     std::string m_selectedRegion;
     std::string m_hoverRegion;
+    double m_selectedRegionU = 0.0; ///< where the click chose the region (u on the plane, mm)
+    double m_selectedRegionV = 0.0; ///< where the click chose the region (v on the plane, mm)
     bool m_regionsFailedSaid = false;
     std::vector<std::string> m_selectedElements; ///< the chosen elements (no tool on, AP-2.2b)
     // a live drag of points with no tool on (AP-2.2c4)

@@ -16,6 +16,7 @@
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
@@ -30,6 +31,7 @@
 #include <gp_Dir.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
+#include <gp_Trsf.hxx>
 #include <gp_Vec.hxx>
 
 namespace fission::geo::occt {
@@ -192,11 +194,38 @@ std::string roleOf(const TopoDS_Face& face, const HoleToolSpec& spec, double r, 
     return "";
 }
 
+// The rotation about the origin that takes +Z onto the unit vector `up` (the shortest arc).
+gp_Trsf rotationTakingZTo(const Point3d& up) {
+    const gp_Vec z(0.0, 0.0, 1.0);
+    const gp_Vec u(up.x, up.y, up.z);
+    const gp_Vec axis = z.Crossed(u);
+    const double sin = axis.Magnitude();
+    const double cos = z.Dot(u);
+    gp_Trsf rotation;
+    if (sin > 1e-12) {
+        rotation.SetRotation(gp_Ax1(gp_Pnt(0.0, 0.0, 0.0), gp_Dir(axis)), std::atan2(sin, cos));
+    } else if (cos < 0.0) {
+        // Antiparallel: any axis perpendicular to Z works, X is as good as any.
+        rotation.SetRotation(gp_Ax1(gp_Pnt(0.0, 0.0, 0.0), gp_Dir(1.0, 0.0, 0.0)),
+                             std::numbers::pi);
+    }
+    return rotation;
+}
+
 } // namespace
 
 NamedSolid makeHoleToolNamed(const HoleToolSpec& spec) {
     try {
         requireFitting(spec);
+        if (!isFinite(spec.at) || !isFinite(spec.up)) {
+            refuse("the place of the tool must be numbers");
+        }
+        const double upLength =
+            std::sqrt(spec.up.x * spec.up.x + spec.up.y * spec.up.y + spec.up.z * spec.up.z);
+        if (!(upLength > 0.0)) {
+            refuse("the direction of the tool must have a length");
+        }
+        const Point3d up{spec.up.x / upLength, spec.up.y / upLength, spec.up.z / upLength};
         const double r = spec.diameter / 2.0;
         const double R = spec.headDiameter / 2.0;
         const TopoDS_Shape shape = spec.kind == HoleKind::nutTrap
@@ -206,8 +235,25 @@ NamedSolid makeHoleToolNamed(const HoleToolSpec& spec) {
             throw GeometryError(GeometryErrorCode::kernelFailure,
                                 "hole: the kernel returned an invalid body");
         }
-        return nameFaces(shape, "hole",
-                         [&](const TopoDS_Face& face) { return roleOf(face, spec, r, R); });
+        // The tool is built and named in the origin system (axis +Z), where its roles are told
+        // apart by their place along that axis.
+        NamedSolid made = nameFaces(
+            shape, "hole", [&](const TopoDS_Face& face) { return roleOf(face, spec, r, R); });
+        // Placed on the face: the origin of the tool goes to `at` and its +Z axis onto `up`, so
+        // the point (0, 0, -depth) lands at `at - up * depth`, inside the material.
+        if (spec.at.x != 0.0 || spec.at.y != 0.0 || spec.at.z != 0.0 || up.x != 0.0 ||
+            up.y != 0.0 || up.z != 1.0) {
+            gp_Trsf place = rotationTakingZTo(up);
+            gp_Trsf move;
+            move.SetTranslation(gp_Vec(spec.at.x, spec.at.y, spec.at.z));
+            move.Multiply(place); // first the rotation, then the move: p -> at + R p
+            const TopoDS_Shape moved = BRepBuilderAPI_Transform(shape, move, /*Copy=*/true).Shape();
+            NamedSolid result;
+            result.solid = validated(moved, "hole");
+            result.faces = made.faces; // a pure move: the faces stay the faces they were
+            return result;
+        }
+        return made;
     } catch (const Standard_Failure&) {
         throw GeometryError(GeometryErrorCode::kernelFailure, "hole: the kernel failed");
     }
