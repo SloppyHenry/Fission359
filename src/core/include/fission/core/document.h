@@ -256,6 +256,8 @@ public:
     /// Removes the step and the bodies it created. Steps that used them stay and report a
     /// missing input; `dependentsOf` tells beforehand who that will be.
     bool removeFeature(const FeatureId& id);
+    /// The steps that need the step `id`: they work on a body it created, or they read a sketch
+    /// it is (its word `sketch`), directly or through the steps in between.
     std::vector<FeatureId> dependentsOf(const FeatureId& id) const;
     /// Like `removeFeature`, but hands back what is needed to restore the step exactly.
     std::optional<RemovedFeature> takeFeature(const FeatureId& id);

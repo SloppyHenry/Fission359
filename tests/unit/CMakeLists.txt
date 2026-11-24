@@ -22,29 +22,37 @@ add_executable(fission_unit_tests
   naming/test_random.cpp
   naming/test_sensitivity.cpp
   features/test_primitives.cpp
+  features/test_hole_tables.cpp
   features/test_combine.cpp
   features/test_split.cpp
   features/test_blend.cpp
   features/test_push_face.cpp
   features/test_face_ops.cpp
+  features/test_pattern_step.cpp
+  features/test_helper_plane.cpp
+  features/test_hole_step.cpp
   features/test_shell_draft.cpp
   features/test_text_feature.cpp
   features/test_import.cpp
   features/test_sketch_feature.cpp
+  features/test_extrude_feature.cpp
   features/test_sketch_edges.cpp
   services/test_settings.cpp
+  services/test_platform.cpp
   io/test_fission_file.cpp
   io/test_export.cpp
   io/test_formats.cpp
   geometry/test_occt_layer.cpp
   geometry/test_solids.cpp
   geometry/test_shapes.cpp
+  geometry/test_hole_tool.cpp
   geometry/test_rotation.cpp
   geometry/test_booleans_gal.cpp
   geometry/test_signatures.cpp
   geometry/test_blends.cpp
   geometry/test_faces.cpp
   geometry/test_stretch.cpp
+  geometry/test_transformed.cpp
   geometry/test_plausibility.cpp
   geometry/test_hollow.cpp
   geometry/test_draft.cpp
@@ -56,6 +64,8 @@ add_executable(fission_unit_tests
   geometry/test_sketch_intersections.cpp
   geometry/test_sketch_regions.cpp
   geometry/test_extrude.cpp
+  geometry/test_pattern.cpp
+  geometry/test_datum.cpp
   geometry/test_sketch_edge.cpp
   geometry/test_sketch_solver.cpp
   analysis/test_material.cpp
@@ -105,7 +115,7 @@ add_executable(fission_unit_tests
   interaction/test_sketch_edit.cpp
   interaction/test_sketch_offset.cpp
   interaction/test_sketch_pattern.cpp
-  interaction/test_sketch_regions.cpp)
+  features/test_sketch_regions_features.cpp)
 
 target_link_libraries(fission_unit_tests PRIVATE
   fission_core fission_services fission_io fission_analysis lib3mf::lib3mf fission_features fission_geometry_occt fission_geometry_sketch fission_render fission_interaction fission_ui Catch2::Catch2WithMain)

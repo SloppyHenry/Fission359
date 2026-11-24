@@ -56,10 +56,10 @@ void SketchRegionWorker::start(Job job) {
     QPointer<SketchRegionWorker> self(this);
     m_pool.start([self, generation, job = std::move(job)] {
         const auto begin = std::chrono::steady_clock::now();
-        interaction::SketchRegionSet set;
+        features::SketchRegionSet set;
         bool failed = false;
         try {
-            set = interaction::computeSketchRegions(*job.kernel, job.elements);
+            set = features::computeSketchRegions(*job.kernel, job.elements);
         } catch (const std::exception&) {
             failed = true; // a refusal of the kernel: no regions, a hint (rule 5)
         }
@@ -78,7 +78,7 @@ void SketchRegionWorker::start(Job job) {
     });
 }
 
-void SketchRegionWorker::finished(std::uint64_t generation, interaction::SketchRegionSet set,
+void SketchRegionWorker::finished(std::uint64_t generation, features::SketchRegionSet set,
                                   bool failed, double milliseconds) {
     if (generation != m_generation) {
         return; // reset meanwhile

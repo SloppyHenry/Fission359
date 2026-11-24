@@ -5,7 +5,7 @@ Stand: 2026-11-06 (P17 erledigt mit PR #99, P22 umgesetzt), gegen den Code auf `
 
 ## Reihenfolge
 **Nach Bedarf**, der Nutzertest 1 (AP-1.13) kann die Reihenfolge ändern. P18, P2 und P3 sind vor dem Nutzertest erledigt worden.
-**Braucht eine Entscheidung (trifft die Orchestrierung) oder ein Testsystem:** P1 (Bild oder Video), P5, P8, P11, P14 (Entscheidung oder Rechner).
+**Braucht eine Entscheidung (trifft die Orchestrierung) oder ein Testsystem:** P1 (Bild oder Video), P5, P11, P14 (Entscheidung oder Rechner).
 
 ---
 
@@ -30,12 +30,8 @@ Heute werden Maßbänder gedrehter Körper nicht gezeichnet und die Beschriftung
 Achsen des Körpers, außerhalb seines (gedrehten) Kastens. `FeatureType::placedHandles` liefert gedrehte Griffe; `HandleController::refresh`
 baut die Bänder heute nur für achsparallele Richtungen. Bilder vorher/nachher; Test: gedrehter Quader (rotZ 30) hat drei Bänder, keines
 schneidet den Körper.
-
-## P8 Lage beim Tippen von Maßen nach dem Ablegen an einer Wand mitführen
-**Größe:** S · Idee aus AP-1.6b3. **Haltepunkt:** erst fragen, ob gewünscht.
-Problem: Nach dem Ablegen an einer Wand und `50 ⇥ 20 ⇥ 4` ändert sich die Höhe um die Körpermitte; die Form rutscht von der Wand.
-Lösung: Solange der Schritt „frisch abgelegt“ ist (bis zum ersten anderen Befehl), Lage so nachführen, dass die Unterseite auf der Wand bleibt
-(`geo::seatOnFace` mit der gemerkten Fläche).
+**Erledigt (2026-11-11):** `refresh` legt die Bänder in einem körpereigenen Rahmen aus den Achsen der Größen-Griffe an (Welt-Achsen,
+wenn die Griffe keinen Quader aufspannen). Gedrehte Größen bleiben ohne Achsfarbe.
 
 ## P9 Rezept umsortieren per Ziehen
 **Größe:** M · UX §4 erlaubt es, AP-1.9 hat es ausgelassen. Ziehen einer Zeile; erlaubt nur, wenn keine Abhängigkeit verletzt wird
@@ -60,7 +56,16 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 **Größe:** S–M · Aus AP-1.8 und AP-1.12. Tooltip-Karten für Menübefehle der Kontextleiste; „Mehr ▾“ und Ausrichten bei mehreren Körpern; die Leiste kann Maßzahlen der Ansicht kurz verdecken.
 
 ## P20 Kleinigkeiten aus AP-1.10 und AP-1.11
-**Größe:** S · „Zuletzt geöffnet“ als Untermenü; Einheit „Zoll“ auch in der Statuszeile und in bestehenden Projekten; Dateizuordnung unter macOS und Linux von Hand prüfen; Bildschirmfotos 80/100/150/200 % in den PR des nächsten Politurdurchgangs.
+**Größe:** S · „Zuletzt geöffnet“ als Untermenü; Einheit „Zoll“ → P23 (Auswahl bis dahin ausgeblendet); Dateizuordnung unter macOS und Linux von Hand prüfen; Bildschirmfotos 80/100/150/200 % in den PR des nächsten Politurdurchgangs.
+
+## P23 Anzeige in Zoll
+**Größe:** L · Aus P20. Die Einstellung „Einheit für neue Projekte: Zoll“ ließ in neuen Projekten bloße Zahlen als Zoll zählen, angezeigt wurde
+aber alles in mm. Sie ist bis zu dieser Aufgabe ausgeblendet, neue Projekte zählen in mm (Zoll lassen sich weiter eintippen, „2 in“). Nötig: Einheit je Dokument (Dateiformat-Feld mit Migration), Anzeige
+aller Längen (Zahlenfeld, Maßbänder, Rezept-Sätze, Statuszeile, Bett-Beschriftung) in der Einheit des Dokuments, intern weiter mm.
+
+**Erledigt (2026-11-12):** `Numbers::unit`/`formatLength`; `DocumentModel::unit` aus `defaultUnitMillimetres` (kein neues
+Dateiformat-Feld); Zahlenfelder, Griffe, Abstände, Gizmo, Statuszeile, Rezept-Sätze und Bett in der Einheit; Auswahl wieder sichtbar.
+Druckermaße bleiben in mm.
 
 ## P21 Wacklige Fenster-Tests beobachten
 **Größe:** S · Ursache von `app_ring_turn` und `app_snap_corner_handle` wohl behoben (2026-10-28, `pressAndPull`). Fällt einer in der CI erneut aus: Meldung dort ansehen, nicht abschwächen. Prüfungen von `--simulate` warten auf das Ende der Aktion, nie auf feste Zeiten (PR #51).
@@ -76,6 +81,7 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 
 ## Erledigt
 - **P19 (Teil)** „Wert ändern“ unter einem Problem setzt den Cursor in das betroffene Feld, Text markiert (2026-11-11).
+- **P8** Lage beim Tippen nach dem Ablegen an einer Wand (2026-11-11): solange nichts anderes geschah, hält ein getipptes Maß die Unterseite an der Wand, im selben Schritt; mit benannten Maßen im Wert wird nicht nachgeführt.
 - **P7** Exakte Fangpunkte aus dem Kernel (2026-11-11): `GeometryKernel::snapPoints` (Ecken, Kantenmitten, Kreismitten, Mitten ebener Flächen, exakt aus OCCT; Nahtkanten ausgenommen), im Hintergrund mit dem Netz berechnet, `SnapSession` nimmt sie statt der Netzpunkte (Rückfall: Netzpunkte).
 - **P18** Abstandsmaß auf einer Platte (2026-11-03, PR #83): Ohne Nachbarn misst das Maß bis zum Rand des kleinsten Körpers, der die Grundfläche umfasst und auf dem der Körper steht oder in dem er steckt (nicht ein Körper darüber, z. B. Schrift über dem Loch); danach bis zum Bettrand. Festlegung ohne Umschalter. `app_flow_a_keychain` tippt den Abstand.
 - **P2** Formen-Galerie schließt bei Klick auf leeren Grund (2026-11-03, PR #84), Simulations-Prüfung `expectflyout:`.

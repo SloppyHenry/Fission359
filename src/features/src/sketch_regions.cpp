@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Fission359 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "fission/interaction/sketch_regions.h"
+#include "fission/features/sketch_regions.h"
 
 #include <algorithm>
 #include <map>
 
-namespace fission::interaction {
+namespace fission::features {
 
 namespace {
 
@@ -76,17 +76,23 @@ std::string sidesOf(const geo::SketchRegion& shape, const std::vector<std::size_
 
 } // namespace
 
-SketchRegionSet computeSketchRegions(const geo::GeometryKernel& kernel,
-                                     const std::vector<SketchElement>& elements) {
-    std::vector<geo::SketchCurve> curves;
-    std::vector<std::string> ids; // id of curve i
+SketchCurves sketchCurvesOf(const std::vector<SketchElement>& elements) {
+    SketchCurves out;
     for (const SketchElement& element : elements) {
         if (element.kind == SketchElementKind::point || element.construction) {
             continue;
         }
-        curves.push_back(curveOf(element));
-        ids.push_back(element.id);
+        out.curves.push_back(curveOf(element));
+        out.ids.push_back(element.id);
     }
+    return out;
+}
+
+SketchRegionSet computeSketchRegions(const geo::GeometryKernel& kernel,
+                                     const std::vector<SketchElement>& elements) {
+    const SketchCurves built = sketchCurvesOf(elements);
+    const std::vector<geo::SketchCurve>& curves = built.curves;
+    const std::vector<std::string>& ids = built.ids; // id of curve i
     SketchRegionSet set;
     if (curves.empty()) {
         return set;
@@ -169,4 +175,4 @@ int regionAt(const SketchRegionSet& set, const core::SketchPoint& at) {
     return best;
 }
 
-} // namespace fission::interaction
+} // namespace fission::features

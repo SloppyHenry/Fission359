@@ -252,6 +252,14 @@ if(_fission_run_window_tests)
             --camera=35,35,200 --simulate "put:box;value:width,0;clickitem:problemBadge;clickitem:problemAction_editValue;expectfocus:width")
   set_tests_properties(app_problem_change_value PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.12c: a helper plane is made from the menu (a step without a body); its switch hides the
+  # square in the view (one undo step).
+  add_test(NAME app_helper_plane
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-helper-plane.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "menu:helperPlane;recipe:box,helperPlane;clickitem:helperPlaneShown;expectundo:setText")
+  set_tests_properties(app_helper_plane PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # Pflege P10: the keys + and - zoom the 3D view towards its centre by 20 % each (the camera
   # distance gets smaller, then larger again).
   add_test(NAME app_keyboard_zoom
@@ -447,6 +455,23 @@ if(_fission_run_window_tests)
             --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-regions.png" --language en --size 1280x800
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.rectangle;sketchclickmm:-40,-20;sketchclickmm:40,20;expectsketchregions:1,none;menu:sketchtool.circle;sketchclickmm:40,0;sketchclickmm:50,0;key:Escape;expectsketchtool:;expectsketchregions:3,none;expecthint:3 closed areas;sketchclickmm:-20,0;expectsketchregions:3,selected;expecthint:One is chosen;key:Escape;expectsketch:active;expectsketchregions:3,none;menu:undo;expectsketchregions:1,none;menu:redo;expectsketchregions:3,none;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_regions PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.3b2: a closed area of the sketch is chosen with a click (the hint says what Enter does),
+  # Enter pulls it out of the sketch into a body: an "extrude" step, one undo step, the new body
+  # chosen and the size tool on (its arrow grip can be dragged or typed to).
+  add_test(NAME app_sketch_pull
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-pull.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.rectangle;sketchclickmm:-40,-20;sketchclickmm:40,20;key:Escape;expectsketchregions:1,none;sketchclickmm:0,0;expectsketchregions:1,selected;expecthint:Enter;key:Return;expectsketch:idle;recipe:box,sketch,extrude;expectundo:extrude")
+  set_tests_properties(app_sketch_pull PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.3: a pull of a sketch on the box has a chip beside its arrow that shows the mode; a click
+  # changes it (one undo step "setText").
+  add_test(NAME app_sketch_pull_mode
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-pull-mode.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;expectsketch:picking;click:366,341;expectsketch:active;expectsketchplane:face;menu:sketchtool.rectangle;sketchclickmm:-5,-5;sketchclickmm:5,5;key:Escape;expectsketchregions:1,none;sketchclickmm:0,0;expectsketchregions:1,selected;key:Return;expectsketch:idle;recipe:box,sketch,extrude;clickitem:pullModeChip;expectundo:setText")
+  set_tests_properties(app_sketch_pull_mode PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-2.1f: a sketch on the top of the box, the border taken over with the tool U (found by words
   # only this tool carries), one undo step; the box is made wider by a typed value and the border
