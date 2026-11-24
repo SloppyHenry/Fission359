@@ -30,6 +30,8 @@ Heute werden Maßbänder gedrehter Körper nicht gezeichnet und die Beschriftung
 Achsen des Körpers, außerhalb seines (gedrehten) Kastens. `FeatureType::placedHandles` liefert gedrehte Griffe; `HandleController::refresh`
 baut die Bänder heute nur für achsparallele Richtungen. Bilder vorher/nachher; Test: gedrehter Quader (rotZ 30) hat drei Bänder, keines
 schneidet den Körper.
+**Erledigt (2026-11-11):** `refresh` legt die Bänder in einem körpereigenen Rahmen aus den Achsen der Größen-Griffe an (Welt-Achsen,
+wenn die Griffe keinen Quader aufspannen). Gedrehte Größen bleiben ohne Achsfarbe.
 
 ## P9 Rezept umsortieren per Ziehen
 **Größe:** M · UX §4 erlaubt es, AP-1.9 hat es ausgelassen. Ziehen einer Zeile; erlaubt nur, wenn keine Abhängigkeit verletzt wird
