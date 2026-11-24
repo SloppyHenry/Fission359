@@ -159,6 +159,7 @@ Window {
             { id: "helperPlane", text: qsTr("Helper plane"), enabled: true },
             { id: "patternLinear", text: qsTr("Row pattern"), enabled: root.chosenBodies.length === 1 },
             { id: "patternCircular", text: qsTr("Circular pattern"), enabled: root.chosenBodies.length === 1 },
+            { id: "mirror", text: qsTr("Mirror"), enabled: root.chosenBodies.length === 1 },
             { id: "drillHole", text: qsTr("Drill hole"), enabled: Selection.singleFaceChosen },
             { separator: true },
             { id: "shell", text: qsTr("Hollow out"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
@@ -582,6 +583,7 @@ Window {
         case "helperPlane": helperPlaneChosen(); break
         case "patternLinear": patternChosen("linear"); break
         case "patternCircular": patternChosen("circular"); break
+        case "mirror": mirrorChosen(); break
         case "drillHole": drillHoleChosen(); break
         case "shell": shellChosen(); break
         case "draft": draftChosen(); break
@@ -765,6 +767,19 @@ Window {
         Selection.chooseBodies([made])
         showHint(mode === "circular" ? qsTr("Circle of 6 copies. Type another number or angle in the panel.")
                                      : qsTr("Row of 3 copies. Drag the arrow or type another distance in the panel."))
+    }
+
+    // The mirror image of the chosen body, kept beside it and just touching (AP-2.8c).
+    function mirrorChosen() {
+        const body = root.chosenBodies.length === 1 ? root.chosenBodies[0] : ""
+        const made = body !== "" ? DocumentModel.addMirror(body, "copy") : ""
+        if (made === "") {
+            showHint(qsTr("This body cannot be mirrored: it may already be part of another body."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        showHint(qsTr("Mirror image beside the body. Drag the arrow or type where the mirror plane stands."))
     }
 
     // The body to work on: the one the chosen faces belong to, or the one chosen body ("" if none).
@@ -1928,6 +1943,7 @@ Window {
             }
             onTabRequested: tab => root.rightTab = tab
             onAxisChosen: axis => DocumentModel.setSplitAxis(DocumentModel.currentStep, axis)
+            onMirrorAxisChosen: axis => DocumentModel.setMirrorAxis(DocumentModel.currentStep, axis)
             onPatternDirectionChosen: (circular, axis, sign) => DocumentModel.setPatternDirection(DocumentModel.currentStep, circular, axis, sign)
             onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)
             onDragStarted: name => DocumentModel.beginChange(name)
@@ -1988,6 +2004,7 @@ Window {
         if (type === "shell") { return qsTr("Hollowing out") }
         if (type === "draft") { return qsTr("Draft") }
         if (type === "pattern") { return qsTr("Pattern") }
+        if (type === "mirror") { return qsTr("Mirror") }
         if (type === "place") { return qsTr("Placing") }
         if (type === "import") { return qsTr("Imported body") }
         if (type === "sketch") { return qsTr("Sketch") }
@@ -2007,6 +2024,9 @@ Window {
         case "cornerRadius": return qsTr("Corner radius")
         case "font": return qsTr("Font")
         case "style": return qsTr("Style")
+        case "planeX": return qsTr("Mirror plane at x")
+        case "planeY": return qsTr("Mirror plane at y")
+        case "planeZ": return qsTr("Mirror plane at z")
         case "count": return qsTr("Number")
         case "spacing": return qsTr("Distance")
         case "total": return qsTr("Angle in all")
@@ -2093,6 +2113,7 @@ Window {
         case "offsetFaces": return qsTr("%n face(s) moved", "", Number(step.count))
         case "tiltFace": return qsTr("Face tilted")
         case "helperPlane": return qsTr("Helper plane added")
+        case "mirror": return qsTr("Mirrored")
         case "pattern": return step.mode === "circular" ? qsTr("Circular pattern added") : qsTr("Row pattern added")
         case "drillHole": return qsTr("Hole drilled")
         case "shellBody": return qsTr("Body hollowed out")

@@ -113,6 +113,17 @@ Rectangle {
     readonly property var axisValue: stepValues.find(v => v.group === "axis")
     readonly property var cutValues: stepValues.filter(v => v.group === "cut")
     signal axisChosen(int axis)
+    // A mirror (AP-2.8c): the plane stands upright to one axis; one number says where.
+    signal mirrorAxisChosen(int axis)
+    readonly property bool isMirror: stepValues.some(v => v.name === "planeX")
+    readonly property int mirrorAxis: {
+        const n = [valueNamed("normalX").value, valueNamed("normalY").value, valueNamed("normalZ").value]
+        let best = 0
+        for (let i = 1; i < 3; ++i) {
+            if (Math.abs(n[i]) > Math.abs(n[best])) { best = i }
+        }
+        return best
+    }
     // A pattern (AP-2.8b): a row or a circle of copies, its way or axis, and the copies left out.
     signal patternDirectionChosen(bool circular, int axis, int sign)
     readonly property bool isPattern: stepTexts.some(t => t.name === "skip")
@@ -436,6 +447,24 @@ Rectangle {
                             value: cutField.entry.expression
                         }
                     }
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.isMirror
+                heading: qsTr("Mirror")
+
+                Txt {
+                    text: qsTr("The plane stands upright to")
+                    color: Theme.fg2
+                }
+
+                Segmented {
+                    objectName: "mirrorAxis"
+                    accessibleName: qsTr("The plane stands upright to")
+                    current: root.mirrorAxis
+                    model: [{ value: 0, text: "X" }, { value: 1, text: "Y" }, { value: 2, text: "Z" }]
+                    onActivated: value => root.mirrorAxisChosen(value)
                 }
             }
 

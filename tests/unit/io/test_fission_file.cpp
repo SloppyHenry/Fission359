@@ -351,7 +351,8 @@ TEST_CASE("write the version 1 fixture files", "[.generate-fixtures]") {
     World world;
     fs::create_directories(fixtureFolder("v1"));
     for (const std::string& type : world.registry.ids()) {
-        if (type == "helperPlane" || type == "pattern" || type == "extrude" || type == "revolve") {
+        if (type == "helperPlane" || type == "pattern" || type == "mirror" || type == "extrude" ||
+            type == "revolve") {
             continue; // came after format 1 (extrude: its file lives in v4/)
         }
         const fs::path target = fixtureFolder("v1") / (type + ".fission");
@@ -398,8 +399,9 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
     }
     // Step types that came after format 1 and have no artificial version 1 file (see the README
     // of the fixtures); their files live in the folder of their own format.
-    // pattern (AP-2.8b), extrude (AP-2.3b), helperPlane (AP-2.12b), revolve (AP-2.3c)
-    const std::size_t newer = 4;
+    // pattern (AP-2.8b), mirror (AP-2.8c), extrude (AP-2.3b), helperPlane (AP-2.12b), revolve
+    // (AP-2.3c)
+    const std::size_t newer = 5;
     CHECK(count + newer == world.registry.ids().size());
 }
 
@@ -523,6 +525,25 @@ TEST_CASE("write the version 5 fixture files", "[.generate-fixtures]") {
         SaveExtras fixed{{}, "0.1.0", "2026-11-24T12:00:00Z"};
         REQUIRE(save(document, patternTarget, fixed).ok);
     }
+    const fs::path mirrorTarget = fixtureFolder("v5") / "mirror.fission";
+    if (!fs::exists(mirrorTarget)) {
+        Document document(1000);
+        document.title = "Fixture mirror v5";
+        FeatureDraft box = defaultDraft(*world.registry.find("box"));
+        box.params.at("width").expression = "10";
+        box.params.at("depth").expression = "10";
+        box.params.at("height").expression = "10";
+        box.newBodies = 1;
+        const FeatureId first = *document.addFeature(std::move(box));
+        FeatureDraft image = defaultDraft(*world.registry.find("mirror"));
+        image.inputs = {document.findFeature(first)->outputs.front()};
+        image.newBodies = 2;
+        image.texts["mode"] = "copy";
+        image.params.at("planeX").expression = "30";
+        document.addFeature(std::move(image));
+        SaveExtras fixed{{}, "0.1.0", "2026-11-24T12:00:00Z"};
+        REQUIRE(save(document, mirrorTarget, fixed).ok);
+    }
     const fs::path revolveTarget = fixtureFolder("v5") / "revolve.fission";
     if (!fs::exists(revolveTarget)) {
         Document document(1000);
@@ -566,6 +587,24 @@ TEST_CASE("the version 5 fixture files with a pattern and a revolve still open a
             most = std::max(most, world.kernel->measure(body.solid).volume);
         }
         CHECK(most == Approx(3000.0).epsilon(1e-9)); // four places, the third left out
+    }
+    {
+        const OpenResult opened = open(fixtureFolder("v5") / "mirror.fission");
+        REQUIRE(opened.document);
+        CHECK(opened.problems.empty());
+        CHECK(opened.documentProblems.empty());
+        CHECK(opened.info.formatVersion == 5);
+        CHECK(opened.document->features().back().type == "mirror");
+        CHECK(opened.document->features().back().outputs.size() == 2);
+        RecomputeCache cache;
+        const auto result = recompute(*opened.document, world.registry, *world.kernel, cache);
+        REQUIRE(result.has_value());
+        REQUIRE(result->bodies.size() == 3); // the box, the box again and its mirror image
+        for (const auto& [id, body] : result->bodies) {
+            const auto report = world.kernel->measure(body.solid);
+            CHECK(report.valid);
+            CHECK(report.volume == Approx(1000.0).epsilon(1e-9));
+        }
     }
     {
         const OpenResult opened = open(fixtureFolder("v5") / "revolve.fission");

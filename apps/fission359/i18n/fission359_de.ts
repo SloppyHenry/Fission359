@@ -868,6 +868,16 @@
         <translation>Wähle einen Körper, tippe dann Anzahl und Winkel im Bereich rechts.</translation>
     </message>
     <message>
+        <location line="+6"/>
+        <source>Makes a mirror image of the body at a plane, like a hand and its other hand. The copy touches the original; the plane can be moved afterwards.</source>
+        <translation>Macht ein Spiegelbild des Körpers an einer Ebene, wie eine Hand und ihre andere Hand. Die Kopie berührt das Original; die Ebene lässt sich danach verschieben.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose one body, then drag the arrow or type where the mirror plane stands.</source>
+        <translation>Wähle einen Körper, ziehe dann den Pfeil oder tippe, wo die Spiegelebene steht.</translation>
+    </message>
+    <message>
         <location line="+5"/>
         <source>Offset faces</source>
         <translation>Flächen versetzen</translation>
@@ -1068,7 +1078,7 @@
         <translation>Jede Änderung ist hier ein Satz.</translation>
     </message>
     <message>
-        <location line="-146"/>
+        <location line="-153"/>
         <source>Round edges</source>
         <translation>Abrunden</translation>
     </message>
@@ -1078,32 +1088,22 @@
         <translation>Fase</translation>
     </message>
     <message>
-        <location line="+62"/>
+        <location line="+69"/>
         <source>Hollow out</source>
         <translation>Aushöhlen</translation>
     </message>
     <message>
-        <location line="-221"/>
+        <location line="-228"/>
         <source>Sketch</source>
         <translation>Skizze</translation>
     </message>
     <message>
-        <location line="+307"/>
+        <location line="+207"/>
         <source>Mirror</source>
         <translation>Spiegeln</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Makes a mirrored copy of a body.</source>
-        <translation>Macht eine gespiegelte Kopie eines Körpers.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Choose the body and the plane to mirror at.</source>
-        <translation>Wähle den Körper und die Ebene, an der gespiegelt wird.</translation>
-    </message>
-    <message>
-        <location line="+13"/>
+        <location line="+115"/>
         <source>A %1 as the start of a shape. %2</source>
         <translation>Ein %1 als Anfang einer Form. %2</translation>
     </message>
@@ -1138,7 +1138,7 @@
         <translation>Wähle eine ebene Fläche (oder nichts für das Druckbett) und trage dann den Abstand im Feld ein.</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+32"/>
         <source>Drill hole</source>
         <translation>Bohren</translation>
     </message>
@@ -1881,12 +1881,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1185"/>
+        <location line="+1200"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location line="-1184"/>
+        <location line="-1199"/>
         <source>Save as…</source>
         <translation>Speichern unter …</translation>
     </message>
@@ -1916,7 +1916,7 @@
         <translation>Bearbeiten</translation>
     </message>
     <message>
-        <location line="+151"/>
+        <location line="+152"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
@@ -1926,7 +1926,7 @@
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-151"/>
+        <location line="-152"/>
         <source>Ctrl+Shift+Z</source>
         <translation>Strg+Umschalt+Z</translation>
     </message>
@@ -2127,12 +2127,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1855"/>
+        <location line="+1872"/>
         <source>Body</source>
         <translation>Körper</translation>
     </message>
     <message>
-        <location line="-1854"/>
+        <location line="-1871"/>
         <source>As hole</source>
         <translation>Als Loch</translation>
     </message>
@@ -2163,12 +2163,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1827"/>
+        <location line="+1843"/>
         <source>Split</source>
         <translation>Teilen</translation>
     </message>
     <message>
-        <location line="-1825"/>
+        <location line="-1841"/>
         <source>Round edges</source>
         <translation>Kanten abrunden</translation>
     </message>
@@ -2213,18 +2213,24 @@
         <translation>Muster: Kreis</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+1"/>
+        <location line="+1845"/>
+        <source>Mirror</source>
+        <translation>Spiegeln</translation>
+    </message>
+    <message>
+        <location line="-1842"/>
         <source>Hollow out</source>
         <translation>Aushöhlen</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1824"/>
+        <location line="+1839"/>
         <source>Draft</source>
         <translation>Schräge</translation>
     </message>
     <message>
-        <location line="-1822"/>
+        <location line="-1837"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
@@ -2285,18 +2291,18 @@
     </message>
     <message>
         <location line="+46"/>
-        <location line="+1216"/>
+        <location line="+1230"/>
         <source>Undo: %1</source>
         <translation>Rückgängig: %1</translation>
     </message>
     <message>
-        <location line="-1214"/>
-        <location line="+1215"/>
+        <location line="-1228"/>
+        <location line="+1229"/>
         <source>Redo: %1</source>
         <translation>Wiederholen: %1</translation>
     </message>
     <message>
-        <location line="-1209"/>
+        <location line="-1223"/>
         <source>Drag with the middle mouse button to move the view, with Shift + middle button to turn it, scroll to zoom.</source>
         <translation>Mittlere Maustaste ziehen verschiebt die Ansicht, Umschalt + mittlere Taste dreht sie, das Mausrad zoomt.</translation>
     </message>
@@ -2354,7 +2360,7 @@
         <translation>Nichts zu tun: Die Körper stehen schon auf dem Bett.</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+35"/>
         <source>This arrives in a later version.</source>
         <translation>Das kommt in einer späteren Version.</translation>
     </message>
@@ -2437,6 +2443,16 @@
         <location line="+1"/>
         <source>Row of 3 copies. Drag the arrow or type another distance in the panel.</source>
         <translation>Reihe aus 3 Exemplaren. Ziehe den Pfeil oder tippe im Bereich rechts einen anderen Abstand.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>This body cannot be mirrored: it may already be part of another body.</source>
+        <translation>Dieser Körper lässt sich nicht spiegeln: Er ist vielleicht schon Teil eines anderen Körpers.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Mirror image beside the body. Drag the arrow or type where the mirror plane stands.</source>
+        <translation>Spiegelbild neben dem Körper. Ziehe den Pfeil oder tippe, wo die Spiegelebene steht.</translation>
     </message>
     <message>
         <location line="+21"/>
@@ -2578,7 +2594,7 @@
         </translation>
     </message>
     <message>
-        <location line="-1030"/>
+        <location line="-1044"/>
         <source>Arrives in a later version.</source>
         <translation>Kommt in einer späteren Version.</translation>
     </message>
@@ -2613,7 +2629,7 @@
         <translation>Kopiere zuerst etwas.</translation>
     </message>
     <message>
-        <location line="+1247"/>
+        <location line="+1261"/>
         <source>Soft shadows are off because the graphics card could not keep up. You can switch them on again in the View menu.</source>
         <translation>Die weichen Schatten sind aus, weil die Grafikkarte nicht mehr hinterherkam. Im Menü Ansicht kannst du sie wieder einschalten.</translation>
     </message>
@@ -2628,7 +2644,7 @@
         <translation>%1 × %2 mm</translation>
     </message>
     <message>
-        <location line="-1698"/>
+        <location line="-1712"/>
         <source>Click the face the body should lie on. Esc cancels.</source>
         <translation>Klicke auf die Fläche, auf die der Körper soll. Esc bricht ab.</translation>
     </message>
@@ -2688,7 +2704,7 @@
         <translation>Ziehe eine Form aufs Druckbett oder auf eine Fläche, oder klicke sie an; auf dem Bett fängt sie an Ecken und Mitten. Mit gehaltener Umschalt-Taste ist das Fangen aus. Mit „Als Loch“ wird sie zum Loch.</translation>
     </message>
     <message>
-        <location line="+1745"/>
+        <location line="+1760"/>
         <source>Unit: %1</source>
         <translation>Einheit: %1</translation>
     </message>
@@ -2703,7 +2719,7 @@
         <translation>Abschrägung</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+13"/>
         <source>Placing</source>
         <translation>Platzierung</translation>
     </message>
@@ -2743,7 +2759,7 @@
         <translation>Stil</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+10"/>
         <source>Top radius</source>
         <translation>Radius oben</translation>
     </message>
@@ -2783,7 +2799,7 @@
         <translation>Position</translation>
     </message>
     <message numerus="yes">
-        <location line="+79"/>
+        <location line="+80"/>
         <source>Cut out %n body(ies)</source>
         <translation>
             <numerusform>%n Körper ausgeschnitten</numerusform>
@@ -2791,12 +2807,12 @@
         </translation>
     </message>
     <message>
-        <location line="-31"/>
+        <location line="-32"/>
         <source>%1 added</source>
         <translation>%1 hinzugefügt</translation>
     </message>
     <message>
-        <location line="-1289"/>
+        <location line="-1294"/>
         <source>This body cannot be hollowed: it may already be part of another body.</source>
         <translation>Dieser Körper lässt sich nicht aushöhlen: Er gehört vielleicht schon zu einem anderen Körper.</translation>
     </message>
@@ -2811,7 +2827,7 @@
         <translation>Abgerundet. Ziehe am Griff oder tippe einen Radius.</translation>
     </message>
     <message>
-        <location line="+262"/>
+        <location line="+263"/>
         <source>Rounding</source>
         <translation>Rundung</translation>
     </message>
@@ -2856,18 +2872,18 @@
         <translation>Aushöhlen</translation>
     </message>
     <message>
-        <location line="+17"/>
-        <location line="+6"/>
+        <location line="+18"/>
+        <location line="+9"/>
         <source>Distance</source>
         <translation>Abstand</translation>
     </message>
     <message>
-        <location line="-5"/>
+        <location line="-8"/>
         <source>Second distance</source>
         <translation>Zweiter Abstand</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+21"/>
         <source>Wall thickness</source>
         <translation>Wandstärke</translation>
     </message>
@@ -2877,12 +2893,12 @@
         <translation>Winkel</translation>
     </message>
     <message>
-        <location line="-695"/>
+        <location line="-700"/>
         <source>Outline exported.</source>
         <translation>Umriss exportiert.</translation>
     </message>
     <message>
-        <location line="-1121"/>
+        <location line="-1135"/>
         <source>Helper lines are on: what you draw is only an aid.</source>
         <translation>Hilfslinien sind an: Was du zeichnest, ist nur eine Hilfe.</translation>
     </message>
@@ -2902,7 +2918,7 @@
         <translation>Öffne zuerst eine Skizze (Werkzeug „Skizze“).</translation>
     </message>
     <message>
-        <location line="+1676"/>
+        <location line="+1692"/>
         <source>Imported body</source>
         <translation>Importierter Körper</translation>
     </message>
@@ -2912,7 +2928,7 @@
         <translation>Skizze</translation>
     </message>
     <message>
-        <location line="+48"/>
+        <location line="+51"/>
         <source>Point</source>
         <translation>Punkt</translation>
     </message>
@@ -2987,7 +3003,22 @@
         <translation>%1 im Rezept verschoben</translation>
     </message>
     <message>
-        <location line="-63"/>
+        <location line="-66"/>
+        <source>Mirror plane at x</source>
+        <translation>Spiegelebene bei x</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mirror plane at y</source>
+        <translation>Spiegelebene bei y</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mirror plane at z</source>
+        <translation>Spiegelebene bei z</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Number</source>
         <translation>Anzahl</translation>
     </message>
@@ -3095,6 +3126,11 @@
     </message>
     <message>
         <location line="+2"/>
+        <source>Mirrored</source>
+        <translation>Gespiegelt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Circular pattern added</source>
         <translation>Kreismuster angelegt</translation>
     </message>
@@ -3403,37 +3439,37 @@
         <translation>%1 – ein Klick wählt es.</translation>
     </message>
     <message>
-        <location line="-440"/>
+        <location line="-446"/>
         <source>This tool group arrives in a later version.</source>
         <translation>Diese Werkzeuggruppe kommt in einer späteren Version.</translation>
     </message>
     <message>
-        <location line="-1805"/>
+        <location line="-1820"/>
         <source>My printer</source>
         <translation>Mein Drucker</translation>
     </message>
     <message>
-        <location line="+1840"/>
+        <location line="+1855"/>
         <source>%1 mm</source>
         <translation>%1 mm</translation>
     </message>
     <message>
-        <location line="-1624"/>
+        <location line="-1638"/>
         <source>Drag with the right mouse button to turn the view, with the middle button to move it, scroll to zoom.</source>
         <translation>Rechte Maustaste ziehen dreht die Ansicht, mittlere Taste verschiebt sie, das Mausrad zoomt.</translation>
     </message>
     <message>
-        <location line="+962"/>
+        <location line="+976"/>
         <source>%1 · %2 mm</source>
         <translation>%1 · %2 mm</translation>
     </message>
     <message>
-        <location line="-1034"/>
+        <location line="-1048"/>
         <source>Let go to put the shape down here; on a wall it lies on it (%1 keeps it upright). Esc takes it back.</source>
         <translation>Loslassen legt die Form hier ab; an einer Wand liegt sie auf ihr (%1 lässt sie aufrecht). Esc nimmt sie zurück.</translation>
     </message>
     <message>
-        <location line="+1855"/>
+        <location line="+1874"/>
         <source>Slot</source>
         <translation>Langloch</translation>
     </message>
@@ -3443,7 +3479,7 @@
         <translation>Polygon</translation>
     </message>
     <message numerus="yes">
-        <location line="-1831"/>
+        <location line="-1850"/>
         <source>%n closed area(s). One is chosen: Enter or “Pull” makes a body of it, Esc or a click beside lets go.</source>
         <translation>
             <numerusform>%n geschlossener Bereich. Einer ist gewählt: Enter oder „Ziehen“ macht daraus einen Körper, Esc oder ein Klick daneben lässt ihn los.</numerusform>
@@ -3477,7 +3513,7 @@
         <translation>Zahl tippen: %1 setzen</translation>
     </message>
     <message>
-        <location line="+1832"/>
+        <location line="+1851"/>
         <source>length</source>
         <translation>Länge</translation>
     </message>
@@ -3502,18 +3538,18 @@
         <translation>Winkel</translation>
     </message>
     <message>
-        <location line="-70"/>
+        <location line="-74"/>
         <source>Pattern</source>
         <translation>Muster</translation>
     </message>
     <message>
-        <location line="-1831"/>
-        <location line="+1835"/>
+        <location line="-1847"/>
+        <location line="+1852"/>
         <source>Helper plane</source>
         <translation>Hilfsebene</translation>
     </message>
     <message>
-        <location line="-1246"/>
+        <location line="-1261"/>
         <source>A helper plane can only start from a flat face.</source>
         <translation>Eine Hilfsebene geht nur von einer ebenen Fläche aus.</translation>
     </message>
@@ -3528,17 +3564,17 @@
         <translation>Hilfsebene 10 mm über dem Druckbett. Einen anderen Abstand trägst du im Feld ein.</translation>
     </message>
     <message>
-        <location line="+1342"/>
+        <location line="+1360"/>
         <source>Helper plane added</source>
         <translation>Hilfsebene hinzugefügt</translation>
     </message>
     <message>
-        <location line="-1933"/>
+        <location line="-1952"/>
         <source>Drill hole</source>
         <translation>Bohren</translation>
     </message>
     <message>
-        <location line="+662"/>
+        <location line="+676"/>
         <source>A hole can only be drilled into a flat face of a body that is not part of another body yet.</source>
         <translation>Eine Bohrung geht nur in eine ebene Fläche eines Körpers, der noch nicht Teil eines anderen Körpers ist.</translation>
     </message>
@@ -3548,17 +3584,17 @@
         <translation>Bohrung in die Mitte der Fläche gesetzt. Durchmesser, Tiefe und Lage trägst du im Feld ein.</translation>
     </message>
     <message>
-        <location line="+1158"/>
+        <location line="+1159"/>
         <source>Drilling a hole</source>
         <translation>Bohren</translation>
     </message>
     <message>
-        <location line="+110"/>
+        <location line="+115"/>
         <source>Hole drilled</source>
         <translation>Bohrung gesetzt</translation>
     </message>
     <message>
-        <location line="-71"/>
+        <location line="-72"/>
         <source>Diameter</source>
         <translation>Durchmesser</translation>
     </message>
@@ -3573,13 +3609,13 @@
         <translation>Längs</translation>
     </message>
     <message>
-        <location line="-1330"/>
-        <location line="+1228"/>
+        <location line="-1348"/>
+        <location line="+1241"/>
         <source>This pull starts on the ground plane: there is no body to join or cut.</source>
         <translation>Dieses Ziehen beginnt auf der Grundebene: Es gibt keinen Körper zum Vereinen oder Ausschneiden.</translation>
     </message>
     <message>
-        <location line="-1239"/>
+        <location line="-1252"/>
         <source>This area cannot be turned.</source>
         <translation>Dieser Bereich lässt sich nicht drehen.</translation>
     </message>
@@ -3937,18 +3973,18 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+247"/>
+        <location line="+248"/>
         <source>This file has no solid body in it, only surfaces or lines. Fission359 can only use solid bodies.</source>
         <translation>In dieser Datei ist kein fester Körper, nur Flächen oder Linien. Fission359 kann nur feste Körper benutzen.</translation>
     </message>
     <message>
-        <location line="-244"/>
-        <location line="+242"/>
+        <location line="-245"/>
+        <location line="+243"/>
         <source>This file could not be read. Is it a STEP or IGES file that is not damaged?</source>
         <translation>Diese Datei konnte nicht gelesen werden. Ist es eine STEP- oder IGES-Datei, die nicht beschädigt ist?</translation>
     </message>
     <message numerus="yes">
-        <location line="-233"/>
+        <location line="-234"/>
         <source>%n body(ies) had small flaws in the file and was repaired.</source>
         <translation>
             <numerusform>%n Körper hatte kleine Fehler in der Datei und wurde repariert.</numerusform>
@@ -4330,6 +4366,11 @@
         <translation>Der Radius oben darf nicht negativ sein.</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>The mirror plane needs a direction: choose X, Y or Z.</source>
+        <translation>Die Spiegelebene braucht eine Richtung: Wähle X, Y oder Z.</translation>
+    </message>
+    <message>
         <location line="+2"/>
         <source>Type a value that is not zero.</source>
         <translation>Tippe einen Wert, der nicht null ist.</translation>
@@ -4440,8 +4481,8 @@
         <translation>Das ist ein Fehler im Programm, nicht deiner. Wenn du die Details kopierst, kannst du ihn melden.</translation>
     </message>
     <message>
-        <location line="-123"/>
-        <location line="+113"/>
+        <location line="-124"/>
+        <location line="+114"/>
         <source>An earlier step has a problem.</source>
         <translation>Ein früherer Schritt hat ein Problem.</translation>
     </message>
@@ -4461,7 +4502,7 @@
         <translation>Die Berechnung wurde durch eine neuere Änderung ersetzt.</translation>
     </message>
     <message>
-        <location line="-379"/>
+        <location line="-380"/>
         <source>A polygon has a whole number of sides from 3 to 64. The number before stays.</source>
         <translation>Ein Polygon hat eine ganze Zahl von Seiten, von 3 bis 64. Die Zahl davor bleibt.</translation>
     </message>
@@ -4809,6 +4850,26 @@
         </translation>
     </message>
     <message>
+        <location line="+11"/>
+        <source>Mirrored at a slanted plane</source>
+        <translation>An einer schrägen Ebene gespiegelt</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Mirrored at %1 = %2 mm and joined with the original</source>
+        <translation>Gespiegelt bei %1 = %2 mm und mit dem Original vereint</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mirrored at %1 = %2 mm, only the mirror image kept</source>
+        <translation>Gespiegelt bei %1 = %2 mm, nur das Spiegelbild behalten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mirrored at %1 = %2 mm, the original stays</source>
+        <translation>Gespiegelt bei %1 = %2 mm, das Original bleibt</translation>
+    </message>
+    <message>
         <location line="+7"/>
         <source>, without %1</source>
         <translation>, ohne %1</translation>
@@ -4838,7 +4899,7 @@
 <context>
     <name>RightPanel</name>
     <message>
-        <location filename="../qml/RightPanel.qml" line="+201"/>
+        <location filename="../qml/RightPanel.qml" line="+212"/>
         <source>Object</source>
         <translation>Objekt</translation>
     </message>
@@ -4873,7 +4934,7 @@
         <translation>Quer schneiden</translation>
     </message>
     <message>
-        <location line="+570"/>
+        <location line="+589"/>
         <source>Hole</source>
         <translation>Loch</translation>
     </message>
@@ -4903,7 +4964,7 @@
         <translation>Text</translation>
     </message>
     <message numerus="yes">
-        <location line="-407"/>
+        <location line="-426"/>
         <source>%n body(ies) selected</source>
         <translation>
             <numerusform>%n Körper ausgewählt</numerusform>
@@ -4926,7 +4987,7 @@
         <translation>Farbe</translation>
     </message>
     <message>
-        <location line="+389"/>
+        <location line="+408"/>
         <source>Words</source>
         <translation>Worte</translation>
     </message>
@@ -4946,13 +5007,13 @@
         <translation>Kursiv</translation>
     </message>
     <message>
-        <location line="-403"/>
-        <location line="+413"/>
+        <location line="-422"/>
+        <location line="+432"/>
         <source>Size</source>
         <translation>Größe</translation>
     </message>
     <message>
-        <location line="-426"/>
+        <location line="-445"/>
         <source>Facts</source>
         <translation>Eckdaten</translation>
     </message>
@@ -5014,6 +5075,17 @@
     </message>
     <message>
         <location line="+58"/>
+        <source>Mirror</source>
+        <translation>Spiegeln</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+6"/>
+        <source>The plane stands upright to</source>
+        <translation>Die Ebene steht senkrecht zu</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Pattern</source>
         <translation>Muster</translation>
     </message>
@@ -5055,7 +5127,7 @@
         <translation>Schalte ein Exemplar aus, um es wegzulassen. Das erste ist der Körper selbst.</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+26"/>
         <source>Copy %1</source>
         <translation>Exemplar %1</translation>
     </message>

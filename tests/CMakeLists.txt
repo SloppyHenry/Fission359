@@ -259,6 +259,13 @@ if(_fission_run_window_tests)
             --camera=35,35,200 --simulate "selectall;menu:patternLinear;recipe:box,pattern;expectundo:pattern;menu:undo;recipe:box;selectall;menu:patternCircular;recipe:box,pattern;expectundo:pattern")
   set_tests_properties(app_pattern PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.8c: a mirror image of the chosen body from the menu: one step with its bodies, one undo.
+  add_test(NAME app_mirror
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-mirror.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "selectall;menu:mirror;recipe:box,mirror,place,place;expectundo:mirror;menu:undo;recipe:box")
+  set_tests_properties(app_mirror PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # Pflege P10: the keys + and - zoom the 3D view towards its centre by 20 % each (the camera
   # distance gets smaller, then larger again).
   add_test(NAME app_keyboard_zoom

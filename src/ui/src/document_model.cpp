@@ -899,14 +899,15 @@ void DocumentModel::rebuildLists() {
             (type == "combine" || type == "place" || type == "split" || type == "fillet" ||
              type == "chamfer" || type == "pushFace" || type == "stretch" ||
              type == "removeFaces" || type == "offsetFaces" || type == "tiltFace" ||
-             type == "hole" || type == "shell" || type == "draft") &&
+             type == "hole" || type == "shell" || type == "draft" || type == "pattern" ||
+             type == "mirror") &&
             !maker->inputs.empty() && origin.contains(maker->inputs.front().value);
         if (continues) {
             const Origin& started = origin.at(maker->inputs.front().value);
             type = started.type;
             number = started.number;
             partNumber = started.part;
-            if (maker->type == "split") {
+            if (maker->type == "split" || (maker->type == "mirror" && maker->outputs.size() == 2)) {
                 const auto at = std::find(maker->outputs.begin(), maker->outputs.end(), body.id);
                 partNumber = static_cast<int>(at - maker->outputs.begin()) + 1;
             }
@@ -991,6 +992,32 @@ static QString patternGroup(const core::Feature& step, const std::string& name) 
     return QStringLiteral("hidden");
 }
 
+// Where a value of a mirror step is shown: only the place of the plane along its axis, as a size;
+// the rest (the other two places, the direction) is set by the buttons and hidden.
+static QString mirrorGroup(const core::Feature& step, const core::FeatureState* state,
+                           const std::string& name) {
+    const auto number = [&](const char* key) {
+        if (state != nullptr) {
+            const auto found = state->params.find(key);
+            if (found != state->params.end()) {
+                return found->second.value;
+            }
+        }
+        const auto given = step.params.find(key);
+        return given == step.params.end()
+                   ? 0.0
+                   : core::evaluateExpression(given->second.expression, core::QuantityKind::plain)
+                         .value_or(0.0);
+    };
+    const double n[3] = {number("normalX"), number("normalY"), number("normalZ")};
+    int axis = 0;
+    for (int i = 1; i < 3; ++i) {
+        axis = std::abs(n[i]) > std::abs(n[axis]) ? i : axis;
+    }
+    static const char* planes[3] = {"planeX", "planeY", "planeZ"};
+    return name == planes[axis] ? QStringLiteral("size") : QStringLiteral("hidden");
+}
+
 QVariantList DocumentModel::buildStepValues() const {
     QVariantList values;
     const auto& features = m_history.document().features();
@@ -1020,6 +1047,7 @@ QVariantList DocumentModel::buildStepValues() const {
             : spec.name == "position"                                  ? QStringLiteral("cut")
             : spec.name.rfind("anchor", 0) == 0                        ? QStringLiteral("hidden")
             : feature.type == "pattern"               ? patternGroup(feature, spec.name)
+            : feature.type == "mirror"                ? mirrorGroup(feature, state, spec.name)
             : (noDistance && spec.name == "distance") ? QStringLiteral("hidden")
                                                       : QStringLiteral("size");
         // The coloured letter in front of a place or a turn: x, y, z (empty for sizes).
@@ -5037,6 +5065,116 @@ QString DocumentModel::addPattern(const QString& bodyId, const QString& mode) {
     emit historyChanged();
     selectStep(stepIndexOf(*id));
     return toQString(result.value);
+}
+
+QString DocumentModel::addMirror(const QString& bodyId, const QString& mode) {
+    const core::FeatureType* type = m_registry.find("mirror");
+    const core::Body* target = findBody(bodyId);
+    if (type == nullptr || target == nullptr || !m_result ||
+        (mode != QLatin1String("copy") && mode != QLatin1String("merge") &&
+         mode != QLatin1String("only")) ||
+        m_history.document().consumerOf(target->id)) {
+        return {};
+    }
+    const auto made = m_result->bodies.find(target->id);
+    if (made == m_result->bodies.end()) {
+        return {};
+    }
+    geo::Bounds box;
+    try {
+        box = m_kernel->exactBounds(made->second.solid);
+    } catch (const geo::GeometryError&) {
+        return {};
+    }
+    core::FeatureDraft draft = core::defaultDraft(*type);
+    draft.params.at("planeX").expression = digits(box.max.x);
+    draft.params.at("planeY").expression = digits((box.min.y + box.max.y) / 2.0);
+    draft.params.at("planeZ").expression = digits((box.min.z + box.max.z) / 2.0);
+    draft.texts["mode"] = mode.toStdString();
+    draft.inputs = {target->id};
+    draft.newBodies = mode == QLatin1String("copy") ? 2 : 1;
+    const core::Body before = *target;
+
+    m_history.beginTransaction({"mirror", {{"mode", mode.toStdString()}}});
+    const auto id = m_history.addFeature(std::move(draft));
+    const core::Feature* feature = id ? m_history.document().findFeature(*id) : nullptr;
+    if (feature == nullptr || feature->outputs.empty()) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    const std::vector<core::BodyId> outputs = feature->outputs;
+    for (const core::BodyId& output : outputs) {
+        if (!before.name.empty()) {
+            m_history.execute(core::makeSetBodyName(output, before.name));
+        }
+        m_history.execute(core::makeSetBodyColor(output, before.color));
+    }
+    // Two bodies from one step cannot be moved through it: each gets a step of its own that puts
+    // it where it is wanted, as after a split (ADR-0010 point 3).
+    if (outputs.size() == 2) {
+        for (const core::BodyId& output : outputs) {
+            core::FeatureDraft place = core::defaultDraft(*m_registry.find("place"));
+            place.inputs = {output};
+            if (!m_history.addFeature(std::move(place))) {
+                m_history.cancelTransaction();
+                return {};
+            }
+        }
+    }
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    selectStep(stepIndexOf(*id));
+    return toQString(outputs.front().value);
+}
+
+bool DocumentModel::setMirrorAxis(int index, int axis) {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) || axis < 0 || axis > 2 ||
+        !m_result) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "mirror" || step.inputs.empty()) {
+        return false;
+    }
+    const auto input = m_result->bodies.find(step.inputs.front());
+    if (input == m_result->bodies.end()) {
+        return false;
+    }
+    geo::Bounds box;
+    try {
+        box = m_kernel->exactBounds(input->second.solid);
+    } catch (const geo::GeometryError&) {
+        return false;
+    }
+    const double high[3] = {box.max.x, box.max.y, box.max.z};
+    const double low[3] = {box.min.x, box.min.y, box.min.z};
+    const core::FeatureId id = step.id;
+    static const char* planes[3] = {"planeX", "planeY", "planeZ"};
+    static const char* normals[3] = {"normalX", "normalY", "normalZ"};
+    const std::uint64_t before = m_history.document().revision();
+    const bool own = !m_history.inTransaction();
+    if (own) {
+        m_history.beginTransaction({"setValue", {{"field", planes[axis]}}});
+    }
+    bool ok = true;
+    for (int i = 0; i < 3 && ok; ++i) {
+        ok = m_history.execute(core::makeSetFeatureValue(id, normals[i], i == axis ? "1" : "0")) &&
+             m_history.execute(core::makeSetFeatureValue(
+                 id, planes[i], digits(i == axis ? high[i] : (low[i] + high[i]) / 2.0)));
+    }
+    if (own) {
+        if (ok) {
+            m_history.commitTransaction();
+        } else {
+            m_history.cancelTransaction();
+        }
+    }
+    if (ok && m_history.document().revision() != before) {
+        documentChanged();
+    }
+    return ok;
 }
 
 bool DocumentModel::setPatternDirection(int index, bool circular, int axis, int sign) {

@@ -401,6 +401,7 @@ QtObject {
             case "tubeRadius": return qsTr("The tube must be thinner than the ring radius.")
             case "innerRadius": return qsTr("The notches must lie closer to the middle than the tips.")
             case "topRadius": return qsTr("The top radius cannot be negative.")
+            case "normalX": return qsTr("The mirror plane needs a direction: choose X, Y or Z.")
             case "distance":
             case "angle": return qsTr("Type a value that is not zero.")
             default: return qsTr("%1 must be bigger than zero.").arg(valueLabel(problem.field))

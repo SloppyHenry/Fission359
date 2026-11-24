@@ -617,6 +617,15 @@ public:
     /// Sets the way of the row (`circular` false: dirX/Y/Z) or the axis of the circle (dirs
     /// axisDx/Dy/Dz) to the axis 0 = x, 1 = y, 2 = z, `sign` +1 or -1: one step of the history.
     Q_INVOKABLE bool setPatternDirection(int index, bool circular, int axis, int sign);
+    /// Mirrors the body at a plane (AP-2.8c), one step of the history: the plane stands upright
+    /// to x on the right side of the body, so that body and mirror image just touch. `mode` is
+    /// "copy" (the original stays, the mirror image is a second body), "merge" (one body of both)
+    /// or "only" (the mirror image alone). Returns the id of the first body of the step, empty
+    /// when nothing can be done. The result kind cannot change later: the step has its bodies.
+    Q_INVOKABLE QString addMirror(const QString& bodyId, const QString& mode);
+    /// Puts the plane of a mirror step upright to the axis 0 = x, 1 = y, 2 = z, on the far side of
+    /// the body along it: one step of the history.
+    Q_INVOKABLE bool setMirrorAxis(int index, int axis);
     /// The four corners (mm) of every helper plane that is calculated and shown, for the view.
     std::vector<std::array<geo::Point3d, 4>> helperPlaneCorners() const;
     /// Drills an M3 hole (3.4 mm, 10 mm deep) into the middle of a flat face: a new step.

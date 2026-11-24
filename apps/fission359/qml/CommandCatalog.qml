@@ -265,6 +265,13 @@ QtObject {
           synonyms: { de: ["muster kreis", "kreis", "kreismuster", "kreisförmig", "rund anordnen", "im kreis wiederholen", "polar", "lochkreis"],
                       en: ["circular pattern", "polar pattern", "pattern", "around a circle", "radial", "copies in a circle", "bolt circle"] },
           run: { kind: "menu", id: "patternCircular" } },
+        { id: "menu.mirror", group: "body", name: qsTr("Mirror"),
+          tip: qsTr("Makes a mirror image of the body at a plane, like a hand and its other hand. The copy touches the original; the plane can be moved afterwards."),
+          hint: qsTr("Choose one body, then drag the arrow or type where the mirror plane stands."),
+          needs: "one",
+          synonyms: { de: ["spiegeln", "spiegel", "gespiegelt", "symmetrisch", "seitenverkehrt", "gegenstück", "linke rechte seite"],
+                      en: ["mirror", "flip copy", "symmetric", "reflect", "mirrored copy", "other hand", "left right"] },
+          run: { kind: "menu", id: "mirror" } },
         { id: "menu.offsetFaces", group: "body", name: qsTr("Offset faces"),
           tip: qsTr("Moves faces in or out by the same distance. With a body chosen all faces move: a fit for parts that must slide together."),
           hint: qsTr("Choose faces or one body, then type the distance in the panel."),
@@ -363,15 +370,8 @@ QtObject {
     ]
 
     // What the program will be able to do later. They are listed so that the search finds them
-    // and says so honestly (rule: no dead ends without a word).
-    readonly property var soonCommands: [
-        { id: "soon.mirror", group: "soon", name: qsTr("Mirror"),
-          tip: qsTr("Makes a mirrored copy of a body."),
-          hint: qsTr("Choose the body and the plane to mirror at."),
-          synonyms: { de: ["spiegeln", "spiegel", "gespiegelt", "symmetrisch", "seitenverkehrt"],
-                      en: ["mirror", "flip copy", "symmetric", "reflect", "mirrored copy"] },
-          run: { kind: "soon" } }
-    ]
+    // and says so honestly (rule: no dead ends without a word). None at the moment.
+    readonly property var soonCommands: []
 
     // The tools and shapes of the palette in the same form.
     readonly property var toolCommands: tools === null ? [] : tools.tools.map(tool => ({
