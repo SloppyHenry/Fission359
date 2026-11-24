@@ -17,6 +17,8 @@ Rectangle {
     property var recipe: []            // [{ text, state }]  state: ok | warning | fails | off | pending
     property int currentStep: -1       // the step whose values are shown (highlighted)
     signal stepRequested(int index)
+    // The step whose problem is explained (-1: none).
+    property int explainedStep: -1
     /// "Change value" under the problem of a step: `field` is the value the problem is about.
     signal valueEditRequested(int index, string field)
     // The recipe as the person edits it (AP-1.9).
@@ -605,6 +607,8 @@ Rectangle {
                             opensSketch: stepItem.modelData.type === "sketch"
                             active: stepItem.modelData.active === true
                             onOpenRequested: root.stepOpenRequested(stepItem.index)
+                            explained: root.explainedStep === stepItem.index
+                            onExplainRequested: on => root.explainedStep = on ? stepItem.index : -1
                             problemTitle: stepItem.modelData.problemTitle
                             problem: stepItem.modelData.problem
                             problemActions: stepItem.modelData.problemActions
