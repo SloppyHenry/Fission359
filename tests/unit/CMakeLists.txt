@@ -60,6 +60,7 @@ add_executable(fission_unit_tests
   geometry/test_text.cpp
   geometry/test_exchange.cpp
   geometry/test_measuring.cpp
+  geometry/test_section.cpp
   geometry/test_sketch_curve.cpp
   geometry/test_sketch_intersections.cpp
   geometry/test_sketch_regions.cpp

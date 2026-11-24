@@ -18,6 +18,7 @@
 #include "fission/geo/pattern.h"
 #include "fission/geo/primitives.h"
 #include "fission/geo/rotation.h"
+#include "fission/geo/section.h"
 #include "fission/geo/signature.h"
 #include "fission/geo/sketch_curve.h"
 #include "fission/geo/sketch_edge.h"
@@ -503,6 +504,21 @@ public:
     virtual Measurement measureElements(const std::vector<ElementRef>& elements) const {
         (void)elements;
         throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot measure");
+    }
+
+    /// The cut face of a body along a plane through `planePoint` with the normal `planeNormal`
+    /// (AP-2.11a): the exact section, triangulated within `deflection` mm, holes stay holes. The
+    /// triangles face the way the normal points. Empty where the plane misses the body or only
+    /// touches an outer face. Throws `GeometryError` with `invalidInput` for a zero or not finite
+    /// normal or point, or a tolerance that is not positive. The body is never changed. The
+    /// default refuses.
+    virtual SectionMesh sectionMesh(const Solid& solid, Point3d planePoint, Point3d planeNormal,
+                                    double deflection) const {
+        (void)solid;
+        (void)planePoint;
+        (void)planeNormal;
+        (void)deflection;
+        throw GeometryError(GeometryErrorCode::kernelFailure, "this kernel cannot cut sections");
     }
 
     virtual SolidReport measure(const Solid& solid) const = 0;
