@@ -48,11 +48,20 @@ struct NoCatching {
 };
 
 struct Drawing {
-    Drawing() {
+    // `unitMillimetres`: what a bare number means in the document (1 for mm, 25.4 for inches).
+    explicit Drawing(double unitMillimetres = 1.0) {
         application();
         kernel = fission::geo::occt::makeKernel();
         model = std::make_unique<DocumentModel>(kernel, nullptr,
                                                 fission::geo::sketch::makePlaneGcsSolver());
+        if (unitMillimetres != 1.0) {
+            core::Document document;
+            core::DocumentSettings settings = document.settings();
+            settings.defaultUnitMillimetres = unitMillimetres;
+            document.setSettings(settings);
+            model->replaceDocument(std::move(document));
+            model->waitForCalculation();
+        }
         selection = std::make_unique<SelectionController>(model.get());
         sketch = std::make_unique<SketchController>(model.get(), selection.get());
         QObject::connect(sketch.get(), &SketchController::notice, &holder,
@@ -569,4 +578,62 @@ TEST_CASE("doubled: a second horizontal rule is listed as doubled",
             CHECK_FALSE(mark.toMap().value(QStringLiteral("conflict")).toBool());
         }
     }
+}
+
+TEST_CASE("sketch measures: in an inch document a bare number is inches and the label too",
+          "[ui][sketchmeasures][units]") {
+    NoCatching free;
+    Drawing f(25.4);
+    REQUIRE(f.model->unit() == QStringLiteral("in"));
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0);
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->chooseTool(QString());
+    f.click(5, 0);
+    REQUIRE(f.sketch->measureKindForSelection() == QStringLiteral("length"));
+
+    // "2" is two inches: the line is 50.8 mm long, the label says 2.
+    CHECK(f.sketch->setMeasureForSelection(QStringLiteral("2")));
+    f.settle();
+    const auto labelText = [&] {
+        return f.sketch->measureLabels().first().toMap().value(QStringLiteral("text")).toString();
+    };
+    CHECK(labelText() == QStringLiteral("2"));
+    const auto lengthOfLine = [&] {
+        const core::SketchElement line = f.elements()[0];
+        return std::hypot(line.points[1].u - line.points[0].u, line.points[1].v - line.points[0].v);
+    };
+    CHECK(lengthOfLine() == Approx(50.8).epsilon(1e-6));
+
+    // The label follows a change; an explicit unit still counts as typed.
+    CHECK(f.sketch->changeMeasure(QStringLiteral("R2"), QStringLiteral("1.5")));
+    f.settle();
+    CHECK(labelText() == QStringLiteral("1.5"));
+    CHECK(lengthOfLine() == Approx(38.1).epsilon(1e-6));
+    CHECK(f.sketch->changeMeasure(QStringLiteral("R2"), QStringLiteral("25.4 mm")));
+    f.settle();
+    CHECK(labelText() == QStringLiteral("1"));
+    CHECK(lengthOfLine() == Approx(25.4).epsilon(1e-6));
+
+    // An angle stays in degrees whatever the unit of the document is.
+    f.sketch->escape();
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 20);
+    f.click(10, 25); // L2, not parallel to L1
+    f.sketch->chooseTool(QString());
+    f.sketch->clickAt(Drawing::down(5, 0), 2.0, false, true);
+    f.sketch->clickAt(Drawing::down(5, 22.5), 2.0, false, true);
+    REQUIRE(f.sketch->measureKindForSelection() == QStringLiteral("angle"));
+    CHECK(f.sketch->setMeasureForSelection(QStringLiteral("30")));
+    f.settle();
+    bool found = false;
+    for (const QVariant& entry : f.sketch->measureLabels()) {
+        const QVariantMap label = entry.toMap();
+        if (label.value(QStringLiteral("kind")).toString() == QStringLiteral("angle")) {
+            found = true;
+            CHECK(label.value(QStringLiteral("text")).toString() == QString::fromUtf8("30\u00B0"));
+        }
+    }
+    CHECK(found);
 }

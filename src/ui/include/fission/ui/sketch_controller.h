@@ -339,6 +339,8 @@ signals:
     void solveStateChanged();
 
 private:
+    /// What a bare number means in this document: 1 for millimetres, 25.4 for inches.
+    double documentUnitMillimetres() const;
     enum class Mode { idle, picking, sketching };
 
     void beginOn(const QString& stepId);

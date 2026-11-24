@@ -4437,9 +4437,9 @@ core::NamedMeasures DocumentModel::namedMeasureValues() const {
 
 std::optional<double> DocumentModel::evaluateSketchValue(const QString& expression,
                                                          bool angle) const {
-    return core::evaluateExpression(expression.toStdString(),
-                                    angle ? core::QuantityKind::angle : core::QuantityKind::length,
-                                    namedMeasureValues());
+    return core::evaluateExpression(
+        expression.toStdString(), angle ? core::QuantityKind::angle : core::QuantityKind::length,
+        namedMeasureValues(), m_history.document().settings().defaultUnitMillimetres);
 }
 
 bool DocumentModel::addSketchRule(const QString& step, const QString& kind,

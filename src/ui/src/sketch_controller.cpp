@@ -1033,8 +1033,8 @@ bool contains(const std::vector<std::string>& ids, const std::string& id) {
 }
 
 // A number with up to two decimals, the trailing zeros removed ("30", "12.5").
-QString trimmedNumber(double value) {
-    QString text = QString::number(value, 'f', 2);
+QString trimmedNumber(double value, int decimals = 2) {
+    QString text = QString::number(value, 'f', decimals);
     while (text.endsWith(QLatin1Char('0'))) {
         text.chop(1);
     }
@@ -1044,9 +1044,12 @@ QString trimmedNumber(double value) {
     return text;
 }
 
-// The label of a measure: its value as text, with the sign of its kind.
-QString measureText(const core::SketchMeasure& measure) {
-    const QString number = trimmedNumber(measure.lastValue);
+// The label of a measure: its value as text, with the sign of its kind. Lengths are shown in the
+// unit of the document (`unitMillimetres`: 1 for mm, 25.4 for inches), angles stay in degrees.
+QString measureText(const core::SketchMeasure& measure, double unitMillimetres) {
+    const bool angle = measure.kind == "angle";
+    const double shown = angle ? measure.lastValue : measure.lastValue / unitMillimetres;
+    const QString number = trimmedNumber(shown, unitMillimetres == 1.0 ? 2 : 3);
     if (measure.kind == "diameter") {
         return QString::fromUtf8("Ø ") + number;
     }
@@ -1060,6 +1063,10 @@ QString measureText(const core::SketchMeasure& measure) {
 }
 
 } // namespace
+
+double SketchController::documentUnitMillimetres() const {
+    return m_model != nullptr && m_model->unit() == QStringLiteral("in") ? 25.4 : 1.0;
+}
 
 bool SketchController::elementSelected(const std::string& id) const noexcept {
     return std::ranges::find(m_selectedElements, id) != m_selectedElements.end();
@@ -1258,7 +1265,7 @@ QVariantList SketchController::measureLabels() const {
         label[QStringLiteral("id")] = QString::fromStdString(measure.id);
         label[QStringLiteral("kind")] = QString::fromStdString(measure.kind);
         label[QStringLiteral("expression")] = QString::fromStdString(measure.value.expression);
-        label[QStringLiteral("text")] = measureText(measure);
+        label[QStringLiteral("text")] = measureText(measure, documentUnitMillimetres());
         label[QStringLiteral("x")] = world.x();
         label[QStringLiteral("y")] = world.y();
         label[QStringLiteral("z")] = world.z();
@@ -1385,7 +1392,8 @@ QVariantList SketchController::constraintEntries(const std::vector<std::string>&
             entry[QStringLiteral("id")] = QString::fromStdString(measure->id);
             entry[QStringLiteral("kind")] = QString::fromStdString(measure->kind);
             entry[QStringLiteral("measure")] = true;
-            entry[QStringLiteral("text")] = measureText(*measure); // like the measure labels
+            entry[QStringLiteral("text")] =
+                measureText(*measure, documentUnitMillimetres()); // like the measure labels
             entries << entry;
         }
     }
