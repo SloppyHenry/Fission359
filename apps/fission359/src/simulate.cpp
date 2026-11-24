@@ -1034,7 +1034,8 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                             QCoreApplication::processEvents();
                         }
                         std::function<QQuickItem*(QQuickItem*)> find = [&](QQuickItem* item) {
-                            if (item->objectName() == name && item->isVisible()) {
+                            if (item->objectName() == name && item->isVisible() &&
+                                item->isEnabled()) {
                                 return item;
                             }
                             for (QQuickItem* child : item->childItems()) {
