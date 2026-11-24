@@ -125,3 +125,6 @@ Alle entschieden (Festlegungen 1–8). Neue Fragen: anhalten und berichten.
 ## Nicht tun
 - Keine zweite Oberfläche, keine Server-Berechnung, kein Konto, keine Analyse-/Tracking-Skripte auf der Seite.
 - Keine Funktion im Browser halb anbieten (Festlegung 5). Desktop-Verhalten nicht verschlechtern.
+
+## Nachtrag: Ausnahme-Format
+Compiler-Flags für WebAssembly (Triplet und Projekt-CMake gleich): `-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1 -fno-jump-tables`, Linker ohne `-fno-jump-tables`. Begründung: ADR-0014, Nachtrag.

@@ -58,3 +58,7 @@ Wir wählen **Option 1**, weil sie als einzige ohne zweite Oberfläche und ohne 
 
 **Nachtrag (2026-11-11):** Abweichung von „gleiche Qt-Version wie auf dem Desktop“: Der Browser nutzt Qt 6.12 mit Emscripten 5.0.5,
 weil das zu Qt 6.11 gehörende Emscripten 4.0.7 mit WebAssembly-Ausnahmen fehlerhaften Code erzeugt (AP-6.7 Festlegung 10).
+
+## Nachtrag: Ausnahme-Format und Sprungtabellen (AP-6.7)
+- `-fwasm-exceptions` allein ergibt in Emscripten 5 das neue exnref-Format; V8 lehnte die damit erzeugten `br_table`-Sprünge ab („label arity inconsistent“). Das Triplet und das Projekt setzen deshalb ausdrücklich `-sWASM_LEGACY_EXCEPTIONS=1` (Compiler und Linker, alle Teile gleich) und `-fno-jump-tables`, damit Clang gar keine `br_table` erzeugt.
+- Der Cache-Schlüssel enthält den Hash von `cmake/vcpkg-triplets/**`; die geänderte Datei erzwingt den Neubau aller Bibliotheken. Der Link läuft mit `-O0` (keine Binaryen-Durchgänge, die neue Sprungtabellen erzeugen könnten).

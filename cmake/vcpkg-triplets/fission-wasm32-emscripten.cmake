@@ -33,12 +33,14 @@ set(VCPKG_CMAKE_SYSTEM_NAME Emscripten)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${VCPKG_ROOT_DIR}/scripts/toolchains/emscripten.cmake")
 # Native WebAssembly exceptions: without them Emscripten cannot catch C++ exceptions, and every
 # error the program reports by throwing (OpenCASCADE failures, broken files) ends the program.
-# The legacy exception format: the exnref format made Emscripten 5.0.5 write br_table jumps that
-# the engine refuses ("label arity inconsistent"). All libraries and the program must use the
-# same setting.
-set(VCPKG_C_FLAGS "-pthread -fwasm-exceptions")
-set(VCPKG_CXX_FLAGS "-pthread -fwasm-exceptions")
-set(VCPKG_LINKER_FLAGS "-pthread -fwasm-exceptions")
+# The legacy exception format, chosen explicitly: "-fwasm-exceptions" alone gives the exnref format
+# in Emscripten 5, which made br_table jumps that V8 refuses ("label arity inconsistent").
+# -fno-jump-tables keeps Clang from making br_table at all. All libraries and the program must
+# use the same flags (the same list is in the top CMakeLists.txt). Changing this file changes the
+# vcpkg and CI cache keys.
+set(VCPKG_C_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1 -fno-jump-tables")
+set(VCPKG_CXX_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1 -fno-jump-tables")
+set(VCPKG_LINKER_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1")
 # -O2 instead of the default -O3 for every library (set last, so that nothing after it can
 # override it; the flags a port adds itself come before the flags of the build type).
 set(VCPKG_CMAKE_CONFIGURE_OPTIONS "-DCMAKE_C_FLAGS_RELEASE=-O2 -DNDEBUG" "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -DNDEBUG")

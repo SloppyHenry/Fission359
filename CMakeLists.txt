@@ -25,12 +25,12 @@ option(FISSION_COVERAGE "Instrument the code for test coverage (scripts/coverage
 include(FissionCompilerOptions)
 include(FissionLayers)
 
-# WebAssembly (Emscripten) needs pthreads, and native exceptions (current exnref format) so that
-# errors can be caught
-# (the same flags as cmake/vcpkg-triplets/fission-wasm32-emscripten.cmake).
+# WebAssembly (Emscripten) needs pthreads, and native exceptions in the legacy format (explicit,
+# the default of Emscripten 5 is exnref) so that errors can be caught; no jump tables, so that no
+# br_table is made (the same flags as cmake/vcpkg-triplets/fission-wasm32-emscripten.cmake).
 if(EMSCRIPTEN)
-  add_compile_options(-pthread -fwasm-exceptions)
-  add_link_options(-pthread -fwasm-exceptions)
+  add_compile_options(-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1 -fno-jump-tables)
+  add_link_options(-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1)
   # The code is optimised by the compiler (-O3); the link step runs no Binaryen passes (-O0 comes
   # after the -O3 of the build type, the last one counts). Binaryen 123 cannot read what LLVM
   # makes of the constructors of the large programs with WebAssembly exceptions ("popping from
