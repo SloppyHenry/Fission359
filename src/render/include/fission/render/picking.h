@@ -29,9 +29,10 @@ struct SurfaceHit {
 
 /// The nearest surface along `ray`: a body face, or else the top of the print bed. The body whose
 /// `RenderBody::id` is `ignoreBody` is looked through (the shape being put down must not land on
-/// itself).
+/// itself). What the section plane `clip` cuts away is looked through too.
 std::optional<SurfaceHit> pickSurface(const RenderScene& scene, const Ray& ray,
-                                      const std::string& ignoreBody = {});
+                                      const std::string& ignoreBody = {},
+                                      const std::optional<ClipPlane>& clip = std::nullopt);
 
 /// Centre and radius of the sphere around one face of a body, and the way it faces (the mean of
 /// its triangles' normals, pointing out of the body; for a curved face that is only a direction

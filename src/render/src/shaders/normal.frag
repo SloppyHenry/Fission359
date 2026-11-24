@@ -27,9 +27,13 @@ layout(std140, binding = 0) uniform Params {
     vec4 bedSize;
     vec4 bodyOverride; // rgb, a = 1: draw every body in this colour
     vec4 view;       // x, y: size of the image in pixels, z: 1 if ambient occlusion is on
+    vec4 clip;       // xyz: normal of the cut plane, w: offset; what lies beyond (dot(n, p) > w) is cut away. All 0: off
 } u;
 
 void main() {
+    if (dot(u.clip.xyz, vWorld) > u.clip.w) {
+        discard;
+    }
     vec3 n = normalize(vNormal);
     if (dot(n, u.eye.xyz - vWorld) < 0.0) {
         n = -n;

@@ -75,3 +75,27 @@ TEST_CASE("the shape of a face is its centre and the radius around it", "[pickin
     CHECK(shape->radius == Approx(std::sqrt(50.0F)));
     CHECK_FALSE(faceShape(body.geometry(), 99).has_value());
 }
+
+TEST_CASE("a section plane tells which side is cut away", "[picking][section]") {
+    const ClipPlane plane{QVector3D(0, 0, 5), QVector3D(0, 0, 1)};
+    CHECK(plane.cuts(QVector3D(1, 2, 6)));
+    CHECK_FALSE(plane.cuts(QVector3D(1, 2, 4)));
+    CHECK_FALSE(plane.cuts(QVector3D(1, 2, 5))); // exactly on the plane stays
+}
+
+TEST_CASE("what the section plane cuts away cannot be picked", "[picking][section]") {
+    RenderScene scene;
+    scene.bodies.push_back(square(10.0F));
+    const ClipPlane cutAbove{QVector3D(0, 0, 5), QVector3D(0, 0, 1)};
+    // The face at z = 10 is cut away: the ray goes on to the print bed.
+    const auto hit = pickSurface(scene, down(0.0F, 0.0F), {}, cutAbove);
+    REQUIRE(hit.has_value());
+    CHECK(hit->bodyIndex == -1);
+    // The other side of the plane is kept: the face is still there.
+    const ClipPlane cutBelow{QVector3D(0, 0, 5), QVector3D(0, 0, -1)};
+    const auto kept = pickSurface(scene, down(0.0F, 0.0F), {}, cutBelow);
+    REQUIRE(kept.has_value());
+    CHECK(kept->bodyIndex == 0);
+    // Off: as before.
+    CHECK(pickSurface(scene, down(0.0F, 0.0F), {}, std::nullopt)->bodyIndex == 0);
+}

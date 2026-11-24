@@ -87,6 +87,10 @@ public:
     void setScene(std::shared_ptr<const render::RenderScene> scene);
 
     bool bedVisible() const { return m_bedVisible; }
+    /// Cuts bodies away for display only (section view, AP-2.11b): what the plane's normal points
+    /// to is not drawn and cannot be picked. Nothing is stored; nullopt turns the cut off.
+    void setClipPlane(const std::optional<render::ClipPlane>& plane);
+    const std::optional<render::ClipPlane>& clipPlane() const { return m_clip; }
     bool snapGridShown() const { return m_snapGridShown; }
     void setSnapGridShown(bool shown);
     /// The step (mm) of the grid a drag in progress snaps to; 0 when none. Shown on the bed when
@@ -299,6 +303,7 @@ public:
         float snapGridStep = 0.0F; ///< 0: not shown
         render::DisplayMode displayMode = render::DisplayMode::colors;
         bool ambientOcclusion = true;
+        std::optional<render::ClipPlane> clip;
         quint64 sceneVersion = 0;
         quint64 paletteVersion = 0;
         std::vector<render::Highlight> highlights;
@@ -435,6 +440,7 @@ private:
     render::CameraPose m_defaultPose;
     QPointF m_lastMouse;
     bool m_bedVisible = true;
+    std::optional<render::ClipPlane> m_clip;
     bool m_snapGridShown = true;
     double m_snapGridStep = 0.0;
     double m_fixedSnapStep = 0.0;

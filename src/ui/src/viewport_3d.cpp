@@ -84,6 +84,7 @@ public:
         frame.handles = m_snapshot.handles;
         frame.accent = m_snapshot.accent;
         const auto started = std::chrono::steady_clock::now();
+        m_renderer->setClipPlane(m_snapshot.clip);
         m_renderer->draw(cb, renderTarget(), frame);
         const double cpuMilliseconds =
             std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
@@ -343,6 +344,13 @@ double Viewport3D::bedSizeX() const {
 
 double Viewport3D::bedSizeY() const {
     return m_scene ? static_cast<double>(m_scene->bed.sizeY) : 0.0;
+}
+
+void Viewport3D::setClipPlane(const std::optional<render::ClipPlane>& plane) {
+    if (m_clip != plane) {
+        m_clip = plane;
+        update();
+    }
 }
 
 void Viewport3D::setBedVisible(bool visible) {
@@ -933,7 +941,7 @@ std::optional<render::SurfaceHit> Viewport3D::surfaceAt(double x, double y) cons
     if (!ray) {
         return std::nullopt;
     }
-    return render::pickSurface(*m_shown, *ray);
+    return render::pickSurface(*m_shown, *ray, {}, m_clip);
 }
 
 std::optional<Viewport3D::BodyPoint> Viewport3D::bodyPointAt(double x, double y) const {
@@ -963,7 +971,7 @@ std::optional<Viewport3D::Landing> Viewport3D::landingAt(double x, double y,
     }
     if (m_shown) {
         const std::optional<render::SurfaceHit> hit =
-            render::pickSurface(*m_shown, *ray, ignoreBody.toStdString());
+            render::pickSurface(*m_shown, *ray, ignoreBody.toStdString(), m_clip);
         if (hit && hit->bodyIndex < 0) {
             return Landing{hit->point.x(), hit->point.y(), 0.0, {}};
         }
@@ -1096,6 +1104,7 @@ Viewport3D::Snapshot Viewport3D::takeSnapshot(float aspect, bool pickIdle) {
     snapshot.bedVisible = m_bedVisible;
     snapshot.snapGridStep = m_snapGridShown ? static_cast<float>(m_snapGridStep) : 0.0F;
     snapshot.ambientOcclusion = m_ambientOcclusion;
+    snapshot.clip = m_clip;
     snapshot.sceneVersion = m_sceneVersion;
     snapshot.paletteVersion = m_paletteVersion;
     snapshot.highlights = m_selectionHighlights;
