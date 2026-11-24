@@ -961,6 +961,16 @@ void DocumentModel::rebuildLists() {
     emit stepValuesChanged();
 }
 
+namespace {
+// An extrude step whose reach is "through everything" or "up to a face": its typed distance
+// does not act (the way is worked out), so neither the arrow nor the field is offered.
+bool pullIgnoresDistance(const core::Feature& feature) {
+    const auto found = feature.texts.find("extent");
+    return found != feature.texts.end() &&
+           (found->second == "throughAll" || found->second == "toFace");
+}
+} // namespace
+
 QVariantList DocumentModel::buildStepValues() const {
     QVariantList values;
     const auto& features = m_history.document().features();
@@ -973,6 +983,8 @@ QVariantList DocumentModel::buildStepValues() const {
         return values;
     }
     const core::FeatureState* state = m_result ? m_result->state(feature.id) : nullptr;
+    // A pull up to a face or through the body has no distance of its own to type (AP-2.3).
+    const bool noDistance = feature.type == "extrude" && pullIgnoresDistance(feature);
     for (const core::ParamSpec& spec : type->parameters()) {
         const auto given = feature.params.find(spec.name);
         const std::string& text =
@@ -987,6 +999,7 @@ QVariantList DocumentModel::buildStepValues() const {
             : spec.name == "axis"                                      ? QStringLiteral("axis")
             : spec.name == "position"                                  ? QStringLiteral("cut")
             : spec.name.rfind("anchor", 0) == 0                        ? QStringLiteral("hidden")
+            : (noDistance && spec.name == "distance")                  ? QStringLiteral("hidden")
                                                                        : QStringLiteral("size");
         // The coloured letter in front of a place or a turn: x, y, z (empty for sizes).
         entry[QStringLiteral("axis")] = turn ? toQString(spec.name.substr(3, 1)).toLower()
@@ -1065,9 +1078,10 @@ QVariantList DocumentModel::buildStepHandles() const {
         state->status == core::FeatureStatus::suppressed || !state->description) {
         return handles;
     }
+    const bool noDistance = feature.type == "extrude" && pullIgnoresDistance(feature);
     for (const core::HandleSpec& spec : type->placedHandles(state->params)) {
         const auto value = state->params.find(spec.parameter);
-        if (value == state->params.end()) {
+        if (value == state->params.end() || (noDistance && spec.parameter == "distance")) {
             continue;
         }
         QVariantMap entry;

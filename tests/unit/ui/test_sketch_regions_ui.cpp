@@ -440,12 +440,34 @@ TEST_CASE("sketch regions: the mode of a pull on a body goes round new, join, cu
     QCoreApplication::processEvents();
     CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() ==
           QStringLiteral("ok"));
+    // The typed distance does not act up to a face or through everything: no field, no arrow.
+    const auto distanceShown = [&] {
+        f.model->selectStep(index);
+        f.model->waitForCalculation();
+        QCoreApplication::processEvents();
+        bool field = false;
+        for (const QVariant& entry : f.model->stepValues()) {
+            const QVariantMap value = entry.toMap();
+            field = field || (value.value(QStringLiteral("name")).toString() == "distance" &&
+                              value.value(QStringLiteral("group")).toString() == "size");
+        }
+        bool arrow = false;
+        for (const QVariant& entry : f.model->stepHandles()) {
+            arrow = arrow || entry.toMap().value(QStringLiteral("parameter")).toString() ==
+                                 QStringLiteral("distance");
+        }
+        return std::pair{field, arrow};
+    };
     CHECK(f.model->setExtrudeReach(index, QStringLiteral("throughAll"), 0));
     f.model->waitForCalculation();
     QCoreApplication::processEvents();
+    CHECK(distanceShown() == std::pair{false, false});
     CHECK(f.model->recipe().back().toMap().value(QStringLiteral("state")).toString() ==
           QStringLiteral("ok"));
     CHECK(f.model->setExtrudeReach(index, QStringLiteral("distance"), 0));
+    f.model->waitForCalculation();
+    QCoreApplication::processEvents();
+    CHECK(distanceShown() == std::pair{true, true});
     CHECK_FALSE(f.model->setExtrudeReach(index, QStringLiteral("toFace"), 4242));
     CHECK_FALSE(f.model->setExtrudeReach(index, QStringLiteral("sideways"), 0));
     f.model->waitForCalculation();

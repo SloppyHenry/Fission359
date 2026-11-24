@@ -4522,6 +4522,36 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Cut all the way through the body</source>
+        <translation>Ganz durch den Körper ausgeschnitten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled all the way through the body</source>
+        <translation>Ganz durch den Körper gezogen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut up to a face of the body</source>
+        <translation>Bis zu einer Fläche des Körpers ausgeschnitten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled up to a face of the body</source>
+        <translation>Bis zu einer Fläche des Körpers gezogen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut %1 mm deep in total, half to each side</source>
+        <translation>Insgesamt %1 mm tief ausgeschnitten, je zur Hälfte auf jede Seite</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled %1 mm in total, half to each side</source>
+        <translation>Insgesamt %1 mm gezogen, je zur Hälfte auf jede Seite</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Cut %1 mm deep</source>
         <translation>%1 mm tief ausgeschnitten</translation>
     </message>

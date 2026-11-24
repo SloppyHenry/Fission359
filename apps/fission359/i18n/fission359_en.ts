@@ -4518,6 +4518,36 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Cut all the way through the body</source>
+        <translation>Cut all the way through the body</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled all the way through the body</source>
+        <translation>Pulled all the way through the body</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut up to a face of the body</source>
+        <translation>Cut up to a face of the body</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled up to a face of the body</source>
+        <translation>Pulled up to a face of the body</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cut %1 mm deep in total, half to each side</source>
+        <translation>Cut %1 mm deep in total, half to each side</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pulled %1 mm in total, half to each side</source>
+        <translation>Pulled %1 mm in total, half to each side</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Cut %1 mm deep</source>
         <translation>Cut %1 mm deep</translation>
     </message>

@@ -83,6 +83,18 @@ QtObject {
                              : qsTr("Face pushed in by %1 mm").arg(len(-v[0]))
         }
         if (step.type === "extrude" && v.length === 1) {
+            // The reach decides what the typed distance means (AP-2.3): through everything and up
+            // to a face ignore it; a symmetric pull counts it in total, half to each side.
+            const cut = step.texts.mode === "subtract"
+            switch (step.texts.extent) {
+            case "throughAll":
+                return cut ? qsTr("Cut all the way through the body") : qsTr("Pulled all the way through the body")
+            case "toFace":
+                return cut ? qsTr("Cut up to a face of the body") : qsTr("Pulled up to a face of the body")
+            case "symmetric":
+                return cut ? qsTr("Cut %1 mm deep in total, half to each side").arg(len(Math.abs(v[0])))
+                           : qsTr("Pulled %1 mm in total, half to each side").arg(len(Math.abs(v[0])))
+            }
             switch (step.texts.mode) {
             case "merge": return qsTr("Pulled %1 mm onto the body").arg(len(v[0]))
             case "subtract": return qsTr("Cut %1 mm deep").arg(len(Math.abs(v[0])))
