@@ -345,6 +345,21 @@ public:
     Q_INVOKABLE QStringList fontStyles(const QString& family) const;
     /// Sets a word of step `index` (the text of a lettering, the name of its font).
     Q_INVOKABLE bool setStepText(int index, const QString& name, const QString& text);
+    /// A pull of a sketch area (step `index`) that lies on a body goes to the next mode: new body,
+    /// joined to the body, cut out of it, new again; the distance changes its sign with it. Returns
+    /// the mode now ("new", "merge", "subtract"), empty when the step is no pull on a body.
+    Q_INVOKABLE QString cycleExtrudeMode(int index);
+    /// True when the step is a pull of a sketch that lies on a body, i.e. its mode can change.
+    Q_INVOKABLE bool canCycleExtrudeMode(int index) const;
+    /// How far a pull (step `index`) of a sketch on a body goes: `reach` is "distance" (the typed
+    /// number), "throughAll" or "toFace" (up to the flat face number `faceNumber` of that body,
+    /// parallel to the sketch). One step of the history; false when the step is no such pull or
+    /// the face cannot be named.
+    /// The faces a pull (step `index`) may stop at: [{ number, distance }], the flat faces of the
+    /// body it joins or cuts that are parallel to the sketch, `distance` (mm, signed along the
+    /// sketch's normal) from the sketch plane. Empty for a pull on the ground.
+    Q_INVOKABLE QVariantList extrudeReachFaces(int index) const;
+    Q_INVOKABLE bool setExtrudeReach(int index, const QString& reach, int faceNumber);
 
     // --- putting shapes down (AP-1.5) ---
     /// Starts putting a shape of `type` ("sphere", "box" ...) down at (x, y) on the plane z, as
@@ -461,6 +476,14 @@ public:
     /// when the body is part of another one, the face is not flat or cannot be named again after
     /// a change. A new step of the recipe, one step of the history.
     Q_INVOKABLE QString addSketch(const QString& bodyId, int faceNumber);
+    /// Pulls the region `regionId` of the sketch step `sketchStep` (its id) out of the sketch plane
+    /// into a new body (AP-2.3b): a step "extrude" of 10 mm. `u`, `v` is a point inside the region
+    /// (sketch coordinates); the grip stands there. A sketch on a face of a body pulls into that
+    /// body instead: the pull merges into it, a negative distance cuts it. Returns the id of the
+    /// new body, or "" when the sketch step has no result. A region that is not there shows as an
+    /// error on the step.
+    Q_INVOKABLE QString addExtrude(const QString& sketchStep, const QString& regionId, double u,
+                                   double v);
     /// True when the face is flat, i.e. a sketch can lie on it.
     Q_INVOKABLE bool faceIsFlat(const QString& bodyId, int faceNumber) const;
     /// Removes the sketch step when nothing was drawn in it (a normal command, so that undo
@@ -537,6 +560,22 @@ public:
     /// Turns a flat face about its lowest edge, 10 degrees to start with (positive leans it out):
     /// a new step. Returns the id of the new body, empty when nothing can be done.
     Q_INVOKABLE QString tiltFace(const QString& bodyId, int faceNumber);
+    /// Adds a helper plane 10 mm from the flat face `faceNumber` of the body, or from the ground
+    /// plane when `bodyId` is empty (AP-2.12): a step without a body. Returns the id of the step,
+    /// empty when nothing can be done.
+    Q_INVOKABLE QString addHelperPlane(const QString& bodyId, int faceNumber);
+    /// The four corners (mm) of every helper plane that is calculated and shown, for the view.
+    std::vector<std::array<geo::Point3d, 4>> helperPlaneCorners() const;
+    /// Drills an M3 hole (3.4 mm, 10 mm deep) into the middle of a flat face: a new step.
+    /// Returns the id of the new body, empty when nothing can be done.
+    Q_INVOKABLE QString drillHole(const QString& bodyId, int faceNumber);
+    /// Sets a drilled hole (step `index`) for a metric screw from the tables: `size` like "M3",
+    /// `kind` one of plain (clearance hole), counterbore, countersink, nutTrap, tapDrill. One
+    /// step of the history. False when the step is no hole or size or kind are unknown.
+    /// {size, kind} of a hole step read back from its values: the table row and kind that give
+    /// exactly these numbers (tolerance 1e-6); size is empty for any other numbers.
+    Q_INVOKABLE QVariantMap holeScrewOf(int index) const;
+    Q_INVOKABLE bool setHoleScrew(int index, const QString& size, const QString& kind);
     /// The faces that belong to the one at `faceNumber` as a feature: for a curved face the curved
     /// faces it runs into and the floor of a blind hole, for a flat face just itself.
     Q_INVOKABLE QVariantList faceFeature(const QString& bodyId, int faceNumber) const;

@@ -11,6 +11,7 @@
 #include <cmath>
 #include <limits>
 #include <map>
+#include <memory>
 #include <numbers>
 #include <string>
 #include <utility>
@@ -21,17 +22,30 @@
 
 #include "occt_build.h"
 #include "sketch_region_face.h"
+#include <BRepAdaptor_Surface.hxx>
+#include <BRepAlgoAPI_Cut.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepGProp.hxx>
+#include <BRepOffsetAPI_MakeOffset.hxx>
+#include <BRepOffsetAPI_ThruSections.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
+#include <BRepTools.hxx>
+#include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
+#include <GProp_GProps.hxx>
+#include <GeomAbs_JoinType.hxx>
+#include <GeomAbs_SurfaceType.hxx>
 #include <LocOpe_DPrism.hxx>
+#include <NCollection_List.hxx>
 #include <Standard_Failure.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
+#include <TopoDS_Vertex.hxx>
+#include <TopoDS_Wire.hxx>
 #include <gp_Ax3.hxx>
 #include <gp_Dir.hxx>
 #include <gp_Pnt.hxx>
@@ -94,10 +108,6 @@ NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
     }
     if (!std::isfinite(spec.taperDegrees) || std::abs(spec.taperDegrees) >= 89.0) {
         invalidInput("the taper must be less than 89 degrees");
-    }
-    if (spec.taperDegrees < 0.0) {
-        // LocOpe_DPrism rounds the corners of an outward taper; sharp corners come later.
-        invalidInput("an outward taper is not supported yet");
     }
     if (spec.taperDegrees != 0.0 && spec.extent == ExtrudeExtent::symmetric) {
         invalidInput("a taper needs a pull to one side");
@@ -177,7 +187,7 @@ NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
                     roles.push_back({side, sideRole(indices, seen)});
                 }
             }
-        } else {
+        } else if (spec.taperDegrees > 0.0) {
             // A taper: the sides lean by the angle against the pull, so a positive taper makes
             // the far cap smaller. OCCT's draft angle counts from the pull direction the same
             // way; should the kernel's sign turn out the opposite, negate it here — the golden
@@ -197,6 +207,137 @@ NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
                     roles.push_back({side, sideRole(indices, seen)});
                 }
             }
+        } else {
+            // An outward taper with sharp corners: LocOpe_DPrism would round them, so loft
+            // between the near profile and an offset copy of it instead. The far profile is
+            // the near one grown by `grow` on each side and moved to the far plane.
+            const double angleRadians = spec.taperDegrees * std::numbers::pi / 180.0;
+            const double grow = std::abs(pull) * std::tan(std::abs(angleRadians));
+            BRepOffsetAPI_MakeOffset offset(placed, GeomAbs_Intersection);
+            offset.Perform(grow);
+            if (!offset.IsDone()) {
+                kernelFailed("the taper is too steep for this shape");
+            }
+            gp_Trsf farShift;
+            farShift.SetTranslation(gp_Vec(n.x * pull, n.y * pull, n.z * pull));
+            BRepBuilderAPI_Transform farMoved(offset.Shape(), farShift, /*Copy=*/true);
+            std::vector<TopoDS_Wire> farWires;
+            for (TopExp_Explorer e(farMoved.Shape(), TopAbs_WIRE); e.More(); e.Next()) {
+                farWires.push_back(TopoDS::Wire(e.Current()));
+            }
+            const TopoDS_Wire outerNear = BRepTools::OuterWire(placed);
+            std::vector<TopoDS_Wire> nearWires{outerNear};
+            for (TopExp_Explorer e(placed, TopAbs_WIRE); e.More(); e.Next()) {
+                const TopoDS_Wire wire = TopoDS::Wire(e.Current());
+                if (!wire.IsSame(outerNear)) {
+                    nearWires.push_back(wire);
+                }
+            }
+            if (farWires.size() != nearWires.size()) {
+                kernelFailed("the taper is too steep for this shape");
+            }
+            // The centre of a wire's bounding box, projected onto the sketch plane.
+            const auto projectedCentre = [&](const TopoDS_Shape& wire) {
+                Bnd_Box box;
+                BRepBndLib::Add(wire, box);
+                if (box.IsVoid()) {
+                    kernelFailed("the taper is too steep for this shape");
+                }
+                const gp_Pnt lo = box.CornerMin();
+                const gp_Pnt hi = box.CornerMax();
+                const Point3d centre{(lo.X() + hi.X()) / 2.0, (lo.Y() + hi.Y()) / 2.0,
+                                     (lo.Z() + hi.Z()) / 2.0};
+                const double along = dot({centre.x - frame.origin.x, centre.y - frame.origin.y,
+                                          centre.z - frame.origin.z},
+                                         n);
+                return Point3d{centre.x - n.x * along, centre.y - n.y * along,
+                               centre.z - n.z * along};
+            };
+            // The diagonal of a wire's bounding box.
+            const auto sizeOf = [](const TopoDS_Shape& wire) {
+                Bnd_Box box;
+                BRepBndLib::Add(wire, box);
+                return box.IsVoid() ? 0.0 : box.CornerMin().Distance(box.CornerMax());
+            };
+            // Match each near wire to the unused far wire with the closest centre and size.
+            std::vector<TopoDS_Wire> farMatched;
+            std::vector<bool> taken(farWires.size(), false);
+            for (const TopoDS_Wire& near : nearWires) {
+                const Point3d nearCentre = projectedCentre(near);
+                double best = std::numeric_limits<double>::infinity();
+                int bestIndex = -1;
+                for (std::size_t j = 0; j < farWires.size(); ++j) {
+                    if (taken[j]) {
+                        continue;
+                    }
+                    const Point3d farCentre = projectedCentre(farWires[j]);
+                    // Wires round the same middle (a ring) differ in size: compare that too.
+                    const double d =
+                        lengthOf({nearCentre.x - farCentre.x, nearCentre.y - farCentre.y,
+                                  nearCentre.z - farCentre.z}) +
+                        std::abs(sizeOf(near) - sizeOf(farWires[j]));
+                    if (d < best) {
+                        best = d;
+                        bestIndex = static_cast<int>(j);
+                    }
+                }
+                if (bestIndex < 0) {
+                    kernelFailed("the taper is too steep for this shape");
+                }
+                taken[static_cast<std::size_t>(bestIndex)] = true;
+                farMatched.push_back(farWires[static_cast<std::size_t>(bestIndex)]);
+            }
+            // Loft each near wire to its far wire; the outer loft is the body, the hole lofts
+            // are cut out of it.
+            std::vector<std::unique_ptr<BRepOffsetAPI_ThruSections>> lofts;
+            for (std::size_t i = 0; i < nearWires.size(); ++i) {
+                lofts.push_back(std::make_unique<BRepOffsetAPI_ThruSections>(/*isSolid=*/true,
+                                                                             /*ruled=*/true));
+                lofts.back()->AddWire(nearWires[i]);
+                lofts.back()->AddWire(farMatched[i]);
+                lofts.back()->CheckCompatibility(false);
+                lofts.back()->Build();
+                if (!lofts.back()->IsDone()) {
+                    kernelFailed("the sweep did not work");
+                }
+            }
+            // A loft from a hole's wire can come out inside out (the wire runs the other way):
+            // turned the right way round, it has a positive volume.
+            const auto outward = [](TopoDS_Shape solid) {
+                GProp_GProps props;
+                BRepGProp::VolumeProperties(solid, props);
+                if (props.Mass() < 0.0) {
+                    solid.Reverse();
+                }
+                return solid;
+            };
+            result = outward(lofts.front()->Shape());
+            std::vector<std::unique_ptr<BRepAlgoAPI_Cut>> cuts;
+            for (std::size_t i = 1; i < lofts.size(); ++i) {
+                auto cut = std::make_unique<BRepAlgoAPI_Cut>(result, outward(lofts[i]->Shape()));
+                cut->Build();
+                if (!cut->IsDone() || cut->HasErrors()) {
+                    kernelFailed("the sweep did not work");
+                }
+                result = cut->Shape();
+                cuts.push_back(std::move(cut));
+            }
+            for (const auto& [edge, indices] : region->edgeCurves) {
+                const TopoDS_Shape placedEdge = moved.ModifiedShape(edge);
+                for (const auto& loft : lofts) {
+                    for (const TopoDS_Shape& side : loft->Generated(placedEdge)) {
+                        // The cuts may have rebuilt the face; map to the face in the result.
+                        TopoDS_Shape face = side;
+                        for (const auto& cut : cuts) {
+                            const NCollection_List<TopoDS_Shape>& modified = cut->Modified(face);
+                            if (!modified.IsEmpty()) {
+                                face = modified.First();
+                            }
+                        }
+                        roles.push_back({face, sideRole(indices, seen)});
+                    }
+                }
+            }
         }
         NamedSolid named =
             nameFaces(result, "extrude", [&](const TopoDS_Face& face) -> std::string {
@@ -205,6 +346,28 @@ NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
                     for (TopExp_Explorer e(shape, TopAbs_FACE); e.More(); e.Next()) {
                         if (e.Current().IsSame(face)) {
                             return role;
+                        }
+                    }
+                }
+                // The caps of an outward taper have no shape to name: a planar face whose
+                // normal is parallel to the pull and that lies in one of the two pull planes
+                // is a cap.
+                const BRepAdaptor_Surface surface(face);
+                if (surface.GetType() == GeomAbs_Plane) {
+                    const gp_Dir normal = surface.Plane().Axis().Direction();
+                    const double parallel = normal.X() * n.x + normal.Y() * n.y + normal.Z() * n.z;
+                    if (std::abs(parallel) > 0.999) {
+                        for (TopExp_Explorer v(face, TopAbs_VERTEX); v.More(); v.Next()) {
+                            const gp_Pnt p = BRep_Tool::Pnt(TopoDS::Vertex(v.Current()));
+                            const double dist = (p.X() - frame.origin.x) * n.x +
+                                                (p.Y() - frame.origin.y) * n.y +
+                                                (p.Z() - frame.origin.z) * n.z;
+                            if (std::abs(dist) < 1e-6) {
+                                return "capStart";
+                            }
+                            if (std::abs(dist - pull) < 1e-6) {
+                                return "capEnd";
+                            }
                         }
                     }
                 }

@@ -82,6 +82,13 @@ QtObject {
             return v[0] >= 0 ? qsTr("Face pulled out by %1 mm").arg(len(v[0]))
                              : qsTr("Face pushed in by %1 mm").arg(len(-v[0]))
         }
+        if (step.type === "extrude" && v.length === 1) {
+            switch (step.texts.mode) {
+            case "merge": return qsTr("Pulled %1 mm onto the body").arg(len(v[0]))
+            case "subtract": return qsTr("Cut %1 mm deep").arg(len(Math.abs(v[0])))
+            default: return qsTr("Pulled %1 mm").arg(len(v[0]))
+            }
+        }
         if (step.type === "stretch" && v.length === 2) {
             return v[0] >= 0 ? qsTr("Stretched by %1 mm").arg(len(v[0])) : qsTr("Shortened by %1 mm").arg(len(-v[0]))
         }
@@ -91,6 +98,9 @@ QtObject {
         if (step.type === "offsetFaces" && v.length === 2) {
             return v[1] >= 0 ? qsTr("Moved %n face(s) out by %1 mm", "", v[0]).arg(len(v[1]))
                              : qsTr("Moved %n face(s) in by %1 mm", "", v[0]).arg(len(-v[1]))
+        }
+        if (step.type === "hole" && v.length === 2) {
+            return qsTr("Drilled a hole, Ø %1 mm, %2 mm deep").arg(len(v[0])).arg(len(v[1]))
         }
         if (step.type === "tiltFace" && v.length === 1) {
             return qsTr("Face tilted by %1°").arg(n(v[0]))
@@ -112,6 +122,9 @@ QtObject {
         if (step.type === "sketch") {
             return qsTr("Sketch")
         }
+        if (step.type === "helperPlane" && v.length === 1) {
+            return qsTr("Helper plane, %1 mm offset").arg(len(v[0]))
+        }
         if (step.type === "combine" && v.length === 1) {
             switch (step.texts.mode) {
             case "subtract": return qsTr("Cut out %n body(ies)", "", v[0])
@@ -119,8 +132,14 @@ QtObject {
             default: return qsTr("Merged with %n body(ies)", "", v[0])
             }
         }
+        if (step.type === "pattern" && v.length === 2) {
+            switch (step.texts.mode) {
+            case "circular": return qsTr("Circle of %n copy(ies), %1° in all", "", v[0]).arg(n(v[1]))
+            default: return qsTr("Row of %n copy(ies), %1 mm apart", "", v[0]).arg(len(v[1]))
+            }
+        }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "tiltFace", "shell", "draft"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "hole", "tiltFace", "shell", "draft", "helperPlane", "pattern"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)

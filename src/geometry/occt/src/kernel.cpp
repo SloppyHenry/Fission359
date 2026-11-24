@@ -36,6 +36,9 @@ public:
     NamedSolid translate(const NamedSolid& solid, Point3d delta) const override {
         return translateNamed(solid, delta);
     }
+    NamedSolid transformed(const NamedSolid& solid, const Transform3& transform) const override {
+        return transformNamed(solid, transform);
+    }
     NamedSolid boolean(BooleanOp op, const NamedSolid& target, const std::vector<NamedSolid>& tools,
                        double fuzzy) const override {
         return booleanNamed(op, target, tools, fuzzy);
