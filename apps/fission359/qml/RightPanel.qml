@@ -450,7 +450,10 @@ Rectangle {
                     delegate: Toggle {
                         required property var modelData
 
-                        text: qsTr("Up to the face %1 mm away").arg(Math.abs(modelData.distance).toFixed(2))
+                        text: {
+                            const words = qsTr("Up to the face %1 mm away").arg(Numbers.formatLength(Math.abs(modelData.distance), 2))
+                            return Numbers.unit === "in" ? words.replace(/(\d) mm\b/g, "$1 in") : words
+                        }
                         checked: root.pullReach === "toFace" && root.reachFaceNumber === modelData.number
                         onToggled: checked ? root.reachFaceChosen(modelData.number) : root.reachChosen("distance")
                     }
