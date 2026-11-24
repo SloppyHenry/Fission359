@@ -1780,6 +1780,19 @@ void SketchController::dragTo(const interaction::PlaneRay& ray, double pixelsPer
             targets.push_back({start.u + onPlane->u - m_pointDragFrom.u,
                                start.v + onPlane->v - m_pointDragFrom.v});
         }
+        // One point lands on the grid like a drawn one, so that the numbers stay round; with
+        // several the first leads and the rest keep their places to it.
+        if (!targets.empty() && !snappingSuppressed()) {
+            const double grid = interaction::sketchGridStep(baseStep(), pixelsPerMillimetre);
+            if (grid > 0.0) {
+                const double du = std::round(targets.front().x / grid) * grid - targets.front().x;
+                const double dv = std::round(targets.front().y / grid) * grid - targets.front().y;
+                for (geo::Point2d& target : targets) {
+                    target.x += du;
+                    target.y += dv;
+                }
+            }
+        }
         if (auto moved = m_pointDrag->moveTo(targets)) { // a failed solve keeps the last picture
             m_elements = moved->elements;
             m_pointDragMoved = true;

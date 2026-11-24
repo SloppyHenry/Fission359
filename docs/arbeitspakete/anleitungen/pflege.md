@@ -82,6 +82,7 @@ Druckermaße bleiben in mm.
 ---
 
 ## Erledigt
+- **P20 (Teil)** „Zuletzt geöffnet“ ist ein Untermenü, im Systemmenü und in den Menüs im Fenster (2026-11-11).
 - **P8** Lage beim Tippen nach dem Ablegen an einer Wand (2026-11-11): solange nichts anderes geschah, hält ein getipptes Maß die Unterseite an der Wand, im selben Schritt; mit benannten Maßen im Wert wird nicht nachgeführt.
 - **P7** Exakte Fangpunkte aus dem Kernel (2026-11-11): `GeometryKernel::snapPoints` (Ecken, Kantenmitten, Kreismitten, Mitten ebener Flächen, exakt aus OCCT; Nahtkanten ausgenommen), im Hintergrund mit dem Netz berechnet, `SnapSession` nimmt sie statt der Netzpunkte (Rückfall: Netzpunkte).
 - **P18** Abstandsmaß auf einer Platte (2026-11-03, PR #83): Ohne Nachbarn misst das Maß bis zum Rand des kleinsten Körpers, der die Grundfläche umfasst und auf dem der Körper steht oder in dem er steckt (nicht ein Körper darüber, z. B. Schrift über dem Loch); danach bis zum Bettrand. Festlegung ohne Umschalter. `app_flow_a_keychain` tippt den Abstand.
