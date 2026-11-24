@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 fission_add_library(fission_geometry
-  SOURCES src/layer.cpp src/pattern.cpp)
+  SOURCES src/layer.cpp src/pattern.cpp src/datum.cpp)

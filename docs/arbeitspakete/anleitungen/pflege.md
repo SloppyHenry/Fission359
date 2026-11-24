@@ -30,6 +30,8 @@ Heute werden Maßbänder gedrehter Körper nicht gezeichnet und die Beschriftung
 Achsen des Körpers, außerhalb seines (gedrehten) Kastens. `FeatureType::placedHandles` liefert gedrehte Griffe; `HandleController::refresh`
 baut die Bänder heute nur für achsparallele Richtungen. Bilder vorher/nachher; Test: gedrehter Quader (rotZ 30) hat drei Bänder, keines
 schneidet den Körper.
+**Erledigt (2026-11-11):** `refresh` legt die Bänder in einem körpereigenen Rahmen aus den Achsen der Größen-Griffe an (Welt-Achsen,
+wenn die Griffe keinen Quader aufspannen). Gedrehte Größen bleiben ohne Achsfarbe.
 
 ## P9 Rezept umsortieren per Ziehen
 **Größe:** M · UX §4 erlaubt es, AP-1.9 hat es ausgelassen. Ziehen einer Zeile; erlaubt nur, wenn keine Abhängigkeit verletzt wird
@@ -60,6 +62,10 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 **Größe:** L · Aus P20. Die Einstellung „Einheit für neue Projekte: Zoll“ ließ in neuen Projekten bloße Zahlen als Zoll zählen, angezeigt wurde
 aber alles in mm. Sie ist bis zu dieser Aufgabe ausgeblendet, neue Projekte zählen in mm (Zoll lassen sich weiter eintippen, „2 in“). Nötig: Einheit je Dokument (Dateiformat-Feld mit Migration), Anzeige
 aller Längen (Zahlenfeld, Maßbänder, Rezept-Sätze, Statuszeile, Bett-Beschriftung) in der Einheit des Dokuments, intern weiter mm.
+
+**Erledigt (2026-11-12):** `Numbers::unit`/`formatLength`; `DocumentModel::unit` aus `defaultUnitMillimetres` (kein neues
+Dateiformat-Feld); Zahlenfelder, Griffe, Abstände, Gizmo, Statuszeile, Rezept-Sätze und Bett in der Einheit; Auswahl wieder sichtbar.
+Druckermaße bleiben in mm.
 
 ## P21 Wacklige Fenster-Tests beobachten
 **Größe:** S · Ursache von `app_ring_turn` und `app_snap_corner_handle` wohl behoben (2026-10-28, `pressAndPull`). Fällt einer in der CI erneut aus: Meldung dort ansehen, nicht abschwächen. Prüfungen von `--simulate` warten auf das Ende der Aktion, nie auf feste Zeiten (PR #51).

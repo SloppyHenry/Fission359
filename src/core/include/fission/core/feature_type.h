@@ -175,6 +175,9 @@ struct ExecuteInput {
     /// to the elements found, in the order of the references. Only safely found elements are
     /// here; a step with a reference that needs help is not calculated at all.
     std::map<std::string, std::vector<ResolvedRef>> refs = {};
+    /// The sketch steps calculated so far (AP-2.3), for a step that reads a sketch
+    /// (`readsSketch`); null where nobody passes them.
+    const std::map<FeatureId, SketchResult>* sketches = nullptr;
 };
 
 struct ExecuteContext {
@@ -209,6 +212,15 @@ public:
     /// True for a type whose steps hold a sketch (`Feature::sketch`, ADR-0013): a new step then
     /// starts with an empty one.
     virtual bool carriesSketch() const { return false; }
+
+    /// The sketch step this step takes its curves from (AP-2.3), named in one of the step's words
+    /// (an id as text); nullopt when the step reads no sketch. The recompute passes the sketches of
+    /// the earlier steps in `ExecuteInput::sketches` and puts the sketch into the cache key, so a
+    /// changed sketch is calculated again.
+    virtual std::optional<FeatureId> readsSketch(const Feature& feature) const {
+        (void)feature;
+        return std::nullopt;
+    }
 
     /// Which of the step's input bodies the reference `index` of `slot` points into (by position in
     /// `Feature::inputs`), or nothing when the reference is not used (any more) and so is not

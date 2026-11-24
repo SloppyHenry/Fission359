@@ -3,6 +3,7 @@
 
 // Pattern step for bodies (AP-2.8b): linear and circular patterns.
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <sstream>
@@ -19,10 +20,12 @@ namespace {
 
 using namespace fission::core;
 
-std::optional<geo::Point3d> directionOf(const ResolvedParams& params, const char* prefix) {
-    const double x = valueOf(params, (std::string(prefix) + "X").c_str());
-    const double y = valueOf(params, (std::string(prefix) + "Y").c_str());
-    const double z = valueOf(params, (std::string(prefix) + "Z").c_str());
+// `prefix` + "X"/"Y"/"Z" (dirX ...) or, for the axis direction, "axisDx" ... (`suffixLower`).
+std::optional<geo::Point3d> directionOf(const ResolvedParams& params, const char* prefix,
+                                        bool suffixLower = false) {
+    const double x = valueOf(params, (std::string(prefix) + (suffixLower ? "x" : "X")).c_str());
+    const double y = valueOf(params, (std::string(prefix) + (suffixLower ? "y" : "Y")).c_str());
+    const double z = valueOf(params, (std::string(prefix) + (suffixLower ? "z" : "Z")).c_str());
     if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) {
         return std::nullopt;
     }
@@ -39,23 +42,32 @@ std::optional<geo::Point3d> pointOf(const ResolvedParams& params, const char* pr
     return geo::Point3d{x, y, z};
 }
 
-// Parse a comma-separated list of integers from a string (e.g., "3,7,12").
-// Non-integer values are silently ignored.
+// Parse a comma-separated list of non-negative integers ("3, 7,12"; blanks around the numbers
+// are fine, an empty text is an empty list). Anything else is an error that names `skip`.
 std::vector<int> parseSkipIndices(const std::string& text) {
     std::vector<int> indices;
+    const auto bad = [] {
+        return geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                  "pattern: skip is not a list of whole numbers", "skip");
+    };
+    const auto isBlank = [](char c) { return c == ' ' || c == '\t'; };
+    if (std::all_of(text.begin(), text.end(), isBlank)) {
+        return indices;
+    }
     std::istringstream stream(text);
     std::string token;
     while (std::getline(stream, token, ',')) {
-        try {
-            // Try to parse as integer, ignoring any trailing whitespace
-            size_t pos = 0;
-            const int value = std::stoi(token, &pos);
-            if (pos == token.size()) {
-                indices.push_back(value);
-            }
-        } catch (...) {
-            // Ignore non-integer tokens
+        while (!token.empty() && isBlank(token.front())) {
+            token.erase(token.begin());
         }
+        while (!token.empty() && isBlank(token.back())) {
+            token.pop_back();
+        }
+        if (token.empty() || token.size() > 9 ||
+            !std::all_of(token.begin(), token.end(), [](char c) { return c >= '0' && c <= '9'; })) {
+            throw bad();
+        }
+        indices.push_back(std::stoi(token));
     }
     return indices;
 }
@@ -129,7 +141,7 @@ public:
             transforms = geo::linearPattern(*dirOpt, spacing, count);
         } else { // circular
             const std::optional<geo::Point3d> axisPointOpt = pointOf(input.params, "axis");
-            const std::optional<geo::Point3d> axisDirOpt = directionOf(input.params, "axisD");
+            const std::optional<geo::Point3d> axisDirOpt = directionOf(input.params, "axisD", true);
             if (!axisPointOpt || !axisDirOpt) {
                 throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
                                          "pattern: axis not finite", "axis");
@@ -142,22 +154,25 @@ public:
             transforms = geo::circularPattern(*axisPointOpt, *axisDirOpt, count, total);
         }
 
-        // Apply skip indices
-        std::vector<geo::Transform3> effectiveTransforms =
-            geo::withSkipped(transforms, skipIndices);
-
-        // If no copies remain (only the original, which is already the input), return original
-        if (effectiveTransforms.size() <= 1) {
+        // Copies are numbered by their index in the full pattern (0 is the original, which always
+        // stays); a left-out index leaves a gap, so names stay the same when others are left out.
+        std::vector<geo::NamedSolid> copies;
+        for (std::size_t i = 1; i < transforms.size(); ++i) {
+            if (std::find(skipIndices.begin(), skipIndices.end(), static_cast<int>(i)) !=
+                skipIndices.end()) {
+                continue;
+            }
+            geo::NamedSolid copy = context.kernel.transformed(original, transforms[i]);
+            for (geo::NamedFace& face : copy.faces) {
+                face.role += "[" + std::to_string(i) + "]";
+            }
+            copies.push_back(std::move(copy));
+        }
+        if (copies.empty()) {
             FeatureResult result;
             result.outputs.push_back(
                 {input.feature.outputs.at(0), original.solid, original.faces, {}});
             return result;
-        }
-
-        // Create transformed copies (skip index 0 which is identity/original)
-        std::vector<geo::NamedSolid> copies;
-        for (size_t i = 1; i < effectiveTransforms.size(); ++i) {
-            copies.push_back(context.kernel.transformed(original, effectiveTransforms[i]));
         }
 
         // Merge all copies with the original using boolean merge
@@ -176,7 +191,10 @@ public:
 
     Description describeStep(const Feature& feature, const ResolvedParams& params) const override {
         const std::string mode = textOf(feature, "mode", "linear");
-        return {"pattern." + mode, {params.at("count")}};
+        if (mode == "circular") {
+            return {"pattern.circular", {params.at("count"), params.at("total")}};
+        }
+        return {"pattern.linear", {params.at("count"), params.at("spacing")}};
     }
 
     bool passesOnNames() const override { return true; }

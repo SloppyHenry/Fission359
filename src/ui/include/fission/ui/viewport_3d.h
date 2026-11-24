@@ -263,7 +263,8 @@ public:
         distances = 5,
         align = 6,
         measure = 7,
-        sketch = 8 ///< the grid, the elements and the catch marker of the sketch mode (AP-2.1b)
+        sketch = 8, ///< the grid, the elements and the catch marker of the sketch mode (AP-2.1b)
+        datum = 9   ///< the helper planes (AP-2.12c)
     };
     void setHandleGraphics(render::HandleGraphics graphics,
                            HandleSource source = HandleSource::size);
@@ -399,7 +400,7 @@ private:
     core::SelectionFilter m_filter;
     std::optional<QStringList> m_pickable; ///< see `setPickableBodies`
     std::vector<render::Highlight> m_selectionHighlights;
-    std::array<render::HandleGraphics, 9> m_handleGraphics;
+    std::array<render::HandleGraphics, 10> m_handleGraphics;
     std::optional<render::Highlight> m_hover;
     std::vector<render::Highlight> m_listHover; ///< lit up from a list, see `lightUpBodies`
     std::deque<PickRequest> m_pickQueue;

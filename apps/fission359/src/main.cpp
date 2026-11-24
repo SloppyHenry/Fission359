@@ -68,6 +68,7 @@
 #include "fission/ui/measure_controller.h"
 #include "fission/ui/numbers.h"
 #include "fission/ui/placement_controller.h"
+#include "fission/ui/platform_info.h"
 #include "fission/ui/preferences.h"
 #include "fission/ui/rotate_controller.h"
 #include "fission/ui/scale_controller.h"
@@ -571,10 +572,14 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Preferences", &preferences);
     fission::ui::CommandSearch commandSearch;
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "CommandSearch", &commandSearch);
+    fission::ui::PlatformInfo platform;
+    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Platform", &platform);
     documentModel.setPrinter(preferences.printerId());
-    // New projects count in millimetres until lengths are also shown in inches (pflege.md P23):
-    // a bare number in inches while everything shows millimetres would only confuse.
-    files.setNewDocumentUnit(1.0);
+    // New projects count and show lengths in the chosen unit; opened ones keep their own.
+    files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
+    QObject::connect(&preferences, &fission::ui::Preferences::unitsChanged, &files, [&] {
+        files.setNewDocumentUnit(preferences.units() == QLatin1String("in") ? 25.4 : 1.0);
+    });
     numbers.setMaxDecimals(preferences.decimals());
     QObject::connect(&preferences, &fission::ui::Preferences::decimalsChanged, &numbers,
                      [&] { numbers.setMaxDecimals(preferences.decimals()); });
@@ -676,6 +681,27 @@ int main(int argc, char* argv[]) {
         align.attach(viewport);
         distances.attachGizmo(&gizmo);
         viewport->setScene(documentModel.scene());
+        // The helper planes are drawn as squares with a line round them (AP-2.12c).
+        const auto drawPlanes = [viewport, &documentModel] {
+            fission::render::HandleGraphics graphics;
+            for (const auto& corners : documentModel.helperPlaneCorners()) {
+                fission::render::HandleQuad quad;
+                for (std::size_t i = 0; i < 4; ++i) {
+                    quad.corners[i] = QVector3D(static_cast<float>(corners[i].x),
+                                                static_cast<float>(corners[i].y),
+                                                static_cast<float>(corners[i].z));
+                }
+                quad.fill = QColor(0x4C, 0x8D, 0xFF, 40);
+                quad.line = QColor(0x4C, 0x8D, 0xFF, 200);
+                graphics.quads.push_back(quad);
+            }
+            viewport->setHandleGraphics(std::move(graphics),
+                                        fission::ui::Viewport3D::HandleSource::datum);
+        };
+        QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
+                         [drawPlanes](const std::shared_ptr<const fission::render::RenderScene>&) {
+                             drawPlanes();
+                         });
         const QMetaObject::Connection sceneConnection =
             QObject::connect(&documentModel, &fission::ui::DocumentModel::sceneReady, viewport,
                              [viewport](std::shared_ptr<const fission::render::RenderScene> scene) {

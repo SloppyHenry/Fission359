@@ -301,6 +301,7 @@ Document fixtureDocument(World& world, const std::string& type) {
         {"tiltFace", {"face", ElementKind::face}},
         {"removeFaces", {"faces", ElementKind::face}},
         {"offsetFaces", {"faces", ElementKind::face}},
+        {"hole", {"face", ElementKind::face}},
         {"draft", {"faces", ElementKind::face}},
         {"shell", {"openFaces", ElementKind::face}}};
     if (const auto slot = onElement.find(type); slot != onElement.end()) {
@@ -350,8 +351,8 @@ TEST_CASE("write the version 1 fixture files", "[.generate-fixtures]") {
     World world;
     fs::create_directories(fixtureFolder("v1"));
     for (const std::string& type : world.registry.ids()) {
-        if (type == "pattern") {
-            continue; // came after format 1
+        if (type == "helperPlane" || type == "pattern" || type == "extrude") {
+            continue; // came after format 1 (extrude: its file lives in v4/)
         }
         const fs::path target = fixtureFolder("v1") / (type + ".fission");
         if (fs::exists(target)) {
@@ -375,9 +376,9 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
         REQUIRE(opened.document);
         CHECK(opened.problems.empty());
         CHECK(opened.documentProblems.empty());
-        CHECK(opened.info.formatVersion == 1);
-
         const std::string type = entry.path().stem().string();
+        // `hole` came with format 4 (AP-2.7b2) and was written by that program, unchanged.
+        CHECK(opened.info.formatVersion == (type == "hole" ? 4 : 1));
         CHECK(opened.document->title == "Fixture " + type);
         CHECK(opened.document->features().back().type == type);
         CHECK(opened.document->findParameter("Breite")->expression == "25,5 mm");
@@ -395,8 +396,9 @@ TEST_CASE("every version 1 fixture file still opens and calculates", "[fission-f
             CHECK(result->sketches.begin()->second.data.elements.empty());
         }
     }
-    // Step types that came after format 1 and have no artificial version 1 file.
-    const std::size_t newer = 1; // pattern (AP-2.8b)
+    // Step types that came after format 1 and have no artificial version 1 file (see the README
+    // of the fixtures); their files live in the folder of their own format.
+    const std::size_t newer = 3; // pattern (AP-2.8b), extrude (AP-2.3b), helperPlane (AP-2.12b)
     CHECK(count + newer == world.registry.ids().size());
 }
 
@@ -443,6 +445,55 @@ TEST_CASE("the version 3 fixture file with a sketch still opens and calculates",
     REQUIRE(result.has_value());
     REQUIRE(result->sketches.size() == 1);
     CHECK(result->sketches.begin()->second.plane->normal().y == -1.0);
+}
+
+// The first file with an extrude step (format 4, AP-2.3b). Written once, never changed.
+TEST_CASE("write the version 4 fixture file with an extrude", "[.generate-fixtures]") {
+    World world;
+    const fs::path target = fixtureFolder("v4") / "extrude.fission";
+    fs::create_directories(fixtureFolder("v4"));
+    if (fs::exists(target)) {
+        return;
+    }
+    Document document(1000);
+    document.title = "Fixture extrude v4";
+    FeatureDraft draft = defaultDraft(*world.registry.find("sketch"));
+    draft.texts["basePlane"] = "xy";
+    const FeatureId sketch = *document.addFeature(std::move(draft));
+    document.addSketchElement(sketch, SketchElementKind::line, {{0, 0}, {60, 0}});
+    document.addSketchElement(sketch, SketchElementKind::line, {{60, 0}, {60, 40}});
+    document.addSketchElement(sketch, SketchElementKind::line, {{60, 40}, {0, 40}});
+    document.addSketchElement(sketch, SketchElementKind::line, {{0, 40}, {0, 0}});
+    FeatureDraft pull = defaultDraft(*world.registry.find("extrude"));
+    pull.texts["sketch"] = sketch.value;
+    pull.texts["region"] = "L1+L2+L3+L4";
+    pull.params.at("distance").expression = "25";
+    pull.params.at("insideU").expression = "30";
+    pull.params.at("insideV").expression = "20";
+    document.addFeature(std::move(pull));
+    SaveExtras fixed{{}, "0.1.0", "2026-11-11T12:00:00Z"};
+    REQUIRE(save(document, target, fixed).ok);
+}
+
+TEST_CASE("the version 4 fixture file with an extrude still opens and calculates",
+          "[fission-file][extrude]") {
+    World world;
+    const OpenResult opened = open(fixtureFolder("v4") / "extrude.fission");
+    REQUIRE(opened.document);
+    CHECK(opened.problems.empty());
+    CHECK(opened.documentProblems.empty());
+    CHECK(opened.info.formatVersion == 4);
+    REQUIRE(opened.document->features().size() >= 2);
+    CHECK(opened.document->features().back().type == "extrude");
+    CHECK(opened.document->features().back().texts.at("region") == "L1+L2+L3+L4");
+    CHECK(opened.document->features().back().texts.at("mode") == "new");
+
+    RecomputeCache cache;
+    const auto result = recompute(*opened.document, world.registry, *world.kernel, cache);
+    REQUIRE(result.has_value());
+    REQUIRE(result->bodies.size() == 1);
+    CHECK(world.kernel->measure(result->bodies.begin()->second.solid).volume ==
+          Approx(60000.0).epsilon(1e-9));
 }
 
 // --- the examples that come with the program (AP-1.11d) -------------------------------------
