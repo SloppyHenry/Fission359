@@ -56,7 +56,6 @@ geht dafür die Kette zurück). **Haltepunkt:** erst mit dem Maintainer klären,
 **Größe:** S–M · Aus AP-1.8 und AP-1.12. Tooltip-Karten für Menübefehle der Kontextleiste; „Wert ändern“ wählt den Schritt, soll auch das Feld fokussieren; „Mehr ▾“ und Ausrichten bei mehreren Körpern; die Leiste kann Maßzahlen der Ansicht kurz verdecken.
 
 ## P20 Kleinigkeiten aus AP-1.10 und AP-1.11
-**Größe:** S · Einheit „Zoll“ auch in der Statuszeile und in bestehenden Projekten; Dateizuordnung unter macOS und Linux von Hand prüfen; Bildschirmfotos 80/100/150/200 % in den PR des nächsten Politurdurchgangs.
 **Größe:** S · „Zuletzt geöffnet“ als Untermenü; Einheit „Zoll“ → P23 (Auswahl bis dahin ausgeblendet); Dateizuordnung unter macOS und Linux von Hand prüfen; Bildschirmfotos 80/100/150/200 % in den PR des nächsten Politurdurchgangs.
 
 ## P23 Anzeige in Zoll
