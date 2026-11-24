@@ -1559,5 +1559,6 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
         });
     }
-    QTimer::singleShot(delay + 500, Qt::PreciseTimer, viewport, std::move(done));
+    // In the same queue: the end must not come before steps that are held back.
+    scheduleAction(delay + 500, viewport, std::move(done));
 }
