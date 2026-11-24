@@ -602,7 +602,7 @@ int main(int argc, char* argv[]) {
     fission::ui::MeasureController measure(&documentModel, &selection, kernel);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Measure", &measure);
     fission::ui::SectionController section(&documentModel, kernel);
-    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Section", &section);
+    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "SectionView", &section);
     fission::ui::SketchController sketch(&documentModel, &selection);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Sketch", &sketch);
     fission::ui::PlacementController placement(&documentModel);

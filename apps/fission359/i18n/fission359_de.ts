@@ -1117,6 +1117,18 @@
         <source>Choose one flat face, then type the diameter, the depth and the place in the panel.</source>
         <translation>Wähle eine ebene Fläche und trage dann Durchmesser, Tiefe und Lage im Feld ein.</translation>
     </message>
+    <message>
+        <source>Section view</source>
+        <translation>Schnittansicht</translation>
+    </message>
+    <message>
+        <source>Cuts the bodies open along a plane so you can look inside. Only the view changes, not the project.</source>
+        <translation>Schneidet die Körper entlang einer Ebene auf, damit du hineinsehen kannst. Nur die Ansicht ändert sich, nicht das Projekt.</translation>
+    </message>
+    <message>
+        <source>Drag the slider or type the place; Swap side shows the other half.</source>
+        <translation>Zieh den Regler oder trage die Lage ein; „Seite tauschen“ zeigt die andere Hälfte.</translation>
+    </message>
 </context>
 <context>
     <name>CommandPalette</name>
@@ -3373,6 +3385,18 @@
     <message>
         <source>This pull starts on the ground plane: there is no body to join or cut.</source>
         <translation>Dieses Ziehen beginnt auf der Grundebene: Es gibt keinen Körper zum Vereinen oder Ausschneiden.</translation>
+    </message>
+    <message>
+        <source>Section view</source>
+        <translation>Schnittansicht</translation>
+    </message>
+    <message>
+        <source>Section view: drag the slider or type the place. Esc closes it.</source>
+        <translation>Schnittansicht: Zieh den Regler oder trage die Lage ein. Esc schließt sie.</translation>
+    </message>
+    <message>
+        <source>There is nothing to cut: no body is shown.</source>
+        <translation>Es gibt nichts zu schneiden: Kein Körper ist sichtbar.</translation>
     </message>
 </context>
 <context>
@@ -6327,6 +6351,33 @@
     <message>
         <source>What the pull does</source>
         <translation>Was das Ziehen macht</translation>
+    </message>
+</context>
+<context>
+    <name>SectionCard</name>
+    <message>
+        <source>Section view</source>
+        <translation>Schnittansicht</translation>
+    </message>
+    <message>
+        <source>Drag the slider or type the place. Esc closes the section view; nothing in the project changes.</source>
+        <translation>Zieh den Regler oder trage die Lage ein. Esc schließt die Schnittansicht; im Projekt ändert sich nichts.</translation>
+    </message>
+    <message>
+        <source>Axis</source>
+        <translation>Achse</translation>
+    </message>
+    <message>
+        <source>Place</source>
+        <translation>Lage</translation>
+    </message>
+    <message>
+        <source>Swap side</source>
+        <translation>Seite tauschen</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Schließen</translation>
     </message>
 </context>
 </TS>

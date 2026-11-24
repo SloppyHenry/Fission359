@@ -1117,6 +1117,18 @@
         <source>Choose one flat face, then type the diameter, the depth and the place in the panel.</source>
         <translation>Choose one flat face, then type the diameter, the depth and the place in the panel.</translation>
     </message>
+    <message>
+        <source>Section view</source>
+        <translation>Section view</translation>
+    </message>
+    <message>
+        <source>Cuts the bodies open along a plane so you can look inside. Only the view changes, not the project.</source>
+        <translation>Cuts the bodies open along a plane so you can look inside. Only the view changes, not the project.</translation>
+    </message>
+    <message>
+        <source>Drag the slider or type the place; Swap side shows the other half.</source>
+        <translation>Drag the slider or type the place; Swap side shows the other half.</translation>
+    </message>
 </context>
 <context>
     <name>CommandPalette</name>
@@ -3369,6 +3381,18 @@
     <message>
         <source>This pull starts on the ground plane: there is no body to join or cut.</source>
         <translation>This pull starts on the ground plane: there is no body to join or cut.</translation>
+    </message>
+    <message>
+        <source>Section view</source>
+        <translation>Section view</translation>
+    </message>
+    <message>
+        <source>Section view: drag the slider or type the place. Esc closes it.</source>
+        <translation>Section view: drag the slider or type the place. Esc closes it.</translation>
+    </message>
+    <message>
+        <source>There is nothing to cut: no body is shown.</source>
+        <translation>There is nothing to cut: no body is shown.</translation>
     </message>
 </context>
 <context>
@@ -6325,6 +6349,33 @@
     <message>
         <source>What the pull does</source>
         <translation>What the pull does</translation>
+    </message>
+</context>
+<context>
+    <name>SectionCard</name>
+    <message>
+        <source>Section view</source>
+        <translation>Section view</translation>
+    </message>
+    <message>
+        <source>Drag the slider or type the place. Esc closes the section view; nothing in the project changes.</source>
+        <translation>Drag the slider or type the place. Esc closes the section view; nothing in the project changes.</translation>
+    </message>
+    <message>
+        <source>Axis</source>
+        <translation>Axis</translation>
+    </message>
+    <message>
+        <source>Place</source>
+        <translation>Place</translation>
+    </message>
+    <message>
+        <source>Swap side</source>
+        <translation>Swap side</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Close</translation>
     </message>
 </context>
 </TS>
