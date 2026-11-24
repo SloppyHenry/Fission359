@@ -971,6 +971,26 @@ bool pullIgnoresDistance(const core::Feature& feature) {
 }
 } // namespace
 
+// Where a value of a pattern step is shown: the count, the distance (a row) or the angle (a circle)
+// as sizes, the middle of the circle's axis as a place; the way is chosen with buttons instead.
+static QString patternGroup(const core::Feature& step, const std::string& name) {
+    const auto mode = step.texts.find("mode");
+    const bool circle = mode != step.texts.end() && mode->second == "circular";
+    if (name == "count") {
+        return QStringLiteral("size");
+    }
+    if (name == "spacing") {
+        return circle ? QStringLiteral("hidden") : QStringLiteral("size");
+    }
+    if (name == "total") {
+        return circle ? QStringLiteral("size") : QStringLiteral("hidden");
+    }
+    if (name == "axisX" || name == "axisY" || name == "axisZ") {
+        return circle ? QStringLiteral("position") : QStringLiteral("hidden");
+    }
+    return QStringLiteral("hidden");
+}
+
 QVariantList DocumentModel::buildStepValues() const {
     QVariantList values;
     const auto& features = m_history.document().features();
@@ -999,13 +1019,17 @@ QVariantList DocumentModel::buildStepValues() const {
             : spec.name == "axis"                                      ? QStringLiteral("axis")
             : spec.name == "position"                                  ? QStringLiteral("cut")
             : spec.name.rfind("anchor", 0) == 0                        ? QStringLiteral("hidden")
-            : (noDistance && spec.name == "distance")                  ? QStringLiteral("hidden")
-                                                                       : QStringLiteral("size");
+            : feature.type == "pattern"               ? patternGroup(feature, spec.name)
+            : (noDistance && spec.name == "distance") ? QStringLiteral("hidden")
+                                                      : QStringLiteral("size");
         // The coloured letter in front of a place or a turn: x, y, z (empty for sizes).
+        const bool patternPlace =
+            feature.type == "pattern" && spec.name.rfind("axis", 0) == 0 && spec.name.size() == 5;
         entry[QStringLiteral("axis")] = turn ? toQString(spec.name.substr(3, 1)).toLower()
                                         : (spec.name == "x" || spec.name == "y" || spec.name == "z")
                                             ? toQString(spec.name)
-                                            : QString();
+                                        : patternPlace ? toQString(spec.name.substr(4, 1)).toLower()
+                                                       : QString();
         entry[QStringLiteral("expression")] = isPlainNumber(text) ? QString() : toQString(text);
         double number = 0.0;
         bool error = true;
@@ -1056,7 +1080,8 @@ QVariantList DocumentModel::buildStepTexts() const {
             : spec.name == "keepTools" || spec.name == "fuzzy" || spec.name == "shown"
                 ? QStringLiteral("flag")
             : spec.name == "mode" || spec.name == "auto" || spec.name == "kind" ||
-                    spec.name == "sketch" || spec.name == "region" || spec.name == "extent"
+                    (feature.type == "pattern" && spec.name == "skip") || spec.name == "sketch" ||
+                    spec.name == "region" || spec.name == "extent"
                 ? QStringLiteral("hidden")
                 : QStringLiteral("text");
         texts.push_back(entry);
@@ -1079,6 +1104,13 @@ QVariantList DocumentModel::buildStepHandles() const {
         return handles;
     }
     const bool noDistance = feature.type == "extrude" && pullIgnoresDistance(feature);
+    // A circle has no arrow (the way of a row is the only handle of a pattern).
+    if (feature.type == "pattern") {
+        const auto mode = feature.texts.find("mode");
+        if (mode != feature.texts.end() && mode->second != "linear") {
+            return handles;
+        }
+    }
     for (const core::HandleSpec& spec : type->placedHandles(state->params)) {
         const auto value = state->params.find(spec.parameter);
         if (value == state->params.end() || (noDistance && spec.parameter == "distance")) {
@@ -4941,6 +4973,105 @@ QString DocumentModel::addHelperPlane(const QString& bodyId, int faceNumber) {
     emit historyChanged();
     selectStep(stepIndexOf(*id)); // the panel shows its distance and its switch at once
     return toQString(id->value);
+}
+
+QString DocumentModel::addPattern(const QString& bodyId, const QString& mode) {
+    const core::FeatureType* type = m_registry.find("pattern");
+    const core::Body* target = findBody(bodyId);
+    if (type == nullptr || target == nullptr || !m_result ||
+        (mode != QLatin1String("linear") && mode != QLatin1String("circular")) ||
+        m_history.document().consumerOf(target->id)) {
+        return {};
+    }
+    const auto made = m_result->bodies.find(target->id);
+    if (made == m_result->bodies.end()) {
+        return {};
+    }
+    geo::Bounds box;
+    try {
+        box = m_kernel->exactBounds(made->second.solid);
+    } catch (const geo::GeometryError&) {
+        return {};
+    }
+    const double width = box.max.x - box.min.x;
+    const double centreX = (box.min.x + box.max.x) / 2.0;
+    const double centreY = (box.min.y + box.max.y) / 2.0;
+    const double centreZ = (box.min.z + box.max.z) / 2.0;
+    const double gap = std::ceil(width + 5.0);
+    // A body in the middle of the axis would lie on its own copies: the axis steps aside, by
+    // the diagonal of the body and 5 mm, so that six copies in the circle do not touch.
+    const double aside = std::ceil(std::hypot(width, box.max.y - box.min.y) + 5.0);
+    const bool onAxis = std::hypot(centreX, centreY) < 1e-6;
+
+    core::FeatureDraft draft = core::defaultDraft(*type);
+    const auto set = [&](const char* name, double number) {
+        draft.params.at(name).expression = digits(number);
+    };
+    set("spacing", gap);
+    set("anchorX", centreX);
+    set("anchorY", centreY);
+    set("anchorZ", centreZ);
+    set("axisX", onAxis ? -aside : 0.0);
+    if (mode == QLatin1String("circular")) {
+        set("count", 6.0);
+    }
+    draft.texts["mode"] = mode.toStdString();
+    draft.inputs = {target->id};
+    draft.newBodies = 1;
+    const core::Body before = *target;
+
+    m_history.beginTransaction({"pattern", {{"mode", mode.toStdString()}}});
+    const auto id = m_history.addFeature(std::move(draft));
+    const core::Feature* feature = id ? m_history.document().findFeature(*id) : nullptr;
+    if (feature == nullptr || feature->outputs.empty()) {
+        m_history.cancelTransaction();
+        return {};
+    }
+    const core::BodyId result = feature->outputs.front();
+    if (!before.name.empty()) {
+        m_history.execute(core::makeSetBodyName(result, before.name));
+    }
+    m_history.execute(core::makeSetBodyColor(result, before.color));
+    m_history.commitTransaction();
+    documentChanged();
+    emit historyChanged();
+    selectStep(stepIndexOf(*id));
+    return toQString(result.value);
+}
+
+bool DocumentModel::setPatternDirection(int index, bool circular, int axis, int sign) {
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) || axis < 0 || axis > 2 ||
+        (sign != 1 && sign != -1) || (circular && sign != 1)) {
+        return false;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "pattern") {
+        return false;
+    }
+    const core::FeatureId id = step.id;
+    const char* names[2][3] = {{"dirX", "dirY", "dirZ"}, {"axisDx", "axisDy", "axisDz"}};
+    const std::uint64_t before = m_history.document().revision();
+    const bool own = !m_history.inTransaction();
+    if (own) {
+        m_history.beginTransaction({"setValue", {{"field", names[circular ? 1 : 0][axis]}}});
+    }
+    bool ok = true;
+    for (int i = 0; i < 3 && ok; ++i) {
+        ok = m_history.execute(core::makeSetFeatureValue(
+            id, names[circular ? 1 : 0][i], i == axis ? (sign > 0 ? "1" : "-1") : "0"));
+    }
+    if (own) {
+        if (ok) {
+            m_history.commitTransaction();
+        } else {
+            m_history.cancelTransaction();
+        }
+    }
+    if (ok && m_history.document().revision() != before) {
+        documentChanged();
+    }
+    return ok;
 }
 
 std::vector<std::array<geo::Point3d, 4>> DocumentModel::helperPlaneCorners() const {

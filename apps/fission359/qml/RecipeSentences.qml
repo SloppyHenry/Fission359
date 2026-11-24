@@ -152,9 +152,13 @@ QtObject {
             }
         }
         if (step.type === "pattern" && v.length === 2) {
+            const left = String(step.texts.skip === undefined ? "" : step.texts.skip)
+                .split(",").map(t => parseInt(t.trim())).filter(k => !isNaN(k) && k > 0 && k < v[0])
+                .map(k => k + 1)
+            const without = left.length > 0 ? qsTr(", without %1").arg(left.join(", ")) : ""
             switch (step.texts.mode) {
-            case "circular": return qsTr("Circle of %n copy(ies), %1° in all", "", v[0]).arg(n(v[1]))
-            default: return qsTr("Row of %n copy(ies), %1 mm apart", "", v[0]).arg(len(v[1]))
+            case "circular": return qsTr("Circle of %n copy(ies), %1° in all", "", v[0]).arg(n(v[1])) + without
+            default: return qsTr("Row of %n copy(ies), %1 mm apart", "", v[0]).arg(len(v[1])) + without
             }
         }
         // A kind of step this version does not know (a file from a later version).

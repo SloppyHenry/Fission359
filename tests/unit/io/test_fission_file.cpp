@@ -497,6 +497,92 @@ TEST_CASE("the version 4 fixture file with an extrude still opens and calculates
           Approx(60000.0).epsilon(1e-9));
 }
 
+// The first files with a pattern step and a revolve step (format 5, AP-2.8b and AP-2.3c). Written
+// once, never changed.
+TEST_CASE("write the version 5 fixture files", "[.generate-fixtures]") {
+    World world;
+    fs::create_directories(fixtureFolder("v5"));
+    const fs::path patternTarget = fixtureFolder("v5") / "pattern.fission";
+    if (!fs::exists(patternTarget)) {
+        Document document(1000);
+        document.title = "Fixture pattern v5";
+        FeatureDraft box = defaultDraft(*world.registry.find("box"));
+        box.params.at("width").expression = "10";
+        box.params.at("depth").expression = "10";
+        box.params.at("height").expression = "10";
+        box.newBodies = 1;
+        const FeatureId first = *document.addFeature(std::move(box));
+        FeatureDraft row = defaultDraft(*world.registry.find("pattern"));
+        row.inputs = {document.findFeature(first)->outputs.front()};
+        row.newBodies = 1;
+        row.texts["mode"] = "linear";
+        row.texts["skip"] = "2";
+        row.params.at("count").expression = "4";
+        row.params.at("spacing").expression = "20";
+        document.addFeature(std::move(row));
+        SaveExtras fixed{{}, "0.1.0", "2026-11-24T12:00:00Z"};
+        REQUIRE(save(document, patternTarget, fixed).ok);
+    }
+    const fs::path revolveTarget = fixtureFolder("v5") / "revolve.fission";
+    if (!fs::exists(revolveTarget)) {
+        Document document(1000);
+        document.title = "Fixture revolve v5";
+        FeatureDraft draft = defaultDraft(*world.registry.find("sketch"));
+        draft.texts["basePlane"] = "xy";
+        const FeatureId sketch = *document.addFeature(std::move(draft));
+        document.addSketchElement(sketch, SketchElementKind::line, {{10, 0}, {20, 0}});
+        document.addSketchElement(sketch, SketchElementKind::line, {{20, 0}, {20, 30}});
+        document.addSketchElement(sketch, SketchElementKind::line, {{20, 30}, {10, 30}});
+        document.addSketchElement(sketch, SketchElementKind::line, {{10, 30}, {10, 0}});
+        FeatureDraft turn = defaultDraft(*world.registry.find("revolve"));
+        turn.texts["sketch"] = sketch.value;
+        turn.texts["region"] = "L1+L2+L3+L4";
+        turn.params.at("angle").expression = "360";
+        turn.params.at("insideU").expression = "15";
+        turn.params.at("insideV").expression = "15";
+        document.addFeature(std::move(turn));
+        SaveExtras fixed{{}, "0.1.0", "2026-11-24T12:00:00Z"};
+        REQUIRE(save(document, revolveTarget, fixed).ok);
+    }
+}
+
+TEST_CASE("the version 5 fixture files with a pattern and a revolve still open and calculate",
+          "[fission-file][pattern]") {
+    World world;
+    {
+        const OpenResult opened = open(fixtureFolder("v5") / "pattern.fission");
+        REQUIRE(opened.document);
+        CHECK(opened.problems.empty());
+        CHECK(opened.documentProblems.empty());
+        CHECK(opened.info.formatVersion == 5);
+        CHECK(opened.document->features().back().type == "pattern");
+        CHECK(opened.document->features().back().texts.at("skip") == "2");
+        RecomputeCache cache;
+        const auto result = recompute(*opened.document, world.registry, *world.kernel, cache);
+        REQUIRE(result.has_value());
+        REQUIRE(result->bodies.size() == 2); // the box and the row
+        double most = 0.0;
+        for (const auto& [id, body] : result->bodies) {
+            most = std::max(most, world.kernel->measure(body.solid).volume);
+        }
+        CHECK(most == Approx(3000.0).epsilon(1e-9)); // four places, the third left out
+    }
+    {
+        const OpenResult opened = open(fixtureFolder("v5") / "revolve.fission");
+        REQUIRE(opened.document);
+        CHECK(opened.problems.empty());
+        CHECK(opened.documentProblems.empty());
+        CHECK(opened.info.formatVersion == 5);
+        CHECK(opened.document->features().back().type == "revolve");
+        RecomputeCache cache;
+        const auto result = recompute(*opened.document, world.registry, *world.kernel, cache);
+        REQUIRE(result.has_value());
+        REQUIRE(result->bodies.size() == 1);
+        CHECK(world.kernel->measure(result->bodies.begin()->second.solid).volume ==
+              Approx(3.14159265358979 * (400.0 - 100.0) * 30.0).epsilon(1e-6));
+    }
+}
+
 // --- the examples that come with the program (AP-1.11d) -------------------------------------
 
 namespace {

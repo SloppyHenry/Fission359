@@ -609,6 +609,14 @@ public:
     /// plane when `bodyId` is empty (AP-2.12): a step without a body. Returns the id of the step,
     /// empty when nothing can be done.
     Q_INVOKABLE QString addHelperPlane(const QString& bodyId, int faceNumber);
+    /// Adds a pattern step for the body (AP-2.8b), one step of the history: `mode` is "linear"
+    /// (3 copies along +X, one body width and 5 mm apart) or "circular" (6 copies in a full turn
+    /// about the z axis; a body that stands on the axis moves the axis aside by its width and
+    /// 5 mm). Returns the id of the new body, empty when nothing can be done.
+    Q_INVOKABLE QString addPattern(const QString& bodyId, const QString& mode);
+    /// Sets the way of the row (`circular` false: dirX/Y/Z) or the axis of the circle (dirs
+    /// axisDx/Dy/Dz) to the axis 0 = x, 1 = y, 2 = z, `sign` +1 or -1: one step of the history.
+    Q_INVOKABLE bool setPatternDirection(int index, bool circular, int axis, int sign);
     /// The four corners (mm) of every helper plane that is calculated and shown, for the view.
     std::vector<std::array<geo::Point3d, 4>> helperPlaneCorners() const;
     /// Drills an M3 hole (3.4 mm, 10 mm deep) into the middle of a flat face: a new step.

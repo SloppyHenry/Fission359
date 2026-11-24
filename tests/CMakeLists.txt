@@ -252,6 +252,13 @@ if(_fission_run_window_tests)
             --camera=35,35,200 --simulate "menu:helperPlane;recipe:box,helperPlane;clickitem:helperPlaneShown;expectundo:setText")
   set_tests_properties(app_helper_plane PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.8b: a row and a circle of the chosen body from the menu: one step each, one undo step.
+  add_test(NAME app_pattern
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-pattern.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "put:box;selectall;menu:patternLinear;recipe:box,pattern;expectundo:pattern;menu:undo;recipe:box;selectall;menu:patternCircular;recipe:box,pattern;expectundo:pattern")
+  set_tests_properties(app_pattern PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # Pflege P10: the keys + and - zoom the 3D view towards its centre by 20 % each (the camera
   # distance gets smaller, then larger again).
   add_test(NAME app_keyboard_zoom

@@ -78,12 +78,22 @@ public:
     int version() const override { return 1; }
 
     std::vector<ParamSpec> parameters() const override {
-        return {{"count", QuantityKind::plain, "3"},  {"spacing", QuantityKind::length, "20"},
-                {"dirX", QuantityKind::plain, "1"},   {"dirY", QuantityKind::plain, "0"},
-                {"dirZ", QuantityKind::plain, "0"},   {"total", QuantityKind::angle, "360"},
-                {"axisX", QuantityKind::length, "0"}, {"axisY", QuantityKind::length, "0"},
-                {"axisZ", QuantityKind::length, "0"}, {"axisDx", QuantityKind::plain, "0"},
-                {"axisDy", QuantityKind::plain, "0"}, {"axisDz", QuantityKind::plain, "1"}};
+        return {{"count", QuantityKind::plain, "3"},
+                {"spacing", QuantityKind::length, "20"},
+                {"dirX", QuantityKind::plain, "1"},
+                {"dirY", QuantityKind::plain, "0"},
+                {"dirZ", QuantityKind::plain, "0"},
+                {"total", QuantityKind::angle, "360"},
+                {"axisX", QuantityKind::length, "0"},
+                {"axisY", QuantityKind::length, "0"},
+                {"axisZ", QuantityKind::length, "0"},
+                {"axisDx", QuantityKind::plain, "0"},
+                {"axisDy", QuantityKind::plain, "0"},
+                {"axisDz", QuantityKind::plain, "1"},
+                // Where the row's arrow starts: the middle of the body (set by the program).
+                {"anchorX", QuantityKind::length, "0"},
+                {"anchorY", QuantityKind::length, "0"},
+                {"anchorZ", QuantityKind::length, "0"}};
     }
 
     std::vector<TextFieldSpec> texts() const override { return {{"mode", "linear"}, {"skip", ""}}; }
@@ -199,7 +209,26 @@ public:
 
     bool passesOnNames() const override { return true; }
 
-    std::vector<HandleSpec> handles(const ResolvedParams&) const override { return {}; }
+    // The arrow of a row stands at the second copy and points the way the row runs; dragging it
+    // changes the distance (rule 1). A circle has none (the interface leaves it out).
+    std::vector<HandleSpec> handles(const ResolvedParams& params) const override {
+        const std::optional<geo::Point3d> way = directionOf(params, "dir");
+        if (!way) {
+            return {};
+        }
+        const double length = std::hypot(way->x, way->y, way->z);
+        const double spacing = valueOf(params, "spacing");
+        if (!(length > 1e-9) || !std::isfinite(spacing)) {
+            return {};
+        }
+        const geo::Point3d unit{way->x / length, way->y / length, way->z / length};
+        const geo::Point3d spot{valueOf(params, "anchorX"), valueOf(params, "anchorY"),
+                                valueOf(params, "anchorZ")};
+        return {makeHandle(
+            "spacing", HandleKind::distance,
+            {spot.x + unit.x * spacing, spot.y + unit.y * spacing, spot.z + unit.z * spacing}, unit,
+            spacing)};
+    }
 
     std::vector<std::string> sizeParameters() const override { return {"count", "spacing"}; }
 };

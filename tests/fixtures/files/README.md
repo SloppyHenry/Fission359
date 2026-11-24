@@ -16,3 +16,7 @@ format 3 file with one element of every kind. `v4/extrude.fission` is the first 
 
 `v1/hole.fission` was written by a program of format 4 (the step type `hole` came with AP-2.7b2)
 and is kept as it was written; the test expects format 4 for it.
+
+`v5/pattern.fission` (a 10 mm cube in a row of 4, 20 mm apart, the third left out) and
+`v5/revolve.fission` (a rectangle turned a full circle) are the first files with a step `pattern`
+(AP-2.8b) and `revolve` (AP-2.3c).
