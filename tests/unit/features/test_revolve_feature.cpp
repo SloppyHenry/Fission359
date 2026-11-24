@@ -22,6 +22,7 @@
 #include "fission/core/resolve.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/occt/kernel.h"
+#include "fission/geo/sketch/planegcs_solver.h"
 
 using Catch::Approx;
 using namespace fission::core;
@@ -209,4 +210,41 @@ TEST_CASE("revolve: when the sketch changes, the body is calculated again", "[re
     CHECK(wider.executed == 2); // the sketch and the revolve were calculated again
     CHECK(world.kernel->measure(wider.bodies.at(body).solid).volume ==
           Approx(kPi * (30.0 * 30.0 - 10.0 * 10.0) * 30.0).epsilon(1e-9));
+}
+
+TEST_CASE("revolve: a named measure changes the solved sketch and so the turned body",
+          "[revolve][feature][sketch]") {
+    RevolveWorld world;
+    const auto solver = fission::geo::sketch::makePlaneGcsSolver();
+    REQUIRE(world.history.execute(
+        makeAddParameter(Parameter{"Breite", "10", QuantityKind::length, "", std::nullopt})));
+    const FeatureId sketch = world.addSketch();
+    world.rectangle(sketch);
+    for (const char* line : {"L1", "L3"}) {
+        REQUIRE(world.history.execute(makeAddSketchRule(sketch, "horizontal", {line}, *solver)));
+    }
+    for (const char* line : {"L2", "L4"}) {
+        REQUIRE(world.history.execute(makeAddSketchRule(sketch, "vertical", {line}, *solver)));
+    }
+    REQUIRE(world.history.execute(makeAddSketchRule(sketch, "fixed", {"L1.0"}, *solver)));
+    for (const auto& pair : std::vector<std::vector<std::string>>{
+             {"L1.1", "L2.0"}, {"L2.1", "L3.0"}, {"L3.1", "L4.0"}, {"L4.1", "L1.0"}}) {
+        REQUIRE(world.history.execute(makeAddSketchRule(sketch, "coincident", pair, *solver)));
+    }
+    REQUIRE(world.history.execute(
+        makeAddSketchMeasure(sketch, "length", {"L1"}, "Breite", 10.0, *solver)));
+    world.addRevolve(sketch, "L1+L2+L3+L4");
+    const BodyId body = world.onlyBody();
+
+    const auto volumeOf = [&] {
+        const auto result = recompute(world.history.document(), world.registry, *world.kernel,
+                                      world.cache, {}, solver.get());
+        REQUIRE(result.has_value());
+        REQUIRE(result->bodies.contains(body));
+        return world.kernel->measure(result->bodies.at(body).solid).volume;
+    };
+    CHECK(volumeOf() == Approx(kPi * (20.0 * 20.0 - 10.0 * 10.0) * 30.0).epsilon(1e-6));
+    // Only the named measure changes: the cache must not hand back the old body.
+    REQUIRE(world.history.execute(makeSetParameterExpression("Breite", "20")));
+    CHECK(volumeOf() == Approx(kPi * (30.0 * 30.0 - 10.0 * 10.0) * 30.0).epsilon(1e-6));
 }
