@@ -424,6 +424,27 @@ TEST_CASE("dragging a free end point moves it and is one undo step", "[ui][sketc
     CHECK(elements[0].points[1].v == Approx(0.0).margin(1e-6));
 }
 
+TEST_CASE("a dragged point lands on the grid", "[ui][sketchmeasures][drag]") {
+    Drawing f;
+    f.sketch->chooseTool(QStringLiteral("line"));
+    f.click(0, 0);
+    f.click(10, 0);
+    f.settle();
+    REQUIRE(f.elements().size() == 1);
+    f.sketch->chooseTool(QString());
+    f.settle();
+
+    // the pointer is a little beside the grid: the point lands on it all the same
+    f.sketch->pressAt(Drawing::down(10, 0), 2.0);
+    f.sketch->dragTo(Drawing::down(20.0001, 0.0001), 2.0);
+    f.sketch->releaseAt(Drawing::down(20.0001, 0.0001), 2.0, false, true);
+    f.settle();
+    const auto elements = f.elements();
+    REQUIRE(elements.size() == 1);
+    CHECK(std::abs(elements[0].points[1].u - 20.0) < 1e-6);
+    CHECK(std::abs(elements[0].points[1].v) < 1e-6);
+}
+
 TEST_CASE("a horizontal line stays horizontal while its end is dragged",
           "[ui][sketchmeasures][drag]") {
     NoCatching free;
