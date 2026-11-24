@@ -29,6 +29,7 @@ Item {
     signal sketchDoneRequested
     /// "Pull" (AP-2.3b2): the chosen closed area of the sketch becomes a body.
     signal pullRequested
+    signal spinRequested
     property var sketchTools: null         // SketchToolCatalog
     property string sketchTool: ""         // the drawing tool that is on
     property int sketchVariant: 0
@@ -130,6 +131,15 @@ Item {
                 text: qsTr("Pull")
                 visible: root.sketchActive && Sketch.selectedRegion !== ""
                 onClicked: root.pullRequested()
+            }
+
+            Btn {
+                objectName: "sketchSpin"
+                anchors.verticalCenter: parent.verticalCenter
+                small: true
+                text: qsTr("Spin")
+                visible: root.sketchActive && Sketch.selectedRegion !== ""
+                onClicked: root.spinRequested()
             }
         }
     }

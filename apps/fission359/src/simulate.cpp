@@ -1412,9 +1412,18 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                                .arg(focus != nullptr
                                         ? QString::fromLatin1(focus->metaObject()->className())
                                         : QStringLiteral("none"));
-                    QKeyEvent press(QEvent::KeyPress, key.key(), key.keyboardModifiers());
+                    // A real keyboard gives a digit or a sign its text; a text field inserts that
+                    // text (a shortcut only looks at the key). Without it a field that got the
+                    // keyboard from the first digit would lose every later one.
+                    const int code = key.key();
+                    const bool typed =
+                        key.keyboardModifiers() == Qt::NoModifier &&
+                        ((code >= Qt::Key_0 && code <= Qt::Key_9) || code == Qt::Key_Comma ||
+                         code == Qt::Key_Period || code == Qt::Key_Minus);
+                    const QString text = typed ? QString(QChar(code)) : QString();
+                    QKeyEvent press(QEvent::KeyPress, code, key.keyboardModifiers(), text);
                     QCoreApplication::sendEvent(window, &press);
-                    QKeyEvent release(QEvent::KeyRelease, key.key(), key.keyboardModifiers());
+                    QKeyEvent release(QEvent::KeyRelease, code, key.keyboardModifiers(), text);
                     QCoreApplication::sendEvent(window, &release);
                 };
                 scheduleAction(delay, viewport, [window, viewport, send] {

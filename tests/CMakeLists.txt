@@ -260,6 +260,20 @@ if(_fission_run_window_tests)
             --camera=35,35,200 --simulate "menu:helperPlane;recipe:box,helperPlane;clickitem:helperPlaneShown;expectundo:setText")
   set_tests_properties(app_helper_plane PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.8b: a row and a circle of the chosen body from the menu: one step each, one undo step.
+  add_test(NAME app_pattern
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-pattern.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "selectall;menu:patternLinear;recipe:box,pattern;expectundo:pattern;menu:undo;recipe:box;selectall;menu:patternCircular;recipe:box,pattern;expectundo:pattern")
+  set_tests_properties(app_pattern PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.8c: a mirror image of the chosen body from the menu: one step with its bodies, one undo.
+  add_test(NAME app_mirror
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-mirror.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "selectall;menu:mirror;recipe:box,mirror,place,place;expectundo:mirror;menu:undo;recipe:box")
+  set_tests_properties(app_mirror PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # Pflege P10: the keys + and - zoom the 3D view towards its centre by 20 % each (the camera
   # distance gets smaller, then larger again).
   add_test(NAME app_keyboard_zoom
@@ -455,6 +469,32 @@ if(_fission_run_window_tests)
             --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-regions.png" --language en --size 1280x800
             --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.rectangle;sketchclickmm:-40,-20;sketchclickmm:40,20;expectsketchregions:1,none;menu:sketchtool.circle;sketchclickmm:40,0;sketchclickmm:50,0;key:Escape;expectsketchtool:;expectsketchregions:3,none;expecthint:3 closed areas;sketchclickmm:-20,0;expectsketchregions:3,selected;expecthint:One is chosen;key:Escape;expectsketch:active;expectsketchregions:3,none;menu:undo;expectsketchregions:1,none;menu:redo;expectsketchregions:3,none;menu:sketchdone;expectsketch:idle;recipe:box,sketch")
   set_tests_properties(app_sketch_regions PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.2b: a measure by typing. A line 40 mm long, the tool off, a click on the line chooses it,
+  # the digits 3 and 0 open the measure field, Enter sets it: the line is 30 mm long (one undo
+  # step, the solver keeps it level); undo makes it 40 mm again.
+  add_test(NAME app_sketch_measure_typed
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-measure.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;sketchclickmm:-20,0;sketchclickmm:20,0;key:Escape;key:Escape;expectsketchtool:;expectsketchelements:line=1;expectsketchsize:40,0;sketchclickmm:0,0;key:3;key:0;key:Return;expectundo:addSketchMeasure;expectsketchsize:30,0;menu:undo;expectsketchsize:40,0")
+  set_tests_properties(app_sketch_measure_typed PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.2c4: live dragging. A level line 40 mm long, the tool off, its end pulled 10 mm further
+  # with the mouse: the line is 50 mm long and still level (one undo step); undo makes it 40 mm.
+  add_test(NAME app_sketch_point_drag
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-point-drag.png" --language en --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;sketchclickmm:-20,0;sketchclickmm:20,0;key:Escape;key:Escape;expectsketchtool:;expectsketchsize:40,0;sketchdragmm:20,0,30,0;expectundo:moveSketchPoints;expectsketchsize:50,0;menu:undo;expectsketchsize:40,0")
+  set_tests_properties(app_sketch_point_drag PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
+  # AP-2.2d: a contradiction is explained, nothing jumps. A level line 40 mm, a length of 30 typed,
+  # then a length of 40 typed on the same line: the two measures contradict each other, the line
+  # keeps its last shape (30 mm) and the card at the top lists both (see the picture).
+  add_test(NAME app_sketch_conflict
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-sketch-conflict.png" --language de --size 1280x800
+            --camera=0,90,260 --simulate "menu:sketch;click:60,60;expectsketch:active;menu:sketchtool.line;sketchclickmm:-20,0;sketchclickmm:20,0;key:Escape;key:Escape;expectsketchtool:;sketchclickmm:0,0;key:3;key:0;key:Return;expectsketchsize:30,0;sketchclickmm:8,0;key:4;key:0;key:Return;expectundo:addSketchMeasure;expectsketchsize:30,0")
+  set_tests_properties(app_sketch_conflict PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 120 RUN_SERIAL TRUE)
   # AP-2.3b2: a closed area of the sketch is chosen with a click (the hint says what Enter does),
   # Enter pulls it out of the sketch into a body: an "extrude" step, one undo step, the new body
