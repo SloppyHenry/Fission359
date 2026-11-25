@@ -1977,6 +1977,8 @@ Window {
                 DocumentModel.setExtrudeReach(DocumentModel.currentStep, "toFace", number)
             }
             reachFaces: { DocumentModel.stepTexts; return DocumentModel.extrudeReachFaces(DocumentModel.currentStep) }
+            revolveAxes: { DocumentModel.stepTexts; return DocumentModel.revolveAxes(DocumentModel.currentStep) }
+            onRevolveAxisChosen: axis => DocumentModel.setStepText(DocumentModel.currentStep, "axis", axis)
             onModeCycleRequested: {
                 if (DocumentModel.cycleExtrudeMode(DocumentModel.currentStep) === "") {
                     root.showHint(qsTr("This pull starts on the ground plane: there is no body to join or cut."))

@@ -87,6 +87,12 @@ Live-Vorschau messen.
 `side[L3]` (Rotationsfläche je Profilkante), `capStart/capEnd` bei < 360°. Golden: Rechteck um Achse → Zylinder/Rohr (Formel); Halbkreis →
 Kugel. Profil, das die Achse kreuzt → Fehler `revolveCrossesAxis` (Meldung mit Lösung „Profil auf eine Seite der Achse legen“).
 
+**Achse wählbar (2.3d-Achse, Stand):** Der Schritt hat das Textfeld `axis`: `auto` (Vorgabe, die Zahlen `axisU/V/Dx/Dy`, alte Dateien
+rechnen unverändert), `x`/`y`/`z` (Hauptachse, nur wenn sie in der Skizzenebene liegt und die Ebene den Ursprung enthält) oder
+`line:<id>` (gerade Linie der eigenen Skizze, auch Hilfslinie). Auswahl im rechten Bereich beim Schritt; Ändern ist ein Command mit
+Undo. Fehlende Linie → `axisMissing`, Hauptachse quer zur Skizze → `axisOutOfPlane`, Profil schneidet die Achse → `axis`; alle mit
+Meldung im Katalog. Offen: Körperkanten als Achse; Klick auf eine Linie in der Ansicht; mehr als sechs Linien im Auswahlstreifen.
+
 ## Teil 2.3d – Entlang Pfad
 `sweep`: Profil (Bereich) + Pfad (Skizzenkette oder Kanten), Ausrichtung (Standard: Profil bleibt senkrecht zum Pfad – `BRepOffsetAPI_MakePipeShell`
 mit Frenet bzw. fester Binormale, siehe AP-0.5 Gewinde). Golden: Kreis entlang Gerade = Zylinder; entlang Viertelkreis = Torus-Viertel (Formel).

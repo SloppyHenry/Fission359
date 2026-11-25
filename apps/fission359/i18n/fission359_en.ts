@@ -4555,6 +4555,30 @@
         <source>The closed areas of this sketch could not be worked out. Move a point a little, or take away the last element. You can keep drawing.</source>
         <translation>The closed areas of this sketch could not be worked out. Move a point a little, or take away the last element. You can keep drawing.</translation>
     </message>
+    <message>
+        <source>The line to turn about is gone.</source>
+        <translation>The line to turn about is gone.</translation>
+    </message>
+    <message>
+        <source>This axis does not lie in the sketch.</source>
+        <translation>This axis does not lie in the sketch.</translation>
+    </message>
+    <message>
+        <source>The area lies on both sides of the axis.</source>
+        <translation>The area lies on both sides of the axis.</translation>
+    </message>
+    <message>
+        <source>The line this turn is about was removed from the sketch. Choose another line or an axis.</source>
+        <translation>The line this turn is about was removed from the sketch. Choose another line or an axis.</translation>
+    </message>
+    <message>
+        <source>This axis stands across the sketch. Choose a line of the sketch or an axis that lies in it.</source>
+        <translation>This axis stands across the sketch. Choose a line of the sketch or an axis that lies in it.</translation>
+    </message>
+    <message>
+        <source>The area lies on both sides of the axis. Put the area on one side of the axis, or choose another axis.</source>
+        <translation>The area lies on both sides of the axis. Put the area on one side of the axis, or choose another axis.</translation>
+    </message>
 </context>
 <context>
     <name>NumberField</name>
@@ -4918,6 +4942,14 @@
         <location line="+6"/>
         <source>Step %1 (unknown kind)</source>
         <translation>Step %1 (unknown kind)</translation>
+    </message>
+    <message>
+        <source>about the line %1</source>
+        <translation>about the line %1</translation>
+    </message>
+    <message>
+        <source>about the %1 axis</source>
+        <translation>about the %1 axis</translation>
     </message>
 </context>
 <context>
@@ -5333,6 +5365,26 @@
         <location line="-10"/>
         <source>Up to the face %1 mm away</source>
         <translation>Up to the face %1 mm away</translation>
+    </message>
+    <message>
+        <source>Turn</source>
+        <translation>Turn</translation>
+    </message>
+    <message>
+        <source>The area turns about</source>
+        <translation>The area turns about</translation>
+    </message>
+    <message>
+        <source>A line of the sketch</source>
+        <translation>A line of the sketch</translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation>Line %1</translation>
+    </message>
+    <message>
+        <source>Upright</source>
+        <translation>Upright</translation>
     </message>
 </context>
 <context>

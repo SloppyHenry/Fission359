@@ -331,6 +331,15 @@ QtObject {
             if (problem.field === "edges") {
                 return qsTr("An edge of this sketch cannot be followed.")
             }
+            if (problem.field === "axisMissing") {
+                return qsTr("The line to turn about is gone.")
+            }
+            if (problem.field === "axisOutOfPlane") {
+                return qsTr("This axis does not lie in the sketch.")
+            }
+            if (problem.code === "kernelRejected" && problem.field === "axis") {
+                return qsTr("The area lies on both sides of the axis.")
+            }
             return problem.numbers && problem.numbers.maxValue !== undefined && problem.field !== ""
                 ? qsTr("%1 does not work here.").arg(valueLabel(problem.field))
                 : qsTr("These values do not work.")
@@ -407,6 +416,15 @@ QtObject {
             default: return qsTr("%1 must be bigger than zero.").arg(valueLabel(problem.field))
             }
         case "kernelRejected":
+            if (problem.field === "axisMissing") {
+                return qsTr("The line this turn is about was removed from the sketch. Choose another line or an axis.")
+            }
+            if (problem.field === "axisOutOfPlane") {
+                return qsTr("This axis stands across the sketch. Choose a line of the sketch or an axis that lies in it.")
+            }
+            if (problem.field === "axis") {
+                return qsTr("The area lies on both sides of the axis. Put the area on one side of the axis, or choose another axis.")
+            }
             if (problem.field === "position") {
                 return step && step.type === "stretch"
                     ? qsTr("There is no place here without a rounding or a hole. Choose the place yourself: move the cutting plane to a flat stretch.")

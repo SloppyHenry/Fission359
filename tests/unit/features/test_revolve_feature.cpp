@@ -248,3 +248,151 @@ TEST_CASE("revolve: a named measure changes the solved sketch and so the turned 
     REQUIRE(world.history.execute(makeSetParameterExpression("Breite", "20")));
     CHECK(volumeOf() == Approx(kPi * (30.0 * 30.0 - 10.0 * 10.0) * 30.0).epsilon(1e-6));
 }
+
+// --- the axis can be chosen (AP-2.3d) ------------------------------------------------------
+
+namespace {
+
+double volumeOfTurn(RevolveWorld& world, const BodyId& body) {
+    const RecomputeResult result = world.calculate();
+    REQUIRE(result.bodies.contains(body));
+    return world.kernel->measure(result.bodies.at(body).solid).volume;
+}
+
+} // namespace
+
+TEST_CASE("revolve: the axis is the own line of the sketch", "[revolve][feature][axis]") {
+    RevolveWorld world;
+    const FeatureId sketch = world.addSketch();
+    world.rectangle(sketch);
+    // L5 is the v-axis again, L6 stands at u = 5, L7 lies along the u-axis.
+    for (const auto& points : std::vector<std::vector<SketchPoint>>{
+             {{0, 0}, {0, 50}}, {{5, 0}, {5, 50}}, {{0, -5}, {50, -5}}}) {
+        world.history.execute(
+            std::make_unique<AddSketchElementCommand>(sketch, SketchElementKind::line, points));
+    }
+    const FeatureId turn = world.addRevolve(sketch, "L1+L2+L3+L4");
+    const BodyId body = world.onlyBody();
+    const double auto_ = volumeOfTurn(world, body);
+    CHECK(auto_ == Approx(kPi * (400.0 - 100.0) * 30.0).epsilon(1e-9));
+
+    REQUIRE(world.history.execute(makeSetFeatureText(turn, "axis", "line:L5")));
+    CHECK(volumeOfTurn(world, body) == Approx(auto_).epsilon(1e-9));
+    // The line at u = 5: a tube from the radius 5 to 15 (in the other direction: 15 to 5).
+    REQUIRE(world.history.execute(makeSetFeatureText(turn, "axis", "line:L6")));
+    CHECK(volumeOfTurn(world, body) ==
+          Approx(kPi * (15.0 * 15.0 - 5.0 * 5.0) * 30.0).epsilon(1e-9));
+    // A line that runs along the u-axis and lies below the area: a tube from 5 to 35.
+    REQUIRE(world.history.execute(makeSetFeatureText(turn, "axis", "line:L7")));
+    CHECK(volumeOfTurn(world, body) ==
+          Approx(kPi * (35.0 * 35.0 - 5.0 * 5.0) * 10.0).epsilon(1e-9));
+}
+
+TEST_CASE("revolve: a main axis in the plane of the sketch is the axis",
+          "[revolve][feature][axis]") {
+    RevolveWorld world;
+    const FeatureId sketch = world.addSketch(); // plane xy: x is u, y is v
+    world.rectangle(sketch);
+    const FeatureId turn = world.addRevolve(sketch, "L1+L2+L3+L4");
+    const BodyId body = world.onlyBody();
+    // Around y: the same as the default axis.
+    REQUIRE(world.history.execute(makeSetFeatureText(turn, "axis", "y")));
+    CHECK(volumeOfTurn(world, body) == Approx(kPi * (400.0 - 100.0) * 30.0).epsilon(1e-9));
+    // Around x: the area (v 0..30, u 10..20) makes a disc of radius 30 and thickness 10.
+    REQUIRE(world.history.execute(makeSetFeatureText(turn, "axis", "x")));
+    CHECK(volumeOfTurn(world, body) == Approx(kPi * 30.0 * 30.0 * 10.0).epsilon(1e-9));
+    // z stands upright to the plane: not an axis of this sketch.
+    REQUIRE(world.history.execute(makeSetFeatureText(turn, "axis", "z")));
+    const RecomputeResult result = world.calculate();
+    const FeatureState* state = result.state(turn);
+    REQUIRE(state != nullptr);
+    CHECK(state->status != FeatureStatus::ok);
+    REQUIRE(state->issue.has_value());
+    CHECK(state->issue->subject == "axisOutOfPlane");
+}
+
+TEST_CASE("revolve: choosing the axis can be undone", "[revolve][feature][axis]") {
+    RevolveWorld world;
+    const FeatureId sketch = world.addSketch();
+    world.rectangle(sketch);
+    const FeatureId turn = world.addRevolve(sketch, "L1+L2+L3+L4");
+    const BodyId body = world.onlyBody();
+    REQUIRE(world.history.execute(makeSetFeatureText(turn, "axis", "x")));
+    CHECK(volumeOfTurn(world, body) == Approx(kPi * 30.0 * 30.0 * 10.0).epsilon(1e-9));
+    REQUIRE(world.history.undo());
+    CHECK(volumeOfTurn(world, body) == Approx(kPi * (400.0 - 100.0) * 30.0).epsilon(1e-9));
+    REQUIRE(world.history.redo());
+    CHECK(volumeOfTurn(world, body) == Approx(kPi * 30.0 * 30.0 * 10.0).epsilon(1e-9));
+}
+
+TEST_CASE("revolve: a line that is gone is a message, not a guess", "[revolve][feature][axis]") {
+    RevolveWorld world;
+    const FeatureId sketch = world.addSketch();
+    world.rectangle(sketch);
+    world.history.execute(std::make_unique<AddSketchElementCommand>(
+        sketch, SketchElementKind::line, std::vector<SketchPoint>{{0, 0}, {0, 50}}));
+    const FeatureId turn = world.addRevolve(sketch, "L1+L2+L3+L4");
+    REQUIRE(world.history.execute(makeSetFeatureText(turn, "axis", "line:L5")));
+    CHECK(world.calculate().state(turn)->status == FeatureStatus::ok);
+    REQUIRE(world.history.execute(makeRemoveSketchElement(sketch, "L5")));
+    const RecomputeResult result = world.calculate();
+    const FeatureState* state = result.state(turn);
+    REQUIRE(state != nullptr);
+    CHECK(state->status != FeatureStatus::ok);
+    REQUIRE(state->issue.has_value());
+    CHECK(state->issue->subject == "axisMissing");
+}
+
+TEST_CASE("revolve: an area that crosses the axis is refused", "[revolve][feature][axis]") {
+    RevolveWorld world;
+    const FeatureId sketch = world.addSketch();
+    // u -10..10, v 0..30: the default v-axis runs through the middle.
+    for (const auto& side : std::vector<std::vector<SketchPoint>>{{{-10, 0}, {10, 0}},
+                                                                  {{10, 0}, {10, 30}},
+                                                                  {{10, 30}, {-10, 30}},
+                                                                  {{-10, 30}, {-10, 0}}}) {
+        world.history.execute(
+            std::make_unique<AddSketchElementCommand>(sketch, SketchElementKind::line, side));
+    }
+    FeatureDraft draft = defaultDraft(*world.registry.find("revolve"));
+    draft.texts["sketch"] = sketch.value;
+    draft.texts["region"] = "L1+L2+L3+L4";
+    draft.params.at("insideU").expression = "5";
+    draft.params.at("insideV").expression = "15";
+    const FeatureId turn = *world.history.addFeature(std::move(draft));
+    const RecomputeResult result = world.calculate();
+    const FeatureState* state = result.state(turn);
+    REQUIRE(state != nullptr);
+    CHECK(state->status != FeatureStatus::ok);
+    REQUIRE(state->issue.has_value());
+    CHECK(state->issue->subject == "axis");
+}
+
+TEST_CASE("revolve: golden - a half turn about the x-axis (volume, area, box, faces, valid)",
+          "[revolve][feature][axis][golden]") {
+    RevolveWorld world;
+    const FeatureId sketch = world.addSketch();
+    world.rectangle(sketch); // u 10..20, v 0..30
+    const FeatureId turn = world.addRevolve(sketch, "L1+L2+L3+L4");
+    REQUIRE(world.history.execute(makeSetFeatureText(turn, "axis", "x")));
+    REQUIRE(world.history.execute(makeSetFeatureValue(turn, "angle", "180")));
+    const RecomputeResult result = world.calculate();
+    const BodyId body = world.onlyBody();
+    const auto& solid = result.bodies.at(body).solid;
+    const auto report = world.kernel->measure(solid);
+    CHECK(report.valid);
+    // A half disc of radius 30 and thickness 10.
+    CHECK(report.volume == Approx(kPi * 30.0 * 30.0 * 10.0 / 2.0).epsilon(1e-9));
+    // Curved side 2 pi r h / 2, the two half discs, the two caps (rectangles 10 x 30), the flat
+    // side at v = 0 (a ring is not there: the area touches the axis, so it is one more flat face).
+    CHECK(report.area ==
+          Approx(kPi * 30.0 * 10.0 + 2.0 * (kPi * 30.0 * 30.0 / 2.0) + 2.0 * 10.0 * 30.0)
+              .epsilon(1e-6));
+    const auto box = world.kernel->bounds(solid);
+    CHECK(box.min.x == Approx(10.0).margin(1e-6));
+    CHECK(box.max.x == Approx(20.0).margin(1e-6));
+    CHECK(box.max.y == Approx(30.0).margin(1e-6));
+    CHECK(box.min.y == Approx(-30.0).margin(1e-6));
+    CHECK(hasFaceEndingWith(result, body, "capStart"));
+    CHECK(hasFaceEndingWith(result, body, "capEnd"));
+}

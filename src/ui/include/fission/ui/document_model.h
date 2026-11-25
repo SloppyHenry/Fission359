@@ -366,6 +366,11 @@ public:
     /// body it joins or cuts that are parallel to the sketch, `distance` (mm, signed along the
     /// sketch's normal) from the sketch plane. Empty for a pull on the ground.
     Q_INVOKABLE QVariantList extrudeReachFaces(int index) const;
+    /// The axes a turn (step "revolve", AP-2.3d) at `index` can be made about: "auto" (the
+    /// vertical axis of the sketch), the main axes "x", "y", "z" that lie in the plane of its
+    /// sketch, and each straight line of that sketch as "line:<id>". Each entry is
+    /// { value, kind ("auto", "main", "line"), name (the axis letter or the line's id) }.
+    Q_INVOKABLE QVariantList revolveAxes(int index) const;
     Q_INVOKABLE bool setExtrudeReach(int index, const QString& reach, int faceNumber);
 
     // --- putting shapes down (AP-1.5) ---
