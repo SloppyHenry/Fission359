@@ -114,6 +114,21 @@ Rectangle {
         const entry = stepTexts.find(t => t.name === "extent")
         return entry !== undefined ? entry.value : "distance"
     }
+    // A turn (AP-2.3d): the axes to choose from ([{ value, kind, name }], see
+    // DocumentModel.revolveAxes) and the one that is chosen ("auto", "x", "line:L3" ...).
+    signal revolveAxisChosen(string axis)
+    property var revolveAxes: []
+    readonly property bool isRevolve: stepTexts.some(t => t.name === "axis")
+    readonly property string revolveAxis: stepTexts.find(t => t.name === "axis")?.value ?? "auto"
+    function revolveAxisLabel(entry) {
+        if (entry.kind === "main") {
+            return entry.name
+        }
+        if (entry.kind === "line") {
+            return qsTr("Line %1").arg(entry.name)
+        }
+        return qsTr("Upright")
+    }
     // The pull of a sketch area (AP-2.3): what it does with the body the sketch lies on.
     readonly property bool isPull: stepTexts.some(t => t.name === "region")
     readonly property string pullMode: {
@@ -488,6 +503,37 @@ Rectangle {
                     current: root.mirrorAxis
                     model: [{ value: 0, text: "X" }, { value: 1, text: "Y" }, { value: 2, text: "Z" }]
                     onActivated: value => root.mirrorAxisChosen(value)
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.isRevolve
+                heading: qsTr("Turn")
+
+                Txt {
+                    text: qsTr("The area turns about")
+                    color: Theme.fg2
+                }
+
+                Segmented {
+                    objectName: "revolveAxisMain"
+                    accessibleName: qsTr("The area turns about")
+                    current: root.revolveAxis
+                    model: root.revolveAxes.filter(e => e.kind !== "line")
+                                .map(e => ({ value: e.value, text: root.revolveAxisLabel(e) }))
+                    onActivated: value => root.revolveAxisChosen(value)
+                }
+
+                Segmented {
+                    // The straight lines of the sketch (the first six; the chosen one always).
+                    objectName: "revolveAxisLines"
+                    visible: model.length > 0
+                    accessibleName: qsTr("A line of the sketch")
+                    current: root.revolveAxis
+                    model: root.revolveAxes.filter(e => e.kind === "line")
+                                .filter((e, i) => i < 6 || e.value === root.revolveAxis)
+                                .map(e => ({ value: e.value, text: root.revolveAxisLabel(e) }))
+                    onActivated: value => root.revolveAxisChosen(value)
                 }
             }
 

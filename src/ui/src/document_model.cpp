@@ -1109,7 +1109,8 @@ QVariantList DocumentModel::buildStepTexts() const {
                 ? QStringLiteral("flag")
             : spec.name == "mode" || spec.name == "auto" || spec.name == "kind" ||
                     (feature.type == "pattern" && spec.name == "skip") || spec.name == "sketch" ||
-                    spec.name == "region" || spec.name == "extent"
+                    spec.name == "region" || spec.name == "extent" ||
+                    (feature.type == "revolve" && spec.name == "axis")
                 ? QStringLiteral("hidden")
                 : QStringLiteral("text");
         texts.push_back(entry);
@@ -1265,6 +1266,54 @@ void DocumentModel::documentChanged(bool geometryChanged) {
     if (geometryChanged) {
         requestRecompute();
     }
+}
+
+QVariantList DocumentModel::revolveAxes(int index) const {
+    QVariantList list;
+    const auto& features = m_history.document().features();
+    if (index < 0 || index >= static_cast<int>(features.size()) || !m_result) {
+        return list;
+    }
+    const core::Feature& step = features[static_cast<std::size_t>(index)];
+    if (step.type != "revolve") {
+        return list;
+    }
+    const auto sketchWord = step.texts.find("sketch");
+    const auto sketch = sketchWord == step.texts.end()
+                            ? m_result->sketches.end()
+                            : m_result->sketches.find(core::FeatureId{sketchWord->second});
+    if (sketch == m_result->sketches.end() || !sketch->second.plane) {
+        return list;
+    }
+    const auto entry = [](const QString& value, const QString& kind, const QString& name) {
+        QVariantMap map;
+        map[QStringLiteral("value")] = value;
+        map[QStringLiteral("kind")] = kind;
+        map[QStringLiteral("name")] = name;
+        return map;
+    };
+    list.push_back(entry(QStringLiteral("auto"), QStringLiteral("auto"), {}));
+    // A main axis is offered when it runs parallel to the sketch plane and the plane holds the
+    // origin (the same test as the step makes).
+    const core::SketchPlane& plane = *sketch->second.plane;
+    const geo::Point3d normal = plane.normal();
+    const geo::Point3d origin = plane.origin();
+    const double offset = -(origin.x * normal.x + origin.y * normal.y + origin.z * normal.z);
+    const double along[3] = {normal.x, normal.y, normal.z};
+    const char* letters[3] = {"x", "y", "z"};
+    for (int axis = 0; axis < 3; ++axis) {
+        if (std::abs(along[axis]) <= 1e-9 && std::abs(offset) <= 1e-7) {
+            list.push_back(entry(QString::fromLatin1(letters[axis]), QStringLiteral("main"),
+                                 QString::fromLatin1(letters[axis]).toUpper()));
+        }
+    }
+    for (const core::SketchElement& element : sketch->second.data.elements) {
+        if (element.kind == core::SketchElementKind::line && element.points.size() == 2) {
+            list.push_back(entry(QStringLiteral("line:") + toQString(element.id),
+                                 QStringLiteral("line"), toQString(element.id)));
+        }
+    }
+    return list;
 }
 
 QVariantList DocumentModel::extrudeReachFaces(int index) const {
