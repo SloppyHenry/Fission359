@@ -337,7 +337,7 @@ QtObject {
             if (problem.field === "axisOutOfPlane") {
                 return qsTr("This axis does not lie in the sketch.")
             }
-            if (problem.field === "axis") {
+            if (problem.code === "kernelRejected" && problem.field === "axis") {
                 return qsTr("The area lies on both sides of the axis.")
             }
             return problem.numbers && problem.numbers.maxValue !== undefined && problem.field !== ""
