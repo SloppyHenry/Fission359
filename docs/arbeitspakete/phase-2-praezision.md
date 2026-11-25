@@ -50,7 +50,7 @@
 ---
 
 ### AP-2.2 Skizzen-Regeln und Maße (Constraint-Solver)
-**Status:** in Arbeit (2.2a in main seit 2026-11-11, PR #113: Skizzen-Löser hinter der GAL mit PlaneGCS; 2.2b Maße und Regeln in PR #115) · **Größe:** XL · **Abhängigkeiten:** AP-2.1
+**Status:** in Arbeit (2.2a–d in main, zuletzt 2026-11-25, PR #113 und #148: Löser, Maße, Auto-Regeln, Live-Ziehen, Konflikthilfe; Prüfung der Akzeptanzkriterien offen) · **Größe:** XL · **Abhängigkeiten:** AP-2.1
 **Bauanleitung:** [anleitungen/AP-2.2.md](anleitungen/AP-2.2.md)
 
 > Vor dem Start in Teilpakete zerlegen (Solver-Anbindung, Auto-Regeln, Maße, Diagnose-UI).
@@ -71,7 +71,7 @@
 ---
 
 ### AP-2.3 Aus Skizzen werden Körper
-**Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-2.2, AP-2.10, AP-1.7
+**Status:** in Arbeit (Ziehen und Drehkörper in main seit 2026-11-25, PR #134 und #145; offen: Entlang Pfad, Übergang, Pfeil-Griff ohne Werkzeugwahl, Achse des Drehkörpers wählen) · **Größe:** L · **Abhängigkeiten:** AP-2.2, AP-2.10, AP-1.7
 **Bauanleitung:** [anleitungen/AP-2.3.md](anleitungen/AP-2.3.md)
 
 **Umfang:**
@@ -136,7 +136,7 @@
 ---
 
 ### AP-2.7 Bohrungen, Gewinde und Schraubverbindungen
-**Status:** offen · **Größe:** L · **Abhängigkeiten:** AP-2.3, AP-2.10, AP-1.6
+**Status:** in Arbeit (Bohrungs-Assistent in main seit 2026-11-24, PR #134; offen: echte Gewinde, Lochkorrektur, Griffe, gedruckte Testteile) · **Größe:** L · **Abhängigkeiten:** AP-2.3, AP-2.10, AP-1.6
 **Bauanleitung:** [anleitungen/AP-2.7.md](anleitungen/AP-2.7.md)
 
 **Umfang:**
@@ -153,7 +153,7 @@
 ---
 
 ### AP-2.8 Muster und Spiegeln
-**Status:** offen · **Größe:** M · **Abhängigkeiten:** AP-2.3, AP-2.10, AP-2.12, AP-1.7
+**Status:** in Arbeit (Muster Reihe und Kreis, Spiegeln von Körpern in main seit 2026-11-25, PR #149; offene Reste in der Bauanleitung) · **Größe:** M · **Abhängigkeiten:** AP-2.3, AP-2.10, AP-2.12, AP-1.7
 **Bauanleitung:** [anleitungen/AP-2.8.md](anleitungen/AP-2.8.md)
 
 **Umfang:**
@@ -244,12 +244,12 @@
 
 **Stand Schnittansicht (2026-11-25, noch nicht erledigt):**
 - Gebaut: Kernel `sectionMesh` (exakter Schnitt Körper ∩ Ebenenfläche, Golden-Tests); Renderer schneidet in allen Körper-Durchläufen ab (Körper, Kanten, Schatten, Tiefe/Normalen, Auswahlfärbung, GPU-Pick, CPU-Strahl), Bett, Raster, Griffe bleiben ganz; Befehl „Schnittansicht“ (Ansicht-Menü, Befehlssuche) mit Karte (Achse X/Y/Z, Lage als Zahlenfeld, Schieberegler, Seite tauschen, Schließen; Esc schließt); Deckfläche je Körper im Hintergrund, mit diagonaler Schraffur, nicht anklickbar. Nichts davon ist Teil des Projekts (kein Undo, nicht gespeichert).
-- Offene Reste: Pfeil-Griff an der Ebene in der 3D-Ansicht (Regel 1; bisher nur Regler und Zahlenfeld in der Karte); `app_section` ist neu und lief noch nicht (nur in der CI); Hilfsebenen-Ausblendung und Wireframe-Modus mit Deckfläche nicht eigens geprüft; Abbrechen eines laufenden Schnitts gibt es nicht (nur Überholen).
+- Offene Reste: Pfeil-Griff an der Ebene in der 3D-Ansicht (Regel 1; bisher nur Regler und Zahlenfeld in der Karte); `app_section` läuft in der CI; Hilfsebenen-Ausblendung und Wireframe-Modus mit Deckfläche nicht eigens geprüft; Abbrechen eines laufenden Schnitts gibt es nicht (nur Überholen).
 
 ---
 
 ### AP-2.12 Hilfsgeometrie
-**Status:** offen · **Größe:** S · **Abhängigkeiten:** AP-2.1, AP-2.10
+**Status:** in Arbeit (Hilfsebenen in main seit 2026-11-24, PR #134; offen: Griffe, Skizze auf Hilfsebene, Hilfsachsen und Hilfspunkte) · **Größe:** S · **Abhängigkeiten:** AP-2.1, AP-2.10
 **Bauanleitung:** [anleitungen/AP-2.12.md](anleitungen/AP-2.12.md)
 
 **Umfang:**
