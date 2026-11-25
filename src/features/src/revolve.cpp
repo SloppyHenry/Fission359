@@ -6,7 +6,9 @@
 // (word "region", as `SketchRegionInfo::id`); the recompute passes the sketches of the earlier
 // steps and puts the sketch into the cache key, so a changed sketch is calculated again. The axis
 // is given in sketch coordinates: a point on it ("axisU", "axisV") and its direction ("axisDx",
-// "axisDy"); the default is the v-axis through the sketch origin.
+// "axisDy"); the default is the v-axis through the sketch origin. The text "axis" says which axis
+// is meant (AP-2.3d): "auto" (the default, the numbers above), "x", "y" or "z" (a main axis, if
+// it lies in the plane of the sketch) or "line:<id>" (a straight line of the own sketch).
 
 #include <cmath>
 #include <memory>
@@ -23,6 +25,61 @@ namespace fission::features {
 namespace {
 
 using namespace fission::core;
+
+// The axis the step asks for, in sketch coordinates. Throws `geo::GeometryError` with the subject
+// "axisMissing" (the line is gone or the word is not known) or "axisOutOfPlane" (a main axis that
+// does not lie in the plane of the sketch); never guesses.
+geo::RevolveSpec axisSpecOf(const ExecuteInput& input, const SketchResult& sketch,
+                            const geo::SketchFrame& frame) {
+    geo::RevolveSpec spec{{valueOf(input.params, "axisU"), valueOf(input.params, "axisV")},
+                          {valueOf(input.params, "axisDx"), valueOf(input.params, "axisDy")},
+                          valueOf(input.params, "angle")};
+    const std::string axis = textOf(input.feature, "axis", "auto");
+    if (axis == "auto") {
+        return spec;
+    }
+    if (axis.starts_with("line:")) {
+        const std::string id = axis.substr(5);
+        for (const SketchElement& element : sketch.data.elements) {
+            if (element.id != id || element.kind != SketchElementKind::line ||
+                element.points.size() != 2) {
+                continue;
+            }
+            const double dx = element.points[1].u - element.points[0].u;
+            const double dy = element.points[1].v - element.points[0].v;
+            if (!std::isfinite(dx) || !std::isfinite(dy) || std::hypot(dx, dy) < 1e-9) {
+                break;
+            }
+            spec.axisPoint = {element.points[0].u, element.points[0].v};
+            spec.axisDirection = {dx, dy};
+            return spec;
+        }
+        throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                 "revolve: the line of the axis is not there any more",
+                                 "axisMissing");
+    }
+    if (axis != "x" && axis != "y" && axis != "z") {
+        throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                 "revolve: unknown axis '" + axis + "'", "axisMissing");
+    }
+    const geo::Point3d d{axis == "x" ? 1.0 : 0.0, axis == "y" ? 1.0 : 0.0, axis == "z" ? 1.0 : 0.0};
+    const auto dot = [](const geo::Point3d& a, const geo::Point3d& b) {
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+    };
+    const geo::Point3d normal{frame.u.y * frame.v.z - frame.u.z * frame.v.y,
+                              frame.u.z * frame.v.x - frame.u.x * frame.v.z,
+                              frame.u.x * frame.v.y - frame.u.y * frame.v.x};
+    const geo::Point3d toOrigin{-frame.origin.x, -frame.origin.y, -frame.origin.z};
+    // The axis lies in the plane when it runs parallel to it and the plane holds the origin.
+    if (std::abs(dot(d, normal)) > 1e-9 || std::abs(dot(toOrigin, normal)) > 1e-7) {
+        throw geo::GeometryError(geo::GeometryErrorCode::invalidInput,
+                                 "revolve: the main axis does not lie in the sketch plane",
+                                 "axisOutOfPlane");
+    }
+    spec.axisPoint = {dot(toOrigin, frame.u), dot(toOrigin, frame.v)};
+    spec.axisDirection = {dot(d, frame.u), dot(d, frame.v)};
+    return spec;
+}
 
 class RevolveType final : public FeatureType {
 public:
@@ -45,7 +102,7 @@ public:
 
     std::vector<TextFieldSpec> texts() const override {
         // "sketch": the id of the sketch step; "region": the region's id ("L1+L2+L3+L4").
-        return {{"sketch", ""}, {"region", ""}, {"mode", "new"}};
+        return {{"sketch", ""}, {"region", ""}, {"mode", "new"}, {"axis", "auto"}};
     }
 
     std::optional<FeatureId> readsSketch(const Feature& feature) const override {
@@ -138,10 +195,7 @@ public:
 
         const SketchPlane& plane = *sketch->plane;
         const geo::SketchFrame frame{plane.origin(), plane.uAxis(), plane.vAxis()};
-        const geo::RevolveSpec spec{
-            {valueOf(input.params, "axisU"), valueOf(input.params, "axisV")},
-            {valueOf(input.params, "axisDx"), valueOf(input.params, "axisDy")},
-            valueOf(input.params, "angle")};
+        const geo::RevolveSpec spec = axisSpecOf(input, *sketch, frame);
         geo::NamedSolid made =
             context.kernel.revolveRegion(built.curves, {inside.u, inside.v}, frame, spec);
 

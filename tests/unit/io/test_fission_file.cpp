@@ -622,6 +622,41 @@ TEST_CASE("the version 5 fixture files with a pattern and a revolve still open a
     }
 }
 
+TEST_CASE("a revolve step with a chosen axis survives saving and opening", "[io][revolve]") {
+    World world;
+    TempFolder folder;
+    Document document(1001);
+    FeatureDraft sketchDraft = defaultDraft(*world.registry.find("sketch"));
+    sketchDraft.texts["basePlane"] = "xy";
+    const FeatureId sketch = *document.addFeature(std::move(sketchDraft));
+    document.addSketchElement(sketch, SketchElementKind::line, {{10, 0}, {20, 0}});
+    document.addSketchElement(sketch, SketchElementKind::line, {{20, 0}, {20, 30}});
+    document.addSketchElement(sketch, SketchElementKind::line, {{20, 30}, {10, 30}});
+    document.addSketchElement(sketch, SketchElementKind::line, {{10, 30}, {10, 0}});
+    document.addSketchElement(sketch, SketchElementKind::line, {{5, 0}, {5, 50}});
+    FeatureDraft turn = defaultDraft(*world.registry.find("revolve"));
+    turn.texts["sketch"] = sketch.value;
+    turn.texts["region"] = "L1+L2+L3+L4";
+    turn.texts["axis"] = "line:L5";
+    turn.params.at("insideU").expression = "15";
+    turn.params.at("insideV").expression = "15";
+    document.addFeature(std::move(turn));
+    const fs::path file = folder.path / "axis.fission";
+    REQUIRE(save(document, file, SaveExtras{{}, "0.1.0", "2026-11-25T12:00:00Z"}).ok);
+
+    const OpenResult opened = open(file);
+    REQUIRE(opened.document);
+    CHECK(opened.problems.empty());
+    const Feature& step = opened.document->features().back();
+    CHECK(step.texts.at("axis") == "line:L5");
+    RecomputeCache cache;
+    const auto result = recompute(*opened.document, world.registry, *world.kernel, cache);
+    REQUIRE(result.has_value());
+    REQUIRE(result->bodies.size() == 1);
+    CHECK(world.kernel->measure(result->bodies.begin()->second.solid).volume ==
+          Approx(3.14159265358979 * (15.0 * 15.0 - 5.0 * 5.0) * 30.0).epsilon(1e-6));
+}
+
 // --- the examples that come with the program (AP-1.11d) -------------------------------------
 
 namespace {
