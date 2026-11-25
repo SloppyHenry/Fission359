@@ -30,6 +30,7 @@ add_executable(fission_unit_tests
   features/test_push_face.cpp
   features/test_face_ops.cpp
   features/test_pattern_step.cpp
+  features/test_mirror_step.cpp
   features/test_helper_plane.cpp
   features/test_hole_step.cpp
   features/test_shell_draft.cpp
@@ -109,6 +110,8 @@ add_executable(fission_unit_tests
   ui/test_messages.cpp
   ui/test_blend_edges.cpp
   ui/test_push_face_ui.cpp
+  ui/test_pattern_ui.cpp
+  ui/test_mirror_ui.cpp
   interaction/test_drag.cpp
   interaction/test_snap.cpp
   interaction/test_distances.cpp

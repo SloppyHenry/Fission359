@@ -46,3 +46,16 @@ Loch-Durchmesser ändern → alle ändern sich.
 
 ## Nicht tun
 Kein Kaleidoskop-Live-Modus (AP-4.9). Keine Muster mit unterschiedlichen Größen je Exemplar (später „Variieren“).
+
+## Stand und offene Reste
+Umgesetzt: Muster Reihe und Kreis (Schritt `pattern`: Anzahl, Abstand bzw. Gesamtwinkel, Richtung bzw. Achse,
+Auslassen je Exemplar, Pfeil für den Abstand der Reihe, Namen der Exemplare mit `[i]`) und Spiegeln eines Körpers
+(Schritt `mirror`: Ebene als Punkt und Normale, Ergebnis `copy`, `merge` oder `only`; die Art des Ergebnisses wird beim
+Anlegen gewählt, weil sie die Zahl der Ausgabekörper des Schritts festlegt; Spiegelbild-Flächen tragen `[mirror]`).
+Offen:
+- Pfad-Muster und 2D-Reihe (Raster) als Schritt; die Rechnung (`geo::gridPattern`) liegt vor.
+- Muster und Spiegeln von Schritten (Löcher, Rundungen) statt von Körpern.
+- Klick auf ein Exemplar in der Ansicht zum Auslassen; Ring-Griff für Anzahl und Winkel des Kreises.
+- Spiegeln an einer gewählten Fläche oder Hilfsebene; die Ebene steht bisher senkrecht zu X, Y oder Z.
+- Der Anker des Pfeils (Körpermitte beim Anlegen) folgt dem Original nicht, wenn es später verschoben wird.
+- Moduswechsel beim Spiegeln nach dem Anlegen; Kreis mit einem Exemplar und Teilwinkel hat keine eigene Meldung.
