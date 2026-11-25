@@ -55,3 +55,12 @@ Wir wählen **Option 1**, weil sie als einzige ohne zweite Oberfläche und ohne 
 - OCCT unter Emscripten: offizielle Unterstützung seit 7.x (`BUILD_LIBRARY_TYPE=Static`, Emscripten-Toolchain), Projekt opencascade.js.
 - Manifold hat einen eigenen WebAssembly-Build (manifold-3d auf npm).
 - coi-serviceworker: https://github.com/gzuidhof/coi-serviceworker
+
+**Nachtrag (2026-11-11):** Abweichung von „gleiche Qt-Version wie auf dem Desktop“: Der Browser nutzt Qt 6.12 mit Emscripten 5.0.5,
+weil das zu Qt 6.11 gehörende Emscripten 4.0.7 mit WebAssembly-Ausnahmen fehlerhaften Code erzeugt (AP-6.7 Festlegung 10).
+
+## Nachtrag: Ausnahme-Format (AP-6.7)
+- Native WebAssembly-Ausnahmen (`-fwasm-exceptions`, beide Formate) scheiterten bei den großen Programmen: V8 lehnte `br_table` ab („label arity inconsistent“), Binaryen brach bei den Konstruktoren ab. `-fno-jump-tables` half nicht.
+- Deshalb nutzt der Browser-Bau C++-Ausnahmen über JavaScript: `-fexceptions` und `-sSUPPORT_LONGJMP=emscripten` in Triplet und Projekt-CMake, überall gleich. Das ist auch die Voreinstellung der Qt-for-WebAssembly-Pakete (bei den Qt-Teilpaketen AP-6.7b2 bis b4 prüfen). Kosten: Code mit Ausnahmen ist langsamer und größer; Fehlerpfade sind selten.
+- Der Link läuft wieder mit der normalen Optimierung (Binaryen); der frühere `-O0`-Notbehelf entfällt. Alle 715 Tests des Presets `web-core` laufen unter Node 24.
+- Der Cache-Schlüssel enthält den Hash von `cmake/vcpkg-triplets/**`; die Änderung erzwingt den Neubau aller Bibliotheken.

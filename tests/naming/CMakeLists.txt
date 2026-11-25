@@ -23,10 +23,12 @@ add_executable(fission_naming_tests
   test_random.cpp)
 target_link_libraries(fission_naming_tests PRIVATE fission_naming_proto Catch2::Catch2WithMain)
 fission_apply_compiler_options(fission_naming_tests)
+# AP-6.7a: no-op unless Emscripten (Node emulator, NODERAWFS - see FissionCompilerOptions).
+fission_web_test_options(fission_naming_tests)
 
 # The sensitivity runs (same random chains with parts of the design switched off) take minutes;
 # run them by hand.
-catch_discover_tests(fission_naming_tests TEST_PREFIX "naming: " TEST_SPEC "~[sensitivity]")
+catch_discover_tests(fission_naming_tests TEST_PREFIX "naming: " TEST_SPEC "~[sensitivity]" ${_fission_discovery})
 
 # OpenCASCADE's own naming framework (OCAF / TNaming), linked only here. The executable also
 # carries the LeakSanitizer exception for a leak inside OpenCASCADE (see test_ocaf.cpp).
@@ -36,4 +38,5 @@ target_link_libraries(fission_ocaf_tests PRIVATE
   Catch2::Catch2WithMain
   ${FISSION_OCCT_OCAF_TARGETS})
 fission_apply_compiler_options(fission_ocaf_tests)
-catch_discover_tests(fission_ocaf_tests TEST_PREFIX "naming: ")
+fission_web_test_options(fission_ocaf_tests)
+catch_discover_tests(fission_ocaf_tests TEST_PREFIX "naming: " ${_fission_discovery})

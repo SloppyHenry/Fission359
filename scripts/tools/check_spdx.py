@@ -18,6 +18,8 @@ SOURCE_SUFFIXES = {".cpp", ".cc", ".h", ".hpp", ".hxx", ".qml", ".cmake", ".py",
 SOURCE_NAMES = {"CMakeLists.txt"}
 SKIPPED_DIRS = {".git", "build", "out", "third_party", "vcpkg_installed", "fixtures",
                 "__pycache__", ".venv"}
+# vcpkg overlay ports are copies of vcpkg's own files under vcpkg's license (MIT).
+SKIPPED_PREFIXES = {("cmake", "ports")}
 
 
 def is_script_without_suffix(path: Path) -> bool:
@@ -40,6 +42,8 @@ def source_files(root: Path):
         # only .github is ours.
         if any(part in SKIPPED_DIRS or (part.startswith(".") and part != ".github")
                for part in parts[:-1]):
+            continue
+        if any(parts[:len(prefix)] == prefix for prefix in SKIPPED_PREFIXES):
             continue
         if (path.suffix in SOURCE_SUFFIXES or path.name in SOURCE_NAMES
                 or is_script_without_suffix(path)):

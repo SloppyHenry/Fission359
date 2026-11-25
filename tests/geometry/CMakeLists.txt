@@ -23,5 +23,7 @@ target_link_libraries(fission_geometry_tests PRIVATE
 target_compile_definitions(fission_geometry_tests PRIVATE
   FISSION_TEST_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures")
 fission_apply_compiler_options(fission_geometry_tests)
+# AP-6.7a: no-op unless Emscripten (Node emulator, NODERAWFS - see FissionCompilerOptions).
+fission_web_test_options(fission_geometry_tests)
 
-catch_discover_tests(fission_geometry_tests TEST_PREFIX "geometry: ")
+catch_discover_tests(fission_geometry_tests TEST_PREFIX "geometry: " ${_fission_discovery})
