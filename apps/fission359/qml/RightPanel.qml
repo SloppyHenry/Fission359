@@ -74,6 +74,29 @@ Rectangle {
     signal dragStarted(string name)
     signal dragFinished(bool accepted)
     signal textCommitted(string name, string text)
+    // The cursor goes into the field of the value `name` (or the first value field when there is
+    // none of that name), its text selected.
+    function focusValue(name) {
+        const wanted = "field_" + name
+        let first = null
+        const find = item => {
+            for (const child of item.children) {
+                if (child.objectName === wanted) {
+                    return child
+                }
+                if (first === null && child.objectName.startsWith("field_") && child.focusAndSelect !== undefined) {
+                    first = child
+                }
+                const found = find(child)
+                if (found !== null) {
+                    return found
+                }
+            }
+            return null
+        }
+        const field = find(root) ?? first
+        field?.focusAndSelect()
+    }
     signal holeScrewChosen(string size, string kind)
     // A drilled hole (AP-2.7c): the screw it is for, and what the hole is to take.
     readonly property bool isDrill: stepTexts.some(t => t.name === "kind")
