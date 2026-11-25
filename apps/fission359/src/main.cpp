@@ -45,6 +45,7 @@
 #include "fission/core/version.h"
 #include "fission/geo/occt/kernel.h"
 #include "fission/geo/occt/layer.h"
+#include "fission/geo/sketch/planegcs_solver.h"
 #include "fission/render/benchmark_scene.h"
 #include "fission/render/scene.h"
 #include "fission/services/autosave.h"
@@ -72,6 +73,7 @@
 #include "fission/ui/preferences.h"
 #include "fission/ui/rotate_controller.h"
 #include "fission/ui/scale_controller.h"
+#include "fission/ui/section_controller.h"
 #include "fission/ui/selection_controller.h"
 #include "fission/ui/shape_previews.h"
 #include "fission/ui/sketch_controller.h"
@@ -527,7 +529,10 @@ int main(int argc, char* argv[]) {
     kernelOptions.fontFiles = bundledFontFiles();
     std::shared_ptr<const fission::geo::GeometryKernel> kernel =
         fission::geo::occt::makeKernel(kernelOptions);
-    fission::ui::DocumentModel documentModel(kernel);
+    // The one sketch solver of the application: the document model and its engine use it.
+    std::shared_ptr<const fission::geo::SketchSolver> sketchSolver =
+        fission::geo::sketch::makePlaneGcsSolver();
+    fission::ui::DocumentModel documentModel(kernel, nullptr, sketchSolver);
     documentModel.setNumbers(&numbers);
     documentModel.addDemoBox();
     documentModel.waitForCalculation();
@@ -600,6 +605,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Selection", &selection);
     fission::ui::MeasureController measure(&documentModel, &selection, kernel);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Measure", &measure);
+    fission::ui::SectionController section(&documentModel, kernel);
+    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "SectionView", &section);
     fission::ui::SketchController sketch(&documentModel, &selection);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Sketch", &sketch);
     fission::ui::PlacementController placement(&documentModel);
@@ -677,6 +684,7 @@ int main(int argc, char* argv[]) {
         scale.attach(viewport);
         distances.attach(viewport);
         measure.attach(viewport);
+        section.attach(viewport);
         sketch.attach(viewport);
         align.attach(viewport);
         distances.attachGizmo(&gizmo);

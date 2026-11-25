@@ -33,6 +33,24 @@ Point3d scaled(const Point3d& a, double factor) noexcept {
 
 constexpr std::array<char, sketchElementKindCount> idLetters{'P', 'L', 'C', 'A', 'S'};
 
+/// The number of a rule or measure id ("R12" -> 12); nullopt when it is not of that form.
+std::optional<int> parseRuleNumber(std::string_view id) noexcept {
+    if (id.size() < 2 || id.front() != 'R') {
+        return std::nullopt;
+    }
+    long long number = 0;
+    for (const char c : id.substr(1)) {
+        if (c < '0' || c > '9' || number > 100000000) {
+            return std::nullopt;
+        }
+        number = number * 10 + (c - '0');
+    }
+    if (number < 1 || id[1] == '0') {
+        return std::nullopt;
+    }
+    return static_cast<int>(number);
+}
+
 } // namespace
 
 // --- plane ---------------------------------------------------------------------------------
@@ -201,12 +219,121 @@ std::optional<ParsedSketchId> parseSketchId(std::string_view id) noexcept {
                           static_cast<int>(number)};
 }
 
+// --- rules and measures --------------------------------------------------------------------
+
+std::string_view sketchRuleKindWord(geo::SketchRuleKind kind) {
+    switch (kind) {
+    case geo::SketchRuleKind::horizontal:
+        return "horizontal";
+    case geo::SketchRuleKind::vertical:
+        return "vertical";
+    case geo::SketchRuleKind::parallel:
+        return "parallel";
+    case geo::SketchRuleKind::perpendicular:
+        return "perpendicular";
+    case geo::SketchRuleKind::tangent:
+        return "tangent";
+    case geo::SketchRuleKind::equal:
+        return "equal";
+    case geo::SketchRuleKind::symmetric:
+        return "symmetric";
+    case geo::SketchRuleKind::midpoint:
+        return "midpoint";
+    case geo::SketchRuleKind::fixed:
+        return "fixed";
+    case geo::SketchRuleKind::pointOnCurve:
+        return "pointOnCurve";
+    case geo::SketchRuleKind::concentric:
+        return "concentric";
+    case geo::SketchRuleKind::coincident:
+        return "coincident";
+    }
+    return "horizontal";
+}
+
+std::optional<geo::SketchRuleKind> sketchRuleKindFromWord(std::string_view word) {
+    constexpr std::array kinds{geo::SketchRuleKind::horizontal, geo::SketchRuleKind::vertical,
+                               geo::SketchRuleKind::parallel,   geo::SketchRuleKind::perpendicular,
+                               geo::SketchRuleKind::tangent,    geo::SketchRuleKind::equal,
+                               geo::SketchRuleKind::symmetric,  geo::SketchRuleKind::midpoint,
+                               geo::SketchRuleKind::fixed,      geo::SketchRuleKind::pointOnCurve,
+                               geo::SketchRuleKind::concentric, geo::SketchRuleKind::coincident};
+    for (const geo::SketchRuleKind kind : kinds) {
+        if (word == sketchRuleKindWord(kind)) {
+            return kind;
+        }
+    }
+    return std::nullopt;
+}
+
+std::string_view sketchMeasureKindWord(geo::SketchMeasureKind kind) {
+    switch (kind) {
+    case geo::SketchMeasureKind::length:
+        return "length";
+    case geo::SketchMeasureKind::distance:
+        return "distance";
+    case geo::SketchMeasureKind::horizontalDistance:
+        return "horizontalDistance";
+    case geo::SketchMeasureKind::verticalDistance:
+        return "verticalDistance";
+    case geo::SketchMeasureKind::radius:
+        return "radius";
+    case geo::SketchMeasureKind::diameter:
+        return "diameter";
+    case geo::SketchMeasureKind::angle:
+        return "angle";
+    }
+    return "length";
+}
+
+std::optional<geo::SketchMeasureKind> sketchMeasureKindFromWord(std::string_view word) {
+    constexpr std::array kinds{geo::SketchMeasureKind::length,
+                               geo::SketchMeasureKind::distance,
+                               geo::SketchMeasureKind::horizontalDistance,
+                               geo::SketchMeasureKind::verticalDistance,
+                               geo::SketchMeasureKind::radius,
+                               geo::SketchMeasureKind::diameter,
+                               geo::SketchMeasureKind::angle};
+    for (const geo::SketchMeasureKind kind : kinds) {
+        if (word == sketchMeasureKindWord(kind)) {
+            return kind;
+        }
+    }
+    return std::nullopt;
+}
+
+bool sketchReferenceExists(const SketchData& data, std::string_view ref) noexcept {
+    const std::size_t dot = ref.find('.');
+    if (dot == std::string_view::npos) {
+        return data.find(ref) != nullptr;
+    }
+    const std::string_view id = ref.substr(0, dot);
+    const std::string_view indexText = ref.substr(dot + 1);
+    if (indexText.empty()) {
+        return false;
+    }
+    std::size_t index = 0;
+    for (const char c : indexText) {
+        if (c < '0' || c > '9' || index > 100000000) {
+            return false;
+        }
+        index = index * 10 + static_cast<std::size_t>(c - '0');
+    }
+    const SketchElement* element = data.find(id);
+    return element != nullptr && index < element->points.size();
+}
+
 // --- data ----------------------------------------------------------------------------------
 
 std::string SketchData::allocateId(SketchElementKind kind) {
     int& last = lastNumber[static_cast<std::size_t>(kind)];
     ++last;
     return std::string(1, sketchIdLetter(kind)) + std::to_string(last);
+}
+
+std::string SketchData::allocateRuleId() {
+    ++lastRuleNumber;
+    return "R" + std::to_string(lastRuleNumber);
 }
 
 std::optional<std::size_t> SketchData::indexOf(std::string_view id) const noexcept {
@@ -241,9 +368,24 @@ bool SketchData::consistent() const {
     if (std::ranges::any_of(lastNumber, [](int n) { return n < 0; }) || lastRuleNumber < 0) {
         return false;
     }
+    // Rules and measures share the "R" ids. A rule's kind was free text before the solver read
+    // it, so only its references are checked; a measure must also name a known kind.
+    const auto referencesExist = [this](const std::vector<std::string>& refs) {
+        return std::ranges::all_of(
+            refs, [this](const std::string& ref) { return sketchReferenceExists(*this, ref); });
+    };
     std::set<std::string> ruleIds;
     for (const SketchRule& rule : rules) {
-        if (rule.id.empty() || !ruleIds.insert(rule.id).second) {
+        const auto number = parseRuleNumber(rule.id);
+        if (!number || *number > lastRuleNumber || !ruleIds.insert(rule.id).second ||
+            !referencesExist(rule.elements)) {
+            return false;
+        }
+    }
+    for (const SketchMeasure& measure : measures) {
+        const auto number = parseRuleNumber(measure.id);
+        if (!number || *number > lastRuleNumber || !ruleIds.insert(measure.id).second ||
+            !sketchMeasureKindFromWord(measure.kind) || !referencesExist(measure.elements)) {
             return false;
         }
     }
@@ -275,6 +417,13 @@ std::string SketchData::fingerprint() const {
         for (const std::string& id : rule.elements) {
             text += "," + id;
         }
+    }
+    for (const SketchMeasure& measure : measures) {
+        text += "%" + measure.id + ":" + measure.kind;
+        for (const std::string& id : measure.elements) {
+            text += "," + id;
+        }
+        text += ";" + measure.value.expression + ";" + number(measure.lastValue);
     }
     return text;
 }

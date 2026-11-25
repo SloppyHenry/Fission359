@@ -6,6 +6,7 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 color;
 
 layout(location = 0) out vec4 vColor;
+layout(location = 1) out vec3 vWorld;
 
 layout(std140, binding = 0) uniform Params {
     mat4 mvp;
@@ -23,6 +24,7 @@ layout(std140, binding = 0) uniform Params {
     vec4 bedSize;
     vec4 bodyOverride; // rgb, a = 1: draw every body in this colour
     vec4 view;       // x, y: size of the image in pixels, z: 1 if ambient occlusion is on
+    vec4 clip;       // xyz: normal of the cut plane, w: offset; what lies beyond (dot(n, p) > w) is cut away. All 0: off
 } u;
 
 out gl_PerVertex {
@@ -31,5 +33,6 @@ out gl_PerVertex {
 
 void main() {
     vColor = color;
+    vWorld = position;
     gl_Position = u.mvp * vec4(position, 1.0);
 }

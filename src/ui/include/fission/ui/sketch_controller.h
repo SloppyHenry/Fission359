@@ -7,13 +7,17 @@
 #include <QObject>
 #include <QPointer>
 #include <QString>
+#include <QStringList>
+#include <QVariantList>
 #include <QVariantMap>
 
 #include <array>
+#include <memory>
 #include <optional>
 #include <vector>
 
 #include "fission/core/sketch.h"
+#include "fission/core/sketch_solve.h"
 #include "fission/features/sketch_regions.h"
 #include "fission/interaction/sketch_edit.h"
 #include "fission/interaction/sketch_offset.h"
@@ -88,6 +92,8 @@ class SketchController : public QObject {
     Q_PROPERTY(QColor gridColour MEMBER m_gridColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor gridMajorColour MEMBER m_gridMajorColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor elementColour MEMBER m_elementColour NOTIFY coloursChanged)
+    /// The colour of the elements that can still move (AP-2.2c1).
+    Q_PROPERTY(QColor freeColour MEMBER m_freeColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor guideColour MEMBER m_guideColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor markerColour MEMBER m_markerColour NOTIFY coloursChanged)
     Q_PROPERTY(QColor draftColour MEMBER m_draftColour NOTIFY coloursChanged)
@@ -109,6 +115,26 @@ class SketchController : public QObject {
     Q_PROPERTY(QColor regionColour MEMBER m_regionColour NOTIFY coloursChanged)
     /// A number that belongs to the last `notice` (the biggest radius that fits, in mm).
     Q_PROPERTY(double noticeNumber READ noticeNumber NOTIFY noticeNumberChanged)
+    /// The ids of the chosen elements (no tool on; at most two, for a measure, AP-2.2b).
+    Q_PROPERTY(QStringList selectedElements READ selectedElements NOTIFY selectionChanged)
+    /// The labels of the measures of the sketch for the view: one map per measure with
+    /// { id, kind, expression (as typed), text, x, y, z (the anchor in space), conflict }.
+    Q_PROPERTY(QVariantList measureLabels READ measureLabels NOTIFY measuresChanged)
+    /// The marks of the rules of the sketch for the view (AP-2.2c3): one map per rule with
+    /// { id, kind, x, y, z (the anchor in space), slot (how many earlier marks share the same
+    /// anchor element, so the view can place them side by side), conflict, doubled }.
+    Q_PROPERTY(QVariantList ruleMarks READ ruleMarks NOTIFY measuresChanged)
+    /// How many elements can still move (AP-2.2c1); drawn in `freeColour`.
+    Q_PROPERTY(int freeCount READ freeCount NOTIFY freedomChanged)
+    /// True when the sketch has elements and nothing can move any more (AP-2.2c1).
+    Q_PROPERTY(bool fullyFixed READ fullyFixed NOTIFY freedomChanged)
+    /// The rules and measures that contradict each other (AP-2.2d), in the solver's order: one
+    /// map per entry with { id, kind, measure (true for a measure), text (the measure's label) }.
+    Q_PROPERTY(QVariantList conflicts READ conflicts NOTIFY solveStateChanged)
+    /// The rules and measures that follow from the others already, the same maps (AP-2.2d).
+    Q_PROPERTY(QVariantList doubled READ doubled NOTIFY solveStateChanged)
+    /// The solver found no solution for another reason, no contradiction named (AP-2.2d).
+    Q_PROPERTY(bool solveFailed READ solveFailed NOTIFY solveStateChanged)
 
 public:
     SketchController(DocumentModel* model, SelectionController* selection,
@@ -141,6 +167,8 @@ public:
     QVariantMap readout() const { return m_readout; }
     bool planeReady() const noexcept { return m_mode == Mode::sketching && m_planeReady; }
     QString step() const { return m_step; }
+    /// A point of the sketch is being dragged live (no tool on, AP-2.2c4).
+    bool draggingPoint() const noexcept { return m_pointDrag != nullptr; }
     QVariantMap snap() const { return m_snapMap; }
     double gridStep() const noexcept { return m_gridStep; }
 
@@ -172,9 +200,10 @@ public:
     Q_INVOKABLE void chooseTool(const QString& name, int variant = -1);
     Q_INVOKABLE void toggleHelperLine();
     /// A click on the plane along this line of sight (`alt`: the key that makes a helper line is
-    /// held). The point is the one the pointer catches (Shift off). The view calls this for each
-    /// click; tests call it directly.
-    void clickAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre, bool alt = false);
+    /// held, `add`: Shift is held, the click adds to the chosen elements). The point is the one the
+    /// pointer catches (Shift off). The view calls this for each click; tests call it directly.
+    void clickAt(const interaction::PlaneRay& ray, double pixelsPerMillimetre, bool alt = false,
+                 bool add = false);
     /// A double click: ends a chain of lines.
     Q_INVOKABLE void doubleClick();
     /// The left button goes down / the pointer moves with it held / it goes up (AP-2.1c2). Pressed
@@ -233,6 +262,47 @@ public:
     Q_INVOKABLE QVariantMap regionPull() const;
     /// The elements of the sketch as the controller knows them (the document's; for tests).
     const std::vector<core::SketchElement>& elements() const noexcept { return m_elements; }
+    /// The ids of the chosen elements (no tool on, in the order they were chosen).
+    QStringList selectedElements() const;
+    /// The labels of the measures of the sketch, one map per measure (see the property).
+    QVariantList measureLabels() const;
+    /// The marks of the rules of the sketch, one map per rule (see the property, AP-2.2c3).
+    QVariantList ruleMarks() const;
+    /// The contradicting rules and measures, one map per entry (see the property, AP-2.2d).
+    QVariantList conflicts() const;
+    /// The doubled (redundant) rules and measures, one map per entry (see the property, AP-2.2d).
+    QVariantList doubled() const;
+    /// True when the solver found no solution for another reason (AP-2.2d).
+    bool solveFailed() const noexcept { return m_solveFailed; }
+    /// How many elements can still move (AP-2.2c1).
+    int freeCount() const noexcept { return static_cast<int>(m_movable.size()); }
+    /// True when the sketch has elements and nothing can move any more (AP-2.2c1).
+    bool fullyFixed() const noexcept {
+        return !m_elements.empty() && m_dof == 0 && m_movable.empty();
+    }
+    /// The measure kind for the chosen elements (AP-2.2b): "length" for one line, "diameter" for
+    /// one circle, "radius" for one arc; for two lines "distance" when they are parallel, else
+    /// "angle"; "" otherwise.
+    Q_INVOKABLE QString measureKindForSelection() const;
+    /// Adds a measure of that kind for the chosen elements and solves the sketch again; on success
+    /// the choice stays. False when nothing is chosen or the model refuses.
+    Q_INVOKABLE bool setMeasureForSelection(const QString& expression);
+    /// The rule kinds that fit the chosen elements, in order: one line → "horizontal", "vertical",
+    /// "fixed"; one circle or arc → "fixed"; two lines → "parallel", "perpendicular", "equal";
+    /// a line and a circle/arc → "tangent"; two circles/arcs → "equal", "concentric", "tangent";
+    /// empty for anything else (points, splines, nothing chosen).
+    Q_INVOKABLE QStringList rulesForSelection() const;
+    /// Adds a rule of that kind for the chosen elements and solves the sketch again; on success
+    /// the choice stays. The elements go in the order they were chosen, the line first for
+    /// "tangent" (the solver takes {line, circle|arc}). False when the kind does not fit the
+    /// choice or the model refuses.
+    Q_INVOKABLE bool addRuleForSelection(const QString& kind);
+    /// Changes the value of the measure with this "R" id and solves again.
+    Q_INVOKABLE bool changeMeasure(const QString& id, const QString& expression);
+    /// Removes the rule or measure with this "R" id.
+    Q_INVOKABLE bool removeMeasure(const QString& id);
+    /// Removes the rule with this "R" id (AP-2.2c3); one step of the history.
+    Q_INVOKABLE bool removeRule(const QString& id);
 
 signals:
     void stateChanged();
@@ -259,8 +329,18 @@ signals:
     void blockedChanged();
     /// The regions, the chosen one or the one under the pointer changed.
     void regionsChanged();
+    /// The chosen elements changed (AP-2.2b).
+    void selectionChanged();
+    /// The measures of the sketch changed (AP-2.2b).
+    void measuresChanged();
+    /// The elements that can still move changed (AP-2.2c1).
+    void freedomChanged();
+    /// The contradicting or doubled rules and measures, or the failure, changed (AP-2.2d).
+    void solveStateChanged();
 
 private:
+    /// What a bare number means in this document: 1 for millimetres, 25.4 for inches.
+    double documentUnitMillimetres() const;
     enum class Mode { idle, picking, sketching };
 
     void beginOn(const QString& stepId);
@@ -334,12 +414,33 @@ private:
     void hoverRegionAt(const core::SketchPoint& at);
     void clickRegion(const interaction::PlaneRay& ray, double pixelsPerMillimetre);
     void drawRegions(render::HandleGraphics& out, double lift) const;
+    // choosing elements for a measure (AP-2.2b)
+    bool elementSelected(const std::string& id) const noexcept;
+    void clearElementSelection();
+    std::optional<core::SketchPoint> measureAnchor(const core::SketchMeasure& measure) const;
+    /// The anchor of a rule on the plane (AP-2.2c3): its first element (a point reference
+    /// "L1.0" gives that point, else the element's own anchor point). Nothing when the element
+    /// is not found.
+    std::optional<core::SketchPoint>
+    ruleAnchor(const core::SketchRule& rule,
+               const std::vector<core::SketchElement>& elements) const;
+    /// The entries of `ids` (rule and measure ids) as maps for the view (AP-2.2d): each id is
+    /// looked up in the rules and measures of the step; an unknown id gets no entry.
+    QVariantList constraintEntries(const std::vector<std::string>& ids) const;
     void forgetEdit();
     void onClicked(double x, double y);
     void onPressed(double x, double y);
     void onDragged(double x, double y);
     void onReleased(double x, double y, bool dragged);
     void onDoubleClicked(double x, double y);
+    // a live drag of sketch points with no tool on (AP-2.2c4)
+    /// What a press at `at` holds, as solver point ids ("L1.1"): the nearest point of a movable
+    /// element within the catch radius, else a whole line or the rim point of a circle near the
+    /// pointer, else nothing.
+    std::vector<std::string> dragPointsAt(const core::SketchPoint& at,
+                                          double pixelsPerMillimetre) const;
+    /// Ends a point drag: the state goes and the elements go back to before the drag.
+    void resetPointDrag();
 
     QPointer<DocumentModel> m_model;
     QPointer<SelectionController> m_selection;
@@ -350,6 +451,14 @@ private:
     bool m_cameraTurned = false;
     core::SketchPlane m_plane;
     std::vector<core::SketchElement> m_elements;
+    std::vector<std::string> m_movable; ///< the elements that can still move (AP-2.2c1)
+    int m_dof = -1;                     ///< directions the sketch can still move in (-1: unknown)
+    /// The rules and measures that contradict each other, after solving (AP-2.2d).
+    std::vector<std::string> m_conflicting;
+    /// The rules and measures that follow from the others already (AP-2.2d).
+    std::vector<std::string> m_redundant;
+    /// The solver found no solution for another reason (AP-2.2d).
+    bool m_solveFailed = false;
     std::optional<render::CameraPose> m_previousPose;
     double m_gridStep = 0.0;
     double m_pixelsPerMillimetre = 2.0;
@@ -396,6 +505,7 @@ private:
     QColor m_gridColour{0x3A, 0x3D, 0x43};
     QColor m_gridMajorColour{0x55, 0x59, 0x61};
     QColor m_elementColour{0xE8, 0xEA, 0xED};
+    QColor m_freeColour{0x4C, 0x8D, 0xF6};
     QColor m_guideColour{0x4C, 0x8D, 0xFF};
     QColor m_markerColour{0x4C, 0x8D, 0xFF};
     QColor m_draftColour{0x4C, 0x8D, 0xFF};
@@ -408,6 +518,14 @@ private:
     double m_selectedRegionU = 0.0; ///< where the click chose the region (u on the plane, mm)
     double m_selectedRegionV = 0.0; ///< where the click chose the region (v on the plane, mm)
     bool m_regionsFailedSaid = false;
+    std::vector<std::string> m_selectedElements; ///< the chosen elements (no tool on, AP-2.2b)
+    // a live drag of points with no tool on (AP-2.2c4)
+    std::unique_ptr<core::SketchDragging> m_pointDrag;
+    /// Where the held points were at the press, in the order of `m_pointDrag->held()`.
+    std::vector<core::SketchPoint> m_pointDragStart;
+    core::SketchPoint m_pointDragFrom;                    ///< the pointer on the plane at the press
+    std::vector<core::SketchElement> m_pointDragElements; ///< the elements before the drag
+    bool m_pointDragMoved = false;
 };
 
 } // namespace fission::ui

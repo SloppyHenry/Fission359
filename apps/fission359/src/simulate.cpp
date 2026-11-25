@@ -1207,6 +1207,29 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             });
             continue;
         }
+        if (kind == QLatin1String("expectsection")) {
+            // expectsection:off | x | -x | y | -y | z | -z - the section view is off, or cuts
+            // away the side the named axis points to (AP-2.11).
+            const QString wanted = action.mid(colon + 1).trimmed();
+            delay += 600;
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [viewport, wanted] {
+                QString found = QStringLiteral("off");
+                if (const auto& plane = viewport->clipPlane()) {
+                    const QVector3D n = plane->normal;
+                    const int axis = std::abs(n.x()) > 0.5F ? 0 : std::abs(n.y()) > 0.5F ? 1 : 2;
+                    found = QString::fromLatin1(n[axis] < 0.0F ? "-" : "") +
+                            QString::fromLatin1(axis == 0   ? "x"
+                                                : axis == 1 ? "y"
+                                                            : "z");
+                }
+                if (found != wanted) {
+                    qWarning().noquote() << QStringLiteral("expected the section view %1; found %2")
+                                                .arg(wanted, found);
+                    g_simulationFailure = 11;
+                }
+            });
+            continue;
+        }
         if (kind == QLatin1String("expectmenu")) {
             // expectmenu:recent,1 - the menus have an entry "recent" with a submenu of at least
             // one entry (Pflege P20: "Open recent" is a submenu, not a flat list).
@@ -1405,9 +1428,18 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                                .arg(focus != nullptr
                                         ? QString::fromLatin1(focus->metaObject()->className())
                                         : QStringLiteral("none"));
-                    QKeyEvent press(QEvent::KeyPress, key.key(), key.keyboardModifiers());
+                    // A real keyboard gives a digit or a sign its text; a text field inserts that
+                    // text (a shortcut only looks at the key). Without it a field that got the
+                    // keyboard from the first digit would lose every later one.
+                    const int code = key.key();
+                    const bool typed =
+                        key.keyboardModifiers() == Qt::NoModifier &&
+                        ((code >= Qt::Key_0 && code <= Qt::Key_9) || code == Qt::Key_Comma ||
+                         code == Qt::Key_Period || code == Qt::Key_Minus);
+                    const QString text = typed ? QString(QChar(code)) : QString();
+                    QKeyEvent press(QEvent::KeyPress, code, key.keyboardModifiers(), text);
                     QCoreApplication::sendEvent(window, &press);
-                    QKeyEvent release(QEvent::KeyRelease, key.key(), key.keyboardModifiers());
+                    QKeyEvent release(QEvent::KeyRelease, code, key.keyboardModifiers(), text);
                     QCoreApplication::sendEvent(window, &release);
                 };
                 scheduleAction(delay, viewport, [window, viewport, send] {

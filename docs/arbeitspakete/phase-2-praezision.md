@@ -50,7 +50,7 @@
 ---
 
 ### AP-2.2 Skizzen-Regeln und Maße (Constraint-Solver)
-**Status:** offen · **Größe:** XL · **Abhängigkeiten:** AP-2.1
+**Status:** in Arbeit (2.2a in main seit 2026-11-11, PR #113: Skizzen-Löser hinter der GAL mit PlaneGCS; 2.2b Maße und Regeln in PR #115) · **Größe:** XL · **Abhängigkeiten:** AP-2.1
 **Bauanleitung:** [anleitungen/AP-2.2.md](anleitungen/AP-2.2.md)
 
 > Vor dem Start in Teilpakete zerlegen (Solver-Anbindung, Auto-Regeln, Maße, Diagnose-UI).
@@ -231,7 +231,7 @@
 
 **Akzeptanzkriterien:**
 - [x] Messwerte stimmen mit analytischen Werten überein (1e-6): Golden-Tests für Abstand, Winkel (90°, 45° am Keil), Länge, Radius, Fläche; Gewicht PLA 20-mm-Würfel 9,92 g
-- [ ] Schnittansicht (Ebene ziehen, Schnittfläche schraffiert): **nicht gebaut**
+- [~] Schnittansicht (Ebene ziehen, Schnittfläche schraffiert): gebaut als reine Anzeige (Stand 2026-11-25, siehe unten); Griff in der Ansicht fehlt noch
 
 **Abschlussvermerk 2026-11-05 (ohne Schnittansicht):**
 - Ergebnis: Kernel misst Ecke, Kante, Fläche und je zwei davon (`measureElements`: Position, Länge, Fläche, Radius, kürzester Abstand, Winkel). Werkzeug „Messen“ (Prüfen ▸ Messen, Ansicht ▸ Messen):
@@ -241,6 +241,10 @@
 - Festlegungen: Gewicht wird als Höchstwert angezeigt; Schnittansicht soll nur Anzeige sein (Clip-Ebene, Deckfläche aus dem exakten Schnitt), nicht das Modell ändern.
 - Offene Reste: **Schnittansicht** (Clip-Ebene in allen Zeichen-Durchläufen des Renderers: Körper, Schatten, Umgebungsverdeckung, Auswahl; Deckfläche mit Schraffur); Messen mit Körpern als Ganzes und Punkt im Raum;
   Materialwahl wird nicht mit dem Projekt gespeichert.
+
+**Stand Schnittansicht (2026-11-25, noch nicht erledigt):**
+- Gebaut: Kernel `sectionMesh` (exakter Schnitt Körper ∩ Ebenenfläche, Golden-Tests); Renderer schneidet in allen Körper-Durchläufen ab (Körper, Kanten, Schatten, Tiefe/Normalen, Auswahlfärbung, GPU-Pick, CPU-Strahl), Bett, Raster, Griffe bleiben ganz; Befehl „Schnittansicht“ (Ansicht-Menü, Befehlssuche) mit Karte (Achse X/Y/Z, Lage als Zahlenfeld, Schieberegler, Seite tauschen, Schließen; Esc schließt); Deckfläche je Körper im Hintergrund, mit diagonaler Schraffur, nicht anklickbar. Nichts davon ist Teil des Projekts (kein Undo, nicht gespeichert).
+- Offene Reste: Pfeil-Griff an der Ebene in der 3D-Ansicht (Regel 1; bisher nur Regler und Zahlenfeld in der Karte); `app_section` ist neu und lief noch nicht (nur in der CI); Hilfsebenen-Ausblendung und Wireframe-Modus mit Deckfläche nicht eigens geprüft; Abbrechen eines laufenden Schnitts gibt es nicht (nur Überholen).
 
 ---
 

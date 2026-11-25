@@ -5,6 +5,7 @@
 
 #include "fission/geo/occt/exchange.h"
 #include "fission/geo/occt/measuring.h"
+#include "fission/geo/occt/section.h"
 #include "fission/geo/occt/sketch_curve.h"
 #include "fission/geo/occt/sketch_edge.h"
 #include "fission/geo/occt/sketch_intersections.h"
@@ -104,6 +105,10 @@ public:
     Measurement measureElements(const std::vector<ElementRef>& elements) const override {
         return occt::measureElements(elements);
     }
+    SectionMesh sectionMesh(const Solid& solid, Point3d planePoint, Point3d planeNormal,
+                            double deflection) const override {
+        return occt::sectionMesh(solid, planePoint, planeNormal, deflection);
+    }
     Outline faceOutline(const Solid& solid, std::uint32_t faceId) const override {
         return occt::faceOutline(solid, faceId);
     }
@@ -125,6 +130,10 @@ public:
     NamedSolid extrudeRegion(const std::vector<SketchCurve>& curves, Point2d inside,
                              const SketchFrame& frame, const ExtrudeSpec& spec) const override {
         return occt::extrudeRegion(curves, inside, frame, spec);
+    }
+    NamedSolid revolveRegion(const std::vector<SketchCurve>& curves, Point2d inside,
+                             const SketchFrame& frame, const RevolveSpec& spec) const override {
+        return occt::revolveRegion(curves, inside, frame, spec);
     }
     std::vector<SketchCrossing>
     sketchCarrierCrossings(const SketchCurve& carrier,

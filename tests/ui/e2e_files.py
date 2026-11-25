@@ -62,7 +62,7 @@ with tempfile.TemporaryDirectory() as data:
         check({"manifest.json", "document.json", "preview.png"} <= set(names), "parts missing: %s" % names)
         check(archive.read("preview.png")[:4] == b"\x89PNG", "the preview is not a picture")
         manifest = json.loads(archive.read("manifest.json"))
-        check(manifest["formatVersion"] == 4 and "document.json" in manifest["checksums"], "manifest")
+        check(manifest["formatVersion"] == 5 and "document.json" in manifest["checksums"], "manifest")
         document = json.loads(archive.read("document.json"))
         check([f["type"] for f in document["features"]] == ["box", "cylinder", "sphere"], "recipe in file")
     run(data, "recipe:box,cylinder,sphere;expectmodified:0", model)       # opened by argument
@@ -152,7 +152,7 @@ with tempfile.TemporaryDirectory() as data:
               "search:namen,shape.text;search:verschiben,tool.move;search:grosse,tool.size;"
               "search:round edges,menu.round;search:drill,menu.drillHole;search:rotate,tool.rotate;"
               "search:speichern,menu.save;search:rückgängig,menu.undo;search:kugel,shape.sphere;"
-              "runcommand:tool.rotate;runcommand:menu.settings;runcommand:soon.pattern")
+              "runcommand:tool.rotate;runcommand:menu.settings;runcommand:menu.mirror")
 
     # 12. The hint line and the message catalogue.
     run(data, "menu:new;expecthint:Start with a shape;"

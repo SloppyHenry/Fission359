@@ -128,9 +128,18 @@ Json sketchJson(const SketchData& sketch) {
     for (const SketchRule& rule : sketch.rules) {
         rules.push_back({{"id", rule.id}, {"kind", rule.kind}, {"elements", rule.elements}});
     }
+    Json measures = Json::array();
+    for (const SketchMeasure& measure : sketch.measures) {
+        measures.push_back({{"id", measure.id},
+                            {"kind", measure.kind},
+                            {"elements", measure.elements},
+                            {"expression", measure.value.expression},
+                            {"lastValue", measure.lastValue}});
+    }
     return {{"elements", std::move(elements)},
             {"lastNumber", std::move(lastNumber)},
             {"rules", std::move(rules)},
+            {"measures", std::move(measures)},
             {"lastRuleNumber", sketch.lastRuleNumber}};
 }
 
@@ -466,6 +475,19 @@ SketchData sketchFrom(const Json& json, const std::string& path, Problems& probl
         item.finish();
         sketch.rules.push_back(std::move(rule));
     }
+    const Json& measures = reader.array("measures");
+    for (std::size_t i = 0; i < measures.size(); ++i) {
+        ObjectReader item(measures[i], childPath(reader.path("measures"), std::to_string(i)),
+                          problems);
+        SketchMeasure measure;
+        measure.id = item.text("id");
+        measure.kind = item.text("kind");
+        measure.elements = stringsFrom(item, "elements");
+        measure.value.expression = item.text("expression");
+        measure.lastValue = item.number("lastValue");
+        item.finish();
+        sketch.measures.push_back(std::move(measure));
+    }
     sketch.lastRuleNumber = reader.integer("lastRuleNumber");
     reader.finish();
     if (!sketch.consistent()) { // repeated ids, a counter behind an id, unusable points
@@ -733,21 +755,41 @@ LoadResult fromJson(std::string_view text) {
     // Nothing to rewrite: a sketch step without the field is an empty sketch on the ground plane.
     // Version 3 -> 4 (AP-2.1f): a sketch element may have the field `link` (a taken-over edge); a
     // missing field means not linked, so there is nothing to rewrite either.
-    static const MigrationTable builtIn = {{1,
-                                            [](Json& root) {
-                                                const auto found = root.find("parameters");
-                                                if (found == root.end() || !found->is_array()) {
-                                                    return;
-                                                }
-                                                for (Json& parameter : *found) {
-                                                    if (parameter.is_object() &&
-                                                        !parameter.contains("slider")) {
-                                                        parameter["slider"] = nullptr;
-                                                    }
-                                                }
-                                            }},
-                                           {2, [](Json&) {}},
-                                           {3, [](Json&) {}}};
+    // Version 4 -> 5 (AP-2.2): a sketch carries `measures` next to `rules`; a sketch that has
+    // `rules` but no `measures` gets an empty list.
+    static const MigrationTable builtIn = {
+        {1,
+         [](Json& root) {
+             const auto found = root.find("parameters");
+             if (found == root.end() || !found->is_array()) {
+                 return;
+             }
+             for (Json& parameter : *found) {
+                 if (parameter.is_object() && !parameter.contains("slider")) {
+                     parameter["slider"] = nullptr;
+                 }
+             }
+         }},
+        {2, [](Json&) {}},
+        {3, [](Json&) {}},
+        {4, [](Json& root) {
+             const auto features = root.find("features");
+             if (features == root.end() || !features->is_array()) {
+                 return;
+             }
+             for (Json& feature : *features) {
+                 if (!feature.is_object()) {
+                     continue;
+                 }
+                 const auto sketch = feature.find("sketch");
+                 if (sketch == feature.end() || !sketch->is_object()) {
+                     continue;
+                 }
+                 if (sketch->contains("rules") && !sketch->contains("measures")) {
+                     (*sketch)["measures"] = Json::array();
+                 }
+             }
+         }}};
     return read(text, builtIn, currentFormatVersion);
 }
 

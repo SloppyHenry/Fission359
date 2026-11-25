@@ -8,12 +8,16 @@ layout(location = 0) in vec3 position;
 layout(std140, binding = 0) uniform Params {
     mat4 mvp;
     vec4 color;
+    vec4 clip; // see body.vert
 } u;
+
+layout(location = 0) out vec3 vWorld;
 
 out gl_PerVertex {
     vec4 gl_Position;
 };
 
 void main() {
+    vWorld = position;
     gl_Position = u.mvp * vec4(position, 1.0);
 }

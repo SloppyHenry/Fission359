@@ -6,6 +6,7 @@
 #include <cmath>
 #include <memory>
 
+#include "fission/core/sketch_solve.h"
 #include "fission/features/builtin.h"
 #include "fission/geo/error.h"
 
@@ -98,6 +99,49 @@ public:
                                            turnOf(input.params));
         }
         followEdges(input, context, sketch);
+        // The measures were evaluated by the recompute (a formula may use a named measure, as in
+        // "2 * width"): solve the sketch before its result is used. Only a status of ok writes the
+        // solved coordinates back; conflict and failed keep them - a contradiction is no error
+        // here, AP-2.2d explains it.
+        // A sketch with rules but no measures is solved too (no values to evaluate then).
+        static const SketchMeasureValues noValues;
+        const SketchMeasureValues& values =
+            input.sketchMeasures != nullptr ? *input.sketchMeasures : noValues;
+        if (context.sketchSolver != nullptr &&
+            (!sketch.data.rules.empty() || !sketch.data.measures.empty())) {
+            for (SketchMeasure& measure : sketch.data.measures) {
+                const auto found = values.find(measure.id);
+                if (found != values.end()) {
+                    measure.lastValue = found->second; // the label shows the current number
+                }
+            }
+            const geo::SolveResult solved = solveSketch(sketch.data, values, *context.sketchSolver);
+            // AP-2.2d: name the contradicting and doubled rules and measures, whatever the
+            // status is (an ok solve can still report redundant ones)
+            sketch.conflicting = solved.conflicting;
+            sketch.redundant = solved.redundant;
+            sketch.failed = solved.status == geo::SolveStatus::failed;
+            if (solved.status == geo::SolveStatus::ok) {
+                sketch.movable = movableElements(sketch.data, solved);
+                sketch.dof = solved.dof;
+            } else {
+                // conflict or failed: the coordinates stay, every element that does not follow a
+                // body edge counts as free
+                for (const SketchElement& element : sketch.data.elements) {
+                    if (!element.link) {
+                        sketch.movable.push_back(element.id);
+                    }
+                }
+            }
+        } else {
+            // no rules and no measures: nothing was solved, every element that does not follow a
+            // body edge can still move
+            for (const SketchElement& element : sketch.data.elements) {
+                if (!element.link) {
+                    sketch.movable.push_back(element.id);
+                }
+            }
+        }
         FeatureResult result;
         result.sketch = std::move(sketch);
         return result;

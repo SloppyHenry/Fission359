@@ -11,6 +11,7 @@ add_executable(fission_unit_tests
   core/test_recompute.cpp
   core/test_history.cpp
   core/test_sketch.cpp
+  core/test_sketch_solve.cpp
   core/test_selection.cpp
   core/test_scaling.cpp
   core/test_cuts.cpp
@@ -29,6 +30,7 @@ add_executable(fission_unit_tests
   features/test_push_face.cpp
   features/test_face_ops.cpp
   features/test_pattern_step.cpp
+  features/test_mirror_step.cpp
   features/test_helper_plane.cpp
   features/test_hole_step.cpp
   features/test_shell_draft.cpp
@@ -36,6 +38,7 @@ add_executable(fission_unit_tests
   features/test_import.cpp
   features/test_sketch_feature.cpp
   features/test_extrude_feature.cpp
+  features/test_revolve_feature.cpp
   features/test_sketch_edges.cpp
   services/test_settings.cpp
   services/test_platform.cpp
@@ -60,10 +63,12 @@ add_executable(fission_unit_tests
   geometry/test_text.cpp
   geometry/test_exchange.cpp
   geometry/test_measuring.cpp
+  geometry/test_section.cpp
   geometry/test_sketch_curve.cpp
   geometry/test_sketch_intersections.cpp
   geometry/test_sketch_regions.cpp
   geometry/test_extrude.cpp
+  geometry/test_revolve.cpp
   geometry/test_pattern.cpp
   geometry/test_datum.cpp
   geometry/test_sketch_edge.cpp
@@ -84,10 +89,12 @@ add_executable(fission_unit_tests
   ui/test_export_controller.cpp
   ui/test_import_controller.cpp
   ui/test_measure_controller.cpp
+  ui/test_section_controller.cpp
   ui/test_measures_model.cpp
   ui/test_selection_controller.cpp
   ui/test_sketch_mode.cpp
   ui/test_sketch_tools.cpp
+  ui/test_sketch_measures_ui.cpp
   ui/test_sketch_takeover.cpp
   ui/test_sketch_regions_ui.cpp
   ui/test_placement.cpp
@@ -105,6 +112,8 @@ add_executable(fission_unit_tests
   ui/test_messages.cpp
   ui/test_blend_edges.cpp
   ui/test_push_face_ui.cpp
+  ui/test_pattern_ui.cpp
+  ui/test_mirror_ui.cpp
   interaction/test_drag.cpp
   interaction/test_snap.cpp
   interaction/test_distances.cpp

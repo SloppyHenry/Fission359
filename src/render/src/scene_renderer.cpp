@@ -37,8 +37,9 @@ struct Params {
     float bedSize[4];
     float bodyOverride[4];
     float view[4];
+    float clip[4]; // normal and offset of the cut plane; all 0: no cut
 };
-static_assert(sizeof(Params) == 64 * 3 + 16 * 12, "Params must match the std140 block");
+static_assert(sizeof(Params) == 64 * 3 + 16 * 13, "Params must match the std140 block");
 
 // The block of the ambient-occlusion shaders (fullscreen.vert, ssao.frag, aoblur.frag).
 struct AoParams {
@@ -77,15 +78,17 @@ static_assert(sizeof(PickVertex) == 16 && sizeof(PickCornerVertex) == 24);
 struct PickParams {
     float mvp[16];
     float misc[4];
+    float clip[4];
 };
-static_assert(sizeof(PickParams) == 64 + 16);
+static_assert(sizeof(PickParams) == 64 + 32);
 
 // Mirrors the block of overlay.vert and overlay.frag.
 struct OverlayParams {
     float mvp[16];
     float color[4];
+    float clip[4];
 };
-static_assert(sizeof(OverlayParams) == 64 + 16);
+static_assert(sizeof(OverlayParams) == 64 + 32);
 
 QShader loadShader(const char* name) {
     QFile file(QStringLiteral(":/fission/render/shaders/%1.qsb").arg(QLatin1String(name)));
@@ -194,6 +197,17 @@ SceneRenderer::SceneRenderer(QRhi* rhi) : m_rhi(rhi) {
          QRhiShaderResourceBinding::sampledTexture(2, QRhiShaderResourceBinding::FragmentStage,
                                                    m_aoWhite.get(), m_linearSampler.get())});
     m_srb->create();
+    m_clipUniforms.reset(
+        m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, sizeof(Params)));
+    m_clipUniforms->create();
+    m_clipSrb.reset(m_rhi->newShaderResourceBindings());
+    m_clipSrb->setBindings(
+        {QRhiShaderResourceBinding::uniformBuffer(0, stages, m_clipUniforms.get()),
+         QRhiShaderResourceBinding::sampledTexture(1, QRhiShaderResourceBinding::FragmentStage,
+                                                   m_shadowTexture.get(), m_sampler.get()),
+         QRhiShaderResourceBinding::sampledTexture(2, QRhiShaderResourceBinding::FragmentStage,
+                                                   m_aoWhite.get(), m_linearSampler.get())});
+    m_clipSrb->create();
     m_shadowSrb.reset(m_rhi->newShaderResourceBindings());
     m_shadowSrb->setBindings(
         {QRhiShaderResourceBinding::uniformBuffer(0, stages, m_shadowUniforms.get())});
@@ -204,6 +218,7 @@ SceneRenderer::SceneRenderer(QRhi* rhi) : m_rhi(rhi) {
     m_bedFragment = loadShader("bed.frag");
     m_flatVertex = loadShader("flat.vert");
     m_flatFragment = loadShader("flat.frag");
+    m_capFragment = loadShader("cap.frag");
     m_backgroundVertex = loadShader("background.vert");
     m_backgroundFragment = loadShader("background.frag");
     m_shadowVertex = loadShader("shadow.vert");
@@ -305,6 +320,8 @@ void SceneRenderer::createPipelines(QRhiRenderPassDescriptor* pass, int sampleCo
     // Holes are drawn see-through, after everything solid, and cast no shadow.
     m_ghostPipeline =
         makePipeline(m_bodyVertex, m_bodyFragment, false, false, true, true, pass, sampleCount);
+    m_capPipeline =
+        makePipeline(m_flatVertex, m_capFragment, true, false, false, true, pass, sampleCount);
     m_discPipeline =
         makePipeline(m_flatVertex, m_flatFragment, true, false, true, true, pass, sampleCount);
     m_linePipeline =
@@ -585,15 +602,19 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
     }
     cb->resourceUpdate(updates);
 
+    renderShadow(cb);
+}
+
+void SceneRenderer::renderShadow(QRhiCommandBuffer* cb) {
+    m_shadowStale = false;
     if (!m_hasShadow || m_drawOrder.empty()) {
         return;
     }
     // Shadow map: depth of the bodies seen from the light.
     QRhiResourceUpdateBatch* shadowUpdates = m_rhi->nextResourceUpdateBatch();
     Frame none;
-    none.palette = palette;
     writeUniforms(shadowUpdates, m_shadowUniforms.get(),
-                  m_rhi->clipSpaceCorrMatrix() * m_lightViewProjection, none);
+                  m_rhi->clipSpaceCorrMatrix() * m_lightViewProjection, none, {}, false, true);
     cb->beginPass(m_shadowTarget.get(), QColor(0, 0, 0, 255), {1.0F, 0}, shadowUpdates);
     cb->setGraphicsPipeline(m_shadowPipeline.get());
     cb->setViewport({0, 0, float(kShadowSize), float(kShadowSize)});
@@ -609,10 +630,65 @@ void SceneRenderer::upload(QRhiCommandBuffer* cb, const RenderScene& scene,
     cb->endPass();
 }
 
+void SceneRenderer::setCaps(std::shared_ptr<const CapSet> caps) {
+    if (caps != m_caps) {
+        m_caps = std::move(caps);
+        m_capsDirty = true;
+    }
+}
+
+void SceneRenderer::uploadCaps(QRhiResourceUpdateBatch* updates) {
+    m_capsDirty = false;
+    m_capVertices.reset();
+    m_capIndices.reset();
+    m_capIndexCount = 0;
+    if (!m_caps) {
+        return;
+    }
+    std::vector<FlatVertex> vertices;
+    std::vector<std::uint32_t> indices;
+    for (const CapMesh& cap : *m_caps) {
+        const auto base = static_cast<std::uint32_t>(vertices.size());
+        for (std::size_t i = 0; i + 2 < cap.positions.size(); i += 3) {
+            vertices.push_back(flatVertex(cap.positions[i], cap.positions[i + 1],
+                                          cap.positions[i + 2], cap.color));
+        }
+        for (const std::uint32_t index : cap.indices) {
+            indices.push_back(base + index);
+        }
+    }
+    m_capVertices = makeVertexBuffer(updates, vertices.data(), vertices.size() * sizeof(FlatVertex),
+                                     QRhiBuffer::VertexBuffer);
+    m_capIndices = makeVertexBuffer(updates, indices.data(), indices.size() * sizeof(std::uint32_t),
+                                    QRhiBuffer::IndexBuffer);
+    m_capIndexCount = m_capIndices ? indices.size() : 0;
+}
+
+void SceneRenderer::setClipPlane(const std::optional<ClipPlane>& plane) {
+    if (m_clip != plane) {
+        m_shadowStale = true; // the shadow map follows the cut
+    }
+    m_clip = plane;
+}
+
+void SceneRenderer::writeClip(float (&target)[4]) const {
+    if (!m_clip) {
+        return;
+    }
+    const QVector3D n = m_clip->normal.normalized();
+    target[0] = n.x();
+    target[1] = n.y();
+    target[2] = n.z();
+    target[3] = QVector3D::dotProduct(n, m_clip->point);
+}
+
 void SceneRenderer::writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* buffer,
                                   const QMatrix4x4& mvp, const Frame& frame,
-                                  const QSize& targetSize, bool occlusion) const {
+                                  const QSize& targetSize, bool occlusion, bool clipped) const {
     Params p{};
+    if (clipped) {
+        writeClip(p.clip);
+    }
     p.view[0] = static_cast<float>(targetSize.width());
     p.view[1] = static_cast<float>(targetSize.height());
     p.view[2] = occlusion ? 1.0F : 0.0F;
@@ -757,6 +833,13 @@ bool SceneRenderer::ensureAmbientOcclusionTargets(const QSize& size) {
                         QRhiShaderResourceBinding::sampledTexture(
                             2, fragment, m_aoBlurTexture.get(), m_linearSampler.get())});
     m_srb->create();
+    m_clipSrb->setBindings(
+        {QRhiShaderResourceBinding::uniformBuffer(0, stages, m_clipUniforms.get()),
+         QRhiShaderResourceBinding::sampledTexture(1, fragment, m_shadowTexture.get(),
+                                                   m_sampler.get()),
+         QRhiShaderResourceBinding::sampledTexture(2, fragment, m_aoBlurTexture.get(),
+                                                   m_linearSampler.get())});
+    m_clipSrb->create();
     m_aoSize = size;
     return true;
 }
@@ -768,7 +851,7 @@ void SceneRenderer::renderAmbientOcclusion(QRhiCommandBuffer* cb, const Frame& f
     QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
 
     writeUniforms(updates, m_aoDepthUniforms.get(), m_rhi->clipSpaceCorrMatrix() * viewProjection,
-                  frame, size, false);
+                  frame, size, false, true);
 
     // pixels per mm at distance 1 (perspective) or everywhere (orthographic)
     const float scale = 0.5F * static_cast<float>(size.height()) * frame.projection(1, 1);
@@ -833,6 +916,9 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
     if (!m_bodyPipeline) {
         return;
     }
+    if (m_shadowStale) {
+        renderShadow(cb);
+    }
     const QSize size = target->pixelSize();
     // Without bodies there is nothing that could be in a corner.
     const bool occlusion = frame.ambientOcclusion && !m_drawOrder.empty() &&
@@ -845,6 +931,14 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
     writeUniforms(updates, m_uniforms.get(),
                   m_rhi->clipSpaceCorrMatrix() * frame.projection * frame.view, frame, size,
                   occlusion);
+    if (m_clip) {
+        writeUniforms(updates, m_clipUniforms.get(),
+                      m_rhi->clipSpaceCorrMatrix() * frame.projection * frame.view, frame, size,
+                      occlusion, true);
+    }
+    if (m_capsDirty) {
+        uploadCaps(updates);
+    }
     prepareHighlights(updates, frame, size);
     prepareHandles(updates, frame, size);
 
@@ -855,6 +949,9 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
     cb->setShaderResources(m_srb.get());
     cb->draw(3);
 
+    // Bodies and their edges are cut by the section plane; the bed, the grid, the handles and
+    // the helper planes are not (they use the block without a plane).
+    QRhiShaderResourceBindings* bodySrb = m_clip ? m_clipSrb.get() : m_srb.get();
     if (frame.bedVisible && m_bedVertices) {
         const QRhiCommandBuffer::VertexInput input(m_bedVertices.get(), 0);
         cb->setGraphicsPipeline(m_bedPipeline.get());
@@ -866,7 +963,7 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
         // Solid bodies first, then the see-through ones over them.
         for (const bool ghosts : {false, true}) {
             cb->setGraphicsPipeline(ghosts ? m_ghostPipeline.get() : m_bodyPipeline.get());
-            cb->setShaderResources(m_srb.get());
+            cb->setShaderResources(bodySrb);
             for (const GpuBody* body : m_drawOrder) {
                 if (!body->vertices || !body->indices || isGhost(*body) != ghosts) {
                     continue;
@@ -877,6 +974,14 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
                 cb->drawIndexed(static_cast<quint32>(body->indexCount));
             }
         }
+    }
+    if (m_clip && m_capVertices && m_capIndices && m_capIndexCount > 0) {
+        // The cut faces lie on the plane itself, so they are drawn without the plane's cut.
+        const QRhiCommandBuffer::VertexInput input(m_capVertices.get(), 0);
+        cb->setGraphicsPipeline(m_capPipeline.get());
+        cb->setShaderResources(m_srb.get());
+        cb->setVertexInput(0, 1, &input, m_capIndices.get(), 0, QRhiCommandBuffer::IndexUInt32);
+        cb->drawIndexed(static_cast<quint32>(m_capIndexCount));
     }
     if (frame.bedVisible && m_discVertices) {
         const QRhiCommandBuffer::VertexInput input(m_discVertices.get(), 0);
@@ -894,6 +999,7 @@ void SceneRenderer::draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const 
             cb->setVertexInput(0, 1, &input);
             cb->draw(static_cast<quint32>(m_lineVertexCount));
         }
+        cb->setShaderResources(bodySrb);
         for (const GpuBody* body : m_drawOrder) {
             if (!body->lines || body->lineVertexCount == 0) {
                 continue;
@@ -930,7 +1036,8 @@ void SceneRenderer::createPickResources() {
     m_pickUniforms->create();
     m_pickSrb.reset(m_rhi->newShaderResourceBindings());
     m_pickSrb->setBindings({QRhiShaderResourceBinding::uniformBuffer(
-        0, QRhiShaderResourceBinding::VertexStage, m_pickUniforms.get())});
+        0, QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage,
+        m_pickUniforms.get())});
     m_pickSrb->create();
 
     const auto make = [this](const QShader& vertex, QRhiVertexInputLayout layout,
@@ -1117,6 +1224,7 @@ bool SceneRenderer::pickPass(QRhiCommandBuffer* cb, const QSize& targetSize, con
     crop(1, 3) = -ny * scaleY;
 
     PickParams params{};
+    writeClip(params.clip);
     copyMatrix(params.mvp, m_rhi->clipSpaceCorrMatrix() * crop * projection * view);
     params.misc[0] = 2.0F / static_cast<float>(size.width());
     params.misc[1] = 2.0F / static_cast<float>(size.height());
@@ -1354,6 +1462,7 @@ void SceneRenderer::prepareHighlights(QRhiResourceUpdateBatch* updates, const Fr
         withAlpha(lighter(frame.accent), 0.30F), withAlpha(frame.accent, 0.45F),
         withAlpha(lighter(frame.accent), 0.14F), withAlpha(frame.accent, 0.22F)};
     OverlayParams overlay{};
+    writeClip(overlay.clip);
     copyMatrix(overlay.mvp, m_rhi->clipSpaceCorrMatrix() * frame.projection * frame.view);
     for (int style = 0; style < kOverlayStyles; ++style) {
         setColor(overlay.color, styleColors[style]);

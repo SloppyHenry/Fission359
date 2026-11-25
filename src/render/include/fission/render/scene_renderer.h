@@ -18,6 +18,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -120,6 +121,8 @@ struct HandleGraphics {
 
 class SceneRenderer {
 public:
+    using ClipPlane = render::ClipPlane;
+
     struct Frame {
         QMatrix4x4 view;
         QMatrix4x4 projection;
@@ -152,6 +155,14 @@ public:
 
     /// Uploads geometry; call when the scene or the palette changed. Needs an open command buffer.
     void upload(QRhiCommandBuffer* cb, const RenderScene& scene, const ViewPalette& palette);
+
+    /// Turns the section plane on or off. The bed, grid, handles and helper planes stay whole.
+    void setClipPlane(const std::optional<ClipPlane>& plane);
+    const std::optional<ClipPlane>& clipPlane() const { return m_clip; }
+
+    /// The cut faces of the section view, drawn on the plane with stripes, not cut themselves
+    /// and not pickable. null: none (they are gone until a new set is there).
+    void setCaps(std::shared_ptr<const CapSet> caps);
 
     /// Draws everything into `target`, including the background gradient.
     void draw(QRhiCommandBuffer* cb, QRhiRenderTarget* target, const Frame& frame);
@@ -195,8 +206,20 @@ public:
 
 private:
     void writeUniforms(QRhiResourceUpdateBatch* updates, QRhiBuffer* buffer, const QMatrix4x4& mvp,
-                       const Frame& frame, const QSize& targetSize = {},
-                       bool occlusion = false) const;
+                       const Frame& frame, const QSize& targetSize = {}, bool occlusion = false,
+                       bool clipped = false) const;
+    void writeClip(float (&target)[4]) const;
+    /// Draws the shadow map (the bodies as the section plane leaves them).
+    void renderShadow(QRhiCommandBuffer* cb);
+    bool m_shadowStale = false;
+    std::shared_ptr<const CapSet> m_caps;
+    bool m_capsDirty = false;
+    std::unique_ptr<QRhiBuffer> m_capVertices;
+    std::unique_ptr<QRhiBuffer> m_capIndices;
+    std::size_t m_capIndexCount = 0;
+    void uploadCaps(QRhiResourceUpdateBatch* updates);
+    QShader m_capFragment;
+    std::unique_ptr<QRhiGraphicsPipeline> m_capPipeline;
     /// Depth of the scene, then the occlusion from it, then the blur; fills `m_aoBlurTexture`.
     void renderAmbientOcclusion(QRhiCommandBuffer* cb, const Frame& frame, const QSize& size);
     bool ensureAmbientOcclusionTargets(const QSize& size);
@@ -251,6 +274,8 @@ private:
     bool m_hasShadow = false;
 
     std::unique_ptr<QRhiBuffer> m_uniforms;
+    std::unique_ptr<QRhiBuffer> m_clipUniforms; ///< the same block with the section plane
+    std::optional<ClipPlane> m_clip;
     std::unique_ptr<QRhiBuffer> m_shadowUniforms;
     std::unique_ptr<QRhiBuffer> m_bedVertices;
     std::unique_ptr<QRhiBuffer> m_bedIndices;
@@ -287,6 +312,7 @@ private:
     std::unique_ptr<QRhiTextureRenderTarget> m_shadowTarget;
     std::unique_ptr<QRhiRenderPassDescriptor> m_shadowPass;
     std::unique_ptr<QRhiShaderResourceBindings> m_srb;
+    std::unique_ptr<QRhiShaderResourceBindings> m_clipSrb; ///< like m_srb, with the section plane
     std::unique_ptr<QRhiShaderResourceBindings> m_shadowSrb;
     QMatrix4x4 m_lightViewProjection;
     QVector3D m_lightDirection;

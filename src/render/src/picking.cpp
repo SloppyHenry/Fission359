@@ -79,7 +79,8 @@ bool hitsBox(const Ray& ray, const QVector3D& lo, const QVector3D& hi) {
 } // namespace
 
 std::optional<SurfaceHit> pickSurface(const RenderScene& scene, const Ray& ray,
-                                      const std::string& ignoreBody) {
+                                      const std::string& ignoreBody,
+                                      const std::optional<ClipPlane>& clip) {
     std::optional<SurfaceHit> best;
 
     for (std::size_t bodyIndex = 0; bodyIndex < scene.bodies.size(); ++bodyIndex) {
@@ -105,6 +106,9 @@ std::optional<SurfaceHit> pickSurface(const RenderScene& scene, const Ray& ray,
                                        toVector(mesh.positions[ib]), toVector(mesh.positions[ic]));
             if (!hit || (best && hit->t >= best->distance)) {
                 continue;
+            }
+            if (clip && clip->cuts(ray.origin + ray.direction * hit->t)) {
+                continue; // cut away: not there to be clicked
             }
             // The smooth normal at the hit point: a cylinder wall is looked at squarely
             // wherever it was hit, not along the flat of one triangle.
