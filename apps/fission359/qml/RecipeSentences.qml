@@ -102,10 +102,14 @@ QtObject {
             }
         }
         if (step.type === "revolve" && v.length === 1) {
+            const axis = step.texts.axis ?? "auto"
+            const about = axis.startsWith("line:") ? " " + qsTr("about the line %1").arg(axis.substring(5))
+                          : (axis === "x" || axis === "y" || axis === "z") ? " " + qsTr("about the %1 axis").arg(axis.toUpperCase())
+                          : ""
             switch (step.texts.mode) {
-            case "merge": return qsTr("Turned and joined with the body (%1°)").arg(n(v[0]))
-            case "subtract": return qsTr("Turned and cut out of the body (%1°)").arg(n(v[0]))
-            default: return qsTr("Turned an area into a body (%1°)").arg(n(v[0]))
+            case "merge": return qsTr("Turned and joined with the body (%1°)").arg(n(v[0])) + about
+            case "subtract": return qsTr("Turned and cut out of the body (%1°)").arg(n(v[0])) + about
+            default: return qsTr("Turned an area into a body (%1°)").arg(n(v[0])) + about
             }
         }
         if (step.type === "stretch" && v.length === 2) {

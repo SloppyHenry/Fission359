@@ -4555,6 +4555,30 @@
         <source>The closed areas of this sketch could not be worked out. Move a point a little, or take away the last element. You can keep drawing.</source>
         <translation>Die geschlossenen Bereiche dieser Skizze ließen sich nicht berechnen. Verschiebe einen Punkt ein wenig oder nimm das letzte Element weg. Du kannst weiterzeichnen.</translation>
     </message>
+    <message>
+        <source>The line to turn about is gone.</source>
+        <translation>Die Linie, um die gedreht wird, ist weg.</translation>
+    </message>
+    <message>
+        <source>This axis does not lie in the sketch.</source>
+        <translation>Diese Achse liegt nicht in der Skizze.</translation>
+    </message>
+    <message>
+        <source>The area lies on both sides of the axis.</source>
+        <translation>Der Bereich liegt auf beiden Seiten der Achse.</translation>
+    </message>
+    <message>
+        <source>The line this turn is about was removed from the sketch. Choose another line or an axis.</source>
+        <translation>Die Linie, um die sich diese Drehung dreht, wurde aus der Skizze entfernt. Wähle eine andere Linie oder eine Achse.</translation>
+    </message>
+    <message>
+        <source>This axis stands across the sketch. Choose a line of the sketch or an axis that lies in it.</source>
+        <translation>Diese Achse steht quer zur Skizze. Wähle eine Linie der Skizze oder eine Achse, die in ihr liegt.</translation>
+    </message>
+    <message>
+        <source>The area lies on both sides of the axis. Put the area on one side of the axis, or choose another axis.</source>
+        <translation>Der Bereich liegt auf beiden Seiten der Achse. Lege den Bereich auf eine Seite der Achse oder wähle eine andere Achse.</translation>
+    </message>
 </context>
 <context>
     <name>NumberField</name>
@@ -4918,6 +4942,14 @@
             <numerusform>Kreis aus %n Exemplar, über %1° verteilt</numerusform>
             <numerusform>Kreis aus %n Exemplaren, über %1° verteilt</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>about the line %1</source>
+        <translation>um die Linie %1</translation>
+    </message>
+    <message>
+        <source>about the %1 axis</source>
+        <translation>um die Achse %1</translation>
     </message>
 </context>
 <context>
@@ -5333,6 +5365,26 @@
         <location line="-10"/>
         <source>Up to the face %1 mm away</source>
         <translation>Bis zur Fläche %1 mm entfernt</translation>
+    </message>
+    <message>
+        <source>Turn</source>
+        <translation>Drehen</translation>
+    </message>
+    <message>
+        <source>The area turns about</source>
+        <translation>Der Bereich dreht sich um</translation>
+    </message>
+    <message>
+        <source>A line of the sketch</source>
+        <translation>Eine Linie der Skizze</translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation>Linie %1</translation>
+    </message>
+    <message>
+        <source>Upright</source>
+        <translation>Senkrecht</translation>
     </message>
 </context>
 <context>
