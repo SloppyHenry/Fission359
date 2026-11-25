@@ -71,7 +71,7 @@
 ---
 
 ### AP-2.3 Aus Skizzen werden Körper
-**Status:** in Arbeit (Ziehen und Drehkörper in main seit 2026-11-25, PR #134 und #145; offen: Entlang Pfad, Übergang, Verjüngung, Pfeil-Griff ohne Werkzeugwahl, Achse des Drehkörpers wählen) · **Größe:** L · **Abhängigkeiten:** AP-2.2, AP-2.10, AP-1.7
+**Status:** in Arbeit (Ziehen und Drehkörper in main seit 2026-11-25, PR #134 und #145; offen: Entlang Pfad, Übergang, Pfeil-Griff ohne Werkzeugwahl, Achse des Drehkörpers wählen) · **Größe:** L · **Abhängigkeiten:** AP-2.2, AP-2.10, AP-1.7
 **Bauanleitung:** [anleitungen/AP-2.3.md](anleitungen/AP-2.3.md)
 
 **Umfang:**
