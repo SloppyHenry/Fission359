@@ -11,6 +11,7 @@
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QEventLoop>
@@ -1086,9 +1087,19 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     const QPointF scene =
                         item->mapToScene(QPointF(item->width() / 3, item->height() / 2));
                     const bool press = type == QEvent::MouseButtonPress;
-                    QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()), button,
-                                      press ? button : Qt::NoButton, Qt::NoModifier);
-                    QCoreApplication::sendEvent(window, &event);
+                    const auto send = [&](QEvent::Type kindOfEvent, Qt::MouseButton changed,
+                                          Qt::MouseButtons held) {
+                        QMouseEvent event(kindOfEvent, scene, window->mapToGlobal(scene.toPoint()),
+                                          changed, held, Qt::NoModifier);
+                        // Like the events of a real mouse: each has its own time.
+                        event.setTimestamp(
+                            static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()));
+                        QCoreApplication::sendEvent(window, &event);
+                    };
+                    if (press) { // a hand comes to the place before it presses
+                        send(QEvent::MouseMove, Qt::NoButton, Qt::NoButton);
+                    }
+                    send(type, button, press ? Qt::MouseButtons(button) : Qt::NoButton);
                 });
             }
             continue;
