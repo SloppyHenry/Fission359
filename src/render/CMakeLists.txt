@@ -19,6 +19,7 @@ qt_add_shaders(fission_render "fission_render_shaders"
     src/shaders/bed.frag
     src/shaders/flat.vert
     src/shaders/flat.frag
+    src/shaders/cap.frag
     src/shaders/shadow.vert
     src/shaders/shadow.frag
     src/shaders/fullscreen.vert

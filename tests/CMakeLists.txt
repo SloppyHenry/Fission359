@@ -244,6 +244,14 @@ if(_fission_run_window_tests)
             --camera=35,35,200 --simulate "put:box;menu:new;expecttab:1,2;key:${_fission_prev_tab_key};expecttab:0,2;key:${_fission_next_tab_key};expecttab:1,2;menu:prevtab;expecttab:0,2")
   set_tests_properties(app_tab_keys PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.11c: the section view comes from the menu, cuts away the +X side, swaps its side and goes
+  # off again (a view setting only: no undo step).
+  add_test(NAME app_section
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-section.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "expectsection:off;menu:section;expectsection:x;clickitem:sectionFlip;expectsection:-x;menu:section;expectsection:off")
+  set_tests_properties(app_section PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-2.12c: a helper plane is made from the menu (a step without a body); its switch hides the
   # square in the view (one undo step).
   add_test(NAME app_helper_plane

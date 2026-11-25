@@ -114,6 +114,7 @@ Window {
         ] },
         { title: qsTr("View"), items: [
             { id: "measure", text: qsTr("Measure"), checked: Measure.enabled },
+            { id: "section", text: qsTr("Section view"), checked: SectionView.enabled },
             { id: "measures", text: qsTr("Named measures"), shortcut: primaryKey + "M", nativeShortcut: "Ctrl+M", checked: root.measuresOpen },
             { id: "orthographic", text: qsTr("Orthographic"), shortcut: "P", checked: root.orthographic },
             { id: "bed", text: qsTr("Print bed"), checked: root.bedVisible },
@@ -198,6 +199,7 @@ Window {
             : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
             : root.flyout === "combine" ? qsTr("Choose two or more bodies (Shift+click), then merge them, subtract the others from the first or keep only what they share. One body can be split in two.")
+            : SectionView.enabled ? qsTr("Section view: drag the slider or type the place. Esc closes it.")
             : Measure.enabled ? qsTr("Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.")
             : root.flyout === "check" ? qsTr("Check: measure faces, edges and corners.")
             : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.")
@@ -502,6 +504,10 @@ Window {
             if (Measure.enabled && Selection.filter === "body") {
                 Selection.filter = "all"
             }
+            break
+        case "section":
+            root.flyout = ""
+            SectionView.enabled = !SectionView.enabled
             break
         case "sketchdone": Sketch.finish(); break
         case "sketchpull": pullRegion(); break
@@ -1025,6 +1031,11 @@ Window {
     }
     Shortcut {
         sequence: "Escape"
+        enabled: SectionView.enabled && !Measure.enabled && !root.seating && !Sketch.engaged && !root.typing
+        onActivated: SectionView.enabled = false
+    }
+    Shortcut {
+        sequence: "Escape"
         enabled: DocumentModel.repairing && !Measure.enabled && !root.seating && !Sketch.engaged
         onActivated: DocumentModel.cancelRepair()
     }
@@ -1359,6 +1370,26 @@ Window {
         anchors.rightMargin: 16
         z: 19
         onCloseRequested: Measure.enabled = false
+    }
+
+    SectionCard {
+        id: sectionCard
+
+        visible: SectionView.enabled
+        anchors.top: docTabs.bottom
+        anchors.topMargin: Measure.enabled ? 330 : 10
+        anchors.right: parent.right
+        anchors.rightMargin: 16
+        z: 19
+        onCloseRequested: SectionView.enabled = false
+    }
+
+    Connections {
+        target: SectionView
+
+        function onNothingToCut() {
+            root.showHint(qsTr("There is nothing to cut: no body is shown."))
+        }
     }
 
     ExportCard {

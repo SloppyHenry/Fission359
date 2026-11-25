@@ -4,9 +4,11 @@
 #pragma once
 
 #include <QColor>
+#include <QVector3D>
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -43,6 +45,25 @@ struct BedSpec {
     float cornerRadius = 6.0F;
     float thickness = 5.0F;
 };
+
+/// A plane that cuts bodies away for display (AP-2.11b): what lies on the side the normal points
+/// to is not drawn and cannot be picked. Nothing is stored in the document.
+struct ClipPlane {
+    QVector3D point;
+    QVector3D normal;
+    bool operator==(const ClipPlane&) const = default;
+
+    /// True if `p` lies on the cut-away side.
+    bool cuts(const QVector3D& p) const { return QVector3D::dotProduct(normal, p - point) > 0.0F; }
+};
+
+/// The cut face of one body in the section view, as triangles in the plane (AP-2.11c).
+struct CapMesh {
+    std::vector<float> positions; ///< x, y, z per vertex (mm)
+    std::vector<std::uint32_t> indices;
+    QColor color{233, 234, 236};
+};
+using CapSet = std::vector<CapMesh>;
 
 struct RenderScene {
     std::vector<RenderBody> bodies;

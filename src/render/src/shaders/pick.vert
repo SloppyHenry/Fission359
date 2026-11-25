@@ -7,10 +7,12 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in uint id;
 
 layout(location = 0) flat out uint vId;
+layout(location = 1) out vec3 vWorld;
 
 layout(std140, binding = 0) uniform Params {
     mat4 mvp;  // clip-space correction * crop * projection * view
     vec4 misc; // x, y: size of one pixel in clip space of the pick target
+    vec4 clip; // see body.vert
 } u;
 
 out gl_PerVertex {
@@ -19,5 +21,6 @@ out gl_PerVertex {
 
 void main() {
     vId = id;
+    vWorld = position;
     gl_Position = u.mvp * vec4(position, 1.0);
 }

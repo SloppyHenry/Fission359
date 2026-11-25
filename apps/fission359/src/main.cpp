@@ -73,6 +73,7 @@
 #include "fission/ui/preferences.h"
 #include "fission/ui/rotate_controller.h"
 #include "fission/ui/scale_controller.h"
+#include "fission/ui/section_controller.h"
 #include "fission/ui/selection_controller.h"
 #include "fission/ui/shape_previews.h"
 #include "fission/ui/sketch_controller.h"
@@ -604,6 +605,8 @@ int main(int argc, char* argv[]) {
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Selection", &selection);
     fission::ui::MeasureController measure(&documentModel, &selection, kernel);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Measure", &measure);
+    fission::ui::SectionController section(&documentModel, kernel);
+    qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "SectionView", &section);
     fission::ui::SketchController sketch(&documentModel, &selection);
     qmlRegisterSingletonInstance("Fission359.Ui", 1, 0, "Sketch", &sketch);
     fission::ui::PlacementController placement(&documentModel);
@@ -681,6 +684,7 @@ int main(int argc, char* argv[]) {
         scale.attach(viewport);
         distances.attach(viewport);
         measure.attach(viewport);
+        section.attach(viewport);
         sketch.attach(viewport);
         align.attach(viewport);
         distances.attachGizmo(&gizmo);

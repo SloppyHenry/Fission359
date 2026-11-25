@@ -199,3 +199,46 @@ TEST_CASE("handles are drawn twice: faint where a body hides them, full where th
     CHECK(f.renderer->handleVertexCount() > 2 * 6);
     CHECK(f.renderer->handleVertexCount() % 2 == 0);
 }
+
+TEST_CASE("a frame with a section plane runs through all passes, on and off again",
+          "[render][scene-renderer][section]") {
+    Fixture f;
+    RenderScene scene;
+    scene.bodies = {body("a", 1)};
+    const QSize size(320, 200);
+    std::unique_ptr<QRhiTexture> color(
+        f.rhi->newTexture(QRhiTexture::RGBA8, size, 1, QRhiTexture::RenderTarget));
+    REQUIRE(color->create());
+    std::unique_ptr<QRhiRenderBuffer> depth(
+        f.rhi->newRenderBuffer(QRhiRenderBuffer::DepthStencil, size, 1));
+    REQUIRE(depth->create());
+    QRhiTextureRenderTargetDescription description{QRhiColorAttachment(color.get())};
+    description.setDepthStencilBuffer(depth.get());
+    std::unique_ptr<QRhiTextureRenderTarget> target(f.rhi->newTextureRenderTarget(description));
+    std::unique_ptr<QRhiRenderPassDescriptor> pass(target->newCompatibleRenderPassDescriptor());
+    target->setRenderPassDescriptor(pass.get());
+    REQUIRE(target->create());
+    f.renderer->createPipelines(pass.get(), 1);
+
+    SceneRenderer::Frame frame;
+    frame.projection.perspective(45.0F, 1.6F, 1.0F, 1000.0F);
+    frame.view.lookAt({60, -80, 60}, {0, 0, 5}, {0, 0, 1});
+    frame.ambientOcclusion = true;
+    const auto drawFrame = [&] {
+        QRhiCommandBuffer* cb = nullptr;
+        REQUIRE(f.rhi->beginOffscreenFrame(&cb) == QRhi::FrameOpSuccess);
+        f.renderer->upload(cb, scene, {});
+        f.renderer->draw(cb, target.get(), frame);
+        f.rhi->endOffscreenFrame();
+    };
+    CHECK_FALSE(f.renderer->clipPlane().has_value());
+    drawFrame();
+    f.renderer->setClipPlane(ClipPlane{QVector3D(5, 0, 0), QVector3D(1, 0, 0)});
+    CHECK(f.renderer->clipPlane().has_value());
+    drawFrame();
+    f.renderer->setClipPlane(ClipPlane{QVector3D(2, 0, 0), QVector3D(-1, 0, 0)});
+    drawFrame();
+    f.renderer->setClipPlane(std::nullopt);
+    CHECK_FALSE(f.renderer->clipPlane().has_value());
+    drawFrame();
+}
