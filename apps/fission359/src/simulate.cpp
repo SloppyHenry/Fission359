@@ -11,6 +11,7 @@
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QEventLoop>
@@ -1058,11 +1059,16 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
             const QString name = action.mid(colon + 1).trimmed();
             const Qt::MouseButton button =
                 kind == QLatin1String("clickitem") ? Qt::LeftButton : Qt::RightButton;
+            // A step changed just before may still be calculated: what the click is aimed at (a
+            // problem badge, its way out) only exists after that.
+            delay += 350;
+            scheduleAction(delay, viewport,
+                           [viewport, model] { whenCalculatedInOrder(viewport, model, [] {}); });
             for (const QEvent::Type type : {QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
                 delay += type == QEvent::MouseButtonPress ? 350 : 60;
                 scheduleAction(delay, viewport, [window, name, type, button] {
                     std::function<QQuickItem*(QQuickItem*)> find = [&](QQuickItem* item) {
-                        if (item->objectName() == name && item->isVisible()) {
+                        if (item->objectName() == name && item->isVisible() && item->isEnabled()) {
                             return item;
                         }
                         for (QQuickItem* child : item->childItems()) {
@@ -1081,9 +1087,19 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                     const QPointF scene =
                         item->mapToScene(QPointF(item->width() / 3, item->height() / 2));
                     const bool press = type == QEvent::MouseButtonPress;
-                    QMouseEvent event(type, scene, window->mapToGlobal(scene.toPoint()), button,
-                                      press ? button : Qt::NoButton, Qt::NoModifier);
-                    QCoreApplication::sendEvent(window, &event);
+                    const auto send = [&](QEvent::Type kindOfEvent, Qt::MouseButton changed,
+                                          Qt::MouseButtons held) {
+                        QMouseEvent event(kindOfEvent, scene, window->mapToGlobal(scene.toPoint()),
+                                          changed, held, Qt::NoModifier);
+                        // Like the events of a real mouse: each has its own time.
+                        event.setTimestamp(
+                            static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()));
+                        QCoreApplication::sendEvent(window, &event);
+                    };
+                    if (press) { // a hand comes to the place before it presses
+                        send(QEvent::MouseMove, Qt::NoButton, Qt::NoButton);
+                    }
+                    send(type, button, press ? Qt::MouseButtons(button) : Qt::NoButton);
                 });
             }
             continue;
@@ -1187,6 +1203,29 @@ void playActions(QQuickWindow* window, fission::ui::Viewport3D* viewport,
                                .arg(files->currentTab())
                                .arg(files->tabs().size());
                     g_simulationFailure = 10;
+                }
+            });
+            continue;
+        }
+        if (kind == QLatin1String("expectsection")) {
+            // expectsection:off | x | -x | y | -y | z | -z - the section view is off, or cuts
+            // away the side the named axis points to (AP-2.11).
+            const QString wanted = action.mid(colon + 1).trimmed();
+            delay += 600;
+            QTimer::singleShot(delay, Qt::PreciseTimer, viewport, [viewport, wanted] {
+                QString found = QStringLiteral("off");
+                if (const auto& plane = viewport->clipPlane()) {
+                    const QVector3D n = plane->normal;
+                    const int axis = std::abs(n.x()) > 0.5F ? 0 : std::abs(n.y()) > 0.5F ? 1 : 2;
+                    found = QString::fromLatin1(n[axis] < 0.0F ? "-" : "") +
+                            QString::fromLatin1(axis == 0   ? "x"
+                                                : axis == 1 ? "y"
+                                                            : "z");
+                }
+                if (found != wanted) {
+                    qWarning().noquote() << QStringLiteral("expected the section view %1; found %2")
+                                                .arg(wanted, found);
+                    g_simulationFailure = 11;
                 }
             });
             continue;

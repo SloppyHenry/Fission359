@@ -114,6 +114,7 @@ Window {
         ] },
         { title: qsTr("View"), items: [
             { id: "measure", text: qsTr("Measure"), checked: Measure.enabled },
+            { id: "section", text: qsTr("Section view"), checked: SectionView.enabled },
             { id: "measures", text: qsTr("Named measures"), shortcut: primaryKey + "M", nativeShortcut: "Ctrl+M", checked: root.measuresOpen },
             { id: "orthographic", text: qsTr("Orthographic"), shortcut: "P", checked: root.orthographic },
             { id: "bed", text: qsTr("Print bed"), checked: root.bedVisible },
@@ -158,6 +159,9 @@ Window {
             { id: "removeFaces", text: qsTr("Remove face"), enabled: root.facesChosen },
             { id: "offsetFaces", text: qsTr("Offset faces"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
             { id: "helperPlane", text: qsTr("Helper plane"), enabled: true },
+            { id: "patternLinear", text: qsTr("Row pattern"), enabled: root.chosenBodies.length === 1 },
+            { id: "patternCircular", text: qsTr("Circular pattern"), enabled: root.chosenBodies.length === 1 },
+            { id: "mirror", text: qsTr("Mirror"), enabled: root.chosenBodies.length === 1 },
             { id: "drillHole", text: qsTr("Drill hole"), enabled: Selection.singleFaceChosen },
             { separator: true },
             { id: "shell", text: qsTr("Hollow out"), enabled: root.facesChosen || root.chosenBodies.length === 1 },
@@ -195,6 +199,7 @@ Window {
             : Handles.armed ? qsTr("Type a size (Tab for the next one, Enter to finish) or drag the dots.")
             : root.transientHint !== "" && hintTimer.running ? root.transientHint
             : root.flyout === "combine" ? qsTr("Choose two or more bodies (Shift+click), then merge them, subtract the others from the first or keep only what they share. One body can be split in two.")
+            : SectionView.enabled ? qsTr("Section view: drag the slider or type the place. Esc closes it.")
             : Measure.enabled ? qsTr("Click a face, an edge or a corner; Shift+click adds a second one. Esc ends measuring.")
             : root.flyout === "check" ? qsTr("Check: measure faces, edges and corners.")
             : root.flyout === "shapes" ? qsTr("Drag a shape onto the print bed or onto a face, or click it; on the bed it snaps to corners and middles. Hold Shift to switch snapping off. “As hole” makes it a hole.")
@@ -500,6 +505,10 @@ Window {
                 Selection.filter = "all"
             }
             break
+        case "section":
+            root.flyout = ""
+            SectionView.enabled = !SectionView.enabled
+            break
         case "sketchdone": Sketch.finish(); break
         case "sketchpull": pullRegion(); break
         case "sketchspin": spinRegion(); break
@@ -579,6 +588,9 @@ Window {
         case "removeFaces": removeFacesChosen(); break
         case "offsetFaces": offsetFacesChosen(); break
         case "helperPlane": helperPlaneChosen(); break
+        case "patternLinear": patternChosen("linear"); break
+        case "patternCircular": patternChosen("circular"); break
+        case "mirror": mirrorChosen(); break
         case "drillHole": drillHoleChosen(); break
         case "shell": shellChosen(); break
         case "draft": draftChosen(); break
@@ -748,6 +760,33 @@ Window {
         root.flyout = ""
         showHint(item !== undefined ? qsTr("Helper plane 10 mm from the face. Type another distance in the panel.")
                                     : qsTr("Helper plane 10 mm above the bed. Type another distance in the panel."))
+    }
+
+    // A pattern of the chosen body: 3 copies in a row or 6 in a circle (AP-2.8b).
+    function patternChosen(mode) {
+        const body = root.chosenBodies.length === 1 ? root.chosenBodies[0] : ""
+        const made = body !== "" ? DocumentModel.addPattern(body, mode) : ""
+        if (made === "") {
+            showHint(qsTr("This body cannot be repeated: it may already be part of another body."))
+            return
+        }
+        root.flyout = ""
+        Selection.chooseBodies([made])
+        showHint(mode === "circular" ? qsTr("Circle of 6 copies. Type another number or angle in the panel.")
+                                     : qsTr("Row of 3 copies. Drag the arrow or type another distance in the panel."))
+    }
+
+    // The mirror image of the chosen body, kept beside it and just touching (AP-2.8c).
+    function mirrorChosen() {
+        const body = root.chosenBodies.length === 1 ? root.chosenBodies[0] : ""
+        const made = body !== "" ? DocumentModel.addMirror(body, "copy") : ""
+        if (made === "") {
+            showHint(qsTr("This body cannot be mirrored: it may already be part of another body."))
+            return
+        }
+        root.flyout = ""
+        root.tool = "size" // the arrow that moves the plane is shown by this tool
+        showHint(qsTr("Mirror image beside the body. Drag the arrow or type where the mirror plane stands."))
     }
 
     // The body to work on: the one the chosen faces belong to, or the one chosen body ("" if none).
@@ -989,6 +1028,11 @@ Window {
         sequence: "Escape"
         enabled: Measure.enabled && !root.seating && !Sketch.engaged
         onActivated: Measure.enabled = false
+    }
+    Shortcut {
+        sequence: "Escape"
+        enabled: SectionView.enabled && !Measure.enabled && !root.seating && !Sketch.engaged && !root.typing
+        onActivated: SectionView.enabled = false
     }
     Shortcut {
         sequence: "Escape"
@@ -1328,6 +1372,26 @@ Window {
         onCloseRequested: Measure.enabled = false
     }
 
+    SectionCard {
+        id: sectionCard
+
+        visible: SectionView.enabled
+        anchors.top: docTabs.bottom
+        anchors.topMargin: Measure.enabled ? 330 : 10
+        anchors.right: parent.right
+        anchors.rightMargin: 16
+        z: 19
+        onCloseRequested: SectionView.enabled = false
+    }
+
+    Connections {
+        target: SectionView
+
+        function onNothingToCut() {
+            root.showHint(qsTr("There is nothing to cut: no body is shown."))
+        }
+    }
+
     ExportCard {
         id: exportCard
 
@@ -1484,6 +1548,15 @@ Window {
             onAddRequested: root.flyout = "shapes"
             deletion: root.pendingDeletion
             onStepRequested: index => DocumentModel.selectStep(DocumentModel.currentStep === index ? -1 : index)
+            // "Change value" under a problem: the step is chosen and the cursor goes into the field
+            // the problem is about, its text selected, so that typing replaces it (Pflege P19).
+            onValueEditRequested: (index, field) => {
+                if (DocumentModel.currentStep !== index) {
+                    DocumentModel.selectStep(index)
+                }
+                root.rightTab = "object"
+                Qt.callLater(() => rightPanel.focusValue(field))
+            }
             onStepHovered: (index, on) => viewport.lightUpBodies(on ? [DocumentModel.bodyOfStep(index)] : [])
             onStepRenamed: (index, text) => DocumentModel.setStepLabel(index, text)
             onStepOpenRequested: index => Sketch.reopen(index)
@@ -1911,6 +1984,8 @@ Window {
             }
             onTabRequested: tab => root.rightTab = tab
             onAxisChosen: axis => DocumentModel.setSplitAxis(DocumentModel.currentStep, axis)
+            onMirrorAxisChosen: axis => DocumentModel.setMirrorAxis(DocumentModel.currentStep, axis)
+            onPatternDirectionChosen: (circular, axis, sign) => DocumentModel.setPatternDirection(DocumentModel.currentStep, circular, axis, sign)
             onValueCommitted: (name, text) => DocumentModel.setStepValue(DocumentModel.currentStep, name, text)
             onDragStarted: name => DocumentModel.beginChange(name)
             onDragFinished: accepted => accepted ? DocumentModel.commitChange() : DocumentModel.cancelChange()
@@ -1970,6 +2045,7 @@ Window {
         if (type === "shell") { return qsTr("Hollowing out") }
         if (type === "draft") { return qsTr("Draft") }
         if (type === "pattern") { return qsTr("Pattern") }
+        if (type === "mirror") { return qsTr("Mirror") }
         if (type === "place") { return qsTr("Placing") }
         if (type === "import") { return qsTr("Imported body") }
         if (type === "sketch") { return qsTr("Sketch") }
@@ -1989,6 +2065,15 @@ Window {
         case "cornerRadius": return qsTr("Corner radius")
         case "font": return qsTr("Font")
         case "style": return qsTr("Style")
+        case "planeX": return qsTr("Mirror plane at x")
+        case "planeY": return qsTr("Mirror plane at y")
+        case "planeZ": return qsTr("Mirror plane at z")
+        case "count": return qsTr("Number")
+        case "spacing": return qsTr("Distance")
+        case "total": return qsTr("Angle in all")
+        case "axisX": return qsTr("Centre x")
+        case "axisY": return qsTr("Centre y")
+        case "axisZ": return qsTr("Centre z")
         case "topRadius": return qsTr("Top radius")
         case "tubeRadius": return qsTr("Tube radius")
         case "innerRadius": return qsTr("Inner radius")
@@ -2069,6 +2154,8 @@ Window {
         case "offsetFaces": return qsTr("%n face(s) moved", "", Number(step.count))
         case "tiltFace": return qsTr("Face tilted")
         case "helperPlane": return qsTr("Helper plane added")
+        case "mirror": return qsTr("Mirrored")
+        case "pattern": return step.mode === "circular" ? qsTr("Circular pattern added") : qsTr("Row pattern added")
         case "drillHole": return qsTr("Hole drilled")
         case "shellBody": return qsTr("Body hollowed out")
         case "draftFaces": return qsTr("Draft added")
@@ -2180,7 +2267,8 @@ Window {
         active: step.active,
         problemTitle: step.problem ? messageCatalog.title(step.problem, step) : "",
         problem: step.problem ? problemText(step.problem, step) : "",
-        problemActions: step.problem ? messageCatalog.actionsFor(step.problem, step) : []
+        problemActions: step.problem ? messageCatalog.actionsFor(step.problem, step) : [],
+        problemField: step.problem ? (step.problem.field || "") : ""
     }))
 
     readonly property var chosenBodyIndexes: Selection.items.map(item => item.bodyIndex)

@@ -74,6 +74,29 @@ Rectangle {
     signal dragStarted(string name)
     signal dragFinished(bool accepted)
     signal textCommitted(string name, string text)
+    // The cursor goes into the field of the value `name` (or the first value field when there is
+    // none of that name), its text selected.
+    function focusValue(name) {
+        const wanted = "field_" + name
+        let first = null
+        const find = item => {
+            for (const child of item.children) {
+                if (child.objectName === wanted) {
+                    return child
+                }
+                if (first === null && child.objectName.startsWith("field_") && child.focusAndSelect !== undefined) {
+                    first = child
+                }
+                const found = find(child)
+                if (found !== null) {
+                    return found
+                }
+            }
+            return null
+        }
+        const field = find(root) ?? first
+        field?.focusAndSelect()
+    }
     signal holeScrewChosen(string size, string kind)
     // A drilled hole (AP-2.7c): the screw it is for, and what the hole is to take.
     readonly property bool isDrill: stepTexts.some(t => t.name === "kind")
@@ -113,6 +136,42 @@ Rectangle {
     readonly property var axisValue: stepValues.find(v => v.group === "axis")
     readonly property var cutValues: stepValues.filter(v => v.group === "cut")
     signal axisChosen(int axis)
+    // A mirror (AP-2.8c): the plane stands upright to one axis; one number says where.
+    signal mirrorAxisChosen(int axis)
+    readonly property bool isMirror: stepValues.some(v => v.name === "planeX")
+    readonly property int mirrorAxis: {
+        const n = [valueNamed("normalX").value, valueNamed("normalY").value, valueNamed("normalZ").value]
+        let best = 0
+        for (let i = 1; i < 3; ++i) {
+            if (Math.abs(n[i]) > Math.abs(n[best])) { best = i }
+        }
+        return best
+    }
+    // A pattern (AP-2.8b): a row or a circle of copies, its way or axis, and the copies left out.
+    signal patternDirectionChosen(bool circular, int axis, int sign)
+    readonly property bool isPattern: stepTexts.some(t => t.name === "skip")
+    readonly property string patternMode: stepTexts.find(t => t.name === "mode")?.value ?? "linear"
+    readonly property bool patternCircular: patternMode === "circular"
+    readonly property string skipText: stepTexts.find(t => t.name === "skip")?.value ?? ""
+    readonly property int patternCount: Math.max(0, Math.round(valueNamed("count").value))
+    readonly property var skippedIndexes: skipText.split(",").map(t => parseInt(t.trim())).filter(n => !isNaN(n))
+    // The way of the row or the axis of the circle as "x+", "y-" ... (from the three numbers).
+    function patternWay(prefix) {
+        const parts = [valueNamed(prefix + (prefix === "dir" ? "X" : "x")).value,
+                       valueNamed(prefix + (prefix === "dir" ? "Y" : "y")).value,
+                       valueNamed(prefix + (prefix === "dir" ? "Z" : "z")).value]
+        let best = 0
+        for (let i = 1; i < 3; ++i) {
+            if (Math.abs(parts[i]) > Math.abs(parts[best])) { best = i }
+        }
+        return "xyz"[best] + (parts[best] < 0 ? "-" : "+")
+    }
+    function skipWith(index, on) {
+        const list = skippedIndexes.filter(n => n !== index)
+        if (on) { list.push(index) }
+        list.sort((a, b) => a - b)
+        return list.join(", ")
+    }
     // The fields stay when only their numbers change (a field being dragged or stepped with the
     // arrow keys must not be rebuilt under the hand): the repeaters get the names, which differ
     // only when the shape has other fields.
@@ -411,6 +470,116 @@ Rectangle {
                             value: cutField.entry.expression
                         }
                     }
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.isMirror
+                heading: qsTr("Mirror")
+
+                Txt {
+                    text: qsTr("The plane stands upright to")
+                    color: Theme.fg2
+                }
+
+                Segmented {
+                    objectName: "mirrorAxis"
+                    accessibleName: qsTr("The plane stands upright to")
+                    current: root.mirrorAxis
+                    model: [{ value: 0, text: "X" }, { value: 1, text: "Y" }, { value: 2, text: "Z" }]
+                    onActivated: value => root.mirrorAxisChosen(value)
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.isPattern
+                heading: qsTr("Pattern")
+
+                Segmented {
+                    objectName: "patternMode"
+                    accessibleName: qsTr("Kind of pattern")
+                    current: root.patternMode
+                    model: [{ value: "linear", text: qsTr("Row") }, { value: "circular", text: qsTr("Circle") }]
+                    onActivated: value => root.textCommitted("mode", value)
+                }
+
+                Txt {
+                    text: root.patternCircular ? qsTr("Turn about the axis") : qsTr("Way of the row")
+                    color: Theme.fg2
+                }
+
+                Segmented {
+                    objectName: "patternWay"
+                    accessibleName: root.patternCircular ? qsTr("Turn about the axis") : qsTr("Way of the row")
+                    current: root.patternWay(root.patternCircular ? "axisD" : "dir")
+                    model: root.patternCircular
+                        ? [{ value: "x+", text: "X" }, { value: "y+", text: "Y" }, { value: "z+", text: "Z" }]
+                        : [{ value: "x+", text: "X" }, { value: "y+", text: "Y" }, { value: "z+", text: "Z" },
+                           { value: "x-", text: "-X" }, { value: "y-", text: "-Y" }, { value: "z-", text: "-Z" }]
+                    onActivated: value => root.patternDirectionChosen(root.patternCircular, "xyz".indexOf(value.charAt(0)), value.charAt(1) === "-" ? -1 : 1)
+                }
+            }
+
+            Section {
+                visible: root.showsStep && root.isPattern && root.patternCount > 1
+                heading: qsTr("Copies")
+
+                Txt {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Switch a copy off to leave it out. The first one is the body itself.")
+                    color: Theme.fg2
+                }
+
+                Flow {
+                    width: parent.width
+                    spacing: 6
+                    visible: root.patternCount <= 60
+
+                    Repeater {
+                        model: root.patternCount <= 60 ? root.patternCount : 0
+
+                        delegate: AbstractButton {
+                            id: copyButton
+
+                            required property int modelData
+                            readonly property int copyNumber: modelData
+                            readonly property bool leftOut: root.skippedIndexes.indexOf(copyNumber) >= 0
+
+                            objectName: "patternCopy" + copyNumber
+                            width: 30
+                            height: 28
+                            checkable: true
+                            checked: !leftOut
+                            enabled: copyNumber > 0
+                            hoverEnabled: true
+                            Accessible.name: qsTr("Copy %1").arg(copyNumber + 1)
+                            onClicked: root.textCommitted("skip", root.skipWith(copyNumber, !leftOut))
+
+                            contentItem: Txt {
+                                text: copyButton.copyNumber + 1
+                                color: copyButton.checked ? Theme.fg : Theme.fg3
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                radius: 6
+                                color: copyButton.checked ? Theme.accentSoft : Theme.raise
+                                border.width: 1
+                                border.color: copyButton.checked ? Theme.accentLine : Theme.line2
+                                opacity: copyButton.enabled ? 1.0 : 0.6
+                            }
+                        }
+                    }
+                }
+
+                WordField {
+                    visible: root.patternCount > 60
+                    width: parent.width
+                    label: qsTr("Left out (numbers, with commas)")
+                    value: root.skipText
+                    onCommitted: text => root.textCommitted("skip", text)
                 }
             }
 

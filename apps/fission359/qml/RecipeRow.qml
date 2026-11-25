@@ -41,7 +41,10 @@ Rectangle {
     readonly property string stateWord: state === "warning" ? qsTr("Needs help")
                                       : state === "fails" ? qsTr("Does not work")
                                       : state === "off" ? qsTr("Hidden") : ""
+    /// The explanation of the problem is open. The panel keeps it (`explainRequested`): the rows are
+    /// made anew with every calculation.
     property bool explained: false
+    signal explainRequested(bool on)
     /// The buttons under the explanation of a problem: [{ id: "editValue" | "hideStep", label }].
     property var problemActions: []
     signal editRequested
@@ -204,6 +207,7 @@ Rectangle {
             AbstractButton {
                 id: badge
 
+                objectName: "problemBadge"
                 anchors.right: parent.right
                 anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
@@ -212,7 +216,7 @@ Rectangle {
                 hoverEnabled: true
                 enabled: root.state === "warning" || root.state === "fails"
                 Accessible.name: root.stateWord
-                onClicked: root.explained = !root.explained
+                onClicked: root.explainRequested(!root.explained)
 
                 ToolTip.visible: hovered && root.stateWord !== ""
                 ToolTip.delay: 400

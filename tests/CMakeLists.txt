@@ -263,6 +263,22 @@ if(_fission_run_window_tests)
             --camera=35,35,200 --simulate "put:box;menu:new;expecttab:1,2;key:${_fission_prev_tab_key};expecttab:0,2;key:${_fission_next_tab_key};expecttab:1,2;menu:prevtab;expecttab:0,2")
   set_tests_properties(app_tab_keys PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # Pflege P19: "Change value" under the problem of a step puts the cursor into the field the
+  # problem is about (a box with width 0).
+  add_test(NAME app_problem_change_value
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-problem-change-value.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "put:box;value:width,0;clickitem:recipeRow_0;clickitem:problemBadge;clickitem:problemAction_editValue;expectfocus:width;key:7;key:Return;near:width,7")
+  set_tests_properties(app_problem_change_value PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.11c: the section view comes from the menu, cuts away the +X side, swaps its side and goes
+  # off again (a view setting only: no undo step).
+  add_test(NAME app_section
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-section.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "expectsection:off;menu:section;expectsection:x;clickitem:sectionFlip;expectsection:-x;menu:section;expectsection:off")
+  set_tests_properties(app_section PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # AP-2.12c: a helper plane is made from the menu (a step without a body); its switch hides the
   # square in the view (one undo step).
   add_test(NAME app_helper_plane
@@ -270,6 +286,20 @@ if(_fission_run_window_tests)
             --smoke-test "${CMAKE_BINARY_DIR}/window-helper-plane.png" --language en --size 1280x800
             --camera=35,35,200 --simulate "menu:helperPlane;recipe:box,helperPlane;clickitem:helperPlaneShown;expectundo:setText")
   set_tests_properties(app_helper_plane PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.8b: a row and a circle of the chosen body from the menu: one step each, one undo step.
+  add_test(NAME app_pattern
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-pattern.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "selectall;menu:patternLinear;recipe:box,pattern;expectundo:pattern;menu:undo;recipe:box;selectall;menu:patternCircular;recipe:box,pattern;expectundo:pattern")
+  set_tests_properties(app_pattern PROPERTIES
+    ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
+  # AP-2.8c: a mirror image of the chosen body from the menu: one step with its bodies, one undo.
+  add_test(NAME app_mirror
+    COMMAND ${_fission_gui_runner} ${_fission_app_exe}
+            --smoke-test "${CMAKE_BINARY_DIR}/window-mirror.png" --language en --size 1280x800
+            --camera=35,35,200 --simulate "selectall;menu:mirror;recipe:box,mirror,place,place;expectundo:mirror;menu:undo;recipe:box")
+  set_tests_properties(app_mirror PROPERTIES
     ENVIRONMENT "${_fission_gui_env};${_fission_lsan_env}" TIMEOUT 90 RUN_SERIAL TRUE)
   # Pflege P10: the keys + and - zoom the 3D view towards its centre by 20 % each (the camera
   # distance gets smaller, then larger again).

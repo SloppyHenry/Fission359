@@ -151,14 +151,36 @@ QtObject {
             default: return qsTr("Merged with %n body(ies)", "", v[0])
             }
         }
-        if (step.type === "pattern" && v.length === 2) {
+        if (step.type === "mirror" && v.length === 6) {
+            const n = [v[3], v[4], v[5]]
+            let axis = 0
+            for (let i = 1; i < 3; ++i) {
+                if (Math.abs(n[i]) > Math.abs(n[axis])) { axis = i }
+            }
+            const norm = Math.hypot(n[0], n[1], n[2])
+            if (!(norm > 1e-9) || Math.abs(n[axis]) < norm - 1e-9) {
+                return qsTr("Mirrored at a slanted plane")
+            }
+            const letter = ["x", "y", "z"][axis]
+            const place = len(v[axis])
             switch (step.texts.mode) {
-            case "circular": return qsTr("Circle of %n copy(ies), %1° in all", "", v[0]).arg(n(v[1]))
-            default: return qsTr("Row of %n copy(ies), %1 mm apart", "", v[0]).arg(len(v[1]))
+            case "merge": return qsTr("Mirrored at %1 = %2 mm and joined with the original").arg(letter).arg(place)
+            case "only": return qsTr("Mirrored at %1 = %2 mm, only the mirror image kept").arg(letter).arg(place)
+            default: return qsTr("Mirrored at %1 = %2 mm, the original stays").arg(letter).arg(place)
+            }
+        }
+        if (step.type === "pattern" && v.length === 2) {
+            const left = String(step.texts.skip === undefined ? "" : step.texts.skip)
+                .split(",").map(t => parseInt(t.trim())).filter(k => !isNaN(k) && k > 0 && k < v[0])
+                .map(k => k + 1)
+            const without = left.length > 0 ? qsTr(", without %1").arg(left.join(", ")) : ""
+            switch (step.texts.mode) {
+            case "circular": return qsTr("Circle of %n copy(ies), %1° in all", "", v[0]).arg(n(v[1])) + without
+            default: return qsTr("Row of %n copy(ies), %1 mm apart", "", v[0]).arg(len(v[1])) + without
             }
         }
         // A kind of step this version does not know (a file from a later version).
-        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "hole", "tiltFace", "shell", "draft", "helperPlane", "pattern", "revolve"].indexOf(step.type) < 0) {
+        if (!root.knownShape(step.type) && ["combine", "split", "place", "import", "sketch", "fillet", "chamfer", "pushFace", "stretch", "removeFaces", "offsetFaces", "hole", "tiltFace", "shell", "draft", "helperPlane", "pattern", "mirror", "revolve"].indexOf(step.type) < 0) {
             return qsTr("Step %1 (unknown kind)").arg(step.index + 1)
         }
         return root.typeLabel(step.type)

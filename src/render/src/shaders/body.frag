@@ -25,6 +25,7 @@ layout(std140, binding = 0) uniform Params {
     vec4 bedSize;
     vec4 bodyOverride; // rgb, a = 1: draw every body in this colour
     vec4 view;       // x, y: size of the image in pixels, z: 1 if ambient occlusion is on
+    vec4 clip;       // xyz: normal of the cut plane, w: offset; what lies beyond (dot(n, p) > w) is cut away. All 0: off
 } u;
 
 layout(binding = 1) uniform sampler2D shadowMap;
@@ -73,9 +74,13 @@ float lightAmount(vec3 normal) {
 }
 
 void main() {
+    if (dot(u.clip.xyz, vWorld) > u.clip.w) {
+        discard;
+    }
     vec3 viewDir = normalize(u.eye.xyz - vWorld);
     vec3 n = normalize(vNormal);
-    if (dot(n, viewDir) < 0.0) {
+    bool seenFromBehind = dot(n, viewDir) < 0.0;
+    if (seenFromBehind) {
         n = -n; // two-sided: a face is lit from the side the viewer sees
     }
     float lit = lightAmount(n);
@@ -85,5 +90,8 @@ void main() {
     vec3 base = u.bodyOverride.a > 0.5 ? u.bodyOverride.rgb : vColor.rgb;
     float open = openness();
     vec3 c = base * (ambient * open + 0.5 * diffuse * mix(1.0, open, 0.5) + 0.1 * fill * open);
+    if (seenFromBehind && dot(u.clip.xyz, u.clip.xyz) > 0.0) {
+        c *= 0.8; // the inside of a cut body, seen through the cut, a little darker
+    }
     fragColor = vec4(c, vColor.a);
 }

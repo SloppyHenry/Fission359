@@ -32,6 +32,7 @@ set(_core_tests
   features/test_push_face.cpp
   features/test_face_ops.cpp
   features/test_pattern_step.cpp
+  features/test_mirror_step.cpp
   features/test_helper_plane.cpp
   features/test_hole_step.cpp
   features/test_shell_draft.cpp
@@ -62,6 +63,7 @@ set(_core_tests
   geometry/test_text.cpp
   geometry/test_exchange.cpp
   geometry/test_measuring.cpp
+  geometry/test_section.cpp
   geometry/test_sketch_curve.cpp
   geometry/test_sketch_intersections.cpp
   geometry/test_sketch_regions.cpp
@@ -91,6 +93,7 @@ set(_app_tests
   ui/test_export_controller.cpp
   ui/test_import_controller.cpp
   ui/test_measure_controller.cpp
+  ui/test_section_controller.cpp
   ui/test_measures_model.cpp
   ui/test_selection_controller.cpp
   ui/test_sketch_mode.cpp
@@ -113,6 +116,8 @@ set(_app_tests
   ui/test_messages.cpp
   ui/test_blend_edges.cpp
   ui/test_push_face_ui.cpp
+  ui/test_pattern_ui.cpp
+  ui/test_mirror_ui.cpp
   interaction/test_drag.cpp
   interaction/test_snap.cpp
   interaction/test_distances.cpp
