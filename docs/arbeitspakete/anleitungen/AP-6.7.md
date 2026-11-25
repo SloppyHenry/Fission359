@@ -128,4 +128,4 @@ Alle entschieden (Festlegungen 1–8). Neue Fragen: anhalten und berichten.
 - Keine Funktion im Browser halb anbieten (Festlegung 5). Desktop-Verhalten nicht verschlechtern.
 
 ## Nachtrag: Ausnahme-Format
-Compiler-Flags für WebAssembly (Triplet und Projekt-CMake gleich): `-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1 -fno-jump-tables`, Linker ohne `-fno-jump-tables`. Begründung: ADR-0014, Nachtrag.
+Compiler- und Linker-Flags für WebAssembly (Triplet und Projekt-CMake gleich): `-pthread -fexceptions -sSUPPORT_LONGJMP=emscripten` (Ausnahmen über JavaScript, keine nativen Wasm-Ausnahmen). Begründung: ADR-0014, Nachtrag.

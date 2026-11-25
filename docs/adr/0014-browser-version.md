@@ -59,6 +59,8 @@ Wir wählen **Option 1**, weil sie als einzige ohne zweite Oberfläche und ohne 
 **Nachtrag (2026-11-11):** Abweichung von „gleiche Qt-Version wie auf dem Desktop“: Der Browser nutzt Qt 6.12 mit Emscripten 5.0.5,
 weil das zu Qt 6.11 gehörende Emscripten 4.0.7 mit WebAssembly-Ausnahmen fehlerhaften Code erzeugt (AP-6.7 Festlegung 10).
 
-## Nachtrag: Ausnahme-Format und Sprungtabellen (AP-6.7)
-- V8 lehnte erzeugte `br_table`-Sprünge ab („label arity inconsistent“, vermutlich durch das exnref-Format). Das Triplet und das Projekt setzen deshalb ausdrücklich `-sWASM_LEGACY_EXCEPTIONS=1` (Compiler und Linker, alle Teile gleich) und `-fno-jump-tables`, damit Clang gar keine `br_table` erzeugt.
-- Der Cache-Schlüssel enthält den Hash von `cmake/vcpkg-triplets/**`; die geänderte Datei erzwingt den Neubau aller Bibliotheken. Der Link läuft mit `-O0` (keine Binaryen-Durchgänge, die neue Sprungtabellen erzeugen könnten).
+## Nachtrag: Ausnahme-Format (AP-6.7)
+- Native WebAssembly-Ausnahmen (`-fwasm-exceptions`, beide Formate) scheiterten bei den großen Programmen: V8 lehnte `br_table` ab („label arity inconsistent“), Binaryen brach bei den Konstruktoren ab. `-fno-jump-tables` half nicht.
+- Deshalb nutzt der Browser-Bau C++-Ausnahmen über JavaScript: `-fexceptions` und `-sSUPPORT_LONGJMP=emscripten` in Triplet und Projekt-CMake, überall gleich. Das ist auch die Voreinstellung der Qt-for-WebAssembly-Pakete (bei den Qt-Teilpaketen AP-6.7b2 bis b4 prüfen). Kosten: Code mit Ausnahmen ist langsamer und größer; Fehlerpfade sind selten.
+- Der Link läuft wieder mit der normalen Optimierung (Binaryen); der frühere `-O0`-Notbehelf entfällt. Alle 715 Tests des Presets `web-core` laufen unter Node 24.
+- Der Cache-Schlüssel enthält den Hash von `cmake/vcpkg-triplets/**`; die Änderung erzwingt den Neubau aller Bibliotheken.

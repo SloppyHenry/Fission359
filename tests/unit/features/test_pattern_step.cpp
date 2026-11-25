@@ -184,7 +184,10 @@ TEST_CASE("pattern: a hundred copies are quick enough", "[pattern][feature]") {
     CHECK(reportOf(world, result, row).solids == 100);
     CHECK(volumeOf(world, result, row) == Approx(100000.0).epsilon(1e-9));
     WARN("100 copies took " << seconds << " s");
-#ifdef NDEBUG
+#if defined(__EMSCRIPTEN__)
+    // WebAssembly under Node, several test programs in parallel: the native budget does not apply.
+    CHECK(seconds < 30.0);
+#elif defined(NDEBUG)
     CHECK(seconds < 3.0);
 #else
     CHECK(seconds < 30.0);

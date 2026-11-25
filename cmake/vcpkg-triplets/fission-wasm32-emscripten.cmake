@@ -31,16 +31,16 @@ set(VCPKG_LIBRARY_LINKAGE static)
 set(VCPKG_BUILD_TYPE release)
 set(VCPKG_CMAKE_SYSTEM_NAME Emscripten)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${VCPKG_ROOT_DIR}/scripts/toolchains/emscripten.cmake")
-# Native WebAssembly exceptions: without them Emscripten cannot catch C++ exceptions, and every
-# error the program reports by throwing (OpenCASCADE failures, broken files) ends the program.
-# The legacy exception format, chosen explicitly and not by default: V8 refused br_table
-# jumps in the programs ("label arity inconsistent"), probably an effect of the exnref format.
-# -fno-jump-tables keeps Clang from making br_table at all. All libraries and the program must
-# use the same flags (the same list is in the top CMakeLists.txt). Changing this file changes the
-# vcpkg and CI cache keys.
-set(VCPKG_C_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1 -fno-jump-tables")
-set(VCPKG_CXX_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1 -fno-jump-tables")
-set(VCPKG_LINKER_FLAGS "-pthread -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=1")
+# C++ exceptions through JavaScript (-fexceptions), not native WebAssembly exceptions: without
+# exceptions Emscripten cannot catch, and every error the program reports by throwing
+# (OpenCASCADE failures, broken files) ends the program. The native format made V8 refuse the
+# large programs ("br_table: label arity inconsistent") and Binaryen fail on them. setjmp/longjmp
+# (FreeType, OpenCASCADE) use the matching Emscripten mechanism. This is also what the Qt for
+# WebAssembly packages use. All libraries and the program must use the same flags (the same list
+# is in the top CMakeLists.txt). Changing this file changes the vcpkg and CI cache keys.
+set(VCPKG_C_FLAGS "-pthread -fexceptions -sSUPPORT_LONGJMP=emscripten")
+set(VCPKG_CXX_FLAGS "-pthread -fexceptions -sSUPPORT_LONGJMP=emscripten")
+set(VCPKG_LINKER_FLAGS "-pthread -fexceptions -sSUPPORT_LONGJMP=emscripten")
 # -O2 instead of the default -O3 for every library (set last, so that nothing after it can
 # override it; the flags a port adds itself come before the flags of the build type).
 set(VCPKG_CMAKE_CONFIGURE_OPTIONS "-DCMAKE_C_FLAGS_RELEASE=-O2 -DNDEBUG" "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -DNDEBUG")
